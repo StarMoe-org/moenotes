@@ -1,0 +1,33 @@
+{
+  "name": "moenotes",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "lint": "bun run lint:i18n && bun run lint:i18n-routing && bun run lint:routes && bun run lint:arch && bun run lint:text",
+    "lint:i18n": "node scripts/check-i18n-keys.mjs",
+    "lint:i18n-routing": "node scripts/check-i18n-routing.mjs",
+    "lint:routes": "node scripts/check-route-registry.mjs",
+    "lint:arch": "node scripts/check-architecture.mjs",
+    "lint:text": "node scripts/scan-hardcoded-ui-text.mjs"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@astrojs/react": "^4.4.2",
+    "@astrojs/tailwind": "^6.0.2",
+    "@tailwindcss/vite": "^4.1.18",
+    "astro": "^5.16.5",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3"
+  }
+}

@@ -1,0 +1,33 @@
+---
+import type { AppLocale } from "@/config/locales";
+import { t } from "@/i18n";
+import { localizePath } from "@/i18n/routing";
+import { getNavChildren } from "@/lib/route/registry";
+import type { AppRoute } from "@/types/route";
+
+interface Props {
+  locale: AppLocale;
+  group: AppRoute;
+}
+
+const { locale, group } = Astro.props;
+const children = getNavChildren(group);
+---
+
+<section class="mn-glass rounded-[2rem] p-6 sm:p-8">
+  <p class="mb-6 max-w-3xl leading-8 text-[var(--mn-text-muted)]">{t(locale, "page.groupIntro")}</p>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    {children.length === 0 ? (
+      <article class="rounded-3xl border border-[var(--mn-border)] bg-white/20 p-6">
+        <h2 class="text-lg font-bold text-[var(--mn-text)]">{t(locale, "page.placeholderTitle")}</h2>
+        <p class="mt-2 text-sm leading-7 text-[var(--mn-text-muted)]">{t(locale, "page.placeholderDescription")}</p>
+      </article>
+    ) : children.map((item) => (
+      <a href={localizePath(item.path, locale)} class="group rounded-3xl border border-[var(--mn-border)] bg-white/20 p-6 transition hover:-translate-y-1 hover:bg-white/35 hover:shadow-lg">
+        <h2 class="text-lg font-bold text-[var(--mn-text)] group-hover:text-[var(--mn-accent)]">{t(locale, item.labelKey)}</h2>
+        <p class="mt-2 text-sm leading-7 text-[var(--mn-text-muted)]">{t(locale, item.seo.descriptionKey)}</p>
+        <span class="mt-5 inline-flex text-sm font-bold text-[var(--mn-accent)]">{t(locale, "actions.open")} →</span>
+      </a>
+    ))}
+  </div>
+</section>

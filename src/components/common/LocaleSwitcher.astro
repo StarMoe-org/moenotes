@@ -1,0 +1,25 @@
+---
+import { LOCALE_LABELS, SUPPORTED_LOCALES, type AppLocale } from "@/config/locales";
+import { switchLocalePath } from "@/i18n/routing";
+
+interface Props {
+  locale: AppLocale;
+  pathname: string;
+}
+
+const { locale, pathname } = Astro.props;
+---
+
+<div class="flex items-center gap-1 rounded-full border border-[var(--mn-border)] bg-[var(--mn-surface)] p-1 text-xs">
+  {SUPPORTED_LOCALES.map((item) => (
+    <a
+      href={switchLocalePath(pathname, item)}
+      class:list={[
+        "rounded-full px-2.5 py-1 transition",
+        item === locale ? "bg-[var(--mn-accent)] text-white shadow-sm" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]",
+      ]}
+    >
+      {LOCALE_LABELS[item]}
+    </a>
+  ))}
+</div>

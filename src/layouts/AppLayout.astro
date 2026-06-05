@@ -1,0 +1,18 @@
+---
+import AppShell from "@/components/shell/AppShell.astro";
+import RootLayout from "@/layouts/RootLayout.astro";
+import type { AppLocale } from "@/config/locales";
+
+interface Props {
+  locale: AppLocale;
+  pathname: string;
+}
+
+const { locale, pathname } = Astro.props;
+---
+
+<RootLayout locale={locale} pathname={pathname}>
+  <AppShell locale={locale} pathname={pathname}>
+    <slot />
+  </AppShell>
+</RootLayout>

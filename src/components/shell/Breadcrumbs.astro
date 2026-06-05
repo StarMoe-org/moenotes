@@ -1,0 +1,46 @@
+---
+import type { AppLocale } from "@/config/locales";
+import { t } from "@/i18n";
+import { localizePath } from "@/i18n/routing";
+import { buildBreadcrumbs } from "@/lib/route/breadcrumbs";
+import { findRouteMatch, getNavChildren, getNavigationGroups } from "@/lib/route/registry";
+
+interface Props {
+  locale: AppLocale;
+  pathname: string;
+  detailLabel?: string;
+}
+
+const { locale, pathname, detailLabel } = Astro.props;
+const crumbs = buildBreadcrumbs(pathname, locale, detailLabel ? { label: detailLabel } : undefined);
+const match = findRouteMatch(pathname);
+const groups = getNavigationGroups();
+const siblings = match?.group ? getNavChildren(match.group) : groups;
+---
+
+<nav class="hidden min-w-0 items-center gap-1 text-sm text-[var(--mn-text-muted)] md:flex" aria-label="Breadcrumb">
+  {crumbs.slice(1).map((crumb, index) => (
+    <>
+      <span class="text-[var(--mn-border)]">/</span>
+      <a
+        href={crumb.href}
+        class:list={["truncate rounded-xl px-2 py-1 transition hover:bg-white/30", crumb.current ? "font-semibold text-[var(--mn-accent)]" : ""]}
+        aria-current={crumb.current ? "page" : undefined}
+      >
+        {crumb.label}
+      </a>
+      {index === crumbs.length - 2 && siblings.length > 0 && (
+        <details class="relative">
+          <summary class="list-none rounded-lg px-1 py-1 hover:bg-white/30" aria-label={t(locale, index === 0 ? "shell.breadcrumbExpandGroup" : "shell.breadcrumbExpandItems")}>⌄</summary>
+          <div class="mn-glass absolute left-0 top-full z-50 mt-2 min-w-48 rounded-2xl p-2">
+            {siblings.map((item) => (
+              <a href={localizePath(item.path, locale)} class="block rounded-xl px-3 py-2 text-sm text-[var(--mn-text-muted)] hover:bg-white/30 hover:text-[var(--mn-text)]">
+                {t(locale, item.labelKey)}
+              </a>
+            ))}
+          </div>
+        </details>
+      )}
+    </>
+  ))}
+</nav>

@@ -1,0 +1,42 @@
+---
+import type { AppLocale } from "@/config/locales";
+import { t } from "@/i18n";
+import { localizePath } from "@/i18n/routing";
+import { getRoutePathById } from "@/lib/route/registry";
+
+interface Props {
+  locale: AppLocale;
+}
+
+const { locale } = Astro.props;
+const features = ["i18n", "breadcrumb", "masterdata", "settings", "scroll", "seo"] as const;
+const databasePath = getRoutePathById("database");
+const aboutPath = getRoutePathById("community");
+---
+
+<section class="relative overflow-hidden rounded-[2.5rem] border border-[var(--mn-border)] bg-[var(--mn-surface)] p-8 shadow-[var(--mn-shadow)] sm:p-12">
+  <div class="absolute right-[-5rem] top-[-5rem] h-64 w-64 rounded-full bg-[var(--mn-pink)] opacity-20 blur-3xl"></div>
+  <div class="absolute bottom-[-5rem] left-[30%] h-72 w-72 rounded-full bg-[var(--mn-cyan)] opacity-20 blur-3xl"></div>
+  <div class="relative max-w-3xl">
+    <p class="mb-4 text-sm font-bold uppercase tracking-[0.26em] text-[var(--mn-accent)]">{t(locale, "home.eyebrow")}</p>
+    <h1 class="text-5xl font-black tracking-tight text-[var(--mn-text)] sm:text-7xl">{t(locale, "home.title")}</h1>
+    <p class="mt-5 text-xl font-semibold text-[var(--mn-text)]">{t(locale, "home.subtitle")}</p>
+    <p class="mt-4 max-w-2xl text-base leading-8 text-[var(--mn-text-muted)]">{t(locale, "home.description")}</p>
+    <div class="mt-8 flex flex-wrap gap-3">
+      <a href={localizePath(databasePath, locale)} class="rounded-2xl bg-[var(--mn-accent)] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-violet-500/20">{t(locale, "home.ctaPrimary")}</a>
+      <a href={localizePath(aboutPath, locale)} class="rounded-2xl border border-[var(--mn-border)] bg-white/20 px-5 py-3 text-sm font-bold text-[var(--mn-text)] hover:bg-white/35">{t(locale, "home.ctaSecondary")}</a>
+    </div>
+  </div>
+</section>
+
+<section class="mt-10">
+  <h2 class="mb-4 text-2xl font-black text-[var(--mn-text)]">{t(locale, "home.featuresTitle")}</h2>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    {features.map((feature) => (
+      <article class="mn-glass rounded-3xl p-5">
+        <div class="mb-4 grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-[var(--mn-pink)] to-[var(--mn-accent)] text-white">✦</div>
+        <h3 class="font-bold text-[var(--mn-text)]">{t(locale, `home.features.${feature}`)}</h3>
+      </article>
+    ))}
+  </div>
+</section>

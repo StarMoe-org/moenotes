@@ -1,0 +1,32 @@
+---
+import type { AppLocale } from "@/config/locales";
+import { t } from "@/i18n";
+
+interface Props {
+  locale: AppLocale;
+  titleKey: string;
+  descriptionKey: string;
+}
+
+const { locale, titleKey, descriptionKey } = Astro.props;
+---
+
+<section class="mn-glass rounded-[2rem] p-8">
+  <div class="grid gap-6 lg:grid-cols-[1fr_18rem]">
+    <div>
+      <h2 class="text-2xl font-black text-[var(--mn-text)]">{t(locale, titleKey)}</h2>
+      <p class="mt-4 leading-8 text-[var(--mn-text-muted)]">{t(locale, descriptionKey)}</p>
+      <p class="mt-4 leading-8 text-[var(--mn-text-muted)]">{t(locale, "page.placeholderDescription")}</p>
+    </div>
+    <div class="rounded-3xl border border-[var(--mn-border)] bg-white/20 p-5">
+      <p class="text-xs font-bold uppercase tracking-[0.22em] text-[var(--mn-accent)]">Foundation</p>
+      <ul class="mt-4 space-y-2 text-sm text-[var(--mn-text-muted)]">
+        <li>✓ i18n route</li>
+        <li>✓ SEO metadata</li>
+        <li>✓ Breadcrumb JSON-LD</li>
+        <li>✓ Scroll memory</li>
+        <li>✓ Route registry</li>
+      </ul>
+    </div>
+  </div>
+</section>

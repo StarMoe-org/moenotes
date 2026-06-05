@@ -1,0 +1,41 @@
+---
+import Hero from "@/components/home/Hero.astro";
+import GroupLanding from "@/components/route/GroupLanding.astro";
+import PageHeader from "@/components/route/PageHeader.astro";
+import AppLayout from "@/layouts/AppLayout.astro";
+import PageLayout from "@/layouts/PageLayout.astro";
+import { DEFAULT_LOCALE, PATH_PREFIX_LOCALE, type AppLocale } from "@/config/locales";
+import { findRouteMatch } from "@/lib/route/registry";
+import { getStaticLocalizedPaths } from "@/lib/route/static-paths";
+import { stripLocaleFromPathname } from "@/i18n/routing";
+
+export function getStaticPaths() {
+  return getStaticLocalizedPaths();
+}
+
+const raw = Astro.params.locale ?? "";
+const segments = raw.split("/").filter(Boolean);
+const maybeLocale = PATH_PREFIX_LOCALE[segments[0] ?? ""];
+const locale: AppLocale = maybeLocale ?? DEFAULT_LOCALE;
+const routePath = maybeLocale ? `/${segments.slice(1).join("/")}` : `/${segments.join("/")}`;
+const pathname = routePath === "/" ? "/" : stripLocaleFromPathname(routePath);
+const match = findRouteMatch(pathname);
+
+if (!match) {
+  return Astro.redirect(locale === DEFAULT_LOCALE ? "/" : `/${segments[0]}`);
+}
+---
+
+<AppLayout locale={locale} pathname={pathname}>
+  {match.item.id === "home" ? (
+    <Hero locale={locale} />
+  ) : (
+    <PageLayout locale={locale} titleKey={match.item.seo.titleKey} descriptionKey={match.item.seo.descriptionKey}>
+      {match.isGroupLanding || (match.item.children?.length ?? 0) > 0 ? (
+        <GroupLanding locale={locale} group={match.item} />
+      ) : (
+        <PageHeader locale={locale} titleKey={match.item.seo.titleKey} descriptionKey={match.item.seo.descriptionKey} />
+      )}
+    </PageLayout>
+  )}
+</AppLayout>

@@ -1,0 +1,13 @@
+:root {
+  --mn-bg: #f7f6ff;
+  --mn-surface: rgba(255, 255, 255, 0.78);
+  --mn-surface-strong: rgba(255, 255, 255, 0.92);
+  --mn-glass: rgba(255, 255, 255, 0.58);
+  --mn-text: #202235;
+  --mn-text-muted: #676b85;
+  --mn-border: rgba(124, 116, 180, 0.18);
+  --mn-accent: #8c7cff;
+  --mn-pink: #ff8fbd;
+  --mn-cyan: #5ee7df;
+  --mn-shadow: 0 24px 80px rgba(87, 78, 160, 0.16);
+}

@@ -1,0 +1,13 @@
+html[data-theme="dark"] {
+  --mn-bg: #11111f;
+  --mn-surface: rgba(26, 26, 45, 0.78);
+  --mn-surface-strong: rgba(30, 30, 52, 0.94);
+  --mn-glass: rgba(29, 29, 51, 0.58);
+  --mn-text: #f4f1ff;
+  --mn-text-muted: #b7b3cf;
+  --mn-border: rgba(203, 195, 255, 0.16);
+  --mn-accent: #a69bff;
+  --mn-pink: #ff9fcc;
+  --mn-cyan: #6ef7ec;
+  --mn-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+}

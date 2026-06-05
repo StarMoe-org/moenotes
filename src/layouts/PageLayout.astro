@@ -1,0 +1,21 @@
+---
+import type { AppLocale } from "@/config/locales";
+import { t } from "@/i18n";
+
+interface Props {
+  locale: AppLocale;
+  titleKey: string;
+  descriptionKey: string;
+}
+
+const { locale, titleKey, descriptionKey } = Astro.props;
+---
+
+<section class="mb-8">
+  <div class="mb-4 inline-flex rounded-full border border-[var(--mn-border)] bg-[var(--mn-surface)] px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.22em] text-[var(--mn-accent)]">
+    Moenotes
+  </div>
+  <h1 class="text-3xl font-black tracking-tight text-[var(--mn-text)] sm:text-5xl">{t(locale, titleKey)}</h1>
+  <p class="mt-4 max-w-3xl text-base leading-8 text-[var(--mn-text-muted)]">{t(locale, descriptionKey)}</p>
+</section>
+<slot />

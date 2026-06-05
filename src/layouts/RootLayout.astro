@@ -1,0 +1,48 @@
+---
+import "@/styles/global.css";
+import { HTML_LANG, type AppLocale } from "@/config/locales";
+import { siteConfig } from "@/config/site";
+import { buildThemeBootstrapScript } from "@/lib/settings/apply-theme";
+import { buildHreflang, buildPageMetadata } from "@/lib/seo/metadata";
+import { breadcrumbJsonLd, websiteJsonLd } from "@/lib/seo/jsonld";
+
+interface Props {
+  locale: AppLocale;
+  pathname: string;
+}
+
+const { locale, pathname } = Astro.props;
+const meta = buildPageMetadata(pathname, locale);
+const themeScript = buildThemeBootstrapScript();
+const website = websiteJsonLd(locale);
+const breadcrumbs = breadcrumbJsonLd(pathname, locale);
+---
+
+<!doctype html>
+<html lang={HTML_LANG[locale]} data-locale={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>{meta.fullTitle}</title>
+    <meta name="description" content={meta.description} />
+    {meta.keywords.length > 0 && <meta name="keywords" content={meta.keywords.join(", ")} />}
+    {!meta.indexable && <meta name="robots" content="noindex,nofollow" />}
+    <link rel="icon" href="/favicon.svg" />
+    <link rel="canonical" href={meta.canonical} />
+    {meta.alternates.map((alt) => <link rel="alternate" hreflang={buildHreflang(alt.locale)} href={alt.href} />)}
+    <meta property="og:site_name" content={siteConfig.name} />
+    <meta property="og:title" content={meta.fullTitle} />
+    <meta property="og:description" content={meta.description} />
+    <meta property="og:url" content={meta.canonical} />
+    <meta property="og:locale" content={meta.ogLocale} />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script is:inline set:html={themeScript}></script>
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(website)}></script>
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(breadcrumbs)}></script>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
