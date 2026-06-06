@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { events, getBand } from "../data/bands";
 import { SectionTitle, FadeIn, Tag } from "../components/UI";
-import { Calendar, MapPin } from "lucide-react";
+import { Calendar, CalendarDays, Film, MapPin, Mic, Music, Users } from "lucide-react";
 import { cn } from "../utils/cn";
 
 const TABS = [
@@ -11,12 +11,12 @@ const TABS = [
   { key: "all", label: "全部" },
 ] as const;
 
-const TYPE_ICON: Record<string, string> = {
-  Live: "🎤",
-  "Fan Meeting": "🤝",
-  新曲: "🎵",
-  PV: "🎬",
-  活动: "🎪",
+const TYPE_ICON = {
+  Live: Mic,
+  "Fan Meeting": Users,
+  新曲: Music,
+  PV: Film,
+  活动: CalendarDays,
 };
 
 export default function Events() {
@@ -43,7 +43,7 @@ export default function Events() {
             <div className="absolute inset-0 halftone opacity-15 text-white" />
             <div className="absolute top-4 right-4">
               <div className="px-3 py-1 bg-[var(--color-amber)] text-[var(--color-ink)] border-2 border-[var(--color-ink)] rounded font-[var(--font-display)] text-xs tracking-wider">
-                ★ FEATURED
+                FEATURED
               </div>
             </div>
             <div className="relative">
@@ -90,6 +90,7 @@ export default function Events() {
       <div className="space-y-3">
         {list.map((e, i) => {
           const b = e.band ? getBand(e.band) : null;
+          const TypeIcon = TYPE_ICON[e.type] || CalendarDays;
           return (
             <FadeIn key={e.id} delay={i * 0.05}>
               <div
@@ -101,7 +102,7 @@ export default function Events() {
                     className="w-14 h-14 sm:w-16 sm:h-16 grid place-items-center border-[2.5px] border-[var(--color-ink)] rounded text-2xl"
                     style={{ background: b ? b.color : "var(--color-cocoa)" }}
                   >
-                    {TYPE_ICON[e.type] || "🎪"}
+                    <TypeIcon size={28} strokeWidth={2.4} className="text-[var(--color-cream)]" />
                   </div>
                 </div>
                 <div className="sm:col-span-7 min-w-0">

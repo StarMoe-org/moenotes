@@ -7,14 +7,14 @@ export default function KeyboardShortcutsHelp({ locale }: { locale: AppLocale })
   const { isOpen, close } = useOverlay("shortcuts");
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/25 p-4 backdrop-blur-sm" onClick={close}>
-      <div className="mn-glass w-full max-w-lg rounded-[2rem] p-6" onClick={(event) => event.stopPropagation()}>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold">{t(locale, "shell.shortcuts")}</h2>
-          <button onClick={close} className="rounded-full px-3 py-1 text-sm text-[var(--mn-text-muted)] hover:bg-white/30">{t(locale, "actions.close")}</button>
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/35 p-4 backdrop-blur-[2px]" onClick={close}>
+      <div className="w-full max-w-lg rounded-md border-[2.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-6 shadow-[var(--mn-shadow-stamp-lg)]" onClick={(event) => event.stopPropagation()}>
+        <div className="mb-4 flex items-center justify-between border-b-2 border-[var(--mn-border)] pb-4">
+          <h2 className="font-[var(--mn-font-display)] text-xl text-[var(--mn-text)]">{t(locale, "shell.shortcuts")}</h2>
+          <button onClick={close} className="rounded border-2 border-[var(--mn-border)] bg-[var(--mn-surface-strong)] px-3 py-1 text-sm font-black text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp-sm)] hover:bg-[var(--mn-cream-deep)]">{t(locale, "actions.close")}</button>
         </div>
         <div className="space-y-2">
-          {shortcuts.map((shortcut) => <div key={shortcut.id} className="flex items-center justify-between rounded-2xl border border-[var(--mn-border)] px-4 py-3 text-sm"><span>{t(locale, shortcut.labelKey)}</span><kbd className="rounded-lg bg-black/10 px-2 py-1 text-xs">{shortcut.combos[0]}</kbd></div>)}
+          {shortcuts.map((shortcut) => <div key={shortcut.id} className="flex items-center justify-between rounded border-2 border-[var(--mn-border)] bg-[var(--mn-surface-strong)] px-4 py-3 text-sm font-bold shadow-[var(--mn-shadow-stamp-sm)]"><span>{t(locale, shortcut.labelKey)}</span><kbd className="rounded border-2 border-[var(--mn-border)] bg-[var(--mn-yellow)] px-2 py-1 text-xs font-black text-[var(--mn-text)]">{shortcut.combos[0]}</kbd></div>)}
         </div>
       </div>
     </div>

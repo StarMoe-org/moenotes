@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Search } from "lucide-react";
 import { characters, bands, getBand } from "../data/bands";
 import { SectionTitle, FadeIn } from "../components/UI";
-import { memberEmoji } from "../utils/emoji";
+import { PlaceholderAvatar, PlaceholderArt, SparkleIcon, StarIcon } from "../components/Placeholders";
 import { cn } from "../utils/cn";
 
 export default function Characters() {
@@ -87,7 +87,7 @@ export default function Characters() {
 
                   {/* Emoji art */}
                   <div className="absolute inset-0 grid place-items-center text-[100px] sm:text-[120px]">
-                    {memberEmoji(c.id)}
+                    <PlaceholderAvatar id={c.id} label={c.nameJa} color={c.color} className="h-[1em] w-[1em] text-[1em]" />
                   </div>
 
                   {/* Position badge */}

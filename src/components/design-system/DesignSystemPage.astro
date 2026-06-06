@@ -1,0 +1,12 @@
+---
+import DesignSystemPage from "./DesignSystemPage";
+import type { AppLocale } from "@/config/locales";
+
+interface Props {
+  locale: AppLocale;
+}
+
+const { locale } = Astro.props;
+---
+
+<DesignSystemPage client:load locale={locale} />

@@ -12,10 +12,12 @@ const { locale, titleKey, descriptionKey } = Astro.props;
 ---
 
 <section class="mb-8">
-  <div class="mb-4 inline-flex rounded-full border border-[var(--mn-border)] bg-[var(--mn-surface)] px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.22em] text-[var(--mn-accent)]">
+  <div class="mn-stamp mb-4 rotate-[-2deg] rounded-sm px-4 py-1.5 text-xs uppercase">
     Moenotes
   </div>
-  <h1 class="text-3xl font-black tracking-tight text-[var(--mn-text)] sm:text-5xl">{t(locale, titleKey)}</h1>
-  <p class="mt-4 max-w-3xl text-base leading-8 text-[var(--mn-text-muted)]">{t(locale, descriptionKey)}</p>
+  <h1 class="max-w-4xl font-[var(--mn-font-display)] text-4xl leading-[1.02] tracking-tight text-[var(--mn-text)] sm:text-6xl">
+    <span class="mn-hand-underline">{t(locale, titleKey)}</span>
+  </h1>
+  <p class="mt-5 max-w-3xl text-base font-medium leading-8 text-[var(--mn-text-muted)]">{t(locale, descriptionKey)}</p>
 </section>
 <slot />

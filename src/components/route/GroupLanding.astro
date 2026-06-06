@@ -14,19 +14,22 @@ const { locale, group } = Astro.props;
 const children = getNavChildren(group);
 ---
 
-<section class="mn-glass rounded-[2rem] p-6 sm:p-8">
-  <p class="mb-6 max-w-3xl leading-8 text-[var(--mn-text-muted)]">{t(locale, "page.groupIntro")}</p>
-  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+<section class="rounded-md border-[2.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-6 shadow-[var(--mn-shadow-stamp-lg)] sm:p-8">
+  <p class="mb-6 max-w-3xl font-medium leading-8 text-[var(--mn-text-muted)]">{t(locale, "page.groupIntro")}</p>
+  <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
     {children.length === 0 ? (
-      <article class="rounded-3xl border border-[var(--mn-border)] bg-white/20 p-6">
-        <h2 class="text-lg font-bold text-[var(--mn-text)]">{t(locale, "page.placeholderTitle")}</h2>
-        <p class="mt-2 text-sm leading-7 text-[var(--mn-text-muted)]">{t(locale, "page.placeholderDescription")}</p>
+      <article class="mn-tape relative rounded-md border-[2.5px] border-[var(--mn-border)] bg-[var(--mn-surface-strong)] p-6 shadow-[var(--mn-shadow-stamp)]">
+        <h2 class="text-lg font-black text-[var(--mn-text)]">{t(locale, "page.placeholderTitle")}</h2>
+        <p class="mt-2 text-sm font-medium leading-7 text-[var(--mn-text-muted)]">{t(locale, "page.placeholderDescription")}</p>
       </article>
-    ) : children.map((item) => (
-      <a href={localizePath(item.path, locale)} class="group rounded-3xl border border-[var(--mn-border)] bg-white/20 p-6 transition hover:-translate-y-1 hover:bg-white/35 hover:shadow-lg">
-        <h2 class="text-lg font-bold text-[var(--mn-text)] group-hover:text-[var(--mn-accent)]">{t(locale, item.labelKey)}</h2>
-        <p class="mt-2 text-sm leading-7 text-[var(--mn-text-muted)]">{t(locale, item.seo.descriptionKey)}</p>
-        <span class="mt-5 inline-flex text-sm font-bold text-[var(--mn-accent)]">{t(locale, "actions.open")} →</span>
+    ) : children.map((item, index) => (
+      <a href={localizePath(item.path, locale)} class:list={["group mn-tape relative rounded-md border-[2.5px] border-[var(--mn-border)] bg-[var(--mn-surface-strong)] p-6 shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:bg-[var(--mn-cream-deep)]", index % 2 === 0 ? "rotate-[-1deg]" : "rotate-[1deg]"]}>
+        <h2 class="text-lg font-black text-[var(--mn-text)] group-hover:text-[var(--mn-accent)]">{t(locale, item.labelKey)}</h2>
+        <p class="mt-2 text-sm font-medium leading-7 text-[var(--mn-text-muted)]">{t(locale, item.seo.descriptionKey)}</p>
+        <span class="mt-5 inline-flex items-center gap-2 rounded border-2 border-[var(--mn-border)] bg-[var(--mn-accent)] px-3 py-1.5 text-sm font-black text-[var(--mn-bg)] shadow-[var(--mn-shadow-stamp-sm)]">
+          {t(locale, "actions.open")}
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></svg>
+        </span>
       </a>
     ))}
   </div>

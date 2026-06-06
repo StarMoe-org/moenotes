@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .astro/
+.miaomiaomiao/
 .env
 .env.*
 !.env.example

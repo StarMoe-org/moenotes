@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Music, Play } from "lucide-react";
 import { getBand, getBandMembers, songs } from "../data/bands";
 import { SectionTitle, FadeIn, Tag } from "../components/UI";
-import { memberEmoji } from "../utils/emoji";
+import { PlaceholderAvatar, PlaceholderArt, SparkleIcon, StarIcon } from "../components/Placeholders";
 import { cn } from "../utils/cn";
 
 export default function BandDetail() {
@@ -70,7 +70,7 @@ export default function BandDetail() {
                   <div className={cn("absolute inset-0 bg-gradient-to-br", m.bgGradient)} />
                   <div className="absolute inset-0 halftone opacity-25 text-white" />
                   <div className="absolute inset-0 grid place-items-center text-[110px] sm:text-[140px]">
-                    {memberEmoji(m.id)}
+                    <PlaceholderAvatar id={m.id} label={m.nameJa} color={m.color} className="h-[1em] w-[1em] text-[1em]" />
                   </div>
                   <div className="absolute top-2 left-2 px-2 py-0.5 bg-[var(--color-cream)] border-2 border-[var(--color-ink)] text-xs font-bold rounded-sm">
                     {m.position}
@@ -137,7 +137,7 @@ export default function BandDetail() {
         >
           <div className="absolute inset-0 stripes-cream opacity-30" />
           <div className="relative">
-            <div className="font-[var(--font-hand)] text-2xl mb-2">✦ {b.name} ✦</div>
+            <div className="font-[var(--font-hand)] text-2xl mb-2">{b.name}</div>
             <p className="font-[var(--font-jp)] text-lg sm:text-xl leading-relaxed">{b.concept}</p>
             <div className="mt-5 font-[var(--font-jp)] text-2xl italic">{b.slogan}</div>
           </div>

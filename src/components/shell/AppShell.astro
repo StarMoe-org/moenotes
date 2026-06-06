@@ -1,6 +1,7 @@
 ---
 import CommandPalette from "@/components/shell/CommandPalette";
 import Header from "@/components/shell/Header.astro";
+import HeaderActions, { HamburgerButtons } from "@/components/shell/HeaderActions";
 import KeyboardShortcutsHelp from "@/components/shell/KeyboardShortcutsHelp";
 import OverlayHost from "@/components/shell/OverlayHost";
 import ScrollRestorer from "@/components/shell/ScrollRestorer";
@@ -16,9 +17,12 @@ interface Props {
 const { locale, pathname } = Astro.props;
 ---
 
-<Header locale={locale} pathname={pathname} />
+<Header locale={locale} pathname={pathname}>
+  <HamburgerButtons slot="hamburger" client:load locale={locale} />
+  <HeaderActions client:load locale={locale} />
+</Header>
 <Sidebar client:load locale={locale} pathname={pathname} />
-<main id="content" class="mx-auto min-h-screen max-w-7xl px-4 pb-16 pt-28 md:pl-72">
+<main id="content" class="mx-auto min-h-screen max-w-7xl px-4 pb-16 pt-36 transition-[padding] duration-300 md:pl-[calc(var(--mn-sidebar-offset,18rem)+1.5rem)] md:pr-6">
   <slot />
 </main>
 <CommandPalette client:load locale={locale} />

@@ -32,14 +32,14 @@ export default function About() {
         <h3 className="font-[var(--font-display)] text-2xl sm:text-3xl mb-4">设计理念 .</h3>
         <div className="grid md:grid-cols-2 gap-4">
           <div className="p-5 bg-[var(--color-amber)] border-[2.5px] border-[var(--color-ink)] rounded-md">
-            <div className="font-[var(--font-hand)] text-2xl text-[var(--color-ink)] mb-1">✦ why retro-zine?</div>
+            <div className="font-[var(--font-hand)] text-2xl text-[var(--color-ink)] mb-1">why retro-zine?</div>
             <p className="text-sm font-[var(--font-jp)] leading-relaxed">
               bangdream 的灵魂是 <span className="font-bold">青春 × 摇滚 × Livehouse</span>。
               我们用 Zine（杂志小册）+ 复古印刷的元素来呈现这种感觉 ── 撕边、胶带、手写体、邮票、暖色调。
             </p>
           </div>
           <div className="p-5 bg-[var(--color-mint)] border-[2.5px] border-[var(--color-ink)] rounded-md">
-            <div className="font-[var(--font-hand)] text-2xl text-[var(--color-ink)] mb-1">✦ sister site</div>
+            <div className="font-[var(--font-hand)] text-2xl text-[var(--color-ink)] mb-1">sister site</div>
             <p className="text-sm font-[var(--font-jp)] leading-relaxed">
               与 pjsk.moe 共享设计语言 ── 但在视觉上做了差异化（pjsk 走粉紫清新, Moenotes 走暖橘摇滚）。
               两个站点是一个团队做的, 一个 DNA 两种风格。
@@ -88,7 +88,7 @@ export default function About() {
 
       <FadeIn>
         <div className="mt-12 p-6 sm:p-8 bg-[var(--color-cream-deep)] border-2 border-dashed border-[var(--color-ink)] rounded-md text-center">
-          <div className="font-[var(--font-hand)] text-2xl text-[var(--color-tomato)]">📝 免责声明</div>
+          <div className="font-[var(--font-hand)] text-2xl text-[var(--color-tomato)]">免责声明</div>
           <p className="text-sm font-[var(--font-jp)] text-[var(--color-ink-soft)] mt-3 leading-relaxed">
             本网站为粉丝自建资料站, 与 Bushiroad / Craft Egg / Ishimori Production / 武士道 等官方公司无任何关联。<br />
             站内所有数据来源于公开资料整理, 如有错误欢迎指正。所有角色 / 乐队 / 歌曲的著作权归其各自权利人所有。

@@ -1,13 +1,26 @@
 :root {
-  --mn-bg: #f7f6ff;
-  --mn-surface: rgba(255, 255, 255, 0.78);
-  --mn-surface-strong: rgba(255, 255, 255, 0.92);
-  --mn-glass: rgba(255, 255, 255, 0.58);
-  --mn-text: #202235;
-  --mn-text-muted: #676b85;
-  --mn-border: rgba(124, 116, 180, 0.18);
-  --mn-accent: #8c7cff;
-  --mn-pink: #ff8fbd;
-  --mn-cyan: #5ee7df;
-  --mn-shadow: 0 24px 80px rgba(87, 78, 160, 0.16);
+  --mn-bg: #fbf7ef;
+  --mn-surface: rgba(248, 241, 224, 0.9);
+  --mn-surface-strong: rgba(255, 250, 239, 0.96);
+  --mn-glass: rgba(248, 241, 224, 0.88);
+  --mn-text: #1a1410;
+  --mn-text-muted: #6b4423;
+  --mn-border: #1a1410;
+  --mn-accent: #e84d2e;
+  --mn-pink: #e89ba8;
+  --mn-cyan: #4a8fa8;
+  --mn-amber: #f4a93c;
+  --mn-yellow: #f4c430;
+  --mn-mint: #7fb069;
+  --mn-cream-deep: #f4ecdb;
+  --mn-paper: #f8f1e0;
+  --mn-ink-soft: #3a2f26;
+  --mn-shadow: 0 2px 4px rgba(26, 20, 16, 0.1), 0 12px 28px -10px rgba(26, 20, 16, 0.25);
+  --mn-shadow-stamp: 3px 3px 0 0 var(--mn-border);
+  --mn-shadow-stamp-sm: 2px 2px 0 0 var(--mn-border);
+  --mn-shadow-stamp-lg: 6px 6px 0 0 var(--mn-border);
+  --mn-font-display: "Archivo Black", "Noto Sans JP", sans-serif;
+  --mn-font-body: "Zen Maru Gothic", "Noto Sans JP", ui-sans-serif, system-ui, sans-serif;
+  --mn-font-hand: "Caveat", "Patrick Hand", cursive;
+  --mn-font-note: "Patrick Hand", "Zen Kurenaido", cursive;
 }

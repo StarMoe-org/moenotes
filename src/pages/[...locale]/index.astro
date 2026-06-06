@@ -1,4 +1,5 @@
 ---
+import DesignSystemPage from "@/components/design-system/DesignSystemPage.astro";
 import Hero from "@/components/home/Hero.astro";
 import GroupLanding from "@/components/route/GroupLanding.astro";
 import PageHeader from "@/components/route/PageHeader.astro";
@@ -29,6 +30,8 @@ if (!match) {
 <AppLayout locale={locale} pathname={pathname}>
   {match.item.id === "home" ? (
     <Hero locale={locale} />
+  ) : match.item.id === "design-system" ? (
+    <DesignSystemPage locale={locale} />
   ) : (
     <PageLayout locale={locale} titleKey={match.item.seo.titleKey} descriptionKey={match.item.seo.descriptionKey}>
       {match.isGroupLanding || (match.item.children?.length ?? 0) > 0 ? (

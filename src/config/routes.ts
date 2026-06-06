@@ -164,6 +164,20 @@ export const routeRegistry = [
         searchable: true,
         keywords: ["toolbox", "utilities"],
       },
+      {
+        id: "design-system",
+        path: "/tools/design-system",
+        labelKey: "nav.items.designSystem",
+        seo: {
+          titleKey: "seo.designSystem.title",
+          descriptionKey: "seo.designSystem.description",
+          sitemap: { priority: 0.3, changefreq: "monthly" },
+          indexable: false,
+        },
+        nav: false,
+        searchable: false,
+        keywords: ["design system", "style guide", "components"],
+      },
     ],
   },
   {

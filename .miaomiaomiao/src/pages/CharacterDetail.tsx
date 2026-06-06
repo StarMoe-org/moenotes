@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Cake, Ruler, Star, Music, Quote, Mic2 } from "lucide-react";
 import { getCharacter, getBand, getBandMembers } from "../data/bands";
 import { SectionTitle, Tag, FadeIn } from "../components/UI";
-import { memberEmoji } from "../utils/emoji";
+import { PlaceholderAvatar, PlaceholderArt, SparkleIcon, StarIcon } from "../components/Placeholders";
 import { cn } from "../utils/cn";
 
 export default function CharacterDetail() {
@@ -44,7 +44,7 @@ export default function CharacterDetail() {
                 <div className={cn("absolute inset-0 rounded-md border-[3px] border-[var(--color-cream)] bg-gradient-to-br shadow-[0_20px_60px_-10px_rgba(0,0,0,.5)]", c.bgGradient)}>
                   <div className="absolute inset-0 halftone opacity-30 text-white" />
                   <div className="absolute inset-0 grid place-items-center text-[180px] sm:text-[220px]">
-                    {memberEmoji(c.id)}
+                    <PlaceholderAvatar id={c.id} label={c.nameJa} color={c.color} className="h-[1em] w-[1em] text-[1em]" />
                   </div>
                   <div className="absolute top-3 left-3 px-3 py-1 bg-[var(--color-cream)] text-[var(--color-ink)] border-2 border-[var(--color-ink)] rounded font-[var(--font-display)] tracking-wider text-sm">
                     {c.position}
@@ -52,7 +52,7 @@ export default function CharacterDetail() {
                 </div>
                 {/* Stickers around */}
                 <div className="absolute -top-3 -right-3 w-20 h-20 bg-[var(--color-amber)] border-[2.5px] border-[var(--color-ink)] rounded-full grid place-items-center font-[var(--font-display)] text-[var(--color-ink)] text-xs text-center leading-tight shadow-[var(--shadow-stamp-sm)] rotate-12">
-                  5★<br />MAX
+                  Rarity 5<br />MAX
                 </div>
               </div>
             </motion.div>
@@ -155,7 +155,7 @@ export default function CharacterDetail() {
                   <div className={cn("absolute inset-0 bg-gradient-to-br", m.bgGradient)} />
                   <div className="absolute inset-0 halftone opacity-20 text-white" />
                   <div className="absolute inset-0 grid place-items-center text-[100px]">
-                    {memberEmoji(m.id)}
+                    <PlaceholderAvatar id={m.id} label={m.nameJa} color={m.color} className="h-[1em] w-[1em] text-[1em]" />
                   </div>
                   <div className="absolute top-2 left-2 px-2 py-0.5 bg-[var(--color-cream)] border-2 border-[var(--color-ink)] text-xs font-bold rounded-sm">
                     {m.position}

@@ -119,7 +119,7 @@ export const characters: Character[] = [
   { id: "uika", band: "mujica", nameJa: "三角 初華", nameRomaji: "Misumi Uika", nameCn: "三角 初华", position: "Gt.&Vo. / Doloris", cv: "佐々木 李子", color: "#2A1B3D", bgGradient: "from-[#2A1B3D] to-[#6B2B5E]", quote: "这场戏,才刚刚开始。", birthday: "01.11", height: "163cm", tags: ["主唱", "戏剧", "神秘"] },
   { id: "mutsumi", band: "mujica", nameJa: "若葉 睦", nameRomaji: "Wakaba Mutsumi", nameCn: "若叶 睦", position: "Gt. / Mortis", cv: "渡瀬 結月", color: "#6B4423", bgGradient: "from-[#6B4423] to-[#A8431E]", quote: "……", birthday: "08.03", height: "159cm", tags: ["沉默", "观察", "吉他"] },
   { id: "umiri", band: "mujica", nameJa: "八幡 海鈴", nameRomaji: "Yahata Umiri", nameCn: "八幡 海铃", position: "Ba. / Timoris", cv: "岡田 夢以", color: "#4A8FA8", bgGradient: "from-[#4A8FA8] to-[#2A1B3D]", quote: "希望我们都能笑着走下舞台。", birthday: "03.30", height: "162cm", tags: ["贝斯", "温柔", "面具"] },
-  { id: "nyamu", band: "mujica", nameJa: "祐天寺 にゃむ", nameRomaji: "Yūtenji Nyamu", nameCn: "祐天寺 喵姆", position: "Dr. / Amoris", cv: "米澤 茜", color: "#E89BA8", bgGradient: "from-[#E89BA8] to-[#D63A8C]", quote: "一起闪耀吧✨", birthday: "12.25", height: "157cm", tags: ["元气", "鼓手", "SNS"] },
+  { id: "nyamu", band: "mujica", nameJa: "祐天寺 にゃむ", nameRomaji: "Yūtenji Nyamu", nameCn: "祐天寺 喵姆", position: "Dr. / Amoris", cv: "米澤 茜", color: "#E89BA8", bgGradient: "from-[#E89BA8] to-[#D63A8C]", quote: "一起闪耀吧", birthday: "12.25", height: "157cm", tags: ["元气", "鼓手", "SNS"] },
   { id: "sakiko", band: "mujica", nameJa: "豊川 祥子", nameRomaji: "Togawa Sakiko", nameCn: "丰川 祥子", position: "Key. / Oblivionis", cv: "高尾 奏音", color: "#1A1410", bgGradient: "from-[#1A1410] to-[#6B4423]", quote: "为了实现我们的故事。", birthday: "07.07", height: "161cm", tags: ["键盘", "完美主义", "大小姐"] },
 
   // MewType
@@ -141,7 +141,7 @@ export const characters: Character[] = [
   { id: "miku", band: "ikka", nameJa: "馬橋 心玖", nameRomaji: "Mahashi Miku", nameCn: "马桥 心玖", position: "Gt.&Vo.", cv: "涼泉 桜花", color: "#F4A93C", bgGradient: "from-[#F4A93C] to-[#B85042]", quote: "姐妹们,冲啊！", birthday: "07.23", height: "157cm", tags: ["合唱", "家庭感", "吵闹"] },
   { id: "yomogi", band: "ikka", nameJa: "矢倉 蓬咲", nameRomaji: "Yakura Yomogi", nameCn: "矢仓 蓬咲", position: "Ba.", cv: "花宮 初奈", color: "#7FB069", bgGradient: "from-[#7FB069] to-[#B85042]", quote: "我是这个家最靠谱的！…大概。", birthday: "05.12", height: "163cm", tags: ["贝斯", "吐槽", "吐槽役"] },
   { id: "chieri", band: "ikka", nameJa: "梅里 ちえり", nameRomaji: "Umezato Chieri", nameCn: "梅里 千绘里", position: "Dr.", cv: "菱川 花菜", color: "#6B4423", bgGradient: "from-[#6B4423] to-[#1A1410]", quote: "鼓点会说话,听。", birthday: "11.02", height: "158cm", tags: ["鼓手", "沉默", "型格"] },
-  { id: "shizuku", band: "ikka", nameJa: "四宮 寧月", nameRomaji: "Shinomiya Shizuku", nameCn: "四宫 宁月", position: "Key.", cv: "遠野 ひかる", color: "#E89BA8", bgGradient: "from-[#E89BA8] to-[#D63A8C]", quote: "我为这个家写一首安眠曲吧♪", birthday: "08.18", height: "155cm", tags: ["键盘", "少女", "梦幻"] },
+  { id: "shizuku", band: "ikka", nameJa: "四宮 寧月", nameRomaji: "Shinomiya Shizuku", nameCn: "四宫 宁月", position: "Key.", cv: "遠野 ひかる", color: "#E89BA8", bgGradient: "from-[#E89BA8] to-[#D63A8C]", quote: "我为这个家写一首安眠曲吧", birthday: "08.18", height: "155cm", tags: ["键盘", "少女", "梦幻"] },
 ];
 
 export const getBand = (key: BandKey) => bands.find((b) => b.key === key)!;
@@ -161,7 +161,7 @@ export interface NewsItem {
 
 export const news: NewsItem[] = [
   { id: "n1", date: "2025.06.18", category: "活动", band: "mujica", title: "「Ave Mujica 5th Live」追加公演决定", excerpt: "东京 · 日本武道馆 · 7/19 售票开启。", tag: "Live" },
-  { id: "n2", date: "2025.06.15", category: "更新", title: "wiki v0.3 上线：新增「卡牌图鉴」栏目", excerpt: "25 名角色初始 5★ 卡牌数据已整理完成,持续更新中。", tag: "数据" },
+  { id: "n2", date: "2025.06.15", category: "更新", title: "wiki v0.3 上线：新增「卡牌图鉴」栏目", excerpt: "25 名角色初始 Rarity 5 卡牌数据已整理完成,持续更新中。", tag: "数据" },
   { id: "n3", date: "2025.06.12", category: "公告", band: "mygo", title: "MyGO!!!!! 新单曲《迷路の子羊》PV 公开", excerpt: "高松灯个人单曲,6/25 数字 / CD 同步发行。", tag: "音乐" },
   { id: "n4", date: "2025.06.08", category: "Live", band: "ikka", title: "「一家Dumb Rock! 初ワンマン」圆满结束", excerpt: "感谢到场 2,500 名粉丝,next is coming soon。", tag: "Rep" },
   { id: "n5", date: "2025.06.01", category: "活动", band: "millsage", title: "millsage 全国巡回粉丝见面会开启", excerpt: "大阪 → 名古屋 → 福冈 → 札幌,详情见站内。", tag: "Fan" },
@@ -202,25 +202,25 @@ export interface CardItem {
   skill: string;
   releaseDate: string;
   gacha: string;
-  art: string; // emoji 风格
+  visualKey: string; // placeholder visual key
 }
 
 export const cards: CardItem[] = [
-  { id: "c1", characterId: "tomori", name: "迷茫者的共鸣", rarity: 5, attribute: "Dark", skill: "PERFECT 判定 +120% / 乐团 16% 强化", releaseDate: "2023.06.15", gacha: "永久卡池", art: "🌑" },
-  { id: "c2", characterId: "anon", name: "想要朋友的真心", rarity: 4, attribute: "Happy", skill: "GREAT 判定 +90% / 体力 8% 恢复", releaseDate: "2023.06.15", gacha: "永久卡池", art: "💗" },
-  { id: "c3", characterId: "rana", name: "自由即兴", rarity: 4, attribute: "Cool", skill: "音符 8% UP / 技能发动条件 10% 降低", releaseDate: "2023.07.10", gacha: "限定卡池", art: "🎸" },
-  { id: "c4", characterId: "soyo", name: "温柔的阴谋", rarity: 4, attribute: "Pure", skill: "乐团得分 7.5% UP / 体力 6% 恢复", releaseDate: "2023.08.20", gacha: "永久卡池", art: "🍀" },
-  { id: "c5", characterId: "taki", name: "不退让的鼓手", rarity: 5, attribute: "Power", skill: "PERFECT 判定 +150% / 连击 12% 强化", releaseDate: "2023.09.05", gacha: "限定卡池", art: "🔥" },
-  { id: "c6", characterId: "uika", name: "Doloris 的咏叹", rarity: 5, attribute: "Dark", skill: "PERFECT 判定 +140% / 乐团 18% 强化", releaseDate: "2023.12.24", gacha: "永久卡池", art: "🎭" },
-  { id: "c7", characterId: "sakiko", name: "Oblivionis 的夜曲", rarity: 5, attribute: "Cool", skill: "PERFECT 判定 +130% / 技能发动条件 15% 降低", releaseDate: "2024.01.15", gacha: "限定卡池", art: "🎹" },
-  { id: "c8", characterId: "nyamu", name: "喵姆的闪耀", rarity: 4, attribute: "Happy", skill: "GREAT 判定 +95% / 乐团 9% 强化", releaseDate: "2023.12.24", gacha: "永久卡池", art: "✨" },
-  { id: "c9", characterId: "arale", name: "无限大的声音", rarity: 5, attribute: "Power", skill: "PERFECT 判定 +135% / 体力 10% 恢复", releaseDate: "2024.06.12", gacha: "永久卡池", art: "🌈" },
-  { id: "c10", characterId: "yuno", name: "DJ 时间", rarity: 4, attribute: "Cool", skill: "音符 9% UP / 技能发动条件 8% 降低", releaseDate: "2024.06.12", gacha: "永久卡池", art: "🎧" },
-  { id: "c11", characterId: "hotaru", name: "幸福的音色", rarity: 5, attribute: "Pure", skill: "PERFECT 判定 +125% / 体力 12% 恢复", releaseDate: "2024.06.12", gacha: "永久卡池", art: "🌟" },
-  { id: "c12", characterId: "mahoro", name: "节奏与低语", rarity: 4, attribute: "Cool", skill: "乐团得分 8.5% UP / 连击 7% 强化", releaseDate: "2024.07.15", gacha: "永久卡池", art: "🎵" },
-  { id: "c13", characterId: "raika", name: "家庭摇滚！", rarity: 5, attribute: "Power", skill: "PERFECT 判定 +130% / 乐团 15% 强化", releaseDate: "2024.06.12", gacha: "永久卡池", art: "🎤" },
-  { id: "c14", characterId: "chieri", name: "鼓点会说话", rarity: 4, attribute: "Dark", skill: "连击 11% UP / 音符 7% 强化", releaseDate: "2024.07.20", gacha: "限定卡池", art: "🥁" },
-  { id: "c15", characterId: "shizuku", name: "宁月的小夜曲", rarity: 3, attribute: "Pure", skill: "体力 5% 恢复 / 音符 4% UP", releaseDate: "2024.06.12", gacha: "永久卡池", art: "🌙" },
+  { id: "c1", characterId: "tomori", name: "迷茫者的共鸣", rarity: 5, attribute: "Dark", skill: "PERFECT 判定 +120% / 乐团 16% 强化", releaseDate: "2023.06.15", gacha: "永久卡池", visualKey: "dark" },
+  { id: "c2", characterId: "anon", name: "想要朋友的真心", rarity: 4, attribute: "Happy", skill: "GREAT 判定 +90% / 体力 8% 恢复", releaseDate: "2023.06.15", gacha: "永久卡池", visualKey: "heart" },
+  { id: "c3", characterId: "rana", name: "自由即兴", rarity: 4, attribute: "Cool", skill: "音符 8% UP / 技能发动条件 10% 降低", releaseDate: "2023.07.10", gacha: "限定卡池", visualKey: "guitar" },
+  { id: "c4", characterId: "soyo", name: "温柔的阴谋", rarity: 4, attribute: "Pure", skill: "乐团得分 7.5% UP / 体力 6% 恢复", releaseDate: "2023.08.20", gacha: "永久卡池", visualKey: "leaf" },
+  { id: "c5", characterId: "taki", name: "不退让的鼓手", rarity: 5, attribute: "Power", skill: "PERFECT 判定 +150% / 连击 12% 强化", releaseDate: "2023.09.05", gacha: "限定卡池", visualKey: "flame" },
+  { id: "c6", characterId: "uika", name: "Doloris 的咏叹", rarity: 5, attribute: "Dark", skill: "PERFECT 判定 +140% / 乐团 18% 强化", releaseDate: "2023.12.24", gacha: "永久卡池", visualKey: "mask" },
+  { id: "c7", characterId: "sakiko", name: "Oblivionis 的夜曲", rarity: 5, attribute: "Cool", skill: "PERFECT 判定 +130% / 技能发动条件 15% 降低", releaseDate: "2024.01.15", gacha: "限定卡池", visualKey: "keys" },
+  { id: "c8", characterId: "nyamu", name: "喵姆的闪耀", rarity: 4, attribute: "Happy", skill: "GREAT 判定 +95% / 乐团 9% 强化", releaseDate: "2023.12.24", gacha: "永久卡池", visualKey: "spark" },
+  { id: "c9", characterId: "arale", name: "无限大的声音", rarity: 5, attribute: "Power", skill: "PERFECT 判定 +135% / 体力 10% 恢复", releaseDate: "2024.06.12", gacha: "永久卡池", visualKey: "rainbow" },
+  { id: "c10", characterId: "yuno", name: "DJ 时间", rarity: 4, attribute: "Cool", skill: "音符 9% UP / 技能发动条件 8% 降低", releaseDate: "2024.06.12", gacha: "永久卡池", visualKey: "headphone" },
+  { id: "c11", characterId: "hotaru", name: "幸福的音色", rarity: 5, attribute: "Pure", skill: "PERFECT 判定 +125% / 体力 12% 恢复", releaseDate: "2024.06.12", gacha: "永久卡池", visualKey: "bright" },
+  { id: "c12", characterId: "mahoro", name: "节奏与低语", rarity: 4, attribute: "Cool", skill: "乐团得分 8.5% UP / 连击 7% 强化", releaseDate: "2024.07.15", gacha: "永久卡池", visualKey: "note" },
+  { id: "c13", characterId: "raika", name: "家庭摇滚！", rarity: 5, attribute: "Power", skill: "PERFECT 判定 +130% / 乐团 15% 强化", releaseDate: "2024.06.12", gacha: "永久卡池", visualKey: "mic" },
+  { id: "c14", characterId: "chieri", name: "鼓点会说话", rarity: 4, attribute: "Dark", skill: "连击 11% UP / 音符 7% 强化", releaseDate: "2024.07.20", gacha: "限定卡池", visualKey: "drum" },
+  { id: "c15", characterId: "shizuku", name: "宁月的小夜曲", rarity: 3, attribute: "Pure", skill: "体力 5% 恢复 / 音符 4% UP", releaseDate: "2024.06.12", gacha: "永久卡池", visualKey: "moon" },
 ];
 
 export interface EventItem {

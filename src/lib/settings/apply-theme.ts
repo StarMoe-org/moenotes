@@ -34,7 +34,11 @@ export function buildThemeBootstrapScript(): string {
     document.documentElement.dataset.theme = resolved;
     document.documentElement.dataset.themePreference = colorScheme;
     document.documentElement.dataset.animationLevel = animationLevel;
+    var sidebarOpen = sessionStorage.getItem('moenotes:sidebar-open');
+    var effectiveSidebarOpen = sidebarOpen === null ? true : sidebarOpen === 'true';
     document.documentElement.dataset.sidebarMode = sidebarMode;
+    document.documentElement.dataset.sidebar = effectiveSidebarOpen ? 'open' : 'closed';
+    document.documentElement.style.setProperty('--mn-sidebar-offset', effectiveSidebarOpen ? '18rem' : '2rem');
     document.documentElement.style.colorScheme = resolved;
   } catch(e) {}
 })();`;

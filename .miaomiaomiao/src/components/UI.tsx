@@ -1,8 +1,8 @@
 // 可复用的小组件 — 通用 UI 元件
-import { Link } from "react-router-dom";
 import { cn } from "../utils/cn";
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
+import { SparkleIcon, StarIcon } from "./Placeholders";
 
 export function Stamp({ children, color = "var(--color-tomato)", className }: { children: ReactNode; color?: string; className?: string }) {
   return (
@@ -34,7 +34,7 @@ export function SectionTitle({
       <div>
         {eyebrow && (
           <div className="font-[var(--font-hand)] text-[var(--color-tomato)] text-lg sm:text-xl -mb-1">
-            ✦ {eyebrow}
+            <SparkleIcon className="w-4 h-4" /> {eyebrow}
           </div>
         )}
         <h2 className="font-[var(--font-display)] text-3xl sm:text-5xl tracking-tight text-[var(--color-ink)] leading-[1.05]">
@@ -79,7 +79,7 @@ export function StickerCard({
       {children}
     </div>
   );
-  if (href) return <Link to={href} className="block hover:scale-[1.02] transition-transform">{inner}</Link>;
+  if (href) return <a href={href} className="block hover:scale-[1.02] transition-transform">{inner}</a>;
   if (onClick) return <button onClick={onClick} className="block w-full text-left hover:scale-[1.02] transition-transform">{inner}</button>;
   return inner;
 }
@@ -134,7 +134,7 @@ export function Divider() {
   return (
     <div className="flex items-center gap-3 my-8">
       <div className="flex-1 h-[2px] bg-[var(--color-ink)]" />
-      <div className="font-[var(--font-display)] text-[var(--color-ink)]">★</div>
+      <StarIcon className="w-4 h-4 text-[var(--color-ink)]" />
       <div className="flex-1 h-[2px] bg-[var(--color-ink)]" />
     </div>
   );

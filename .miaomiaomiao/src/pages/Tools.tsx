@@ -4,6 +4,7 @@ import { characters, cards } from "../data/bands";
 import { SectionTitle, attributeColor, rarityBg } from "../components/UI";
 import { Dices, RefreshCw, Calculator } from "lucide-react";
 import { cn } from "../utils/cn";
+import { PlaceholderArt, StarIcon, SparkleIcon } from "../components/Placeholders";
 
 export default function Tools() {
   return (
@@ -113,12 +114,12 @@ function GachaSim() {
                   className="w-10 h-10 grid place-items-center text-lg border-2 border-[var(--color-ink)] rounded shrink-0"
                   style={{ background: rarityBg(c.rarity) }}
                 >
-                  {c.art}
+                  <PlaceholderArt id={c.visualKey || c.id} color="var(--color-cream)" className="h-full w-full" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-[var(--font-jp)] font-bold text-sm truncate">{c.name}</div>
                   <div className="text-[10px] text-[var(--color-ink-soft)] truncate">
-                    {c.rarity}★ · {ch.nameJa} · {c.attribute}
+                    Rarity {c.rarity} · {ch.nameJa} · {c.attribute}
                   </div>
                 </div>
                 <span
@@ -133,7 +134,7 @@ function GachaSim() {
         </AnimatePresence>
         {history.length === 0 && (
           <div className="text-center py-8 text-[var(--color-ink-soft)] font-[var(--font-hand)] text-lg">
-            ✦ 点击按钮开始抽卡 ✦
+            点击按钮开始抽卡
           </div>
         )}
       </div>
@@ -172,7 +173,7 @@ function RosterCounter() {
 
       <div className="grid grid-cols-3 gap-2 mb-4 text-center">
         <Stat k={owned.size} v={`/ ${total} 张`} c="var(--color-tomato)" />
-        <Stat k={count5} v={`/ ${total5} ★5`} c="var(--color-amber)" />
+        <Stat k={count5} v={`/ ${total5} Rarity 5`} c="var(--color-amber)" />
         <Stat k={`${Math.round((owned.size / total) * 100)}%`} v="完成度" c="var(--color-forest)" />
       </div>
 
@@ -197,10 +198,10 @@ function RosterCounter() {
               )}
               style={{ background: rarityBg(c.rarity) }}
             >
-              <div className="absolute inset-0 grid place-items-center text-3xl">{c.art}</div>
+              <div className="absolute inset-0 grid place-items-center text-3xl"><PlaceholderArt id={c.visualKey || c.id} color="var(--color-cream)" className="h-full w-full" /></div>
               <div className="absolute top-0.5 left-0.5 flex">
                 {Array.from({ length: c.rarity }).map((_, j) => (
-                  <span key={j} className="text-[8px] text-[var(--color-cream)]">★</span>
+                  <StarIcon key={j} className="h-2 w-2 text-[var(--color-cream)]" />
                 ))}
               </div>
               {isOwned && (

@@ -1,7 +1,7 @@
 import type { AppLocale } from "@/config/locales";
 
 export type RouteGroupId = "database" | "activity" | "story" | "tools" | "community";
-export type RouteIcon = "home" | "database" | "music" | "users" | "calendar" | "newspaper" | "book" | "wrench" | "sparkles" | "info";
+export type RouteIcon = "home" | "database" | "music" | "users" | "calendar" | "newspaper" | "book" | "wrench" | "sparkles" | "info" | "palette";
 
 export interface RouteSeoConfig {
   titleKey: string;

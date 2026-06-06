@@ -9,23 +9,27 @@ interface Props {
 }
 
 const { locale, titleKey, descriptionKey } = Astro.props;
+const foundations = ["i18n route", "SEO metadata", "Breadcrumb JSON-LD", "Scroll memory", "Route registry"];
 ---
 
-<section class="mn-glass rounded-[2rem] p-8">
+<section class="relative rounded-md border-[2.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-6 shadow-[var(--mn-shadow-stamp-lg)] sm:p-8">
+  <div class="mn-halftone absolute right-5 top-5 h-20 w-20 text-[var(--mn-accent)] opacity-20"></div>
   <div class="grid gap-6 lg:grid-cols-[1fr_18rem]">
-    <div>
-      <h2 class="text-2xl font-black text-[var(--mn-text)]">{t(locale, titleKey)}</h2>
-      <p class="mt-4 leading-8 text-[var(--mn-text-muted)]">{t(locale, descriptionKey)}</p>
-      <p class="mt-4 leading-8 text-[var(--mn-text-muted)]">{t(locale, "page.placeholderDescription")}</p>
+    <div class="relative">
+      <p class="mb-2 font-[var(--mn-font-hand)] text-xl font-bold text-[var(--mn-accent)]">Page memo</p>
+      <h2 class="font-[var(--mn-font-display)] text-2xl tracking-tight text-[var(--mn-text)] sm:text-4xl">{t(locale, titleKey)}</h2>
+      <p class="mt-4 font-medium leading-8 text-[var(--mn-text-muted)]">{t(locale, descriptionKey)}</p>
+      <p class="mt-4 font-medium leading-8 text-[var(--mn-text-muted)]">{t(locale, "page.placeholderDescription")}</p>
     </div>
-    <div class="rounded-3xl border border-[var(--mn-border)] bg-white/20 p-5">
-      <p class="text-xs font-bold uppercase tracking-[0.22em] text-[var(--mn-accent)]">Foundation</p>
-      <ul class="mt-4 space-y-2 text-sm text-[var(--mn-text-muted)]">
-        <li>✓ i18n route</li>
-        <li>✓ SEO metadata</li>
-        <li>✓ Breadcrumb JSON-LD</li>
-        <li>✓ Scroll memory</li>
-        <li>✓ Route registry</li>
+    <div class="mn-tape relative rounded-md border-[2.5px] border-[var(--mn-border)] bg-[var(--mn-surface-strong)] p-5 shadow-[var(--mn-shadow-stamp)]">
+      <p class="font-[var(--mn-font-display)] text-xs uppercase tracking-[0.22em] text-[var(--mn-accent)]">Foundation</p>
+      <ul class="mt-4 space-y-2 text-sm font-bold text-[var(--mn-text-muted)]">
+        {foundations.map((item) => (
+          <li class="flex items-center gap-2">
+            <svg class="h-4 w-4 shrink-0 text-[var(--mn-accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10" /></svg>
+            {item}
+          </li>
+        ))}
       </ul>
     </div>
   </div>

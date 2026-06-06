@@ -3,7 +3,7 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { bands, getCharacter, news, events, getBand } from "../data/bands";
 import { Stamp, SectionTitle, Tag, FadeIn } from "../components/UI";
-import { memberEmoji } from "../utils/emoji";
+import { PlaceholderAvatar, PlaceholderArt, SparkleIcon, StarIcon } from "../components/Placeholders";
 import {
   ArrowRight, Music, Volume2, Sparkles, Play, Heart, Star,
   Calendar, Mic2, Guitar, ChevronRight, Zap, Headphones,
@@ -216,7 +216,7 @@ export default function Home() {
                   {/* Big character art via emoji + abstract */}
                   <div className="absolute inset-0 grid place-items-center">
                     <div className="text-[110px] sm:text-[140px] opacity-90 filter-print">
-                      {memberEmoji(m.id)}
+                      <PlaceholderAvatar id={m.id} label={m.nameJa} color={m.color} className="h-[1em] w-[1em] text-[1em]" />
                     </div>
                   </div>
 
@@ -224,7 +224,7 @@ export default function Home() {
                     {m.position}
                   </div>
                   <div className="absolute top-2 right-2 px-2 py-0.5 bg-[var(--color-tomato)] text-[var(--color-cream)] border-2 border-[var(--color-ink)] text-xs font-bold rounded-sm">
-                    5★
+                    Rarity 5
                   </div>
 
                   <div className="absolute bottom-0 left-0 right-0 p-2.5 bg-[var(--color-cream)] border-t-[2.5px] border-[var(--color-ink)]">
@@ -252,7 +252,7 @@ export default function Home() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {[
               { to: "/characters", icon: Mic2, title: "角色图鉴", desc: "25 名角色完整档案 ── 担当、声优、属性、语录、关系图。", c: "var(--color-tomato)" },
-              { to: "/cards", icon: Music, title: "卡牌图鉴", desc: "按稀有度 / 属性 / 技能筛选。5★ 卡牌详细数值一网打尽。", c: "var(--color-amber)" },
+              { to: "/cards", icon: Music, title: "卡牌图鉴", desc: "按稀有度 / 属性 / 技能筛选。Rarity 5 卡牌详细数值一网打尽。", c: "var(--color-amber)" },
               { to: "/bands", icon: Guitar, title: "乐队专题", desc: "5 支乐队的概念、成员关系、代表曲与 Live 历史。", c: "var(--color-rose)" },
               { to: "/songs", icon: Headphones, title: "歌曲库", desc: "原创、翻唱、印象曲、角色曲 ── 全部整理成册。", c: "var(--color-mint)" },
               { to: "/events", icon: Calendar, title: "活动日程", desc: "Live、Fan Meeting、新曲发售 ── 不错过每一场。", c: "var(--color-yellow)" },
@@ -351,7 +351,7 @@ export default function Home() {
                       </div>
                       <h4 className="font-[var(--font-jp)] font-bold text-[15px] leading-snug">{e.title}</h4>
                       {e.location && (
-                        <div className="text-xs text-[var(--color-ink-soft)] mt-1.5">📍 {e.location}</div>
+                        <div className="text-xs text-[var(--color-ink-soft)] mt-1.5">{e.location}</div>
                       )}
                       {band && (
                         <div className="mt-2">
@@ -378,7 +378,7 @@ export default function Home() {
         <div className="absolute inset-0 stripes-cream opacity-40" />
         <div className="max-w-5xl mx-auto px-6 text-center relative">
           <div className="font-[var(--font-hand)] text-2xl sm:text-3xl text-[var(--color-ink)] mb-2">
-            ✦ a quote from MyGO!!!!! ✦
+            a quote from MyGO!!!!!
           </div>
           <blockquote className="font-[var(--font-display)] text-3xl sm:text-5xl lg:text-6xl leading-[1.1] tracking-tight">
             「迷子でもいい、<br />前へ進め。」

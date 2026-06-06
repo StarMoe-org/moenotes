@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import type { AppLocale } from "@/config/locales";
 import { localizePath } from "@/i18n/routing";
-import { closeOverlay, toggleOverlay } from "@/lib/overlay/overlay-store";
+import { closeOverlay, openOverlay, toggleOverlay } from "@/lib/overlay/overlay-store";
 import { registerShortcutManager } from "@/lib/shortcuts/manager";
 
 interface OverlayHostProps {
@@ -19,6 +19,7 @@ export default function OverlayHost({ locale }: OverlayHostProps) {
         toggleOverlay("mobile-sidebar");
       }
     };
+    const openMobileSidebar = () => openOverlay("mobile-sidebar");
     const toggleShortcuts = () => toggleOverlay("shortcuts");
     const closeActive = () => closeOverlay();
     const onKeyDown = (event: KeyboardEvent) => {
@@ -28,6 +29,7 @@ export default function OverlayHost({ locale }: OverlayHostProps) {
     window.addEventListener("moenotes:toggle-command", toggleCommand);
     window.addEventListener("moenotes:toggle-settings", toggleSettings);
     window.addEventListener("moenotes:toggle-sidebar", toggleSidebar);
+    window.addEventListener("moenotes:open-mobile-sidebar", openMobileSidebar);
     window.addEventListener("moenotes:toggle-shortcuts", toggleShortcuts);
     window.addEventListener("moenotes:close-overlay", closeActive);
     document.addEventListener("keydown", onKeyDown);
@@ -49,6 +51,7 @@ export default function OverlayHost({ locale }: OverlayHostProps) {
       window.removeEventListener("moenotes:toggle-command", toggleCommand);
       window.removeEventListener("moenotes:toggle-settings", toggleSettings);
       window.removeEventListener("moenotes:toggle-sidebar", toggleSidebar);
+      window.removeEventListener("moenotes:open-mobile-sidebar", openMobileSidebar);
       window.removeEventListener("moenotes:toggle-shortcuts", toggleShortcuts);
       window.removeEventListener("moenotes:close-overlay", closeActive);
       document.removeEventListener("keydown", onKeyDown);

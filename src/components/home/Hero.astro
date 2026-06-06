@@ -14,28 +14,40 @@ const databasePath = getRoutePathById("database");
 const aboutPath = getRoutePathById("community");
 ---
 
-<section class="relative overflow-hidden rounded-[2.5rem] border border-[var(--mn-border)] bg-[var(--mn-surface)] p-8 shadow-[var(--mn-shadow)] sm:p-12">
-  <div class="absolute right-[-5rem] top-[-5rem] h-64 w-64 rounded-full bg-[var(--mn-pink)] opacity-20 blur-3xl"></div>
-  <div class="absolute bottom-[-5rem] left-[30%] h-72 w-72 rounded-full bg-[var(--mn-cyan)] opacity-20 blur-3xl"></div>
-  <div class="relative max-w-3xl">
-    <p class="mb-4 text-sm font-bold uppercase tracking-[0.26em] text-[var(--mn-accent)]">{t(locale, "home.eyebrow")}</p>
-    <h1 class="text-5xl font-black tracking-tight text-[var(--mn-text)] sm:text-7xl">{t(locale, "home.title")}</h1>
-    <p class="mt-5 text-xl font-semibold text-[var(--mn-text)]">{t(locale, "home.subtitle")}</p>
-    <p class="mt-4 max-w-2xl text-base leading-8 text-[var(--mn-text-muted)]">{t(locale, "home.description")}</p>
+<section class="mn-staff-bg relative overflow-hidden rounded-md border-[2.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-6 shadow-[var(--mn-shadow-stamp-lg)] sm:p-10 lg:p-12">
+  <div class="mn-halftone absolute right-6 top-6 h-32 w-32 text-[var(--mn-accent)] opacity-20"></div>
+  <div class="mn-stripes-warm absolute -right-12 bottom-8 h-20 w-48 rotate-[-8deg] border-2 border-[var(--mn-border)] opacity-90"></div>
+  <div class="absolute left-[55%] top-12 hidden h-28 w-28 rotate-6 rounded-md border-[2.5px] border-[var(--mn-border)] bg-[var(--mn-yellow)] shadow-[var(--mn-shadow-stamp)] lg:block"></div>
+  <div class="relative max-w-4xl">
+    <p class="mb-3 font-[var(--mn-font-hand)] text-2xl font-bold text-[var(--mn-accent)]">{t(locale, "home.eyebrow")}</p>
+    <h1 class="max-w-3xl font-[var(--mn-font-display)] text-5xl leading-[0.95] tracking-tight text-[var(--mn-text)] sm:text-7xl lg:text-8xl">
+      <span class="mn-hand-underline">{t(locale, "home.title")}</span>
+    </h1>
+    <p class="mt-6 max-w-2xl text-xl font-black text-[var(--mn-text)]">{t(locale, "home.subtitle")}</p>
+    <p class="mt-4 max-w-2xl text-base font-medium leading-8 text-[var(--mn-text-muted)]">{t(locale, "home.description")}</p>
     <div class="mt-8 flex flex-wrap gap-3">
-      <a href={localizePath(databasePath, locale)} class="rounded-2xl bg-[var(--mn-accent)] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-violet-500/20">{t(locale, "home.ctaPrimary")}</a>
-      <a href={localizePath(aboutPath, locale)} class="rounded-2xl border border-[var(--mn-border)] bg-white/20 px-5 py-3 text-sm font-bold text-[var(--mn-text)] hover:bg-white/35">{t(locale, "home.ctaSecondary")}</a>
+      <a href={localizePath(databasePath, locale)} class="mn-stamp rounded px-5 py-3 text-sm transition hover:-rotate-2">{t(locale, "home.ctaPrimary")}</a>
+      <a href={localizePath(aboutPath, locale)} class="rounded border-2 border-[var(--mn-border)] bg-[var(--mn-surface-strong)] px-5 py-3 text-sm font-black text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp-sm)] hover:bg-[var(--mn-cream-deep)]">{t(locale, "home.ctaSecondary")}</a>
     </div>
   </div>
 </section>
 
-<section class="mt-10">
-  <h2 class="mb-4 text-2xl font-black text-[var(--mn-text)]">{t(locale, "home.featuresTitle")}</h2>
-  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-    {features.map((feature) => (
-      <article class="mn-glass rounded-3xl p-5">
-        <div class="mb-4 grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-[var(--mn-pink)] to-[var(--mn-accent)] text-white">✦</div>
-        <h3 class="font-bold text-[var(--mn-text)]">{t(locale, `home.features.${feature}`)}</h3>
+<section class="mt-12">
+  <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <p class="font-[var(--mn-font-hand)] text-xl font-bold text-[var(--mn-accent)]">Foundation notes</p>
+      <h2 class="font-[var(--mn-font-display)] text-3xl tracking-tight text-[var(--mn-text)] sm:text-5xl">{t(locale, "home.featuresTitle")}</h2>
+    </div>
+  </div>
+  <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    {features.map((feature, index) => (
+      <article class:list={["mn-tape relative rounded-md border-[2.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-5 shadow-[var(--mn-shadow-stamp-lg)] transition hover:-translate-y-1", index % 2 === 0 ? "rotate-[-1deg]" : "rotate-[1deg]"]}>
+        <div class="mb-4 grid h-11 w-11 place-items-center rounded border-2 border-[var(--mn-border)] bg-[var(--mn-accent)] text-[var(--mn-bg)] shadow-[var(--mn-shadow-stamp-sm)]">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 2.75 14.35 9.65 21.25 12 14.35 14.35 12 21.25 9.65 14.35 2.75 12 9.65 9.65Z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-black text-[var(--mn-text)]">{t(locale, `home.features.${feature}`)}</h3>
       </article>
     ))}
   </div>

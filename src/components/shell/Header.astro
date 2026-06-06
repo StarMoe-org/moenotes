@@ -1,8 +1,6 @@
 ---
-import LocaleSwitcher from "@/components/common/LocaleSwitcher.astro";
 import Breadcrumbs from "@/components/shell/Breadcrumbs.astro";
 import type { AppLocale } from "@/config/locales";
-import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 
 interface Props {
@@ -11,33 +9,35 @@ interface Props {
 }
 
 const { locale, pathname } = Astro.props;
+const marqueeItems = ["Moenotes preview", "Our Notes viewer", "MoeSekai project", "Route registry", "i18n ready", "MasterData cache"];
 ---
 
-<header class="fixed inset-x-0 top-0 z-40 px-4 py-3">
-  <div class="mn-glass mx-auto flex max-w-7xl items-center gap-3 rounded-3xl px-4 py-2.5">
-    <button class="mn-focus grid h-10 w-10 place-items-center rounded-2xl text-[var(--mn-text-muted)] hover:bg-white/30 md:hidden" aria-label={t(locale, "shell.openSidebar")} data-action="sidebar-toggle">
-      <span class="text-xl">☰</span>
-    </button>
-    <a href={localizePath("/", locale)} class="flex items-center gap-3 font-black tracking-tight text-[var(--mn-text)]">
-      <span class="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-[var(--mn-pink)] via-[var(--mn-accent)] to-[var(--mn-cyan)] text-white shadow-lg">M</span>
-      <span class="hidden sm:inline">Moenotes</span>
-    </a>
-    <Breadcrumbs locale={locale} pathname={pathname} />
-    <div class="ml-auto flex items-center gap-2">
-      <button class="mn-focus hidden rounded-2xl border border-[var(--mn-border)] px-3 py-2 text-sm text-[var(--mn-text-muted)] hover:bg-white/30 sm:block" data-action="command-toggle">⌘K</button>
-      <LocaleSwitcher locale={locale} pathname={pathname} />
-      <button class="mn-focus rounded-2xl border border-[var(--mn-border)] px-3 py-2 text-sm text-[var(--mn-text-muted)] hover:bg-white/30" aria-label={t(locale, "shell.openSettings")} data-action="settings-toggle">⚙</button>
+<header class="fixed inset-x-0 top-0 z-40">
+  <div class="overflow-hidden border-b-2 border-[var(--mn-border)] bg-[var(--mn-border)] py-1.5 text-xs font-black uppercase tracking-[0.22em] text-[var(--mn-bg)]">
+    <div class="mn-marquee-track flex w-max gap-10 whitespace-nowrap">
+      {Array.from({ length: 2 }).map(() => (
+        <div class="flex shrink-0 gap-10">
+          {marqueeItems.map((item) => <span class="shrink-0">- {item} -</span>)}
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <div class="border-b-[2.5px] border-[var(--mn-border)] bg-[var(--mn-bg)]/95 px-4 py-3 shadow-[0_4px_0_0_var(--mn-border)] backdrop-blur-sm">
+    <div class="mx-auto flex max-w-7xl items-center gap-3">
+      <slot name="hamburger" />
+
+      <a href={localizePath("/", locale)} class="group flex items-center gap-3 text-[var(--mn-text)]">
+        <span class="grid h-11 w-11 place-items-center rounded-md border-[2.5px] border-[var(--mn-border)] bg-[var(--mn-accent)] font-[var(--mn-font-display)] text-lg text-[var(--mn-bg)] shadow-[var(--mn-shadow-stamp)] transition group-hover:-rotate-3">M!</span>
+        <span class="leading-none">
+          <span class="block font-[var(--mn-font-display)] text-xl tracking-tight sm:text-2xl">Moenotes</span>
+          <span class="hidden font-[var(--mn-font-hand)] text-sm text-[var(--mn-text-muted)] sm:block">bangdream ournotes viewer</span>
+        </span>
+      </a>
+
+      <Breadcrumbs locale={locale} pathname={pathname} />
+
+      <slot />
     </div>
   </div>
 </header>
-
-<script>
-  document.addEventListener("click", (event) => {
-    const target = event.target instanceof HTMLElement ? event.target.closest("[data-action]") : null;
-    if (!(target instanceof HTMLElement)) return;
-    const action = target.dataset.action;
-    if (action === "settings-toggle") window.dispatchEvent(new Event("moenotes:toggle-settings"));
-    if (action === "command-toggle") window.dispatchEvent(new Event("moenotes:toggle-command"));
-    if (action === "sidebar-toggle") window.dispatchEvent(new Event("moenotes:toggle-sidebar"));
-  });
-</script>

@@ -4,6 +4,7 @@ import { cards, getCharacter, bands } from "../data/bands";
 import { SectionTitle, FadeIn, attributeColor, rarityBg } from "../components/UI";
 import { Search, Star, Lock } from "lucide-react";
 import { cn } from "../utils/cn";
+import { PlaceholderArt, StarIcon, SparkleIcon } from "../components/Placeholders";
 
 const RARITIES = [5, 4, 3, 2, 1] as const;
 const ATTRS = ["Power", "Cool", "Pure", "Happy", "Dark"] as const;
@@ -49,7 +50,7 @@ export default function Cards() {
           <FilterBtn active={rarity === "all"} onClick={() => setRarity("all")}>全部稀有度</FilterBtn>
           {RARITIES.map((r) => (
             <FilterBtn key={r} active={rarity === r} onClick={() => setRarity(r)}>
-              <span className="flex items-center gap-1">{r}★</span>
+              <span className="flex items-center gap-1">Rarity {r}</span>
             </FilterBtn>
           ))}
         </div>
@@ -125,7 +126,7 @@ export default function Cards() {
 
                 {/* Big emoji art */}
                 <div className="absolute inset-x-0 top-1/4 bottom-1/3 grid place-items-center text-[80px] sm:text-[100px]">
-                  {c.art}
+                  <PlaceholderArt id={c.visualKey || c.id} color="var(--color-cream)" className="h-full w-full" />
                 </div>
 
                 {/* Card name */}

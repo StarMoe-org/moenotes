@@ -4,6 +4,7 @@ import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import { buildBreadcrumbs } from "@/lib/route/breadcrumbs";
 import { findRouteMatch, getNavChildren, getNavigationGroups } from "@/lib/route/registry";
+import type { AppRoute, BreadcrumbItem } from "@/types/route";
 
 interface Props {
   locale: AppLocale;
@@ -15,32 +16,53 @@ const { locale, pathname, detailLabel } = Astro.props;
 const crumbs = buildBreadcrumbs(pathname, locale, detailLabel ? { label: detailLabel } : undefined);
 const match = findRouteMatch(pathname);
 const groups = getNavigationGroups();
-const siblings = match?.group ? getNavChildren(match.group) : groups;
+const visibleCrumbs = crumbs.slice(1);
+
+function getOptionsForCrumb(crumb: BreadcrumbItem): AppRoute[] {
+  if (match?.group && crumb.id === match.group.id) return groups;
+  if (match?.group && crumb.id === match.item.id && match.item.id !== match.group.id) return getNavChildren(match.group);
+  return [];
+}
 ---
 
-<nav class="hidden min-w-0 items-center gap-1 text-sm text-[var(--mn-text-muted)] md:flex" aria-label="Breadcrumb">
-  {crumbs.slice(1).map((crumb, index) => (
-    <>
-      <span class="text-[var(--mn-border)]">/</span>
-      <a
-        href={crumb.href}
-        class:list={["truncate rounded-xl px-2 py-1 transition hover:bg-white/30", crumb.current ? "font-semibold text-[var(--mn-accent)]" : ""]}
-        aria-current={crumb.current ? "page" : undefined}
-      >
-        {crumb.label}
-      </a>
-      {index === crumbs.length - 2 && siblings.length > 0 && (
-        <details class="relative">
-          <summary class="list-none rounded-lg px-1 py-1 hover:bg-white/30" aria-label={t(locale, index === 0 ? "shell.breadcrumbExpandGroup" : "shell.breadcrumbExpandItems")}>⌄</summary>
-          <div class="mn-glass absolute left-0 top-full z-50 mt-2 min-w-48 rounded-2xl p-2">
-            {siblings.map((item) => (
-              <a href={localizePath(item.path, locale)} class="block rounded-xl px-3 py-2 text-sm text-[var(--mn-text-muted)] hover:bg-white/30 hover:text-[var(--mn-text)]">
-                {t(locale, item.labelKey)}
-              </a>
-            ))}
-          </div>
-        </details>
-      )}
-    </>
-  ))}
+<nav class="hidden min-w-0 items-center gap-1 text-sm font-bold text-[var(--mn-text-muted)] md:flex" aria-label="Breadcrumb">
+  {visibleCrumbs.map((crumb) => {
+    const options = getOptionsForCrumb(crumb);
+    return (
+      <>
+        <span class="font-black text-[var(--mn-accent)]">/</span>
+        <div class="flex min-w-0 items-center gap-1">
+          <a
+            href={crumb.href}
+            class:list={["truncate rounded px-2 py-1 transition hover:bg-[var(--mn-cream-deep)]", crumb.current ? "bg-[var(--mn-yellow)] text-[var(--mn-text)]" : ""]}
+            aria-current={crumb.current ? "page" : undefined}
+          >
+            {crumb.label}
+          </a>
+          {options.length > 0 && (
+            <details class="relative shrink-0">
+              <summary class="grid h-7 w-7 place-items-center rounded border-2 border-transparent list-none hover:border-[var(--mn-border)] hover:bg-[var(--mn-cream-deep)]" aria-label={t(locale, crumb.id === match?.group?.id ? "shell.breadcrumbExpandGroup" : "shell.breadcrumbExpandItems")}>
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+              </summary>
+              <div class="absolute left-0 top-full z-50 mt-2 min-w-52 rounded-md border-[2.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp-lg)]">
+                {options.map((item) => {
+                  const active = item.id === crumb.id;
+                  return (
+                    <a
+                      href={localizePath(item.path, locale)}
+                      class:list={["block rounded px-3 py-2 text-sm font-bold hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]", active ? "bg-[var(--mn-accent)] text-[var(--mn-bg)]" : "text-[var(--mn-text-muted)]"]}
+                      aria-current={active ? "page" : undefined}
+                    >
+                      <span class="block text-[10px] uppercase tracking-[0.16em] opacity-70">{item.id === match?.group?.id || groups.some((group) => group.id === item.id) ? "SECTION" : "PAGE"}</span>
+                      {t(locale, item.labelKey)}
+                    </a>
+                  );
+                })}
+              </div>
+            </details>
+          )}
+        </div>
+      </>
+    );
+  })}
 </nav>

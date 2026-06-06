@@ -40,12 +40,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           {Array.from({ length: 2 }).map((_, i) => (
             <div key={i} className="flex gap-12 shrink-0">
               {[
-                "★ Moenotes 公开测试中 v0.3",
-                "🎸 收录 5 支乐队 / 25 名角色",
-                "🎤 Ave Mujica 5th Live 7/19 售票",
-                "🆕 卡牌图鉴栏目上线",
-                "💌 wiki 公开编辑 · 欢迎补充",
-                "⚡ by MoeSekai · pjsk.moe 兄弟站",
+                "Moenotes 公开测试中 v0.3",
+                "收录 5 支乐队 / 25 名角色",
+                "Ave Mujica 5th Live 7/19 售票",
+                "卡牌图鉴栏目上线",
+                "wiki 公开编辑 · 欢迎补充",
+                "by MoeSekai · pjsk.moe 兄弟站",
               ].map((t, j) => (
                 <span key={j} className="shrink-0">· {t} ·</span>
               ))}
@@ -54,7 +54,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      {/* ===== Navbar ===== */}
+      {/* ===== Header without primary nav ===== */}
       <header
         className={cn(
           "sticky top-0 z-50 transition-all",
@@ -76,41 +76,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-1">
-            {links.map((l) => (
-              <NavLink
-                key={l.to}
-                to={l.to}
-                end={l.to === "/"}
-                className={({ isActive }) =>
-                  cn(
-                    "nav-link px-3 py-2 font-[var(--font-jp)] font-bold text-sm",
-                    "hover:text-[var(--color-tomato)]",
-                    isActive ? "active text-[var(--color-tomato)]" : "text-[var(--color-ink)]"
-                  )
-                }
-              >
-                {l.label}
-              </NavLink>
-            ))}
-          </nav>
-
-          <div className="hidden lg:flex items-center gap-2">
-            <a
-              href="https://pjsk.moe"
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs font-bold text-[var(--color-ink)]/60 hover:text-[var(--color-tomato)] transition"
-            >
-              ← pjsk.moe
-            </a>
-            <Link
-              to="/tools"
-              className="px-4 py-2 bg-[var(--color-tomato)] text-[var(--color-cream)] border-2 border-[var(--color-ink)] shadow-[var(--shadow-stamp-sm)] hover:shadow-[2px_2px_0_0_var(--color-ink)] hover:translate-x-[1px] hover:translate-y-[1px] font-bold text-sm rounded"
-            >
-              GACHA
-            </Link>
-          </div>
+          <div className="hidden lg:block text-xs font-bold text-[var(--color-ink)]/60">主导航迁移到侧边栏</div>
 
           <button
             className="lg:hidden p-2 border-2 border-[var(--color-ink)] rounded"
@@ -121,16 +87,39 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </button>
         </div>
 
-        {/* mobile menu */}
-        <AnimatePresence>
-          {open && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="lg:hidden border-t-2 border-[var(--color-ink)] bg-[var(--color-cream-deep)] overflow-hidden"
+      </header>
+
+      <aside className="hidden lg:block fixed left-4 top-24 z-40 w-56 rounded-md border-[2.5px] border-[var(--color-ink)] bg-[var(--color-paper)] p-3 shadow-[var(--shadow-card)]">
+        <div className="font-[var(--font-display)] text-xs tracking-wider text-[var(--color-tomato)] mb-2">SIDEBAR</div>
+        <nav className="space-y-1" aria-label="设计源侧边栏导航">
+          {links.map((l) => (
+            <NavLink
+              key={l.to}
+              to={l.to}
+              end={l.to === "/"}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-2 rounded px-3 py-2 text-sm font-bold",
+                  isActive ? "bg-[var(--color-tomato)] text-[var(--color-cream)]" : "hover:bg-[var(--color-cream-deep)]"
+                )
+              }
             >
-              <div className="px-4 py-3 grid grid-cols-2 gap-2">
+              <l.icon size={16} /> {l.label}
+            </NavLink>
+          ))}
+        </nav>
+      </aside>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div className="fixed inset-0 z-50 lg:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <button className="absolute inset-0 bg-black/35" aria-label="关闭菜单" onClick={() => setOpen(false)} />
+            <aside className="absolute left-3 top-3 h-[calc(100dvh-1.5rem)] w-[min(20rem,calc(100vw-1.5rem))] rounded-md border-[2.5px] border-[var(--color-ink)] bg-[var(--color-paper)] p-4 shadow-[var(--shadow-card)]">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="font-[var(--font-display)] text-sm tracking-wider text-[var(--color-tomato)]">SIDEBAR</div>
+                <button onClick={() => setOpen(false)} className="rounded border-2 border-[var(--color-ink)] p-1"><X size={16} /></button>
+              </div>
+              <nav className="space-y-1" aria-label="移动端侧边栏导航">
                 {links.map((l) => (
                   <NavLink
                     key={l.to}
@@ -138,23 +127,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     end={l.to === "/"}
                     className={({ isActive }) =>
                       cn(
-                        "flex items-center gap-2 px-3 py-2.5 border-2 border-[var(--color-ink)] rounded font-bold text-sm",
-                        isActive
-                          ? "bg-[var(--color-tomato)] text-[var(--color-cream)]"
-                          : "bg-[var(--color-cream)]"
+                        "flex items-center gap-2 rounded px-3 py-2.5 text-sm font-bold",
+                        isActive ? "bg-[var(--color-tomato)] text-[var(--color-cream)]" : "hover:bg-[var(--color-cream-deep)]"
                       )
                     }
                   >
                     <l.icon size={16} /> {l.label}
                   </NavLink>
                 ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </header>
+              </nav>
+            </aside>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 lg:pl-64">{children}</main>
 
       <footer className="mt-20 bg-[var(--color-ink)] text-[var(--color-cream)] border-t-4 border-[var(--color-tomato)]">
         <div className="max-w-7xl mx-auto px-6 py-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -192,10 +179,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div>
             <div className="font-[var(--font-display)] text-sm mb-3 text-[var(--color-amber)]">CONTACT</div>
             <ul className="space-y-1.5 text-sm font-[var(--font-jp)]">
-              <li>📮 提交反馈 / 投稿</li>
-              <li>🐛 错误报告</li>
-              <li>💌 邮箱 admin@moenotes.moe</li>
-              <li className="text-[var(--color-cream)]/50 text-xs pt-2">© 2025 Moenotes · 非官方资料站</li>
+              <li>提交反馈 / 投稿</li>
+              <li>错误报告</li>
+              <li>邮箱 admin@moenotes.moe</li>
+              <li className="text-[var(--color-cream)]/50 text-xs pt-2">(c) 2025 Moenotes · 非官方资料站</li>
             </ul>
           </div>
         </div>

@@ -1,13 +1,22 @@
 html[data-theme="dark"] {
-  --mn-bg: #11111f;
-  --mn-surface: rgba(26, 26, 45, 0.78);
-  --mn-surface-strong: rgba(30, 30, 52, 0.94);
-  --mn-glass: rgba(29, 29, 51, 0.58);
-  --mn-text: #f4f1ff;
-  --mn-text-muted: #b7b3cf;
-  --mn-border: rgba(203, 195, 255, 0.16);
-  --mn-accent: #a69bff;
-  --mn-pink: #ff9fcc;
-  --mn-cyan: #6ef7ec;
-  --mn-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+  --mn-bg: #17120f;
+  --mn-surface: rgba(42, 30, 24, 0.9);
+  --mn-surface-strong: rgba(53, 38, 30, 0.96);
+  --mn-glass: rgba(39, 28, 23, 0.9);
+  --mn-text: #fbf7ef;
+  --mn-text-muted: #e5dcc8;
+  --mn-border: #fbf7ef;
+  --mn-accent: #ff7658;
+  --mn-pink: #ffadc0;
+  --mn-cyan: #77d4e8;
+  --mn-amber: #ffc15d;
+  --mn-yellow: #ffe07a;
+  --mn-mint: #9ac982;
+  --mn-cream-deep: #2b211b;
+  --mn-paper: #251c17;
+  --mn-ink-soft: #f4ecdb;
+  --mn-shadow: 0 2px 4px rgba(0, 0, 0, 0.35), 0 18px 38px -14px rgba(0, 0, 0, 0.72);
+  --mn-shadow-stamp: 3px 3px 0 0 #fbf7ef;
+  --mn-shadow-stamp-sm: 2px 2px 0 0 #fbf7ef;
+  --mn-shadow-stamp-lg: 6px 6px 0 0 #fbf7ef;
 }

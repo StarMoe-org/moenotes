@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { bands, getBandMembers, songs } from "../data/bands";
 import { SectionTitle, FadeIn } from "../components/UI";
-import { memberEmoji } from "../utils/emoji";
+import { PlaceholderAvatar, PlaceholderArt, SparkleIcon, StarIcon } from "../components/Placeholders";
 import { ArrowRight, Music, Mic2 } from "lucide-react";
 import { cn } from "../utils/cn";
 
@@ -79,7 +79,7 @@ export default function Bands() {
                         <div className={cn("absolute inset-0 bg-gradient-to-br", m.bgGradient)} />
                         <div className="absolute inset-0 halftone opacity-25 text-white" />
                         <div className="absolute inset-0 grid place-items-center text-[44px] sm:text-[60px]">
-                          {memberEmoji(m.id)}
+                          <PlaceholderAvatar id={m.id} label={m.nameJa} color={m.color} className="h-[1em] w-[1em] text-[1em]" />
                         </div>
                         <div className="absolute bottom-0 left-0 right-0 px-1 py-1 bg-[var(--color-cream)] border-t-[2px] border-[var(--color-ink)] text-center">
                           <div className="font-[var(--font-jp)] font-bold text-[10px] sm:text-xs truncate">{m.nameJa.split(" ")[1] || m.nameJa}</div>
