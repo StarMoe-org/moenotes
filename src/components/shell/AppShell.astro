@@ -4,7 +4,8 @@ import Header from "@/components/shell/Header.astro";
 import HeaderActions, { HamburgerButtons } from "@/components/shell/HeaderActions";
 import KeyboardShortcutsHelp from "@/components/shell/KeyboardShortcutsHelp";
 import OverlayHost from "@/components/shell/OverlayHost";
-import ScrollRestorer from "@/components/shell/ScrollRestorer";
+import ScrollRestorer from "@/components/shell/ScrollRestorer.astro";
+import ScrollToTop from "@/components/shared/ScrollToTop";
 import SettingsDrawer from "@/components/shell/SettingsDrawer";
 import Sidebar from "@/components/shell/Sidebar";
 import type { AppLocale } from "@/config/locales";
@@ -22,11 +23,12 @@ const { locale, pathname } = Astro.props;
   <HeaderActions client:load locale={locale} />
 </Header>
 <Sidebar client:load locale={locale} pathname={pathname} />
-<main id="content" class="mx-auto min-h-screen max-w-7xl px-4 pb-16 pt-36 transition-[padding] duration-300 md:pl-[calc(var(--mn-sidebar-offset,18rem)+1.5rem)] md:pr-6">
+<main id="content" class="mx-auto min-h-screen max-w-7xl px-4 pb-16 pt-24 md:pt-28 transition-[padding] duration-300 md:pl-[calc(var(--mn-sidebar-offset,18rem)+1.5rem)] md:pr-6">
   <slot />
 </main>
 <CommandPalette client:load locale={locale} />
 <SettingsDrawer client:load locale={locale} pathname={pathname} />
 <KeyboardShortcutsHelp client:load locale={locale} />
-<ScrollRestorer client:load />
+<ScrollRestorer />
 <OverlayHost client:load locale={locale} />
+<ScrollToTop client:load />

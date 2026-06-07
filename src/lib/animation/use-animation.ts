@@ -5,6 +5,15 @@ import type { Transition, Variants } from "framer-motion";
 /**
  * Animation-aware hook that respects the user's animation level setting.
  * Returns framer-motion props adapted to the current animation preference.
+ *
+ * Two animation specs are provided, one per button shape family:
+ *
+ * ┌─────────────┬──────────────────────────┬─────────────────────────────────┐
+ * │ Spec        │ Shape                    │ Hover / Tap                     │
+ * ├─────────────┼──────────────────────────┼─────────────────────────────────┤
+ * │ Stamp       │ Circular / Square        │ press-down (x+1, y+1, s0.98)   │
+ * │ Float       │ Capsule / Pill           │ rise-up (y-6, rotate 2°)       │
+ * └─────────────┴──────────────────────────┴─────────────────────────────────┘
  */
 export function useSpringAnimation() {
   const { settings } = useSettings();
@@ -22,8 +31,23 @@ export function useSpringAnimation() {
       ? { duration: 0.15 }
       : { type: "spring", stiffness: 300, damping: 28 };
 
-    const hoverProps = isDisabled ? {} : { whileHover: { y: -6, rotate: 2 } };
-    const tapProps = isDisabled ? {} : { whileTap: { scale: 0.92 } };
+    // ── Float Animation (capsule / pill buttons) ─────────────────────────────
+    // Hover: rise up slightly — light, clean feel.
+    // Tap:   scale down to 0.96.
+    // Pair with: no mandatory shadow change; capsule buttons keep their own shadow style.
+    const floatHoverProps = isDisabled ? {} : { whileHover: { y: -4 } };
+    const floatTapProps = isDisabled ? {} : { whileTap: { scale: 0.96 } };
+
+    // ── Stamp Animation (circular / square buttons) ─────────────────────────
+    // Hover: rise up slightly + scale — modern feel.
+    // Tap:   scale down to 0.98 — clean feedback.
+    const stampHoverProps = isDisabled ? {} : { whileHover: { y: -2, scale: 1.02 } };
+    const stampTapProps = isDisabled ? {} : { whileTap: { scale: 0.98 } };
+
+    /** @deprecated Use floatHoverProps (capsule) or stampHoverProps (circular/square) */
+    const hoverProps = floatHoverProps;
+    /** @deprecated Use floatTapProps (capsule) or stampTapProps (circular/square) */
+    const tapProps = floatTapProps;
 
     const staggerContainer: Variants = {
       hidden: {},
@@ -45,6 +69,10 @@ export function useSpringAnimation() {
       modalTransition,
       hoverProps,
       tapProps,
+      floatHoverProps,
+      floatTapProps,
+      stampHoverProps,
+      stampTapProps,
       staggerContainer,
       staggerItem,
     };

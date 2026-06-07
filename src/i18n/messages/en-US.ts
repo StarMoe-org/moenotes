@@ -81,7 +81,7 @@ export const enUS = {
     title: "Design System",
     subtitle: "Moenotes visual language reference — colors, typography, components, and interactions.",
     sections: { colors: "Colors", typography: "Typography", components: "Components", modals: "Modals", filters: "Filters", animations: "Animations" },
-    colors: { accent: "Accent", pink: "Pink", cyan: "Cyan", amber: "Amber", mint: "Mint", yellow: "Yellow", paper: "Paper", background: "Background", surface: "Surface", border: "Border", text: "Text", muted: "Muted" },
+    colors: { accent: "Accent", "accent-deep": "Accent Deep", "accent-soft": "Accent Soft", pink: "Pink", "pink-soft": "Pink Soft", cyan: "Cyan", amber: "Amber", peach: "Peach", mint: "Mint", "mint-deep": "Mint Deep", "mint-soft": "Mint Soft", yellow: "Yellow", rose: "Rose", "cream-deep": "Cream Deep", "ink-soft": "Ink Soft", paper: "Paper", background: "Background", surface: "Surface", border: "Border", text: "Text", muted: "Muted" },
     typography: { display: "Display Font", body: "Body Font", hand: "Hand Font", note: "Note Font" },
     components: { buttons: "Buttons", inputs: "Inputs", badges: "Badges & Stamps", cards: "Cards", select: "Select", checkbox: "Checkbox", textures: "Textures", primary: "Primary", outline: "Outline", ghost: "Ghost", stamp: "Stamp", selectPlaceholder: "Choose option...", optA: "Option A", optB: "Option B", optC: "Option C" },
     modals: { openSm: "Small Modal", openMd: "Medium Modal", openLg: "Large Modal", openXl: "Extra Large Modal", title: "Modal Example", body: "This is a demo of the generic modal component. Supports multiple size variants.", currentSize: "Current size", copyModal: "Copy Modal", copyModalTitle: "Image Preview", copy: "Copy", save: "Save" },

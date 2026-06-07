@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, Fragment, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
 import { localizePath } from "@/i18n/routing";
 import { t } from "@/i18n";
@@ -76,7 +76,7 @@ export default function Sidebar({ locale, pathname }: SidebarProps) {
 
   return (
     <>
-      <aside className={`fixed left-4 top-32 z-30 hidden h-[calc(100vh-9rem)] w-64 shrink-0 transition-[transform,opacity] duration-300 md:block ${desktopOpen ? "translate-x-0 opacity-100" : "pointer-events-none -translate-x-[18rem] opacity-0"}`}>
+      <aside className={`fixed left-4 top-24 z-30 hidden h-[calc(100vh-7.5rem)] w-64 shrink-0 transition-[transform,opacity] duration-300 md:block ${desktopOpen ? "translate-x-0 opacity-100" : "pointer-events-none -translate-x-[18rem] opacity-0"}`}>
         <SidebarFrame>
           <SidebarNav locale={locale} pathname={pathname} groups={groups} />
         </SidebarFrame>
@@ -85,7 +85,7 @@ export default function Sidebar({ locale, pathname }: SidebarProps) {
       {mobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true">
           <button className="absolute inset-0 h-full w-full bg-black/40 backdrop-blur-[2px]" aria-label={t(locale, "actions.close")} onClick={closeMobile} />
-          <aside className="absolute left-3 top-3 h-[calc(100dvh-1.5rem)] w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-md border-[2.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]">
+          <aside className="absolute left-3 top-3 h-[calc(100dvh-1.5rem)] w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)]">
             <SidebarNav locale={locale} pathname={pathname} groups={groups} onNavigate={closeMobile} />
           </aside>
         </div>
@@ -95,12 +95,51 @@ export default function Sidebar({ locale, pathname }: SidebarProps) {
 }
 
 function SidebarFrame({ children }: { children: ReactNode }) {
-  return <div className="h-full rounded-md border-[2.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]">{children}</div>;
+  return <div className="h-full overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)]">{children}</div>;
 }
 
 function SidebarNav({ locale, pathname, groups, onNavigate }: { locale: AppLocale; pathname: string; groups: AppRoute[]; onNavigate?: () => void }) {
+  const scrollRef = useRef<HTMLElement>(null);
   const activeGroupIds = useMemo(() => groups.filter((group) => isCurrentRoute(pathname, group.path)).map((group) => group.id), [groups, pathname]);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+
+  // 保存滚动位置到 safe-storage — i18n-allow-hardcoded
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    let ticking = false;
+    const handleScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        if (scrollRef.current) {
+          safeSetSessionStorage("moenotes:sidebar-scroll", String(scrollRef.current.scrollTop));
+        }
+        ticking = false;
+      });
+    };
+
+    el.addEventListener("scroll", handleScroll, { passive: true });
+    return () => el.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // 恢复滚动位置 — i18n-allow-hardcoded
+  useEffect(() => {
+    const saved = safeGetSessionStorage("moenotes:sidebar-scroll");
+    if (saved !== null && scrollRef.current) {
+      const scrollTop = parseInt(saved, 10);
+      if (!isNaN(scrollTop)) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            if (scrollRef.current) {
+              scrollRef.current.scrollTop = scrollTop;
+            }
+          });
+        });
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const raw = safeGetLocalStorage(groupStorageKey);
@@ -123,22 +162,33 @@ function SidebarNav({ locale, pathname, groups, onNavigate }: { locale: AppLocal
   };
 
   return (
-    <nav className="h-full overflow-y-auto p-3" aria-label="Primary">
-      <div className="mb-3 border-b-2 border-[var(--mn-border)] pb-3">
-        <div className="rounded bg-[var(--mn-accent)] px-3 py-2 font-[var(--mn-font-display)] text-xs uppercase tracking-[0.22em] text-[var(--mn-bg)] shadow-[var(--mn-shadow-stamp-sm)]">Navigation</div>
-      </div>
-      <div className="mb-2 px-2 font-[var(--mn-font-display)] text-xs tracking-[0.22em] text-[var(--mn-accent)]">SIDEBAR</div>
+    <nav ref={scrollRef} className="h-full overflow-y-auto p-3" aria-label="Primary">
       <div className="space-y-3">
-        {groups.map((group) => (
-          <NavGroup
-            key={group.id}
-            group={group}
-            locale={locale}
-            pathname={pathname}
-            collapsed={Boolean(collapsed[group.id]) && !activeGroupIds.includes(group.id)}
-            onToggle={() => toggleGroup(group.id)}
-            {...(onNavigate ? { onNavigate } : {})}
-          />
+        {/* Home link */}
+        <a
+          href={localizePath("/", locale)}
+          onClick={onNavigate}
+          className={`block rounded-full px-4 py-2 text-[14px] font-black transition-colors ${
+            pathname === "/"
+              ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]"
+              : "text-[var(--mn-text)] hover:bg-[var(--mn-cream-deep)]"
+          }`}
+        >
+          {t(locale, "nav.home")}
+        </a>
+        <div className="border-t border-[var(--mn-border)] opacity-30 my-1" />
+        {groups.map((group, idx) => (
+          <Fragment key={group.id}>
+            {idx > 0 && <div className="border-t border-[var(--mn-border)] opacity-30 my-1" />}
+            <NavGroup
+              group={group}
+              locale={locale}
+              pathname={pathname}
+              collapsed={Boolean(collapsed[group.id]) && !activeGroupIds.includes(group.id)}
+              onToggle={() => toggleGroup(group.id)}
+              {...(onNavigate ? { onNavigate } : {})}
+            />
+          </Fragment>
         ))}
       </div>
     </nav>
@@ -150,38 +200,64 @@ function NavGroup({ group, locale, pathname, collapsed, onToggle, onNavigate }: 
   const groupActive = isCurrentRoute(pathname, group.path);
   const hasChildren = children.length > 0;
   return (
-    <section className="rounded border-2 border-[var(--mn-border)] bg-[var(--mn-surface-strong)] p-2 shadow-[var(--mn-shadow-stamp-sm)]">
-      <div className="mb-2 flex items-center gap-2 border-b-2 border-dashed border-[color-mix(in_oklab,var(--mn-border)_30%,transparent)] pb-2">
-        <a href={localizePath(group.path, locale)} onClick={onNavigate} className={`min-w-0 flex-1 rounded px-2 py-1.5 ${groupActive ? "bg-[var(--mn-yellow)] text-[var(--mn-text)]" : "hover:bg-[var(--mn-cream-deep)]"}`}>
-          <span className="block font-[var(--mn-font-display)] text-[10px] uppercase tracking-[0.18em] text-[var(--mn-accent)]">SECTION</span>
-          <span className="block truncate text-sm font-black text-[var(--mn-text)]">{t(locale, group.labelKey)}</span>
-        </a>
-        <button
-          type="button"
-          className="grid h-8 w-8 shrink-0 place-items-center rounded border-2 border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:bg-[var(--mn-cream-deep)] hover:shadow-[var(--mn-shadow-stamp)] hover:translate-x-[1px] hover:translate-y-[1px]"
-          aria-expanded={!collapsed}
-          aria-label={t(locale, group.labelKey)}
-          onClick={onToggle}
+    <div className="space-y-1">
+      <div className="flex items-center justify-between px-3 py-1">
+        <a
+          href={localizePath(group.path, locale)}
+          onClick={onNavigate}
+          className={`min-w-0 flex-1 rounded-full px-3 py-1.5 text-[14px] font-black text-[var(--mn-text)] transition-colors hover:bg-[var(--mn-cream-deep)] ${
+            groupActive ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : ""
+          }`}
         >
-          <svg className={`h-4 w-4 transition-transform ${collapsed ? "-rotate-90" : "rotate-0"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
-        </button>
+          {t(locale, group.labelKey)}
+        </a>
+        {hasChildren && (
+          <button
+            type="button"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[var(--mn-text-muted)] transition-colors hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]"
+            aria-expanded={!collapsed}
+            aria-label={t(locale, group.labelKey)}
+            onClick={onToggle}
+          >
+            <svg className={`h-4 w-4 transition-transform ${collapsed ? "-rotate-90" : "rotate-0"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+          </button>
+        )}
       </div>
       {!collapsed && (
-        <div className="space-y-1">
-          {hasChildren ? children.map((item) => {
+        <div className="space-y-0.5">
+          {hasChildren ? children.map((item, childIdx) => {
             const active = isCurrentRoute(pathname, item.path);
             return (
-              <a key={item.id} href={localizePath(item.path, locale)} onClick={onNavigate} className={`block rounded px-3 py-2 text-sm font-bold transition ${active ? "bg-[var(--mn-accent)] text-[var(--mn-bg)] shadow-[var(--mn-shadow-stamp-sm)]" : "text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]"}`}>
-                {t(locale, item.labelKey)}
-              </a>
+              <Fragment key={item.id}>
+                {childIdx > 0 && <div className="border-t border-dashed border-[var(--mn-border)] opacity-20 my-0.5 ml-8" />}
+                <a
+                  href={localizePath(item.path, locale)}
+                  onClick={onNavigate}
+                  className={`block rounded-full pl-8 pr-4 py-1.5 text-[13px] font-medium transition-colors ${
+                    active
+                      ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)] font-semibold"
+                      : "text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]"
+                  }`}
+                >
+                  {t(locale, item.labelKey)}
+                </a>
+              </Fragment>
             );
           }) : (
-            <a href={localizePath(group.path, locale)} onClick={onNavigate} className={`block rounded px-3 py-2 text-sm font-bold transition ${groupActive ? "bg-[var(--mn-accent)] text-[var(--mn-bg)] shadow-[var(--mn-shadow-stamp-sm)]" : "text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]"}`}>
+            <a
+              href={localizePath(group.path, locale)}
+              onClick={onNavigate}
+              className={`block rounded-full pl-8 pr-4 py-1.5 text-[13px] font-medium transition-colors ${
+                groupActive
+                  ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)] font-semibold"
+                  : "text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]"
+              }`}
+            >
               {t(locale, group.labelKey)}
             </a>
           )}
         </div>
       )}
-    </section>
+    </div>
   );
 }

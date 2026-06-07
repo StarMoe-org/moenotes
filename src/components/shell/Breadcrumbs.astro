@@ -30,27 +30,27 @@ function getOptionsForCrumb(crumb: BreadcrumbItem): AppRoute[] {
     const options = getOptionsForCrumb(crumb);
     return (
       <>
-        <span class="font-black text-[var(--mn-accent)]">/</span>
+        <span class="font-black text-[var(--mn-accent-deep)]">/</span>
         <div class="flex min-w-0 items-center gap-1">
           <a
             href={crumb.href}
-            class:list={["truncate rounded px-2 py-1 transition hover:bg-[var(--mn-cream-deep)]", crumb.current ? "bg-[var(--mn-yellow)] text-[var(--mn-text)]" : ""]}
+            class:list={["truncate rounded-full px-3 py-1 transition hover:bg-[var(--mn-cream-deep)]", crumb.current ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : ""]}
             aria-current={crumb.current ? "page" : undefined}
           >
             {crumb.label}
           </a>
           {options.length > 0 && (
             <details class="relative shrink-0">
-              <summary class="grid h-7 w-7 place-items-center rounded border-2 border-transparent list-none hover:border-[var(--mn-border)] hover:bg-[var(--mn-cream-deep)]" aria-label={t(locale, crumb.id === match?.group?.id ? "shell.breadcrumbExpandGroup" : "shell.breadcrumbExpandItems")}>
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+              <summary class="grid h-7 w-7 place-items-center rounded-full border-2 border-transparent list-none hover:border-[var(--mn-border)] hover:bg-[var(--mn-cream-deep)]" aria-label={t(locale, crumb.id === match?.group?.id ? "shell.breadcrumbExpandGroup" : "shell.breadcrumbExpandItems")}>
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
               </summary>
-              <div class="absolute left-0 top-full z-50 mt-2 min-w-52 rounded-md border-[2.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp-lg)]">
+              <div class="absolute left-0 top-full z-50 mt-2 min-w-52 rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp-lg)]">
                 {options.map((item) => {
                   const active = item.id === crumb.id;
                   return (
                     <a
                       href={localizePath(item.path, locale)}
-                      class:list={["block rounded px-3 py-2 text-sm font-bold hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]", active ? "bg-[var(--mn-accent)] text-[var(--mn-bg)]" : "text-[var(--mn-text-muted)]"]}
+                      class:list={["block rounded-full px-4 py-2 text-sm font-bold hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]", active ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)]"]}
                       aria-current={active ? "page" : undefined}
                     >
                       <span class="block text-[10px] uppercase tracking-[0.16em] opacity-70">{item.id === match?.group?.id || groups.some((group) => group.id === item.id) ? "SECTION" : "PAGE"}</span>

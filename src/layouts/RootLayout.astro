@@ -2,6 +2,7 @@
 import "@/styles/global.css";
 import { HTML_LANG, type AppLocale } from "@/config/locales";
 import { siteConfig } from "@/config/site";
+import { assetConfig } from "@/config/assets";
 import { buildThemeBootstrapScript } from "@/lib/settings/apply-theme";
 import { buildHreflang, buildPageMetadata } from "@/lib/seo/metadata";
 import { breadcrumbJsonLd, websiteJsonLd } from "@/lib/seo/jsonld";
@@ -16,6 +17,7 @@ const meta = buildPageMetadata(pathname, locale);
 const themeScript = buildThemeBootstrapScript();
 const website = websiteJsonLd(locale);
 const breadcrumbs = breadcrumbJsonLd(pathname, locale);
+const fontPreloadHref = locale === "zh-CN" ? "/fonts/MoenotesRoundedSC-400.woff2" : locale === "ja-JP" ? "/fonts/MoenotesRounded-400.woff2" : undefined;
 ---
 
 <!doctype html>
@@ -23,12 +25,15 @@ const breadcrumbs = breadcrumbJsonLd(pathname, locale);
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href={assetConfig.fonts.lxgwWenKaiWeb} />
+    <link rel="stylesheet" href={assetConfig.fonts.lxgwWenKaiScreen} />
     <meta name="color-scheme" content="light dark" />
     <title>{meta.fullTitle}</title>
     <meta name="description" content={meta.description} />
     {meta.keywords.length > 0 && <meta name="keywords" content={meta.keywords.join(", ")} />}
     {!meta.indexable && <meta name="robots" content="noindex,nofollow" />}
     <link rel="icon" href="/favicon.svg" />
+    {fontPreloadHref && <link rel="preload" href={fontPreloadHref} as="font" type="font/woff2" crossorigin="anonymous" />}
     <link rel="canonical" href={meta.canonical} />
     {meta.alternates.map((alt) => <link rel="alternate" hreflang={buildHreflang(alt.locale)} href={alt.href} />)}
     <meta property="og:site_name" content={siteConfig.name} />

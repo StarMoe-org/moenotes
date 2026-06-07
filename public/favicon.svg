@@ -1,1 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Moenotes"><rect x="10" y="10" width="108" height="108" rx="18" fill="#FBF7EF"/><rect x="18" y="18" width="92" height="92" rx="12" fill="#E84D2E" stroke="#1A1410" stroke-width="8"/><path d="M37 39h12l15 25 15-25h12v50H78V63L66 84h-5L49 63v26H37Z" fill="#FBF7EF"/><circle cx="93" cy="38" r="6" fill="#F4C430" stroke="#1A1410" stroke-width="4"/><path d="M34 96h60" stroke="#1A1410" stroke-width="6" stroke-linecap="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <circle cx="64" cy="64" r="54" fill="#E87461" />
+  <text x="64" y="86" font-family="Georgia, serif" font-size="64" font-weight="bold" fill="#FFFBF5" text-anchor="middle">M</text>
+  <circle cx="98" cy="30" r="12" fill="#5B7553" stroke="#FFFBF5" stroke-width="4.5" />
+</svg>

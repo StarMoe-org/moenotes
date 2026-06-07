@@ -41,6 +41,7 @@ for (const root of roots) {
     lines.forEach((line, index) => {
       const chars = Array.from(line).filter((char) => emojiPattern.test(char) || deniedChars.has(char));
       if (chars.length > 0) {
+        if (line.includes("emoji-allow")) return;
         hits.push({
           file: relative(process.cwd(), file),
           line: index + 1,

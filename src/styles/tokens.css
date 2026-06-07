@@ -1,26 +1,61 @@
 :root {
-  --mn-bg: #fbf7ef;
-  --mn-surface: rgba(248, 241, 224, 0.9);
-  --mn-surface-strong: rgba(255, 250, 239, 0.96);
-  --mn-glass: rgba(248, 241, 224, 0.88);
-  --mn-text: #1a1410;
-  --mn-text-muted: #6b4423;
-  --mn-border: #1a1410;
-  --mn-accent: #e84d2e;
-  --mn-pink: #e89ba8;
-  --mn-cyan: #4a8fa8;
-  --mn-amber: #f4a93c;
-  --mn-yellow: #f4c430;
-  --mn-mint: #7fb069;
-  --mn-cream-deep: #f4ecdb;
-  --mn-paper: #f8f1e0;
-  --mn-ink-soft: #3a2f26;
-  --mn-shadow: 0 2px 4px rgba(26, 20, 16, 0.1), 0 12px 28px -10px rgba(26, 20, 16, 0.25);
-  --mn-shadow-stamp: 3px 3px 0 0 var(--mn-border);
-  --mn-shadow-stamp-sm: 2px 2px 0 0 var(--mn-border);
-  --mn-shadow-stamp-lg: 6px 6px 0 0 var(--mn-border);
-  --mn-font-display: "Archivo Black", "Noto Sans JP", sans-serif;
-  --mn-font-body: "Zen Maru Gothic", "Noto Sans JP", ui-sans-serif, system-ui, sans-serif;
+  /* ── Neutrals ── */
+  --mn-bg: #FAF6F0;
+  --mn-surface: rgba(255, 251, 245, 0.92);
+  --mn-surface-strong: rgba(255, 251, 245, 0.97);
+  --mn-glass: rgba(255, 251, 245, 0.88);
+  --mn-text: #2B2A27;
+  --mn-ink-soft: #4A4843;
+  --mn-text-muted: #8A857C;
+  --mn-border: #2B2A27;
+  --mn-cream-deep: #F3ECE0;
+  --mn-paper: #FFFBF5;
+
+  /* ── Accent / Orange ── */
+  --mn-accent: #E87461;
+  --mn-accent-deep: #C85A47;
+  --mn-accent-soft: #FBE3DC;
+
+  /* ── Pink / Sakura ── */
+  --mn-pink: #F5C4C4;
+  --mn-pink-soft: #FBE8E4;
+
+  /* ── Cyan ── */
+  --mn-cyan: #A5D2E1;
+
+  /* ── Amber / Mustard ── */
+  --mn-amber: #EAD0A6;
+  --mn-peach: #F8D3B8;
+
+  /* ── Yellow ── */
+  --mn-yellow: #F7E9AD;
+
+  /* ── Mint / Moss ── */
+  --mn-mint: #B9D5B1;
+  --mn-mint-deep: #3F5740;
+  --mn-mint-soft: #E4EBDD;
+
+  /* ── Rose ── */
+  --mn-rose: #B85C6B;
+
+  /* ── Shadows ── */
+  --mn-shadow: 0 4px 20px -2px rgba(43, 42, 39, 0.05), 0 2px 6px -1px rgba(43, 42, 39, 0.03);
+  --mn-shadow-stamp: 0 4px 12px -2px rgba(43, 42, 39, 0.06), 0 2px 4px -1px rgba(43, 42, 39, 0.04);
+  --mn-shadow-stamp-sm: 0 2px 6px -1px rgba(43, 42, 39, 0.04), 0 1px 2px -1px rgba(43, 42, 39, 0.02);
+  --mn-shadow-stamp-lg: 0 12px 32px -4px rgba(43, 42, 39, 0.08), 0 4px 12px -2px rgba(43, 42, 39, 0.04);
+
+  /* ── Fonts ── */
+  --mn-font-display-common: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --mn-font-display-sc: "LXGW WenKai Screen", "LXGW WenKai", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --mn-font-body-common: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --mn-font-body-sc: "LXGW WenKai Screen", "LXGW WenKai", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --mn-font-display: var(--mn-font-display-common);
+  --mn-font-body: var(--mn-font-body-common);
   --mn-font-hand: "Caveat", "Patrick Hand", cursive;
   --mn-font-note: "Patrick Hand", "Zen Kurenaido", cursive;
+}
+
+html[data-locale="zh-CN"] {
+  --mn-font-display: var(--mn-font-display-sc);
+  --mn-font-body: var(--mn-font-body-sc);
 }

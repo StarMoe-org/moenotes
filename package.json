@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "astro dev",
+    "dev": "node scripts/clean-dev-cache.mjs && astro dev --force",
+    "dev:fresh": "node scripts/clean-dev-cache.mjs && astro dev --force",
     "build": "astro check && astro build",
     "preview": "astro preview",
     "check": "astro check",
@@ -14,7 +15,9 @@
     "lint:routes": "node scripts/check-route-registry.mjs",
     "lint:arch": "node scripts/check-architecture.mjs",
     "lint:text": "node scripts/scan-hardcoded-ui-text.mjs",
-    "lint:emoji": "node scripts/scan-emoji.mjs"
+    "lint:emoji": "node scripts/scan-emoji.mjs",
+    "fonts:nowar": "python scripts/subset-nowar-font.py",
+    "fonts:inspect": "python scripts/subset-nowar-font.py --inspect"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",

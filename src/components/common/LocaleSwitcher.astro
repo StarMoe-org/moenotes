@@ -10,13 +10,13 @@ interface Props {
 const { locale, pathname } = Astro.props;
 ---
 
-<div class="flex items-center gap-1 rounded-md border-2 border-[var(--mn-border)] bg-[var(--mn-paper)] p-1 text-xs font-bold shadow-[var(--mn-shadow-stamp-sm)]">
+<div class="flex items-center gap-1 rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-paper)] p-1 text-xs font-bold shadow-[var(--mn-shadow-stamp-sm)]">
   {SUPPORTED_LOCALES.map((item) => (
     <a
       href={switchLocalePath(pathname, item)}
       class:list={[
-        "rounded px-2.5 py-1 transition",
-        item === locale ? "bg-[var(--mn-accent)] text-[var(--mn-bg)]" : "text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]",
+        "rounded-full px-2.5 py-1 transition",
+        item === locale ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]",
       ]}
     >
       {LOCALE_LABELS[item]}

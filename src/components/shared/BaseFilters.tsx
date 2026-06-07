@@ -46,14 +46,15 @@ export function FilterSection({ title, children }: FilterSectionProps) {
 // ── FilterToggle ───────────────────────────────────────────────────────────────
 
 export function FilterToggle({ checked, onChange, label }: FilterToggleProps) {
-  const { tapProps, springTransition } = useSpringAnimation();
+  // Square toggle → stamp animation (shadow press effect)
+  const { stampTapProps, springTransition } = useSpringAnimation();
 
   return (
     <motion.button
       onClick={() => onChange(!checked)}
-      {...tapProps}
+      {...stampTapProps}
       transition={springTransition}
-      className="flex w-full items-center justify-between rounded-md border-2 border-[var(--mn-border)] bg-[var(--mn-paper)] px-4 py-3 transition-colors hover:shadow-[var(--mn-shadow-stamp-sm)]"
+      className="flex w-full items-center justify-between rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-paper)] px-5 py-3 transition-colors hover:shadow-[var(--mn-shadow-stamp-sm)]"
     >
       <span className={`text-sm font-bold ${checked ? "text-[var(--mn-text)]" : "text-[var(--mn-text-muted)]"}`}>
         {label}
@@ -90,7 +91,7 @@ export default function BaseFilters({
   const [collapsed, setCollapsed] = useState(true);
 
   return (
-    <div className="overflow-hidden rounded-md border-[2.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]">
+    <div className="overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]">
       {/* Header */}
       <div
         className="flex cursor-pointer select-none items-center justify-between border-b-2 border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_10%,transparent)] to-transparent px-5 py-4 lg:cursor-default"
@@ -135,7 +136,7 @@ export default function BaseFilters({
             placeholder={searchPlaceholder ?? "Search..."}
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full rounded-md border-2 border-[var(--mn-border)] bg-[var(--mn-surface)] py-2.5 pl-10 pr-4 text-sm text-[var(--mn-text)] placeholder:text-[var(--mn-text-muted)] focus:border-[var(--mn-accent)] focus:bg-[var(--mn-paper)] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_oklab,var(--mn-accent)_20%,transparent)]"
+            className="w-full rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-surface)] py-2.5 pl-11 pr-5 text-sm text-[var(--mn-text)] placeholder:text-[var(--mn-text-muted)] focus:border-[var(--mn-accent)] focus:bg-[var(--mn-paper)] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_oklab,var(--mn-accent)_20%,transparent)]"
           />
         </div>
       </div>
@@ -149,7 +150,7 @@ export default function BaseFilters({
           {hasActiveFilters && onReset && (
             <button
               onClick={onReset}
-              className="flex w-full items-center justify-center gap-2 rounded-md border-2 border-[var(--mn-border)] bg-[var(--mn-surface)] py-2.5 text-sm font-medium text-[var(--mn-text-muted)] transition hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]"
+              className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-surface)] py-2.5 text-sm font-medium text-[var(--mn-text-muted)] transition hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />

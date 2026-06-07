@@ -1,251 +1,129 @@
-@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Zen+Kurenaido&family=Zen+Maru+Gothic:wght@400;500;700;900&family=Caveat:wght@400;700&family=Patrick+Hand&family=Noto+Sans+JP:wght@400;500;700;900&family=Shippori+Antique&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --color-cream: #FBF7EF;
-  --color-cream-deep: #F4ECDB;
-  --color-paper: #F8F1E0;
-  --color-ink: #1A1410;
-  --color-ink-soft: #3A2F26;
-  --color-burnt: #C8412B;
-  --color-tomato: #E84D2E;
-  --color-amber: #F4A93C;
-  --color-yellow: #F4C430;
-  --color-mint: #7FB069;
-  --color-forest: #2D4A2B;
-  --color-rose: #E89BA8;
-  --color-cocoa: #6B4423;
-  --color-rust: #A8431E;
+  --color-cream: #FAF6F0;
+  --color-cream-2: #F3ECE0;
+  --color-paper: #FFFBF5;
+  --color-ink: #2B2A27;
+  --color-ink-soft: #4A4843;
+  --color-ink-muted: #8A857C;
+  --color-line: #E8E0D2;
+  --color-coral: #E87461;
+  --color-coral-deep: #C85A47;
+  --color-coral-soft: #FBE3DC;
+  --color-peach: #F4B183;
+  --color-sakura: #F5C4C4;
+  --color-sakura-soft: #FBE8E4;
+  --color-moss: #5B7553;
+  --color-moss-deep: #3F5740;
+  --color-moss-soft: #E4EBDD;
+  --color-mustard: #D8A24A;
+  --color-rose: #B85C6B;
 
-  --color-mygo: #5A6B8C;
-  --color-mujica: #2A1B3D;
-  --color-mewtype: #D63A8C;
-  --color-millsage: #4A8FA8;
-  --color-ikka: #B85042;
-
-  --font-display: "Archivo Black", "Noto Sans JP", sans-serif;
-  --font-jp: "Zen Maru Gothic", "Noto Sans JP", sans-serif;
-  --font-hand: "Caveat", "Patrick Hand", cursive;
-  --font-note: "Patrick Hand", "Zen Kurenaido", cursive;
-  --font-antique: "Shippori Antique", "Zen Maru Gothic", serif;
-
-  --shadow-stamp: 3px 3px 0 0 #1A1410;
-  --shadow-stamp-sm: 2px 2px 0 0 #1A1410;
-  --shadow-stamp-lg: 6px 6px 0 0 #1A1410;
-  --shadow-paper: 0 1px 2px rgba(26,20,16,.08), 0 8px 24px -8px rgba(26,20,16,.18);
-  --shadow-card: 0 2px 4px rgba(26,20,16,.1), 0 12px 28px -10px rgba(26,20,16,.25);
+  --font-serif: "Fraunces", "Noto Serif JP", serif;
+  --font-jp: "Zen Kaku Gothic New", "Noto Serif JP", sans-serif;
+  --font-sans: "Inter", "Zen Kaku Gothic New", system-ui, sans-serif;
 }
 
-* {
-  -webkit-tap-highlight-color: transparent;
-}
-
-html, body {
-  background: var(--color-cream);
-  color: var(--color-ink);
-  font-family: var(--font-jp);
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+html {
+  scroll-behavior: smooth;
 }
 
 body {
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   background-image:
-    radial-gradient(rgba(200,65,43,0.04) 1px, transparent 1px),
-    radial-gradient(rgba(26,20,16,0.03) 1px, transparent 1px);
-  background-size: 24px 24px, 8px 8px;
-  background-position: 0 0, 4px 4px;
+    radial-gradient(circle at 1px 1px, rgba(43, 42, 39, 0.06) 1px, transparent 0);
+  background-size: 28px 28px;
 }
 
-/* === Paper noise overlay === */
-.paper-grain {
-  position: relative;
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
 }
-.paper-grain::after {
+::-webkit-scrollbar-track {
+  background: var(--color-cream);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 8px;
+  border: 2px solid var(--color-cream);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ink-muted);
+}
+
+/* Hide scrollbar utility but keep scrollable */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Paper texture */
+.paper-texture {
+  background-color: var(--color-paper);
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(43,42,39,0.015) 2px, rgba(43,42,39,0.015) 3px),
+    repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(43,42,39,0.015) 2px, rgba(43,42,39,0.015) 3px);
+}
+
+/* Subtle grain overlay */
+.grain::after {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: .35;
+  opacity: 0.4;
   mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.4  0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0.12 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.17  0 0 0 0 0.16  0 0 0 0 0.15  0 0 0 0.08 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
 }
 
-/* === Staff lines (五线谱) === */
-.staff-bg {
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent 12px,
-    rgba(26,20,16,0.07) 12px,
-    rgba(26,20,16,0.07) 14px
-  );
-  background-size: 100% 70px;
+/* Underline animation */
+.link-underline {
+  background-image: linear-gradient(var(--color-coral), var(--color-coral));
+  background-size: 0% 1px;
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  transition: background-size 0.4s ease;
+}
+.link-underline:hover {
+  background-size: 100% 1px;
 }
 
-/* === Halftone dots === */
-.halftone {
-  background-image: radial-gradient(currentColor 1.2px, transparent 1.5px);
-  background-size: 8px 8px;
+/* Vertical text (JP style) */
+.vertical-jp {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  letter-spacing: 0.4em;
 }
 
-/* === Diagonal stripes === */
-.stripes-warm {
-  background-image: repeating-linear-gradient(
-    45deg,
-    var(--color-tomato) 0,
-    var(--color-tomato) 6px,
-    var(--color-amber) 6px,
-    var(--color-amber) 12px
-  );
-}
-
-.stripes-cream {
-  background-image: repeating-linear-gradient(
-    45deg,
-    rgba(26,20,16,.05) 0,
-    rgba(26,20,16,.05) 2px,
-    transparent 2px,
-    transparent 6px
-  );
-}
-
-/* === Torn edge === */
-.torn-top {
-  --mask:
-    radial-gradient(8px at 8px 100%, #0000 98%, #000) -8px 0/16px 100%,
-    radial-gradient(8px at 8px 100%, #0000 98%, #000) -8px 0/16px 100%;
-  -webkit-mask:
-    radial-gradient(8px at 8px 0, transparent 98%, #000) -8px 0/16px 100%;
-          mask:
-    radial-gradient(8px at 8px 0, transparent 98%, #000) -8px 0/16px 100%;
-}
-
-.torn-bottom {
-  -webkit-mask:
-    radial-gradient(8px at 8px 100%, transparent 98%, #000) -8px 0/16px 100%;
-          mask:
-    radial-gradient(8px at 8px 100%, transparent 98%, #000) -8px 0/16px 100%;
-}
-
-/* === Marquee === */
+/* Marquee */
 @keyframes marquee {
   from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
+  to { transform: translateX(-50%); }
 }
-.marquee-track {
-  animation: marquee 32s linear infinite;
-}
-
-/* === Stamp pulse === */
-@keyframes stamp {
-  0%   { transform: rotate(-6deg) scale(1.6); opacity: 0; }
-  60%  { transform: rotate(-6deg) scale(.95); opacity: 1; }
-  100% { transform: rotate(-6deg) scale(1);   opacity: 1; }
-}
-.stamp-anim {
-  animation: stamp .6s cubic-bezier(.2,.9,.3,1.2) both;
+.animate-marquee {
+  animation: marquee 40s linear infinite;
 }
 
-/* === Wobble === */
-@keyframes wobble {
-  0%, 100% { transform: rotate(-2deg); }
-  50%      { transform: rotate(2deg); }
+/* Soft float */
+@keyframes softfloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }
-.wobble:hover { animation: wobble .4s ease-in-out; }
-
-/* === Tape effect === */
-.tape {
-  position: relative;
-}
-.tape::before {
-  content: "";
-  position: absolute;
-  top: -10px; left: 50%;
-  width: 70px; height: 18px;
-  background: rgba(244, 201, 48, .75);
-  border-left: 1px dashed rgba(0,0,0,.15);
-  border-right: 1px dashed rgba(0,0,0,.15);
-  transform: translateX(-50%) rotate(-3deg);
-  box-shadow: 0 1px 2px rgba(0,0,0,.08);
+.animate-softfloat {
+  animation: softfloat 5s ease-in-out infinite;
 }
 
-/* === Custom scrollbar === */
-::-webkit-scrollbar { width: 12px; height: 12px; }
-::-webkit-scrollbar-track { background: var(--color-cream-deep); }
-::-webkit-scrollbar-thumb {
-  background: var(--color-ink);
-  border: 3px solid var(--color-cream-deep);
-}
-::-webkit-scrollbar-thumb:hover { background: var(--color-tomato); }
-
-/* === Selection === */
+/* Selection */
 ::selection {
-  background: var(--color-tomato);
-  color: var(--color-cream);
-}
-
-/* === Hand-drawn underline === */
-.hand-underline {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 8' preserveAspectRatio='none'><path d='M0 4 Q 25 0, 50 4 T 100 4' stroke='%23E84D2E' stroke-width='2.5' fill='none' stroke-linecap='round'/></svg>");
-  background-repeat: no-repeat;
-  background-position: 0 100%;
-  background-size: 100% 8px;
-  padding-bottom: 6px;
-}
-
-.hand-underline-yellow {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 8' preserveAspectRatio='none'><path d='M0 4 Q 25 0, 50 4 T 100 4' stroke='%23F4C430' stroke-width='3' fill='none' stroke-linecap='round'/></svg>");
-  background-repeat: no-repeat;
-  background-position: 0 100%;
-  background-size: 100% 8px;
-  padding-bottom: 6px;
-}
-
-/* === Sticker rotation === */
-.sticker-1 { transform: rotate(-4deg); }
-.sticker-2 { transform: rotate(3deg); }
-.sticker-3 { transform: rotate(-2deg); }
-.sticker-4 { transform: rotate(5deg); }
-.sticker-5 { transform: rotate(-5deg); }
-
-/* === Filter card for old photo feel === */
-.filter-print {
-  filter: contrast(1.05) saturate(.95);
-}
-
-/* === Zine cut corners === */
-.clip-corner {
-  clip-path: polygon(0 12px, 12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
-}
-
-.clip-corner-2 {
-  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
-}
-
-/* === Nav link underline reveal === */
-.nav-link {
-  position: relative;
-}
-.nav-link::after {
-  content: "";
-  position: absolute;
-  left: 0; right: 0; bottom: -4px;
-  height: 3px;
-  background: var(--color-tomato);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform .25s ease;
-}
-.nav-link:hover::after,
-.nav-link.active::after {
-  transform: scaleX(1);
-}
-
-/* === Smooth focus === */
-a, button {
-  transition: transform .15s ease, color .15s ease, background-color .15s ease;
-}
-
-button:active, a:active {
-  transform: translate(1px, 1px);
+  background: var(--color-coral-soft);
+  color: var(--color-coral-deep);
 }

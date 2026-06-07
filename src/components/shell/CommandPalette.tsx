@@ -32,11 +32,11 @@ export default function CommandPalette({ locale }: CommandPaletteProps) {
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-start bg-black/35 px-4 pt-[12vh] backdrop-blur-[2px]" onClick={close}>
-      <div className="w-full max-w-2xl overflow-hidden rounded-md border-[2.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]" onClick={(event) => event.stopPropagation()}>
-        <input ref={inputRef} value={query} onChange={(event) => setQuery(event.currentTarget.value)} placeholder={t(locale, "shell.commandPlaceholder")} className="w-full border-b-[2.5px] border-[var(--mn-border)] bg-[var(--mn-surface-strong)] px-6 py-4 text-lg font-bold text-[var(--mn-text)] outline-none placeholder:text-[var(--mn-text-muted)]" />
+      <div className="w-full max-w-2xl overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]" onClick={(event) => event.stopPropagation()}>
+        <input ref={inputRef} value={query} onChange={(event) => setQuery(event.currentTarget.value)} placeholder={t(locale, "shell.commandPlaceholder")} className="w-full border-b-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface-strong)] px-6 py-4 text-lg font-bold text-[var(--mn-text)] outline-none placeholder:text-[var(--mn-text-muted)]" />
         <div className="max-h-[50vh] overflow-y-auto p-2">
           {filtered.length === 0 ? <p className="px-4 py-8 text-center text-sm font-bold text-[var(--mn-text-muted)]">{t(locale, "shell.noCommandResults")}</p> : filtered.map((item) => (
-            <a key={item.id} href={localizePath(item.path, locale)} className="block rounded border-2 border-transparent px-4 py-3 text-sm text-[var(--mn-text)] hover:border-[var(--mn-border)] hover:bg-[var(--mn-cream-deep)] hover:shadow-[var(--mn-shadow-stamp-sm)]" onClick={close}>
+            <a key={item.id} href={localizePath(item.path, locale)} className="block rounded-full border-2 border-transparent px-5 py-3 text-sm text-[var(--mn-text)] hover:border-[var(--mn-border)] hover:bg-[var(--mn-cream-deep)] hover:shadow-[var(--mn-shadow-stamp-sm)]" onClick={close}>
               <span className="font-black">{t(locale, item.labelKey)}</span>
               <span className="ml-3 text-xs font-bold text-[var(--mn-text-muted)]">{item.path}</span>
             </a>

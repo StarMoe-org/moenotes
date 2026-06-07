@@ -1,0 +1,6 @@
+# Extra Simplified Chinese characters that should remain in the SC-only subset.
+# Add future zh-CN MasterData names, translated titles, UI labels, and punctuation here.
+
+Moenotes MoeSekai BanG Dream Our Notes
+角色成员乐队乐团歌曲乐曲音乐活动公告剧情主线章节卡片稀有度属性加成技能等级排行筛选搜索排序收藏解锁奖励任务登录设置语言主题资料库工具箱
+简体中文页面字体专用本地嵌入缓存预加载默认镜像线路官方资源来源版本清除刷新打开关闭展开折叠自动浅色深色跟随系统

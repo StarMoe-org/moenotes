@@ -1,0 +1,10 @@
+# Extra characters that should remain in the common zh-CN + ja-JP subset.
+# Add future MasterData names, character names, song names, event names, or punctuation here.
+
+Moenotes MoeSekai BanG Dream Our Notes
+々ヶゝゞヽヾー・＝〜「」『』【】（）！？、。￥
+角色成员乐队乐团歌曲乐曲音乐活动公告剧情主线章节卡片稀有度属性属性加成技能等级排行筛选搜索排序收藏解锁奖励任务登录设置语言主题资料库工具箱
+メンバーキャラクターバンド楽曲音楽イベントお知らせストーリーメインカードレアリティ属性スキルレベルランキング検索並び替えお気に入り報酬ミッションログイン設定言語テーマデータベースツール
+Poppin'Party Afterglow Pastel Palettes Roselia ハロー、ハッピーワールド！ Morfonica RAISE A SUILEN MyGO!!!!! Ave Mujica
+戸山香澄花園たえ牛込りみ山吹沙綾市ヶ谷有咲美竹蘭青葉モカ上原ひまり宇田川巴羽沢つぐみ丸山彩氷川日菜白鷺千聖大和麻弥若宮イヴ湊友希那氷川紗夜今井リサ宇田川あこ白金燐子弦巻こころ瀬田薫北沢はぐみ松原花音奥沢美咲倉田ましろ桐ヶ谷透子広町七深二葉つくし八潮瑠唯レイヤロックマスキングパレオチュチュ
+高松燈千早愛音要楽奈長崎そよ椎名立希三角初華若葉睦八幡海鈴祐天寺にゃむ豊川祥子

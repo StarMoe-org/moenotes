@@ -9,29 +9,21 @@ interface Props {
 }
 
 const { locale, pathname } = Astro.props;
-const marqueeItems = ["Moenotes preview", "Our Notes viewer", "MoeSekai project", "Route registry", "i18n ready", "MasterData cache"];
 ---
 
-<header class="fixed inset-x-0 top-0 z-40">
-  <div class="overflow-hidden border-b-2 border-[var(--mn-border)] bg-[var(--mn-border)] py-1.5 text-xs font-black uppercase tracking-[0.22em] text-[var(--mn-bg)]">
-    <div class="mn-marquee-track flex w-max gap-10 whitespace-nowrap">
-      {Array.from({ length: 2 }).map(() => (
-        <div class="flex shrink-0 gap-10">
-          {marqueeItems.map((item) => <span class="shrink-0">- {item} -</span>)}
-        </div>
-      ))}
-    </div>
-  </div>
-
-  <div class="border-b-[2.5px] border-[var(--mn-border)] bg-[var(--mn-bg)]/95 px-4 py-3 shadow-[0_4px_0_0_var(--mn-border)] backdrop-blur-sm">
-    <div class="mx-auto flex max-w-7xl items-center gap-3">
+<header class="fixed inset-x-4 top-4 z-40">
+  <div class="rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-bg)]/95 px-3 py-2 shadow-[var(--mn-shadow)] backdrop-blur-sm sm:px-6">
+    <div class="flex items-center gap-3">
       <slot name="hamburger" />
 
       <a href={localizePath("/", locale)} class="group flex items-center gap-3 text-[var(--mn-text)]">
-        <span class="grid h-11 w-11 place-items-center rounded-md border-[2.5px] border-[var(--mn-border)] bg-[var(--mn-accent)] font-[var(--mn-font-display)] text-lg text-[var(--mn-bg)] shadow-[var(--mn-shadow-stamp)] transition group-hover:-rotate-3">M!</span>
+        <div class="mn-stamp-press relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-accent-deep)] shadow-[var(--mn-shadow-stamp)]">
+          <span class="font-serif text-xl font-bold text-[var(--mn-paper)] select-none">M</span>
+          <span class="absolute right-0.5 top-0.5 h-3.5 w-3.5 rounded-full border-[1.5px] border-[var(--mn-paper)] bg-[var(--mn-mint)]"></span>
+        </div>
         <span class="leading-none">
-          <span class="block font-[var(--mn-font-display)] text-xl tracking-tight sm:text-2xl">Moenotes</span>
-          <span class="hidden font-[var(--mn-font-hand)] text-sm text-[var(--mn-text-muted)] sm:block">bangdream ournotes viewer</span>
+          <span class="block font-[var(--mn-font-display)] text-xl font-black tracking-tight sm:text-2xl">Moenotes</span>
+          <span class="hidden font-[var(--mn-font-display)] text-[10px] uppercase tracking-[0.2em] text-[var(--mn-text-muted)] sm:block">OURNOTES VIEWER</span>
         </span>
       </a>
 
@@ -41,3 +33,4 @@ const marqueeItems = ["Moenotes preview", "Our Notes viewer", "MoeSekai project"
     </div>
   </div>
 </header>
+

@@ -103,17 +103,14 @@ export default function Modal({
 
           {/* Dialog */}
           <motion.div
-            className={`relative w-full ${sizeClasses[size]} max-h-[calc(100vh-2rem)] sm:max-h-[85vh] flex flex-col overflow-hidden rounded-md border-[2.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]`}
+            className={`relative w-full ${sizeClasses[size]} max-h-[calc(100vh-2rem)] sm:max-h-[85vh] flex flex-col overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]`}
             initial={panelInitial}
             animate={panelAnimate}
             exit={panelExit}
             transition={modalTransition}
           >
-            {/* Tape decoration */}
-            <div className="pointer-events-none absolute left-1/2 -top-[10px] z-10 h-[18px] w-[70px] -translate-x-1/2 -rotate-[3deg] border-l border-r border-dashed border-black/20" style={{ background: "color-mix(in oklab, var(--mn-yellow) 75%, transparent)" }} />
-
             {/* Header */}
-            <div className="flex shrink-0 items-center justify-between border-b-[2.5px] border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_8%,transparent)] to-transparent px-5 py-3.5">
+            <div className="flex shrink-0 items-center justify-between border-b-[1.5px] border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_8%,transparent)] to-transparent px-5 py-3.5">
               <h2 className="flex items-center gap-2 font-[var(--mn-font-display)] text-base tracking-tight text-[var(--mn-text)]">
                 <span className="h-6 w-1.5 rounded-full bg-[var(--mn-accent)]" />
                 {title}
@@ -122,7 +119,7 @@ export default function Modal({
                 {headerActions}
                 <button
                   onClick={onClose}
-                  className="grid h-8 w-8 place-items-center rounded border-2 border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]"
+                  className="grid h-8 w-8 place-items-center rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]"
                   aria-label="Close"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round">

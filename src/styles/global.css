@@ -1,7 +1,43 @@
-@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Zen+Kurenaido&family=Zen+Maru+Gothic:wght@400;500;700;900&family=Caveat:wght@400;700&family=Patrick+Hand&family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Zen+Kurenaido&family=Caveat:wght@400;700&family=Patrick+Hand&display=swap');
 @import "tailwindcss";
 @import "./tokens.css";
 @import "./themes.css";
+
+@font-face {
+  font-family: "Moenotes Rounded SC";
+  src: url("/fonts/MoenotesRoundedSC-400.woff2") format("woff2");
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400 600;
+  unicode-range: U+0020-024F, U+0300-052F, U+2000-27BF, U+3000-303F, U+4E00-9FFF, U+FE10-FE6F, U+FF00-FFEF;
+}
+
+@font-face {
+  font-family: "Moenotes Rounded SC";
+  src: url("/fonts/MoenotesRoundedSC-700.woff2") format("woff2");
+  font-display: swap;
+  font-style: normal;
+  font-weight: 700 900;
+  unicode-range: U+0020-024F, U+0300-052F, U+2000-27BF, U+3000-303F, U+4E00-9FFF, U+FE10-FE6F, U+FF00-FFEF;
+}
+
+@font-face {
+  font-family: "Moenotes Rounded";
+  src: url("/fonts/MoenotesRounded-400.woff2") format("woff2");
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400 600;
+  unicode-range: U+0020-024F, U+0300-052F, U+2000-27BF, U+3000-33FF, U+4E00-9FFF, U+FE10-FE6F, U+FF00-FFEF;
+}
+
+@font-face {
+  font-family: "Moenotes Rounded";
+  src: url("/fonts/MoenotesRounded-700.woff2") format("woff2");
+  font-display: swap;
+  font-style: normal;
+  font-weight: 700 900;
+  unicode-range: U+0020-024F, U+0300-052F, U+2000-27BF, U+3000-33FF, U+4E00-9FFF, U+FE10-FE6F, U+FF00-FFEF;
+}
 
 * {
   box-sizing: border-box;
@@ -21,26 +57,10 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
-  background:
-    radial-gradient(circle at 10% 8%, color-mix(in oklab, var(--mn-accent) 12%, transparent), transparent 22rem),
-    radial-gradient(circle at 86% 12%, color-mix(in oklab, var(--mn-amber) 18%, transparent), transparent 24rem),
-    radial-gradient(circle at 75% 86%, color-mix(in oklab, var(--mn-cyan) 12%, transparent), transparent 26rem),
-    radial-gradient(rgba(200, 65, 43, 0.045) 1px, transparent 1px),
-    radial-gradient(rgba(26, 20, 16, 0.035) 1px, transparent 1px),
-    var(--mn-bg);
-  background-position: 0 0, 0 0, 0 0, 0 0, 4px 4px, 0 0;
-  background-size: auto, auto, auto, 24px 24px, 8px 8px, auto;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.28;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.4  0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0.12 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  background-color: var(--mn-bg);
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(43, 42, 39, 0.06) 1px, transparent 0);
+  background-size: 28px 28px;
 }
 
 [data-animation-level="off"] *,
@@ -51,36 +71,66 @@ body::before {
 }
 
 ::selection {
-  background: var(--mn-accent);
-  color: var(--mn-bg);
+  background: color-mix(in oklab, var(--mn-accent) 18%, transparent);
+  color: var(--mn-text);
 }
 
 .mn-glass,
 .mn-paper {
   position: relative;
-  border: 2.5px solid var(--mn-border);
+  border: 1.5px solid var(--mn-border);
   background: var(--mn-glass);
   box-shadow: var(--mn-shadow);
   backdrop-filter: none;
+  border-radius: 1.5rem;
 }
 
 .mn-card,
 .mn-sticker {
-  border: 2.5px solid var(--mn-border);
+  border: 1.5px solid var(--mn-border);
   background: var(--mn-paper);
   box-shadow: var(--mn-shadow-stamp-lg);
+  border-radius: 1.5rem;
 }
 
 .mn-stamp {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid var(--mn-border);
-  background: var(--mn-accent);
-  color: var(--mn-bg);
+  border: 1.5px solid var(--mn-border);
+  background: var(--mn-accent-deep);
+  color: var(--mn-paper);
   box-shadow: var(--mn-shadow-stamp-sm);
   font-family: var(--mn-font-display);
   letter-spacing: 0.06em;
+  border-radius: 9999px;
+}
+
+/* ── Stamp press interaction (circular / square buttons) ──────
+ * Hover: shift right-down + shadow shrink  — simulates pressing into paper.
+ * Pair with resting shadow: --mn-shadow-stamp (use .mn-stamp-press)
+ *                          or --mn-shadow-stamp-lg (use .mn-stamp-press-lg)
+ * ─────────────────────────────────────────────────────────── */
+.mn-stamp-press {
+  --_stamp-rest: var(--mn-shadow-stamp);
+  --_stamp-hover: var(--mn-shadow-stamp-sm);
+  box-shadow: var(--_stamp-rest);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.mn-stamp-press:hover {
+  transform: translate(1px, 1px);
+  box-shadow: var(--_stamp-hover);
+}
+
+.mn-stamp-press-lg {
+  --_stamp-rest: var(--mn-shadow-stamp-lg);
+  --_stamp-hover: var(--mn-shadow-stamp-sm);
+  box-shadow: var(--_stamp-rest);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.mn-stamp-press-lg:hover {
+  transform: translate(1px, 1px);
+  box-shadow: var(--_stamp-hover);
 }
 
 .mn-focus {
@@ -144,7 +194,7 @@ body::before {
 }
 
 .mn-hand-underline {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 8' preserveAspectRatio='none'><path d='M0 4 Q 25 0, 50 4 T 100 4' stroke='%23E84D2E' stroke-width='2.5' fill='none' stroke-linecap='round'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 8' preserveAspectRatio='none'><path d='M0 4 Q 25 0, 50 4 T 100 4' stroke='%23E87461' stroke-width='2' fill='none' stroke-linecap='round'/></svg>");
   background-repeat: no-repeat;
   background-position: 0 100%;
   background-size: 100% 8px;
@@ -173,13 +223,14 @@ body::before {
   min-width: 0;
 }
 
-::-webkit-scrollbar { width: 12px; height: 12px; }
-::-webkit-scrollbar-track { background: var(--mn-cream-deep); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--mn-bg); }
 ::-webkit-scrollbar-thumb {
-  background: var(--mn-border);
-  border: 3px solid var(--mn-cream-deep);
+  background: var(--mn-cream-deep);
+  border-radius: 8px;
+  border: 2px solid var(--mn-bg);
 }
-::-webkit-scrollbar-thumb:hover { background: var(--mn-accent); }
+::-webkit-scrollbar-thumb:hover { background: var(--mn-text-muted); }
 
 a, button {
   transition: transform 0.15s ease, color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
@@ -189,3 +240,21 @@ button:active,
 a:active {
   transform: translate(1px, 1px);
 }
+
+/* Thinner Typography Overrides */
+.font-black {
+  font-weight: 600 !important;
+}
+.font-bold {
+  font-weight: 500 !important;
+}
+
+/* Hide scrollbar utility but keep scrollable */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

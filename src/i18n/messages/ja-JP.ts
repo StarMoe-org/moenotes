@@ -96,7 +96,7 @@ export const jaJP = {
     title: "デザインシステム",
     subtitle: "Moenotes ビジュアル言語リファレンス —— カラー、タイポグラフィ、コンポーネント、インタラクション。",
     sections: { colors: "カラー", typography: "タイポグラフィ", components: "コンポーネント", modals: "モーダル", filters: "フィルター", animations: "アニメーション" },
-    colors: { accent: "アクセント", pink: "ピンク", cyan: "シアン", amber: "アンバー", mint: "ミント", yellow: "イエロー", paper: "用紙", background: "背景", surface: "サーフェス", border: "ボーダー", text: "テキスト", muted: "ミュート" },
+    colors: { accent: "アクセント", "accent-deep": "ディープアクセント", "accent-soft": "ソフトアクセント", pink: "ピンク", "pink-soft": "ソフトピンク", cyan: "シアン", amber: "アンバー", peach: "ピーチ", mint: "ミント", "mint-deep": "ディープミント", "mint-soft": "ソフトミント", yellow: "イエロー", rose: "ローズ", "cream-deep": "ディープクリーム", "ink-soft": "ソフトインク", paper: "用紙", background: "背景", surface: "サーフェス", border: "ボーダー", text: "テキスト", muted: "ミュート" },
     typography: { display: "ディスプレイ", body: "本文", hand: "手書き", note: "ノート" },
     components: { buttons: "ボタン", inputs: "入力", badges: "バッジ＆スタンプ", cards: "カード", select: "セレクト", checkbox: "チェックボックス", textures: "テクスチャ", primary: "プライマリ", outline: "アウトライン", ghost: "ゴースト", stamp: "スタンプ", selectPlaceholder: "選択してください...", optA: "オプション A", optB: "オプション B", optC: "オプション C" },
     modals: { openSm: "小モーダル", openMd: "中モーダル", openLg: "大モーダル", openXl: "特大モーダル", title: "モーダル例", body: "汎用モーダルコンポーネントのデモです。複数のサイズバリアントに対応。", currentSize: "現在のサイズ", copyModal: "コピーモーダル", copyModalTitle: "画像プレビュー", copy: "コピー", save: "保存" },
