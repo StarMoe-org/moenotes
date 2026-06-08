@@ -10,60 +10,189 @@ interface Props {
   locale: AppLocale;
   pathname: string;
   detailLabel?: string;
+  mode?: "desktop" | "mobile";
 }
 
-const { locale, pathname, detailLabel } = Astro.props;
+const { locale, pathname, detailLabel, mode = "desktop" } = Astro.props;
 const crumbs = buildBreadcrumbs(pathname, locale, detailLabel ? { label: detailLabel } : undefined);
 const match = findRouteMatch(pathname);
 const groups = getNavigationGroups();
-const visibleCrumbs = crumbs.slice(1);
+const visibleCrumbs = crumbs.slice(1).map((crumb) => ({ ...crumb }));
+if (match && match.isGroupLanding) {
+  const children = getNavChildren(match.item);
+  if (children.length > 0) {
+    visibleCrumbs.push({
+      id: "__placeholder__",
+      label: "...",
+      href: "",
+      current: true,
+    });
+    const prevCrumb = visibleCrumbs[visibleCrumbs.length - 2];
+    if (prevCrumb) {
+      prevCrumb.current = false;
+    }
+  }
+}
 
 function getOptionsForCrumb(crumb: BreadcrumbItem): AppRoute[] {
-  if (match?.group && crumb.id === match.group.id) return groups;
-  if (match?.group && crumb.id === match.item.id && match.item.id !== match.group.id) return getNavChildren(match.group);
+  if (!match) return [];
+  if (crumb.id === "__placeholder__") {
+    return getNavChildren(match.item);
+  }
+  const isGroupCrumb = match.isGroupLanding
+    ? crumb.id === match.item.id
+    : Boolean(match.group && crumb.id === match.group.id);
+  if (isGroupCrumb) return groups;
+
+  const isItemCrumb = !match.isGroupLanding
+    ? Boolean(match.group && crumb.id === match.item.id && match.item.id !== match.group.id)
+    : false;
+  if (isItemCrumb && match.group) return getNavChildren(match.group);
+
   return [];
 }
 ---
 
-<nav class="hidden min-w-0 items-center gap-1 text-sm font-bold text-[var(--mn-text-muted)] md:flex" aria-label="Breadcrumb">
-  {visibleCrumbs.map((crumb) => {
-    const options = getOptionsForCrumb(crumb);
-    return (
-      <>
-        <span class="font-black text-[var(--mn-accent-deep)]">/</span>
-        <div class="flex min-w-0 items-center gap-1">
-          <a
-            href={crumb.href}
-            class:list={["inline-block truncate rounded-full px-3 py-1 transition hover:bg-[var(--mn-cream-deep)]", crumb.current ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : ""]}
-            aria-current={crumb.current ? "page" : undefined}
-            aria-label={crumb.label}
-          >
-            {crumb.label}
-          </a>
-          {options.length > 0 && (
-            <details class="relative shrink-0">
-              <summary class="grid h-7 w-7 place-items-center rounded-full border-2 border-transparent list-none hover:border-[var(--mn-border)] hover:bg-[var(--mn-cream-deep)]" aria-label={t(locale, crumb.id === match?.group?.id ? "shell.breadcrumbExpandGroup" : "shell.breadcrumbExpandItems")}>
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
-              </summary>
-              <div class="absolute left-0 top-full z-50 mt-2 min-w-52 rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp-lg)]">
-                {options.map((item) => {
-                  const active = item.id === crumb.id;
-                  return (
-                    <a
-                      href={localizePath(item.path, locale)}
-                      class:list={["block rounded-full px-4 py-2 text-sm font-bold hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]", active ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)]"]}
-                      aria-current={active ? "page" : undefined}
-                      aria-label={t(locale, item.labelKey)}
-                    >
-                      {t(locale, item.labelKey)}
-                    </a>
-                  );
-                })}
-              </div>
-            </details>
-          )}
-        </div>
-      </>
-    );
-  })}
-</nav>
+{mode === "mobile" ? (
+  <nav class="flex items-center text-xs font-bold text-[var(--mn-text-muted)] max-w-full" aria-label="Breadcrumb">
+
+    <div class="flex items-center gap-1 min-w-0 overflow-visible">
+      {visibleCrumbs.map((crumb, idx) => {
+        const options = getOptionsForCrumb(crumb);
+        const isPlaceholder = crumb.id === "__placeholder__";
+        return (
+          <>
+            {idx > 0 && <span class="font-black text-[var(--mn-accent-deep)] select-none">/</span>}
+            <div class="flex min-w-0 items-center gap-0.5 overflow-visible">
+              {isPlaceholder ? (
+                options.length > 0 && (
+                  <details class="relative shrink-0 overflow-visible">
+                    <summary class="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-bold text-[var(--mn-text-muted)] cursor-pointer list-none transition hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]" aria-label="Select subpage">
+                      <span>...</span>
+                      <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+                    </summary>
+                    <div class="absolute left-0 top-full z-50 mt-1 min-w-44 rounded-xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-1.5 shadow-[var(--mn-shadow-stamp-lg)]">
+                      {options.map((item) => (
+                        <a
+                          href={localizePath(item.path, locale)}
+                          class="block rounded-full px-3 py-1.5 text-xs font-bold text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]"
+                          aria-label={t(locale, item.labelKey)}
+                        >
+                          {t(locale, item.labelKey)}
+                        </a>
+                      ))}
+                    </div>
+                  </details>
+                )
+              ) : (
+                <>
+                  <a
+                    href={crumb.href}
+                    class:list={[
+                      "inline-block truncate rounded-full px-2 py-0.5 transition hover:bg-[var(--mn-cream-deep)] min-w-0",
+                      crumb.current ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : ""
+                    ]}
+                    aria-current={crumb.current ? "page" : undefined}
+                    aria-label={crumb.label}
+                  >
+                    {crumb.label}
+                  </a>
+                  {options.length > 0 && (
+                    <details class="relative shrink-0 overflow-visible">
+                      <summary class="grid h-5 w-5 place-items-center rounded-full border border-transparent list-none hover:border-[var(--mn-border)] hover:bg-[var(--mn-cream-deep)]" aria-label={t(locale, crumb.id === match?.group?.id ? "shell.breadcrumbExpandGroup" : "shell.breadcrumbExpandItems")}>
+                        <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+                      </summary>
+                      <div class="absolute left-0 top-full z-50 mt-1 min-w-44 rounded-xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-1.5 shadow-[var(--mn-shadow-stamp-lg)]">
+                        {options.map((item) => {
+                          const active = item.id === crumb.id;
+                          return (
+                            <a
+                              href={localizePath(item.path, locale)}
+                              class:list={["block rounded-full px-3 py-1.5 text-xs font-bold hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]", active ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)]"]}
+                              aria-current={active ? "page" : undefined}
+                              aria-label={t(locale, item.labelKey)}
+                            >
+                              {t(locale, item.labelKey)}
+                            </a>
+                          );
+                        })}
+                      </div>
+                    </details>
+                  )}
+                </>
+              )}
+            </div>
+          </>
+        );
+      })}
+    </div>
+  </nav>
+) : (
+  <nav class="hidden min-w-0 items-center gap-1 text-sm font-bold text-[var(--mn-text-muted)] md:flex" aria-label="Breadcrumb">
+    {visibleCrumbs.map((crumb) => {
+      const options = getOptionsForCrumb(crumb);
+      const isPlaceholder = crumb.id === "__placeholder__";
+      return (
+        <>
+          <span class="font-black text-[var(--mn-accent-deep)]">/</span>
+          <div class="flex min-w-0 items-center gap-1">
+            {isPlaceholder ? (
+              options.length > 0 && (
+                <details class="relative shrink-0">
+                  <summary class="inline-flex items-center gap-1 rounded-full px-3 py-1 font-black text-[var(--mn-text-muted)] cursor-pointer list-none transition hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]" aria-label="Select subpage">
+                    <span>...</span>
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+                  </summary>
+                  <div class="absolute left-0 top-full z-50 mt-2 min-w-52 rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp-lg)]">
+                    {options.map((item) => (
+                      <a
+                        href={localizePath(item.path, locale)}
+                        class="block rounded-full px-4 py-2 text-sm font-bold text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]"
+                        aria-label={t(locale, item.labelKey)}
+                      >
+                        {t(locale, item.labelKey)}
+                      </a>
+                    ))}
+                  </div>
+                </details>
+              )
+            ) : (
+              <>
+                <a
+                  href={crumb.href}
+                  class:list={["inline-block truncate rounded-full px-3 py-1 transition hover:bg-[var(--mn-cream-deep)]", crumb.current ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : ""]}
+                  aria-current={crumb.current ? "page" : undefined}
+                  aria-label={crumb.label}
+                >
+                  {crumb.label}
+                </a>
+                {options.length > 0 && (
+                  <details class="relative shrink-0">
+                    <summary class="grid h-7 w-7 place-items-center rounded-full border-2 border-transparent list-none hover:border-[var(--mn-border)] hover:bg-[var(--mn-cream-deep)]" aria-label={t(locale, crumb.id === match?.group?.id ? "shell.breadcrumbExpandGroup" : "shell.breadcrumbExpandItems")}>
+                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+                    </summary>
+                    <div class="absolute left-0 top-full z-50 mt-2 min-w-52 rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp-lg)]">
+                      {options.map((item) => {
+                        const active = item.id === crumb.id;
+                        return (
+                          <a
+                            href={localizePath(item.path, locale)}
+                            class:list={["block rounded-full px-4 py-2 text-sm font-bold hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]", active ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)]"]}
+                            aria-current={active ? "page" : undefined}
+                            aria-label={t(locale, item.labelKey)}
+                          >
+                            {t(locale, item.labelKey)}
+                          </a>
+                        );
+                      })}
+                    </div>
+                  </details>
+                )}
+              </>
+            )}
+          </div>
+        </>
+      );
+    })}
+  </nav>
+)}

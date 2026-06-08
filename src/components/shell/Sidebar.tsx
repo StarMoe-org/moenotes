@@ -15,9 +15,10 @@ const groupStorageKey = "moenotes:nav-groups";
 interface SidebarProps {
   locale: AppLocale;
   pathname: string;
+  hasCrumbs?: boolean;
 }
 
-export default function Sidebar({ locale, pathname }: SidebarProps) {
+export default function Sidebar({ locale, pathname, hasCrumbs }: SidebarProps) {
   const [desktopOpen, setDesktopOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
   const { isOpen: mobileOpen, close: closeMobile } = useOverlay("mobile-sidebar");
@@ -80,6 +81,9 @@ export default function Sidebar({ locale, pathname }: SidebarProps) {
     return () => unlockBodyScroll("mobile-sidebar");
   }, [mobileOpen]);
 
+  const topClass = hasCrumbs ? "top-36" : "top-24";
+  const heightClass = hasCrumbs ? "h-[calc(100dvh-10.5rem)]" : "h-[calc(100dvh-7.5rem)]";
+
   return (
     <>
       <aside className={`fixed left-4 top-24 z-30 hidden h-[calc(100vh-7.5rem)] w-64 shrink-0 md:block ${mounted ? "transition duration-300" : ""} ${desktopOpen ? "translate-x-0 opacity-100" : "pointer-events-none -translate-x-[18rem] opacity-0"}`}>
@@ -101,7 +105,7 @@ export default function Sidebar({ locale, pathname }: SidebarProps) {
               transition={{ duration: 0.2 }}
             />
             <motion.aside
-              className="absolute left-4 top-24 h-[calc(100dvh-7.5rem)] w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]"
+              className={`absolute left-4 ${topClass} ${heightClass} w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]`}
               initial={{ x: "-105%" }}
               animate={{ x: 0 }}
               exit={{ x: "-105%" }}
