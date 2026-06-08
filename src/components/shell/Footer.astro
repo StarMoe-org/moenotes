@@ -1,0 +1,125 @@
+---
+import type { AppLocale } from "@/config/locales";
+import { t } from "@/i18n";
+import { localizePath } from "@/i18n/routing";
+import { getRoutePathById } from "@/lib/route/registry";
+import { siteConfig } from "@/config/site";
+
+interface Props {
+  locale: AppLocale;
+}
+
+const { locale } = Astro.props;
+
+const exploreLinks = [
+  { id: "home", labelKey: "nav.home" },
+  { id: "characters", labelKey: "nav.items.characters" },
+  { id: "music", labelKey: "nav.items.music" },
+  { id: "events", labelKey: "nav.items.events" },
+  { id: "toolbox", labelKey: "nav.items.toolbox" },
+];
+---
+
+<footer class="mt-20 border-t-4 border-[var(--mn-accent)] bg-[var(--mn-paper)] text-[var(--mn-text)] transition-[padding] duration-300">
+  <div class="mx-auto max-w-7xl px-6 py-12 md:pl-[calc(var(--mn-sidebar-offset,18rem)+1.5rem)] md:pr-6">
+    <div class="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Column 1: Logo & Info */}
+      <div class="flex flex-col gap-4">
+        <a href={localizePath(getRoutePathById("home"), locale)} class="flex items-center text-[var(--mn-text)]">
+          <span class="leading-none">
+            <span class="block font-[var(--mn-font-display)] text-xl font-black tracking-tight">Moenotes</span>
+            <span class="block font-[var(--mn-font-display)] text-[10px] uppercase tracking-[0.2em] text-[var(--mn-text-muted)]">OURNOTES VIEWER</span>
+          </span>
+        </a>
+        <p class="text-sm font-medium leading-relaxed text-[var(--mn-text-muted)]">
+          {t(locale, "footer.desc")}
+        </p>
+      </div>
+
+      {/* Column 2: Explore */}
+      <div>
+        <h3 class="mb-4 font-[var(--mn-font-display)] text-sm font-black tracking-wider text-[var(--mn-accent)] uppercase">
+          {t(locale, "footer.explore")}
+        </h3>
+        <ul class="flex flex-col gap-2.5">
+          {exploreLinks.map((link) => (
+            <li>
+              <a
+                href={localizePath(getRoutePathById(link.id), locale)}
+                class="group flex items-center gap-2 text-sm font-bold text-[var(--mn-text-muted)] transition-colors hover:text-[var(--mn-accent-deep)]"
+              >
+                <span class="inline-block transition-transform duration-200 group-hover:translate-x-1">→</span>
+                <span>{t(locale, link.labelKey)}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Column 3: Sister Sites */}
+      <div>
+        <h3 class="mb-4 font-[var(--mn-font-display)] text-sm font-black tracking-wider text-[var(--mn-accent)] uppercase">
+          {t(locale, "footer.sister")}
+        </h3>
+        <ul class="flex flex-col gap-2.5">
+          {siteConfig.sisterSites.map((link) => (
+            <li>
+              <a
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="group flex items-center gap-2 text-sm font-bold text-[var(--mn-text-muted)] transition-colors hover:text-[var(--mn-accent-deep)]"
+              >
+                <span class="inline-block transition-transform duration-200 group-hover:translate-x-1">→</span>
+                <span>{link.label}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Column 4: Contact */}
+      <div>
+        <h3 class="mb-4 font-[var(--mn-font-display)] text-sm font-black tracking-wider text-[var(--mn-accent)] uppercase">
+          {t(locale, "footer.contact")}
+        </h3>
+        <ul class="flex flex-col gap-2.5 text-sm font-bold text-[var(--mn-text-muted)]">
+          <li>
+            <a
+              href={siteConfig.contact.feedbackUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="group flex items-center gap-2 text-sm font-bold text-[var(--mn-text-muted)] transition-colors hover:text-[var(--mn-accent-deep)]"
+            >
+              <svg class="h-4 w-4 shrink-0 text-[var(--mn-accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <span>{t(locale, "footer.feedback")}</span>
+            </a>
+          </li>
+          <li>
+            <a
+              href={siteConfig.contact.bugReportUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="group flex items-center gap-2 text-sm font-bold text-[var(--mn-text-muted)] transition-colors hover:text-[var(--mn-accent-deep)]"
+            >
+              <svg class="h-4 w-4 shrink-0 text-[var(--mn-accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="14" x="8" y="5" rx="4"/><path d="M12 2v3M12 19v3M5 12h14M6 7l3 3M18 7l-3 3M6 17l3-3M18 17l-3-3"/></svg>
+              <span>{t(locale, "footer.bugReport")}</span>
+            </a>
+          </li>
+          <li class="flex items-center gap-2 select-all">
+            <svg class="h-4 w-4 shrink-0 text-[var(--mn-accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            <span class="font-mono text-xs">{siteConfig.contact.email}</span>
+          </li>
+          <li class="mt-2 text-xs font-medium text-[var(--mn-text-muted)]/60">
+            {t(locale, "footer.copyright")}
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    {/* Bottom Disclaimer */}
+    <div class="mt-12 border-t border-[var(--mn-border)]/10 pt-6 text-center text-xs font-medium text-[var(--mn-text-muted)]/75">
+      {t(locale, "footer.disclaimer")}
+    </div>
+  </div>
+</footer>

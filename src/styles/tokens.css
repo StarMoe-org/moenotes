@@ -49,8 +49,8 @@
   --mn-font-display-sc: "LXGW WenKai Screen", "LXGW WenKai", "Inter", ui-sans-serif, system-ui, sans-serif;
   --mn-font-body-common: "Inter", ui-sans-serif, system-ui, sans-serif;
   --mn-font-body-sc: "LXGW WenKai Screen", "LXGW WenKai", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --mn-font-display: var(--mn-font-display-common);
-  --mn-font-body: var(--mn-font-body-common);
+  --mn-font-display: var(--mn-font-display-sc);
+  --mn-font-body: var(--mn-font-body-sc);
   --mn-font-hand: "Caveat", "Patrick Hand", cursive;
   --mn-font-note: "Patrick Hand", "Zen Kurenaido", cursive;
 }
@@ -58,4 +58,6 @@
 html[data-locale="zh-CN"] {
   --mn-font-display: var(--mn-font-display-sc);
   --mn-font-body: var(--mn-font-body-sc);
+  --mn-font-hand: "LXGW WenKai Screen", "LXGW WenKai", "Caveat", "Patrick Hand", cursive;
+  --mn-font-note: "LXGW WenKai Screen", "LXGW WenKai", "Patrick Hand", "Zen Kurenaido", cursive;
 }

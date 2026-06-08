@@ -1,4 +1,5 @@
 ---
+import AssetCacheBootstrap from "@/components/shell/AssetCacheBootstrap.astro";
 import CommandPalette from "@/components/shell/CommandPalette";
 import Header from "@/components/shell/Header.astro";
 import HeaderActions, { HamburgerButtons } from "@/components/shell/HeaderActions";
@@ -8,6 +9,7 @@ import ScrollRestorer from "@/components/shell/ScrollRestorer.astro";
 import ScrollToTop from "@/components/shared/ScrollToTop";
 import SettingsDrawer from "@/components/shell/SettingsDrawer";
 import Sidebar from "@/components/shell/Sidebar";
+import Footer from "@/components/shell/Footer.astro";
 import type { AppLocale } from "@/config/locales";
 
 interface Props {
@@ -18,6 +20,7 @@ interface Props {
 const { locale, pathname } = Astro.props;
 ---
 
+<AssetCacheBootstrap />
 <Header locale={locale} pathname={pathname}>
   <HamburgerButtons slot="hamburger" client:load locale={locale} />
   <HeaderActions client:load locale={locale} />
@@ -26,6 +29,7 @@ const { locale, pathname } = Astro.props;
 <main id="content" class="mx-auto min-h-screen max-w-7xl px-4 pb-16 pt-24 md:pt-28 transition-[padding] duration-300 md:pl-[calc(var(--mn-sidebar-offset,18rem)+1.5rem)] md:pr-6">
   <slot />
 </main>
+<Footer locale={locale} />
 <CommandPalette client:load locale={locale} />
 <SettingsDrawer client:load locale={locale} pathname={pathname} />
 <KeyboardShortcutsHelp client:load locale={locale} />

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, Fragment, type ReactNode } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import type { AppLocale } from "@/config/locales";
 import { localizePath } from "@/i18n/routing";
 import { t } from "@/i18n";
@@ -18,6 +19,7 @@ interface SidebarProps {
 
 export default function Sidebar({ locale, pathname }: SidebarProps) {
   const [desktopOpen, setDesktopOpen] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const { isOpen: mobileOpen, close: closeMobile } = useOverlay("mobile-sidebar");
   const groups = useMemo(() => getNavigationGroups(), []);
 
@@ -26,6 +28,10 @@ export default function Sidebar({ locale, pathname }: SidebarProps) {
     const next = saved === null ? true : saved === "true";
     setDesktopOpen(next);
     document.documentElement.style.setProperty("--mn-sidebar-offset", next ? "18rem" : "2rem");
+    const raf = requestAnimationFrame(() => {
+      setMounted(true);
+    });
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   useEffect(() => {
@@ -76,20 +82,36 @@ export default function Sidebar({ locale, pathname }: SidebarProps) {
 
   return (
     <>
-      <aside className={`fixed left-4 top-24 z-30 hidden h-[calc(100vh-7.5rem)] w-64 shrink-0 transition-[transform,opacity] duration-300 md:block ${desktopOpen ? "translate-x-0 opacity-100" : "pointer-events-none -translate-x-[18rem] opacity-0"}`}>
+      <aside className={`fixed left-4 top-24 z-30 hidden h-[calc(100vh-7.5rem)] w-64 shrink-0 md:block ${mounted ? "transition duration-300" : ""} ${desktopOpen ? "translate-x-0 opacity-100" : "pointer-events-none -translate-x-[18rem] opacity-0"}`}>
         <SidebarFrame>
           <SidebarNav locale={locale} pathname={pathname} groups={groups} />
         </SidebarFrame>
       </aside>
 
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true">
-          <button className="absolute inset-0 h-full w-full bg-black/40 backdrop-blur-[2px]" aria-label={t(locale, "actions.close")} onClick={closeMobile} />
-          <aside className="absolute left-3 top-3 h-[calc(100dvh-1.5rem)] w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)]">
-            <SidebarNav locale={locale} pathname={pathname} groups={groups} onNavigate={closeMobile} />
-          </aside>
-        </div>
-      )}
+      <AnimatePresence>
+        {mobileOpen && (
+          <div className="fixed inset-0 z-[35] md:hidden" role="dialog" aria-modal="true">
+            <motion.button
+              className="absolute inset-0 h-full w-full bg-black/40 backdrop-blur-[2px]"
+              aria-label={t(locale, "actions.close")}
+              onClick={closeMobile}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            />
+            <motion.aside
+              className="absolute left-4 top-24 h-[calc(100dvh-7.5rem)] w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]"
+              initial={{ x: "-105%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-105%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 220 }}
+            >
+              <SidebarNav locale={locale} pathname={pathname} groups={groups} onNavigate={closeMobile} />
+            </motion.aside>
+          </div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
@@ -201,20 +223,28 @@ function NavGroup({ group, locale, pathname, collapsed, onToggle, onNavigate }: 
   const hasChildren = children.length > 0;
   return (
     <div className="space-y-1">
-      <div className="flex items-center justify-between px-3 py-1">
+      <div
+        className={`flex items-center justify-between rounded-full pl-4 pr-1 py-0.5 transition-colors ${
+          groupActive
+            ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]"
+            : "text-[var(--mn-text)] hover:bg-[var(--mn-cream-deep)]"
+        }`}
+      >
         <a
           href={localizePath(group.path, locale)}
           onClick={onNavigate}
-          className={`min-w-0 flex-1 rounded-full px-3 py-1.5 text-[14px] font-black text-[var(--mn-text)] transition-colors hover:bg-[var(--mn-cream-deep)] ${
-            groupActive ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : ""
-          }`}
+          className="min-w-0 flex-1 rounded-full py-1.5 text-[14px] font-black transition-colors"
         >
           {t(locale, group.labelKey)}
         </a>
         {hasChildren && (
           <button
             type="button"
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[var(--mn-text-muted)] transition-colors hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]"
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors ${
+              groupActive
+                ? "text-[var(--mn-accent-deep)] hover:bg-[var(--mn-accent-soft)]"
+                : "text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]"
+            }`}
             aria-expanded={!collapsed}
             aria-label={t(locale, group.labelKey)}
             onClick={onToggle}
@@ -223,9 +253,9 @@ function NavGroup({ group, locale, pathname, collapsed, onToggle, onNavigate }: 
           </button>
         )}
       </div>
-      {!collapsed && (
+      {hasChildren && !collapsed && (
         <div className="space-y-0.5">
-          {hasChildren ? children.map((item, childIdx) => {
+          {children.map((item, childIdx) => {
             const active = isCurrentRoute(pathname, item.path);
             return (
               <Fragment key={item.id}>
@@ -233,7 +263,7 @@ function NavGroup({ group, locale, pathname, collapsed, onToggle, onNavigate }: 
                 <a
                   href={localizePath(item.path, locale)}
                   onClick={onNavigate}
-                  className={`block rounded-full pl-8 pr-4 py-1.5 text-[13px] font-medium transition-colors ${
+                  className={`block rounded-full pl-10 pr-4 py-1.5 text-[13px] font-medium transition-colors ${
                     active
                       ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)] font-semibold"
                       : "text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]"
@@ -243,19 +273,7 @@ function NavGroup({ group, locale, pathname, collapsed, onToggle, onNavigate }: 
                 </a>
               </Fragment>
             );
-          }) : (
-            <a
-              href={localizePath(group.path, locale)}
-              onClick={onNavigate}
-              className={`block rounded-full pl-8 pr-4 py-1.5 text-[13px] font-medium transition-colors ${
-                groupActive
-                  ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)] font-semibold"
-                  : "text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]"
-              }`}
-            >
-              {t(locale, group.labelKey)}
-            </a>
-          )}
+          })}
         </div>
       )}
     </div>

@@ -35,9 +35,9 @@ export interface FilterToggleProps {
 export function FilterSection({ title, children }: FilterSectionProps) {
   return (
     <div>
-      <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--mn-text-muted)]">
+      <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--mn-text-muted)]">
         {title}
-      </label>
+      </span>
       {children}
     </div>
   );
@@ -91,10 +91,10 @@ export default function BaseFilters({
   const [collapsed, setCollapsed] = useState(true);
 
   return (
-    <div className="overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]">
+    <div className="w-full max-w-full rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]">
       {/* Header */}
       <div
-        className="flex cursor-pointer select-none items-center justify-between border-b-2 border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_10%,transparent)] to-transparent px-5 py-4 lg:cursor-default"
+        className="flex cursor-pointer select-none items-center justify-between rounded-t-[22px] border-b-2 border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_10%,transparent)] to-transparent px-4 sm:px-5 py-4 lg:cursor-default"
         onClick={() => setCollapsed((c) => !c)}
       >
         <h2 className="flex items-center gap-2 font-[var(--mn-font-display)] text-sm tracking-tight text-[var(--mn-text)]">
@@ -126,7 +126,7 @@ export default function BaseFilters({
       </div>
 
       {/* Search — always visible */}
-      <div className="px-5 pt-4">
+      <div className="px-4 sm:px-5 pt-4">
         <div className="relative">
           <svg className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--mn-text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -136,14 +136,14 @@ export default function BaseFilters({
             placeholder={searchPlaceholder ?? "Search..."}
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-surface)] py-2.5 pl-11 pr-5 text-sm text-[var(--mn-text)] placeholder:text-[var(--mn-text-muted)] focus:border-[var(--mn-accent)] focus:bg-[var(--mn-paper)] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_oklab,var(--mn-accent)_20%,transparent)]"
+            className="w-full min-w-0 rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-surface)] py-2.5 pl-11 pr-5 text-sm text-[var(--mn-text)] placeholder:text-[var(--mn-text-muted)] focus:border-[var(--mn-accent)] focus:bg-[var(--mn-paper)] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_oklab,var(--mn-accent)_20%,transparent)]"
           />
         </div>
       </div>
 
       {/* Collapsible content */}
       <div className={`${collapsed ? "hidden" : "block"} lg:!block`}>
-        <div className="space-y-5 p-5">
+        <div className="space-y-5 p-4 sm:p-5">
           {children}
 
           {/* Reset */}
@@ -164,7 +164,7 @@ export default function BaseFilters({
       {/* Expand hint bar (mobile only) */}
       {collapsed && (
         <div
-          className="flex cursor-pointer select-none items-center justify-center gap-1 border-t-2 border-[var(--mn-border)] bg-[var(--mn-surface)] py-2.5 text-xs text-[var(--mn-text-muted)] transition hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)] lg:hidden"
+          className="flex cursor-pointer select-none items-center justify-center gap-1 rounded-b-[22px] border-t-2 border-[var(--mn-border)] bg-[var(--mn-surface)] py-2.5 text-xs text-[var(--mn-text-muted)] transition hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)] lg:hidden"
           onClick={() => setCollapsed(false)}
         >
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

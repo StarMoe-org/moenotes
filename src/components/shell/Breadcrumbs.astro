@@ -34,8 +34,9 @@ function getOptionsForCrumb(crumb: BreadcrumbItem): AppRoute[] {
         <div class="flex min-w-0 items-center gap-1">
           <a
             href={crumb.href}
-            class:list={["truncate rounded-full px-3 py-1 transition hover:bg-[var(--mn-cream-deep)]", crumb.current ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : ""]}
+            class:list={["inline-block truncate rounded-full px-3 py-1 transition hover:bg-[var(--mn-cream-deep)]", crumb.current ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : ""]}
             aria-current={crumb.current ? "page" : undefined}
+            aria-label={crumb.label}
           >
             {crumb.label}
           </a>
@@ -52,8 +53,8 @@ function getOptionsForCrumb(crumb: BreadcrumbItem): AppRoute[] {
                       href={localizePath(item.path, locale)}
                       class:list={["block rounded-full px-4 py-2 text-sm font-bold hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]", active ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)]"]}
                       aria-current={active ? "page" : undefined}
+                      aria-label={t(locale, item.labelKey)}
                     >
-                      <span class="block text-[10px] uppercase tracking-[0.16em] opacity-70">{item.id === match?.group?.id || groups.some((group) => group.id === item.id) ? "SECTION" : "PAGE"}</span>
                       {t(locale, item.labelKey)}
                     </a>
                   );

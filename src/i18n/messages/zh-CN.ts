@@ -249,4 +249,15 @@ export const zhCN = {
   modal: {
     close: "关闭",
   },
+  footer: {
+    desc: "BanG Dream! Our Notes 的新一代 Viewer · 由 MoeSekai 团队独立运营",
+    explore: "探索",
+    sister: "姐妹站",
+    contact: "联系与反馈",
+    feedback: "提交反馈 / 投稿",
+    bugReport: "错误报告",
+    email: "邮箱 admin@moenotes.moe",
+    disclaimer: "本站为粉丝自建资料站，与 Bushiroad / Craft Egg / Ishimori 官方无任何关联。",
+    copyright: "© 2026 Moenotes · 非官方资料站",
+  },
 } as const satisfies MessageTree;

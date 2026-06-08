@@ -16,11 +16,7 @@ const { locale, pathname } = Astro.props;
     <div class="flex items-center gap-3">
       <slot name="hamburger" />
 
-      <a href={localizePath("/", locale)} class="group flex items-center gap-3 text-[var(--mn-text)]">
-        <div class="mn-stamp-press relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-accent-deep)] shadow-[var(--mn-shadow-stamp)]">
-          <span class="font-serif text-xl font-bold text-[var(--mn-paper)] select-none">M</span>
-          <span class="absolute right-0.5 top-0.5 h-3.5 w-3.5 rounded-full border-[1.5px] border-[var(--mn-paper)] bg-[var(--mn-mint)]"></span>
-        </div>
+      <a href={localizePath("/", locale)} class="flex items-center text-[var(--mn-text)]">
         <span class="leading-none">
           <span class="block font-[var(--mn-font-display)] text-xl font-black tracking-tight sm:text-2xl">Moenotes</span>
           <span class="hidden font-[var(--mn-font-display)] text-[10px] uppercase tracking-[0.2em] text-[var(--mn-text-muted)] sm:block">OURNOTES VIEWER</span>

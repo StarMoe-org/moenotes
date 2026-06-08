@@ -1,6 +1,8 @@
+import { useState, useEffect } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
-import { openOverlay, toggleOverlay } from "@/lib/overlay/overlay-store";
+import { toggleOverlay } from "@/lib/overlay/overlay-store";
+import { useOverlay } from "@/lib/overlay/use-overlay";
 import { safeGetSessionStorage, safeSetSessionStorage } from "@/lib/storage/safe-storage";
 import { storageKeys } from "@/config/storage";
 
@@ -26,28 +28,60 @@ const btnStamp = "mn-stamp-press";
 
 /** Hamburger buttons — rendered into the `hamburger` named slot (before logo). */
 export function HamburgerButtons({ locale }: Props) {
+  const { isOpen: mobileOpen, toggle: toggleMobile } = useOverlay("mobile-sidebar");
+  const [desktopOpen, setDesktopOpen] = useState(true);
+
+  useEffect(() => {
+    // Initial sync
+    setDesktopOpen(getDesktopSidebarOpen());
+
+    const handler = (event: Event) => {
+      if (event instanceof CustomEvent && typeof event.detail?.open === "boolean") {
+        setDesktopOpen(event.detail.open);
+      } else {
+        setDesktopOpen(getDesktopSidebarOpen());
+      }
+    };
+    window.addEventListener("moenotes:sidebar-state", handler);
+    return () => window.removeEventListener("moenotes:sidebar-state", handler);
+  }, []);
+
   return (
     <>
       {/* Mobile hamburger */}
       <button
         type="button"
-        className={`mn-focus grid h-12 w-12 place-items-center rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)] hover:bg-[var(--mn-cream-deep)] md:hidden ${btnStamp}`}
+        className={`mn-focus grid h-12 w-12 place-items-center rounded-full border-[1.5px] border-[var(--mn-border)] shadow-[var(--mn-shadow-stamp)] hover:bg-[var(--mn-cream-deep)] md:hidden ${btnStamp} ${
+          mobileOpen
+            ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]"
+            : "bg-[var(--mn-paper)] text-[var(--mn-text)]"
+        }`}
         aria-label={t(locale, "shell.openSidebar")}
-        onClick={() => openOverlay("mobile-sidebar")}
+        onClick={toggleMobile}
       >
-        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
-          <path d="M4 7h16" />
-          <path d="M4 12h16" />
-          <path d="M4 17h16" />
-        </svg>
+        {mobileOpen ? (
+          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        ) : (
+          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+            <path d="M4 7h16" />
+            <path d="M4 12h16" />
+            <path d="M4 17h16" />
+          </svg>
+        )}
       </button>
 
       {/* Desktop hamburger */}
       <button
         type="button"
-        className={`mn-focus hidden h-12 w-12 place-items-center rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp)] hover:bg-[var(--mn-cream-deep)] md:grid ${btnStamp}`}
+        className={`mn-focus hidden h-12 w-12 place-items-center rounded-full border-[1.5px] border-[var(--mn-border)] shadow-[var(--mn-shadow-stamp)] hover:bg-[var(--mn-cream-deep)] md:grid ${btnStamp} ${
+          desktopOpen
+            ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]"
+            : "bg-[var(--mn-paper)] text-[var(--mn-text-muted)]"
+        }`}
         aria-label={t(locale, "shell.openSidebar")}
-        onClick={() => setDesktopSidebar(!getDesktopSidebarOpen())}
+        onClick={() => setDesktopSidebar(!desktopOpen)}
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
           <path d="M4 7h16" />
@@ -66,14 +100,14 @@ export default function HeaderActions({ locale }: Props) {
       {/* Search ⌘K */}
       <button
         type="button"
-        className={`mn-focus hidden h-10 items-center gap-1.5 rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-4 text-sm font-bold text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp)] hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)] sm:flex ${btnStamp}`}
+        className={`mn-focus flex h-10 items-center justify-center rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp)] hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)] w-10 sm:w-auto px-0 sm:px-4 gap-0 sm:gap-1.5 ${btnStamp}`}
         onClick={() => toggleOverlay("command")}
       >
-        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <circle cx="11" cy="11" r="8" />
           <path d="M21 21l-4.35-4.35" />
         </svg>
-        <span className="font-black">⌘K</span>
+        <span className="hidden sm:inline font-black">⌘K</span>
       </button>
 
       {/* Settings gear */}

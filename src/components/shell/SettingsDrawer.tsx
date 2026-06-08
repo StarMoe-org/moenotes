@@ -44,12 +44,12 @@ export default function SettingsDrawer({ locale, pathname }: SettingsDrawerProps
             {langOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setLangOpen(false)} />
-                <div className="absolute left-0 top-full z-20 mt-1 w-full rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] py-1 shadow-[var(--mn-shadow-stamp)]">
+                <div className="absolute left-0 top-full z-20 mt-1 w-full rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp)]">
                   {SUPPORTED_LOCALES.map((item) => (
                     <a
                       key={item}
                       href={switchLocalePath(pathname, item)}
-                      className={`block px-4 py-2.5 text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${item === locale ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text)]"}`}
+                      className={`block rounded-full px-4 py-2 text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${item === locale ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
                       onClick={() => setLangOpen(false)}
                     >
                       {LOCALE_LABELS[item]}

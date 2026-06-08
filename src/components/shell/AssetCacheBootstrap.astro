@@ -1,0 +1,10 @@
+---
+---
+
+<script>
+  import { pruneAssetCache } from "@/lib/cache/asset-cache";
+  import { installFetchCache } from "@/lib/cache/cached-fetch";
+
+  installFetchCache();
+  void pruneAssetCache();
+</script>

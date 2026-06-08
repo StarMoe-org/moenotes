@@ -35,8 +35,8 @@ export default function DesignSystemPage({ locale }: Props) {
       </header>
 
       {/* Tab Navigation */}
-      <nav className="sticky top-24 z-20 border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp-sm)] rounded-2xl mx-2 sm:mx-0 sm:rounded-full sm:p-2.5">
-        <div className="w-full overflow-x-auto no-scrollbar touch-pan-x flex flex-nowrap items-center gap-2 md:flex-wrap md:overflow-visible px-2 py-0.5">
+      <nav className="sticky top-24 z-20 border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp-sm)] rounded-2xl mx-2 sm:mx-3 sm:rounded-full sm:p-2.5">
+        <div className="w-full min-w-0 overflow-x-auto no-scrollbar touch-pan-x flex flex-nowrap items-center gap-2 md:flex-wrap md:overflow-visible px-2 py-0.5">
           {TABS.map((tab) => (
             // Capsule tab → float animation
             <motion.button
@@ -93,7 +93,7 @@ export default function DesignSystemPage({ locale }: Props) {
 
 function SectionCard({ children }: { children: React.ReactNode }) {
   return (
-    <section className="rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-6 shadow-[var(--mn-shadow-stamp-lg)] sm:p-8">
+    <section className="rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-4 shadow-[var(--mn-shadow-stamp-lg)] sm:p-6 md:p-8">
       {children}
     </section>
   );
@@ -218,12 +218,12 @@ function ComponentsSection({ locale }: { locale: AppLocale }) {
         <SectionTitle title={t(locale, "designSystem.components.inputs")} />
         <div className="max-w-sm space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-bold text-[var(--mn-text)]">Standard Input</label>
-            <input type="text" placeholder="Type something..." className="w-full rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] px-5 py-2.5 text-sm text-[var(--mn-text)] placeholder:text-[var(--mn-text-muted)] focus:border-[var(--mn-accent-deep)] focus:bg-[var(--mn-paper)] focus:outline-none" />
+            <label htmlFor="std-input" className="mb-1 block text-sm font-bold text-[var(--mn-text)]">Standard Input</label>
+            <input id="std-input" type="text" placeholder="Type something..." className="w-full rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] px-5 py-2.5 text-sm text-[var(--mn-text)] placeholder:text-[var(--mn-text-muted)] focus:border-[var(--mn-accent-deep)] focus:bg-[var(--mn-paper)] focus:outline-none" />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-bold text-[var(--mn-text)]">Input with Error</label>
-            <input type="text" defaultValue="Invalid" className="w-full rounded-full border-[1.5px] border-[var(--mn-accent-deep)] bg-[var(--mn-surface)] px-5 py-2.5 text-sm text-[var(--mn-accent-deep)] focus:outline-none" />
+            <label htmlFor="err-input" className="mb-1 block text-sm font-bold text-[var(--mn-text)]">Input with Error</label>
+            <input id="err-input" type="text" defaultValue="Invalid" className="w-full rounded-full border-[1.5px] border-[var(--mn-accent-deep)] bg-[var(--mn-surface)] px-5 py-2.5 text-sm text-[var(--mn-accent-deep)] focus:outline-none" />
             <p className="mt-1 text-xs font-bold text-[var(--mn-accent-deep)]">Please enter a valid value</p>
           </div>
         </div>
@@ -244,7 +244,7 @@ function ComponentsSection({ locale }: { locale: AppLocale }) {
       {/* Cards */}
       <SectionCard>
         <SectionTitle title={t(locale, "designSystem.components.cards")} />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="mn-card relative rounded-3xl p-5">
             <p className="font-[var(--mn-font-display)] text-lg">mn-card</p>
             <p className="mt-1 text-sm text-[var(--mn-text-muted)]">Standard card with stamp shadow</p>
@@ -439,8 +439,8 @@ function FiltersSection({ locale }: { locale: AppLocale }) {
   return (
     <SectionCard>
       <SectionTitle title={t(locale, "designSystem.sections.filters")} />
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div>
+      <div className="grid grid-cols-1 w-full max-w-full gap-6 lg:grid-cols-2">
+        <div className="w-full min-w-0">
           <BaseFilters
             searchValue={search}
             onSearchChange={setSearch}
@@ -451,7 +451,7 @@ function FiltersSection({ locale }: { locale: AppLocale }) {
             onReset={reset}
           >
             <FilterSection title={t(locale, "designSystem.filters.category")}>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="flex flex-wrap gap-2">
                 {(["all", "typeA", "typeB"] as const).map((cat) => (
                   <FilterButton key={cat} active={category === cat} onClick={() => setCategory(cat)}>
                     {t(locale, `designSystem.filters.${cat}` as const)}
@@ -468,8 +468,8 @@ function FiltersSection({ locale }: { locale: AppLocale }) {
             <FilterToggle checked={toggle} onChange={setToggle} label={t(locale, "designSystem.filters.onlyComplete")} />
           </BaseFilters>
         </div>
-        <div className="space-y-4">
-          <div className="rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] p-4">
+        <div className="w-full min-w-0 space-y-4">
+          <div className="w-full min-w-0 rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] p-4">
             <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--mn-text-muted)]">Current State</h4>
             <div className="space-y-1 font-mono text-xs text-[var(--mn-text-muted)]">
               <div>search: "{search || "(empty)"}"</div>
@@ -480,9 +480,9 @@ function FiltersSection({ locale }: { locale: AppLocale }) {
               <div>filtered: {filtered} / {total}</div>
             </div>
           </div>
-          <div className="rounded-2xl border-[1.5px] border-dashed border-[var(--mn-border)] bg-[var(--mn-paper)] p-4">
+          <div className="w-full min-w-0 rounded-2xl border-[1.5px] border-dashed border-[var(--mn-border)] bg-[var(--mn-paper)] p-4">
             <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--mn-text-muted)]">API</h4>
-            <pre className="overflow-x-auto text-[10px] text-[var(--mn-text-muted)]">
+            <pre className="w-full max-w-full overflow-x-auto text-[10px] text-[var(--mn-text-muted)]">
 {`<BaseFilters searchValue={...} onSearchChange={...}>
   <FilterSection title="...">
     <FilterButton active={...} onClick={...}>...</FilterButton>
@@ -508,20 +508,20 @@ function FilterSelect({ value, options, onChange }: { value: string; options: { 
     <div className="relative">
       <button
         type="button"
-        className="mn-stamp-press flex w-full items-center justify-between rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-4 py-2.5 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]"
+        className="mn-stamp-press flex w-full min-w-0 items-center justify-between rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-4 py-2.5 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]"
         onClick={() => setOpen(!open)}
       >
-        {selected?.label}
+        <span className="truncate">{selected?.label}</span>
         {chevronDown}
       </button>
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-full z-20 mt-1 w-full rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] py-1 shadow-[var(--mn-shadow-stamp)]">
+          <div className="absolute left-0 top-full z-20 mt-1 w-full rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp)]">
             {options.map((opt) => (
               <button
                 key={opt.value}
-                className={`w-full px-4 py-2 text-left text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${opt.value === value ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text)]"}`}
+                className={`w-full rounded-full px-4 py-2 text-left text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${opt.value === value ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
                 onClick={() => { onChange(opt.value); setOpen(false); }}
               >
                 {opt.label}
@@ -711,23 +711,24 @@ function SelectDemo({ locale }: { locale: AppLocale }) {
 
   return (
     <div className="relative">
-      <label className="mb-1 block text-sm font-bold text-[var(--mn-text)]">{t(locale, "designSystem.components.select")}</label>
+      <label htmlFor="demo-select" className="mb-1 block text-sm font-bold text-[var(--mn-text)]">{t(locale, "designSystem.components.select")}</label>
       <button
+        id="demo-select"
         type="button"
-        className="mn-stamp-press flex w-full items-center justify-between rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] px-5 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]"
+        className="mn-stamp-press flex w-full min-w-0 items-center justify-between rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] px-5 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]"
         onClick={() => setOpen(!open)}
       >
-        {selected?.label ?? t(locale, "designSystem.components.selectPlaceholder")}
+        <span className="truncate">{selected?.label ?? t(locale, "designSystem.components.selectPlaceholder")}</span>
         {chevronDown}
       </button>
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-full z-20 mt-1 w-full rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] py-1 shadow-[var(--mn-shadow-stamp)]">
+          <div className="absolute left-0 top-full z-20 mt-1 w-full rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp)]">
             {options.map((opt) => (
               <button
                 key={opt.value}
-                className={`w-full px-4 py-2 text-left text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${opt.value === value ? "bg-[var(--mn-accent)] text-[var(--mn-bg)]" : "text-[var(--mn-text)]"}`}
+                className={`w-full rounded-full px-4 py-2 text-left text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${opt.value === value ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
                 onClick={() => { setValue(opt.value); setOpen(false); }}
               >
                 {opt.label}

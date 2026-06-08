@@ -105,4 +105,15 @@ export const jaJP = {
   },
   filter: { title: "フィルター", search: "検索", sort: "ソート", reset: "フィルターをリセット", collapse: "折りたたむ", expand: "展開", count: "{filtered} / {total}" },
   modal: { close: "閉じる" },
+  footer: {
+    desc: "BanG Dream! Our Notes のための次世代 viewer であり、MoeSekai チームによって独立して運営されています。",
+    explore: "探索",
+    sister: "姉妹サイト",
+    contact: "お問い合わせ",
+    feedback: "フィードバック送信 / 投稿",
+    bugReport: "バグ報告",
+    email: "メール admin@moenotes.moe",
+    disclaimer: "当サイトはファンによる非公式データベースであり、Bushiroad、Craft Egg、Ishimori等の公式とは一切関係ありません。",
+    copyright: "© 2026 Moenotes · 非公式ファンサイト",
+  },
 } as const satisfies MessageTree;

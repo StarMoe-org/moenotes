@@ -90,4 +90,15 @@ export const enUS = {
   },
   filter: { title: "Filter", search: "Search", sort: "Sort", reset: "Reset filters", collapse: "Collapse", expand: "Expand", count: "{filtered} / {total}" },
   modal: { close: "Close" },
+  footer: {
+    desc: "A next-generation viewer for BanG Dream! Our Notes, independently operated by the MoeSekai team.",
+    explore: "Explore",
+    sister: "Sister Sites",
+    contact: "Contact & Feedback",
+    feedback: "Submit Feedback / Contribution",
+    bugReport: "Bug Report",
+    email: "Email admin@moenotes.moe",
+    disclaimer: "This site is a fan-made database, not affiliated with Bushiroad, Craft Egg, or Ishimori.",
+    copyright: "© 2026 Moenotes · Unofficial Fan Site",
+  },
 } as const satisfies MessageTree;
