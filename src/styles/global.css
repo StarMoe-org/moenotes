@@ -21,7 +21,7 @@ body {
   margin: 0;
   background-color: var(--mn-bg);
   background-image:
-    radial-gradient(circle at 1px 1px, rgba(43, 42, 39, 0.06) 1px, transparent 0);
+    radial-gradient(circle at 1px 1px, var(--mn-dot-ink) 1px, transparent 0);
   background-size: 28px 28px;
 }
 
@@ -165,19 +165,31 @@ body {
   z-index: 1;
   width: 70px;
   height: 18px;
-  border-left: 1px dashed rgba(0, 0, 0, 0.18);
-  border-right: 1px dashed rgba(0, 0, 0, 0.18);
+  border-left: 1px dashed var(--mn-tape-edge);
+  border-right: 1px dashed var(--mn-tape-edge);
   background: color-mix(in oklab, var(--mn-yellow) 75%, transparent);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 2px var(--mn-tape-shadow);
   transform: translateX(-50%) rotate(-3deg);
 }
 
 .mn-hand-underline {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 8' preserveAspectRatio='none'><path d='M0 4 Q 25 0, 50 4 T 100 4' stroke='%23E87461' stroke-width='2' fill='none' stroke-linecap='round'/></svg>");
-  background-repeat: no-repeat;
-  background-position: 0 100%;
-  background-size: 100% 8px;
+  --mn-hand-underline-svg: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 8' preserveAspectRatio='none'><path d='M0 4 Q 25 0, 50 4 T 100 4' stroke='black' stroke-width='2' fill='none' stroke-linecap='round'/></svg>");
   padding-bottom: 6px;
+  position: relative;
+}
+
+.mn-hand-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 8px;
+  /* Theme-aware stroke color driven by accent token via mask */
+  background-color: var(--mn-accent);
+  -webkit-mask: var(--mn-hand-underline-svg) no-repeat 0 100% / 100% 8px;
+  mask: var(--mn-hand-underline-svg) no-repeat 0 100% / 100% 8px;
+  pointer-events: none;
 }
 
 @keyframes mn-marquee {
@@ -210,6 +222,21 @@ body {
   border: 2px solid var(--mn-bg);
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--mn-text-muted); }
+
+/* Thinner Typography Overrides via @theme (Tailwind v4 canonical way) */
+@theme {
+  --font-weight-black: 600;
+  --font-weight-bold: 500;
+}
+
+a, button {
+  transition: transform 0.15s ease, color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+button:active,
+a:active {
+  transform: translate(1px, 1px);
+}
 
 a, button {
   transition: transform 0.15s ease, color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;

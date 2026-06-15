@@ -6,20 +6,13 @@ import { t } from "@/i18n";
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/overlay/body-scroll-lock";
 import { useOverlay } from "@/lib/overlay/use-overlay";
 import { useSettings } from "@/lib/settings/use-settings";
+import { useSidebarState } from "@/lib/sidebar/use-sidebar-state";
 import { getNavigationGroups, getNavChildren, isCurrentRoute } from "@/lib/route/registry";
 import type { AppRoute } from "@/types/route";
 import { safeGetLocalStorage, safeSetLocalStorage, safeGetSessionStorage, safeSetSessionStorage } from "@/lib/storage/safe-storage";
-import { storageKeys } from "@/config/storage";
 
 const groupStorageKey = "moenotes:nav-groups";
 const mobileFocusableSelector = "a[href], button:not([disabled]), [tabindex]:not([tabindex='-1'])";
-
-function getEffectiveDesktopOpen(sidebarMode: "auto" | "expanded" | "collapsed"): boolean {
-  if (sidebarMode === "expanded") return true;
-  if (sidebarMode === "collapsed") return false;
-  const saved = safeGetSessionStorage(storageKeys.sidebarOpen);
-  return saved === null ? true : saved === "true";
-}
 
 interface SidebarProps {
   locale: AppLocale;
@@ -27,67 +20,31 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ locale, pathname }: SidebarProps) {
-  const [desktopOpen, setDesktopOpen] = useState(true);
+  const [desktopOpen, , setDesktopOpen] = useSidebarState();
   const [mounted, setMounted] = useState(false);
   const { isOpen: mobileOpen, close: closeMobile } = useOverlay("mobile-sidebar");
-  const { settings, updateSettings } = useSettings();
+  const { settings } = useSettings();
   const mobilePanelRef = useRef<HTMLElement>(null);
   const mobileRestoreFocusRef = useRef<HTMLElement | null>(null);
   const groups = useMemo(() => getNavigationGroups(), []);
 
+  // Sync from sidebarMode setting to store
   useEffect(() => {
-    const next = getEffectiveDesktopOpen(settings.sidebarMode);
-    setDesktopOpen(next);
-    document.documentElement.style.setProperty("--mn-sidebar-offset", next ? "18rem" : "2rem");
-    document.documentElement.dataset.sidebar = next ? "open" : "closed";
+    if (settings.sidebarMode === "expanded") {
+      setDesktopOpen(true);
+    } else if (settings.sidebarMode === "collapsed") {
+      setDesktopOpen(false);
+    }
+    // "auto" mode: let store manage itself
+  }, [settings.sidebarMode, setDesktopOpen]);
+
+  // Mark mounted after initial render (for animation)
+  useEffect(() => {
     const raf = requestAnimationFrame(() => {
       setMounted(true);
     });
     return () => cancelAnimationFrame(raf);
-  }, [settings.sidebarMode]);
-
-  useEffect(() => {
-    document.documentElement.style.setProperty("--mn-sidebar-offset", desktopOpen ? "18rem" : "2rem");
-    document.documentElement.dataset.sidebar = desktopOpen ? "open" : "closed";
-  }, [desktopOpen]);
-
-  useEffect(() => {
-    const syncDocument = (open: boolean) => {
-      safeSetSessionStorage(storageKeys.sidebarOpen, String(open));
-      document.documentElement.style.setProperty("--mn-sidebar-offset", open ? "18rem" : "2rem");
-      document.documentElement.dataset.sidebar = open ? "open" : "closed";
-    };
-
-    const handler = () => {
-      if (!window.matchMedia("(min-width: 768px)").matches) return;
-      if (settings.sidebarMode !== "auto") {
-        updateSettings({ sidebarMode: desktopOpen ? "collapsed" : "expanded" });
-        return;
-      }
-      setDesktopOpen((current) => {
-        const next = !current;
-        syncDocument(next);
-        window.dispatchEvent(new CustomEvent("moenotes:sidebar-state", { detail: { open: next } }));
-        return next;
-      });
-    };
-
-    const stateHandler = (event: Event) => {
-      if (!window.matchMedia("(min-width: 768px)").matches) return;
-      const next = settings.sidebarMode === "auto"
-        ? event instanceof CustomEvent && typeof event.detail?.open === "boolean" ? event.detail.open : document.documentElement.dataset.sidebar !== "closed"
-        : getEffectiveDesktopOpen(settings.sidebarMode);
-      setDesktopOpen(next);
-      syncDocument(next);
-    };
-
-    window.addEventListener("moenotes:toggle-desktop-sidebar", handler);
-    window.addEventListener("moenotes:sidebar-state", stateHandler);
-    return () => {
-      window.removeEventListener("moenotes:toggle-desktop-sidebar", handler);
-      window.removeEventListener("moenotes:sidebar-state", stateHandler);
-    };
-  }, [desktopOpen, settings.sidebarMode, updateSettings]);
+  }, []);
 
   useEffect(() => {
     if (!mobileOpen) {

@@ -14,6 +14,9 @@ export default defineConfig({
       },
     },
   },
+  // NOTE: i18n config here is reserved for future Astro native i18n features.
+  // Current routing uses custom catch-all via src/pages/[...locale]/index.astro
+  // and locale helpers in src/config/locales.ts. Keep these synchronized if locale changes.
   i18n: {
     defaultLocale: "zh-CN",
     locales: [

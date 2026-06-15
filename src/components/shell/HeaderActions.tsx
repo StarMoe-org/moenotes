@@ -3,33 +3,11 @@ import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { toggleOverlay } from "@/lib/overlay/overlay-store";
 import { useOverlay } from "@/lib/overlay/use-overlay";
-import { safeGetSessionStorage, safeSetSessionStorage } from "@/lib/storage/safe-storage";
 import { useSettings } from "@/lib/settings/use-settings";
-import { storageKeys } from "@/config/storage";
-import type { AppSettings } from "@/types/settings";
+import { useSidebarState } from "@/lib/sidebar/use-sidebar-state";
 
 interface Props {
   locale: AppLocale;
-}
-
-function getStoredDesktopSidebarOpen(): boolean {
-  const current = safeGetSessionStorage(storageKeys.sidebarOpen);
-  if (current !== null) return current === "true";
-  return document.documentElement.dataset.sidebar !== "closed";
-}
-
-function getEffectiveDesktopSidebarOpen(settings: AppSettings): boolean {
-  if (settings.sidebarMode === "expanded") return true;
-  if (settings.sidebarMode === "collapsed") return false;
-  return getStoredDesktopSidebarOpen();
-}
-
-function setDesktopSidebar(open: boolean) {
-  const root = document.documentElement;
-  safeSetSessionStorage(storageKeys.sidebarOpen, String(open));
-  root.dataset.sidebar = open ? "open" : "closed";
-  root.style.setProperty("--mn-sidebar-offset", open ? "18rem" : "2rem");
-  window.dispatchEvent(new CustomEvent("moenotes:sidebar-state", { detail: { open } }));
 }
 
 const btnStamp = "mn-stamp-press";
@@ -38,34 +16,25 @@ const btnStamp = "mn-stamp-press";
 export function HamburgerButtons({ locale }: Props) {
   const { isOpen: mobileOpen, toggle: toggleMobile } = useOverlay("mobile-sidebar");
   const { settings, updateSettings } = useSettings();
-  const [desktopOpen, setDesktopOpen] = useState(true);
+  const [desktopOpen, toggleDesktopStore, setDesktopOpen] = useSidebarState();
 
+  // Sync sidebarMode setting to store state
   useEffect(() => {
-    setDesktopOpen(getEffectiveDesktopSidebarOpen(settings));
-
-    const handler = (event: Event) => {
-      if (settings.sidebarMode !== "auto") {
-        setDesktopOpen(getEffectiveDesktopSidebarOpen(settings));
-        return;
-      }
-      if (event instanceof CustomEvent && typeof event.detail?.open === "boolean") {
-        setDesktopOpen(event.detail.open);
-      } else {
-        setDesktopOpen(getStoredDesktopSidebarOpen());
-      }
-    };
-    window.addEventListener("moenotes:sidebar-state", handler);
-    return () => window.removeEventListener("moenotes:sidebar-state", handler);
-  }, [settings]);
+    if (settings.sidebarMode === "expanded") {
+      setDesktopOpen(true);
+    } else if (settings.sidebarMode === "collapsed") {
+      setDesktopOpen(false);
+    }
+    // "auto" mode: let store manage itself
+  }, [settings.sidebarMode, setDesktopOpen]);
 
   const toggleDesktop = () => {
-    const next = !desktopOpen;
     if (settings.sidebarMode === "auto") {
-      setDesktopSidebar(next);
-      setDesktopOpen(next);
-      return;
+      toggleDesktopStore();
+    } else {
+      // In explicit mode, toggle between expanded/collapsed setting
+      updateSettings({ sidebarMode: desktopOpen ? "collapsed" : "expanded" });
     }
-    updateSettings({ sidebarMode: next ? "expanded" : "collapsed" });
   };
 
   return (

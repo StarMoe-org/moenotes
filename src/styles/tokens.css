@@ -38,6 +38,11 @@
   /* ── Rose ── */
   --mn-rose: #B85C6B;
 
+  /* ── Decorative (theme-aware) ── */
+  --mn-dot-ink: rgba(43, 42, 39, 0.06);
+  --mn-tape-edge: rgba(43, 42, 39, 0.18);
+  --mn-tape-shadow: rgba(43, 42, 39, 0.08);
+
   /* ── Shadows ── */
   --mn-shadow: 0 4px 20px -2px rgba(43, 42, 39, 0.05), 0 2px 6px -1px rgba(43, 42, 39, 0.03);
   --mn-shadow-stamp: 0 4px 12px -2px rgba(43, 42, 39, 0.06), 0 2px 4px -1px rgba(43, 42, 39, 0.04);
