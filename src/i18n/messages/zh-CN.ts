@@ -12,6 +12,7 @@ export const zhCN = {
     },
     items: {
       characters: "角色",
+      cards: "卡牌",
       music: "音乐",
       events: "活动列表",
       news: "公告",
@@ -37,13 +38,20 @@ export const zhCN = {
     title: "设置",
     language: "语言",
     colorScheme: "主题模式",
+    animationLevel: "动画等级",
     sidebarMode: "侧边栏",
     assetSource: "资源线路",
     masterdataSource: "MasterData 来源",
+    commandPalette: "命令面板",
+    breadcrumbDropdown: "面包屑下拉",
+    scrollMemory: "滚动记忆",
     options: {
       system: "跟随系统",
       light: "浅色",
       dark: "深色",
+      full: "完整",
+      reduced: "减少",
+      off: "关闭",
       auto: "自动",
       expanded: "展开",
       collapsed: "折叠",
@@ -51,6 +59,8 @@ export const zhCN = {
       backup: "备用线路",
       official: "官方/默认",
       mirror: "镜像",
+      enabled: "开启",
+      disabled: "关闭",
     },
   },
   actions: {
@@ -95,9 +105,25 @@ export const zhCN = {
       title: "角色资料",
       description: "Our Notes 角色资料页面骨架。",
     },
+    characterDetail: {
+      title: "角色详情",
+      description: "Our Notes 角色详情页面骨架。",
+    },
+    cards: {
+      title: "卡牌资料",
+      description: "Our Notes 卡牌资料页面骨架。",
+    },
+    cardDetail: {
+      title: "卡牌详情",
+      description: "Our Notes 卡牌详情页面骨架。",
+    },
     music: {
       title: "音乐资料",
       description: "Our Notes 音乐资料页面骨架。",
+    },
+    songDetail: {
+      title: "音乐详情",
+      description: "Our Notes 音乐详情页面骨架。",
     },
     activity: {
       title: "活动中心",

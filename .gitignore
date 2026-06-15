@@ -5,4 +5,6 @@ dist/
 .env
 .env.*
 .plan/
+__pycache__/
+*.py[cod]
 !.env.example

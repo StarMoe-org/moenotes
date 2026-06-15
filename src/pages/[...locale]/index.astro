@@ -7,34 +7,37 @@ import AppLayout from "@/layouts/AppLayout.astro";
 import PageLayout from "@/layouts/PageLayout.astro";
 import { DEFAULT_LOCALE, PATH_PREFIX_LOCALE, type AppLocale } from "@/config/locales";
 import { findRouteMatch } from "@/lib/route/registry";
-import { getStaticLocalizedPaths } from "@/lib/route/static-paths";
+import { getStaticLocalizedPaths, type StaticLocalizedPathProps } from "@/lib/route/static-paths";
 import { stripLocaleFromPathname } from "@/i18n/routing";
 
-export function getStaticPaths() {
-  return getStaticLocalizedPaths();
+export async function getStaticPaths() {
+  return await getStaticLocalizedPaths();
 }
 
+const props = Astro.props as Partial<StaticLocalizedPathProps>;
 const raw = Astro.params.locale ?? "";
 const segments = raw.split("/").filter(Boolean);
 const maybeLocale = PATH_PREFIX_LOCALE[segments[0] ?? ""];
-const locale: AppLocale = maybeLocale ?? DEFAULT_LOCALE;
+const locale: AppLocale = props.locale ?? maybeLocale ?? DEFAULT_LOCALE;
 const routePath = maybeLocale ? `/${segments.slice(1).join("/")}` : `/${segments.join("/")}`;
-const pathname = routePath === "/" ? "/" : stripLocaleFromPathname(routePath);
-const match = findRouteMatch(pathname);
+const pathname = props.pathname ?? (routePath === "/" ? "/" : stripLocaleFromPathname(routePath));
+const match = props.match ?? findRouteMatch(pathname);
 
 if (!match) {
   return Astro.redirect(locale === DEFAULT_LOCALE ? "/" : `/${segments[0]}`);
 }
+
+const component = match.item.component ?? "page";
 ---
 
-<AppLayout locale={locale} pathname={pathname}>
-  {match.item.id === "home" ? (
+<AppLayout locale={locale} pathname={pathname} meta={props.meta} breadcrumbDetail={props.breadcrumbDetail}>
+  {component === "home" ? (
     <Hero locale={locale} />
-  ) : match.item.id === "design-system" ? (
+  ) : component === "design-system" ? (
     <DesignSystemPage locale={locale} />
   ) : (
     <PageLayout locale={locale} titleKey={match.item.seo.titleKey} descriptionKey={match.item.seo.descriptionKey}>
-      {match.isGroupLanding || (match.item.children?.length ?? 0) > 0 ? (
+      {match.isGroupLanding ? (
         <GroupLanding locale={locale} group={match.item} />
       ) : (
         <PageHeader locale={locale} titleKey={match.item.seo.titleKey} descriptionKey={match.item.seo.descriptionKey} />

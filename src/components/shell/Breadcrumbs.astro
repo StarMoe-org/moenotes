@@ -4,17 +4,18 @@ import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import { buildBreadcrumbs } from "@/lib/route/breadcrumbs";
 import { findRouteMatch, getNavChildren, getNavigationGroups } from "@/lib/route/registry";
-import type { AppRoute, BreadcrumbItem } from "@/types/route";
+import type { AppRoute, BreadcrumbDetail, BreadcrumbItem } from "@/types/route";
 
 interface Props {
   locale: AppLocale;
   pathname: string;
-  detailLabel?: string;
+  detail?: BreadcrumbDetail | undefined;
+  detailLabel?: string | undefined;
   mode?: "desktop" | "mobile";
 }
 
-const { locale, pathname, detailLabel, mode = "desktop" } = Astro.props;
-const crumbs = buildBreadcrumbs(pathname, locale, detailLabel ? { label: detailLabel } : undefined);
+const { locale, pathname, detail, detailLabel, mode = "desktop" } = Astro.props;
+const crumbs = buildBreadcrumbs(pathname, locale, detail ?? (detailLabel ? { label: detailLabel } : undefined));
 const match = findRouteMatch(pathname);
 const groups = getNavigationGroups();
 const visibleCrumbs = crumbs.slice(1).map((crumb) => ({ ...crumb }));
@@ -66,7 +67,7 @@ function getOptionsForCrumb(crumb: BreadcrumbItem): AppRoute[] {
             <div class="flex min-w-0 items-center gap-0.5 overflow-visible">
               {isPlaceholder ? (
                 options.length > 0 && (
-                  <details class="relative shrink-0 overflow-visible">
+                  <details data-breadcrumb-dropdown class="relative shrink-0 overflow-visible">
                     <summary class="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-bold text-[var(--mn-text-muted)] cursor-pointer list-none transition hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]" aria-label="Select subpage">
                       <span>...</span>
                       <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
@@ -98,7 +99,7 @@ function getOptionsForCrumb(crumb: BreadcrumbItem): AppRoute[] {
                     {crumb.label}
                   </a>
                   {options.length > 0 && (
-                    <details class="relative shrink-0 overflow-visible">
+                    <details data-breadcrumb-dropdown class="relative shrink-0 overflow-visible">
                       <summary class="grid h-5 w-5 place-items-center rounded-full border border-transparent list-none hover:border-[var(--mn-border)] hover:bg-[var(--mn-cream-deep)]" aria-label={t(locale, crumb.id === match?.group?.id ? "shell.breadcrumbExpandGroup" : "shell.breadcrumbExpandItems")}>
                         <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
                       </summary>
@@ -138,7 +139,7 @@ function getOptionsForCrumb(crumb: BreadcrumbItem): AppRoute[] {
           <div class="flex min-w-0 items-center gap-1">
             {isPlaceholder ? (
               options.length > 0 && (
-                <details class="relative shrink-0">
+                <details data-breadcrumb-dropdown class="relative shrink-0">
                   <summary class="inline-flex items-center gap-1 rounded-full px-3 py-1 font-black text-[var(--mn-text-muted)] cursor-pointer list-none transition hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]" aria-label="Select subpage">
                     <span>...</span>
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
@@ -167,7 +168,7 @@ function getOptionsForCrumb(crumb: BreadcrumbItem): AppRoute[] {
                   {crumb.label}
                 </a>
                 {options.length > 0 && (
-                  <details class="relative shrink-0">
+                  <details data-breadcrumb-dropdown class="relative shrink-0">
                     <summary class="grid h-7 w-7 place-items-center rounded-full border-2 border-transparent list-none hover:border-[var(--mn-border)] hover:bg-[var(--mn-cream-deep)]" aria-label={t(locale, crumb.id === match?.group?.id ? "shell.breadcrumbExpandGroup" : "shell.breadcrumbExpandItems")}>
                       <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
                     </summary>

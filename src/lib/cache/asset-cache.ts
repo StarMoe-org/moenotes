@@ -27,6 +27,10 @@ export interface GetAssetCacheOptions {
   now?: number;
 }
 
+const touchThrottleMs = 60_000;
+const touchTimestamps = new Map<string, number>();
+let pruneTimer: ReturnType<typeof setTimeout> | null = null;
+
 export function isAssetCacheAvailable(): boolean {
   return isIndexedDbCacheAvailable();
 }
@@ -49,7 +53,7 @@ export async function getAssetCache(key: string, options: GetAssetCacheOptions =
       return null;
     }
 
-    if (options.updateAccessTime !== false) {
+    if (options.updateAccessTime !== false && shouldTouchAssetCache(key, now)) {
       void touchAssetCache(key, now);
       return { ...entry, lastAccessedAt: now };
     }
@@ -68,7 +72,7 @@ export async function setAssetCache(entry: AssetCacheEntry): Promise<void> {
     const transaction = db.transaction(STORE_ASSETS, "readwrite");
     transaction.objectStore(STORE_ASSETS).put(entry);
     await waitForTransaction(transaction);
-    void pruneAssetCache();
+    schedulePruneAssetCache();
   } catch {
     // Cache writes are best-effort.
   }
@@ -146,6 +150,21 @@ export async function pruneAssetCache(now = Date.now()): Promise<void> {
   } catch {
     // Ignore pruning failures.
   }
+}
+
+function shouldTouchAssetCache(key: string, now: number): boolean {
+  const lastTouch = touchTimestamps.get(key) ?? 0;
+  if (now - lastTouch < touchThrottleMs) return false;
+  touchTimestamps.set(key, now);
+  return true;
+}
+
+function schedulePruneAssetCache(): void {
+  if (pruneTimer) return;
+  pruneTimer = setTimeout(() => {
+    pruneTimer = null;
+    void pruneAssetCache();
+  }, 1_000);
 }
 
 async function touchAssetCache(key: string, lastAccessedAt: number): Promise<void> {

@@ -1,6 +1,6 @@
 import { STORE_MASTERDATA, isIndexedDbCacheAvailable, openCacheDb, requestToPromise } from "@/lib/cache/indexed-db";
 
-interface CacheEntry<T> {
+export interface MasterdataCacheEntry<T> {
   key: string;
   version: string;
   data: T;
@@ -11,16 +11,27 @@ export function isMasterdataCacheAvailable(): boolean {
   return isIndexedDbCacheAvailable();
 }
 
-export async function getMasterdataCache<T>(key: string, version: string): Promise<T | null> {
+export async function getMasterdataCacheEntry<T>(key: string, version?: string): Promise<MasterdataCacheEntry<T> | null> {
   if (!isMasterdataCacheAvailable()) return null;
   try {
     const db = await openCacheDb();
     const request = db.transaction(STORE_MASTERDATA, "readonly").objectStore(STORE_MASTERDATA).get(key);
-    const entry = await requestToPromise<CacheEntry<T> | undefined>(request);
-    return entry?.version === version ? entry.data : null;
+    const entry = await requestToPromise<MasterdataCacheEntry<T> | undefined>(request);
+    if (!entry) return null;
+    if (version && entry.version !== version) return null;
+    return entry;
   } catch {
     return null;
   }
+}
+
+export async function getMasterdataCache<T>(key: string, version: string): Promise<T | null> {
+  const entry = await getMasterdataCacheEntry<T>(key, version);
+  return entry ? entry.data : null;
+}
+
+export async function getStaleMasterdataCache<T>(key: string): Promise<MasterdataCacheEntry<T> | null> {
+  return getMasterdataCacheEntry<T>(key);
 }
 
 export async function setMasterdataCache<T>(key: string, version: string, data: T): Promise<void> {

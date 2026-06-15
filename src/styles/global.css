@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Zen+Kurenaido&family=Caveat:wght@400;700&family=Patrick+Hand&display=swap');
 @import "tailwindcss";
 @import "./tokens.css";
 @import "./themes.css";
@@ -31,6 +30,23 @@ body {
 [data-animation-level="off"] *::after {
   animation-duration: 0.001ms !important;
   transition-duration: 0.001ms !important;
+}
+
+[data-breadcrumb-dropdown="false"] details[data-breadcrumb-dropdown] {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  [data-animation-level="full"] *,
+  [data-animation-level="full"] *::before,
+  [data-animation-level="full"] *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
 }
 
 ::selection {

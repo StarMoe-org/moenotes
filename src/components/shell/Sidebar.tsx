@@ -1,39 +1,50 @@
-import { useEffect, useMemo, useRef, useState, Fragment, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, Fragment, type KeyboardEvent, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { AppLocale } from "@/config/locales";
 import { localizePath } from "@/i18n/routing";
 import { t } from "@/i18n";
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/overlay/body-scroll-lock";
 import { useOverlay } from "@/lib/overlay/use-overlay";
+import { useSettings } from "@/lib/settings/use-settings";
 import { getNavigationGroups, getNavChildren, isCurrentRoute } from "@/lib/route/registry";
 import type { AppRoute } from "@/types/route";
 import { safeGetLocalStorage, safeSetLocalStorage, safeGetSessionStorage, safeSetSessionStorage } from "@/lib/storage/safe-storage";
 import { storageKeys } from "@/config/storage";
 
 const groupStorageKey = "moenotes:nav-groups";
+const mobileFocusableSelector = "a[href], button:not([disabled]), [tabindex]:not([tabindex='-1'])";
+
+function getEffectiveDesktopOpen(sidebarMode: "auto" | "expanded" | "collapsed"): boolean {
+  if (sidebarMode === "expanded") return true;
+  if (sidebarMode === "collapsed") return false;
+  const saved = safeGetSessionStorage(storageKeys.sidebarOpen);
+  return saved === null ? true : saved === "true";
+}
 
 interface SidebarProps {
   locale: AppLocale;
   pathname: string;
-  hasCrumbs?: boolean;
 }
 
-export default function Sidebar({ locale, pathname, hasCrumbs }: SidebarProps) {
+export default function Sidebar({ locale, pathname }: SidebarProps) {
   const [desktopOpen, setDesktopOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
   const { isOpen: mobileOpen, close: closeMobile } = useOverlay("mobile-sidebar");
+  const { settings, updateSettings } = useSettings();
+  const mobilePanelRef = useRef<HTMLElement>(null);
+  const mobileRestoreFocusRef = useRef<HTMLElement | null>(null);
   const groups = useMemo(() => getNavigationGroups(), []);
 
   useEffect(() => {
-    const saved = safeGetSessionStorage(storageKeys.sidebarOpen);
-    const next = saved === null ? true : saved === "true";
+    const next = getEffectiveDesktopOpen(settings.sidebarMode);
     setDesktopOpen(next);
     document.documentElement.style.setProperty("--mn-sidebar-offset", next ? "18rem" : "2rem");
+    document.documentElement.dataset.sidebar = next ? "open" : "closed";
     const raf = requestAnimationFrame(() => {
       setMounted(true);
     });
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [settings.sidebarMode]);
 
   useEffect(() => {
     document.documentElement.style.setProperty("--mn-sidebar-offset", desktopOpen ? "18rem" : "2rem");
@@ -49,6 +60,10 @@ export default function Sidebar({ locale, pathname, hasCrumbs }: SidebarProps) {
 
     const handler = () => {
       if (!window.matchMedia("(min-width: 768px)").matches) return;
+      if (settings.sidebarMode !== "auto") {
+        updateSettings({ sidebarMode: desktopOpen ? "collapsed" : "expanded" });
+        return;
+      }
       setDesktopOpen((current) => {
         const next = !current;
         syncDocument(next);
@@ -59,7 +74,9 @@ export default function Sidebar({ locale, pathname, hasCrumbs }: SidebarProps) {
 
     const stateHandler = (event: Event) => {
       if (!window.matchMedia("(min-width: 768px)").matches) return;
-      const next = event instanceof CustomEvent && typeof event.detail?.open === "boolean" ? event.detail.open : document.documentElement.dataset.sidebar !== "closed";
+      const next = settings.sidebarMode === "auto"
+        ? event instanceof CustomEvent && typeof event.detail?.open === "boolean" ? event.detail.open : document.documentElement.dataset.sidebar !== "closed"
+        : getEffectiveDesktopOpen(settings.sidebarMode);
       setDesktopOpen(next);
       syncDocument(next);
     };
@@ -70,19 +87,38 @@ export default function Sidebar({ locale, pathname, hasCrumbs }: SidebarProps) {
       window.removeEventListener("moenotes:toggle-desktop-sidebar", handler);
       window.removeEventListener("moenotes:sidebar-state", stateHandler);
     };
-  }, []);
+  }, [desktopOpen, settings.sidebarMode, updateSettings]);
 
   useEffect(() => {
     if (!mobileOpen) {
       unlockBodyScroll("mobile-sidebar");
       return;
     }
+    mobileRestoreFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     lockBodyScroll("mobile-sidebar");
-    return () => unlockBodyScroll("mobile-sidebar");
+    const raf = requestAnimationFrame(() => {
+      const firstFocusable = mobilePanelRef.current?.querySelector<HTMLElement>(mobileFocusableSelector);
+      (firstFocusable ?? mobilePanelRef.current)?.focus({ preventScroll: true });
+    });
+    return () => {
+      cancelAnimationFrame(raf);
+      unlockBodyScroll("mobile-sidebar");
+      const restoreTarget = mobileRestoreFocusRef.current;
+      if (restoreTarget && document.contains(restoreTarget)) {
+        requestAnimationFrame(() => restoreTarget.focus({ preventScroll: true }));
+      }
+    };
   }, [mobileOpen]);
 
-  const topClass = hasCrumbs ? "top-36" : "top-24";
-  const heightClass = hasCrumbs ? "h-[calc(100dvh-10.5rem)]" : "h-[calc(100dvh-7.5rem)]";
+  const handleMobileKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.nativeEvent.isComposing) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeMobile();
+      return;
+    }
+    if (event.key === "Tab") trapMobileFocus(event.nativeEvent, mobilePanelRef.current);
+  };
 
   return (
     <>
@@ -105,7 +141,15 @@ export default function Sidebar({ locale, pathname, hasCrumbs }: SidebarProps) {
               transition={{ duration: 0.2 }}
             />
             <motion.aside
-              className={`absolute left-4 ${topClass} ${heightClass} w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]`}
+              ref={mobilePanelRef}
+              className="absolute left-4 w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]"
+              tabIndex={-1}
+              aria-label={t(locale, "shell.openSidebar")}
+              onKeyDown={handleMobileKeyDown}
+              style={{
+                top: "var(--mn-header-bottom, 80px)",
+                height: "calc(100dvh - var(--mn-header-bottom, 80px) - 16px)"
+              }}
               initial={{ x: "-105%" }}
               animate={{ x: 0 }}
               exit={{ x: "-105%" }}
@@ -219,6 +263,22 @@ function SidebarNav({ locale, pathname, groups, onNavigate }: { locale: AppLocal
       </div>
     </nav>
   );
+}
+
+function trapMobileFocus(event: globalThis.KeyboardEvent, panel: HTMLElement | null): void {
+  if (!panel) return;
+  const focusable = Array.from(panel.querySelectorAll<HTMLElement>(mobileFocusableSelector));
+  if (focusable.length === 0) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (!first || !last) return;
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus({ preventScroll: true });
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus({ preventScroll: true });
+  }
 }
 
 function NavGroup({ group, locale, pathname, collapsed, onToggle, onNavigate }: { group: AppRoute; locale: AppLocale; pathname: string; collapsed: boolean; onToggle: () => void; onNavigate?: () => void }) {

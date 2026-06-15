@@ -12,30 +12,32 @@ import Sidebar from "@/components/shell/Sidebar";
 import Footer from "@/components/shell/Footer.astro";
 import type { AppLocale } from "@/config/locales";
 import { buildBreadcrumbs } from "@/lib/route/breadcrumbs";
+import type { BreadcrumbDetail } from "@/types/route";
 
 interface Props {
   locale: AppLocale;
   pathname: string;
+  breadcrumbDetail?: BreadcrumbDetail | undefined;
 }
 
-const { locale, pathname } = Astro.props;
-const crumbs = buildBreadcrumbs(pathname, locale);
+const { locale, pathname, breadcrumbDetail } = Astro.props;
+const crumbs = buildBreadcrumbs(pathname, locale, breadcrumbDetail);
 const hasCrumbs = crumbs.length > 1;
 ---
 
 <AssetCacheBootstrap />
-<Header locale={locale} pathname={pathname}>
+<Header locale={locale} pathname={pathname} breadcrumbDetail={breadcrumbDetail}>
   <HamburgerButtons slot="hamburger" client:load locale={locale} />
   <HeaderActions client:load locale={locale} />
 </Header>
-<Sidebar client:load locale={locale} pathname={pathname} hasCrumbs={hasCrumbs} />
-<main id="content" class:list={["mx-auto min-h-screen max-w-7xl px-4 pb-16 transition-[padding] duration-300 md:pl-[calc(var(--mn-sidebar-offset,18rem)+1.5rem)] md:pr-6 md:pt-28", hasCrumbs ? "pt-36" : "pt-24"]}>
+<Sidebar client:load locale={locale} pathname={pathname} />
+<main id="content" class:list={["mx-auto min-h-screen max-w-7xl px-4 pb-16 pt-[var(--mn-header-bottom,5rem)] transition-[padding] duration-300 md:pl-[calc(var(--mn-sidebar-offset,18rem)+1.5rem)] md:pr-6 md:pt-28", hasCrumbs ? "md:pt-36" : "md:pt-24"]}>
   <slot />
 </main>
 <Footer locale={locale} />
-<CommandPalette client:load locale={locale} />
-<SettingsDrawer client:load locale={locale} pathname={pathname} />
-<KeyboardShortcutsHelp client:load locale={locale} />
+<CommandPalette client:idle locale={locale} />
+<SettingsDrawer client:idle locale={locale} pathname={pathname} />
+<KeyboardShortcutsHelp client:idle locale={locale} />
 <ScrollRestorer />
 <OverlayHost client:load locale={locale} />
-<ScrollToTop client:load />
+<ScrollToTop client:idle />

@@ -1,15 +1,16 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { dirname, extname, join, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const roots = ["src", ".miaomiaomiao/src"];
 const exts = new Set([".astro", ".ts", ".tsx", ".css"]);
 const emojiPattern = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
-const deniedCodePoints = [0x2605, 0x2726, 0x266A, 0x266B, 0x2630, 0x2699, 0x2713];
+const deniedCodePoints = [0x2605, 0x2726, 0x266A, 0x266B, 0x2630, 0x2699, 0x2713, 0x2B55, 0x2122, 0xFE0F];
 const deniedChars = new Set(deniedCodePoints.map((codePoint) => String.fromCodePoint(codePoint)));
 
 function extensionOf(file) {
-  const match = file.match(/(\.astro|\.tsx|\.ts|\.css)$/);
-  return match?.[1] ?? "";
+  return extname(file);
 }
 
 function walk(dir, files = []) {
@@ -33,9 +34,16 @@ function walk(dir, files = []) {
 }
 
 const hits = [];
+const missingRequiredRoots = [];
 
 for (const root of roots) {
-  for (const file of walk(root)) {
+  const absoluteRoot = resolve(repoRoot, root);
+  if (!existsSync(absoluteRoot)) {
+    if (root === "src") missingRequiredRoots.push(root);
+    continue;
+  }
+
+  for (const file of walk(absoluteRoot)) {
     const content = readFileSync(file, "utf8");
     const lines = content.split(/\r?\n/);
     lines.forEach((line, index) => {
@@ -43,7 +51,7 @@ for (const root of roots) {
       if (chars.length > 0) {
         if (line.includes("emoji-allow")) return;
         hits.push({
-          file: relative(process.cwd(), file),
+          file: relative(repoRoot, file).replace(/\\/g, "/"),
           line: index + 1,
           chars: [...new Set(chars)].join(" "),
           text: line.trim(),
@@ -51,6 +59,11 @@ for (const root of roots) {
       }
     });
   }
+}
+
+if (missingRequiredRoots.length > 0) {
+  console.error(`Required scan roots are missing: ${missingRequiredRoots.join(", ")}`);
+  process.exit(1);
 }
 
 if (hits.length > 0) {

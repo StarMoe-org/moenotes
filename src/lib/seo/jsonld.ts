@@ -1,6 +1,7 @@
 import { siteConfig } from "@/config/site";
 import type { AppLocale } from "@/config/locales";
 import { buildBreadcrumbs, buildAbsoluteUrl } from "@/lib/route/breadcrumbs";
+import type { BreadcrumbDetail } from "@/types/route";
 
 export function websiteJsonLd(locale: AppLocale) {
   return {
@@ -17,7 +18,7 @@ export function websiteJsonLd(locale: AppLocale) {
   };
 }
 
-export function breadcrumbJsonLd(pathname: string, locale: AppLocale, detail?: { id?: string; label: string; href?: string }) {
+export function breadcrumbJsonLd(pathname: string, locale: AppLocale, detail?: BreadcrumbDetail) {
   const crumbs = buildBreadcrumbs(pathname, locale, detail);
   return {
     "@context": "https://schema.org",
@@ -29,4 +30,8 @@ export function breadcrumbJsonLd(pathname: string, locale: AppLocale, detail?: {
       item: buildAbsoluteUrl(crumb.href),
     })),
   };
+}
+
+export function serializeJsonLd(value: unknown): string {
+  return JSON.stringify(value).replace(/</g, "\\u003c");
 }

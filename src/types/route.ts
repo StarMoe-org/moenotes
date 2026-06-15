@@ -1,7 +1,11 @@
 import type { AppLocale } from "@/config/locales";
+import type { PageMetadata } from "@/lib/seo/metadata";
 
 export type RouteGroupId = "database" | "activity" | "story" | "tools" | "community";
 export type RouteIcon = "home" | "database" | "music" | "users" | "calendar" | "newspaper" | "book" | "wrench" | "sparkles" | "info" | "palette";
+export type RouteKind = "static" | "dynamic";
+export type RouteComponent = "home" | "page" | "design-system";
+export type RouteParams = Record<string, string>;
 
 export interface RouteSeoConfig {
   titleKey: string;
@@ -20,9 +24,26 @@ export interface RouteNavConfig {
   shortcut?: string;
 }
 
+export interface RouteStaticParamConfig {
+  params: RouteParams;
+  breadcrumbDetail?: BreadcrumbDetail;
+  meta?: Partial<PageMetadata>;
+}
+
 export interface AppRoute {
   id: string;
+  /** Canonical route path. Dynamic routes may include `:param` segments. */
   path: `/${string}`;
+  /** Explicit route kind. Omitted routes are treated as static for backward compatibility. */
+  kind?: RouteKind;
+  /** Pattern used to match dynamic detail routes, e.g. `/cards/:id`. Defaults to `path`. */
+  pattern?: `/${string}`;
+  /** Parent route id for dynamic detail routes when the nesting tree is not enough. */
+  parentId?: string;
+  /** Rendering slot used by the catch-all page. */
+  component?: RouteComponent;
+  /** Static params to generate for dynamic routes once real data exists. */
+  staticParams?: readonly RouteStaticParamConfig[] | (() => readonly RouteStaticParamConfig[] | Promise<readonly RouteStaticParamConfig[]>);
   labelKey: string;
   seo: RouteSeoConfig;
   nav?: false | RouteNavConfig;
@@ -34,7 +55,16 @@ export interface AppRoute {
 export interface RouteMatch {
   group?: AppRoute;
   item: AppRoute;
+  ancestors: AppRoute[];
   isGroupLanding: boolean;
+  params: RouteParams;
+  pathname: `/${string}`;
+}
+
+export interface BreadcrumbDetail {
+  id?: string;
+  label: string;
+  href?: string;
 }
 
 export interface BreadcrumbItem {
@@ -46,9 +76,5 @@ export interface BreadcrumbItem {
 
 export interface BuildBreadcrumbOptions {
   locale: AppLocale;
-  detail?: {
-    id?: string;
-    label: string;
-    href?: string;
-  };
+  detail?: BreadcrumbDetail;
 }

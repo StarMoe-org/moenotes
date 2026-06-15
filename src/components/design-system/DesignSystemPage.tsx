@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
@@ -18,6 +19,32 @@ export default function DesignSystemPage({ locale }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>("colors");
   const { springTransition, floatHoverProps, floatTapProps } = useSpringAnimation();
 
+  // Lifted Filter States
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("all");
+  const [sortBy, setSortBy] = useState("name");
+  const [language, setLanguage] = useState("all");
+  const [toggle, setToggle] = useState(false);
+
+  const total = 128;
+  const filtered = search || category !== "all" || toggle || language !== "all" ? 42 : total;
+  const hasActive = search !== "" || category !== "all" || toggle || sortBy !== "name" || language !== "all";
+
+  const reset = () => { setSearch(""); setCategory("all"); setSortBy("name"); setLanguage("all"); setToggle(false); };
+
+  const sortOptions = [
+    { value: "name", label: t(locale, "designSystem.filters.name") },
+    { value: "date", label: t(locale, "designSystem.filters.date") },
+    { value: "level", label: t(locale, "designSystem.filters.level") },
+  ];
+
+  const languageOptions = [
+    { value: "all", label: t(locale, "designSystem.filters.all") },
+    { value: "zh", label: "简体中文" }, // i18n-allow-hardcoded
+    { value: "ja", label: "日本語" }, // i18n-allow-hardcoded
+    { value: "en", label: "English" },
+  ];
+
   return (
     <QuickFilterProvider>
     <div className="space-y-10">
@@ -35,7 +62,7 @@ export default function DesignSystemPage({ locale }: Props) {
       </header>
 
       {/* Tab Navigation */}
-      <nav className="sticky top-24 z-20 border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp-sm)] rounded-2xl mx-2 sm:mx-3 sm:rounded-full sm:p-2.5">
+      <nav className="sticky top-[var(--mn-header-bottom,5rem)] sm:top-24 z-20 border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp-sm)] rounded-2xl mx-1 sm:mx-3 sm:rounded-full sm:p-2.5 transition-all duration-300">
         <div className="w-full min-w-0 overflow-x-auto no-scrollbar touch-pan-x flex flex-nowrap items-center gap-2 md:flex-wrap md:overflow-visible px-2 py-0.5">
           {TABS.map((tab) => (
             // Capsule tab → float animation
@@ -62,25 +89,59 @@ export default function DesignSystemPage({ locale }: Props) {
       {activeTab === "typography" && <TypographySection locale={locale} />}
       {activeTab === "components" && <ComponentsSection locale={locale} />}
       {activeTab === "modals" && <ModalsSection locale={locale} />}
-      {activeTab === "filters" && <FiltersSection locale={locale} />}
+      {activeTab === "filters" && (
+        <FiltersSection
+          locale={locale}
+          search={search}
+          setSearch={setSearch}
+          category={category}
+          setCategory={setCategory}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          language={language}
+          setLanguage={setLanguage}
+          toggle={toggle}
+          setToggle={setToggle}
+          filtered={filtered}
+          total={total}
+          hasActive={hasActive}
+          reset={reset}
+          sortOptions={sortOptions}
+          languageOptions={languageOptions}
+        />
+      )}
       {activeTab === "animations" && <AnimationsSection locale={locale} />}
       <QuickFilterButton
-        title="Quick Navigation"
+        title={t(locale, "designSystem.sections.filters")}
         content={
-          <div className="grid grid-cols-2 gap-3">
-            {TABS.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`rounded-full border-[1.5px] border-[var(--mn-border)] px-4 py-3 text-sm font-bold transition ${
-                  activeTab === tab
-                    ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)] shadow-[var(--mn-shadow-stamp-sm)]"
-                    : "bg-[var(--mn-paper)] text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp-sm)] hover:bg-[var(--mn-cream-deep)]"
-                }`}
-              >
-                {t(locale, `designSystem.sections.${tab}`)}
-              </button>
-            ))}
+          <div className="w-full min-w-0">
+            <BaseFilters
+              searchValue={search}
+              onSearchChange={setSearch}
+              searchPlaceholder={t(locale, "designSystem.filters.searchPlaceholder")}
+              resultCount={filtered}
+              totalCount={total}
+              hasActiveFilters={hasActive}
+              onReset={reset}
+              disableCollapse={true}
+            >
+              <FilterSection title={t(locale, "designSystem.filters.category")}>
+                <div className="flex flex-wrap gap-2">
+                  {(["all", "typeA", "typeB"] as const).map((cat) => (
+                    <FilterButton key={cat} active={category === cat} onClick={() => setCategory(cat)}>
+                      {t(locale, `designSystem.filters.${cat}` as const)}
+                    </FilterButton>
+                  ))}
+                </div>
+              </FilterSection>
+              <FilterSection title={t(locale, "designSystem.filters.sortBy")}>
+                <FilterSelect value={sortBy} options={sortOptions} onChange={setSortBy} />
+              </FilterSection>
+              <FilterSection title={t(locale, "designSystem.filters.language")}>
+                <FilterSelect value={language} options={languageOptions} onChange={setLanguage} />
+              </FilterSection>
+              <FilterToggle checked={toggle} onChange={setToggle} label={t(locale, "designSystem.filters.onlyComplete")} />
+            </BaseFilters>
           </div>
         }
       />
@@ -410,32 +471,45 @@ function ModalsSection({ locale }: { locale: AppLocale }) {
 
 // ── Filters Section ─────────────────────────────────────────────────────────────
 
-function FiltersSection({ locale }: { locale: AppLocale }) {
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("all");
-  const [sortBy, setSortBy] = useState("name");
-  const [language, setLanguage] = useState("all");
-  const [toggle, setToggle] = useState(false);
+interface FiltersSectionProps {
+  locale: AppLocale;
+  search: string;
+  setSearch: (v: string) => void;
+  category: string;
+  setCategory: (v: string) => void;
+  sortBy: string;
+  setSortBy: (v: string) => void;
+  language: string;
+  setLanguage: (v: string) => void;
+  toggle: boolean;
+  setToggle: (v: boolean) => void;
+  filtered: number;
+  total: number;
+  hasActive: boolean;
+  reset: () => void;
+  sortOptions: { value: string; label: string }[];
+  languageOptions: { value: string; label: string }[];
+}
 
-  const total = 128;
-  const filtered = search || category !== "all" || toggle || language !== "all" ? 42 : total;
-  const hasActive = search !== "" || category !== "all" || toggle || sortBy !== "name" || language !== "all";
-
-  const reset = () => { setSearch(""); setCategory("all"); setSortBy("name"); setLanguage("all"); setToggle(false); };
-
-  const sortOptions = [
-    { value: "name", label: t(locale, "designSystem.filters.name") },
-    { value: "date", label: t(locale, "designSystem.filters.date") },
-    { value: "level", label: t(locale, "designSystem.filters.level") },
-  ];
-
-  const languageOptions = [
-    { value: "all", label: t(locale, "designSystem.filters.all") },
-    { value: "zh", label: "简体中文" }, // i18n-allow-hardcoded
-    { value: "ja", label: "日本語" }, // i18n-allow-hardcoded
-    { value: "en", label: "English" },
-  ];
-
+function FiltersSection({
+  locale,
+  search,
+  setSearch,
+  category,
+  setCategory,
+  sortBy,
+  setSortBy,
+  language,
+  setLanguage,
+  toggle,
+  setToggle,
+  filtered,
+  total,
+  hasActive,
+  reset,
+  sortOptions,
+  languageOptions,
+}: FiltersSectionProps) {
   return (
     <SectionCard>
       <SectionTitle title={t(locale, "designSystem.sections.filters")} />
@@ -502,11 +576,38 @@ function FiltersSection({ locale }: { locale: AppLocale }) {
 
 function FilterSelect({ value, options, onChange }: { value: string; options: { value: string; label: string }[]; onChange: (v: string) => void }) {
   const [open, setOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+
+  const updateCoords = () => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (open) {
+      updateCoords();
+      window.addEventListener("resize", updateCoords);
+      window.addEventListener("scroll", updateCoords, true);
+    }
+    return () => {
+      window.removeEventListener("resize", updateCoords);
+      window.removeEventListener("scroll", updateCoords, true);
+    };
+  }, [open]);
+
   const selected = options.find((o) => o.value === value);
 
   return (
     <div className="relative">
       <button
+        ref={buttonRef}
         type="button"
         className="mn-stamp-press flex w-full min-w-0 items-center justify-between rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-4 py-2.5 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]"
         onClick={() => setOpen(!open)}
@@ -516,18 +617,29 @@ function FilterSelect({ value, options, onChange }: { value: string; options: { 
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-full z-20 mt-1 w-full rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp)]">
-            {options.map((opt) => (
-              <button
-                key={opt.value}
-                className={`w-full rounded-full px-4 py-2 text-left text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${opt.value === value ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
-                onClick={() => { onChange(opt.value); setOpen(false); }}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <div className="fixed inset-0 z-[210]" onClick={() => setOpen(false)} />
+          {createPortal(
+            <div
+              style={{
+                position: "absolute",
+                top: `${coords.top}px`,
+                left: `${coords.left}px`,
+                width: `${coords.width}px`,
+              }}
+              className="z-[220] mt-1 rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp)]"
+            >
+              {options.map((opt) => (
+                <button
+                  key={opt.value}
+                  className={`w-full rounded-full px-4 py-2 text-left text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${opt.value === value ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
+                  onClick={() => { onChange(opt.value); setOpen(false); }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>,
+            document.body
+          )}
         </>
       )}
     </div>
@@ -707,12 +819,39 @@ function SelectDemo({ locale }: { locale: AppLocale }) {
   ];
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("a");
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+
+  const updateCoords = () => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (open) {
+      updateCoords();
+      window.addEventListener("resize", updateCoords);
+      window.addEventListener("scroll", updateCoords, true);
+    }
+    return () => {
+      window.removeEventListener("resize", updateCoords);
+      window.removeEventListener("scroll", updateCoords, true);
+    };
+  }, [open]);
+
   const selected = options.find((o) => o.value === value);
 
   return (
     <div className="relative">
       <label htmlFor="demo-select" className="mb-1 block text-sm font-bold text-[var(--mn-text)]">{t(locale, "designSystem.components.select")}</label>
       <button
+        ref={buttonRef}
         id="demo-select"
         type="button"
         className="mn-stamp-press flex w-full min-w-0 items-center justify-between rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] px-5 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]"
@@ -723,18 +862,29 @@ function SelectDemo({ locale }: { locale: AppLocale }) {
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-full z-20 mt-1 w-full rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp)]">
-            {options.map((opt) => (
-              <button
-                key={opt.value}
-                className={`w-full rounded-full px-4 py-2 text-left text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${opt.value === value ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
-                onClick={() => { setValue(opt.value); setOpen(false); }}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <div className="fixed inset-0 z-[210]" onClick={() => setOpen(false)} />
+          {createPortal(
+            <div
+              style={{
+                position: "absolute",
+                top: `${coords.top}px`,
+                left: `${coords.left}px`,
+                width: `${coords.width}px`,
+              }}
+              className="z-[220] mt-1 rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp)]"
+            >
+              {options.map((opt) => (
+                <button
+                  key={opt.value}
+                  className={`w-full rounded-full px-4 py-2 text-left text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${opt.value === value ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
+                  onClick={() => { setValue(opt.value); setOpen(false); }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>,
+            document.body
+          )}
         </>
       )}
     </div>

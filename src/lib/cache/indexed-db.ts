@@ -38,8 +38,7 @@ export function openCacheDb(): Promise<IDBDatabase> {
     };
 
     request.onblocked = () => {
-      dbPromise = null;
-      reject(new Error("Cache database upgrade was blocked."));
+      // Keep the open request pending: blocked is temporary until older tabs close.
     };
   });
 

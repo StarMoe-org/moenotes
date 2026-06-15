@@ -94,9 +94,11 @@ function checkFile(file) {
 
 function checkInternalRouteLiterals(repoPath, source) {
   const literalMatches = [...source.matchAll(/(?<!@)["'](\/[a-z][a-z0-9\/-]*)["']/gi)];
-  const forbidden = literalMatches
-    .map((match) => match[1])
-    .filter((value) => !isAllowedInternalPathLiteral(value));
+  const templateMatches = [...source.matchAll(/`(\/[a-z][a-z0-9\/-]*(?:\$\{[^}]+\}[a-z0-9\/-]*)+)`/gi)];
+  const forbidden = [
+    ...literalMatches.map((match) => match[1]),
+    ...templateMatches.map((match) => match[1]),
+  ].filter((value) => !isAllowedInternalPathLiteral(value));
 
   if (forbidden.length > 0) {
     errors.push(`${repoPath}: hardcoded internal route path is forbidden; use route id helpers instead: ${[...new Set(forbidden)].join(", ")}`);

@@ -7,6 +7,9 @@ export interface SiteConfig {
   author: string;
   ogImage: string;
   repository?: string;
+  xmlNamespaces: {
+    xhtml: string;
+  };
   sisterSites: Array<{ label: string; url: string }>;
   contact: {
     email: string;
@@ -23,6 +26,9 @@ export const siteConfig: SiteConfig = {
   baseUrl: "https://notes.moesekai.dev",
   author: "MoeSekai",
   ogImage: "/og-default.png",
+  xmlNamespaces: {
+    xhtml: "http://www.w3.org/1999/xhtml",
+  },
   sisterSites: [
     { label: "pjsk.moe (MoeSekai)", url: "https://pjsk.moe" },
     { label: "sekai.best", url: "https://sekai.best" },

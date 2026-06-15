@@ -55,6 +55,8 @@ export function registerShortcutManager(handlers: ShortcutHandlers): () => void 
         }
       }
     }
+
+    if (sequence) sequence = null;
   };
 
   document.addEventListener("keydown", onKeyDown);

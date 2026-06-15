@@ -13,29 +13,50 @@ export interface PageMetadata {
   ogLocale: string;
   keywords: string[];
   indexable: boolean;
+  image: string;
 }
 
 export function absoluteUrl(pathname: string): string {
   return new URL(pathname, siteConfig.baseUrl).toString();
 }
 
-export function buildPageMetadata(pathname: string, locale: AppLocale = DEFAULT_LOCALE): PageMetadata {
+export function withDirectorySlash(pathname: string): `/${string}` {
+  const [path = "/", suffix = ""] = pathname.split(/([?#].*)/, 2);
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  const lastSegment = normalized.split("/").filter(Boolean).at(-1) ?? "";
+  if (normalized.endsWith("/") || lastSegment.includes(".")) return `${normalized}${suffix}` as `/${string}`;
+  return `${normalized}/${suffix}` as `/${string}`;
+}
+
+export function absolutePageUrl(pathname: string): string {
+  return absoluteUrl(withDirectorySlash(pathname));
+}
+
+export function buildPageMetadata(
+  pathname: string,
+  locale: AppLocale = DEFAULT_LOCALE,
+  overrides: Partial<PageMetadata> = {},
+): PageMetadata {
   const match = findRouteMatch(pathname);
   const route = match?.item;
-  const title = route ? t(locale, route.seo.titleKey) : siteConfig.name;
-  const description = route ? t(locale, route.seo.descriptionKey) : siteConfig.description;
+  const title = overrides.title ?? (route ? t(locale, route.seo.titleKey) : siteConfig.name);
+  const description = overrides.description ?? (route ? t(locale, route.seo.descriptionKey) : siteConfig.description);
   const localizedPath = localizePath(pathname, locale);
+  const canonical = overrides.canonical ?? absolutePageUrl(localizedPath);
 
-  return {
+  const base: PageMetadata = {
     title,
-    fullTitle: siteConfig.titleTemplate.replace("%s", title),
+    fullTitle: overrides.fullTitle ?? siteConfig.titleTemplate.replace("%s", title),
     description,
-    canonical: absoluteUrl(localizedPath),
-    alternates: localeAlternates(pathname).map(({ locale: altLocale, href }) => ({ locale: altLocale, href: absoluteUrl(href) })),
-    ogLocale: OG_LOCALE[locale],
-    keywords: route?.seo.keywords ?? [],
-    indexable: route?.seo.indexable !== false,
+    canonical,
+    alternates: overrides.alternates ?? localeAlternates(pathname).map(({ locale: altLocale, href }) => ({ locale: altLocale, href: absolutePageUrl(href) })),
+    ogLocale: overrides.ogLocale ?? OG_LOCALE[locale],
+    keywords: overrides.keywords ?? route?.seo.keywords ?? [],
+    indexable: overrides.indexable ?? route?.seo.indexable !== false,
+    image: overrides.image ?? absoluteUrl(siteConfig.ogImage),
   };
+
+  return { ...base, ...overrides, title, description, canonical };
 }
 
 export function buildHreflang(locale: AppLocale): string {

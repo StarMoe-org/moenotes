@@ -1,13 +1,19 @@
 import type { AppLocale } from "@/config/locales";
-import { getAllRoutes } from "@/lib/route/registry";
-import { localizePath } from "@/i18n/routing";
-import { absoluteUrl } from "@/lib/seo/metadata";
+import { getAllStaticRoutes } from "@/lib/route/registry";
+import { localeAlternates, localizePath } from "@/i18n/routing";
+import { absolutePageUrl } from "@/lib/seo/metadata";
 
 export function getStaticSitemapEntries(locale: AppLocale) {
-  return getAllRoutes()
+  const lastmod = new Date().toISOString().slice(0, 10);
+  return getAllStaticRoutes()
     .filter((route) => route.seo.indexable !== false)
     .map((route) => ({
-      loc: absoluteUrl(localizePath(route.path, locale)),
+      loc: absolutePageUrl(localizePath(route.path, locale)),
+      alternates: localeAlternates(route.path).map((alternate) => ({
+        locale: alternate.locale,
+        href: absolutePageUrl(alternate.href),
+      })),
+      lastmod,
       priority: route.seo.sitemap?.priority ?? 0.5,
       changefreq: route.seo.sitemap?.changefreq ?? "weekly",
     }));

@@ -31,7 +31,7 @@ export async function cachedFetch(input: CachedFetchInput, init?: CachedFetchIni
 
   const cacheMode = init?.cache ?? request.cache;
   const cacheKey = options.cacheKey ?? getAssetCacheKey(request.url);
-  const forceRefresh = options.forceRefresh === true || cacheMode === "reload";
+  const forceRefresh = options.forceRefresh === true || cacheMode === "reload" || cacheMode === "no-cache";
 
   if (cacheMode === "no-store" || isAssetCacheBypassed() || !isCacheableAssetRequest(request)) {
     return fetcher(request);
@@ -109,8 +109,7 @@ async function fetchAndCacheAsset(
       if (stale) return createAssetCacheResponse(stale, "stale");
     }
 
-    void storeCacheableAssetResponse(cacheKey, request.url, response, options.ttlMs);
-    return response;
+    return await storeCacheableAssetResponse(cacheKey, request.url, response, options.ttlMs) ?? response;
   } catch (error) {
     if (options.allowStaleOnError !== false) {
       const stale = await getAssetCache(cacheKey, { allowStale: true });
@@ -120,18 +119,21 @@ async function fetchAndCacheAsset(
   }
 }
 
-async function storeCacheableAssetResponse(cacheKey: string, url: string, response: Response, ttlMs = cacheConfig.assets.ttlMs): Promise<void> {
-  if (!isCacheableAssetResponse(response)) return;
+async function storeCacheableAssetResponse(cacheKey: string, url: string, response: Response, ttlMs = cacheConfig.assets.ttlMs): Promise<Response | null> {
+  if (!isCacheableAssetResponse(response)) return null;
 
   const responseSize = getResponseContentLength(response);
-  if (responseSize !== null && responseSize > cacheConfig.assets.maxResponseBytes) return;
+  if (responseSize !== null && responseSize > cacheConfig.assets.maxResponseBytes) return null;
+
+  const headerContentType = normalizeContentType(response.headers.get("content-type") ?? "");
+  if (headerContentType && !isCacheableContentType(headerContentType)) return null;
 
   try {
     const blob = await response.clone().blob();
-    if (blob.size > cacheConfig.assets.maxResponseBytes) return;
-
-    const contentType = normalizeContentType(response.headers.get("content-type") ?? blob.type);
-    if (!isCacheableContentType(contentType)) return;
+    const contentType = normalizeContentType(headerContentType || blob.type);
+    const replay = createReplayResponse(response, blob, contentType);
+    if (blob.size > cacheConfig.assets.maxResponseBytes) return replay;
+    if (!isCacheableContentType(contentType)) return replay;
 
     const now = Date.now();
     await setAssetCache({
@@ -148,8 +150,10 @@ async function storeCacheableAssetResponse(cacheKey: string, url: string, respon
       expiresAt: now + ttlMs,
       staleUntil: now + ttlMs + cacheConfig.assets.staleFallbackTtlMs,
     });
+    return replay;
   } catch {
     // Cache population is best-effort and must never break the request.
+    return null;
   }
 }
 
@@ -182,8 +186,17 @@ function isCacheableAssetRequest(request: Request): boolean {
 
 function isCacheableAssetResponse(response: Response): boolean {
   if (!response.ok) return false;
+  if ([101, 103, 204, 205, 304].includes(response.status)) return false;
   if (response.type === "opaque" || response.type === "opaqueredirect") return false;
   return true;
+}
+
+function createReplayResponse(response: Response, blob: Blob, contentType: string): Response {
+  return new Response(blob, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: collectResponseHeaders(response.headers, contentType, blob.size),
+  });
 }
 
 function isCacheableContentType(contentType: string): boolean {
@@ -208,7 +221,7 @@ function collectResponseHeaders(headers: Headers, contentType: string, size: num
   const result: Record<string, string> = {};
   headers.forEach((value, key) => {
     const normalizedKey = key.toLowerCase();
-    if (normalizedKey === "set-cookie") return;
+    if (normalizedKey === "set-cookie" || normalizedKey === "content-encoding") return;
     result[normalizedKey] = value;
   });
 

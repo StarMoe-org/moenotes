@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
 import { LOCALE_LABELS, SUPPORTED_LOCALES } from "@/config/locales";
 import { switchLocalePath } from "@/i18n/routing";
@@ -17,7 +17,6 @@ const chevronDown = (
   <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
 );
 
-
 export default function SettingsDrawer({ locale, pathname }: SettingsDrawerProps) {
   const { isOpen, close } = useOverlay("settings");
   const { settings, updateSettings } = useSettings();
@@ -28,15 +27,15 @@ export default function SettingsDrawer({ locale, pathname }: SettingsDrawerProps
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={close} title={t(locale, "settings.title")} size="md">
+    <Modal isOpen={isOpen} onClose={close} title={t(locale, "settings.title")} closeLabel={t(locale, "actions.close")} size="md">
       <div className="space-y-6">
-        {/* Language (Dropdown) */}
         <Section title={t(locale, "settings.language")}>
           <div className="relative">
             <button
               type="button"
               className="mn-stamp-press flex w-full items-center justify-between rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface-strong)] px-5 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]"
               onClick={() => setLangOpen(!langOpen)}
+              aria-expanded={langOpen}
             >
               {LOCALE_LABELS[locale]}
               {chevronDown}
@@ -61,32 +60,68 @@ export default function SettingsDrawer({ locale, pathname }: SettingsDrawerProps
           </div>
         </Section>
 
-        {/* Color Scheme */}
         <Section title={t(locale, "settings.colorScheme")}>
           <Segmented
             value={settings.colorScheme}
             options={["system", "light", "dark"]}
-            label={(v) => t(locale, `settings.options.${v}`)}
+            label={(value) => t(locale, `settings.options.${value}`)}
             onChange={(value) => update({ colorScheme: value as AppSettings["colorScheme"] })}
           />
         </Section>
 
-        {/* Sidebar Mode */}
+        <Section title={t(locale, "settings.animationLevel")}>
+          <Segmented
+            value={settings.animationLevel}
+            options={["full", "reduced", "off"]}
+            label={(value) => t(locale, `settings.options.${value}`)}
+            onChange={(value) => update({ animationLevel: value as AppSettings["animationLevel"] })}
+          />
+        </Section>
+
         <Section title={t(locale, "settings.sidebarMode")}>
           <Segmented
             value={settings.sidebarMode}
             options={["auto", "expanded", "collapsed"]}
-            label={(v) => t(locale, `settings.options.${v}`)}
+            label={(value) => t(locale, `settings.options.${value}`)}
             onChange={(value) => update({ sidebarMode: value as AppSettings["sidebarMode"] })}
           />
         </Section>
 
+        <Section title={t(locale, "settings.assetSource")}>
+          <Segmented
+            value={settings.assetSource}
+            options={["main", "backup"]}
+            label={(value) => t(locale, `settings.options.${value}`)}
+            onChange={(value) => update({ assetSource: value as AppSettings["assetSource"] })}
+          />
+        </Section>
+
+        <Section title={t(locale, "settings.masterdataSource")}>
+          <Segmented
+            value={settings.masterdataSource}
+            options={["official", "mirror"]}
+            label={(value) => t(locale, `settings.options.${value}`)}
+            onChange={(value) => update({ masterdataSource: value as AppSettings["masterdataSource"] })}
+          />
+        </Section>
+
+        <Section title={t(locale, "settings.commandPalette")}>
+          <BooleanSegmented value={settings.enableCommandPalette} onChange={(value) => update({ enableCommandPalette: value })} locale={locale} />
+        </Section>
+
+        <Section title={t(locale, "settings.breadcrumbDropdown")}>
+          <BooleanSegmented value={settings.enableBreadcrumbDropdown} onChange={(value) => update({ enableBreadcrumbDropdown: value })} locale={locale} />
+        </Section>
+
+        <Section title={t(locale, "settings.scrollMemory")}>
+          <BooleanSegmented value={settings.enableScrollMemory} onChange={(value) => update({ enableScrollMemory: value })} locale={locale} />
+        </Section>
       </div>
     </Modal>
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
       <h3 className="mb-2 font-[var(--mn-font-display)] text-xs uppercase tracking-[0.18em] text-[var(--mn-accent-deep)]">
@@ -94,6 +129,17 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       </h3>
       {children}
     </section>
+  );
+}
+
+function BooleanSegmented({ value, onChange, locale }: { value: boolean; onChange: (value: boolean) => void; locale: AppLocale }) {
+  return (
+    <Segmented
+      value={value ? "enabled" : "disabled"}
+      options={["enabled", "disabled"]}
+      label={(option) => t(locale, `settings.options.${option}`)}
+      onChange={(option) => onChange(option === "enabled")}
+    />
   );
 }
 
@@ -109,16 +155,18 @@ function Segmented({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="grid grid-cols-3 gap-2 rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-surface-strong)] p-1 shadow-[var(--mn-shadow-stamp-sm)]">
+    <div className="grid grid-cols-[repeat(var(--mn-segment-count),minmax(0,1fr))] gap-2 rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-surface-strong)] p-1 shadow-[var(--mn-shadow-stamp-sm)]" style={{ "--mn-segment-count": options.length } as CSSProperties}>
       {options.map((option) => (
         <button
           key={option}
+          type="button"
           className={`rounded-full px-3 py-2 text-sm font-black transition ${
             value === option
               ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]"
               : "text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)]"
           }`}
           onClick={() => onChange(option)}
+          aria-pressed={value === option}
         >
           {label(option)}
         </button>

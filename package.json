@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node scripts/clean-dev-cache.mjs && astro dev --force",
+    "dev": "astro dev",
     "dev:fresh": "node scripts/clean-dev-cache.mjs && astro dev --force",
     "build": "astro check && astro build",
     "preview": "astro preview",
@@ -20,19 +20,18 @@
     "fonts:inspect": "python scripts/subset-nowar-font.py --inspect"
   },
   "dependencies": {
-    "@astrojs/check": "^0.9.4",
-    "@astrojs/react": "^4.4.2",
-    "@astrojs/tailwind": "^6.0.2",
+    "@astrojs/react": "5.0.7",
     "@tailwindcss/vite": "^4.1.18",
-    "astro": "^5.16.5",
+    "astro": "6.4.4",
     "framer-motion": "^12.40.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "tailwindcss": "^4.1.18",
-    "typescript": "^5.9.3"
+    "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
+    "@astrojs/check": "0.9.9",
     "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3"
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.9.3"
   }
 }

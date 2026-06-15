@@ -1,22 +1,27 @@
 ---
 import "@/styles/global.css";
-import { HTML_LANG, type AppLocale } from "@/config/locales";
+import { HTML_LANG, DEFAULT_LOCALE, type AppLocale } from "@/config/locales";
 import { siteConfig } from "@/config/site";
 import { assetConfig } from "@/config/assets";
+import { localizePath } from "@/i18n/routing";
 import { buildThemeBootstrapScript } from "@/lib/settings/apply-theme";
-import { buildHreflang, buildPageMetadata } from "@/lib/seo/metadata";
-import { breadcrumbJsonLd, websiteJsonLd } from "@/lib/seo/jsonld";
+import { absolutePageUrl, buildHreflang, buildPageMetadata, type PageMetadata } from "@/lib/seo/metadata";
+import { breadcrumbJsonLd, serializeJsonLd, websiteJsonLd } from "@/lib/seo/jsonld";
+import type { BreadcrumbDetail } from "@/types/route";
 
 interface Props {
   locale: AppLocale;
   pathname: string;
+  meta?: Partial<PageMetadata> | undefined;
+  breadcrumbDetail?: BreadcrumbDetail | undefined;
 }
 
-const { locale, pathname } = Astro.props;
-const meta = buildPageMetadata(pathname, locale);
+const { locale, pathname, meta: metaOverrides, breadcrumbDetail } = Astro.props;
+const meta = buildPageMetadata(pathname, locale, metaOverrides);
 const themeScript = buildThemeBootstrapScript();
 const website = websiteJsonLd(locale);
-const breadcrumbs = breadcrumbJsonLd(pathname, locale);
+const breadcrumbs = breadcrumbJsonLd(pathname, locale, breadcrumbDetail);
+const xDefaultHref = absolutePageUrl(localizePath(pathname, DEFAULT_LOCALE));
 ---
 
 <!doctype html>
@@ -24,6 +29,9 @@ const breadcrumbs = breadcrumbJsonLd(pathname, locale);
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href={assetConfig.fonts.googlePreconnect} />
+    <link rel="preconnect" href={assetConfig.fonts.googleStaticPreconnect} crossorigin />
+    <link rel="stylesheet" href={assetConfig.fonts.googleDisplay} />
     <link rel="stylesheet" href={assetConfig.fonts.lxgwWenKaiWeb} />
     <link rel="stylesheet" href={assetConfig.fonts.lxgwWenKaiScreen} />
     <meta name="color-scheme" content="light dark" />
@@ -34,16 +42,19 @@ const breadcrumbs = breadcrumbJsonLd(pathname, locale);
     <link rel="icon" href="/favicon.svg" />
     <link rel="canonical" href={meta.canonical} />
     {meta.alternates.map((alt) => <link rel="alternate" hreflang={buildHreflang(alt.locale)} href={alt.href} />)}
+    <link rel="alternate" hreflang="x-default" href={xDefaultHref} />
     <meta property="og:site_name" content={siteConfig.name} />
     <meta property="og:title" content={meta.fullTitle} />
     <meta property="og:description" content={meta.description} />
     <meta property="og:url" content={meta.canonical} />
     <meta property="og:locale" content={meta.ogLocale} />
     <meta property="og:type" content="website" />
+    <meta property="og:image" content={meta.image} />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={meta.image} />
     <script is:inline set:html={themeScript}></script>
-    <script is:inline type="application/ld+json" set:html={JSON.stringify(website)}></script>
-    <script is:inline type="application/ld+json" set:html={JSON.stringify(breadcrumbs)}></script>
+    <script is:inline type="application/ld+json" set:html={serializeJsonLd(website)}></script>
+    <script is:inline type="application/ld+json" set:html={serializeJsonLd(breadcrumbs)}></script>
   </head>
   <body>
     <slot />

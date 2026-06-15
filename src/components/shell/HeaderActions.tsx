@@ -1,19 +1,27 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { toggleOverlay } from "@/lib/overlay/overlay-store";
 import { useOverlay } from "@/lib/overlay/use-overlay";
 import { safeGetSessionStorage, safeSetSessionStorage } from "@/lib/storage/safe-storage";
+import { useSettings } from "@/lib/settings/use-settings";
 import { storageKeys } from "@/config/storage";
+import type { AppSettings } from "@/types/settings";
 
 interface Props {
   locale: AppLocale;
 }
 
-function getDesktopSidebarOpen(): boolean {
+function getStoredDesktopSidebarOpen(): boolean {
   const current = safeGetSessionStorage(storageKeys.sidebarOpen);
   if (current !== null) return current === "true";
   return document.documentElement.dataset.sidebar !== "closed";
+}
+
+function getEffectiveDesktopSidebarOpen(settings: AppSettings): boolean {
+  if (settings.sidebarMode === "expanded") return true;
+  if (settings.sidebarMode === "collapsed") return false;
+  return getStoredDesktopSidebarOpen();
 }
 
 function setDesktopSidebar(open: boolean) {
@@ -29,22 +37,36 @@ const btnStamp = "mn-stamp-press";
 /** Hamburger buttons — rendered into the `hamburger` named slot (before logo). */
 export function HamburgerButtons({ locale }: Props) {
   const { isOpen: mobileOpen, toggle: toggleMobile } = useOverlay("mobile-sidebar");
+  const { settings, updateSettings } = useSettings();
   const [desktopOpen, setDesktopOpen] = useState(true);
 
   useEffect(() => {
-    // Initial sync
-    setDesktopOpen(getDesktopSidebarOpen());
+    setDesktopOpen(getEffectiveDesktopSidebarOpen(settings));
 
     const handler = (event: Event) => {
+      if (settings.sidebarMode !== "auto") {
+        setDesktopOpen(getEffectiveDesktopSidebarOpen(settings));
+        return;
+      }
       if (event instanceof CustomEvent && typeof event.detail?.open === "boolean") {
         setDesktopOpen(event.detail.open);
       } else {
-        setDesktopOpen(getDesktopSidebarOpen());
+        setDesktopOpen(getStoredDesktopSidebarOpen());
       }
     };
     window.addEventListener("moenotes:sidebar-state", handler);
     return () => window.removeEventListener("moenotes:sidebar-state", handler);
-  }, []);
+  }, [settings]);
+
+  const toggleDesktop = () => {
+    const next = !desktopOpen;
+    if (settings.sidebarMode === "auto") {
+      setDesktopSidebar(next);
+      setDesktopOpen(next);
+      return;
+    }
+    updateSettings({ sidebarMode: next ? "expanded" : "collapsed" });
+  };
 
   return (
     <>
@@ -56,7 +78,8 @@ export function HamburgerButtons({ locale }: Props) {
             ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]"
             : "bg-[var(--mn-paper)] text-[var(--mn-text)]"
         }`}
-        aria-label={t(locale, "shell.openSidebar")}
+        aria-label={t(locale, mobileOpen ? "shell.closeSidebar" : "shell.openSidebar")}
+        aria-expanded={mobileOpen}
         onClick={toggleMobile}
       >
         {mobileOpen ? (
@@ -80,8 +103,9 @@ export function HamburgerButtons({ locale }: Props) {
             ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]"
             : "bg-[var(--mn-paper)] text-[var(--mn-text-muted)]"
         }`}
-        aria-label={t(locale, "shell.openSidebar")}
-        onClick={() => setDesktopSidebar(!desktopOpen)}
+        aria-label={t(locale, desktopOpen ? "shell.closeSidebar" : "shell.openSidebar")}
+        aria-expanded={desktopOpen}
+        onClick={toggleDesktop}
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
           <path d="M4 7h16" />
@@ -95,20 +119,29 @@ export function HamburgerButtons({ locale }: Props) {
 
 /** Right-side action buttons — rendered into the default slot (after breadcrumbs). */
 export default function HeaderActions({ locale }: Props) {
+  const { settings } = useSettings();
+  const [shortcutLabel, setShortcutLabel] = useState("Ctrl K");
+
+  useEffect(() => {
+    setShortcutLabel(/Mac|iPhone|iPad|iPod/.test(navigator.userAgent) ? "⌘K" : "Ctrl K");
+  }, []);
+
   return (
     <div className="ml-auto flex items-center gap-2">
-      {/* Search ⌘K */}
-      <button
-        type="button"
-        className={`mn-focus flex h-10 items-center justify-center rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp)] hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)] w-10 sm:w-auto px-0 sm:px-4 gap-0 sm:gap-1.5 ${btnStamp}`}
-        onClick={() => toggleOverlay("command")}
-      >
-        <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <circle cx="11" cy="11" r="8" />
-          <path d="M21 21l-4.35-4.35" />
-        </svg>
-        <span className="hidden sm:inline font-black">⌘K</span>
-      </button>
+      {settings.enableCommandPalette && (
+        <button
+          type="button"
+          className={`mn-focus flex h-10 items-center justify-center rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp)] hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)] w-10 sm:w-auto px-0 sm:px-4 gap-0 sm:gap-1.5 ${btnStamp}`}
+          aria-label={t(locale, "shell.openCommandPalette")}
+          onClick={() => toggleOverlay("command")}
+        >
+          <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8" />
+            <path d="M21 21l-4.35-4.35" />
+          </svg>
+          <span className="hidden sm:inline font-black">{shortcutLabel}</span>
+        </button>
+      )}
 
       {/* Settings gear */}
       <button

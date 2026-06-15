@@ -1,12 +1,24 @@
 import { SUPPORTED_LOCALES } from "@/config/locales";
+import { siteConfig } from "@/config/site";
 import { getStaticSitemapEntries } from "@/lib/seo/sitemap";
+
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
 
 export function GET() {
   const entries = SUPPORTED_LOCALES.flatMap((locale) => getStaticSitemapEntries(locale));
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="${siteConfig.xmlNamespaces.xhtml}">
 ${entries.map((entry) => `  <url>
-    <loc>${entry.loc}</loc>
+    <loc>${escapeXml(entry.loc)}</loc>
+${entry.alternates.map((alternate) => `    <xhtml:link rel="alternate" hreflang="${escapeXml(alternate.locale)}" href="${escapeXml(alternate.href)}" />`).join("\n")}
+    <lastmod>${escapeXml(entry.lastmod)}</lastmod>
     <changefreq>${entry.changefreq}</changefreq>
     <priority>${entry.priority.toFixed(1)}</priority>
   </url>`).join("\n")}

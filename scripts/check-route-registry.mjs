@@ -30,10 +30,15 @@ for (const path of pathMatches) {
   if (path.length > 1 && path.endsWith("/")) errors.push(`Route path must not end with /: ${path}`);
 }
 
-const nonHomeRouteCount = pathMatches.filter((path) => path !== "/").length;
-const expectedLocalizedPathCount = nonHomeRouteCount * 3 + 2;
-if (expectedLocalizedPathCount <= nonHomeRouteCount) {
-  errors.push("Static localized path count invariant failed");
+const staticPathMatches = pathMatches.filter((path) => !path.includes("/:"));
+const dynamicPathMatches = pathMatches.filter((path) => path.includes("/:"));
+const nonHomeStaticRouteCount = staticPathMatches.filter((path) => path !== "/").length;
+const expectedLocalizedPathCount = nonHomeStaticRouteCount * 3 + 2;
+
+for (const path of dynamicPathMatches) {
+  if (!path.split("/").some((segment) => segment.startsWith(":"))) {
+    errors.push(`Dynamic route pattern must include a :param segment: ${path}`);
+  }
 }
 
 for (const [name, values] of Object.entries({ labelKey: labelMatches, titleKey: titleMatches, descriptionKey: descriptionMatches })) {
@@ -48,4 +53,4 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log(`[moenotes] route registry check passed (${idMatches.length} routes, ${expectedLocalizedPathCount} localized static paths).`);
+console.log(`[moenotes] route registry check passed (${idMatches.length} routes, ${nonHomeStaticRouteCount} static routes, ${dynamicPathMatches.length} dynamic routes, ${expectedLocalizedPathCount} localized static paths).`);

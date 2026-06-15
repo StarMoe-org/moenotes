@@ -6,7 +6,7 @@ export const SETTINGS_CHANGED_EVENT = "moenotes:settings-changed";
 export const defaultSettings: AppSettings = {
   locale: "zh-CN",
   colorScheme: "system",
-  animationLevel: "reduced",
+  animationLevel: "full",
   sidebarMode: "auto",
   assetSource: "main",
   masterdataSource: "official",

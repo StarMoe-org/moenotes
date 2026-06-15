@@ -2,17 +2,21 @@
 import AppShell from "@/components/shell/AppShell.astro";
 import RootLayout from "@/layouts/RootLayout.astro";
 import type { AppLocale } from "@/config/locales";
+import type { PageMetadata } from "@/lib/seo/metadata";
+import type { BreadcrumbDetail } from "@/types/route";
 
 interface Props {
   locale: AppLocale;
   pathname: string;
+  meta?: Partial<PageMetadata> | undefined;
+  breadcrumbDetail?: BreadcrumbDetail | undefined;
 }
 
-const { locale, pathname } = Astro.props;
+const { locale, pathname, meta, breadcrumbDetail } = Astro.props;
 ---
 
-<RootLayout locale={locale} pathname={pathname}>
-  <AppShell locale={locale} pathname={pathname}>
+<RootLayout locale={locale} pathname={pathname} meta={meta} breadcrumbDetail={breadcrumbDetail}>
+  <AppShell locale={locale} pathname={pathname} breadcrumbDetail={breadcrumbDetail}>
     <slot />
   </AppShell>
 </RootLayout>

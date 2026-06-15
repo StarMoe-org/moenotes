@@ -1,14 +1,31 @@
 ---
 ---
 <script>
+  import { SETTINGS_CHANGED_EVENT } from "@/config/settings";
+  import { getSettings } from "@/lib/settings/store";
   import { restoreScrollState, saveScrollState } from "@/lib/scroll/scroll-memory";
 
-  const save = () => saveScrollState(window.location.pathname, window.location.search);
-  
-  // Restore scroll position immediately on client load
-  restoreScrollState(window.location.pathname, window.location.search);
+  let enabled = getSettings().enableScrollMemory;
+  const save = () => {
+    if (enabled) saveScrollState(window.location.pathname, window.location.search);
+  };
+
+  if ("scrollRestoration" in window.history) {
+    window.history.scrollRestoration = "manual";
+  }
+
+  if (enabled) {
+    restoreScrollState(window.location.pathname, window.location.search);
+  }
 
   window.addEventListener("beforeunload", save);
   document.addEventListener("visibilitychange", save);
-  document.addEventListener("click", save, { capture: true });
+  document.addEventListener("click", (event) => {
+    if (!enabled) return;
+    const target = event.target instanceof Element ? event.target.closest("a[href]") : null;
+    if (target) save();
+  }, { capture: true });
+  window.addEventListener(SETTINGS_CHANGED_EVENT, (event) => {
+    enabled = event instanceof CustomEvent ? Boolean(event.detail?.enableScrollMemory) : getSettings().enableScrollMemory;
+  });
 </script>
