@@ -3,7 +3,6 @@ import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { toggleOverlay } from "@/lib/overlay/overlay-store";
 import { useOverlay } from "@/lib/overlay/use-overlay";
-import { useSettings } from "@/lib/settings/use-settings";
 import { useSidebarState } from "@/lib/sidebar/use-sidebar-state";
 
 interface Props {
@@ -15,27 +14,7 @@ const btnStamp = "mn-stamp-press";
 /** Hamburger buttons — rendered into the `hamburger` named slot (before logo). */
 export function HamburgerButtons({ locale }: Props) {
   const { isOpen: mobileOpen, toggle: toggleMobile } = useOverlay("mobile-sidebar");
-  const { settings, updateSettings } = useSettings();
-  const [desktopOpen, toggleDesktopStore, setDesktopOpen] = useSidebarState();
-
-  // Sync sidebarMode setting to store state
-  useEffect(() => {
-    if (settings.sidebarMode === "expanded") {
-      setDesktopOpen(true);
-    } else if (settings.sidebarMode === "collapsed") {
-      setDesktopOpen(false);
-    }
-    // "auto" mode: let store manage itself
-  }, [settings.sidebarMode, setDesktopOpen]);
-
-  const toggleDesktop = () => {
-    if (settings.sidebarMode === "auto") {
-      toggleDesktopStore();
-    } else {
-      // In explicit mode, toggle between expanded/collapsed setting
-      updateSettings({ sidebarMode: desktopOpen ? "collapsed" : "expanded" });
-    }
-  };
+  const [desktopOpen, toggleDesktop] = useSidebarState();
 
   return (
     <>
@@ -88,7 +67,6 @@ export function HamburgerButtons({ locale }: Props) {
 
 /** Right-side action buttons — rendered into the default slot (after breadcrumbs). */
 export default function HeaderActions({ locale }: Props) {
-  const { settings } = useSettings();
   const [shortcutLabel, setShortcutLabel] = useState("Ctrl K");
 
   useEffect(() => {
@@ -97,20 +75,18 @@ export default function HeaderActions({ locale }: Props) {
 
   return (
     <div className="ml-auto flex items-center gap-2">
-      {settings.enableCommandPalette && (
-        <button
-          type="button"
-          className={`mn-focus flex h-10 items-center justify-center rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp)] hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)] w-10 sm:w-auto px-0 sm:px-4 gap-0 sm:gap-1.5 ${btnStamp}`}
-          aria-label={t(locale, "shell.openCommandPalette")}
-          onClick={() => toggleOverlay("command")}
-        >
-          <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="11" cy="11" r="8" />
-            <path d="M21 21l-4.35-4.35" />
-          </svg>
-          <span className="hidden sm:inline font-black">{shortcutLabel}</span>
-        </button>
-      )}
+      <button
+        type="button"
+        className={`mn-focus flex h-10 items-center justify-center rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp)] hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)] w-10 sm:w-auto px-0 sm:px-4 gap-0 sm:gap-1.5 ${btnStamp}`}
+        aria-label={t(locale, "shell.openCommandPalette")}
+        onClick={() => toggleOverlay("command")}
+      >
+        <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8" />
+          <path d="M21 21l-4.35-4.35" />
+        </svg>
+        <span className="hidden sm:inline font-black">{shortcutLabel}</span>
+      </button>
 
       {/* Settings gear */}
       <button

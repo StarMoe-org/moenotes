@@ -1,4 +1,4 @@
-import type { MasterdataSource } from "@/types/settings";
+export type MasterdataSource = "official" | "mirror";
 
 export interface VersionManifest {
   dataVersion: string;

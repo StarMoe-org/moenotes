@@ -5,7 +5,6 @@ import { localizePath } from "@/i18n/routing";
 import { t } from "@/i18n";
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/overlay/body-scroll-lock";
 import { useOverlay } from "@/lib/overlay/use-overlay";
-import { useSettings } from "@/lib/settings/use-settings";
 import { useSidebarState } from "@/lib/sidebar/use-sidebar-state";
 import { getNavigationGroups, getNavChildren, isCurrentRoute } from "@/lib/route/registry";
 import type { AppRoute } from "@/types/route";
@@ -20,23 +19,12 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ locale, pathname }: SidebarProps) {
-  const [desktopOpen, , setDesktopOpen] = useSidebarState();
+  const [desktopOpen] = useSidebarState();
   const [mounted, setMounted] = useState(false);
   const { isOpen: mobileOpen, close: closeMobile } = useOverlay("mobile-sidebar");
-  const { settings } = useSettings();
   const mobilePanelRef = useRef<HTMLElement>(null);
   const mobileRestoreFocusRef = useRef<HTMLElement | null>(null);
   const groups = useMemo(() => getNavigationGroups(), []);
-
-  // Sync from sidebarMode setting to store
-  useEffect(() => {
-    if (settings.sidebarMode === "expanded") {
-      setDesktopOpen(true);
-    } else if (settings.sidebarMode === "collapsed") {
-      setDesktopOpen(false);
-    }
-    // "auto" mode: let store manage itself
-  }, [settings.sidebarMode, setDesktopOpen]);
 
   // Mark mounted after initial render (for animation)
   useEffect(() => {

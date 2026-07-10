@@ -3,6 +3,11 @@ import "@/styles/global.css";
 import { HTML_LANG, DEFAULT_LOCALE, type AppLocale } from "@/config/locales";
 import { siteConfig } from "@/config/site";
 import { assetConfig } from "@/config/assets";
+import {
+  isGoogleAnalyticsEnabled,
+  googleAnalyticsScriptSrc,
+  analyticsConfig,
+} from "@/config/analytics";
 import { localizePath } from "@/i18n/routing";
 import { buildThemeBootstrapScript } from "@/lib/settings/apply-theme";
 import { absolutePageUrl, buildHreflang, buildPageMetadata, type PageMetadata } from "@/lib/seo/metadata";
@@ -22,6 +27,11 @@ const themeScript = buildThemeBootstrapScript();
 const website = websiteJsonLd(locale);
 const breadcrumbs = breadcrumbJsonLd(pathname, locale, breadcrumbDetail);
 const xDefaultHref = absolutePageUrl(localizePath(pathname, DEFAULT_LOCALE));
+const gaMeasurementId = analyticsConfig.googleAnalytics.measurementId;
+const gaScriptSrc = googleAnalyticsScriptSrc;
+const googleAnalyticsBootstrapScript = isGoogleAnalyticsEnabled
+  ? `window.dataLayer = window.dataLayer || [];\nfunction gtag(){dataLayer.push(arguments);}\ngtag('js', new Date());\ngtag('config', '${gaMeasurementId}');`
+  : "";
 ---
 
 <!doctype html>
@@ -54,6 +64,15 @@ const xDefaultHref = absolutePageUrl(localizePath(pathname, DEFAULT_LOCALE));
     <script is:inline set:html={themeScript}></script>
     <script is:inline type="application/ld+json" set:html={serializeJsonLd(website)}></script>
     <script is:inline type="application/ld+json" set:html={serializeJsonLd(breadcrumbs)}></script>
+    {isGoogleAnalyticsEnabled && (
+      <>
+        {analyticsConfig.googleAnalytics.domains.map((domain) => (
+          <link rel="preconnect" href={domain} />
+        ))}
+        <script is:inline async src={gaScriptSrc}></script>
+        <script is:inline set:html={googleAnalyticsBootstrapScript}></script>
+      </>
+    )}
   </head>
   <body>
     <slot />

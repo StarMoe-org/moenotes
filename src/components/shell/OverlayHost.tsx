@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import type { AppLocale } from "@/config/locales";
 import { localizePath } from "@/i18n/routing";
 import { closeOverlay, getActiveOverlay, openOverlay, toggleOverlay } from "@/lib/overlay/overlay-store";
-import { getSettings } from "@/lib/settings/store";
 import { registerShortcutManager } from "@/lib/shortcuts/manager";
 
 interface OverlayHostProps {
@@ -11,13 +10,7 @@ interface OverlayHostProps {
 
 export default function OverlayHost({ locale }: OverlayHostProps) {
   useEffect(() => {
-    const toggleCommand = () => {
-      if (!getSettings().enableCommandPalette) {
-        closeOverlay("command");
-        return;
-      }
-      toggleOverlay("command");
-    };
+    const toggleCommand = () => toggleOverlay("command");
     const toggleSettings = () => toggleOverlay("settings");
     const toggleSidebar = () => {
       if (window.matchMedia("(min-width: 768px)").matches) {

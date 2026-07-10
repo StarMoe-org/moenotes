@@ -25,30 +25,6 @@ body {
   background-size: 28px 28px;
 }
 
-[data-animation-level="off"] *,
-[data-animation-level="off"] *::before,
-[data-animation-level="off"] *::after {
-  animation-duration: 0.001ms !important;
-  transition-duration: 0.001ms !important;
-}
-
-[data-breadcrumb-dropdown="false"] details[data-breadcrumb-dropdown] {
-  display: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  [data-animation-level="full"] *,
-  [data-animation-level="full"] *::before,
-  [data-animation-level="full"] *::after {
-    animation-duration: 0.001ms !important;
-    transition-duration: 0.001ms !important;
-  }
-}
-
 ::selection {
   background: color-mix(in oklab, var(--mn-accent) 18%, transparent);
   color: var(--mn-text);

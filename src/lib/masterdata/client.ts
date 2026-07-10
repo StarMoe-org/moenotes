@@ -1,16 +1,20 @@
 import { masterdataConfig } from "@/config/masterdata";
 import { storageKeys } from "@/config/storage";
 import { safeGetLocalStorage } from "@/lib/storage/safe-storage";
-import { getSettings } from "@/lib/settings/store";
 import { getMasterdataCacheEntry, getStaleMasterdataCache, setMasterdataCache } from "@/lib/masterdata/cache";
 import { fetchVersionManifest, getMasterdataSourceFallbackOrder } from "@/lib/masterdata/version";
-import type { MasterDataFetchOptions, VersionManifest } from "@/types/masterdata";
-import type { MasterdataSource } from "@/types/settings";
+import type { MasterDataFetchOptions, MasterdataSource, VersionManifest } from "@/types/masterdata";
+
+/**
+ * The preferred MasterData source. Always "mirror" — source selection is no
+ * longer a user-facing setting; the fallback chain still provides resilience.
+ */
+const PREFERRED_MASTERDATA_SOURCE: MasterdataSource = "mirror";
 
 const inFlightRequests = new Map<string, Promise<unknown>>();
 
 export async function fetchMasterData<T>(path: string, options: MasterDataFetchOptions<T> = {}): Promise<T> {
-  const source = options.source ?? getSettings().masterdataSource;
+  const source = options.source ?? PREFERRED_MASTERDATA_SOURCE;
   const cacheKey = path.replace(/^\/+/, "");
   const bypassCache = shouldBypassCache(options);
   const requestKey = `${source}:${cacheKey}:${bypassCache ? "no-cache" : "cache"}`;

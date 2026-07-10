@@ -1,7 +1,5 @@
 import { assetConfig } from "@/config/assets";
-import { getSettings } from "@/lib/settings/store";
 import type { AssetRequest } from "@/types/assets";
-import type { AssetSource } from "@/types/settings";
 
 const EXTENSION_BY_TYPE = {
   image: ".webp",
@@ -9,6 +7,12 @@ const EXTENSION_BY_TYPE = {
   json: ".json",
   raw: "",
 } as const;
+
+/**
+ * The preferred asset source. Always "main" — source selection is no longer a
+ * user-facing setting; the fallback chain still provides resilience.
+ */
+const PREFERRED_ASSET_SOURCE = "main" as const;
 
 export function getAssetUrl(request: AssetRequest): string {
   const source = getPreferredAssetSource(request);
@@ -23,10 +27,10 @@ export function getAssetFallbackUrls(request: AssetRequest): string[] {
     .filter((url, index, all) => all.indexOf(url) === index);
 }
 
-function getPreferredAssetSource(request: AssetRequest): AssetSource {
-  return request.source ?? getSettings().assetSource;
+function getPreferredAssetSource(request: AssetRequest): "main" | "backup" {
+  return request.source ?? PREFERRED_ASSET_SOURCE;
 }
 
-function getAssetSourceFallbackOrder(source: AssetSource): AssetSource[] {
+function getAssetSourceFallbackOrder(source: "main" | "backup"): Array<"main" | "backup"> {
   return source === "main" ? ["main", "backup"] : ["backup", "main"];
 }

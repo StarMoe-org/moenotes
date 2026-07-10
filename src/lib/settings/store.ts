@@ -56,11 +56,9 @@ if (typeof window !== "undefined") {
   });
 
   const colorSchemeMedia = window.matchMedia("(prefers-color-scheme: dark)");
-  const motionMedia = window.matchMedia("(prefers-reduced-motion: reduce)");
   const syncSystemPreferences = () => {
     currentSettings = parseSettingsJson(safeGetLocalStorage(SETTINGS_STORAGE_KEY));
     emitSettingsChanged(currentSettings);
   };
   colorSchemeMedia.addEventListener("change", syncSystemPreferences);
-  motionMedia.addEventListener("change", syncSystemPreferences);
 }

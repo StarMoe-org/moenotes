@@ -1,8 +1,7 @@
 import { masterdataConfig } from "@/config/masterdata";
 import { storageKeys } from "@/config/storage";
 import { safeGetLocalStorage, safeSetLocalStorage } from "@/lib/storage/safe-storage";
-import type { VersionManifest } from "@/types/masterdata";
-import type { MasterdataSource } from "@/types/settings";
+import type { MasterdataSource, VersionManifest } from "@/types/masterdata";
 
 export const fallbackVersionManifest: VersionManifest = {
   dataVersion: "",

@@ -1,5 +1,4 @@
 import { storageKeys } from "@/config/storage";
-import { getSettings } from "@/lib/settings/store";
 import { safeGetSessionStorage, safeSetSessionStorage } from "@/lib/storage/safe-storage";
 
 export interface ScrollState {
@@ -14,7 +13,6 @@ export function scrollKey(pathname: string, search = ""): string {
 }
 
 export function saveScrollState(pathname: string, search = "", payload?: Record<string, unknown>): void {
-  if (!getSettings().enableScrollMemory) return;
   const state: ScrollState = { x: window.scrollX, y: window.scrollY, savedAt: Date.now() };
   if (payload) state.payload = payload;
   safeSetSessionStorage(scrollKey(pathname, search), JSON.stringify(state));
@@ -33,7 +31,6 @@ export function readScrollState(pathname: string, search = ""): ScrollState | nu
 }
 
 export function restoreScrollState(pathname: string, search = ""): void {
-  if (!getSettings().enableScrollMemory) return;
   if (window.location.hash) return;
   const state = readScrollState(pathname, search);
   if (!state) return;

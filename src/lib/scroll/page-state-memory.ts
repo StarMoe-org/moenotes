@@ -1,4 +1,3 @@
-import { getSettings } from "@/lib/settings/store";
 import { safeGetSessionStorage, safeRemoveSessionStorage, safeSetSessionStorage } from "@/lib/storage/safe-storage";
 import type { ListPageMemoryState, SaveListPageMemoryState } from "@/types/page-state";
 
@@ -7,7 +6,6 @@ function listPageStateKey(routeId: string): string {
 }
 
 export function saveListPageState(routeId: string, state: SaveListPageMemoryState): ListPageMemoryState | null {
-  if (!getSettings().enableScrollMemory) return null;
   const nextState: ListPageMemoryState = {
     ...state,
     updatedAt: Date.now(),
@@ -17,7 +15,6 @@ export function saveListPageState(routeId: string, state: SaveListPageMemoryStat
 }
 
 export function readListPageState(routeId: string): ListPageMemoryState | null {
-  if (!getSettings().enableScrollMemory) return null;
   const raw = safeGetSessionStorage(listPageStateKey(routeId));
   if (!raw) return null;
   try {

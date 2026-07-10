@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { type CSSProperties, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
 import { LOCALE_LABELS, SUPPORTED_LOCALES } from "@/config/locales";
 import { switchLocalePath } from "@/i18n/routing";
@@ -6,6 +6,7 @@ import { t } from "@/i18n";
 import { useOverlay } from "@/lib/overlay/use-overlay";
 import { useSettings } from "@/lib/settings/use-settings";
 import Modal from "@/components/shared/Modal";
+import Popover from "@/components/shared/Popover";
 import type { AppSettings } from "@/types/settings";
 
 interface SettingsDrawerProps {
@@ -20,7 +21,6 @@ const chevronDown = (
 export default function SettingsDrawer({ locale, pathname }: SettingsDrawerProps) {
   const { isOpen, close } = useOverlay("settings");
   const { settings, updateSettings } = useSettings();
-  const [langOpen, setLangOpen] = useState(false);
 
   const update = (patch: Partial<AppSettings>) => {
     updateSettings(patch);
@@ -30,34 +30,36 @@ export default function SettingsDrawer({ locale, pathname }: SettingsDrawerProps
     <Modal isOpen={isOpen} onClose={close} title={t(locale, "settings.title")} closeLabel={t(locale, "actions.close")} size="md">
       <div className="space-y-6">
         <Section title={t(locale, "settings.language")}>
-          <div className="relative">
-            <button
-              type="button"
-              className="mn-stamp-press flex w-full items-center justify-between rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface-strong)] px-5 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]"
-              onClick={() => setLangOpen(!langOpen)}
-              aria-expanded={langOpen}
-            >
-              {LOCALE_LABELS[locale]}
-              {chevronDown}
-            </button>
-            {langOpen && (
+          <Popover
+            matchTriggerWidth
+            trigger={({ ref, onClick, ...aria }) => (
+              <button
+                ref={ref as React.Ref<HTMLButtonElement>}
+                type="button"
+                className="mn-stamp-press flex w-full items-center justify-between rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface-strong)] px-5 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]"
+                onClick={onClick}
+                {...aria}
+              >
+                {LOCALE_LABELS[locale]}
+                {chevronDown}
+              </button>
+            )}
+          >
+            {({ close: closePopover }) => (
               <>
-                <div className="fixed inset-0 z-10" onClick={() => setLangOpen(false)} />
-                <div className="absolute left-0 top-full z-20 mt-1 w-full rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp)]">
-                  {SUPPORTED_LOCALES.map((item) => (
-                    <a
-                      key={item}
-                      href={switchLocalePath(pathname, item)}
-                      className={`block rounded-full px-4 py-2 text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${item === locale ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
-                      onClick={() => setLangOpen(false)}
-                    >
-                      {LOCALE_LABELS[item]}
-                    </a>
-                  ))}
-                </div>
+                {SUPPORTED_LOCALES.map((item) => (
+                  <a
+                    key={item}
+                    href={switchLocalePath(pathname, item)}
+                    className={`block rounded-full px-4 py-2 text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${item === locale ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
+                    onClick={closePopover}
+                  >
+                    {LOCALE_LABELS[item]}
+                  </a>
+                ))}
               </>
             )}
-          </div>
+          </Popover>
         </Section>
 
         <Section title={t(locale, "settings.colorScheme")}>
@@ -67,54 +69,6 @@ export default function SettingsDrawer({ locale, pathname }: SettingsDrawerProps
             label={(value) => t(locale, `settings.options.${value}`)}
             onChange={(value) => update({ colorScheme: value as AppSettings["colorScheme"] })}
           />
-        </Section>
-
-        <Section title={t(locale, "settings.animationLevel")}>
-          <Segmented
-            value={settings.animationLevel}
-            options={["full", "reduced", "off"]}
-            label={(value) => t(locale, `settings.options.${value}`)}
-            onChange={(value) => update({ animationLevel: value as AppSettings["animationLevel"] })}
-          />
-        </Section>
-
-        <Section title={t(locale, "settings.sidebarMode")}>
-          <Segmented
-            value={settings.sidebarMode}
-            options={["auto", "expanded", "collapsed"]}
-            label={(value) => t(locale, `settings.options.${value}`)}
-            onChange={(value) => update({ sidebarMode: value as AppSettings["sidebarMode"] })}
-          />
-        </Section>
-
-        <Section title={t(locale, "settings.assetSource")}>
-          <Segmented
-            value={settings.assetSource}
-            options={["main", "backup"]}
-            label={(value) => t(locale, `settings.options.${value}`)}
-            onChange={(value) => update({ assetSource: value as AppSettings["assetSource"] })}
-          />
-        </Section>
-
-        <Section title={t(locale, "settings.masterdataSource")}>
-          <Segmented
-            value={settings.masterdataSource}
-            options={["official", "mirror"]}
-            label={(value) => t(locale, `settings.options.${value}`)}
-            onChange={(value) => update({ masterdataSource: value as AppSettings["masterdataSource"] })}
-          />
-        </Section>
-
-        <Section title={t(locale, "settings.commandPalette")}>
-          <BooleanSegmented value={settings.enableCommandPalette} onChange={(value) => update({ enableCommandPalette: value })} locale={locale} />
-        </Section>
-
-        <Section title={t(locale, "settings.breadcrumbDropdown")}>
-          <BooleanSegmented value={settings.enableBreadcrumbDropdown} onChange={(value) => update({ enableBreadcrumbDropdown: value })} locale={locale} />
-        </Section>
-
-        <Section title={t(locale, "settings.scrollMemory")}>
-          <BooleanSegmented value={settings.enableScrollMemory} onChange={(value) => update({ enableScrollMemory: value })} locale={locale} />
         </Section>
       </div>
     </Modal>
@@ -129,17 +83,6 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
       </h3>
       {children}
     </section>
-  );
-}
-
-function BooleanSegmented({ value, onChange, locale }: { value: boolean; onChange: (value: boolean) => void; locale: AppLocale }) {
-  return (
-    <Segmented
-      value={value ? "enabled" : "disabled"}
-      options={["enabled", "disabled"]}
-      label={(option) => t(locale, `settings.options.${option}`)}
-      onChange={(option) => onChange(option === "enabled")}
-    />
   );
 }
 

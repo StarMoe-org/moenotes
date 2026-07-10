@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import Modal from "@/components/shared/Modal";
+import Popover from "@/components/shared/Popover";
 import BaseFilters, { FilterSection, FilterButton, FilterToggle } from "@/components/shared/BaseFilters";
 import QuickFilterButton, { QuickFilterProvider } from "@/components/shared/QuickFilterButton";
 import { useSpringAnimation } from "@/lib/animation/use-animation";
@@ -575,74 +575,36 @@ function FiltersSection({
 }
 
 function FilterSelect({ value, options, onChange }: { value: string; options: { value: string; label: string }[]; onChange: (v: string) => void }) {
-  const [open, setOpen] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
-
-  const updateCoords = () => {
-    if (buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      setCoords({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-        width: rect.width,
-      });
-    }
-  };
-
-  useEffect(() => {
-    if (open) {
-      updateCoords();
-      window.addEventListener("resize", updateCoords);
-      window.addEventListener("scroll", updateCoords, true);
-    }
-    return () => {
-      window.removeEventListener("resize", updateCoords);
-      window.removeEventListener("scroll", updateCoords, true);
-    };
-  }, [open]);
-
   const selected = options.find((o) => o.value === value);
 
   return (
-    <div className="relative">
-      <button
-        ref={buttonRef}
-        type="button"
-        className="mn-stamp-press flex w-full min-w-0 items-center justify-between rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-4 py-2.5 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]"
-        onClick={() => setOpen(!open)}
-      >
-        <span className="truncate">{selected?.label}</span>
-        {chevronDown}
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-[210]" onClick={() => setOpen(false)} />
-          {createPortal(
-            <div
-              style={{
-                position: "absolute",
-                top: `${coords.top}px`,
-                left: `${coords.left}px`,
-                width: `${coords.width}px`,
-              }}
-              className="z-[220] mt-1 rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp)]"
-            >
-              {options.map((opt) => (
-                <button
-                  key={opt.value}
-                  className={`w-full rounded-full px-4 py-2 text-left text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${opt.value === value ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
-                  onClick={() => { onChange(opt.value); setOpen(false); }}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>,
-            document.body
-          )}
-        </>
+    <Popover
+      matchTriggerWidth
+      trigger={({ ref, onClick, ...aria }) => (
+        <button
+          ref={ref as React.Ref<HTMLButtonElement>}
+          type="button"
+          className="mn-stamp-press flex w-full min-w-0 items-center justify-between rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-4 py-2.5 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]"
+          onClick={onClick}
+          {...aria}
+        >
+          <span className="truncate">{selected?.label}</span>
+          {chevronDown}
+        </button>
       )}
-    </div>
+    >
+      {({ close }) =>
+        options.map((opt) => (
+          <button
+            key={opt.value}
+            className={`w-full rounded-full px-4 py-2 text-left text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${opt.value === value ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
+            onClick={() => { onChange(opt.value); close(); }}
+          >
+            {opt.label}
+          </button>
+        ))
+      }
+    </Popover>
   );
 }
 
@@ -817,76 +779,40 @@ function SelectDemo({ locale }: { locale: AppLocale }) {
     { value: "b", label: t(locale, "designSystem.components.optB") },
     { value: "c", label: t(locale, "designSystem.components.optC") },
   ];
-  const [open, setOpen] = useState(false);
   const [value, setValue] = useState("a");
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
-
-  const updateCoords = () => {
-    if (buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      setCoords({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-        width: rect.width,
-      });
-    }
-  };
-
-  useEffect(() => {
-    if (open) {
-      updateCoords();
-      window.addEventListener("resize", updateCoords);
-      window.addEventListener("scroll", updateCoords, true);
-    }
-    return () => {
-      window.removeEventListener("resize", updateCoords);
-      window.removeEventListener("scroll", updateCoords, true);
-    };
-  }, [open]);
-
   const selected = options.find((o) => o.value === value);
 
   return (
-    <div className="relative">
+    <div>
       <label htmlFor="demo-select" className="mb-1 block text-sm font-bold text-[var(--mn-text)]">{t(locale, "designSystem.components.select")}</label>
-      <button
-        ref={buttonRef}
-        id="demo-select"
-        type="button"
-        className="mn-stamp-press flex w-full min-w-0 items-center justify-between rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] px-5 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]"
-        onClick={() => setOpen(!open)}
+      <Popover
+        matchTriggerWidth
+        trigger={({ ref, onClick, ...aria }) => (
+          <button
+            ref={ref as React.Ref<HTMLButtonElement>}
+            id="demo-select"
+            type="button"
+            className="mn-stamp-press flex w-full min-w-0 items-center justify-between rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] px-5 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]"
+            onClick={onClick}
+            {...aria}
+          >
+            <span className="truncate">{selected?.label ?? t(locale, "designSystem.components.selectPlaceholder")}</span>
+            {chevronDown}
+          </button>
+        )}
       >
-        <span className="truncate">{selected?.label ?? t(locale, "designSystem.components.selectPlaceholder")}</span>
-        {chevronDown}
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-[210]" onClick={() => setOpen(false)} />
-          {createPortal(
-            <div
-              style={{
-                position: "absolute",
-                top: `${coords.top}px`,
-                left: `${coords.left}px`,
-                width: `${coords.width}px`,
-              }}
-              className="z-[220] mt-1 rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp)]"
+        {({ close }) =>
+          options.map((opt) => (
+            <button
+              key={opt.value}
+              className={`w-full rounded-full px-4 py-2 text-left text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${opt.value === value ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
+              onClick={() => { setValue(opt.value); close(); }}
             >
-              {options.map((opt) => (
-                <button
-                  key={opt.value}
-                  className={`w-full rounded-full px-4 py-2 text-left text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${opt.value === value ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
-                  onClick={() => { setValue(opt.value); setOpen(false); }}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>,
-            document.body
-          )}
-        </>
-      )}
+              {opt.label}
+            </button>
+          ))
+        }
+      </Popover>
     </div>
   );
 }
