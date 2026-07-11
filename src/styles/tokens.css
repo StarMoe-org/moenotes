@@ -1,4 +1,6 @@
 :root {
+  --mn-layout-max-width: 120rem;
+
   /* ── Neutrals ── */
   --mn-bg: #FAF6F0;
   --mn-surface: rgba(255, 251, 245, 0.92);

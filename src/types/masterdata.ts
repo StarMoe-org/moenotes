@@ -2,6 +2,8 @@ export type MasterdataSource = "official" | "mirror";
 
 export interface VersionManifest {
   dataVersion: string;
+  /** Hash returned by metadata.bdon.moe/version/latest.json. */
+  version?: string;
   assetVersion?: string;
   appVersion?: string;
   generatedAt?: string;
@@ -9,6 +11,9 @@ export interface VersionManifest {
   isFallback?: boolean;
   /** Network source that successfully served the manifest, when known. */
   source?: MasterdataSource;
+  fetchedAt?: string;
+  tableCount?: number;
+  tables?: string[];
 }
 
 export interface MasterDataFetchOptions<T = unknown> {

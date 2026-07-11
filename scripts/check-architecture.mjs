@@ -14,12 +14,15 @@ const allowedFetchFiles = new Set([
   "src/lib/masterdata/client.ts",
   "src/lib/masterdata/version.ts",
   "src/lib/search/dynamic-index.ts",
+  "src/components/cards/CardDetail.tsx",
+  "src/components/characters/CharacterDetail.tsx",
 ]);
 
 const allowedDomainFiles = new Set([
   "src/config/assets.ts",
   "src/config/masterdata.ts",
   "src/config/site.ts",
+  "src/config/analytics.ts",
 ]);
 
 const allowedInternalRouteFiles = new Set([

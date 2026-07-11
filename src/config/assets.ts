@@ -1,6 +1,6 @@
 export const assetConfig = {
   sources: {
-    main: "https://assets.moesekai.dev/ournotes",
+    main: "https://storage.bdon.moe/ournotes-assets",
     backup: "https://assets-backup.moesekai.dev/ournotes",
   },
   fonts: {

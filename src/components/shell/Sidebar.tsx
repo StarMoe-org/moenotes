@@ -67,7 +67,10 @@ export default function Sidebar({ locale, pathname }: SidebarProps) {
 
   return (
     <>
-      <aside className={`fixed left-4 top-24 z-30 hidden h-[calc(100vh-7.5rem)] w-64 shrink-0 md:block ${mounted ? "transition duration-300" : ""} ${desktopOpen ? "translate-x-0 opacity-100" : "pointer-events-none -translate-x-[18rem] opacity-0"}`}>
+      <aside
+        className={`fixed top-24 z-30 hidden h-[calc(100vh-7.5rem)] w-64 shrink-0 md:block ${mounted ? "transition duration-300" : ""} ${desktopOpen ? "translate-x-0 opacity-100" : "pointer-events-none -translate-x-[18rem] opacity-0"}`}
+        style={{ left: "calc(max(1.0rem, (100vw - var(--mn-layout-max-width, 120rem)) / 2 + 1.0rem))" }}
+      >
         <SidebarFrame>
           <SidebarNav locale={locale} pathname={pathname} groups={groups} />
         </SidebarFrame>

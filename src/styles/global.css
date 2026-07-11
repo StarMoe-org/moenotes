@@ -203,6 +203,9 @@ body {
 @theme {
   --font-weight-black: 600;
   --font-weight-bold: 500;
+  --breakpoint-3xl: 1600px;
+  --breakpoint-4xl: 1920px;
+  --breakpoint-5xl: 2200px;
 }
 
 a, button {

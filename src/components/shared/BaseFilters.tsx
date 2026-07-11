@@ -9,13 +9,17 @@ export type { FilterButtonProps } from "@/components/shared/FilterButton";
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 export interface BaseFiltersProps {
+  title?: string;
   searchValue: string;
   onSearchChange: (value: string) => void;
+  searchLabel?: string;
   searchPlaceholder?: string;
   resultCount?: number;
   totalCount?: number;
   hasActiveFilters?: boolean;
   onReset?: () => void;
+  resetLabel?: string;
+  expandLabel?: string;
   children: ReactNode;
   disableCollapse?: boolean;
 }
@@ -81,13 +85,17 @@ export function FilterToggle({ checked, onChange, label }: FilterToggleProps) {
 // ── BaseFilters ────────────────────────────────────────────────────────────────
 
 export default function BaseFilters({
+  title = "Filter",
   searchValue,
   onSearchChange,
+  searchLabel = "Search",
   searchPlaceholder,
   resultCount,
   totalCount,
   hasActiveFilters = false,
   onReset,
+  resetLabel = "Reset",
+  expandLabel = "Expand",
   children,
   disableCollapse = false,
 }: BaseFiltersProps) {
@@ -120,7 +128,7 @@ export default function BaseFilters({
           <svg className="h-5 w-5 text-[var(--mn-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
           </svg>
-          Filter
+          {title}
           {hasActiveFilters && collapsed && (
             <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--mn-accent)] lg:hidden" />
           )}
@@ -148,11 +156,13 @@ export default function BaseFilters({
 
       {/* Search — always visible */}
       <div className="px-4 sm:px-5 pt-4">
+        <label className="sr-only" htmlFor={`${contentId}-search`}>{searchLabel}</label>
         <div className="relative">
           <svg className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--mn-text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
+            id={`${contentId}-search`}
             type="text"
             placeholder={searchPlaceholder ?? "Search..."}
             value={searchValue}
@@ -177,7 +187,7 @@ export default function BaseFilters({
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-              Reset
+              {resetLabel}
             </button>
           )}
         </div>
@@ -195,7 +205,7 @@ export default function BaseFilters({
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
-          Expand
+          {expandLabel}
         </button>
       )}
     </div>

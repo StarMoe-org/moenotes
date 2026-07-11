@@ -31,7 +31,7 @@ const hasCrumbs = crumbs.length > 1;
   <HeaderActions client:load locale={locale} />
 </Header>
 <Sidebar client:load locale={locale} pathname={pathname} />
-<main id="content" class:list={["mx-auto min-h-screen max-w-7xl px-4 pb-16 pt-[var(--mn-header-bottom,5rem)] transition-[padding] duration-300 md:pl-[calc(var(--mn-sidebar-offset,18rem)+1.5rem)] md:pr-6 md:pt-28", hasCrumbs ? "md:pt-36" : "md:pt-24"]}>
+<main id="content" class:list={["mx-auto min-h-screen max-w-[120rem] px-4 pb-16 pt-[var(--mn-header-bottom,5rem)] transition-[padding] duration-300 md:pl-[calc(var(--mn-sidebar-offset,18rem)+1.5rem)] md:pr-6 md:pt-28", hasCrumbs ? "md:pt-36" : "md:pt-24"]}>
   <slot />
 </main>
 <Footer locale={locale} />

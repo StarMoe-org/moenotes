@@ -31,24 +31,21 @@ export async function fetchVersionManifest(source: MasterdataSource = "mirror"):
     try {
       const response = await fetch(`${base}${masterdataConfig.versionPath}`, { cache: "no-store" });
       if (!response.ok) throw new Error(`Version request failed: ${response.status}`);
-      const manifest = await response.json() as VersionManifest;
-      if (!manifest.dataVersion) throw new Error("Missing dataVersion");
-      setStoredDataVersion(manifest.dataVersion);
-      return { ...manifest, source: candidate, isFallback: false };
+      const raw = await response.json() as Partial<VersionManifest>;
+      const dataVersion = raw.dataVersion || raw.version;
+      if (!dataVersion) throw new Error("Missing version");
+      setStoredDataVersion(dataVersion);
+      return { ...raw, dataVersion, source: candidate, isFallback: false };
     } catch (error) {
       errors.push(`${candidate}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
   const storedVersion = getStoredDataVersion();
-  if (storedVersion) {
-    return {
-      ...fallbackVersionManifest,
-      dataVersion: storedVersion,
-      source,
-      isFallback: true,
-    };
-  }
-
-  throw new Error(`Version manifest unavailable (${errors.join("; ")})`);
+  return {
+    ...fallbackVersionManifest,
+    dataVersion: storedVersion ?? "unversioned",
+    source,
+    isFallback: true,
+  };
 }

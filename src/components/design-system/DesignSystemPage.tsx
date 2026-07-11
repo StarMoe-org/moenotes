@@ -113,16 +113,21 @@ export default function DesignSystemPage({ locale }: Props) {
       {activeTab === "animations" && <AnimationsSection locale={locale} />}
       <QuickFilterButton
         title={t(locale, "designSystem.sections.filters")}
+        buttonLabel={t(locale, "filter.title")}
         content={
           <div className="w-full min-w-0">
             <BaseFilters
+              title={t(locale, "filter.title")}
               searchValue={search}
               onSearchChange={setSearch}
+              searchLabel={t(locale, "filter.search")}
               searchPlaceholder={t(locale, "designSystem.filters.searchPlaceholder")}
               resultCount={filtered}
               totalCount={total}
               hasActiveFilters={hasActive}
               onReset={reset}
+              resetLabel={t(locale, "filter.reset")}
+              expandLabel={t(locale, "filter.expand")}
               disableCollapse={true}
             >
               <FilterSection title={t(locale, "designSystem.filters.category")}>
@@ -516,13 +521,17 @@ function FiltersSection({
       <div className="grid grid-cols-1 w-full max-w-full gap-6 lg:grid-cols-2">
         <div className="w-full min-w-0">
           <BaseFilters
+            title={t(locale, "filter.title")}
             searchValue={search}
             onSearchChange={setSearch}
+            searchLabel={t(locale, "filter.search")}
             searchPlaceholder={t(locale, "designSystem.filters.searchPlaceholder")}
             resultCount={filtered}
             totalCount={total}
             hasActiveFilters={hasActive}
             onReset={reset}
+            resetLabel={t(locale, "filter.reset")}
+            expandLabel={t(locale, "filter.expand")}
           >
             <FilterSection title={t(locale, "designSystem.filters.category")}>
               <div className="flex flex-wrap gap-2">

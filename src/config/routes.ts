@@ -1,4 +1,5 @@
 import type { AppRoute } from "@/types/route";
+import { CARD_IDS } from "@/lib/cards/constants";
 
 export const routeRegistry = [
   {
@@ -33,6 +34,7 @@ export const routeRegistry = [
         id: "characters",
         path: "/characters",
         labelKey: "nav.items.characters",
+        component: "characters",
         seo: {
           titleKey: "seo.characters.title",
           descriptionKey: "seo.characters.description",
@@ -49,6 +51,7 @@ export const routeRegistry = [
             pattern: "/characters/:id",
             parentId: "characters",
             labelKey: "nav.items.characters",
+            component: "character-detail",
             seo: {
               titleKey: "seo.characterDetail.title",
               descriptionKey: "seo.characterDetail.description",
@@ -56,7 +59,10 @@ export const routeRegistry = [
             },
             nav: false,
             searchable: false,
-            staticParams: [],
+            staticParams: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((id) => ({
+              params: { id: String(id) },
+              breadcrumbDetail: { label: `#${id}` },
+            })),
           },
         ],
       },
@@ -64,6 +70,7 @@ export const routeRegistry = [
         id: "cards",
         path: "/cards",
         labelKey: "nav.items.cards",
+        component: "cards",
         seo: {
           titleKey: "seo.cards.title",
           descriptionKey: "seo.cards.description",
@@ -80,6 +87,7 @@ export const routeRegistry = [
             pattern: "/cards/:id",
             parentId: "cards",
             labelKey: "nav.items.cards",
+            component: "card-detail",
             seo: {
               titleKey: "seo.cardDetail.title",
               descriptionKey: "seo.cardDetail.description",
@@ -87,7 +95,10 @@ export const routeRegistry = [
             },
             nav: false,
             searchable: false,
-            staticParams: [],
+            staticParams: CARD_IDS.map((id) => ({
+              params: { id: String(id) },
+              breadcrumbDetail: { label: `#${id}` },
+            })),
           },
         ],
       },

@@ -47,9 +47,10 @@ export function QuickFilterProvider({ children }: { children: ReactNode }) {
 interface QuickFilterButtonProps {
   content?: ReactNode;
   title?: string;
+  buttonLabel?: string;
 }
 
-export default function QuickFilterButton({ content, title }: QuickFilterButtonProps = {}) {
+export default function QuickFilterButton({ content, title, buttonLabel = "Quick filter" }: QuickFilterButtonProps = {}) {
   const ctx = useQuickFilter();
   const finalContent = content ?? ctx.filterContent;
   const finalTitle = title ?? ctx.filterTitle;
@@ -89,7 +90,7 @@ export default function QuickFilterButton({ content, title }: QuickFilterButtonP
             {...stampTapProps}
             onClick={() => setIsOpen(true)}
             className="fixed bottom-8 right-[5.5rem] z-50 grid h-11 w-11 place-items-center rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-amber)] text-[var(--mn-bg)] shadow-[var(--mn-shadow-stamp)] transition-colors hover:bg-[var(--mn-yellow)] hover:shadow-[var(--mn-shadow-stamp-sm)]"
-            aria-label="Quick filter"
+            aria-label={buttonLabel}
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />

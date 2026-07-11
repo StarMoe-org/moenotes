@@ -48,7 +48,8 @@ const googleAnalyticsBootstrapScript = isGoogleAnalyticsEnabled
     <meta name="description" content={meta.description} />
     {meta.keywords.length > 0 && <meta name="keywords" content={meta.keywords.join(", ")} />}
     {!meta.indexable && <meta name="robots" content="noindex,nofollow" />}
-    <link rel="icon" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="canonical" href={meta.canonical} />
     {meta.alternates.map((alt) => <link rel="alternate" hreflang={buildHreflang(alt.locale)} href={alt.href} />)}
     <link rel="alternate" hreflang="x-default" href={xDefaultHref} />
