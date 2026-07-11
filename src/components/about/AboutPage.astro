@@ -1,0 +1,53 @@
+---
+import type { AppLocale } from "@/config/locales";
+import { t } from "@/i18n";
+
+interface Props {
+  locale: AppLocale;
+}
+
+const { locale } = Astro.props;
+---
+
+<div class="relative overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-6 shadow-[var(--mn-shadow-stamp-lg)] sm:p-10 lg:p-12">
+  {/* Halftone texture decoration */}
+  <div class="mn-halftone absolute right-6 top-6 h-32 w-32 text-[var(--mn-accent)] opacity-10"></div>
+  
+  <div class="relative max-w-4xl mx-auto">
+    {/* Header Block */}
+    <div class="relative flex items-center justify-between border-b-[1.5px] border-dashed border-[var(--mn-border)]/20 pb-8">
+      <div class="max-w-2xl text-2xl font-bold leading-normal text-[var(--mn-text)] sm:text-3xl">
+        <span class="font-[var(--mn-font-display)] text-7xl italic font-black text-[var(--mn-accent)] leading-[0.7] float-left mr-2 select-none">H</span>
+        <span class="relative top-1 font-[var(--mn-font-display)]" set:html={`i, ${t(locale, "about.teamIntro")}`} />
+      </div>
+      
+      {/* Stamp badge */}
+      <div class="relative hidden sm:flex h-24 w-24 shrink-0 items-center justify-center rounded-full border-2 border-[var(--mn-accent)] select-none">
+        <div class="absolute inset-1 rounded-full border border-dashed border-[var(--mn-accent)]/60"></div>
+        <div class="text-center font-[var(--mn-font-display)] text-[9px] font-black uppercase tracking-wider text-[var(--mn-accent)]/80 leading-tight">
+          <div>Vol.01</div>
+          <div>Spring</div>
+          <div>2026</div>
+        </div>
+      </div>
+    </div>
+
+    {/* Body content */}
+    <div class="mt-8 space-y-6 text-base font-medium leading-8 text-[var(--mn-text-muted)] sm:text-lg sm:leading-9">
+      <p set:html={t(locale, "about.paragraph1")} />
+      <p set:html={t(locale, "about.paragraph2")} />
+    </div>
+
+    {/* Footer signature block */}
+    <div class="mt-12 flex flex-col items-end border-t border-[var(--mn-border)]/10 pt-8">
+      <div class="flex flex-col items-center">
+        <div class="font-[var(--mn-font-hand)] text-4xl font-bold text-[var(--mn-accent-deep)] transform -rotate-3 select-none">
+          — {t(locale, "about.signature")}
+        </div>
+        <div class="mt-2 font-[var(--mn-font-display)] text-[10px] uppercase tracking-[0.2em] text-[var(--mn-text-muted)]">
+          EDITOR IN CHIEF · VOL.01
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

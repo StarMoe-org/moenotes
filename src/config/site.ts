@@ -31,12 +31,10 @@ export const siteConfig: SiteConfig = {
   },
   sisterSites: [
     { label: "pjsk.moe (MoeSekai)", url: "https://pjsk.moe" },
-    { label: "sekai.best", url: "https://sekai.best" },
-    { label: "bestdori.com", url: "https://bestdori.com" },
   ],
   contact: {
-    email: "admin@moenotes.moe",
-    feedbackUrl: "https://github.com/MoeSekai/moenotes/issues",
-    bugReportUrl: "https://github.com/MoeSekai/moenotes/issues",
+    email: "mail@exmeaning.com",
+    feedbackUrl: "https://github.com/moe-sekai/moenotes/issues",
+    bugReportUrl: "https://github.com/moe-sekai/moenotes/issues",
   },
 };

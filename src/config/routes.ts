@@ -1,5 +1,6 @@
 import type { AppRoute } from "@/types/route";
 import { CARD_IDS } from "@/lib/cards/constants";
+import { SUPPORT_CARD_IDS } from "@/lib/support-cards/constants";
 
 export const routeRegistry = [
   {
@@ -96,6 +97,42 @@ export const routeRegistry = [
             nav: false,
             searchable: false,
             staticParams: CARD_IDS.map((id) => ({
+              params: { id: String(id) },
+              breadcrumbDetail: { label: `#${id}` },
+            })),
+          },
+        ],
+      },
+      {
+        id: "support-cards",
+        path: "/support-cards",
+        labelKey: "nav.items.supportCards",
+        component: "support-cards",
+        seo: {
+          titleKey: "seo.supportCards.title",
+          descriptionKey: "seo.supportCards.description",
+          sitemap: { priority: 0.8, changefreq: "daily" },
+        },
+        nav: { order: 18, icon: "sparkles" },
+        searchable: true,
+        keywords: ["support cards", "support", "gacha"],
+        children: [
+          {
+            id: "support-card-detail",
+            kind: "dynamic",
+            path: "/support-cards/:id",
+            pattern: "/support-cards/:id",
+            parentId: "support-cards",
+            labelKey: "nav.items.supportCards",
+            component: "support-card-detail",
+            seo: {
+              titleKey: "seo.supportCardDetail.title",
+              descriptionKey: "seo.supportCardDetail.description",
+              indexable: false,
+            },
+            nav: false,
+            searchable: false,
+            staticParams: SUPPORT_CARD_IDS.map((id) => ({
               params: { id: String(id) },
               breadcrumbDetail: { label: `#${id}` },
             })),
@@ -264,6 +301,7 @@ export const routeRegistry = [
     id: "community",
     path: "/about",
     labelKey: "nav.groups.community",
+    component: "about",
     seo: {
       titleKey: "seo.about.title",
       descriptionKey: "seo.about.description",

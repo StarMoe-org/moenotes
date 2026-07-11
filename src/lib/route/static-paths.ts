@@ -4,6 +4,7 @@ import type { AppRoute, BreadcrumbDetail, RouteMatch, RouteParams, RouteStaticPa
 import type { PageMetadata } from "@/lib/seo/metadata";
 import { fetchMasterData } from "@/lib/masterdata/client";
 import { normalizeCards, validateMasterTable } from "@/lib/cards/data";
+import { normalizeSupportCards } from "@/lib/support-cards/data";
 
 export interface StaticLocalizedPathProps {
   locale: AppLocale;
@@ -36,6 +37,7 @@ export async function getStaticLocalizedPaths(): Promise<StaticLocalizedPath[]> 
   }
 
   let cardMap: Map<number, Record<AppLocale, string>> | null = null;
+  let supportCardMap: Map<number, Record<AppLocale, string>> | null = null;
   let characterMap: Map<number, Record<AppLocale, string>> | null = null;
 
   for (const route of getAllRoutes().filter(isDynamicRoute)) {
@@ -78,6 +80,44 @@ export async function getStaticLocalizedPaths(): Promise<StaticLocalizedPath[]> 
           }
 
           const localizedLabel = cardMap.get(cardId)?.[locale];
+          if (localizedLabel) {
+            breadcrumbDetail = { label: localizedLabel };
+          }
+        }
+
+        if (route.component === "support-card-detail") {
+          const supportCardId = Number(config.params.id);
+          if (!supportCardMap) {
+            supportCardMap = new Map();
+            try {
+              const [cardTable, characterTable, bandTable, textTable] = await Promise.all([
+                fetchMasterData("MasterSupportCard.json", { validate: validateMasterTable }),
+                fetchMasterData("MasterCharacter.json", { validate: validateMasterTable }),
+                fetchMasterData("MasterBand.json", { validate: validateMasterTable }),
+                fetchMasterData("MasterText.json", { validate: validateMasterTable }),
+              ]);
+
+              for (const loc of SUPPORTED_LOCALES) {
+                const normalized = normalizeSupportCards(
+                  (cardTable as any)._allData,
+                  (characterTable as any)._allData,
+                  (bandTable as any)._allData,
+                  (textTable as any)._allData,
+                  loc
+                );
+                normalized.forEach((card) => {
+                  if (!supportCardMap!.has(card.id)) {
+                    supportCardMap!.set(card.id, {} as Record<AppLocale, string>);
+                  }
+                  supportCardMap!.get(card.id)![loc] = `${card.name} - ${card.title}`;
+                });
+              }
+            } catch (err) {
+              console.error("Failed to preload dynamic support card breadcrumbs:", err);
+            }
+          }
+
+          const localizedLabel = supportCardMap.get(supportCardId)?.[locale];
           if (localizedLabel) {
             breadcrumbDetail = { label: localizedLabel };
           }

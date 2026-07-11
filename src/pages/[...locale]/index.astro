@@ -2,8 +2,11 @@
 import DesignSystemPage from "@/components/design-system/DesignSystemPage.astro";
 import CardsPage from "@/components/cards/CardsPage.astro";
 import CardDetailPage from "@/components/cards/CardDetailPage.astro";
+import SupportCardsPage from "@/components/support-cards/SupportCardsPage.astro";
+import SupportCardDetailPage from "@/components/support-cards/SupportCardDetailPage.astro";
 import CharactersPage from "@/components/characters/CharactersPage.astro";
 import CharacterDetailPage from "@/components/characters/CharacterDetailPage.astro";
+import AboutPage from "@/components/about/AboutPage.astro";
 import Hero from "@/components/home/Hero.astro";
 import GroupLanding from "@/components/route/GroupLanding.astro";
 import PageHeader from "@/components/route/PageHeader.astro";
@@ -37,10 +40,17 @@ const component = match.item.component ?? "page";
 <AppLayout locale={locale} pathname={pathname} meta={props.meta} breadcrumbDetail={props.breadcrumbDetail}>
   {component === "home" ? (
     <Hero locale={locale} />
+  ) : component === "about" ? (
+    <AboutPage locale={locale} />
   ) : component === "cards" ? (
+
     <CardsPage locale={locale} />
   ) : component === "card-detail" ? (
     <CardDetailPage locale={locale} cardId={Number(match.params.id)} />
+  ) : component === "support-cards" ? (
+    <SupportCardsPage locale={locale} />
+  ) : component === "support-card-detail" ? (
+    <SupportCardDetailPage locale={locale} supportCardId={Number(match.params.id)} />
   ) : component === "characters" ? (
     <CharactersPage locale={locale} />
   ) : component === "character-detail" ? (

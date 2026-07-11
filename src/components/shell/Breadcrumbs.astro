@@ -40,16 +40,15 @@ function getOptionsForCrumb(crumb: BreadcrumbItem): AppRoute[] {
   if (crumb.id === "__placeholder__") {
     return getNavChildren(match.item);
   }
-  const isGroupCrumb = match.isGroupLanding
-    ? crumb.id === match.item.id
-    : Boolean(match.group && crumb.id === match.group.id);
-  if (isGroupCrumb) return groups;
-
-  const isItemCrumb = match.group
-    ? getNavChildren(match.group).some((child) => child.id === crumb.id)
-    : false;
-  if (isItemCrumb && match.group) return getNavChildren(match.group);
-
+  if (groups.some((g) => g.id === crumb.id)) {
+    return groups;
+  }
+  const parentGroup = groups.find((g) =>
+    getNavChildren(g).some((child) => child.id === crumb.id)
+  );
+  if (parentGroup) {
+    return getNavChildren(parentGroup);
+  }
   return [];
 }
 ---

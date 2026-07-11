@@ -1,0 +1,16 @@
+---
+import SupportCardDetail from "@/components/support-cards/SupportCardDetail";
+import PageLayout from "@/layouts/PageLayout.astro";
+import type { AppLocale } from "@/config/locales";
+
+interface Props {
+  locale: AppLocale;
+  supportCardId: number;
+}
+
+const { locale, supportCardId } = Astro.props;
+---
+
+<PageLayout locale={locale} titleKey="seo.supportCardDetail.title" descriptionKey="seo.supportCardDetail.description">
+  <SupportCardDetail client:load locale={locale} supportCardId={supportCardId} />
+</PageLayout>
