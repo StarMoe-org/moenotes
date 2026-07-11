@@ -87,13 +87,8 @@ export default function CharactersExplorer({ locale }: Props) {
       window.scrollTo({ top: targetY });
     });
 
-    const timer = window.setTimeout(() => {
-      window.scrollTo({ top: targetY });
-    }, 100);
-
     return () => {
       window.cancelAnimationFrame(handle);
-      window.clearTimeout(timer);
     };
   }, [loading, memory.state?.scrollY]);
 

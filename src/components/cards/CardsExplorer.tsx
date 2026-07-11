@@ -78,19 +78,12 @@ export default function CardsExplorer({ locale }: Props) {
     if (loading || !memory.state?.scrollY) return;
     const targetY = memory.state.scrollY;
     
-    // Attempt 1: immediate frame
     const handle = window.requestAnimationFrame(() => {
       window.scrollTo({ top: targetY });
     });
-    
-    // Attempt 2: delayed fallback to capture layout changes after layout/image loads
-    const timer = window.setTimeout(() => {
-      window.scrollTo({ top: targetY });
-    }, 100);
 
     return () => {
       window.cancelAnimationFrame(handle);
-      window.clearTimeout(timer);
     };
   }, [loading, memory.state?.scrollY]);
 
@@ -106,7 +99,6 @@ export default function CardsExplorer({ locale }: Props) {
   }, [query, selectedRarities, selectedCardTypes, selectedBands, selectedCharacters, memory]);
 
   useEffect(() => {
-    saveCurrentState();
     window.addEventListener("beforeunload", saveCurrentState);
     return () => {
       window.removeEventListener("beforeunload", saveCurrentState);

@@ -89,13 +89,8 @@ export default function SupportCardsExplorer({ locale }: Props) {
       window.scrollTo({ top: targetY });
     });
 
-    const timer = window.setTimeout(() => {
-      window.scrollTo({ top: targetY });
-    }, 100);
-
     return () => {
       window.cancelAnimationFrame(handle);
-      window.clearTimeout(timer);
     };
   }, [loading, memory.state?.scrollY]);
 
@@ -111,7 +106,6 @@ export default function SupportCardsExplorer({ locale }: Props) {
   }, [query, selectedRarities, selectedCardTypes, selectedBands, selectedCharacters, memory]);
 
   useEffect(() => {
-    saveCurrentState();
     window.addEventListener("beforeunload", saveCurrentState);
     return () => {
       window.removeEventListener("beforeunload", saveCurrentState);
