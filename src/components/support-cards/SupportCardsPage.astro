@@ -2,14 +2,16 @@
 import SupportCardsExplorer from "@/components/support-cards/SupportCardsExplorer";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
+import { getBuildSupportCards } from "@/lib/masterdata/build-data";
 
 interface Props {
   locale: AppLocale;
 }
 
 const { locale } = Astro.props;
+const cards = await getBuildSupportCards(locale);
 ---
 
 <PageLayout locale={locale} titleKey="seo.supportCards.title" descriptionKey="seo.supportCards.description">
-  <SupportCardsExplorer client:load locale={locale} />
+  <SupportCardsExplorer client:load locale={locale} initialSupportCards={cards} />
 </PageLayout>

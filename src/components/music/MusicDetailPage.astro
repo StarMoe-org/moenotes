@@ -2,6 +2,7 @@
 import MusicDetail from "@/components/music/MusicDetail";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
+import { getBuildMusicDetail } from "@/lib/masterdata/build-data";
 
 interface Props {
   locale: AppLocale;
@@ -9,8 +10,9 @@ interface Props {
 }
 
 const { locale, songId } = Astro.props;
+const song = await getBuildMusicDetail(locale, songId);
 ---
 
 <PageLayout locale={locale} titleKey="seo.songDetail.title" descriptionKey="seo.songDetail.description">
-  <MusicDetail client:load locale={locale} songId={songId} />
+  <MusicDetail client:load locale={locale} songId={songId} initialSong={song} />
 </PageLayout>

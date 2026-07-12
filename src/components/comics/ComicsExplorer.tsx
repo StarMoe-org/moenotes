@@ -4,16 +4,8 @@ import { t } from "@/i18n";
 import BaseFilters, { FilterButton, FilterSection } from "@/components/shared/BaseFilters";
 import QuickFilterButton from "@/components/shared/QuickFilterButton";
 import Modal from "@/components/shared/Modal";
-import { fetchMasterData } from "@/lib/masterdata/client";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
-import {
-  normalizeComics,
-  type ComicViewModel,
-  type RawComic,
-  type RawCharacter,
-  type RawBand,
-  type RawText,
-} from "@/lib/comics/data";
+import type { ComicViewModel } from "@/lib/comics/data";
 import {
   getBandSmallIconUrl,
   getCharacterFaceIconUrl,
@@ -21,61 +13,31 @@ import {
 
 interface Props {
   locale: AppLocale;
+  initialComics: ComicViewModel[];
+  initialBandNames: Array<[number, string]>;
 }
 
-export default function ComicsExplorer({ locale }: Props) {
+export default function ComicsExplorer({ locale, initialComics, initialBandNames }: Props) {
   const memory = useListPageMemory("comics");
-  const remembered = parseRememberedFilters(memory.state?.filtersHash);
-  const [comics, setComics] = useState<ComicViewModel[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
+  const [comics] = useState<ComicViewModel[]>(initialComics);
   
-  const [query, setQuery] = useState(remembered.query);
-  const [selectedBands, setSelectedBands] = useState<number[]>(remembered.bands);
-  const [selectedCharacters, setSelectedCharacters] = useState<number[]>(remembered.characters);
+  const [query, setQuery] = useState("");
+  const [selectedBands, setSelectedBands] = useState<number[]>([]);
+  const [selectedCharacters, setSelectedCharacters] = useState<number[]>([]);
   
   const [selectedComic, setSelectedComic] = useState<ComicViewModel | null>(null);
   const [copyState, setCopyState] = useState<"idle" | "copying" | "success" | "error">("idle");
   const [downloadState, setDownloadState] = useState<"idle" | "downloading" | "success">("idle");
 
   useEffect(() => {
-    let active = true;
-    setLoading(true);
-    setError(false);
-
-    void Promise.all([
-      fetchMasterData("MasterLoadingComics.json", { validate: (raw: any) => validateMasterTable<RawComic>(raw) }),
-      fetchMasterData("MasterCharacter.json", { validate: (raw: any) => validateMasterTable<RawCharacter>(raw) }),
-      fetchMasterData("MasterBand.json", { validate: (raw: any) => validateMasterTable<RawBand>(raw) }),
-      fetchMasterData("MasterText.json", { validate: (raw: any) => validateMasterTable<RawText>(raw) }),
-    ])
-      .then(([comicTable, characterTable, , textTable]) => {
-        if (!active) return;
-        setComics(
-          normalizeComics(
-            comicTable._allData,
-            characterTable._allData,
-            textTable._allData,
-            locale
-          )
-        );
-      })
-      .catch((err) => {
-        console.error("Failed to load comics data:", err);
-        if (active) setError(true);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [locale, reloadKey]);
+    const remembered = parseRememberedFilters(memory.state?.filtersHash);
+    setQuery(remembered.query);
+    setSelectedBands(remembered.bands);
+    setSelectedCharacters(remembered.characters);
+  }, [memory.state?.filtersHash]);
 
   useEffect(() => {
-    if (loading || !memory.state?.scrollY) return;
+    if (!memory.state?.scrollY) return;
     const targetY = memory.state.scrollY;
     
     const handle = window.requestAnimationFrame(() => {
@@ -85,7 +47,7 @@ export default function ComicsExplorer({ locale }: Props) {
     return () => {
       window.cancelAnimationFrame(handle);
     };
-  }, [loading, memory.state?.scrollY]);
+  }, [memory.state?.scrollY]);
 
   const saveCurrentState = useCallback(() => {
     const filtersHash = JSON.stringify({
@@ -114,28 +76,7 @@ export default function ComicsExplorer({ locale }: Props) {
     return [...values.keys()].sort((a, b) => a - b);
   }, [comics, locale]);
 
-  const [bandNamesMap, setBandNamesMap] = useState<Map<number, string>>(new Map());
-  useEffect(() => {
-    if (comics.length === 0) return;
-    void Promise.all([
-      fetchMasterData("MasterBand.json", { validate: (raw: any) => validateMasterTable<RawBand>(raw) }),
-      fetchMasterData("MasterText.json", { validate: (raw: any) => validateMasterTable<RawText>(raw) }),
-    ]).then(([bandTable, textTable]) => {
-      const textMap = new Map((textTable._allData as RawText[]).map((entry) => [entry.id, entry]));
-      const resolveText = (id: string) => {
-        const entry = textMap.get(id);
-        if (!entry) return "";
-        if (locale === "zh-CN") return entry.simplifiedChinese || entry.traditionalChinese || entry.japanese || entry.english;
-        if (locale === "en-US") return entry.english || entry.japanese;
-        return entry.japanese || entry.english;
-      };
-      const map = new Map<number, string>();
-      (bandTable._allData as RawBand[]).forEach((b) => {
-        map.set(b.id, resolveText(b.nameTextID) || `Band ${b.id}`);
-      });
-      setBandNamesMap(map);
-    }).catch(() => {});
-  }, [comics, locale]);
+  const bandNamesMap = useMemo(() => new Map(initialBandNames), [initialBandNames]);
 
   const bandCharacters = useMemo(() => {
     if (selectedBands.length === 0) return [];
@@ -340,11 +281,7 @@ export default function ComicsExplorer({ locale }: Props) {
       <div className="grid min-w-0 gap-6 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start">
         <aside className="sticky top-24 hidden min-w-0 lg:block">{filters(true)}</aside>
         <section className="min-w-0" aria-live="polite">
-          {loading ? (
-            <LoadingGrid label={t(locale, "comics.loading")} />
-          ) : error ? (
-            <ErrorState locale={locale} onRetry={() => setReloadKey((value) => value + 1)} />
-          ) : filteredComics.length === 0 ? (
+          {filteredComics.length === 0 ? (
             <EmptyState locale={locale} onReset={resetFilters} />
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
@@ -410,34 +347,6 @@ export default function ComicsExplorer({ locale }: Props) {
   );
 }
 
-function LoadingGrid({ label }: { label: string }) {
-  return (
-    <div>
-      <p className="sr-only">{label}</p>
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-        {Array.from({ length: 8 }, (_, index) => (
-          <div key={index} className="overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]">
-            <div className="aspect-[928/778] animate-pulse bg-[var(--mn-cream-deep)]" />
-            <div className="space-y-2 p-4"><div className="h-4 animate-pulse rounded-full bg-[var(--mn-cream-deep)]" /><div className="h-3 w-1/3 animate-pulse rounded-full bg-[var(--mn-cream-deep)]" /></div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ErrorState({ locale, onRetry }: { locale: AppLocale; onRetry: () => void }) {
-  return (
-    <div className="mn-paper p-8 text-center sm:p-12" role="alert">
-      <h3 className="font-[var(--mn-font-display)] text-2xl text-[var(--mn-text)]">{t(locale, "comics.loadErrorTitle")}</h3>
-      <p className="mx-auto mt-3 max-w-xl text-sm font-medium leading-7 text-[var(--mn-text-muted)]">{t(locale, "comics.loadErrorDescription")}</p>
-      <button type="button" onClick={onRetry} className="mn-focus mn-stamp-press mt-6 rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-accent-deep)] px-6 py-3 text-sm font-bold text-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]">
-        {t(locale, "comics.retry")}
-      </button>
-    </div>
-  );
-}
-
 function EmptyState({ locale, onReset }: { locale: AppLocale; onReset: () => void }) {
   return (
     <div className="mn-paper p-8 text-center sm:p-12">
@@ -447,25 +356,6 @@ function EmptyState({ locale, onReset }: { locale: AppLocale; onReset: () => voi
         {t(locale, "comics.reset")}
       </button>
     </div>
-  );
-}
-
-function validateMasterTable<T>(raw: unknown): { _allData: T[] } {
-  const rows = Array.isArray(raw)
-    ? raw
-    : raw && typeof raw === "object" && Array.isArray((raw as { _allData?: unknown })._allData)
-      ? (raw as { _allData: unknown[] })._allData
-      : null;
-  if (!rows) {
-    throw new Error("Invalid masterdata table");
-  }
-  return { _allData: rows.map(normalizeEntry) as T[] };
-}
-
-function normalizeEntry(value: unknown): unknown {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
-  return Object.fromEntries(
-    Object.entries(value).map(([key, entryValue]) => [key.replace(/^_/, ""), entryValue]),
   );
 }
 

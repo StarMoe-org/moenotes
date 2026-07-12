@@ -4,61 +4,33 @@ import { t } from "@/i18n";
 import BaseFilters, { FilterSection } from "@/components/shared/BaseFilters";
 import QuickFilterButton from "@/components/shared/QuickFilterButton";
 import Popover from "@/components/shared/Popover";
-import { fetchMasterData } from "@/lib/masterdata/client";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 import {
-  normalizeItems,
-  validateMasterTable,
   type ItemViewModel,
-  type RawItem,
 } from "@/lib/items/data";
-import type { RawText } from "@/lib/cards/data";
 import { getItemIconUrl } from "@/lib/items/assets";
 
 interface Props {
   locale: AppLocale;
+  initialItems: ItemViewModel[];
 }
 
 const displayGroups = [0, 1, 2, 3];
 
-export default function ItemsExplorer({ locale }: Props) {
+export default function ItemsExplorer({ locale, initialItems }: Props) {
   const memory = useListPageMemory("items");
-  const remembered = parseRememberedFilters(memory.state?.filtersHash);
-  const [items, setItems] = useState<ItemViewModel[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
-  const [query, setQuery] = useState(remembered.query);
-  const [selectedGroups, setSelectedGroups] = useState<number[]>(remembered.groups);
+  const [items] = useState<ItemViewModel[]>(initialItems);
+  const [query, setQuery] = useState("");
+  const [selectedGroups, setSelectedGroups] = useState<number[]>([]);
 
   useEffect(() => {
-    let active = true;
-    setLoading(true);
-    setError(false);
-
-    void Promise.all([
-      fetchMasterData("MasterItem.json", { validate: validateMasterTable<RawItem> }),
-      fetchMasterData("MasterText.json", { validate: validateMasterTable<RawText> }),
-    ])
-      .then(([itemTable, textTable]) => {
-        if (!active) return;
-        setItems(normalizeItems(itemTable._allData, textTable._allData, locale));
-      })
-      .catch((err) => {
-        console.error("Failed to load item data:", err);
-        if (active) setError(true);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [locale, reloadKey]);
+    const remembered = parseRememberedFilters(memory.state?.filtersHash);
+    setQuery(remembered.query);
+    setSelectedGroups(remembered.groups);
+  }, [memory.state?.filtersHash]);
 
   useEffect(() => {
-    if (loading || !memory.state?.scrollY) return;
+    if (!memory.state?.scrollY) return;
     const targetY = memory.state.scrollY;
 
     const handle = window.requestAnimationFrame(() => {
@@ -68,7 +40,7 @@ export default function ItemsExplorer({ locale }: Props) {
     return () => {
       window.cancelAnimationFrame(handle);
     };
-  }, [loading, memory.state?.scrollY]);
+  }, [memory.state?.scrollY]);
 
   const saveCurrentState = useCallback(() => {
     const filtersHash = JSON.stringify({
@@ -95,14 +67,6 @@ export default function ItemsExplorer({ locale }: Props) {
   }, [items, query, selectedGroups]);
 
   const hasActiveFilters = Boolean(query) || selectedGroups.length > 0;
-
-  const toggleFilter = (list: number[], setList: (next: number[]) => void, value: number) => {
-    if (list.includes(value)) {
-      setList(list.filter((v) => v !== value));
-    } else {
-      setList([...list, value]);
-    }
-  };
 
   const resetFilters = () => {
     setQuery("");
@@ -183,11 +147,7 @@ export default function ItemsExplorer({ locale }: Props) {
       <div className="grid min-w-0 gap-6 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start">
         <aside className="sticky top-24 hidden min-w-0 lg:block">{filters(true)}</aside>
         <section className="min-w-0" aria-live="polite">
-          {loading ? (
-            <LoadingGrid label={t(locale, "items.loading")} />
-          ) : error ? (
-            <ErrorState locale={locale} onRetry={() => setReloadKey((value) => value + 1)} />
-          ) : filteredItems.length === 0 ? (
+          {filteredItems.length === 0 ? (
             <EmptyState locale={locale} onReset={resetFilters} />
           ) : (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4xl:grid-cols-7 5xl:grid-cols-8">
@@ -254,41 +214,6 @@ function ItemCardItem({ item, locale }: { item: ItemViewModel; locale: AppLocale
           </span>
         </div>
       </div>
-    </div>
-  );
-}
-
-function LoadingGrid({ label }: { label: string }) {
-  return (
-    <div>
-      <p className="sr-only">{label}</p>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4xl:grid-cols-7 5xl:grid-cols-8">
-        {Array.from({ length: 12 }, (_, index) => (
-          <div key={index} className="overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]">
-            <div className="aspect-square animate-pulse bg-[var(--mn-cream-deep)]" />
-            <div className="space-y-2 p-4">
-              <div className="h-4 animate-pulse rounded-full bg-[var(--mn-cream-deep)]" />
-              <div className="h-3 w-2/3 animate-pulse rounded-full bg-[var(--mn-cream-deep)]" />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ErrorState({ locale, onRetry }: { locale: AppLocale; onRetry: () => void }) {
-  return (
-    <div className="mn-paper p-8 text-center sm:p-12" role="alert">
-      <h3 className="font-[var(--mn-font-display)] text-2xl text-[var(--mn-text)]">{t(locale, "items.loadErrorTitle")}</h3>
-      <p className="mx-auto mt-3 max-w-xl text-sm font-medium leading-7 text-[var(--mn-text-muted)]">{t(locale, "items.loadErrorDescription")}</p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="mn-focus mn-stamp-press mt-6 rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-accent-deep)] px-6 py-3 text-sm font-bold text-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]"
-      >
-        {t(locale, "items.retry")}
-      </button>
     </div>
   );
 }

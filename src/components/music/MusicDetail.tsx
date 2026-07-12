@@ -5,14 +5,7 @@ import { localizePath } from "@/i18n/routing";
 import { getRoutePathById } from "@/lib/route/registry";
 import Modal from "@/components/shared/Modal";
 import {
-  normalizeMusic,
-  validateMasterTable,
   type MusicViewModel,
-  type RawMusic,
-  type RawMusicScore,
-  type RawCharacter,
-  type RawBand,
-  type RawText,
 } from "@/lib/music/data";
 import {
   getCardTypeIconUrl,
@@ -22,66 +15,26 @@ import {
   getCharacterFaceIconUrl,
   type CardType,
 } from "@/lib/cards/assets";
-import { fetchMasterData } from "@/lib/masterdata/client";
 
 interface Props {
   locale: AppLocale;
   songId: number;
+  initialSong: MusicViewModel | null;
 }
 
 interface DetailData {
   song: MusicViewModel | null;
 }
 
-export default function MusicDetail({ locale, songId }: Props) {
-  const [data, setData] = useState<DetailData>({ song: null });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
+export default function MusicDetail({ locale, initialSong }: Props) {
+  const [data] = useState<DetailData>({ song: initialSong });
+  const loading = false;
+  const error = false;
+  const [, setReloadKey] = useState(0);
   const [activeTabId, setActiveTabId] = useState<"jacket" | "info">("jacket");
   const [jacketModalOpen, setJacketModalOpen] = useState(false);
   const [copyState, setCopyState] = useState<"idle" | "copying" | "success" | "error">("idle");
   const [downloadState, setDownloadState] = useState<"idle" | "downloading" | "success">("idle");
-
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    setError(false);
-
-    void Promise.all([
-      fetchMasterData("MasterLiveMusic.json", { validate: validateMasterTable<RawMusic> }),
-      fetchMasterData("MasterLiveMusicScore.json", { validate: validateMasterTable<RawMusicScore> }),
-      fetchMasterData("MasterCharacter.json", { validate: validateMasterTable<RawCharacter> }),
-      fetchMasterData("MasterBand.json", { validate: validateMasterTable<RawBand> }),
-      fetchMasterData("MasterText.json", { validate: validateMasterTable<RawText> }),
-      fetchMasterData("MasterSound.json", { validate: validateMasterTable<any> }),
-    ])
-      .then(([musicTable, scoreTable, characterTable, bandTable, textTable, soundTable]) => {
-        if (!active) return;
-        const normalized = normalizeMusic(
-          musicTable._allData,
-          scoreTable._allData,
-          characterTable._allData,
-          bandTable._allData,
-          textTable._allData,
-          locale,
-          soundTable._allData
-        );
-        const song = normalized.find((entry) => entry.id === songId) ?? null;
-        setData({ song });
-      })
-      .catch((err) => {
-        console.error("Failed to load song detail:", err);
-        if (active) setError(true);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [songId, locale, reloadKey]);
 
   const song = data.song;
 
@@ -294,7 +247,7 @@ export default function MusicDetail({ locale, songId }: Props) {
           {/* Audio Player tape widget */}
           {song.audioUrl && (
             <div className="mt-6 w-full">
-              <AudioPlayer src={song.audioUrl} title={song.title} locale={locale} />
+              <AudioPlayer src={song.audioUrl} title={song.title} />
             </div>
           )}
         </aside>
@@ -445,7 +398,7 @@ function formatDate(value: string, locale: AppLocale): string {
   return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat(locale, { year: "numeric", month: "long", day: "numeric" }).format(date);
 }
 
-function AudioPlayer({ src, title, locale }: { src: string; title: string; locale: AppLocale }) {
+function AudioPlayer({ src, title }: { src: string; title: string }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);

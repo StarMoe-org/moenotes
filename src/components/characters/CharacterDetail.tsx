@@ -15,23 +15,16 @@ import {
   getRarityIconUrl,
 } from "@/lib/cards/assets";
 import {
-  normalizeCards,
-  validateMasterTable,
   type CardViewModel,
-  type RawBand,
-  type RawMemberCard,
-  type RawText,
 } from "@/lib/cards/data";
-import { fetchMasterData } from "@/lib/masterdata/client";
 import {
-  normalizeCharacters,
-  type RawCharacter,
   type CharacterViewModel,
 } from "@/lib/characters/data";
 
 interface Props {
   locale: AppLocale;
   characterId: number;
+  initialData: DetailData;
 }
 
 interface DetailData {
@@ -63,59 +56,16 @@ function estimateTabWidth(label: string): number {
   return width;
 }
 
-export default function CharacterDetail({ locale, characterId }: Props) {
-  const [data, setData] = useState<DetailData>({ character: null, cards: [] });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
+export default function CharacterDetail({ locale, initialData }: Props) {
+  const [data] = useState<DetailData>(initialData);
+  const loading = false;
+  const error = false;
+  const [, setReloadKey] = useState(0);
   const [selectedAsset, setSelectedAsset] = useState<AssetPreview | null>(null);
   const [copyState, setCopyState] = useState<CopyState>("idle");
   const [downloadState, setDownloadState] = useState<("idle" | "downloading" | "success")>("idle");
   const [viewportWidth, setViewportWidth] = useState(1280);
   const [activeTabId, setActiveTabId] = useState<string>("sprite");
-
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    setError(false);
-
-    void Promise.all([
-      fetchMasterData("MasterCharacter.json", { validate: validateMasterTable<RawCharacter> }),
-      fetchMasterData("MasterBand.json", { validate: validateMasterTable<RawBand> }),
-      fetchMasterData("MasterText.json", { validate: validateMasterTable<RawText> }),
-      fetchMasterData("MasterMemberCard.json", { validate: validateMasterTable<RawMemberCard> }),
-    ])
-      .then(([characterTable, bandTable, textTable, cardTable]) => {
-        if (!active) return;
-        const character = normalizeCharacters(characterTable._allData, bandTable._allData, textTable._allData, locale)
-          .find((entry) => entry.id === characterId) ?? null;
-
-        if (!character) {
-          setData({ character: null, cards: [] });
-          return;
-        }
-
-        const cards = normalizeCards(
-          cardTable._allData,
-          characterTable._allData,
-          bandTable._allData,
-          textTable._allData,
-          locale
-        ).filter((card) => card.characterId === characterId);
-
-        setData({ character, cards });
-      })
-      .catch(() => {
-        if (active) setError(true);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [characterId, locale, reloadKey]);
 
   useEffect(() => {
     setViewportWidth(window.innerWidth);
@@ -636,7 +586,3 @@ function DetailRow({ label, value }: { label: string; value: ReactNode }) {
     </div>
   );
 }
-
-function CopyIcon() { return <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2m-6 12h8a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2Z" /></svg>; }
-function CheckIcon() { return <svg className="h-4 w-4 text-[var(--mn-mint-deep)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="m5 13 4 4L19 7" /></svg>; }
-function SpinnerIcon() { return <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="9" strokeWidth="2" className="opacity-30" /><path d="M12 3a9 9 0 0 1 9 9" strokeWidth="2" strokeLinecap="round" /></svg>; }

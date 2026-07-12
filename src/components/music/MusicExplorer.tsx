@@ -4,17 +4,9 @@ import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import BaseFilters, { FilterButton, FilterSection } from "@/components/shared/BaseFilters";
 import QuickFilterButton from "@/components/shared/QuickFilterButton";
-import { fetchMasterData } from "@/lib/masterdata/client";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 import {
-  normalizeMusic,
-  validateMasterTable,
   type MusicViewModel,
-  type RawMusic,
-  type RawMusicScore,
-  type RawCharacter,
-  type RawBand,
-  type RawText,
 } from "@/lib/music/data";
 import {
   getCardTypeIconUrl,
@@ -24,63 +16,29 @@ import {
 
 interface Props {
   locale: AppLocale;
+  initialSongs: MusicViewModel[];
 }
 
 const musicTypes: number[] = [1, 2, 3, 4, 5];
 const difficultyKeys = ["easy", "normal", "hard", "expert"] as const;
 
-export default function MusicExplorer({ locale }: Props) {
+export default function MusicExplorer({ locale, initialSongs }: Props) {
   const memory = useListPageMemory("music");
-  const remembered = parseRememberedFilters(memory.state?.filtersHash);
   
-  const [songs, setSongs] = useState<MusicViewModel[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
-  const [query, setQuery] = useState(remembered.query);
-  const [selectedTypes, setSelectedTypes] = useState<number[]>(remembered.types);
-  const [selectedBands, setSelectedBands] = useState<number[]>(remembered.bands);
+  const [songs] = useState<MusicViewModel[]>(initialSongs);
+  const [query, setQuery] = useState("");
+  const [selectedTypes, setSelectedTypes] = useState<number[]>([]);
+  const [selectedBands, setSelectedBands] = useState<number[]>([]);
 
   useEffect(() => {
-    let active = true;
-    setLoading(true);
-    setError(false);
-
-    void Promise.all([
-      fetchMasterData("MasterLiveMusic.json", { validate: validateMasterTable<RawMusic> }),
-      fetchMasterData("MasterLiveMusicScore.json", { validate: validateMasterTable<RawMusicScore> }),
-      fetchMasterData("MasterCharacter.json", { validate: validateMasterTable<RawCharacter> }),
-      fetchMasterData("MasterBand.json", { validate: validateMasterTable<RawBand> }),
-      fetchMasterData("MasterText.json", { validate: validateMasterTable<RawText> }),
-    ])
-      .then(([musicTable, scoreTable, characterTable, bandTable, textTable]) => {
-        if (!active) return;
-        setSongs(
-          normalizeMusic(
-            musicTable._allData,
-            scoreTable._allData,
-            characterTable._allData,
-            bandTable._allData,
-            textTable._allData,
-            locale
-          )
-        );
-      })
-      .catch((err) => {
-        console.error("Failed to load music data:", err);
-        if (active) setError(true);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [locale, reloadKey]);
+    const remembered = parseRememberedFilters(memory.state?.filtersHash);
+    setQuery(remembered.query);
+    setSelectedTypes(remembered.types);
+    setSelectedBands(remembered.bands);
+  }, [memory.state?.filtersHash]);
 
   useEffect(() => {
-    if (loading || !memory.state?.scrollY) return;
+    if (!memory.state?.scrollY) return;
     const targetY = memory.state.scrollY;
     
     const handle = window.requestAnimationFrame(() => {
@@ -90,7 +48,7 @@ export default function MusicExplorer({ locale }: Props) {
     return () => {
       window.cancelAnimationFrame(handle);
     };
-  }, [loading, memory.state?.scrollY]);
+  }, [memory.state?.scrollY]);
 
   const saveCurrentState = useCallback(() => {
     const filtersHash = JSON.stringify({
@@ -195,11 +153,7 @@ export default function MusicExplorer({ locale }: Props) {
       <div className="grid min-w-0 gap-6 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start">
         <aside className="sticky top-24 hidden min-w-0 lg:block">{filters(true)}</aside>
         <section className="min-w-0" aria-live="polite">
-          {loading ? (
-            <LoadingGrid label={t(locale, "music.loading")} />
-          ) : error ? (
-            <ErrorState locale={locale} onRetry={() => setReloadKey((value) => value + 1)} />
-          ) : filteredSongs.length === 0 ? (
+          {filteredSongs.length === 0 ? (
             <EmptyState locale={locale} onReset={resetFilters} />
           ) : (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6">
@@ -298,32 +252,6 @@ function SongCard({ song, locale, onClick }: { song: MusicViewModel; locale: App
         </div>
       </div>
     </a>
-  );
-}
-
-function LoadingGrid({ label }: { label: string }) {
-  return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6" aria-label={label}>
-      {[...Array(6)].map((_, i) => (
-        <div key={i} className="mn-paper h-80 animate-pulse" />
-      ))}
-    </div>
-  );
-}
-
-function ErrorState({ locale, onRetry }: { locale: AppLocale; onRetry: () => void }) {
-  return (
-    <div className="mn-paper p-8 text-center sm:p-12" role="alert">
-      <h2 className="font-[var(--mn-font-display)] text-2xl text-[var(--mn-text)]">
-        {t(locale, "music.loadErrorTitle")}
-      </h2>
-      <p className="mx-auto mt-3 max-w-xl text-sm font-medium leading-7 text-[var(--mn-text-muted)]">
-        {t(locale, "music.loadErrorDescription")}
-      </p>
-      <button type="button" onClick={onRetry} className="mn-focus mn-stamp-press mt-6 rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-accent-deep)] px-6 py-3 text-sm font-bold text-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]">
-        {t(locale, "cards.retry")}
-      </button>
-    </div>
   );
 }
 

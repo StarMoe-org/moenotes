@@ -15,9 +15,3 @@ export interface VersionManifest {
   tableCount?: number;
   tables?: string[];
 }
-
-export interface MasterDataFetchOptions<T = unknown> {
-  noCache?: boolean;
-  source?: MasterdataSource;
-  validate?: (raw: unknown) => T;
-}

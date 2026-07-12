@@ -2,6 +2,7 @@
 import SupportCardDetail from "@/components/support-cards/SupportCardDetail";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
+import { getBuildSupportCardDetail } from "@/lib/masterdata/build-data";
 
 interface Props {
   locale: AppLocale;
@@ -9,8 +10,9 @@ interface Props {
 }
 
 const { locale, supportCardId } = Astro.props;
+const initialData = await getBuildSupportCardDetail(locale, supportCardId);
 ---
 
 <PageLayout locale={locale} titleKey="seo.supportCardDetail.title" descriptionKey="seo.supportCardDetail.description">
-  <SupportCardDetail client:load locale={locale} supportCardId={supportCardId} />
+  <SupportCardDetail client:load locale={locale} supportCardId={supportCardId} initialData={initialData} />
 </PageLayout>

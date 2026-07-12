@@ -1,0 +1,90 @@
+---
+import AppLayout from "@/layouts/AppLayout.astro";
+import { siteConfig } from "@/config/site";
+
+const locale = "zh-CN" as const;
+const pathname = "/404";
+const copy = {
+  metaTitle: "页面没有找到", // i18n-allow-hardcoded
+  metaDescription: "这个页面可能尚未构建完成，也可能暂时走丢了。", // i18n-allow-hardcoded
+  eyebrow: "LOST NOTE · 404",
+  title: "呀，这一页好像还没被写进手帐里", // i18n-allow-hardcoded
+  description: "可能是地址悄悄走丢了，也可能这个页面还在构建中。先稍等一会儿，再刷新看看吧。", // i18n-allow-hardcoded
+  note: "如果等了一阵还是找不到，欢迎把这个链接交给开发者，我们会去把它捡回来。", // i18n-allow-hardcoded
+  home: "回到首页", // i18n-allow-hardcoded
+  retry: "再找一次", // i18n-allow-hardcoded
+  feedback: "向开发者提交反馈", // i18n-allow-hardcoded
+};
+---
+
+<AppLayout
+  locale={locale}
+  pathname={pathname}
+  meta={{ title: copy.metaTitle, description: copy.metaDescription, indexable: false }}
+>
+  <section class="mx-auto flex min-h-[62vh] max-w-5xl items-center justify-center py-8 sm:py-14">
+    <div class="relative w-full overflow-hidden rounded-[2rem] border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-6 py-10 shadow-[var(--mn-shadow-stamp)] sm:px-12 sm:py-14">
+      <div class="mn-halftone pointer-events-none absolute inset-0 opacity-25"></div>
+      <div class="mn-tape absolute -top-3 left-1/2 h-8 w-32 -translate-x-1/2 rotate-[-2deg] opacity-80"></div>
+
+      <div class="relative grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_16rem]">
+        <div class="order-2 lg:order-1">
+          <span class="mn-stamp inline-flex rotate-[-2deg] rounded-full px-4 py-1.5 text-xs tracking-[0.18em]">
+            {copy.eyebrow}
+          </span>
+          <h1 class="mt-7 max-w-3xl font-[var(--mn-font-display)] text-4xl leading-tight text-[var(--mn-text)] sm:text-6xl">
+            呀，这一页好像还没被写进<span class="mn-hand-underline text-[var(--mn-accent-deep)]">手帐里</span> <!-- i18n-allow-hardcoded -->
+          </h1>
+          <p class="mt-6 max-w-2xl text-base font-semibold leading-8 text-[var(--mn-text-muted)] sm:text-lg">
+            {copy.description}
+          </p>
+
+          <div class="mt-7 max-w-2xl rotate-[0.4deg] rounded-2xl border border-dashed border-[var(--mn-border)] bg-[var(--mn-cream-deep)] p-4 text-sm font-medium leading-7 text-[var(--mn-text-muted)]">
+            {copy.note}
+          </div>
+
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a
+              href="/"
+              class="mn-focus mn-stamp-press inline-flex items-center justify-center rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-accent-deep)] px-6 py-3 text-sm font-bold text-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]"
+            >
+              {copy.home}
+            </a>
+            <button
+              type="button"
+              onclick="window.location.reload()"
+              class="mn-focus mn-stamp-press inline-flex items-center justify-center rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-6 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp-sm)]"
+            >
+              {copy.retry}
+            </button>
+            <a
+              href={siteConfig.contact.bugReportUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="mn-focus mn-stamp-press inline-flex items-center justify-center rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-mint)] px-6 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp-sm)]"
+            >
+              {copy.feedback}
+            </a>
+          </div>
+        </div>
+
+        <div class="mx-auto w-full max-w-48 lg:max-w-[15rem] order-1 lg:order-2" aria-hidden="true">
+          <div class="relative rotate-[3deg] rounded-[2rem] border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-cream-deep)] p-6 shadow-[var(--mn-shadow-stamp)] transition-all duration-300 hover:rotate-[6deg] hover:-translate-y-1.5 hover:shadow-[var(--mn-shadow-stamp-lg)]">
+            <svg viewBox="0 0 260 260" class="h-auto w-full" fill="none">
+              <path d="M54 74 130 34l76 40v112l-76 40-76-40V74Z" fill="var(--mn-paper)" stroke="var(--mn-border)" stroke-width="3" stroke-linejoin="round" />
+              <path d="m55 76 75 61 75-61" stroke="var(--mn-border)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="m55 184 52-62M205 184l-52-62" stroke="var(--mn-border)" stroke-width="3" stroke-linecap="round" />
+              <path d="M100 91c7-13 18-20 30-20s23 7 30 20" stroke="var(--mn-accent-deep)" stroke-width="5" stroke-linecap="round" />
+              <circle cx="111" cy="106" r="5" fill="var(--mn-text)" />
+              <circle cx="149" cy="106" r="5" fill="var(--mn-text)" />
+              <path d="M116 119c9 7 19 7 28 0" stroke="var(--mn-text)" stroke-width="4" stroke-linecap="round" />
+              <path d="m73 45 7 14 15 2-11 11 3 15-14-7-14 7 3-15-11-11 15-2 7-14Z" fill="var(--mn-yellow)" stroke="var(--mn-border)" stroke-width="2" stroke-linejoin="round" />
+              <path d="M195 207c12-9 24-8 35 3" stroke="var(--mn-accent)" stroke-width="5" stroke-linecap="round" />
+            </svg>
+            <p class="mt-3 text-center font-[var(--mn-font-note)] text-5xl font-bold text-[var(--mn-accent-deep)]">404</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</AppLayout>

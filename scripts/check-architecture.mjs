@@ -11,13 +11,15 @@ const allowedStorageFiles = new Set([
 ]);
 
 const allowedFetchFiles = new Set([
-  "src/lib/masterdata/client.ts",
-  "src/lib/masterdata/version.ts",
+  "src/lib/masterdata/build-snapshot.ts",
   "src/lib/search/dynamic-index.ts",
   "src/components/cards/CardDetail.tsx",
   "src/components/characters/CharacterDetail.tsx",
+  "src/components/comics/ComicsExplorer.tsx",
   "src/components/music/MusicDetail.tsx",
+  "src/components/stamps/StampsExplorer.tsx",
   "src/components/support-cards/SupportCardDetail.tsx",
+  "src/components/tools/AssetViewer.tsx",
 ]);
 
 const allowedDomainFiles = new Set([

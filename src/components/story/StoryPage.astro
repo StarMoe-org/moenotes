@@ -3,11 +3,26 @@ import StoryExplorer from "@/components/story/StoryExplorer";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
 import type { StorySection } from "@/components/story/StoryExplorer";
+import { getBuildStories, getBuildStoryReaderLookup } from "@/lib/masterdata/build-data";
 
 interface Props { locale: AppLocale; category: StorySection; titleKey: string; descriptionKey: string; }
 const { locale, category, titleKey, descriptionKey } = Astro.props;
+const allStories = await getBuildStories(locale);
+const stories = allStories.filter((story) => category === "other"
+  ? ["live-result", "home", "tutorial"].includes(story.category)
+  : story.category === category);
+const readerLookup = category === "other"
+  ? await getBuildStoryReaderLookup()
+  : { characters: [], texts: [] };
 ---
 
 <PageLayout locale={locale} titleKey={titleKey} descriptionKey={descriptionKey}>
-  <StoryExplorer client:load locale={locale} initialCategory={category} />
+  <StoryExplorer
+    client:load
+    locale={locale}
+    initialCategory={category}
+    initialStories={stories}
+    initialCharacters={readerLookup.characters}
+    initialTexts={readerLookup.texts}
+  />
 </PageLayout>

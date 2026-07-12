@@ -2,14 +2,16 @@
 import CharactersExplorer from "@/components/characters/CharactersExplorer";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
+import { getBuildCharacters } from "@/lib/masterdata/build-data";
 
 interface Props {
   locale: AppLocale;
 }
 
 const { locale } = Astro.props;
+const characters = await getBuildCharacters(locale);
 ---
 
 <PageLayout locale={locale} titleKey="seo.characters.title" descriptionKey="seo.characters.description">
-  <CharactersExplorer client:load locale={locale} />
+  <CharactersExplorer client:load locale={locale} initialCharacters={characters} />
 </PageLayout>

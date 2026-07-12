@@ -12,26 +12,9 @@ import {
   getSupportCardTypeIconUrl,
 } from "@/lib/support-cards/assets";
 import {
-  normalizeSupportCards,
   type SupportCardViewModel,
-  type RawSupportCard,
 } from "@/lib/support-cards/data";
 import {
-  normalizeSupportSkill,
-  type RawSupportSkillEffect,
-} from "@/lib/support-cards/skills";
-import {
-  validateMasterTable,
-  type RawBand,
-  type RawCharacter,
-  type RawText,
-} from "@/lib/cards/data";
-import {
-  type RawSkillDefinition,
-  type RawSkillIcon,
-  type RawSkillCondition,
-  type RawSkillConditionSet,
-  type RawSkillCumulativeCondition,
   type SkillViewModel,
 } from "@/lib/cards/skills";
 import {
@@ -40,11 +23,11 @@ import {
   getBandSmallIconUrl,
   getCharacterFaceIconUrl,
 } from "@/lib/cards/assets";
-import { fetchMasterData } from "@/lib/masterdata/client";
 
 interface Props {
   locale: AppLocale;
   supportCardId: number;
+  initialData: DetailData;
 }
 
 interface DetailData {
@@ -76,109 +59,14 @@ function estimateTabWidth(label: string): number {
   return width;
 }
 
-export default function SupportCardDetail({ locale, supportCardId }: Props) {
-  const [data, setData] = useState<DetailData>({ card: null, skills: [] });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
+export default function SupportCardDetail({ locale, initialData }: Props) {
+  const [data] = useState<DetailData>(initialData);
+  const loading = false;
+  const error = false;
+  const [, setReloadKey] = useState(0);
   const [selectedAsset, setSelectedAsset] = useState<AssetPreview | null>(null);
   const [copyState, setCopyState] = useState<CopyState>("idle");
   const [downloadState, setDownloadState] = useState<"idle" | "downloading" | "success">("idle");
-
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    setError(false);
-
-    void Promise.all([
-      fetchMasterData("MasterSupportCard.json", { validate: validateMasterTable<RawSupportCard> }),
-      fetchMasterData("MasterCharacter.json", { validate: validateMasterTable<RawCharacter> }),
-      fetchMasterData("MasterBand.json", { validate: validateMasterTable<RawBand> }),
-      fetchMasterData("MasterText.json", { validate: validateMasterTable<RawText> }),
-      fetchMasterData("MasterSupportSkill.json", { validate: validateMasterTable<RawSkillDefinition> }),
-      fetchMasterData("MasterSupportSkillEffect.json", { validate: validateMasterTable<RawSupportSkillEffect> }),
-      fetchMasterData("MasterGekisouSupportSkill.json", { validate: validateMasterTable<RawSkillDefinition> }),
-      fetchMasterData("MasterGekisouSupportSkillEffect.json", { validate: validateMasterTable<RawSupportSkillEffect> }),
-      fetchMasterData("MasterSkillIcon.json", { validate: validateMasterTable<RawSkillIcon> }),
-      fetchMasterData("MasterSkillConditionSet.json", { validate: validateMasterTable<RawSkillConditionSet> }),
-      fetchMasterData("MasterSkillCondition.json", { validate: validateMasterTable<RawSkillCondition> }),
-      fetchMasterData("MasterSkillCumulativeCondition.json", { validate: validateMasterTable<RawSkillCumulativeCondition> }),
-    ])
-      .then(
-        ([
-          cardTable,
-          characterTable,
-          bandTable,
-          textTable,
-          supportSkills,
-          supportEffects,
-          gekisouSupportSkills,
-          gekisouSupportEffects,
-          skillIcons,
-          conditionSets,
-          conditions,
-          cumulativeConditions,
-        ]) => {
-          if (!active) return;
-          const card =
-            normalizeSupportCards(
-              cardTable._allData,
-              characterTable._allData,
-              bandTable._allData,
-              textTable._allData,
-              locale,
-            ).find((entry) => entry.id === supportCardId) ?? null;
-
-          if (!card) {
-            setData({ card: null, skills: [] });
-            return;
-          }
-
-          const characterMap = new Map(characterTable._allData.map((entry) => [entry.id, entry]));
-          const skills = [
-            normalizeSupportSkill(
-              "support",
-              card.supportSkillId01,
-              supportSkills._allData,
-              supportEffects._allData,
-              skillIcons._allData,
-              textTable._allData,
-              locale,
-              conditionSets._allData,
-              conditions._allData,
-              cumulativeConditions._allData,
-              characterMap,
-            ),
-            normalizeSupportSkill(
-              "gekisou-support",
-              card.gekisouSupportSkillId01,
-              gekisouSupportSkills._allData,
-              gekisouSupportEffects._allData,
-              skillIcons._allData,
-              textTable._allData,
-              locale,
-              conditionSets._allData,
-              conditions._allData,
-              cumulativeConditions._allData,
-              characterMap,
-            ),
-          ].filter((entry): entry is SkillViewModel => entry !== null);
-
-          setData({ card, skills });
-        },
-      )
-      .catch((err) => {
-        console.error(err);
-        if (active) setError(true);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [supportCardId, locale, reloadKey]);
 
   const card = data.card;
   const assets = useMemo<AssetPreview[]>(() => {

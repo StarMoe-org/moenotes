@@ -3,12 +3,11 @@ import type { AppLocale } from "@/config/locales";
 import BaseFilters, { FilterButton, FilterSection } from "@/components/shared/BaseFilters";
 import QuickFilterButton from "@/components/shared/QuickFilterButton";
 import Modal from "@/components/shared/Modal";
-import { fetchMasterData } from "@/lib/masterdata/client";
 import { getAssetUrl } from "@/lib/assets/url";
 import { getCharacterFaceIconUrl } from "@/lib/cards/assets";
 import { fetchAndParseStory, type ParsedStoryScript } from "@/lib/story/parser";
-import { normalizeStories, validateMasterTable, type RawAdv, type RawCharacterFriendship, type RawHomeSpot, type RawStoryChapter, type RawStoryCharacter, type RawStoryEpisode, type RawStoryFriendshipEpisode, type RawStoryHomeSpotTapTalkEpisode, type RawStoryLiveResultEpisode, type StoryCategory, type StoryViewModel } from "@/lib/story/data";
-import type { RawBand, RawText } from "@/lib/cards/data";
+import type { RawStoryCharacter, StoryCategory, StoryViewModel } from "@/lib/story/data";
+import type { RawText } from "@/lib/cards/data";
 import { localizePath } from "@/i18n/routing";
 
 export type StorySection = "main" | "friendship" | "other";
@@ -19,40 +18,16 @@ const labels: Record<AppLocale, Record<StoryCategory | "other", string>> = {
   "en-US": { main: "Main story", friendship: "Bond stories", "live-result": "Post-live talks", home: "Home stories", tutorial: "Tutorial stories", other: "Other stories" },
 };
 
-export default function StoryExplorer({ locale, initialCategory }: { locale: AppLocale; initialCategory: StorySection }) {
-  const [stories, setStories] = useState<StoryViewModel[]>([]);
-  const [characters, setCharacters] = useState<RawStoryCharacter[]>([]);
-  const [texts, setTexts] = useState<RawText[]>([]);
+export default function StoryExplorer({ locale, initialCategory, initialStories, initialCharacters, initialTexts }: { locale: AppLocale; initialCategory: StorySection; initialStories: StoryViewModel[]; initialCharacters: RawStoryCharacter[]; initialTexts: RawText[] }) {
+  const [stories] = useState<StoryViewModel[]>(initialStories);
   const [query, setQuery] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [reload, setReload] = useState(0);
-  const [active, setActive] = useState<StoryViewModel | null>(null);
   const [otherCategories, setOtherCategories] = useState<StoryCategory[]>([]);
-
-  useEffect(() => {
-    let alive = true; setLoading(true); setError(false);
-    void Promise.all([
-      fetchMasterData("MasterStoryChapter.json", { validate: validateMasterTable<RawStoryChapter> }),
-      fetchMasterData("MasterStoryEpisode.json", { validate: validateMasterTable<RawStoryEpisode> }),
-      fetchMasterData("MasterStoryFriendshipEpisode.json", { validate: validateMasterTable<RawStoryFriendshipEpisode> }),
-      fetchMasterData("MasterStoryHomeSpotTapTalkEpisode.json", { validate: validateMasterTable<RawStoryHomeSpotTapTalkEpisode> }),
-      fetchMasterData("MasterStoryLiveResultEpisode.json", { validate: validateMasterTable<RawStoryLiveResultEpisode> }),
-      fetchMasterData("MasterAdv.json", { validate: validateMasterTable<RawAdv> }),
-      fetchMasterData("MasterHomeSpot.json", { validate: validateMasterTable<RawHomeSpot> }),
-      fetchMasterData("MasterCharacterFriendship.json", { validate: validateMasterTable<RawCharacterFriendship> }),
-      fetchMasterData("MasterCharacter.json", { validate: validateMasterTable<RawStoryCharacter> }),
-      fetchMasterData("MasterBand.json", { validate: validateMasterTable<RawBand> }),
-      fetchMasterData("MasterText.json", { validate: validateMasterTable<RawText> }),
-    ]).then(([chapters, episodes, friendshipEpisodes, homeTapEpisodes, liveResultEpisodes, advs, homeSpots, friendships, characters, bands, texts]) => {
-      if (alive) {
-        setStories(normalizeStories({ chapters: chapters._allData, episodes: episodes._allData, friendshipEpisodes: friendshipEpisodes._allData, homeTapEpisodes: homeTapEpisodes._allData, liveResultEpisodes: liveResultEpisodes._allData, advs: advs._allData, homeSpots: homeSpots._allData, friendships: friendships._allData, characters: characters._allData, bands: bands._allData, texts: texts._allData }, locale));
-        setCharacters(characters._allData);
-        setTexts(texts._allData);
-      }
-    }).catch(() => alive && setError(true)).finally(() => alive && setLoading(false));
-    return () => { alive = false; };
-  }, [locale, reload]);
+  const loading = false;
+  const error = false;
+  const [, setReload] = useState(0);
+  const [active, setActive] = useState<StoryViewModel | null>(null);
+  const characters = initialCharacters;
+  const texts = initialTexts;
 
   const inSection = (story: StoryViewModel) => initialCategory === "other" ? ["live-result", "home", "tutorial"].includes(story.category) : story.category === initialCategory;
   const filtered = useMemo(() => stories.filter((story) => inSection(story) && (initialCategory !== "other" || otherCategories.length === 0 || otherCategories.includes(story.category)) && (!query.trim() || story.searchText.includes(query.trim().toLocaleLowerCase()))), [stories, initialCategory, otherCategories, query]);

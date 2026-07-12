@@ -5,14 +5,10 @@ import { localizePath } from "@/i18n/routing";
 import BaseFilters, { FilterButton, FilterSection } from "@/components/shared/BaseFilters";
 import QuickFilterButton from "@/components/shared/QuickFilterButton";
 import SupportCardArtwork from "./SupportCardArtwork";
-import { fetchMasterData } from "@/lib/masterdata/client";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 import {
-  normalizeSupportCards,
   type SupportCardViewModel,
-  type RawSupportCard,
 } from "@/lib/support-cards/data";
-import { validateMasterTable, type RawCharacter, type RawBand, type RawText } from "@/lib/cards/data";
 import {
   getSupportCardTypeIconUrl,
   getSupportRarityIconUrl,
@@ -28,61 +24,32 @@ import {
 
 interface Props {
   locale: AppLocale;
+  initialSupportCards: SupportCardViewModel[];
 }
 
 const rarities: SupportCardRarity[] = [4, 3, 2];
 const cardTypes: SupportCardType[] = [1, 2, 3, 4, 5];
 
-export default function SupportCardsExplorer({ locale }: Props) {
+export default function SupportCardsExplorer({ locale, initialSupportCards }: Props) {
   const memory = useListPageMemory("support-cards");
-  const remembered = parseRememberedFilters(memory.state?.filtersHash);
-  const [cards, setCards] = useState<SupportCardViewModel[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
-  const [query, setQuery] = useState(remembered.query);
-  const [selectedRarities, setSelectedRarities] = useState<number[]>(remembered.rarities);
-  const [selectedCardTypes, setSelectedCardTypes] = useState<number[]>(remembered.cardTypes);
-  const [selectedBands, setSelectedBands] = useState<number[]>(remembered.bands);
-  const [selectedCharacters, setSelectedCharacters] = useState<number[]>(remembered.characters);
+  const [cards] = useState<SupportCardViewModel[]>(initialSupportCards);
+  const [query, setQuery] = useState("");
+  const [selectedRarities, setSelectedRarities] = useState<number[]>([]);
+  const [selectedCardTypes, setSelectedCardTypes] = useState<number[]>([]);
+  const [selectedBands, setSelectedBands] = useState<number[]>([]);
+  const [selectedCharacters, setSelectedCharacters] = useState<number[]>([]);
 
   useEffect(() => {
-    let active = true;
-    setLoading(true);
-    setError(false);
-
-    void Promise.all([
-      fetchMasterData("MasterSupportCard.json", { validate: validateMasterTable<RawSupportCard> }),
-      fetchMasterData("MasterCharacter.json", { validate: validateMasterTable<RawCharacter> }),
-      fetchMasterData("MasterBand.json", { validate: validateMasterTable<RawBand> }),
-      fetchMasterData("MasterText.json", { validate: validateMasterTable<RawText> }),
-    ])
-      .then(([cardTable, characterTable, bandTable, textTable]) => {
-        if (!active) return;
-        setCards(
-          normalizeSupportCards(
-            cardTable._allData,
-            characterTable._allData,
-            bandTable._allData,
-            textTable._allData,
-            locale,
-          ),
-        );
-      })
-      .catch(() => {
-        if (active) setError(true);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [locale, reloadKey]);
+    const remembered = parseRememberedFilters(memory.state?.filtersHash);
+    setQuery(remembered.query);
+    setSelectedRarities(remembered.rarities);
+    setSelectedCardTypes(remembered.cardTypes);
+    setSelectedBands(remembered.bands);
+    setSelectedCharacters(remembered.characters);
+  }, [memory.state?.filtersHash]);
 
   useEffect(() => {
-    if (loading || !memory.state?.scrollY) return;
+    if (!memory.state?.scrollY) return;
     const targetY = memory.state.scrollY;
 
     const handle = window.requestAnimationFrame(() => {
@@ -92,7 +59,7 @@ export default function SupportCardsExplorer({ locale }: Props) {
     return () => {
       window.cancelAnimationFrame(handle);
     };
-  }, [loading, memory.state?.scrollY]);
+  }, [memory.state?.scrollY]);
 
   const saveCurrentState = useCallback(() => {
     const filtersHash = JSON.stringify({
@@ -304,11 +271,7 @@ export default function SupportCardsExplorer({ locale }: Props) {
       <div className="grid min-w-0 gap-6 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start">
         <aside className="sticky top-24 hidden min-w-0 lg:block">{filters(true)}</aside>
         <section className="min-w-0" aria-live="polite">
-          {loading ? (
-            <LoadingGrid label={t(locale, "supportCards.loading")} />
-          ) : error ? (
-            <ErrorState locale={locale} onRetry={() => setReloadKey((value) => value + 1)} />
-          ) : filteredCards.length === 0 ? (
+          {filteredCards.length === 0 ? (
             <EmptyState locale={locale} onReset={resetFilters} />
           ) : (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4xl:grid-cols-7 5xl:grid-cols-8">
@@ -409,48 +372,6 @@ function SupportCardItem({
         </div>
       </div>
     </a>
-  );
-}
-
-function LoadingGrid({ label }: { label: string }) {
-  return (
-    <div>
-      <p className="sr-only">{label}</p>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4xl:grid-cols-7 5xl:grid-cols-8">
-        {Array.from({ length: 10 }, (_, index) => (
-          <div
-            key={index}
-            className="overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]"
-          >
-            <div className="aspect-[3/4] animate-pulse bg-[var(--mn-cream-deep)]" />
-            <div className="space-y-2 p-4">
-              <div className="h-4 animate-pulse rounded-full bg-[var(--mn-cream-deep)]" />
-              <div className="h-3 w-2/3 animate-pulse rounded-full bg-[var(--mn-cream-deep)]" />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ErrorState({ locale, onRetry }: { locale: AppLocale; onRetry: () => void }) {
-  return (
-    <div className="mn-paper p-8 text-center sm:p-12" role="alert">
-      <h3 className="font-[var(--mn-font-display)] text-2xl text-[var(--mn-text)]">
-        {t(locale, "supportCards.loadErrorTitle")}
-      </h3>
-      <p className="mx-auto mt-3 max-w-xl text-sm font-medium leading-7 text-[var(--mn-text-muted)]">
-        {t(locale, "supportCards.loadErrorDescription")}
-      </p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="mn-focus mn-stamp-press mt-6 rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-accent-deep)] px-6 py-3 text-sm font-bold text-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]"
-      >
-        {t(locale, "cards.retry")}
-      </button>
-    </div>
   );
 }
 

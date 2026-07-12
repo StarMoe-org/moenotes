@@ -2,11 +2,21 @@
 import StoryDetail from "@/components/story/StoryDetail";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
+import { getBuildStoryDetail } from "@/lib/masterdata/build-data";
 
 interface Props { locale: AppLocale; advId: number; }
 const { locale, advId } = Astro.props;
+const detail = await getBuildStoryDetail(locale, advId);
 ---
 
 <PageLayout locale={locale} titleKey="seo.storyDetail.title" descriptionKey="seo.storyDetail.description">
-  <StoryDetail client:load locale={locale} advId={advId} />
+  <StoryDetail
+    client:load
+    locale={locale}
+    advId={advId}
+    initialTitle={detail.title}
+    initialScript={detail.script}
+    initialCharacters={detail.characters}
+    initialTexts={detail.texts}
+  />
 </PageLayout>

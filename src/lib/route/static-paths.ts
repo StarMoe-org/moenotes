@@ -2,9 +2,13 @@ import { DEFAULT_LOCALE, LOCALE_PATH_PREFIX, SUPPORTED_LOCALES, type AppLocale }
 import { buildDynamicPath, findRouteMatch, findRouteById, getAllRoutes, getAllStaticRoutes, isDynamicRoute, resolveRouteStaticParams } from "@/lib/route/registry";
 import type { AppRoute, BreadcrumbDetail, RouteMatch, RouteParams } from "@/types/route";
 import type { PageMetadata } from "@/lib/seo/metadata";
-import { fetchMasterData } from "@/lib/masterdata/client";
+import { getBuildMasterData } from "@/lib/masterdata/build-snapshot";
 import { normalizeCards, validateMasterTable } from "@/lib/cards/data";
 import { normalizeSupportCards } from "@/lib/support-cards/data";
+
+function getStaticMasterData<T>(path: string, options: { validate: (raw: unknown) => T }): Promise<T> {
+  return getBuildMasterData(path, options.validate);
+}
 
 export interface StaticLocalizedPathProps {
   locale: AppLocale;
@@ -55,10 +59,10 @@ export async function getStaticLocalizedPaths(): Promise<StaticLocalizedPath[]> 
             cardMap = new Map();
             try {
               const [cardTable, characterTable, bandTable, textTable] = await Promise.all([
-                fetchMasterData("MasterMemberCard.json", { validate: validateMasterTable }),
-                fetchMasterData("MasterCharacter.json", { validate: validateMasterTable }),
-                fetchMasterData("MasterBand.json", { validate: validateMasterTable }),
-                fetchMasterData("MasterText.json", { validate: validateMasterTable }),
+                getStaticMasterData("MasterMemberCard.json", { validate: validateMasterTable }),
+                getStaticMasterData("MasterCharacter.json", { validate: validateMasterTable }),
+                getStaticMasterData("MasterBand.json", { validate: validateMasterTable }),
+                getStaticMasterData("MasterText.json", { validate: validateMasterTable }),
               ]);
 
               for (const loc of SUPPORTED_LOCALES) {
@@ -93,10 +97,10 @@ export async function getStaticLocalizedPaths(): Promise<StaticLocalizedPath[]> 
             supportCardMap = new Map();
             try {
               const [cardTable, characterTable, bandTable, textTable] = await Promise.all([
-                fetchMasterData("MasterSupportCard.json", { validate: validateMasterTable }),
-                fetchMasterData("MasterCharacter.json", { validate: validateMasterTable }),
-                fetchMasterData("MasterBand.json", { validate: validateMasterTable }),
-                fetchMasterData("MasterText.json", { validate: validateMasterTable }),
+                getStaticMasterData("MasterSupportCard.json", { validate: validateMasterTable }),
+                getStaticMasterData("MasterCharacter.json", { validate: validateMasterTable }),
+                getStaticMasterData("MasterBand.json", { validate: validateMasterTable }),
+                getStaticMasterData("MasterText.json", { validate: validateMasterTable }),
               ]);
 
               for (const loc of SUPPORTED_LOCALES) {
@@ -131,8 +135,8 @@ export async function getStaticLocalizedPaths(): Promise<StaticLocalizedPath[]> 
             characterMap = new Map();
             try {
               const [characterTable, textTable] = await Promise.all([
-                fetchMasterData("MasterCharacter.json", { validate: validateMasterTable }),
-                fetchMasterData("MasterText.json", { validate: validateMasterTable }),
+                getStaticMasterData("MasterCharacter.json", { validate: validateMasterTable }),
+                getStaticMasterData("MasterText.json", { validate: validateMasterTable }),
               ]);
 
               const charList = (characterTable as any)._allData;
@@ -172,8 +176,8 @@ export async function getStaticLocalizedPaths(): Promise<StaticLocalizedPath[]> 
             musicMap = new Map();
             try {
               const [musicTable, textTable] = await Promise.all([
-                fetchMasterData("MasterLiveMusic.json", { validate: validateMasterTable }),
-                fetchMasterData("MasterText.json", { validate: validateMasterTable }),
+                getStaticMasterData("MasterLiveMusic.json", { validate: validateMasterTable }),
+                getStaticMasterData("MasterText.json", { validate: validateMasterTable }),
               ]);
 
               const musicList = (musicTable as any)._allData;
@@ -213,10 +217,10 @@ export async function getStaticLocalizedPaths(): Promise<StaticLocalizedPath[]> 
             storyMap = new Map();
             try {
               const [advTable, textTable, episodeTable, friendshipEpisodeTable] = await Promise.all([
-                fetchMasterData("MasterAdv.json", { validate: validateMasterTable }),
-                fetchMasterData("MasterText.json", { validate: validateMasterTable }),
-                fetchMasterData("MasterStoryEpisode.json", { validate: validateMasterTable }),
-                fetchMasterData("MasterStoryFriendshipEpisode.json", { validate: validateMasterTable }),
+                getStaticMasterData("MasterAdv.json", { validate: validateMasterTable }),
+                getStaticMasterData("MasterText.json", { validate: validateMasterTable }),
+                getStaticMasterData("MasterStoryEpisode.json", { validate: validateMasterTable }),
+                getStaticMasterData("MasterStoryFriendshipEpisode.json", { validate: validateMasterTable }),
               ]);
 
               const advList = (advTable as any)._allData;

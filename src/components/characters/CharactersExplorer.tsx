@@ -1,22 +1,19 @@
 import { useEffect, useState, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
-import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
-import { fetchMasterData } from "@/lib/masterdata/client";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
-import { validateMasterTable, type RawBand, type RawText } from "@/lib/cards/data";
 import {
   getBandSmallIconUrl,
   getCharacterThumbnailUrl,
 } from "@/lib/cards/assets";
-import {
-  normalizeCharacters,
-  type RawCharacter,
-  type CharacterViewModel,
-} from "@/lib/characters/data";
+import { type CharacterViewModel } from "@/lib/characters/data";
 
 interface Props {
   locale: AppLocale;
+  initialCharacters: {
+    characters: CharacterViewModel[];
+    bands: BandModel[];
+  };
 }
 
 interface BandModel {
@@ -26,61 +23,12 @@ interface BandModel {
   color: string;
 }
 
-export default function CharactersExplorer({ locale }: Props) {
+export default function CharactersExplorer({ locale, initialCharacters }: Props) {
   const memory = useListPageMemory("characters");
-  const [data, setData] = useState<{ characters: CharacterViewModel[]; bands: BandModel[] }>({ characters: [], bands: [] });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
+  const [data] = useState<{ characters: CharacterViewModel[]; bands: BandModel[] }>(initialCharacters);
 
   useEffect(() => {
-    let active = true;
-    setLoading(true);
-    setError(false);
-
-    void Promise.all([
-      fetchMasterData("MasterCharacter.json", { validate: validateMasterTable<RawCharacter> }),
-      fetchMasterData("MasterBand.json", { validate: validateMasterTable<RawBand> }),
-      fetchMasterData("MasterText.json", { validate: validateMasterTable<RawText> }),
-    ])
-      .then(([characterTable, bandTable, textTable]) => {
-        if (!active) return;
-
-        const textMap = new Map(textTable._allData.map((t) => [t.id, t]));
-        const resolveText = (id: string) => {
-          const entry = textMap.get(id);
-          if (!entry) return id;
-          if (locale === "zh-CN") return entry.simplifiedChinese || entry.traditionalChinese || entry.japanese || entry.english;
-          if (locale === "en-US") return entry.english || entry.japanese;
-          return entry.japanese || entry.english;
-        };
-
-        const resolvedBands: BandModel[] = bandTable._allData.map((b: any) => ({
-          id: b.id,
-          name: resolveText(b.nameTextID),
-          description: resolveText(b.descriptionTextID || b.descriptionTextId || ""),
-          color: b.mainColorCode ? b.mainColorCode.trim() : "var(--mn-accent)",
-        }));
-
-        const resolvedCharacters = normalizeCharacters(characterTable._allData, bandTable._allData, textTable._allData, locale);
-        resolvedCharacters.sort((a, b) => a.displayOrder - b.displayOrder);
-
-        setData({ characters: resolvedCharacters, bands: resolvedBands });
-      })
-      .catch(() => {
-        if (active) setError(true);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [locale, reloadKey]);
-
-  useEffect(() => {
-    if (loading || !memory.state?.scrollY) return;
+    if (!memory.state?.scrollY) return;
     const targetY = memory.state.scrollY;
 
     const handle = window.requestAnimationFrame(() => {
@@ -90,19 +38,11 @@ export default function CharactersExplorer({ locale }: Props) {
     return () => {
       window.cancelAnimationFrame(handle);
     };
-  }, [loading, memory.state?.scrollY]);
+  }, [memory.state?.scrollY]);
 
   const saveCurrentState = useCallback(() => {
     memory.saveState({ scrollY: window.scrollY });
   }, [memory]);
-
-  if (loading) {
-    return <LoadingLayout label={t(locale, "characters.loading")} />;
-  }
-
-  if (error) {
-    return <ErrorState locale={locale} onRetry={() => setReloadKey((value) => value + 1)} />;
-  }
 
   return (
     <div className="space-y-12">
@@ -176,43 +116,5 @@ function CharacterCard({ char, locale, onClick }: { char: CharacterViewModel; lo
         <span className="block text-[8px] font-bold text-[var(--mn-text-muted)] tracking-wider uppercase truncate mt-0.5">{char.enName}</span>
       </div>
     </a>
-  );
-}
-
-function LoadingLayout({ label }: { label: string }) {
-  return (
-    <div className="space-y-12">
-      <p className="sr-only">{label}</p>
-      {Array.from({ length: 2 }, (_, bIdx) => (
-        <div key={bIdx} className="mn-paper p-6 sm:p-8">
-          <div className="flex items-start gap-4 border-b-[1.5px] border-dashed border-[var(--mn-border)]/30 pb-5 mb-6">
-            <div className="h-14 w-14 shrink-0 rounded-full animate-pulse bg-[var(--mn-cream-deep)]" />
-            <div className="min-w-0 flex-1 space-y-2">
-              <div className="h-5 w-32 animate-pulse rounded bg-[var(--mn-cream-deep)]" />
-              <div className="h-3 w-3/4 animate-pulse rounded bg-[var(--mn-cream-deep)]" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5 xl:grid-cols-5">
-            {Array.from({ length: 5 }, (_, cIdx) => (
-              <div key={cIdx} className="aspect-[1/2.8] rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] flex items-end p-4">
-                <div className="h-10 w-full animate-pulse rounded-2xl bg-[var(--mn-cream-deep)]" />
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function ErrorState({ locale, onRetry }: { locale: AppLocale; onRetry: () => void }) {
-  return (
-    <div className="mn-paper p-8 text-center sm:p-12" role="alert">
-      <h3 className="font-[var(--mn-font-display)] text-2xl text-[var(--mn-text)]">{t(locale, "characters.loadErrorTitle")}</h3>
-      <p className="mx-auto mt-3 max-w-xl text-sm font-medium leading-7 text-[var(--mn-text-muted)]">{t(locale, "characters.loadErrorDescription")}</p>
-      <button type="button" onClick={onRetry} className="mn-focus mn-stamp-press mt-6 rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-accent-deep)] px-6 py-3 text-sm font-bold text-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]">
-        {t(locale, "cards.retry")}
-      </button>
-    </div>
   );
 }

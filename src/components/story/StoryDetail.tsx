@@ -1,8 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import type { AppLocale } from "@/config/locales";
-import { fetchMasterData } from "@/lib/masterdata/client";
-import { fetchAndParseStory, type ParsedStoryScript } from "@/lib/story/parser";
-import { localizeMasterText, validateMasterTable, type RawAdv, type RawStoryCharacter } from "@/lib/story/data";
+import type { ParsedStoryScript } from "@/lib/story/parser";
+import type { RawStoryCharacter } from "@/lib/story/data";
 import type { RawText } from "@/lib/cards/data";
 import { getCharacterFaceIconUrl } from "@/lib/cards/assets";
 
@@ -60,12 +59,12 @@ function findCharacterId(
   return null;
 }
 
-export default function StoryDetail({ locale, advId }: { locale: AppLocale; advId: number }) {
-  const [title, setTitle] = useState(`ADV ${advId}`);
-  const [script, setScript] = useState<ParsedStoryScript | null>(null);
-  const [characters, setCharacters] = useState<RawStoryCharacter[]>([]);
-  const [texts, setTexts] = useState<RawText[]>([]);
-  const [error, setError] = useState(false);
+export default function StoryDetail({ locale, advId, initialTitle, initialScript, initialCharacters, initialTexts }: { locale: AppLocale; advId: number; initialTitle: string; initialScript: ParsedStoryScript | null; initialCharacters: RawStoryCharacter[]; initialTexts: RawText[] }) {
+  const [title] = useState(initialTitle);
+  const [script] = useState<ParsedStoryScript | null>(initialScript);
+  const [characters] = useState<RawStoryCharacter[]>(initialCharacters);
+  const [texts] = useState<RawText[]>(initialTexts);
+  const error = initialScript === null;
   const [activeLineIndex, setActiveLineIndex] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isAutoplayMode, setIsAutoplayMode] = useState(false);
@@ -95,34 +94,6 @@ export default function StoryDetail({ locale, advId }: { locale: AppLocale; advI
   useEffect(() => {
     scriptRef.current = script;
   }, [script]);
-
-  useEffect(() => {
-    let active = true;
-    setError(false);
-    setActiveLineIndex(null);
-    activeLineIndexRef.current = null;
-    setIsPlaying(false);
-    isPlayingRef.current = false;
-    setIsAutoplayMode(false);
-    isAutoplayModeRef.current = false;
-
-    void Promise.all([
-      fetchMasterData("MasterAdv.json", { validate: validateMasterTable<RawAdv> }),
-      fetchMasterData("MasterText.json", { validate: validateMasterTable<RawText> }),
-      fetchMasterData("MasterCharacter.json", { validate: validateMasterTable<RawStoryCharacter> }),
-    ]).then(async ([advs, texts, characters]) => {
-      const adv = advs._allData.find((item) => item.id === advId);
-      if (!adv) throw new Error("Story not found");
-      const text = texts._allData.find((item) => item.id === adv.titleTextId);
-      const parsed = await fetchAndParseStory(adv.advEpisodeAsset, { locale });
-      if (!active) return;
-      setTitle(localizeMasterText(text, locale) || `ADV ${advId}`);
-      setScript(parsed);
-      setCharacters(characters._allData);
-      setTexts(texts._allData);
-    }).catch(() => active && setError(true));
-    return () => { active = false; };
-  }, [advId, locale]);
 
   // Clean up audio on unmount
   useEffect(() => {

@@ -16,30 +16,15 @@ import {
   getBandLogoWhiteUrl,
   getBandSmallIconUrl,
 } from "@/lib/cards/assets";
+import type { CardViewModel } from "@/lib/cards/data";
 import {
-  normalizeCards,
-  validateMasterTable,
-  type CardViewModel,
-  type RawBand,
-  type RawCharacter,
-  type RawMemberCard,
-  type RawText,
-} from "@/lib/cards/data";
-import {
-  normalizeSkill,
-  type RawSkillDefinition,
-  type RawSkillEffect,
-  type RawSkillIcon,
-  type RawSkillCondition,
-  type RawSkillConditionSet,
-  type RawSkillCumulativeCondition,
   type SkillViewModel,
 } from "@/lib/cards/skills";
-import { fetchMasterData } from "@/lib/masterdata/client";
 
 interface Props {
   locale: AppLocale;
   cardId: number;
+  initialData: DetailData;
 }
 
 interface DetailData {
@@ -56,8 +41,6 @@ interface AssetPreview {
   compact?: boolean;
 }
 
-type CopyState = "idle" | "copying" | "image" | "link" | "error";
-
 function estimateTabWidth(label: string): number {
   let width = 24 + 3; // padding-x (px-3 = 12px * 2) + border (1.5px * 2)
   for (let i = 0; i < label.length; i++) {
@@ -71,63 +54,14 @@ function estimateTabWidth(label: string): number {
   return width;
 }
 
-export default function CardDetail({ locale, cardId }: Props) {
-  const [data, setData] = useState<DetailData>({ card: null, skills: [] });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
+export default function CardDetail({ locale, initialData }: Props) {
+  const [data] = useState<DetailData>(initialData);
+  const loading = false;
+  const error = false;
+  const [, setReloadKey] = useState(0);
   const [selectedAsset, setSelectedAsset] = useState<AssetPreview | null>(null);
   const [copyState, setCopyState] = useState<("idle" | "copying" | "success" | "error")>("idle");
   const [downloadState, setDownloadState] = useState<("idle" | "downloading" | "success")>("idle");
-
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    setError(false);
-
-    void Promise.all([
-      fetchMasterData("MasterMemberCard.json", { validate: validateMasterTable<RawMemberCard> }),
-      fetchMasterData("MasterCharacter.json", { validate: validateMasterTable<RawCharacter> }),
-      fetchMasterData("MasterBand.json", { validate: validateMasterTable<RawBand> }),
-      fetchMasterData("MasterText.json", { validate: validateMasterTable<RawText> }),
-      fetchMasterData("MasterLiveSkill.json", { validate: validateMasterTable<RawSkillDefinition> }),
-      fetchMasterData("MasterLiveSkillEffect.json", { validate: validateMasterTable<RawSkillEffect> }),
-      fetchMasterData("MasterLeaderSkill.json", { validate: validateMasterTable<RawSkillDefinition> }),
-      fetchMasterData("MasterLeaderSkillEffect.json", { validate: validateMasterTable<RawSkillEffect> }),
-      fetchMasterData("MasterGekisouSkill.json", { validate: validateMasterTable<RawSkillDefinition> }),
-      fetchMasterData("MasterGekisouSkillEffect.json", { validate: validateMasterTable<RawSkillEffect> }),
-      fetchMasterData("MasterSkillIcon.json", { validate: validateMasterTable<RawSkillIcon> }),
-      fetchMasterData("MasterSkillConditionSet.json", { validate: validateMasterTable<RawSkillConditionSet> }),
-      fetchMasterData("MasterSkillCondition.json", { validate: validateMasterTable<RawSkillCondition> }),
-      fetchMasterData("MasterSkillCumulativeCondition.json", { validate: validateMasterTable<RawSkillCumulativeCondition> }),
-    ])
-      .then(([cardTable, characterTable, bandTable, textTable, liveSkills, liveEffects, leaderSkills, leaderEffects, gekisouSkills, gekisouEffects, skillIcons, conditionSets, conditions, cumulativeConditions]) => {
-        if (!active) return;
-        const card = normalizeCards(cardTable._allData, characterTable._allData, bandTable._allData, textTable._allData, locale)
-          .find((entry) => entry.id === cardId) ?? null;
-        if (!card) {
-          setData({ card: null, skills: [] });
-          return;
-        }
-
-        const skills = [
-          normalizeSkill("leader", card.leaderSkillId, leaderSkills._allData, leaderEffects._allData, skillIcons._allData, textTable._allData, locale, conditionSets._allData, conditions._allData, cumulativeConditions._allData),
-          normalizeSkill("live", card.liveSkillId, liveSkills._allData, liveEffects._allData, skillIcons._allData, textTable._allData, locale, conditionSets._allData, conditions._allData, cumulativeConditions._allData),
-          normalizeSkill("gekisou", card.gekisouSkillId, gekisouSkills._allData, gekisouEffects._allData, skillIcons._allData, textTable._allData, locale, conditionSets._allData, conditions._allData, cumulativeConditions._allData),
-        ].filter((entry): entry is SkillViewModel => entry !== null);
-        setData({ card, skills });
-      })
-      .catch(() => {
-        if (active) setError(true);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [cardId, locale, reloadKey]);
 
   const card = data.card;
   const assets = useMemo<AssetPreview[]>(() => {
@@ -662,7 +596,3 @@ function formatDate(value: string, locale: AppLocale): string {
   const date = new Date(normalized);
   return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat(locale, { year: "numeric", month: "long", day: "numeric" }).format(date);
 }
-
-function CopyIcon() { return <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2m-6 12h8a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2Z" /></svg>; }
-function CheckIcon() { return <svg className="h-4 w-4 text-[var(--mn-mint-deep)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="m5 13 4 4L19 7" /></svg>; }
-function SpinnerIcon() { return <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="9" strokeWidth="2" className="opacity-30" /><path d="M12 3a9 9 0 0 1 9 9" strokeWidth="2" strokeLinecap="round" /></svg>; }

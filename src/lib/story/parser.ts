@@ -37,6 +37,14 @@ interface NormalizedTable<T> {
   allData: T[];
 }
 
+interface StoryTableCacheState {
+  tables: Map<string, Promise<NormalizedTable<unknown>>>;
+}
+
+const storyTableCacheKey = Symbol.for("moenotes.story.build-tables");
+const storyTableGlobal = globalThis as typeof globalThis & { [storyTableCacheKey]?: StoryTableCacheState };
+const storyTableCache = storyTableGlobal[storyTableCacheKey] ??= { tables: new Map() };
+
 interface EpisodeRow {
   index?: number;
   command?: number;
@@ -177,9 +185,37 @@ export function normalizeStoryTable<T>(value: unknown): NormalizedTable<T> {
 }
 
 async function fetchStoryTable<T>(scriptName: string, table: StoryScriptTable, fetcher: typeof fetch): Promise<NormalizedTable<T>> {
-  const response = await fetcher(getStoryScriptTableUrl(scriptName, table));
-  if (!response.ok) throw new Error(`Failed to fetch ${scriptName}-${table}: HTTP ${response.status}`);
-  return normalizeStoryTable<T>(await response.json());
+  const cacheKey = `${scriptName}:${table}`;
+  let request = storyTableCache.tables.get(cacheKey);
+  if (!request) {
+    request = loadStoryTable(scriptName, table, fetcher);
+    storyTableCache.tables.set(cacheKey, request);
+  }
+  return request as Promise<NormalizedTable<T>>;
+}
+
+async function loadStoryTable(scriptName: string, table: StoryScriptTable, fetcher: typeof fetch): Promise<NormalizedTable<unknown>> {
+  const url = getStoryScriptTableUrl(scriptName, table);
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
+    try {
+      const response = await fetcher(url);
+      if (!response.ok) {
+        if (response.status < 500 && response.status !== 429) {
+          throw new Error(`Failed to fetch ${scriptName}-${table}: HTTP ${response.status}`);
+        }
+        throw new Error(`Retryable story response: HTTP ${response.status}`);
+      }
+      return normalizeStoryTable<unknown>(await response.json());
+    } catch (error) {
+      lastError = error;
+      if (attempt === 4) break;
+      await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error(`Failed to fetch ${scriptName}-${table}`);
 }
 
 function localizeText(row: TextRow, locale: StoryLocale): string {

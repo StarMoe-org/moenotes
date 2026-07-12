@@ -2,14 +2,16 @@
 import ComicsExplorer from "@/components/comics/ComicsExplorer";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
+import { getBuildBandNames, getBuildComics } from "@/lib/masterdata/build-data";
 
 interface Props {
   locale: AppLocale;
 }
 
 const { locale } = Astro.props;
+const [comics, bandNames] = await Promise.all([getBuildComics(locale), getBuildBandNames(locale)]);
 ---
 
 <PageLayout locale={locale} titleKey="seo.comics.title" descriptionKey="seo.comics.description">
-  <ComicsExplorer client:load locale={locale} />
+  <ComicsExplorer client:load locale={locale} initialComics={comics} initialBandNames={bandNames} />
 </PageLayout>
