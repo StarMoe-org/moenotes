@@ -5,7 +5,6 @@ export const zhCN = {
     home: "首页",
     groups: {
       database: "资料库",
-      activity: "活动",
       story: "剧情",
       tools: "工具",
       community: "关于",
@@ -18,8 +17,6 @@ export const zhCN = {
       stamps: "贴纸",
       comics: "漫画",
       items: "持有物",
-      events: "活动列表",
-      news: "公告",
       mainStory: "主线剧情",
       eventStory: "活动剧情",
       toolbox: "工具箱",
@@ -289,18 +286,6 @@ export const zhCN = {
     songDetail: {
       title: "音乐详情",
       description: "查看 Our Notes 乐曲详情，包含乐曲封面、词曲编曲、歌手及谱面定数详细信息。",
-    },
-    activity: {
-      title: "活动中心",
-      description: "浏览 Our Notes 活动和公告。",
-    },
-    events: {
-      title: "活动列表",
-      description: "Our Notes 活动列表页面骨架。",
-    },
-    news: {
-      title: "公告",
-      description: "Our Notes 公告页面骨架。",
     },
     story: {
       title: "剧情",

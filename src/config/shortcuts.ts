@@ -15,5 +15,5 @@ export const shortcuts: ShortcutDefinition[] = [
   { id: "go-database", labelKey: "nav.groups.database", combos: ["g d"], scope: "global" },
   { id: "go-music", labelKey: "nav.items.music", combos: ["g m"], scope: "global" },
   { id: "go-characters", labelKey: "nav.items.characters", combos: ["g c"], scope: "global" },
-  { id: "go-events", labelKey: "nav.items.events", combos: ["g e"], scope: "global" },
+  { id: "go-items", labelKey: "nav.items.items", combos: ["g i"], scope: "global" },
 ];

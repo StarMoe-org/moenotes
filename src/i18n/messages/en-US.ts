@@ -3,8 +3,8 @@ import type { MessageTree } from "@/i18n/translate";
 export const enUS = {
   nav: {
     home: "Home",
-    groups: { database: "Database", activity: "Activity", story: "Story", tools: "Tools", community: "About" },
-    items: { characters: "Characters", cards: "Cards", supportCards: "Support Cards", music: "Music", stamps: "Stickers", comics: "Comics", items: "Items", events: "Events", news: "News", mainStory: "Main Story", eventStory: "Event Story", toolbox: "Toolbox", designSystem: "Design System" },
+    groups: { database: "Database", story: "Story", tools: "Tools", community: "About" },
+    items: { characters: "Characters", cards: "Cards", supportCards: "Support Cards", music: "Music", stamps: "Stickers", comics: "Comics", items: "Items", mainStory: "Main Story", eventStory: "Event Story", toolbox: "Toolbox", designSystem: "Design System" },
   },
   shell: {
     openSidebar: "Open sidebar",
@@ -225,9 +225,6 @@ export const enUS = {
     supportCardDetail: { title: "Support Card Detail", description: "View Our Notes support card artwork, character, attribute, rarity, and base stats." },
     music: { title: "Music", description: "Browse the Our Notes song list, including composers, lyricists, difficulty levels, chart constants, and max note counts." },
     songDetail: { title: "Song detail", description: "View Our Notes song details, including album jacket artwork, authors, vocalists, and chart constants." },
-    activity: { title: "Activity", description: "Browse Our Notes events and news." },
-    events: { title: "Events", description: "Our Notes event list foundation." },
-    news: { title: "News", description: "Our Notes news page foundation." },
     story: { title: "Story", description: "Our Notes story viewer foundation." },
     mainStory: { title: "Main Story", description: "Our Notes main story foundation." },
     eventStory: { title: "Event Story", description: "Our Notes event story foundation." },

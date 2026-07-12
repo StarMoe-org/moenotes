@@ -16,7 +16,7 @@ const NAVIGATION_TARGET_ROUTE_IDS: Record<string, string> = {
   "go-database": "database",
   "go-music": "music",
   "go-characters": "characters",
-  "go-events": "events",
+  "go-items": "items",
 };
 
 export function registerShortcutManager(handlers: ShortcutHandlers): () => void {

@@ -221,47 +221,6 @@ export const routeRegistry = [
     ],
   },
   {
-    id: "activity",
-    path: "/activity",
-    labelKey: "nav.groups.activity",
-    seo: {
-      titleKey: "seo.activity.title",
-      descriptionKey: "seo.activity.description",
-      sitemap: { priority: 0.7, changefreq: "daily" },
-    },
-    nav: { order: 20, icon: "calendar", shortcut: "g a" },
-    searchable: true,
-    keywords: ["activity", "events", "news"],
-    children: [
-      {
-        id: "events",
-        path: "/events",
-        labelKey: "nav.items.events",
-        seo: {
-          titleKey: "seo.events.title",
-          descriptionKey: "seo.events.description",
-          sitemap: { priority: 0.8, changefreq: "daily" },
-        },
-        nav: { order: 10, icon: "calendar", shortcut: "g e" },
-        searchable: true,
-        keywords: ["events", "event"],
-      },
-      {
-        id: "news",
-        path: "/news",
-        labelKey: "nav.items.news",
-        seo: {
-          titleKey: "seo.news.title",
-          descriptionKey: "seo.news.description",
-          sitemap: { priority: 0.6, changefreq: "daily" },
-        },
-        nav: { order: 20, icon: "newspaper" },
-        searchable: true,
-        keywords: ["news", "notice", "information"],
-      },
-    ],
-  },
-  {
     id: "story",
     path: "/story",
     labelKey: "nav.groups.story",
