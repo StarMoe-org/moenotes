@@ -300,17 +300,18 @@ export const routeRegistry = [
     keywords: ["tools", "calculator"],
     children: [
       {
-        id: "toolbox",
-        path: "/tools/toolbox",
-        labelKey: "nav.items.toolbox",
+        id: "asset-viewer",
+        path: "/tools/asset-viewer",
+        labelKey: "nav.items.assetViewer",
+        component: "asset-viewer",
         seo: {
-          titleKey: "seo.toolbox.title",
-          descriptionKey: "seo.toolbox.description",
+          titleKey: "seo.assetViewer.title",
+          descriptionKey: "seo.assetViewer.description",
           sitemap: { priority: 0.5, changefreq: "weekly" },
         },
-        nav: { order: 10, icon: "sparkles" },
+        nav: { order: 10, icon: "folder-open" },
         searchable: true,
-        keywords: ["toolbox", "utilities"],
+        keywords: ["asset", "viewer", "s3", "files"],
       },
       {
         id: "design-system",

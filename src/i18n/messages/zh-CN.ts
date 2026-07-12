@@ -24,7 +24,7 @@ export const zhCN = {
       liveResultStory: "演出结束会话",
       homeStory: "主页地点剧情",
       tutorialStory: "教程剧情",
-      toolbox: "工具箱",
+      assetViewer: "资产查看器",
       designSystem: "设计系统",
     },
   },
@@ -76,8 +76,8 @@ export const zhCN = {
       musicDesc: "收录企划中的所有乐曲信息，包含词曲作者、难易度及谱面数据。",
       events: "活动历史",
       eventsDesc: "追溯历史活动进程，查看每期活动的类型、加成属性及奖励角色。",
-      toolbox: "小工具箱",
-      toolboxDesc: "提供多种实用的辅助分析与计算小工具，辅助进行游戏研究。",
+      assetViewer: "资产查看器",
+      assetViewerDesc: "在线浏览、检索并预览企划所使用的各类多媒体静态资产。",
     },
   },
   page: {
@@ -314,9 +314,9 @@ export const zhCN = {
       title: "工具",
       description: "Moenotes 工具页面骨架。",
     },
-    toolbox: {
-      title: "工具箱",
-      description: "Moenotes 工具箱页面骨架。",
+    assetViewer: {
+      title: "资产查看器",
+      description: "在线浏览和检索 Moenotes 的静态资源文件。",
     },
     about: {
       title: "关于 Moenotes",
@@ -503,5 +503,14 @@ export const zhCN = {
     paragraph2: "我们不再用蓝色的渐变和冰冷的发光块，而选了奶油的纸、墨黑的字、夕阳的橘和荧光笔的黄。因为青春不是一段算法生成的色卡，青春是被反复涂抹、却越涂越亮的那一页。",
     badgeMe: "我",
     signature: "東雪",
+    specsTitle: "项目信息与技术栈",
+    openSourceTitle: "开源授权",
+    openSourceDesc: "项目前端遵循 <strong>AGPL v3</strong> 协议开源。我们致力于开放、透明的社区协作，并欢迎所有的贡献与建议。",
+    openSourceLink: "GitHub 仓库",
+    assetsTitle: "版权声明",
+    assetsDesc: "游戏内相关美术、音频等资产版权归属 <strong>Bushiroad / Craft Egg / Ishimori</strong>。部分自制及兼容性资产采用 <strong>CC BY-NC 4.0</strong> (知识共享 署名-非商业性使用 4.0 国际) 协议开源。",
+    assetsLink: "CC BY-NC 4.0 协议",
+    techStackTitle: "开发技术栈",
+    techStackDesc: "采用现代化、轻量高效的技术栈构建，提供极致的页面加载速度与流畅的卡片手帐交互体验。",
   },
 } as const satisfies MessageTree;

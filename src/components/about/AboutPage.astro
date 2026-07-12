@@ -1,6 +1,7 @@
 ---
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
+import { LICENSE_URLS } from "@/config/site";
 
 interface Props {
   locale: AppLocale;
@@ -36,6 +37,91 @@ const { locale } = Astro.props;
     <div class="mt-8 space-y-6 text-base font-medium leading-8 text-[var(--mn-text-muted)] sm:text-lg sm:leading-9">
       <p set:html={t(locale, "about.paragraph1")} />
       <p set:html={t(locale, "about.paragraph2")} />
+    </div>
+
+    {/* Specifications & License Section */}
+    <div class="mt-12 pt-8 border-t-[1.5px] border-dashed border-[var(--mn-border)]/20">
+      <h3 class="font-[var(--mn-font-display)] text-xl font-black text-[var(--mn-text)] mb-6 flex items-center gap-2">
+        <span class="inline-block w-2.5 h-2.5 rounded-full bg-[var(--mn-accent)]"></span>
+        {t(locale, "about.specsTitle")}
+      </h3>
+      
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+        {/* Open Source Card */}
+        <div class="relative flex flex-col justify-between border-[1.5px] border-dashed border-[var(--mn-border)]/30 rounded-2xl p-5 bg-[var(--mn-surface)] hover:bg-[var(--mn-surface-strong)] transition-colors duration-200">
+          <div>
+            <div class="flex items-center gap-2 font-[var(--mn-font-display)] text-base font-bold text-[var(--mn-text)] mb-3">
+              <svg class="h-5 w-5 text-[var(--mn-accent-deep)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path>
+                <path d="M9 18c-4.51 2-5-2-7-2"></path>
+              </svg>
+              {t(locale, "about.openSourceTitle")}
+            </div>
+            <p class="text-sm font-medium leading-relaxed text-[var(--mn-text-muted)]" set:html={t(locale, "about.openSourceDesc")} />
+          </div>
+          <a href="https://github.com/moe-sekai/moenotes" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--mn-accent-deep)] hover:text-[var(--mn-accent)] hover:underline mt-4 transition-colors duration-150">
+            {t(locale, "about.openSourceLink")}
+            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </a>
+        </div>
+
+        {/* Copyright & Assets Card */}
+        <div class="relative flex flex-col justify-between border-[1.5px] border-dashed border-[var(--mn-border)]/30 rounded-2xl p-5 bg-[var(--mn-surface)] hover:bg-[var(--mn-surface-strong)] transition-colors duration-200">
+          <div>
+            <div class="flex items-center gap-2 font-[var(--mn-font-display)] text-base font-bold text-[var(--mn-text)] mb-3">
+              <svg class="h-5 w-5 text-[var(--mn-accent-deep)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M14.83 14.83a4 4 0 1 1 0-5.66"></path>
+              </svg>
+              {t(locale, "about.assetsTitle")}
+            </div>
+            <p class="text-sm font-medium leading-relaxed text-[var(--mn-text-muted)]" set:html={t(locale, "about.assetsDesc")} />
+          </div>
+          <a href={LICENSE_URLS.cc} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--mn-accent-deep)] hover:text-[var(--mn-accent)] hover:underline mt-4 transition-colors duration-150">
+            {t(locale, "about.assetsLink")}
+            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </a>
+        </div>
+
+        {/* Tech Stack Card */}
+        <div class="relative flex flex-col justify-between border-[1.5px] border-dashed border-[var(--mn-border)]/30 rounded-2xl p-5 bg-[var(--mn-surface)] hover:bg-[var(--mn-surface-strong)] transition-colors duration-200">
+          <div>
+            <div class="flex items-center gap-2 font-[var(--mn-font-display)] text-base font-bold text-[var(--mn-text)] mb-3">
+              <svg class="h-5 w-5 text-[var(--mn-accent-deep)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+              </svg>
+              {t(locale, "about.techStackTitle")}
+            </div>
+            <p class="text-sm font-medium leading-relaxed text-[var(--mn-text-muted)]">
+              {t(locale, "about.techStackDesc")}
+            </p>
+          </div>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[var(--mn-accent-soft)] border border-[var(--mn-accent)]/20 text-xs font-bold text-[var(--mn-accent-deep)]">
+              Astro v7.0.7
+            </span>
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[var(--mn-accent-soft)] border border-[var(--mn-accent)]/20 text-xs font-bold text-[var(--mn-accent-deep)]">
+              React v19.2.3
+            </span>
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[var(--mn-accent-soft)] border border-[var(--mn-accent)]/20 text-xs font-bold text-[var(--mn-accent-deep)]">
+              Tailwind v4
+            </span>
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-[var(--mn-accent-soft)] border border-[var(--mn-accent)]/20 text-xs font-bold text-[var(--mn-accent-deep)]">
+              TS v5
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
 
     {/* Footer signature block */}

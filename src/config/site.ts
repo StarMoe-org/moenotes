@@ -38,3 +38,8 @@ export const siteConfig: SiteConfig = {
     bugReportUrl: "https://github.com/moe-sekai/moenotes/issues",
   },
 };
+
+export const LICENSE_URLS = {
+  cc: "https://creativecommons.org/licenses/by-nc/4.0/",
+};
+
