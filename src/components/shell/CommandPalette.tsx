@@ -22,6 +22,7 @@ export default function CommandPalette({ locale }: CommandPaletteProps) {
   const lockKey = `command-${reactId}`;
   const titleId = `${lockKey}-title`;
   const inputRef = useRef<HTMLInputElement>(null);
+  const activeOptionRef = useRef<HTMLAnchorElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
   const items = useMemo(() => buildStaticSearchIndex(), []);
@@ -36,6 +37,14 @@ export default function CommandPalette({ locale }: CommandPaletteProps) {
   useEffect(() => {
     setActiveIndex(filtered.length > 0 ? 0 : -1);
   }, [filtered]);
+
+  useEffect(() => {
+    if (!isOpen || activeIndex < 0) return;
+    const raf = requestAnimationFrame(() => {
+      activeOptionRef.current?.scrollIntoView({ block: "nearest" });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [activeIndex, filtered, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -114,8 +123,10 @@ export default function CommandPalette({ locale }: CommandPaletteProps) {
               value={query}
               onChange={(event) => setQuery(event.currentTarget.value)}
               placeholder={t(locale, "shell.commandPlaceholder")}
+              aria-label={t(locale, "shell.commandPlaceholder")}
               className="w-full border-b-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface-strong)] px-6 py-4 text-lg font-bold text-[var(--mn-text)] outline-none placeholder:text-[var(--mn-text-muted)]"
               role="combobox"
+              aria-autocomplete="list"
               aria-expanded="true"
               aria-controls={`${lockKey}-listbox`}
               aria-activedescendant={activeItem ? `${lockKey}-option-${activeItem.id}` : undefined}
@@ -130,6 +141,7 @@ export default function CommandPalette({ locale }: CommandPaletteProps) {
                   const active = index === activeIndex;
                   return (
                     <a
+                      ref={active ? activeOptionRef : undefined}
                       id={`${lockKey}-option-${item.id}`}
                       key={item.id}
                       href={localizePath(item.path, locale)}

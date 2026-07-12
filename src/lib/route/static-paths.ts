@@ -1,6 +1,6 @@
 import { DEFAULT_LOCALE, LOCALE_PATH_PREFIX, SUPPORTED_LOCALES, type AppLocale } from "@/config/locales";
-import { buildDynamicPath, findRouteMatch, findRouteById, getAllRoutes, getAllStaticRoutes, isDynamicRoute } from "@/lib/route/registry";
-import type { AppRoute, BreadcrumbDetail, RouteMatch, RouteParams, RouteStaticParamConfig } from "@/types/route";
+import { buildDynamicPath, findRouteMatch, findRouteById, getAllRoutes, getAllStaticRoutes, isDynamicRoute, resolveRouteStaticParams } from "@/lib/route/registry";
+import type { AppRoute, BreadcrumbDetail, RouteMatch, RouteParams } from "@/types/route";
 import type { PageMetadata } from "@/lib/seo/metadata";
 import { fetchMasterData } from "@/lib/masterdata/client";
 import { normalizeCards, validateMasterTable } from "@/lib/cards/data";
@@ -43,7 +43,7 @@ export async function getStaticLocalizedPaths(): Promise<StaticLocalizedPath[]> 
   let storyMap: Map<number, { title: Record<AppLocale, string>; category: "main" | "friendship" | "other" }> | null = null;
 
   for (const route of getAllRoutes().filter(isDynamicRoute)) {
-    const configs = await resolveStaticParams(route.staticParams);
+    const configs = await resolveRouteStaticParams(route);
     for (const config of configs) {
       const pathname = buildDynamicPath(route.pattern ?? route.path, config.params);
       for (const locale of SUPPORTED_LOCALES) {
@@ -303,10 +303,4 @@ function createLocalizedPath(
       ...(meta ? { meta } : {}),
     },
   };
-}
-
-async function resolveStaticParams(staticParams: AppRoute["staticParams"]): Promise<readonly RouteStaticParamConfig[]> {
-  if (!staticParams) return [];
-  if (typeof staticParams === "function") return await staticParams();
-  return staticParams;
 }

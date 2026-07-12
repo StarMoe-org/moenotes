@@ -36,7 +36,7 @@ export const zhCN = {
     skipToContent: "跳到正文",
     breadcrumbExpandGroup: "展开导航分组",
     breadcrumbExpandItems: "展开同组页面",
-    commandPlaceholder: "搜索页面、功能或数据...",
+    commandPlaceholder: "搜索页面或功能...",
     noCommandResults: "没有找到结果",
     shortcuts: "快捷键",
   },
@@ -58,12 +58,9 @@ export const zhCN = {
     viewGroup: "查看分组",
   },
   home: {
-    eyebrow: "粉丝自建同人数据库",
     title: "Moenotes",
-    subtitle: "属于我们的手帐笔记本",
     description: "这里是 MoeSekai 团队为 BanG Dream! 新企划「Our Notes」制作的资料库项目。我们选用奶油纸的底色与轻手作感的视觉语言，为你呈现少女们的音乐与故事。",
     ctaPrimary: "进入数据库",
-    ctaSecondary: "了解我们",
     featuresTitle: "探索数据手册",
     features: {
       characters: "成员角色",
@@ -74,8 +71,8 @@ export const zhCN = {
       supportCardsDesc: "查阅 Live 支援卡和击奏支援卡的属性、技能与卡面手帐。",
       music: "音乐资料",
       musicDesc: "收录企划中的所有乐曲信息，包含词曲作者、难易度及谱面数据。",
-      events: "活动历史",
-      eventsDesc: "追溯历史活动进程，查看每期活动的类型、加成属性及奖励角色。",
+      items: "持有物",
+      itemsDesc: "查看游戏内所有的持有物、消耗道具及材料的详细信息。",
       assetViewer: "资产查看器",
       assetViewerDesc: "在线浏览、检索并预览企划所使用的各类多媒体静态资产。",
     },
@@ -241,16 +238,16 @@ export const zhCN = {
   },
   seo: {
     home: {
-      title: "Moenotes - Our Notes Viewer",
-      description: "Moenotes 是 MoeSekai 为 BanG Dream! Our Notes 构建的新一代 viewer 前端。",
+      title: "BanG Dream! Our Notes 资料库与图鉴",
+      description: "Moenotes 是 MoeSekai 制作的多语言 BanG Dream! Our Notes 资料库，可查询角色、卡牌、乐曲、剧情、漫画、贴纸与游戏资源。",
     },
     database: {
-      title: "资料库",
-      description: "浏览 Our Notes 的角色、音乐和未来 masterdata 资料。",
+      title: "BanG Dream! Our Notes 资料库",
+      description: "集中浏览 Our Notes 角色资料、卡牌插图、支援卡、乐曲、剧情、漫画、贴纸、持有物与游戏资源。",
     },
     characters: {
       title: "角色图鉴",
-      description: "浏览 BanG Dream! Our Notes 角色资料，了解她们的所属乐队、担当位置、星座、生日等个人信息。",
+      description: "浏览 BanG Dream! Our Notes 角色图鉴，按乐队查询成员，并查看担当位置、生日、星座、立绘与登场卡牌。",
     },
     characterDetail: {
       title: "角色详情",
@@ -258,19 +255,19 @@ export const zhCN = {
     },
     cards: {
       title: "卡牌图鉴",
-      description: "浏览 BanG Dream! Our Notes 卡牌插图，并按稀有度、属性和乐队筛选。",
+      description: "浏览 BanG Dream! Our Notes 卡牌图鉴与高清插图，并按角色、稀有度、属性或所属乐队快速筛选。",
     },
     stamps: {
       title: "贴纸图鉴",
-      description: "浏览 BanG Dream! Our Notes 贴纸与表情包资源。",
+      description: "浏览 BanG Dream! Our Notes 角色贴纸、表情与高质量表情包插图资源。",
     },
     comics: {
       title: "漫画图鉴",
-      description: "浏览 BanG Dream! Our Notes 游戏加载界面漫画。",
+      description: "阅读和浏览 BanG Dream! Our Notes 游戏加载界面漫画及其原始漫画插图。",
     },
     items: {
       title: "持有物图鉴",
-      description: "浏览 BanG Dream! Our Notes 持有物与道具资源。",
+      description: "查询 BanG Dream! Our Notes 持有物、道具、素材、游戏内说明与对应资源插图。",
     },
     cardDetail: {
       title: "卡牌详情",
@@ -278,30 +275,30 @@ export const zhCN = {
     },
     supportCards: {
       title: "支援卡图鉴",
-      description: "浏览 BanG Dream! Our Notes 支援卡插图，并按稀有度、属性和乐队筛选。",
+      description: "浏览 BanG Dream! Our Notes 支援卡图鉴与插图，并按角色、稀有度、属性或所属乐队筛选。",
     },
     supportCardDetail: {
       title: "支援卡详情",
       description: "查看 Our Notes 支援卡插图、角色、属性、稀有度与基础数值。",
     },
     music: {
-      title: "音乐资料",
-      description: "浏览 Our Notes 乐曲列表，包含词曲作者、难易度、定数以及最大物量等信息。",
+      title: "Our Notes 乐曲与音乐资料库",
+      description: "浏览 BanG Dream! Our Notes 乐曲列表，查询演唱者、作词、作曲、编曲、谱面难度、定数与最大物量。",
     },
     songDetail: {
       title: "音乐详情",
       description: "查看 Our Notes 乐曲详情，包含乐曲封面、词曲编曲、歌手及谱面定数详细信息。",
     },
     story: {
-      title: "剧情",
-      description: "浏览 BanG Dream! Our Notes 剧情。",
+      title: "Our Notes 剧情资料库",
+      description: "浏览 BanG Dream! Our Notes 主线、羁绊剧情、演出结束会话、主页会话，以及带角色语音的剧情文本。",
     },
     mainStory: {
       title: "主线剧情",
-      description: "浏览 BanG Dream! Our Notes 主线剧情。",
+      description: "浏览 BanG Dream! Our Notes 主线剧情章节，阅读完整剧情文本并收听对应角色语音。",
     },
-    friendshipStory: { title: "羁绊剧情", description: "浏览角色之间的羁绊剧情。" },
-    otherStory: { title: "其它剧情", description: "浏览演出结束会话、主页地点会话和教程剧情。" },
+    friendshipStory: { title: "Our Notes 羁绊剧情", description: "浏览 BanG Dream! Our Notes 角色之间的羁绊剧情，阅读剧情文本并收听角色语音。" },
+    otherStory: { title: "Our Notes 其它剧情与会话", description: "浏览 BanG Dream! Our Notes 演出结束会话、主页地点与点击会话，以及教程剧情。" },
     storyDetail: { title: "剧情详情", description: "阅读剧情文本并播放对应角色语音。" },
     liveResultStory: { title: "演出结束会话", description: "浏览 Live 结束后的角色会话。" },
     homeStory: { title: "主页地点剧情", description: "浏览主页地点和角色点击会话。" },
@@ -311,16 +308,16 @@ export const zhCN = {
       description: "浏览 BanG Dream! Our Notes 活动剧情。",
     },
     tools: {
-      title: "工具",
-      description: "Moenotes 工具页面骨架。",
+      title: "Our Notes 资料库工具",
+      description: "使用 Moenotes 工具浏览 BanG Dream! Our Notes 游戏资料与公开资源文件。",
     },
     assetViewer: {
-      title: "资产查看器",
-      description: "在线浏览和检索 Moenotes 的静态资源文件。",
+      title: "Our Notes 游戏资源查看器",
+      description: "在线搜索和浏览 BanG Dream! Our Notes 卡牌插图、乐曲封面、角色图片及其他公开游戏资源。",
     },
     about: {
       title: "关于 Moenotes",
-      description: "了解 Moenotes 与 MoeSekai。",
+      description: "了解 Moenotes：由 MoeSekai 制作，收录 BanG Dream! Our Notes 角色、卡牌、乐曲与剧情的多语言资料库。",
     },
     designSystem: {
       title: "设计系统",

@@ -1,6 +1,6 @@
 ---
 import "@/styles/global.css";
-import { HTML_LANG, DEFAULT_LOCALE, type AppLocale } from "@/config/locales";
+import { HTML_LANG, DEFAULT_LOCALE, OG_LOCALE, type AppLocale } from "@/config/locales";
 import { siteConfig } from "@/config/site";
 import { assetConfig } from "@/config/assets";
 import {
@@ -47,7 +47,12 @@ const googleAnalyticsBootstrapScript = isGoogleAnalyticsEnabled
     <title>{meta.fullTitle}</title>
     <meta name="description" content={meta.description} />
     {meta.keywords.length > 0 && <meta name="keywords" content={meta.keywords.join(", ")} />}
-    {!meta.indexable && <meta name="robots" content="noindex,nofollow" />}
+    <meta
+      name="robots"
+      content={meta.indexable
+        ? "index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"
+        : "noindex,follow"}
+    />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="canonical" href={meta.canonical} />
@@ -58,13 +63,20 @@ const googleAnalyticsBootstrapScript = isGoogleAnalyticsEnabled
     <meta property="og:description" content={meta.description} />
     <meta property="og:url" content={meta.canonical} />
     <meta property="og:locale" content={meta.ogLocale} />
+    {meta.alternates
+      .filter((alt) => alt.locale !== locale)
+      .map((alt) => <meta property="og:locale:alternate" content={OG_LOCALE[alt.locale]} />)}
     <meta property="og:type" content="website" />
     <meta property="og:image" content={meta.image} />
+    <meta property="og:image:alt" content={meta.fullTitle} />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={meta.fullTitle} />
+    <meta name="twitter:description" content={meta.description} />
     <meta name="twitter:image" content={meta.image} />
+    <meta name="twitter:image:alt" content={meta.fullTitle} />
     <script is:inline set:html={themeScript}></script>
     <script is:inline type="application/ld+json" set:html={serializeJsonLd(website)}></script>
-    <script is:inline type="application/ld+json" set:html={serializeJsonLd(breadcrumbs)}></script>
+    {breadcrumbs && <script is:inline type="application/ld+json" set:html={serializeJsonLd(breadcrumbs)}></script>}
     {isGoogleAnalyticsEnabled && (
       <>
         {analyticsConfig.googleAnalytics.domains.map((domain) => (

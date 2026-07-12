@@ -13,6 +13,8 @@ export interface RouteSeoConfig {
   keywords?: string[];
   indexable?: boolean;
   sitemap?: {
+    /** Reliable content modification date in W3C date/datetime format. */
+    lastmod?: string;
     priority?: number;
     changefreq?: "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
   };

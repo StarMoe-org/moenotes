@@ -9,6 +9,7 @@
     "build": "astro check && astro build",
     "preview": "astro preview",
     "check": "astro check",
+    "check:search-seo": "bun run scripts/check-search-seo.ts",
     "lint": "bun run lint:i18n && bun run lint:i18n-routing && bun run lint:routes && bun run lint:arch && bun run lint:text && bun run lint:emoji",
     "lint:i18n": "node scripts/check-i18n-keys.mjs",
     "lint:i18n-routing": "node scripts/check-i18n-routing.mjs",

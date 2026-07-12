@@ -318,7 +318,7 @@ function parseRememberedFilters(raw?: string) {
   try {
     const parsed = JSON.parse(raw) as Partial<typeof fallback>;
     return {
-      query: parsed.query || "",
+      query: typeof parsed.query === "string" ? parsed.query : "",
       groups: Array.isArray(parsed.groups) ? parsed.groups : [],
     };
   } catch {

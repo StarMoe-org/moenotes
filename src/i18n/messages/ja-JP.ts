@@ -52,12 +52,9 @@ export const jaJP = {
   },
   actions: { close: "閉じる", clearCache: "キャッシュ削除", refresh: "更新", open: "開く", viewGroup: "グループを見る" },
   home: {
-    eyebrow: "非公式ファンデータベース",
     title: "Moenotes",
-    subtitle: "私たちのノートブック",
     description: "MoeSekai チームによる BanG Dream! の新プロジェクト「Our Notes」のデータベースプロジェクトへようこそ。温かみのある紙の質感と手作り感のあるデザインで、彼女たちの音楽と物語をお届けします。",
     ctaPrimary: "データベースに入る",
-    ctaSecondary: "私たちについて",
     featuresTitle: "データベースを探索",
     features: {
       characters: "キャラクター",
@@ -68,8 +65,8 @@ export const jaJP = {
       supportCardsDesc: "サポートスキルの属性、スキル効果、カード手帳などを確認できます。",
       music: "楽曲データ",
       musicDesc: "収録楽曲の作詞・作曲者、難易度、譜面データなどを確認できます。",
-      events: "イベント履歴",
-      eventsDesc: "過去のイベント情報、イベントタイプ、ボーナス属性、報酬カードなどを確認できます。",
+      items: "所持品",
+      itemsDesc: "ゲーム内のすべての所持品、消費アイテム、および素材の属性と詳細情報を確認できます。",
       assetViewer: "アセットビューア",
       assetViewerDesc: "ゲームで使用される音声や画像などのアセットを閲覧・检索・プレビューします。",
     },

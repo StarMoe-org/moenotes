@@ -1,10 +1,10 @@
-import { siteConfig } from "@/config/site";
+import { siteUrl } from "@/lib/seo/url";
 
 export function GET() {
   const body = `User-agent: *
 Allow: /
 
-Sitemap: ${new URL("/sitemap.xml", siteConfig.baseUrl).toString()}
+Sitemap: ${siteUrl("/sitemap.xml")}
 `;
 
   return new Response(body, {

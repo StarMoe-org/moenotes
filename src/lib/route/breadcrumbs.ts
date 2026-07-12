@@ -1,12 +1,12 @@
-import { siteConfig } from "@/config/site";
 import { DEFAULT_LOCALE, type AppLocale } from "@/config/locales";
 import { localizePath } from "@/i18n/routing";
 import { t } from "@/i18n";
 import { findRouteMatch } from "@/lib/route/registry";
 import type { AppRoute, BreadcrumbDetail, BreadcrumbItem } from "@/types/route";
+import { siteUrl } from "@/lib/seo/url";
 
 export function buildAbsoluteUrl(pathname: string): string {
-  return new URL(pathname, siteConfig.baseUrl).toString();
+  return siteUrl(pathname);
 }
 
 export function buildBreadcrumbs(pathname: string, locale: AppLocale = DEFAULT_LOCALE, detail?: BreadcrumbDetail): BreadcrumbItem[] {

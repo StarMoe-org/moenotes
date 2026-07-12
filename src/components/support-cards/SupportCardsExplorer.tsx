@@ -486,7 +486,7 @@ function parseRememberedFilters(raw?: string) {
   try {
     const parsed = JSON.parse(raw) as Partial<typeof fallback>;
     return {
-      query: parsed.query || "",
+      query: typeof parsed.query === "string" ? parsed.query : "",
       rarities: Array.isArray(parsed.rarities) ? parsed.rarities : [],
       cardTypes: Array.isArray(parsed.cardTypes) ? parsed.cardTypes : [],
       bands: Array.isArray(parsed.bands) ? parsed.bands : [],

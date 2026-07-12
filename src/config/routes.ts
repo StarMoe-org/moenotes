@@ -12,7 +12,7 @@ export const routeRegistry = [
     seo: {
       titleKey: "seo.home.title",
       descriptionKey: "seo.home.description",
-      keywords: ["Moenotes", "BanG Dream", "Our Notes", "MoeSekai"],
+      keywords: ["Moenotes", "BanG Dream! Our Notes", "Our Notes database", "Our Notes cards", "Our Notes music", "MoeSekai"],
       sitemap: { priority: 1, changefreq: "daily" },
     },
     nav: false,
@@ -26,6 +26,7 @@ export const routeRegistry = [
     seo: {
       titleKey: "seo.database.title",
       descriptionKey: "seo.database.description",
+      keywords: ["BanG Dream! Our Notes database", "Our Notes data", "Our Notes characters", "Our Notes cards", "Our Notes songs", "MoeSekai"],
       sitemap: { priority: 0.8, changefreq: "daily" },
     },
     nav: { order: 10, icon: "database", shortcut: "g d" },
@@ -40,6 +41,7 @@ export const routeRegistry = [
         seo: {
           titleKey: "seo.characters.title",
           descriptionKey: "seo.characters.description",
+          keywords: ["BanG Dream! Our Notes characters", "Our Notes character list", "Our Notes bands", "character profiles", "birthdays", "band members"],
           sitemap: { priority: 0.8, changefreq: "daily" },
         },
         nav: { order: 10, icon: "users", shortcut: "g c" },
@@ -76,6 +78,7 @@ export const routeRegistry = [
         seo: {
           titleKey: "seo.cards.title",
           descriptionKey: "seo.cards.description",
+          keywords: ["BanG Dream! Our Notes cards", "Our Notes card list", "card artwork", "card rarity", "card attributes", "Our Notes gacha"],
           sitemap: { priority: 0.8, changefreq: "daily" },
         },
         nav: { order: 15, icon: "sparkles" },
@@ -112,6 +115,7 @@ export const routeRegistry = [
         seo: {
           titleKey: "seo.supportCards.title",
           descriptionKey: "seo.supportCards.description",
+          keywords: ["BanG Dream! Our Notes support cards", "Our Notes support card list", "support card artwork", "support card rarity", "support card attributes"],
           sitemap: { priority: 0.8, changefreq: "daily" },
         },
         nav: { order: 18, icon: "sparkles" },
@@ -148,6 +152,7 @@ export const routeRegistry = [
         seo: {
           titleKey: "seo.music.title",
           descriptionKey: "seo.music.description",
+          keywords: ["BanG Dream! Our Notes songs", "Our Notes music", "song list", "chart difficulty", "chart constants", "song credits"],
           sitemap: { priority: 0.8, changefreq: "daily" },
         },
         nav: { order: 20, icon: "music", shortcut: "g m" },
@@ -184,6 +189,7 @@ export const routeRegistry = [
         seo: {
           titleKey: "seo.stamps.title",
           descriptionKey: "seo.stamps.description",
+          keywords: ["BanG Dream! Our Notes stamps", "Our Notes stickers", "character stamps", "sticker artwork", "emoji assets"],
           sitemap: { priority: 0.8, changefreq: "daily" },
         },
         nav: { order: 22, icon: "sparkles" },
@@ -198,6 +204,7 @@ export const routeRegistry = [
         seo: {
           titleKey: "seo.comics.title",
           descriptionKey: "seo.comics.description",
+          keywords: ["BanG Dream! Our Notes comics", "Our Notes manga", "loading screen comics", "four-panel comics", "comic artwork"],
           sitemap: { priority: 0.8, changefreq: "daily" },
         },
         nav: { order: 25, icon: "book" },
@@ -212,6 +219,7 @@ export const routeRegistry = [
         seo: {
           titleKey: "seo.items.title",
           descriptionKey: "seo.items.description",
+          keywords: ["BanG Dream! Our Notes items", "Our Notes item list", "game materials", "inventory items", "item artwork"],
           sitemap: { priority: 0.8, changefreq: "daily" },
         },
         nav: { order: 26, icon: "archive" },
@@ -227,6 +235,7 @@ export const routeRegistry = [
     seo: {
       titleKey: "seo.story.title",
       descriptionKey: "seo.story.description",
+      keywords: ["BanG Dream! Our Notes story", "Our Notes stories", "main story", "bond stories", "story transcripts", "character voices"],
       sitemap: { priority: 0.7, changefreq: "weekly" },
     },
     nav: { order: 30, icon: "book", shortcut: "g s" },
@@ -241,6 +250,7 @@ export const routeRegistry = [
         seo: {
           titleKey: "seo.mainStory.title",
           descriptionKey: "seo.mainStory.description",
+          keywords: ["BanG Dream! Our Notes main story", "Our Notes story chapters", "main scenario", "story transcript", "character voices"],
           sitemap: { priority: 0.6, changefreq: "weekly" },
         },
         nav: { order: 10, icon: "book" },
@@ -255,6 +265,7 @@ export const routeRegistry = [
         seo: {
           titleKey: "seo.friendshipStory.title",
           descriptionKey: "seo.friendshipStory.description",
+          keywords: ["BanG Dream! Our Notes bond stories", "Our Notes friendship stories", "character bonds", "bond story transcript", "character voices"],
           sitemap: { priority: 0.6, changefreq: "weekly" },
         },
         nav: { order: 20, icon: "book" },
@@ -266,7 +277,12 @@ export const routeRegistry = [
         path: "/story/other",
         labelKey: "nav.items.otherStory",
         component: "story-other",
-        seo: { titleKey: "seo.otherStory.title", descriptionKey: "seo.otherStory.description", sitemap: { priority: 0.5, changefreq: "weekly" } },
+        seo: {
+          titleKey: "seo.otherStory.title",
+          descriptionKey: "seo.otherStory.description",
+          keywords: ["BanG Dream! Our Notes conversations", "post-live talks", "home conversations", "tutorial stories", "story transcripts"],
+          sitemap: { priority: 0.5, changefreq: "weekly" },
+        },
         nav: { order: 30, icon: "book" },
         searchable: true,
         keywords: ["post live", "home story", "tutorial story", "other story"],
@@ -293,6 +309,7 @@ export const routeRegistry = [
     seo: {
       titleKey: "seo.tools.title",
       descriptionKey: "seo.tools.description",
+      keywords: ["Moenotes tools", "Our Notes tools", "BanG Dream database tools", "MoeSekai tools"],
       sitemap: { priority: 0.6, changefreq: "weekly" },
     },
     nav: { order: 40, icon: "wrench", shortcut: "g t" },
@@ -307,6 +324,7 @@ export const routeRegistry = [
         seo: {
           titleKey: "seo.assetViewer.title",
           descriptionKey: "seo.assetViewer.description",
+          keywords: ["Our Notes assets", "BanG Dream asset viewer", "game asset browser", "card artwork assets", "music jacket assets"],
           sitemap: { priority: 0.5, changefreq: "weekly" },
         },
         nav: { order: 10, icon: "folder-open" },
@@ -338,6 +356,7 @@ export const routeRegistry = [
     seo: {
       titleKey: "seo.about.title",
       descriptionKey: "seo.about.description",
+      keywords: ["Moenotes", "MoeSekai", "BanG Dream! Our Notes database", "Our Notes viewer", "Moenotes project"],
       sitemap: { priority: 0.5, changefreq: "monthly" },
     },
     nav: { order: 50, icon: "info" },

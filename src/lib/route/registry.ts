@@ -1,8 +1,9 @@
 import { routeRegistry } from "@/config/routes";
-import type { AppRoute, RouteMatch, RouteParams } from "@/types/route";
+import type { AppRoute, RouteMatch, RouteParams, RouteStaticParamConfig } from "@/types/route";
 import { normalizePathname, stripLocaleFromPathname } from "@/i18n/routing";
 
 const routes = routeRegistry as readonly AppRoute[];
+const staticParamsCache = new WeakMap<AppRoute, Promise<readonly RouteStaticParamConfig[]>>();
 
 interface RouteEntry {
   route: AppRoute;
@@ -102,6 +103,17 @@ export function buildDynamicPath(pattern: string, params: RouteParams): `/${stri
     return encodeURIComponent(value);
   }).join("/");
   return normalizePathname(path);
+}
+
+export function resolveRouteStaticParams(route: AppRoute): Promise<readonly RouteStaticParamConfig[]> {
+  const cached = staticParamsCache.get(route);
+  if (cached) return cached;
+
+  const resolved = Promise.resolve(
+    typeof route.staticParams === "function" ? route.staticParams() : route.staticParams ?? [],
+  );
+  staticParamsCache.set(route, resolved);
+  return resolved;
 }
 
 function toRouteMatch(entry: RouteEntry, pathname: `/${string}`, params: RouteParams): RouteMatch {

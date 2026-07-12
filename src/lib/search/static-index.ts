@@ -1,4 +1,4 @@
-import { getNavigationGroups, getNavChildren } from "@/lib/route/registry";
+import { getRouteEntries, isStaticRoute } from "@/lib/route/registry";
 import type { AppRoute } from "@/types/route";
 
 export interface SearchIndexRouteItem {
@@ -10,18 +10,9 @@ export interface SearchIndexRouteItem {
 }
 
 export function buildStaticSearchIndex(): SearchIndexRouteItem[] {
-  const items: SearchIndexRouteItem[] = [];
-  for (const group of getNavigationGroups()) {
-    if (group.searchable) {
-      items.push(toSearchItem(group));
-    }
-    for (const child of getNavChildren(group)) {
-      if (child.searchable) {
-        items.push(toSearchItem(child, group));
-      }
-    }
-  }
-  return items;
+  return getRouteEntries()
+    .filter(({ route }) => isStaticRoute(route) && route.searchable)
+    .map(({ route, ancestors }) => toSearchItem(route, ancestors[0]));
 }
 
 function toSearchItem(route: AppRoute, group?: AppRoute): SearchIndexRouteItem {

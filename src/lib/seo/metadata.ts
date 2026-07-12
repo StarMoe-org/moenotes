@@ -3,6 +3,7 @@ import { siteConfig } from "@/config/site";
 import { t } from "@/i18n";
 import { localeAlternates, localizePath } from "@/i18n/routing";
 import { findRouteMatch } from "@/lib/route/registry";
+import { siteUrl } from "@/lib/seo/url";
 
 export interface PageMetadata {
   title: string;
@@ -17,7 +18,7 @@ export interface PageMetadata {
 }
 
 export function absoluteUrl(pathname: string): string {
-  return new URL(pathname, siteConfig.baseUrl).toString();
+  return siteUrl(pathname);
 }
 
 export function withDirectorySlash(pathname: string): `/${string}` {
