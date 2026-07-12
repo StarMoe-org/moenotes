@@ -1,5 +1,5 @@
 import { DEFAULT_LOCALE, LOCALE_PATH_PREFIX, SUPPORTED_LOCALES, type AppLocale } from "@/config/locales";
-import { buildDynamicPath, findRouteMatch, getAllRoutes, getAllStaticRoutes, isDynamicRoute } from "@/lib/route/registry";
+import { buildDynamicPath, findRouteMatch, findRouteById, getAllRoutes, getAllStaticRoutes, isDynamicRoute } from "@/lib/route/registry";
 import type { AppRoute, BreadcrumbDetail, RouteMatch, RouteParams, RouteStaticParamConfig } from "@/types/route";
 import type { PageMetadata } from "@/lib/seo/metadata";
 import { fetchMasterData } from "@/lib/masterdata/client";
@@ -40,6 +40,7 @@ export async function getStaticLocalizedPaths(): Promise<StaticLocalizedPath[]> 
   let supportCardMap: Map<number, Record<AppLocale, string>> | null = null;
   let characterMap: Map<number, Record<AppLocale, string>> | null = null;
   let musicMap: Map<number, Record<AppLocale, string>> | null = null;
+  let storyMap: Map<number, { title: Record<AppLocale, string>; category: "main" | "friendship" | "other" }> | null = null;
 
   for (const route of getAllRoutes().filter(isDynamicRoute)) {
     const configs = await resolveStaticParams(route.staticParams);
@@ -203,6 +204,61 @@ export async function getStaticLocalizedPaths(): Promise<StaticLocalizedPath[]> 
           const localizedLabel = musicMap.get(songId)?.[locale];
           if (localizedLabel) {
             breadcrumbDetail = { label: localizedLabel };
+          }
+        }
+
+        if (route.component === "story-detail") {
+          const advId = Number(config.params.id);
+          if (!storyMap) {
+            storyMap = new Map();
+            try {
+              const [advTable, textTable, episodeTable, friendshipEpisodeTable] = await Promise.all([
+                fetchMasterData("MasterAdv.json", { validate: validateMasterTable }),
+                fetchMasterData("MasterText.json", { validate: validateMasterTable }),
+                fetchMasterData("MasterStoryEpisode.json", { validate: validateMasterTable }),
+                fetchMasterData("MasterStoryFriendshipEpisode.json", { validate: validateMasterTable }),
+              ]);
+
+              const advList = (advTable as any)._allData;
+              const texts = (textTable as any)._allData;
+              const episodes = (episodeTable as any)._allData;
+              const friendshipEpisodes = (friendshipEpisodeTable as any)._allData;
+
+              const textMap = new Map(texts.map((entry: any) => [entry.id, entry]));
+              const resolveText = (id: string, loc: AppLocale) => {
+                const entry = textMap.get(id) as any;
+                if (!entry) return id;
+                if (loc === "zh-CN") return entry.simplifiedChinese || entry.traditionalChinese || entry.japanese || entry.english;
+                if (loc === "en-US") return entry.english || entry.japanese;
+                return entry.japanese || entry.english;
+              };
+
+              advList.forEach((adv: any) => {
+                const titleLoc: Record<AppLocale, string> = {} as any;
+                for (const loc of SUPPORTED_LOCALES) {
+                  titleLoc[loc] = resolveText(adv.titleTextId, loc);
+                }
+                const isMain = episodes.some((ep: any) => ep.advId === adv.id);
+                const isFriendship = friendshipEpisodes.some((ep: any) => ep.advId === adv.id);
+                const category = isMain ? "main" : (isFriendship ? "friendship" : "other");
+                
+                storyMap!.set(adv.id, { title: titleLoc, category });
+              });
+            } catch (err) {
+              console.error("Failed to preload dynamic story breadcrumbs:", err);
+            }
+          }
+
+          const storyInfo = storyMap.get(advId);
+          if (storyInfo) {
+            const localizedLabel = storyInfo.title[locale];
+            const storyRoute = findRouteById("story");
+            const categoryRouteId = storyInfo.category === "main" ? "main-story" : (storyInfo.category === "friendship" ? "friendship-story" : "other-story");
+            const categoryRoute = findRouteById(categoryRouteId);
+            breadcrumbDetail = {
+              label: localizedLabel,
+              ancestors: [storyRoute, categoryRoute].filter(Boolean) as AppRoute[],
+            };
           }
         }
 

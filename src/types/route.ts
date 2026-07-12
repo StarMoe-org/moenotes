@@ -4,7 +4,7 @@ import type { PageMetadata } from "@/lib/seo/metadata";
 export type RouteGroupId = "database" | "story" | "tools" | "community";
 export type RouteIcon = "home" | "database" | "music" | "users" | "calendar" | "newspaper" | "book" | "wrench" | "sparkles" | "info" | "palette" | "archive";
 export type RouteKind = "static" | "dynamic";
-export type RouteComponent = "home" | "page" | "cards" | "card-detail" | "design-system" | "characters" | "character-detail" | "support-cards" | "support-card-detail" | "about" | "music" | "song-detail" | "stamps" | "comics" | "items";
+export type RouteComponent = "home" | "page" | "cards" | "card-detail" | "design-system" | "characters" | "character-detail" | "support-cards" | "support-card-detail" | "about" | "music" | "song-detail" | "stamps" | "comics" | "items" | "story-main" | "story-friendship" | "story-other" | "story-detail";
 export type RouteParams = Record<string, string>;
 
 export interface RouteSeoConfig {
@@ -65,6 +65,7 @@ export interface BreadcrumbDetail {
   id?: string;
   label: string;
   href?: string;
+  ancestors?: AppRoute[];
 }
 
 export interface BreadcrumbItem {

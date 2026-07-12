@@ -23,6 +23,7 @@ interface Props {
 const { locale, pathname, breadcrumbDetail } = Astro.props;
 const crumbs = buildBreadcrumbs(pathname, locale, breadcrumbDetail);
 const hasCrumbs = crumbs.length > 1;
+const activePath = breadcrumbDetail?.ancestors?.at(-1)?.path;
 ---
 
 <AssetCacheBootstrap />
@@ -30,7 +31,7 @@ const hasCrumbs = crumbs.length > 1;
   <HamburgerButtons slot="hamburger" client:load locale={locale} />
   <HeaderActions client:load locale={locale} />
 </Header>
-<Sidebar client:load locale={locale} pathname={pathname} />
+<Sidebar client:load locale={locale} pathname={pathname} activePath={activePath} />
 <main id="content" class:list={["mx-auto min-h-screen max-w-[120rem] px-4 pb-16 pt-[var(--mn-header-bottom,5rem)] transition-[padding] duration-300 md:pl-[calc(var(--mn-sidebar-offset,18rem)+1.5rem)] md:pr-6 md:pt-28", hasCrumbs ? "md:pt-36" : "md:pt-24"]}>
   <slot />
 </main>

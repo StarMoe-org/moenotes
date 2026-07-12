@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, Fragment, type KeyboardEvent, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { AppLocale } from "@/config/locales";
-import { localizePath } from "@/i18n/routing";
+import { localizePath, stripLocaleFromPathname, normalizePathname } from "@/i18n/routing";
 import { t } from "@/i18n";
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/overlay/body-scroll-lock";
 import { useOverlay } from "@/lib/overlay/use-overlay";
@@ -16,9 +16,10 @@ const mobileFocusableSelector = "a[href], button:not([disabled]), [tabindex]:not
 interface SidebarProps {
   locale: AppLocale;
   pathname: string;
+  activePath?: string | undefined;
 }
 
-export default function Sidebar({ locale, pathname }: SidebarProps) {
+export default function Sidebar({ locale, pathname, activePath }: SidebarProps) {
   const [desktopOpen] = useSidebarState();
   const [mounted, setMounted] = useState(false);
   const { isOpen: mobileOpen, close: closeMobile } = useOverlay("mobile-sidebar");
@@ -72,7 +73,7 @@ export default function Sidebar({ locale, pathname }: SidebarProps) {
         style={{ left: "calc(max(1.0rem, (100vw - var(--mn-layout-max-width, 120rem)) / 2 + 1.0rem))" }}
       >
         <SidebarFrame>
-          <SidebarNav locale={locale} pathname={pathname} groups={groups} />
+          <SidebarNav locale={locale} pathname={pathname} activePath={activePath} groups={groups} />
         </SidebarFrame>
       </aside>
 
@@ -103,7 +104,7 @@ export default function Sidebar({ locale, pathname }: SidebarProps) {
               exit={{ x: "-105%" }}
               transition={{ type: "spring", damping: 25, stiffness: 220 }}
             >
-              <SidebarNav locale={locale} pathname={pathname} groups={groups} onNavigate={closeMobile} />
+              <SidebarNav locale={locale} pathname={pathname} activePath={activePath} groups={groups} onNavigate={closeMobile} />
             </motion.aside>
           </div>
         )}
@@ -116,9 +117,9 @@ function SidebarFrame({ children }: { children: ReactNode }) {
   return <div className="h-full overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)]">{children}</div>;
 }
 
-function SidebarNav({ locale, pathname, groups, onNavigate }: { locale: AppLocale; pathname: string; groups: AppRoute[]; onNavigate?: () => void }) {
+function SidebarNav({ locale, pathname, activePath, groups, onNavigate }: { locale: AppLocale; pathname: string; activePath?: string | undefined; groups: AppRoute[]; onNavigate?: () => void }) {
   const scrollRef = useRef<HTMLElement>(null);
-  const activeGroupIds = useMemo(() => groups.filter((group) => isCurrentRoute(pathname, group.path)).map((group) => group.id), [groups, pathname]);
+  const activeGroupIds = useMemo(() => groups.filter((group) => isCurrentRoute(activePath || pathname, group.path)).map((group) => group.id), [groups, pathname, activePath]);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   // 保存滚动位置到 safe-storage — i18n-allow-hardcoded
@@ -202,6 +203,7 @@ function SidebarNav({ locale, pathname, groups, onNavigate }: { locale: AppLocal
               group={group}
               locale={locale}
               pathname={pathname}
+              activePath={activePath}
               collapsed={Boolean(collapsed[group.id]) && !activeGroupIds.includes(group.id)}
               onToggle={() => toggleGroup(group.id)}
               {...(onNavigate ? { onNavigate } : {})}
@@ -229,15 +231,18 @@ function trapMobileFocus(event: globalThis.KeyboardEvent, panel: HTMLElement | n
   }
 }
 
-function NavGroup({ group, locale, pathname, collapsed, onToggle, onNavigate }: { group: AppRoute; locale: AppLocale; pathname: string; collapsed: boolean; onToggle: () => void; onNavigate?: () => void }) {
+function NavGroup({ group, locale, pathname, activePath, collapsed, onToggle, onNavigate }: { group: AppRoute; locale: AppLocale; pathname: string; activePath?: string | undefined; collapsed: boolean; onToggle: () => void; onNavigate?: () => void }) {
   const children = getNavChildren(group);
-  const groupActive = isCurrentRoute(pathname, group.path);
+  const groupActive = isCurrentRoute(activePath || pathname, group.path);
+  const current = stripLocaleFromPathname(activePath || pathname);
+  const target = normalizePathname(group.path);
+  const isHeaderActive = current === target;
   const hasChildren = children.length > 0;
   return (
     <div className="space-y-1">
       <div
         className={`flex items-center justify-between rounded-full pl-4 pr-1 py-0.5 transition-colors ${
-          groupActive
+          isHeaderActive
             ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]"
             : "text-[var(--mn-text)] hover:bg-[var(--mn-cream-deep)]"
         }`}
@@ -268,7 +273,7 @@ function NavGroup({ group, locale, pathname, collapsed, onToggle, onNavigate }: 
       {hasChildren && !collapsed && (
         <div className="space-y-0.5">
           {children.map((item, childIdx) => {
-            const active = isCurrentRoute(pathname, item.path);
+            const active = isCurrentRoute(activePath || pathname, item.path);
             return (
               <Fragment key={item.id}>
                 {childIdx > 0 && <div className="border-t border-dashed border-[var(--mn-border)] opacity-20 my-0.5 ml-8" />}

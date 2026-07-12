@@ -13,6 +13,8 @@ import MusicDetailPage from "@/components/music/MusicDetailPage.astro";
 import StampsPage from "@/components/stamps/StampsPage.astro";
 import ComicsPage from "@/components/comics/ComicsPage.astro";
 import ItemsPage from "@/components/items/ItemsPage.astro";
+import StoryPage from "@/components/story/StoryPage.astro";
+import StoryDetailPage from "@/components/story/StoryDetailPage.astro";
 import GroupLanding from "@/components/route/GroupLanding.astro";
 import PageHeader from "@/components/route/PageHeader.astro";
 import AppLayout from "@/layouts/AppLayout.astro";
@@ -66,6 +68,14 @@ const component = match.item.component ?? "page";
     <ComicsPage locale={locale} />
   ) : component === "items" ? (
     <ItemsPage locale={locale} />
+  ) : component === "story-main" ? (
+    <StoryPage locale={locale} category="main" titleKey={match.item.seo.titleKey} descriptionKey={match.item.seo.descriptionKey} />
+  ) : component === "story-friendship" ? (
+    <StoryPage locale={locale} category="friendship" titleKey={match.item.seo.titleKey} descriptionKey={match.item.seo.descriptionKey} />
+  ) : component === "story-other" ? (
+    <StoryPage locale={locale} category="other" titleKey={match.item.seo.titleKey} descriptionKey={match.item.seo.descriptionKey} />
+  ) : component === "story-detail" ? (
+    <StoryDetailPage locale={locale} advId={Number(match.params.id)} />
   ) : component === "characters" ? (
     <CharactersPage locale={locale} />
   ) : component === "character-detail" ? (

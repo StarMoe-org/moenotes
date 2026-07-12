@@ -7,7 +7,7 @@ import { useSpringAnimation } from "@/lib/animation/use-animation";
 export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title?: string;
+  title?: string | undefined;
   closeLabel?: string;
   size?: "sm" | "md" | "lg" | "xl";
   children: ReactNode;

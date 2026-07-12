@@ -1,0 +1,12 @@
+---
+import StoryDetail from "@/components/story/StoryDetail";
+import PageLayout from "@/layouts/PageLayout.astro";
+import type { AppLocale } from "@/config/locales";
+
+interface Props { locale: AppLocale; advId: number; }
+const { locale, advId } = Astro.props;
+---
+
+<PageLayout locale={locale} titleKey="seo.storyDetail.title" descriptionKey="seo.storyDetail.description">
+  <StoryDetail client:load locale={locale} advId={advId} />
+</PageLayout>

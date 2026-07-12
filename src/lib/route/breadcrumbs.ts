@@ -18,7 +18,10 @@ export function buildBreadcrumbs(pathname: string, locale: AppLocale = DEFAULT_L
   if (!match) return markCurrentCrumb(crumbs);
 
   const isDynamic = match.item.kind === "dynamic";
-  const trail = [...match.ancestors];
+  let trail = [...match.ancestors];
+  if (detail?.ancestors) {
+    trail = [...detail.ancestors];
+  }
   if (!isDynamic && match.item.id !== "home") trail.push(match.item);
 
   for (const route of uniqueRoutes(trail)) {
