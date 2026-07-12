@@ -2,9 +2,9 @@ import type { AppLocale } from "@/config/locales";
 import type { PageMetadata } from "@/lib/seo/metadata";
 
 export type RouteGroupId = "database" | "activity" | "story" | "tools" | "community";
-export type RouteIcon = "home" | "database" | "music" | "users" | "calendar" | "newspaper" | "book" | "wrench" | "sparkles" | "info" | "palette";
+export type RouteIcon = "home" | "database" | "music" | "users" | "calendar" | "newspaper" | "book" | "wrench" | "sparkles" | "info" | "palette" | "archive";
 export type RouteKind = "static" | "dynamic";
-export type RouteComponent = "home" | "page" | "cards" | "card-detail" | "design-system" | "characters" | "character-detail" | "support-cards" | "support-card-detail" | "about" | "music" | "song-detail";
+export type RouteComponent = "home" | "page" | "cards" | "card-detail" | "design-system" | "characters" | "character-detail" | "support-cards" | "support-card-detail" | "about" | "music" | "song-detail" | "stamps" | "comics" | "items";
 export type RouteParams = Record<string, string>;
 
 export interface RouteSeoConfig {

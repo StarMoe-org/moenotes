@@ -10,6 +10,9 @@ import AboutPage from "@/components/about/AboutPage.astro";
 import Hero from "@/components/home/Hero.astro";
 import MusicPage from "@/components/music/MusicPage.astro";
 import MusicDetailPage from "@/components/music/MusicDetailPage.astro";
+import StampsPage from "@/components/stamps/StampsPage.astro";
+import ComicsPage from "@/components/comics/ComicsPage.astro";
+import ItemsPage from "@/components/items/ItemsPage.astro";
 import GroupLanding from "@/components/route/GroupLanding.astro";
 import PageHeader from "@/components/route/PageHeader.astro";
 import AppLayout from "@/layouts/AppLayout.astro";
@@ -57,6 +60,12 @@ const component = match.item.component ?? "page";
     <MusicPage locale={locale} />
   ) : component === "song-detail" ? (
     <MusicDetailPage locale={locale} songId={Number(match.params.id)} />
+  ) : component === "stamps" ? (
+    <StampsPage locale={locale} />
+  ) : component === "comics" ? (
+    <ComicsPage locale={locale} />
+  ) : component === "items" ? (
+    <ItemsPage locale={locale} />
   ) : component === "characters" ? (
     <CharactersPage locale={locale} />
   ) : component === "character-detail" ? (

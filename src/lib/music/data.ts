@@ -80,7 +80,7 @@ export interface MusicViewModel {
   vocalists: Array<{ id: number; name: string }>;
   searchText: string;
   musicSoundID: number;
-  audioUrl?: string;
+  audioUrl?: string | undefined;
 }
 
 export function validateMasterTable<T>(raw: unknown): MasterTable<T> {
