@@ -16,6 +16,8 @@ const allowedFetchFiles = new Set([
   "src/lib/search/dynamic-index.ts",
   "src/components/cards/CardDetail.tsx",
   "src/components/characters/CharacterDetail.tsx",
+  "src/components/music/MusicDetail.tsx",
+  "src/components/support-cards/SupportCardDetail.tsx",
 ]);
 
 const allowedDomainFiles = new Set([
@@ -43,6 +45,7 @@ const allowedInternalRouteFiles = new Set([
 const allowedProtocolUrls = [
   "https://schema.org",
   "http://www.sitemaps.org",
+  "https://github.com",
 ];
 
 const scannedExtensions = new Set([".ts", ".tsx", ".astro"]);

@@ -1,0 +1,15 @@
+---
+import MusicExplorer from "@/components/music/MusicExplorer";
+import PageLayout from "@/layouts/PageLayout.astro";
+import type { AppLocale } from "@/config/locales";
+
+interface Props {
+  locale: AppLocale;
+}
+
+const { locale } = Astro.props;
+---
+
+<PageLayout locale={locale} titleKey="seo.music.title" descriptionKey="seo.music.description">
+  <MusicExplorer client:load locale={locale} />
+</PageLayout>

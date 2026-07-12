@@ -8,6 +8,8 @@ import CharactersPage from "@/components/characters/CharactersPage.astro";
 import CharacterDetailPage from "@/components/characters/CharacterDetailPage.astro";
 import AboutPage from "@/components/about/AboutPage.astro";
 import Hero from "@/components/home/Hero.astro";
+import MusicPage from "@/components/music/MusicPage.astro";
+import MusicDetailPage from "@/components/music/MusicDetailPage.astro";
 import GroupLanding from "@/components/route/GroupLanding.astro";
 import PageHeader from "@/components/route/PageHeader.astro";
 import AppLayout from "@/layouts/AppLayout.astro";
@@ -51,6 +53,10 @@ const component = match.item.component ?? "page";
     <SupportCardsPage locale={locale} />
   ) : component === "support-card-detail" ? (
     <SupportCardDetailPage locale={locale} supportCardId={Number(match.params.id)} />
+  ) : component === "music" ? (
+    <MusicPage locale={locale} />
+  ) : component === "song-detail" ? (
+    <MusicDetailPage locale={locale} songId={Number(match.params.id)} />
   ) : component === "characters" ? (
     <CharactersPage locale={locale} />
   ) : component === "character-detail" ? (

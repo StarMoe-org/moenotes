@@ -1,0 +1,16 @@
+---
+import MusicDetail from "@/components/music/MusicDetail";
+import PageLayout from "@/layouts/PageLayout.astro";
+import type { AppLocale } from "@/config/locales";
+
+interface Props {
+  locale: AppLocale;
+  songId: number;
+}
+
+const { locale, songId } = Astro.props;
+---
+
+<PageLayout locale={locale} titleKey="seo.songDetail.title" descriptionKey="seo.songDetail.description">
+  <MusicDetail client:load locale={locale} songId={songId} />
+</PageLayout>

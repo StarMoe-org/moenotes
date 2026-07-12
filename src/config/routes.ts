@@ -1,6 +1,7 @@
 import type { AppRoute } from "@/types/route";
 import { CARD_IDS } from "@/lib/cards/constants";
 import { SUPPORT_CARD_IDS } from "@/lib/support-cards/constants";
+import { MUSIC_IDS } from "@/lib/music/constants";
 
 export const routeRegistry = [
   {
@@ -143,6 +144,7 @@ export const routeRegistry = [
         id: "music",
         path: "/music",
         labelKey: "nav.items.music",
+        component: "music",
         seo: {
           titleKey: "seo.music.title",
           descriptionKey: "seo.music.description",
@@ -159,6 +161,7 @@ export const routeRegistry = [
             pattern: "/music/:id",
             parentId: "music",
             labelKey: "nav.items.music",
+            component: "song-detail",
             seo: {
               titleKey: "seo.songDetail.title",
               descriptionKey: "seo.songDetail.description",
@@ -166,7 +169,10 @@ export const routeRegistry = [
             },
             nav: false,
             searchable: false,
-            staticParams: [],
+            staticParams: MUSIC_IDS.map((id) => ({
+              params: { id: String(id) },
+              breadcrumbDetail: { label: `#${id}` },
+            })),
           },
         ],
       },

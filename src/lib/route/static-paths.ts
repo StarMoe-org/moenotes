@@ -39,6 +39,7 @@ export async function getStaticLocalizedPaths(): Promise<StaticLocalizedPath[]> 
   let cardMap: Map<number, Record<AppLocale, string>> | null = null;
   let supportCardMap: Map<number, Record<AppLocale, string>> | null = null;
   let characterMap: Map<number, Record<AppLocale, string>> | null = null;
+  let musicMap: Map<number, Record<AppLocale, string>> | null = null;
 
   for (const route of getAllRoutes().filter(isDynamicRoute)) {
     const configs = await resolveStaticParams(route.staticParams);
@@ -159,6 +160,47 @@ export async function getStaticLocalizedPaths(): Promise<StaticLocalizedPath[]> 
           }
 
           const localizedLabel = characterMap.get(characterId)?.[locale];
+          if (localizedLabel) {
+            breadcrumbDetail = { label: localizedLabel };
+          }
+        }
+
+        if (route.component === "song-detail") {
+          const songId = Number(config.params.id);
+          if (!musicMap) {
+            musicMap = new Map();
+            try {
+              const [musicTable, textTable] = await Promise.all([
+                fetchMasterData("MasterLiveMusic.json", { validate: validateMasterTable }),
+                fetchMasterData("MasterText.json", { validate: validateMasterTable }),
+              ]);
+
+              const musicList = (musicTable as any)._allData;
+              const texts = (textTable as any)._allData;
+              const textMap = new Map(texts.map((entry: any) => [entry.id, entry]));
+              const resolveText = (id: string, loc: AppLocale) => {
+                const entry = textMap.get(id) as any;
+                if (!entry) return id;
+                if (loc === "zh-CN") return entry.simplifiedChinese || entry.traditionalChinese || entry.japanese || entry.english;
+                if (loc === "en-US") return entry.english || entry.japanese;
+                return entry.japanese || entry.english;
+              };
+
+              for (const loc of SUPPORTED_LOCALES) {
+                musicList.forEach((song: any) => {
+                  const title = resolveText(song.titleTextID, loc);
+                  if (!musicMap!.has(song.id)) {
+                    musicMap!.set(song.id, {} as Record<AppLocale, string>);
+                  }
+                  musicMap!.get(song.id)![loc] = title;
+                });
+              }
+            } catch (err) {
+              console.error("Failed to preload dynamic song breadcrumbs:", err);
+            }
+          }
+
+          const localizedLabel = musicMap.get(songId)?.[locale];
           if (localizedLabel) {
             breadcrumbDetail = { label: localizedLabel };
           }

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
+import { getRoutePathById } from "@/lib/route/registry";
 import Modal from "@/components/shared/Modal";
 import {
   getSupportCardFullUrl,
@@ -666,7 +667,7 @@ export default function SupportCardDetail({ locale, supportCardId }: Props) {
                 ))
               ) : (
                 <p className="text-sm font-medium text-[var(--mn-text-muted)] py-4 text-center">
-                  暂无支援技能数据
+                  暂无支援技能数据 {/* i18n-allow-hardcoded */}
                 </p>
               )}
             </div>
@@ -689,7 +690,7 @@ export default function SupportCardDetail({ locale, supportCardId }: Props) {
           )}
 
           <div className="flex justify-start">
-            <a href={localizePath("/support-cards", locale)} className="mn-focus mn-stamp-press inline-flex rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-6 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]">
+            <a href={localizePath(getRoutePathById("support-cards"), locale)} className="mn-focus mn-stamp-press inline-flex rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-6 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]">
               {t(locale, "supportCards.backToList")}
             </a>
           </div>
