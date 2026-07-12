@@ -59,7 +59,6 @@ export const routeRegistry = [
             seo: {
               titleKey: "seo.characterDetail.title",
               descriptionKey: "seo.characterDetail.description",
-              indexable: false,
             },
             nav: false,
             searchable: false,
@@ -96,7 +95,6 @@ export const routeRegistry = [
             seo: {
               titleKey: "seo.cardDetail.title",
               descriptionKey: "seo.cardDetail.description",
-              indexable: false,
             },
             nav: false,
             searchable: false,
@@ -133,7 +131,6 @@ export const routeRegistry = [
             seo: {
               titleKey: "seo.supportCardDetail.title",
               descriptionKey: "seo.supportCardDetail.description",
-              indexable: false,
             },
             nav: false,
             searchable: false,
@@ -170,7 +167,6 @@ export const routeRegistry = [
             seo: {
               titleKey: "seo.songDetail.title",
               descriptionKey: "seo.songDetail.description",
-              indexable: false,
             },
             nav: false,
             searchable: false,
@@ -295,7 +291,7 @@ export const routeRegistry = [
         parentId: "story",
         labelKey: "nav.groups.story",
         component: "story-detail",
-        seo: { titleKey: "seo.storyDetail.title", descriptionKey: "seo.storyDetail.description", indexable: false },
+        seo: { titleKey: "seo.storyDetail.title", descriptionKey: "seo.storyDetail.description" },
         nav: false,
         searchable: false,
         staticParams: [10000, 10001, 10002, 10020, 10021, 10022, 10459, 10498].map((id) => ({ params: { id: String(id) }, breadcrumbDetail: { label: `ADV ${id}` } })),
