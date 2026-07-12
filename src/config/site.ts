@@ -23,7 +23,7 @@ export const siteConfig: SiteConfig = {
   shortName: "Moenotes",
   titleTemplate: "%s | Moenotes",
   description: "Moenotes is a multilingual BanG Dream! Our Notes database by MoeSekai for exploring characters, cards, songs, stories, and game assets.",
-  baseUrl: "https://notes.moesekai.dev",
+  baseUrl: "https://bdon.moe",
   author: "MoeSekai",
   ogImage: "/og-default.png",
   xmlNamespaces: {

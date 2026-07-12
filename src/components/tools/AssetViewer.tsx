@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { t } from "@/i18n";
 import type { AppLocale } from "@/config/locales";
+import { assetConfig } from "@/config/assets";
 import Modal from "@/components/shared/Modal";
 
 interface Props {
@@ -115,7 +116,7 @@ export default function AssetViewer({ locale }: Props) {
   // View mode state
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
-  const bucketUrl = "https://storage.bdon.moe/ournotes-assets";
+  const bucketUrl = assetConfig.sources.main;
 
   // Fetch S3 list files for current directory only (using Prefix and Delimiter)
   const fetchDirectory = async (path: string) => {
