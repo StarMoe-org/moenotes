@@ -14,13 +14,23 @@ export async function GET() {
   const entries = await getSitemapEntries();
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="${siteConfig.xmlNamespaces.xhtml}">
-${entries.map((entry) => `  <url>
-    <loc>${escapeXml(entry.loc)}</loc>
-${entry.alternates.map((alternate) => `    <xhtml:link rel="alternate" hreflang="${escapeXml(alternate.locale)}" href="${escapeXml(alternate.href)}" />`).join("\n")}
-    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(entry.xDefault)}" />
-${entry.lastmod ? `    <lastmod>${escapeXml(entry.lastmod)}</lastmod>\n` : ""}    <changefreq>${entry.changefreq}</changefreq>
-    <priority>${entry.priority.toFixed(1)}</priority>
-  </url>`).join("\n")}
+${entries.map((entry) => {
+  const urlParts = [
+    `    <loc>${escapeXml(entry.loc)}</loc>`,
+  ];
+  if (entry.lastmod) {
+    urlParts.push(`    <lastmod>${escapeXml(entry.lastmod)}</lastmod>`);
+  }
+  urlParts.push(`    <changefreq>${entry.changefreq}</changefreq>`);
+  urlParts.push(`    <priority>${entry.priority.toFixed(1)}</priority>`);
+  
+  entry.alternates.forEach((alternate) => {
+    urlParts.push(`    <xhtml:link rel="alternate" hreflang="${escapeXml(alternate.locale)}" href="${escapeXml(alternate.href)}" />`);
+  });
+  urlParts.push(`    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(entry.xDefault)}" />`);
+
+  return `  <url>\n${urlParts.join("\n")}\n  </url>`;
+}).join("\n")}
 </urlset>`;
 
   return new Response(xml, {
