@@ -1,7 +1,7 @@
 # Extra characters that should remain in the common zh-CN + ja-JP subset.
 # Add future MasterData names, character names, song names, event names, or punctuation here.
 
-Moenotes MoeSekai BanG Dream Our Notes
+Moenotes MoeSekai StarMoe star.moe BanG Dream Our Notes
 々ヶゝゞヽヾー・＝〜「」『』【】（）！？、。￥
 角色成员乐队乐团歌曲乐曲音乐活动公告剧情主线章节卡片稀有度属性属性加成技能等级排行筛选搜索排序收藏解锁奖励任务登录设置语言主题资料库工具箱
 メンバーキャラクターバンド楽曲音楽イベントお知らせストーリーメインカードレアリティ属性スキルレベルランキング検索並び替えお気に入り報酬ミッションログイン設定言語テーマデータベースツール

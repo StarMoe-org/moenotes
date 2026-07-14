@@ -5,6 +5,7 @@ export interface SiteConfig {
   description: string;
   baseUrl: string;
   author: string;
+  developerUrl: string;
   ogImage: string;
   repository?: string;
   xmlNamespaces: {
@@ -22,9 +23,10 @@ export const siteConfig: SiteConfig = {
   name: "Moenotes",
   shortName: "Moenotes",
   titleTemplate: "%s | Moenotes",
-  description: "Moenotes is a multilingual BanG Dream! Our Notes database by MoeSekai for exploring characters, cards, songs, stories, and game assets.",
+  description: "Moenotes is a multilingual BanG Dream! Our Notes database by StarMoe for exploring characters, cards, songs, stories, and game assets.",
   baseUrl: "https://bdon.moe",
-  author: "MoeSekai",
+  author: "StarMoe",
+  developerUrl: "https://star.moe",
   ogImage: "/og-default.png",
   xmlNamespaces: {
     xhtml: "http://www.w3.org/1999/xhtml",

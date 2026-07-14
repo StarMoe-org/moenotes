@@ -59,7 +59,7 @@ export const zhCN = {
   },
   home: {
     title: "Moenotes",
-    description: "这里是 MoeSekai 团队为 BanG Dream! 新企划「Our Notes」制作的资料库项目。我们选用奶油纸的底色与轻手作感的视觉语言，为你呈现少女们的音乐与故事。",
+    description: "这里是 StarMoe 团队为 BanG Dream! 新企划「Our Notes」制作的资料库项目。我们选用奶油纸的底色与轻手作感的视觉语言，为你呈现少女们的音乐与故事。",
     ctaPrimary: "进入数据库",
     featuresTitle: "探索数据手册",
     features: {
@@ -239,7 +239,7 @@ export const zhCN = {
   seo: {
     home: {
       title: "BanG Dream! Our Notes 资料库与图鉴",
-      description: "Moenotes 是 MoeSekai 制作的多语言 BanG Dream! Our Notes 资料库，可查询角色、卡牌、乐曲、剧情、漫画、贴纸与游戏资源。",
+      description: "Moenotes 是 StarMoe 制作的多语言 BanG Dream! Our Notes 资料库，可查询角色、卡牌、乐曲、剧情、漫画、贴纸与游戏资源。",
     },
     database: {
       title: "BanG Dream! Our Notes 资料库",
@@ -317,7 +317,7 @@ export const zhCN = {
     },
     about: {
       title: "关于 Moenotes",
-      description: "了解 Moenotes：由 MoeSekai 制作，收录 BanG Dream! Our Notes 角色、卡牌、乐曲与剧情的多语言资料库。",
+      description: "了解 Moenotes：由 StarMoe 制作，收录 BanG Dream! Our Notes 角色、卡牌、乐曲与剧情的多语言资料库。",
     },
     designSystem: {
       title: "设计系统",
@@ -495,7 +495,7 @@ export const zhCN = {
     quickFilter: "打开快捷筛选",
   },
   about: {
-    teamIntro: "我们是来自 <a href=\"https://github.com/moe-sekai\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-[var(--mn-accent-deep)] underline decoration-2 decoration-[var(--mn-accent)] underline-offset-4 hover:text-[var(--mn-accent)]\">moesekai</a> 的小团队。做 <em>MoeSekai</em> 的两年里，我们一直在想：一个好的 wiki, 到底应该长什么样？",
+    teamIntro: "我们是来自 <a href=\"https://github.com/moe-sekai\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-[var(--mn-accent-deep)] underline decoration-2 decoration-[var(--mn-accent)] underline-offset-4 hover:text-[var(--mn-accent)]\">StarMoe</a> 的小团队。做 <em>MoeSekai</em> 的两年里，我们一直在想：一个好的 wiki, 到底应该长什么样？",
     paragraph1: "我们看过太多<strong>极客式的表格</strong>、太多<strong>万年不变的栅格</strong>，数据是准的，可一点都不像那个让我们流泪的世界。所以这一次，对于 BanG Dream! 的全新企划「Our Notes」，我们决定换一种语言来翻译它——<span class=\"bg-[var(--mn-yellow)]/40 px-1 py-0.5 font-bold border-b border-[var(--mn-accent)]/40\">像一本可以被翻阅、被涂写、被珍藏的笔记本。</span>",
     paragraph2: "我们不再用蓝色的渐变和冰冷的发光块，而选了奶油的纸、墨黑的字、夕阳的橘和荧光笔的黄。因为青春不是一段算法生成的色卡，青春是被反复涂抹、却越涂越亮的那一页。",
     badgeMe: "我",

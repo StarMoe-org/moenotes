@@ -53,7 +53,7 @@ export const jaJP = {
   actions: { close: "閉じる", clearCache: "キャッシュ削除", refresh: "更新", open: "開く", viewGroup: "グループを見る" },
   home: {
     title: "Moenotes",
-    description: "MoeSekai チームによる BanG Dream! の新プロジェクト「Our Notes」のデータベースプロジェクトへようこそ。温かみのある紙の質感と手作り感のあるデザインで、彼女たちの音楽と物語をお届けします。",
+    description: "StarMoe チームによる BanG Dream! の新プロジェクト「Our Notes」のデータベースプロジェクトへようこそ。温かみのある紙の質感と手作り感のあるデザインで、彼女たちの音楽と物語をお届けします。",
     ctaPrimary: "データベースに入る",
     featuresTitle: "データベースを探索",
     features: {
@@ -231,7 +231,7 @@ export const jaJP = {
     },
   },
   seo: {
-    home: { title: "Moenotes - Our Notes Viewer", description: "Moenotes は MoeSekai による BanG Dream! Our Notes 向け viewer です。" },
+    home: { title: "Moenotes - Our Notes Viewer", description: "Moenotes は StarMoe による BanG Dream! Our Notes 向け viewer です。" },
     database: { title: "データベース", description: "Our Notes のキャラクター、楽曲、masterdata を閲覧します。" },
     characters: { title: "キャラクター図鑑", description: "BanG Dream! Our Notes のキャラクター情報、所属バンド、担当パート、誕生日などを確認できます。" },
     characterDetail: { title: "キャラクター詳細", description: "BanG Dream! Our Notes キャラクターの立ち絵、プロフィール、および登場カードを閲覧できます。" },
@@ -255,7 +255,7 @@ export const jaJP = {
     eventStory: { title: "イベントストーリー", description: "BanG Dream! Our Notes のイベントストーリーを閲覧できます。" },
     tools: { title: "ツール", description: "Moenotes ツール基盤。" },
     assetViewer: { title: "アセットビューア", description: "静的アセットを閲覧・検索します。" },
-    about: { title: "Moenotes について", description: "Moenotes と MoeSekai について。" },
+    about: { title: "Moenotes について", description: "Moenotes と StarMoe について。" },
     designSystem: { title: "デザインシステム", description: "Moenotes のビジュアル言語とコンポーネントライブラリのリファレンス。" },
   },
   designSystem: {
@@ -333,7 +333,7 @@ export const jaJP = {
     quickFilter: "クイックフィルターを開く",
   },
   about: {
-    teamIntro: "私たちは <a href=\"https://github.com/moe-sekai\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-[var(--mn-accent-deep)] underline decoration-2 decoration-[var(--mn-accent)] underline-offset-4 hover:text-[var(--mn-accent)]\">moesekai</a> から来た小さなチームです。<em>MoeSekai</em> を作ってからの2年間、私たちは考え続けてきました：良いWikiとは、一体どのような形であるべきなのか？",
+    teamIntro: "私たちは <a href=\"https://github.com/moe-sekai\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-[var(--mn-accent-deep)] underline decoration-2 decoration-[var(--mn-accent)] underline-offset-4 hover:text-[var(--mn-accent)]\">StarMoe</a> から来た小さなチームです。<em>MoeSekai</em> を作ってからの2年間、私たちは考え続けてきました：良いWikiとは、一体どのような形であるべきなのか？",
     paragraph1: "私たちは、あまりにも多くの<strong>ギーク的な表</strong>や、<strong>何年も変わらないグリッド</strong>を見てきました。データは正確ですが、私たちが涙したあの世界とは似ても似つかないものでした。だからこそ今回、BanG Dream! の新しいプロジェクト「Our Notes」において、私たちは別の言葉で表現することを決意しました——<span class=\"bg-[var(--mn-yellow)]/40 px-1 py-0.5 font-bold border-b border-[var(--mn-accent)]/40\">めくられ、書き込まれ、大切にしまわれるノートのように。</span>",
     paragraph2: "青いグラデーションや冷たい発光パーツはやめ、クリーム色の紙、墨色の文字、夕日のオレンジ、そして蛍光ペンの黄色を選びました。青春とはアルゴリズムが生成したカラーパレットではなく、何度も書き直され、そのたびに輝きを増していくあの1ページだからです。",
     badgeMe: "我",

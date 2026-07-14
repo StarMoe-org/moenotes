@@ -1,6 +1,6 @@
 # MoeNotes (Our Notes Viewer)
 
-MoeNotes 是由 [MoeSekai](https://github.com/moe-sekai) 团队为 *BanG Dream!* 全新企划 *Our Notes* 开发的静态数据与资料卡片查看器。项目整体设计灵感来自“温暖、清晰、轻手作感的资料手帐”。
+MoeNotes 是由 [StarMoe](https://github.com/moe-sekai) 团队为 *BanG Dream!* 全新企划 *Our Notes* 开发的静态数据与资料卡片查看器。项目整体设计灵感来自“温暖、清晰、轻手作感的资料手帐”。
 
 ---
 
@@ -82,4 +82,4 @@ bun run lint
 
 - **项目前端代码**：采用 [AGPL v3](https://github.com/moe-sekai/moenotes/blob/main/LICENSE) 协议开源。
 - **官方美术与音视频资产**：*BanG Dream! Our Notes* 官方美术图像、音视频、歌词等资产版权归属版权方 **Bushiroad / Craft Egg / Ishimori** 所有。本仓库仅用于非商业性研究和学习交流，不提供任何商业授权。
-- **自制/重制兼容性资产**：由社区或 MoeSekai 团队自制的兼容性静态资产，采用 **Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)** 知识共享署名-非商业性使用协议授权开源。
+- **自制/重制兼容性资产**：由社区或 StarMoe 团队自制的兼容性静态资产，采用 **Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)** 知识共享署名-非商业性使用协议授权开源。

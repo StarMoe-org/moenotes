@@ -12,7 +12,7 @@ export const routeRegistry = [
     seo: {
       titleKey: "seo.home.title",
       descriptionKey: "seo.home.description",
-      keywords: ["Moenotes", "BanG Dream! Our Notes", "Our Notes database", "Our Notes cards", "Our Notes music", "MoeSekai"],
+      keywords: ["Moenotes", "BanG Dream! Our Notes", "Our Notes database", "Our Notes cards", "Our Notes music", "StarMoe", "star.moe"],
       sitemap: { priority: 1, changefreq: "daily" },
     },
     nav: false,
@@ -26,7 +26,7 @@ export const routeRegistry = [
     seo: {
       titleKey: "seo.database.title",
       descriptionKey: "seo.database.description",
-      keywords: ["BanG Dream! Our Notes database", "Our Notes data", "Our Notes characters", "Our Notes cards", "Our Notes songs", "MoeSekai"],
+      keywords: ["BanG Dream! Our Notes database", "Our Notes data", "Our Notes characters", "Our Notes cards", "Our Notes songs", "StarMoe", "star.moe"],
       sitemap: { priority: 0.8, changefreq: "daily" },
     },
     nav: { order: 10, icon: "database", shortcut: "g d" },
@@ -305,7 +305,7 @@ export const routeRegistry = [
     seo: {
       titleKey: "seo.tools.title",
       descriptionKey: "seo.tools.description",
-      keywords: ["Moenotes tools", "Our Notes tools", "BanG Dream database tools", "MoeSekai tools"],
+      keywords: ["Moenotes tools", "Our Notes tools", "BanG Dream database tools", "StarMoe tools", "star.moe tools"],
       sitemap: { priority: 0.6, changefreq: "weekly" },
     },
     nav: { order: 40, icon: "wrench", shortcut: "g t" },
@@ -352,12 +352,12 @@ export const routeRegistry = [
     seo: {
       titleKey: "seo.about.title",
       descriptionKey: "seo.about.description",
-      keywords: ["Moenotes", "MoeSekai", "BanG Dream! Our Notes database", "Our Notes viewer", "Moenotes project"],
+      keywords: ["Moenotes", "StarMoe", "star.moe", "BanG Dream! Our Notes database", "Our Notes viewer", "Moenotes project"],
       sitemap: { priority: 0.5, changefreq: "monthly" },
     },
     nav: { order: 50, icon: "info" },
     searchable: true,
-    keywords: ["about", "moesekai"],
+    keywords: ["about", "StarMoe", "star.moe"],
     children: [],
   },
 ] as const satisfies readonly AppRoute[];
