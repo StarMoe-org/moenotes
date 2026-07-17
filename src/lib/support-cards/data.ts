@@ -1,5 +1,6 @@
 import type { AppLocale } from "@/config/locales";
 import type { RawCharacter, RawBand, RawText } from "@/lib/cards/data";
+import { localizeMasterText } from "@/lib/masterdata/localize-text";
 
 export interface RawSupportCard {
   id: number;
@@ -119,9 +120,3 @@ export function normalizeSupportCards(
     .sort((a, b) => b.rarity - a.rarity || b.id - a.id);
 }
 
-function localizeMasterText(entry: RawText | undefined, locale: AppLocale): string {
-  if (!entry) return "";
-  if (locale === "zh-CN") return entry.simplifiedChinese || entry.traditionalChinese || entry.japanese || entry.english;
-  if (locale === "en-US") return entry.english || entry.japanese;
-  return entry.japanese || entry.english;
-}

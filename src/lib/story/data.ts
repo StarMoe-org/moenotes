@@ -5,6 +5,7 @@ import {
   type RawBand,
   type RawText,
 } from "@/lib/cards/data";
+import { localizeMasterText } from "@/lib/masterdata/localize-text";
 
 export type StoryCategory = "main" | "friendship" | "live-result" | "home" | "tutorial";
 export type HomeStoryKind = "tap-talk" | "spot-intro";
@@ -377,14 +378,7 @@ export function classifyAdv(adv: RawAdv): StoryCategory | null {
   return null;
 }
 
-export function localizeMasterText(entry: RawText | undefined, locale: AppLocale): string {
-  if (!entry) return "";
-  if (locale === "zh-CN") {
-    return entry.simplifiedChinese || entry.traditionalChinese || entry.japanese || entry.english;
-  }
-  if (locale === "en-US") return entry.english || entry.japanese;
-  return entry.japanese || entry.english;
-}
+export { localizeMasterText } from "@/lib/masterdata/localize-text";
 
 interface BuildStoryInput {
   sourceId: number;

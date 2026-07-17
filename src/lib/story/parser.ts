@@ -226,7 +226,8 @@ function localizeText(row: TextRow, locale: StoryLocale): string {
     "zh-TW": row.traditionalChinese,
     "ko-KR": row.korean,
   }[locale];
-  return localized?.trim() || row.japanese?.trim() || row.english?.trim() || "";
+  // Prefer English over Japanese for UI-only locales when the dedicated field is empty.
+  return localized?.trim() || row.english?.trim() || row.japanese?.trim() || "";
 }
 
 function collectSoundUrl(

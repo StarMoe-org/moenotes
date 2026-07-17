@@ -35,8 +35,8 @@ import {
 import { normalizeItems, type ItemViewModel, type RawItem } from "@/lib/items/data";
 import { normalizeStamps, type RawStamp, type StampViewModel } from "@/lib/stamps/data";
 import { normalizeComics, type ComicViewModel, type RawComic } from "@/lib/comics/data";
+import { localizeMasterText } from "@/lib/masterdata/localize-text";
 import {
-  localizeMasterText,
   normalizeStories,
   type RawAdv,
   type RawCharacterFriendship,

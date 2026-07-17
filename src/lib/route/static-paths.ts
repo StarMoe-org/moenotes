@@ -3,6 +3,7 @@ import { buildDynamicPath, findRouteMatch, findRouteById, getAllRoutes, getAllSt
 import type { AppRoute, BreadcrumbDetail, RouteMatch, RouteParams } from "@/types/route";
 import type { PageMetadata } from "@/lib/seo/metadata";
 import { getBuildMasterData } from "@/lib/masterdata/build-snapshot";
+import { localizeMasterText } from "@/lib/masterdata/localize-text";
 import { normalizeCards, validateMasterTable } from "@/lib/cards/data";
 import { normalizeSupportCards } from "@/lib/support-cards/data";
 
@@ -145,9 +146,7 @@ export async function getStaticLocalizedPaths(): Promise<StaticLocalizedPath[]> 
               const resolveText = (id: string, loc: AppLocale) => {
                 const entry = textMap.get(id) as any;
                 if (!entry) return id;
-                if (loc === "zh-CN") return entry.simplifiedChinese || entry.traditionalChinese || entry.japanese || entry.english;
-                if (loc === "en-US") return entry.english || entry.japanese;
-                return entry.japanese || entry.english;
+                return localizeMasterText(entry, loc) || id;
               };
 
               for (const loc of SUPPORTED_LOCALES) {
@@ -186,9 +185,7 @@ export async function getStaticLocalizedPaths(): Promise<StaticLocalizedPath[]> 
               const resolveText = (id: string, loc: AppLocale) => {
                 const entry = textMap.get(id) as any;
                 if (!entry) return id;
-                if (loc === "zh-CN") return entry.simplifiedChinese || entry.traditionalChinese || entry.japanese || entry.english;
-                if (loc === "en-US") return entry.english || entry.japanese;
-                return entry.japanese || entry.english;
+                return localizeMasterText(entry, loc) || id;
               };
 
               for (const loc of SUPPORTED_LOCALES) {
@@ -232,9 +229,7 @@ export async function getStaticLocalizedPaths(): Promise<StaticLocalizedPath[]> 
               const resolveText = (id: string, loc: AppLocale) => {
                 const entry = textMap.get(id) as any;
                 if (!entry) return id;
-                if (loc === "zh-CN") return entry.simplifiedChinese || entry.traditionalChinese || entry.japanese || entry.english;
-                if (loc === "en-US") return entry.english || entry.japanese;
-                return entry.japanese || entry.english;
+                return localizeMasterText(entry, loc) || id;
               };
 
               advList.forEach((adv: any) => {

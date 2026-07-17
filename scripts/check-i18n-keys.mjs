@@ -8,6 +8,7 @@ const localeFiles = {
   "zh-CN": resolve(root, "src/i18n/messages/zh-CN.ts"),
   "ja-JP": resolve(root, "src/i18n/messages/ja-JP.ts"),
   "en-US": resolve(root, "src/i18n/messages/en-US.ts"),
+  "ko-KR": resolve(root, "src/i18n/messages/ko-KR.ts"),
 };
 
 function loadMessageObject(file, exportName) {
@@ -34,6 +35,7 @@ const messages = {
   "zh-CN": loadMessageObject(localeFiles["zh-CN"], "zhCN"),
   "ja-JP": loadMessageObject(localeFiles["ja-JP"], "jaJP"),
   "en-US": loadMessageObject(localeFiles["en-US"], "enUS"),
+  "ko-KR": loadMessageObject(localeFiles["ko-KR"], "koKR"),
 };
 
 const flattened = Object.fromEntries(Object.entries(messages).map(([locale, tree]) => [locale, new Set(flattenKeys(tree))]));

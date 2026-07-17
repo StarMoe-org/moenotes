@@ -1,5 +1,6 @@
 import type { AppLocale } from "@/config/locales";
 import { getAssetUrl } from "@/lib/assets/url";
+import { localizeMasterText } from "@/lib/masterdata/localize-text";
 
 export interface RawComic {
   id: number;
@@ -75,11 +76,13 @@ export function normalizeComics(
 
       let name = "";
       if (locale === "zh-CN") {
-        name = `加载界面漫画 #${comic.id}`;
-      } else if (locale === "en-US") {
-        name = `Loading Comic #${comic.id}`;
+        name = `加载界面漫画 #${comic.id}`; // i18n-allow-hardcoded
+      } else if (locale === "ja-JP") {
+        name = `ローディング漫画 #${comic.id}`; // i18n-allow-hardcoded
+      } else if (locale === "ko-KR") {
+        name = `로딩 만화 #${comic.id}`; // i18n-allow-hardcoded
       } else {
-        name = `ローディング漫画 #${comic.id}`;
+        name = `Loading Comic #${comic.id}`;
       }
 
       if (charNames.length > 0) {
@@ -100,9 +103,3 @@ export function normalizeComics(
     .sort((a, b) => a.id - b.id);
 }
 
-function localizeMasterText(entry: RawText | undefined, locale: AppLocale): string {
-  if (!entry) return "";
-  if (locale === "zh-CN") return entry.simplifiedChinese || entry.traditionalChinese || entry.japanese || entry.english;
-  if (locale === "en-US") return entry.english || entry.japanese;
-  return entry.japanese || entry.english;
-}

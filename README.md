@@ -55,8 +55,8 @@ bun run lint
 ```
 
 该命令会自动并行运行以下专项检测：
-- **多语言 key 对齐 (`lint:i18n`)**：检验 `zh-CN.ts`、`en-US.ts` 与 `ja-JP.ts` 翻译文件的 key 是否完全 1:1 对齐。
-- **国际化路由校验 (`lint:i18n-routing`)**：验证多语言路由规则一致性。
+- **多语言 key 对齐 (`lint:i18n`)**：检验 `zh-CN.ts`、`ja-JP.ts`、`en-US.ts`、`ko-KR.ts` 翻译文件的 key 是否完全 1:1 对齐（`zh-CN` 为 key 权威源）。
+- **国际化路由校验 (`lint:i18n-routing`)**：验证多语言路由规则一致性（含 `/ko` 等前缀）。
 - **路由表完整性 (`lint:routes`)**：扫描路由定义中的重复、格式以及 i18n label配置。
 - **架构合规审计 (`lint:arch`)**：
   - 禁止在非指定入口文件直接使用 `fetch()`，必须通过 domain client 模块封装。
@@ -75,6 +75,23 @@ bun run lint
 - **描边与阴影**：通过 `1.5px solid var(--mn-border)` 墨黑边界保持清晰手绘轮廓；按钮交互采用 Stamp 按压动效（配有 `--mn-shadow-stamp` 按压阴影）。
 - **装饰元素**：可采用 `.mn-halftone`、`.mn-hand-underline`、`.mn-tape`（和纸胶带装饰）等手作风格装饰。
 - 可以在浏览器中访问 `/tools/design-system` 或 `/en/design-system` 在线查看完整的设计系统参考。
+
+---
+
+## 🌐 多语言 (i18n)
+
+当前仓库内支持：
+
+| Locale | 路径 | 说明 |
+|--------|------|------|
+| `zh-CN` | `/`（默认无前缀） | 产品默认 / key 清单权威 |
+| `ja-JP` | `/ja` | 核心 |
+| `en-US` | `/en` | 核心，**运行时缺失文案回退语言** |
+| `ko-KR` | `/ko` | 核心（与其它语言同一套 key 对齐规则） |
+
+运行时 `t()` 解析顺序：当前语言 → `en-US` → 空字符串。**不会**把原始 key（如 `nav.items.foo`）暴露到 UI。
+
+给 AI Agent / 贡献者的完整约定见 [AGENTS.md](./AGENTS.md)（新增文案必须同步全部 locale、禁止半截翻译、新增语言步骤等）。
 
 ---
 

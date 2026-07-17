@@ -1,5 +1,6 @@
 import type { AppLocale } from "@/config/locales";
 import { validateMasterTable, type RawText } from "@/lib/cards/data";
+import { localizeMasterText } from "@/lib/masterdata/localize-text";
 
 export interface RawItem {
   id: number;
@@ -54,11 +55,5 @@ export function normalizeItems(
     .sort((a, b) => a.group - b.group || a.orderNum - b.orderNum || a.id - b.id);
 }
 
-function localizeMasterText(entry: RawText | undefined, locale: AppLocale): string {
-  if (!entry) return "";
-  if (locale === "zh-CN") return entry.simplifiedChinese || entry.traditionalChinese || entry.japanese || entry.english;
-  if (locale === "en-US") return entry.english || entry.japanese;
-  return entry.japanese || entry.english;
-}
 
 export { validateMasterTable };

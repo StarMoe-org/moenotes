@@ -24,8 +24,11 @@ const astroLocaleObjects = [...astroConfig.matchAll(/\{\s*path:\s*"([^"]+)",\s*c
   .map((match) => ({ path: match[1], locale: match[2] }));
 const astroPlainLocales = [...astroConfig.matchAll(/^\s*"([a-z]{2}(?:-[A-Z]{2})?)",?\s*$/gm)].map((match) => match[1]);
 
+const supportedLocales = [...localesConfig.matchAll(/SUPPORTED_LOCALES = \[([^\]]+)\]/gs)]
+  .flatMap((match) => [...match[1].matchAll(/"([^"]+)"/g)].map((item) => item[1]));
+
 const prefixEntries = [...localesConfig.matchAll(/"([^"]+)":\s*"([^"]*)"/g)]
-  .filter((match) => ["zh-CN", "ja-JP", "en-US"].includes(match[1]))
+  .filter((match) => supportedLocales.includes(match[1]))
   .map((match) => ({ locale: match[1], path: match[2] }));
 
 for (const locale of astroPlainLocales) {

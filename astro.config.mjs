@@ -23,6 +23,7 @@ export default defineConfig({
       "zh-CN",
       { path: "ja", codes: ["ja-JP"] },
       { path: "en", codes: ["en-US"] },
+      { path: "ko", codes: ["ko-KR"] },
     ],
     routing: {
       prefixDefaultLocale: false,

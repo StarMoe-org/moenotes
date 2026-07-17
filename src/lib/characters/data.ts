@@ -1,5 +1,6 @@
 import type { AppLocale } from "@/config/locales";
 import type { RawBand, RawText } from "@/lib/cards/data";
+import { localizeMasterText } from "@/lib/masterdata/localize-text";
 
 export interface RawCharacter {
   id: number;
@@ -111,16 +112,13 @@ export function normalizeCharacters(
   });
 }
 
-function localizeMasterText(entry: RawText | undefined, locale: AppLocale): string {
-  if (!entry) return "";
-  if (locale === "zh-CN") return entry.simplifiedChinese || entry.traditionalChinese || entry.japanese || entry.english;
-  if (locale === "en-US") return entry.english || entry.japanese;
-  return entry.japanese || entry.english;
-}
 
 function formatBirthday(month: number, day: number, locale: AppLocale): string {
   if (locale === "zh-CN" || locale === "ja-JP") {
     return `${month}月${day}日`; // i18n-allow-hardcoded
+  }
+  if (locale === "ko-KR") {
+    return `${month}월 ${day}일`; // i18n-allow-hardcoded
   }
   const months = [
     "January", "February", "March", "April", "May", "June",

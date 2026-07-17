@@ -1,5 +1,6 @@
 import type { AppLocale } from "@/config/locales";
 import { getAssetUrl } from "@/lib/assets/url";
+import { localizeMasterText } from "@/lib/masterdata/localize-text";
 
 export interface RawStamp {
   id: number;
@@ -79,11 +80,13 @@ export function normalizeStamps(
       if (!name || name === stamp.nameTextId) {
         const charName = charNames[0] || "";
         if (locale === "zh-CN") {
-          name = charName ? `${charName}贴纸 #${stamp.id}` : `贴纸 #${stamp.id}`;
-        } else if (locale === "en-US") {
-          name = charName ? `${charName} Sticker #${stamp.id}` : `Sticker #${stamp.id}`;
+          name = charName ? `${charName}贴纸 #${stamp.id}` : `贴纸 #${stamp.id}`; // i18n-allow-hardcoded
+        } else if (locale === "ja-JP") {
+          name = charName ? `${charName}スタンプ #${stamp.id}` : `スタンプ #${stamp.id}`; // i18n-allow-hardcoded
+        } else if (locale === "ko-KR") {
+          name = charName ? `${charName} 스티커 #${stamp.id}` : `스티커 #${stamp.id}`; // i18n-allow-hardcoded
         } else {
-          name = charName ? `${charName}スタンプ #${stamp.id}` : `スタンプ #${stamp.id}`;
+          name = charName ? `${charName} Sticker #${stamp.id}` : `Sticker #${stamp.id}`;
         }
       }
 
@@ -100,9 +103,3 @@ export function normalizeStamps(
     .sort((a, b) => a.id - b.id);
 }
 
-function localizeMasterText(entry: RawText | undefined, locale: AppLocale): string {
-  if (!entry) return "";
-  if (locale === "zh-CN") return entry.simplifiedChinese || entry.traditionalChinese || entry.japanese || entry.english;
-  if (locale === "en-US") return entry.english || entry.japanese;
-  return entry.japanese || entry.english;
-}

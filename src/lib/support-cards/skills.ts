@@ -1,6 +1,7 @@
 import type { AppLocale } from "@/config/locales";
 import { getSkillIconUrl } from "@/lib/cards/assets";
 import type { RawText, RawCharacter } from "@/lib/cards/data";
+import { localizeMasterText } from "@/lib/masterdata/localize-text";
 import type {
   RawSkillDefinition,
   RawSkillEffect,
@@ -195,10 +196,7 @@ function formatNumber(value: number | undefined, digits?: string): string {
 }
 
 function localizeText(entry: RawText | undefined, locale: AppLocale): string {
-  if (!entry) return "";
-  if (locale === "zh-CN") return entry.simplifiedChinese || entry.traditionalChinese || entry.japanese || entry.english;
-  if (locale === "en-US") return entry.english || entry.japanese;
-  return entry.japanese || entry.english;
+  return localizeMasterText(entry, locale);
 }
 
 function evaluateTernary(

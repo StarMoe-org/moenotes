@@ -1,5 +1,6 @@
 import type { AppLocale } from "@/config/locales";
 import { getAssetUrl } from "@/lib/assets/url";
+import { localizeMasterText } from "@/lib/masterdata/localize-text";
 
 export interface MasterTable<T> {
   _allData: T[];
@@ -196,12 +197,6 @@ export function normalizeMusic(
   });
 }
 
-function localizeMasterText(entry: RawText | undefined, locale: AppLocale): string {
-  if (!entry) return "";
-  if (locale === "zh-CN") return entry.simplifiedChinese || entry.traditionalChinese || entry.japanese || entry.english;
-  if (locale === "en-US") return entry.english || entry.japanese;
-  return entry.japanese || entry.english;
-}
 
 function normalizeEntry(value: unknown): unknown {
   if (!value || typeof value !== "object" || Array.isArray(value)) return value;

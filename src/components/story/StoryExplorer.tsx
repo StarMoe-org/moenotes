@@ -9,13 +9,123 @@ import { fetchAndParseStory, type ParsedStoryScript } from "@/lib/story/parser";
 import type { RawStoryCharacter, StoryCategory, StoryViewModel } from "@/lib/story/data";
 import type { RawText } from "@/lib/cards/data";
 import { localizePath } from "@/i18n/routing";
+import { localizeMasterText } from "@/lib/masterdata/localize-text";
 
 export type StorySection = "main" | "friendship" | "other";
 
 const labels: Record<AppLocale, Record<StoryCategory | "other", string>> = {
-  "zh-CN": { main: "主线剧情", friendship: "羁绊剧情", "live-result": "演出结束会话", home: "主页地点剧情", tutorial: "教程剧情", other: "其它剧情" },
-  "ja-JP": { main: "メインストーリー", friendship: "絆ストーリー", "live-result": "ライブ終了会話", home: "ホーム会話", tutorial: "チュートリアル", other: "その他ストーリー" },
+  "zh-CN": { main: "主线剧情", friendship: "羁绊剧情", "live-result": "演出结束会话", home: "主页地点剧情", tutorial: "教程剧情", other: "其它剧情" }, // i18n-allow-hardcoded
+  "ja-JP": { main: "メインストーリー", friendship: "絆ストーリー", "live-result": "ライブ終了会話", home: "ホーム会話", tutorial: "チュートリアル", other: "その他ストーリー" }, // i18n-allow-hardcoded
   "en-US": { main: "Main story", friendship: "Bond stories", "live-result": "Post-live talks", home: "Home stories", tutorial: "Tutorial stories", other: "Other stories" },
+  "ko-KR": { main: "메인 스토리", friendship: "인연 스토리", "live-result": "라이브 종료 대화", home: "홈 스토리", tutorial: "튜토리얼", other: "기타 스토리" },
+};
+
+
+const uiCopy: Record<AppLocale, {
+  searchPlaceholder: string;
+  reset: string;
+  expand: string;
+  storyType: string;
+  loadingMain: string;
+  loadMainError: string;
+  loading: string;
+  loadError: string;
+  empty: string;
+  filterTitle: string;
+  filterButton: string;
+  close: string;
+  scriptUnavailable: string;
+  parsing: string;
+  autoplay: string;
+  narration: string;
+  playing: string;
+  paused: string;
+  line: (current: number, total: number) => string;
+}> = {
+  "zh-CN": {
+    searchPlaceholder: "标题、角色、章节或 ADV ID", // i18n-allow-hardcoded
+    reset: "重置筛选", // i18n-allow-hardcoded
+    expand: "展开", // i18n-allow-hardcoded
+    storyType: "剧情类型", // i18n-allow-hardcoded
+    loadingMain: "正在整理主线章节…", // i18n-allow-hardcoded
+    loadMainError: "主线剧情数据加载失败", // i18n-allow-hardcoded
+    loading: "正在整理剧情资料…", // i18n-allow-hardcoded
+    loadError: "剧情数据加载失败", // i18n-allow-hardcoded
+    empty: "没有符合条件的剧情", // i18n-allow-hardcoded
+    filterTitle: "剧情筛选", // i18n-allow-hardcoded
+    filterButton: "筛选", // i18n-allow-hardcoded
+    close: "关闭", // i18n-allow-hardcoded
+    scriptUnavailable: "脚本资源暂不可用", // i18n-allow-hardcoded
+    parsing: "正在解析脚本与语音…", // i18n-allow-hardcoded
+    autoplay: "自动播放", // i18n-allow-hardcoded
+    narration: "旁白", // i18n-allow-hardcoded
+    playing: "自动播放中", // i18n-allow-hardcoded
+    paused: "播放已暂停", // i18n-allow-hardcoded
+    line: (current, total) => `第 ${current} / ${total} 句`, // i18n-allow-hardcoded
+  },
+  "ja-JP": {
+    searchPlaceholder: "タイトル、キャラクター、チャプターまたは ADV ID", // i18n-allow-hardcoded
+    reset: "リセット", // i18n-allow-hardcoded
+    expand: "展開", // i18n-allow-hardcoded
+    storyType: "ストーリー種別", // i18n-allow-hardcoded
+    loadingMain: "メインストーリーを整理中…", // i18n-allow-hardcoded
+    loadMainError: "メインストーリーの読み込みに失敗しました", // i18n-allow-hardcoded
+    loading: "ストーリーを整理中…", // i18n-allow-hardcoded
+    loadError: "ストーリーデータの読み込みに失敗しました", // i18n-allow-hardcoded
+    empty: "条件に一致するストーリーがありません", // i18n-allow-hardcoded
+    filterTitle: "ストーリーフィルター", // i18n-allow-hardcoded
+    filterButton: "フィルター", // i18n-allow-hardcoded
+    close: "閉じる", // i18n-allow-hardcoded
+    scriptUnavailable: "スクリプト資産を利用できません", // i18n-allow-hardcoded
+    parsing: "スクリプトとボイスを解析中…", // i18n-allow-hardcoded
+    autoplay: "自動再生", // i18n-allow-hardcoded
+    narration: "ナレーション", // i18n-allow-hardcoded
+    playing: "自動再生中", // i18n-allow-hardcoded
+    paused: "一時停止中", // i18n-allow-hardcoded
+    line: (current, total) => `${current} / ${total} 行目`, // i18n-allow-hardcoded
+  },
+  "en-US": {
+    searchPlaceholder: "Title, character, chapter or ADV ID",
+    reset: "Reset",
+    expand: "Expand",
+    storyType: "Story type",
+    loadingMain: "Loading main story chapters…",
+    loadMainError: "Failed to load main stories",
+    loading: "Loading stories…",
+    loadError: "Failed to load story data",
+    empty: "No matching stories",
+    filterTitle: "Story filters",
+    filterButton: "Filter",
+    close: "Close",
+    scriptUnavailable: "Script asset unavailable",
+    parsing: "Parsing script and voices…",
+    autoplay: "Autoplay",
+    narration: "Narration",
+    playing: "VOICING PLAYBACK",
+    paused: "PLAYBACK PAUSED",
+    line: (current, total) => `Dialogue Line ${current} / ${total}`,
+  },
+  "ko-KR": {
+    searchPlaceholder: "제목, 캐릭터, 챕터 또는 ADV ID",
+    reset: "초기화",
+    expand: "펼치기",
+    storyType: "스토리 유형",
+    loadingMain: "메인 스토리 챕터 정리 중…",
+    loadMainError: "메인 스토리 로드 실패",
+    loading: "스토리 정리 중…",
+    loadError: "스토리 데이터 로드 실패",
+    empty: "조건에 맞는 스토리가 없습니다",
+    filterTitle: "스토리 필터",
+    filterButton: "필터",
+    close: "닫기",
+    scriptUnavailable: "스크립트 에셋을 사용할 수 없습니다",
+    parsing: "스크립트와 음성을 해석 중…",
+    autoplay: "자동 재생",
+    narration: "나레이션",
+    playing: "자동 재생 중",
+    paused: "일시정지됨",
+    line: (current, total) => `대사 ${current} / ${total}`,
+  },
 };
 
 export default function StoryExplorer({ locale, initialCategory, initialStories, initialCharacters, initialTexts }: { locale: AppLocale; initialCategory: StorySection; initialStories: StoryViewModel[]; initialCharacters: RawStoryCharacter[]; initialTexts: RawText[] }) {
@@ -33,20 +143,20 @@ export default function StoryExplorer({ locale, initialCategory, initialStories,
   const filtered = useMemo(() => stories.filter((story) => inSection(story) && (initialCategory !== "other" || otherCategories.length === 0 || otherCategories.includes(story.category)) && (!query.trim() || story.searchText.includes(query.trim().toLocaleLowerCase()))), [stories, initialCategory, otherCategories, query]);
   const reset = () => { setQuery(""); setOtherCategories([]); };
   const categoryTotal = stories.filter(inSection).length;
-  const filters = (disableCollapse: boolean) => <BaseFilters title={labels[locale][initialCategory]} searchValue={query} onSearchChange={setQuery} searchLabel="Search" searchPlaceholder={locale === "zh-CN" ? "标题、角色、章节或 ADV ID" : "Title, character, chapter or ADV ID"} resultCount={filtered.length} totalCount={categoryTotal} hasActiveFilters={Boolean(query || otherCategories.length)} onReset={reset} resetLabel={locale === "zh-CN" ? "重置筛选" : "Reset"} expandLabel={locale === "zh-CN" ? "展开" : "Expand"} disableCollapse={disableCollapse}>{initialCategory === "other" ? <FilterSection title={locale === "zh-CN" ? "剧情类型" : "Story type"}><div className="flex flex-wrap gap-2"><FilterButton active={otherCategories.length === 0} onClick={() => setOtherCategories([])}>ALL</FilterButton>{(["live-result", "home", "tutorial"] as StoryCategory[]).map((category) => <FilterButton key={category} active={otherCategories.includes(category)} onClick={() => setOtherCategories(otherCategories.includes(category) ? otherCategories.filter((item) => item !== category) : [...otherCategories, category])}>{labels[locale][category]}</FilterButton>)}</div></FilterSection> : <div />}</BaseFilters>;
+  const filters = (disableCollapse: boolean) => <BaseFilters title={labels[locale][initialCategory]} searchValue={query} onSearchChange={setQuery} searchLabel="Search" searchPlaceholder={uiCopy[locale].searchPlaceholder} resultCount={filtered.length} totalCount={categoryTotal} hasActiveFilters={Boolean(query || otherCategories.length)} onReset={reset} resetLabel={uiCopy[locale].reset} expandLabel={uiCopy[locale].expand} disableCollapse={disableCollapse}>{initialCategory === "other" ? <FilterSection title={uiCopy[locale].storyType}><div className="flex flex-wrap gap-2"><FilterButton active={otherCategories.length === 0} onClick={() => setOtherCategories([])}>ALL</FilterButton>{(["live-result", "home", "tutorial"] as StoryCategory[]).map((category) => <FilterButton key={category} active={otherCategories.includes(category)} onClick={() => setOtherCategories(otherCategories.includes(category) ? otherCategories.filter((item) => item !== category) : [...otherCategories, category])}>{labels[locale][category]}</FilterButton>)}</div></FilterSection> : <div />}</BaseFilters>;
 
   if (initialCategory === "main") {
-    if (loading) return <State text={locale === "zh-CN" ? "正在整理主线章节…" : "Loading main story chapters…"} />;
-    if (error) return <State text={locale === "zh-CN" ? "主线剧情数据加载失败" : "Failed to load main stories"} action={() => setReload((v) => v + 1)} />;
+    if (loading) return <State text={uiCopy[locale].loadingMain} />;
+    if (error) return <State text={uiCopy[locale].loadMainError} action={() => setReload((v) => v + 1)} />;
     return <MainStoryGroups stories={filtered} locale={locale} />;
   }
 
   return <>
     <div className="mb-6 lg:hidden">{filters(false)}</div>
     <div className="grid min-w-0 gap-6 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start"><aside className="sticky top-24 hidden lg:block">{filters(true)}</aside><section className="min-w-0" aria-live="polite">
-      {loading ? <State text={locale === "zh-CN" ? "正在整理剧情资料…" : "Loading stories…"} /> : error ? <State text={locale === "zh-CN" ? "剧情数据加载失败" : "Failed to load story data"} action={() => setReload((v) => v + 1)} /> : filtered.length === 0 ? <State text={locale === "zh-CN" ? "没有符合条件的剧情" : "No matching stories"} action={reset} /> : <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{filtered.map((story) => <StoryCard key={story.id} story={story} locale={locale} onOpen={() => setActive(story)} />)}</div>}
+      {loading ? <State text={uiCopy[locale].loading} /> : error ? <State text={uiCopy[locale].loadError} action={() => setReload((v) => v + 1)} /> : filtered.length === 0 ? <State text={uiCopy[locale].empty} action={reset} /> : <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{filtered.map((story) => <StoryCard key={story.id} story={story} locale={locale} onOpen={() => setActive(story)} />)}</div>}
     </section></div>
-    <div className="lg:hidden"><QuickFilterButton title={locale === "zh-CN" ? "剧情筛选" : "Story filters"} buttonLabel={locale === "zh-CN" ? "筛选" : "Filter"} content={filters(true)} /></div>
+    <div className="lg:hidden"><QuickFilterButton title={uiCopy[locale].filterTitle} buttonLabel={uiCopy[locale].filterButton} content={filters(true)} /></div>
     <StoryReader story={active} locale={locale} characters={characters} texts={texts} onClose={() => setActive(null)} />
   </>;
 }
@@ -139,13 +249,7 @@ function findCharacterId(
   // 2. Localized name comparison (short name and full name)
   const nameToCompare = speakerName.trim().toLowerCase();
   const textMap = new Map(texts.map((t) => [t.id, t]));
-  const resolveText = (id: string) => {
-    const entry = textMap.get(id);
-    if (!entry) return "";
-    if (locale === "zh-CN") return entry.simplifiedChinese || entry.traditionalChinese || entry.japanese || entry.english;
-    if (locale === "en-US") return entry.english || entry.japanese;
-    return entry.japanese || entry.english;
-  };
+  const resolveText = (id: string) => localizeMasterText(textMap.get(id), locale);
 
   for (const c of characters) {
     const shortName = resolveText(c.shortNameTextID).trim().toLowerCase();
@@ -399,7 +503,7 @@ function StoryReader({ story, locale, characters, texts, onClose }: { story: Sto
     return urls;
   };
 
-  return <Modal isOpen={Boolean(story)} onClose={onClose} title={story?.title} closeLabel={locale === "zh-CN" ? "关闭" : "Close"} size="xl">
+  return <Modal isOpen={Boolean(story)} onClose={onClose} title={story?.title} closeLabel={uiCopy[locale].close} size="xl">
     <audio
       ref={audioRef}
       preload="none"
@@ -413,7 +517,7 @@ function StoryReader({ story, locale, characters, texts, onClose }: { story: Sto
       ))}
     </div>
 
-    {failed ? <State text={locale === "zh-CN" ? "脚本资源暂不可用" : "Script asset unavailable"} /> : !script ? <State text={locale === "zh-CN" ? "正在解析脚本与语音…" : "Parsing script and voices…"} /> : (
+    {failed ? <State text={uiCopy[locale].scriptUnavailable} /> : !script ? <State text={uiCopy[locale].parsing} /> : (
       <div className="flex flex-col relative pb-28">
         {/* Top Header Controls (only visible if autoplay mode is NOT active) */}
         {!isAutoplayMode && (
@@ -429,7 +533,7 @@ function StoryReader({ story, locale, characters, texts, onClose }: { story: Sto
               <svg className="h-3.5 w-3.5 fill-current translate-x-0.5" viewBox="0 0 24 24">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
               </svg>
-              {locale === "zh-CN" ? "自动播放" : "Autoplay"}
+              {uiCopy[locale].autoplay}
             </button>
           </div>
         )}
@@ -455,7 +559,7 @@ function StoryReader({ story, locale, characters, texts, onClose }: { story: Sto
                     <img src={getCharacterFaceIconUrl(charId)} alt={line.speaker} className={`h-6 w-6 rounded-full border bg-[var(--mn-cream-deep)] object-cover transition-all ${isActive ? "border-[var(--mn-accent)] scale-110" : "border-[var(--mn-border)]"}`} />
                   )}
                   <strong className={`text-sm transition-colors duration-300 ${isActive ? "text-[var(--mn-accent)] font-black" : "text-[var(--mn-text-muted)] font-bold"}`}>
-                    {line.speaker || (locale === "zh-CN" ? "旁白" : "Narration")}
+                    {line.speaker || uiCopy[locale].narration}
                   </strong>
                 </div>
                 {line.voiceUrls[0] && (
@@ -535,10 +639,10 @@ function StoryReader({ story, locale, characters, texts, onClose }: { story: Sto
               {/* Middle dialogue status info */}
               <div className="flex flex-col items-center justify-center text-center">
                 <span className="text-[9px] font-black tracking-widest text-[var(--mn-accent)] uppercase">
-                  {isPlaying ? (locale === "zh-CN" ? "自动播放中" : "VOICING PLAYBACK") : (locale === "zh-CN" ? "播放已暂停" : "PLAYBACK PAUSED")}
+                  {isPlaying ? uiCopy[locale].playing : uiCopy[locale].paused}
                 </span>
                 <span className="mt-0.5 text-xs font-black text-[var(--mn-text)]">
-                  {locale === "zh-CN" ? `第 ${activeLineIndex + 1} / ${script.lines.length} 句` : `Dialogue Line ${activeLineIndex + 1} / ${script.lines.length}`}
+                  {uiCopy[locale].line(activeLineIndex + 1, script.lines.length)}
                 </span>
               </div>
 

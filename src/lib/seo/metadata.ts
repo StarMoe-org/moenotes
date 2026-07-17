@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, OG_LOCALE, SUPPORTED_LOCALES, type AppLocale } from "@/config/locales";
+import { DEFAULT_LOCALE, HTML_LANG, OG_LOCALE, SUPPORTED_LOCALES, type AppLocale } from "@/config/locales";
 import { siteConfig } from "@/config/site";
 import { t } from "@/i18n";
 import { localeAlternates, localizePath } from "@/i18n/routing";
@@ -61,9 +61,7 @@ export function buildPageMetadata(
 }
 
 export function buildHreflang(locale: AppLocale): string {
-  if (locale === "zh-CN") return "zh-CN";
-  if (locale === "ja-JP") return "ja-JP";
-  return "en-US";
+  return HTML_LANG[locale] ?? locale;
 }
 
 export { SUPPORTED_LOCALES };
