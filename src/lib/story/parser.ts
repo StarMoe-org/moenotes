@@ -16,7 +16,12 @@ export type StoryLocale =
   | "ko-KR"
   | "th-TH"
   | "id-ID"
-  | "vi-VN";
+  | "vi-VN"
+  | "es-ES"
+  | "pt-BR"
+  | "fr-FR"
+  | "de-DE"
+  | "ru-RU";
 
 export interface StoryLine {
   index: number;
@@ -228,18 +233,22 @@ async function loadStoryTable(scriptName: string, table: StoryScriptTable, fetch
 
 function localizeText(row: TextRow, locale: StoryLocale): string {
   const localized = {
-    "ja-JP": row.japanese,
-    "en-US": row.english,
-    "zh-CN": row.simplifiedChinese,
-    "zh-TW": row.traditionalChinese,
-    "ko-KR": row.korean,
-    "th-TH": undefined,
-    "id-ID": undefined,
-    "vi-VN": undefined,
-  }[locale];
-  // Prefer English over Japanese for UI-only locales when the dedicated field is empty.
-  return localized?.trim() || row.english?.trim() || row.japanese?.trim() || "";
-}
+      "ja-JP": row.japanese,
+      "en-US": row.english,
+      "zh-CN": row.simplifiedChinese,
+      "zh-TW": row.traditionalChinese,
+      "ko-KR": row.korean,
+      "th-TH": undefined,
+      "id-ID": undefined,
+      "vi-VN": undefined,
+      "es-ES": undefined,
+      "pt-BR": undefined,
+      "fr-FR": undefined,
+      "de-DE": undefined,
+      "ru-RU": undefined,
+    }[locale];
+    return localized?.trim() || row.english?.trim() || row.japanese?.trim() || "";
+  }
 
 function collectSoundUrl(
   id: string | number | undefined,

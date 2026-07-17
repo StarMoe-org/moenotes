@@ -55,8 +55,8 @@ bun run lint
 ```
 
 该命令会自动并行运行以下专项检测：
-- **多语言 key 对齐 (`lint:i18n`)**：检验 `zh-CN.ts`、`ja-JP.ts`、`en-US.ts`、`ko-KR.ts` 翻译文件的 key 是否完全 1:1 对齐（`zh-CN` 为 key 权威源）。
-- **国际化路由校验 (`lint:i18n-routing`)**：验证多语言路由规则一致性（含 `/ko` 等前缀）。
+- **多语言 key 对齐 (`lint:i18n`)**：检验 `SUPPORTED_LOCALES` 下各翻译文件 key 是否与 `zh-CN` 完全 1:1 对齐（`zh-CN` 为 key 权威源）。
+- **国际化路由校验 (`lint:i18n-routing`)**：验证多语言路由规则与 `locales.ts` / Astro 配置一致。
 - **路由表完整性 (`lint:routes`)**：扫描路由定义中的重复、格式以及 i18n label配置。
 - **架构合规审计 (`lint:arch`)**：
   - 禁止在非指定入口文件直接使用 `fetch()`，必须通过 domain client 模块封装。
@@ -85,13 +85,31 @@ bun run lint
 | Locale | 路径 | 说明 |
 |--------|------|------|
 | `zh-CN` | `/`（默认无前缀） | 产品默认 / key 清单权威 |
+| `zh-TW` | `/zh-tw` | 繁体中文 |
 | `ja-JP` | `/ja` | 核心 |
 | `en-US` | `/en` | 核心，**运行时缺失文案回退语言** |
-| `ko-KR` | `/ko` | 核心（与其它语言同一套 key 对齐规则） |
+| `ko-KR` | `/ko` | 核心 |
+| `th-TH` | `/th` | UI（masterdata en→ja→zh） |
+| `id-ID` | `/id` | UI（masterdata en→ja→zh） |
+| `vi-VN` | `/vi` | UI（masterdata en→ja→zh） |
+| `es-ES` | `/es` | UI（masterdata en→ja→zh） |
+| `pt-BR` | `/pt` | UI（masterdata en→ja→zh） |
+| `fr-FR` | `/fr` | UI（masterdata en→ja→zh） |
+| `de-DE` | `/de` | UI（masterdata en→ja→zh） |
+| `ru-RU` | `/ru` | UI（masterdata en→ja→zh） |
 
 运行时 `t()` 解析顺序：当前语言 → `en-US` → 空字符串。**不会**把原始 key（如 `nav.items.foo`）暴露到 UI。
 
-给 AI Agent / 贡献者的完整约定见 [AGENTS.md](./AGENTS.md)（新增文案必须同步全部 locale、禁止半截翻译、新增语言步骤等）。
+### Agent / 功能改动时的 i18n 边界（重要）
+
+一般文件改动或功能增加时：
+
+1. **先完成功能本身**（逻辑、UI、路由、中/英/日核心文案）。
+2. **正常完成后，先停下来等用户确认 / 明确要求**，再处理非中英日的 i18n。
+3. **除非用户明确要求**，否则 **不要擅自修改** 非 `zh-CN` / `ja-JP` / `en-US` 的 message 文件、locale 接线或批量机翻补全。
+4. 核心三语（`zh-CN` / `ja-JP` / `en-US`）仍须保持 key 对齐与可用文案；其它语言等用户点头后再同步。
+
+给 AI Agent / 贡献者的完整约定见 [AGENTS.md](./AGENTS.md)（新增文案、回退策略、新增语言步骤等）。
 
 ---
 

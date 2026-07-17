@@ -10,6 +10,11 @@ export const SUPPORTED_LOCALES = [
   "th-TH",
   "id-ID",
   "vi-VN",
+  "es-ES",
+  "pt-BR",
+  "fr-FR",
+  "de-DE",
+  "ru-RU",
 ] as const;
 
 export type AppLocale = typeof SUPPORTED_LOCALES[number];
@@ -23,6 +28,11 @@ export const LOCALE_PATH_PREFIX: Record<AppLocale, string> = {
   "th-TH": "th",
   "id-ID": "id",
   "vi-VN": "vi",
+  "es-ES": "es",
+  "pt-BR": "pt",
+  "fr-FR": "fr",
+  "de-DE": "de",
+  "ru-RU": "ru",
 };
 
 export const PATH_PREFIX_LOCALE: Record<string, AppLocale> = {
@@ -33,6 +43,11 @@ export const PATH_PREFIX_LOCALE: Record<string, AppLocale> = {
   th: "th-TH",
   id: "id-ID",
   vi: "vi-VN",
+  es: "es-ES",
+  pt: "pt-BR",
+  fr: "fr-FR",
+  de: "de-DE",
+  ru: "ru-RU",
 };
 
 export const LOCALE_LABELS: Record<AppLocale, string> = {
@@ -44,6 +59,28 @@ export const LOCALE_LABELS: Record<AppLocale, string> = {
   "th-TH": "ไทย",
   "id-ID": "Bahasa Indonesia",
   "vi-VN": "Tiếng Việt",
+  "es-ES": "Español",
+  "pt-BR": "Português (Brasil)",
+  "fr-FR": "Français",
+  "de-DE": "Deutsch",
+  "ru-RU": "Русский",
+};
+
+/** Display flags for the language switcher. zh-TW intentionally uses the China flag. */
+export const LOCALE_FLAGS: Record<AppLocale, string> = {
+  "zh-CN": "🇨🇳",
+  "zh-TW": "🇨🇳",
+  "ja-JP": "🇯🇵",
+  "en-US": "🇺🇸",
+  "ko-KR": "🇰🇷",
+  "th-TH": "🇹🇭",
+  "id-ID": "🇮🇩",
+  "vi-VN": "🇻🇳",
+  "es-ES": "🇪🇸",
+  "pt-BR": "🇧🇷",
+  "fr-FR": "🇫🇷",
+  "de-DE": "🇩🇪",
+  "ru-RU": "🇷🇺",
 };
 
 export const HTML_LANG: Record<AppLocale, string> = {
@@ -55,6 +92,11 @@ export const HTML_LANG: Record<AppLocale, string> = {
   "th-TH": "th-TH",
   "id-ID": "id-ID",
   "vi-VN": "vi-VN",
+  "es-ES": "es-ES",
+  "pt-BR": "pt-BR",
+  "fr-FR": "fr-FR",
+  "de-DE": "de-DE",
+  "ru-RU": "ru-RU",
 };
 
 export const OG_LOCALE: Record<AppLocale, string> = {
@@ -66,6 +108,11 @@ export const OG_LOCALE: Record<AppLocale, string> = {
   "th-TH": "th_TH",
   "id-ID": "id_ID",
   "vi-VN": "vi_VN",
+  "es-ES": "es_ES",
+  "pt-BR": "pt_BR",
+  "fr-FR": "fr_FR",
+  "de-DE": "de_DE",
+  "ru-RU": "ru_RU",
 };
 
 export function isAppLocale(value: string | undefined | null): value is AppLocale {

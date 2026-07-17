@@ -9,8 +9,7 @@ export interface LocalizableMasterText {
 
 /**
  * Resolve masterdata text for a UI locale.
- * Master tables currently only ship ja/en/zh fields — locales without a dedicated
- * field (e.g. ko-KR, th/id/vi) intentionally fall back to English, then Japanese.
+ * Master tables currently ship ja/en/zh fields — UI-only locales fall back en→ja→zh.
  */
 export function localizeMasterText(entry: LocalizableMasterText | undefined, locale: AppLocale): string {
   if (!entry) return "";
@@ -23,6 +22,6 @@ export function localizeMasterText(entry: LocalizableMasterText | undefined, loc
   if (locale === "zh-CN") return zhHans || zhHant || ja || en;
   if (locale === "zh-TW") return zhHant || zhHans || ja || en;
   if (locale === "ja-JP") return ja || en || zh;
-  // en-US, ko-KR, th-TH, id-ID, vi-VN, and future UI-only locales
+  // en-US and UI-only locales (ko/th/id/vi/es/pt/fr/de/ru, …)
   return en || ja || zh;
 }

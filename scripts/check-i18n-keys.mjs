@@ -13,6 +13,11 @@ const localeFiles = {
   "th-TH": resolve(root, "src/i18n/messages/th-TH.ts"),
   "id-ID": resolve(root, "src/i18n/messages/id-ID.ts"),
   "vi-VN": resolve(root, "src/i18n/messages/vi-VN.ts"),
+  "es-ES": resolve(root, "src/i18n/messages/es-ES.ts"),
+  "pt-BR": resolve(root, "src/i18n/messages/pt-BR.ts"),
+  "fr-FR": resolve(root, "src/i18n/messages/fr-FR.ts"),
+  "de-DE": resolve(root, "src/i18n/messages/de-DE.ts"),
+  "ru-RU": resolve(root, "src/i18n/messages/ru-RU.ts"),
 };
 
 function loadMessageObject(file, exportName) {
@@ -44,6 +49,11 @@ const messages = {
   "th-TH": loadMessageObject(localeFiles["th-TH"], "thTH"),
   "id-ID": loadMessageObject(localeFiles["id-ID"], "idID"),
   "vi-VN": loadMessageObject(localeFiles["vi-VN"], "viVN"),
+  "es-ES": loadMessageObject(localeFiles["es-ES"], "esES"),
+  "pt-BR": loadMessageObject(localeFiles["pt-BR"], "ptBR"),
+  "fr-FR": loadMessageObject(localeFiles["fr-FR"], "frFR"),
+  "de-DE": loadMessageObject(localeFiles["de-DE"], "deDE"),
+  "ru-RU": loadMessageObject(localeFiles["ru-RU"], "ruRU"),
 };
 
 const flattened = Object.fromEntries(Object.entries(messages).map(([locale, tree]) => [locale, new Set(flattenKeys(tree))]));

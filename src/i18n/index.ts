@@ -1,8 +1,13 @@
 import { FALLBACK_LOCALE, type AppLocale } from "@/config/locales";
+import { deDE } from "@/i18n/messages/de-DE";
 import { enUS } from "@/i18n/messages/en-US";
+import { esES } from "@/i18n/messages/es-ES";
+import { frFR } from "@/i18n/messages/fr-FR";
 import { idID } from "@/i18n/messages/id-ID";
 import { jaJP } from "@/i18n/messages/ja-JP";
 import { koKR } from "@/i18n/messages/ko-KR";
+import { ptBR } from "@/i18n/messages/pt-BR";
+import { ruRU } from "@/i18n/messages/ru-RU";
 import { thTH } from "@/i18n/messages/th-TH";
 import { viVN } from "@/i18n/messages/vi-VN";
 import { zhCN } from "@/i18n/messages/zh-CN";
@@ -18,6 +23,11 @@ export const messagesByLocale: Record<AppLocale, MessageTree> = {
   "th-TH": thTH,
   "id-ID": idID,
   "vi-VN": viVN,
+  "es-ES": esES,
+  "pt-BR": ptBR,
+  "fr-FR": frFR,
+  "de-DE": deDE,
+  "ru-RU": ruRU,
 };
 
 export function getMessages(locale: AppLocale): MessageTree {

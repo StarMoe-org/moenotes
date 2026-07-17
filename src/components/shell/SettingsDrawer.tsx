@@ -1,6 +1,6 @@
 import { type CSSProperties, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
-import { LOCALE_LABELS, SUPPORTED_LOCALES } from "@/config/locales";
+import { LOCALE_FLAGS, LOCALE_LABELS, SUPPORTED_LOCALES } from "@/config/locales";
 import { switchLocalePath } from "@/i18n/routing";
 import { t } from "@/i18n";
 import { useOverlay } from "@/lib/overlay/use-overlay";
@@ -40,7 +40,12 @@ export default function SettingsDrawer({ locale, pathname }: SettingsDrawerProps
                 onClick={onClick}
                 {...aria}
               >
-                {LOCALE_LABELS[locale]}
+                <span className="flex min-w-0 items-center gap-2">
+                  <span className="text-base leading-none" aria-hidden="true">
+                    {LOCALE_FLAGS[locale] /* emoji-allow */}
+                  </span>
+                  <span className="truncate">{LOCALE_LABELS[locale]}</span>
+                </span>
                 {chevronDown}
               </button>
             )}
@@ -51,10 +56,13 @@ export default function SettingsDrawer({ locale, pathname }: SettingsDrawerProps
                   <a
                     key={item}
                     href={switchLocalePath(pathname, item)}
-                    className={`block rounded-full px-4 py-2 text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${item === locale ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
+                    className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${item === locale ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
                     onClick={closePopover}
                   >
-                    {LOCALE_LABELS[item]}
+                    <span className="text-base leading-none" aria-hidden="true">
+                      {LOCALE_FLAGS[item] /* emoji-allow */}
+                    </span>
+                    <span>{LOCALE_LABELS[item]}</span>
                   </a>
                 ))}
               </>
