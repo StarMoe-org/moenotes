@@ -6,9 +6,13 @@ import vm from "node:vm";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const localeFiles = {
   "zh-CN": resolve(root, "src/i18n/messages/zh-CN.ts"),
+  "zh-TW": resolve(root, "src/i18n/messages/zh-TW.ts"),
   "ja-JP": resolve(root, "src/i18n/messages/ja-JP.ts"),
   "en-US": resolve(root, "src/i18n/messages/en-US.ts"),
   "ko-KR": resolve(root, "src/i18n/messages/ko-KR.ts"),
+  "th-TH": resolve(root, "src/i18n/messages/th-TH.ts"),
+  "id-ID": resolve(root, "src/i18n/messages/id-ID.ts"),
+  "vi-VN": resolve(root, "src/i18n/messages/vi-VN.ts"),
 };
 
 function loadMessageObject(file, exportName) {
@@ -33,9 +37,13 @@ function flattenKeys(object, prefix = "") {
 
 const messages = {
   "zh-CN": loadMessageObject(localeFiles["zh-CN"], "zhCN"),
+  "zh-TW": loadMessageObject(localeFiles["zh-TW"], "zhTW"),
   "ja-JP": loadMessageObject(localeFiles["ja-JP"], "jaJP"),
   "en-US": loadMessageObject(localeFiles["en-US"], "enUS"),
   "ko-KR": loadMessageObject(localeFiles["ko-KR"], "koKR"),
+  "th-TH": loadMessageObject(localeFiles["th-TH"], "thTH"),
+  "id-ID": loadMessageObject(localeFiles["id-ID"], "idID"),
+  "vi-VN": loadMessageObject(localeFiles["vi-VN"], "viVN"),
 };
 
 const flattened = Object.fromEntries(Object.entries(messages).map(([locale, tree]) => [locale, new Set(flattenKeys(tree))]));

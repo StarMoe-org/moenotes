@@ -1,4 +1,5 @@
 import type { AppLocale } from "@/config/locales";
+import { t } from "@/i18n";
 import { getAssetUrl } from "@/lib/assets/url";
 import { localizeMasterText } from "@/lib/masterdata/localize-text";
 
@@ -79,15 +80,9 @@ export function normalizeStamps(
       let name = resolveText(stamp.nameTextId);
       if (!name || name === stamp.nameTextId) {
         const charName = charNames[0] || "";
-        if (locale === "zh-CN") {
-          name = charName ? `${charName}贴纸 #${stamp.id}` : `贴纸 #${stamp.id}`; // i18n-allow-hardcoded
-        } else if (locale === "ja-JP") {
-          name = charName ? `${charName}スタンプ #${stamp.id}` : `スタンプ #${stamp.id}`; // i18n-allow-hardcoded
-        } else if (locale === "ko-KR") {
-          name = charName ? `${charName} 스티커 #${stamp.id}` : `스티커 #${stamp.id}`; // i18n-allow-hardcoded
-        } else {
-          name = charName ? `${charName} Sticker #${stamp.id}` : `Sticker #${stamp.id}`;
-        }
+        name = charName
+          ? t(locale, "stamps.fallbackName", { name: charName, id: stamp.id })
+          : t(locale, "stamps.fallbackNameNoChar", { id: stamp.id });
       }
 
       return {

@@ -8,7 +8,15 @@ import {
   type StoryScriptTable,
 } from "@/lib/story/assets";
 
-export type StoryLocale = "ja-JP" | "en-US" | "zh-CN" | "zh-TW" | "ko-KR";
+export type StoryLocale =
+  | "ja-JP"
+  | "en-US"
+  | "zh-CN"
+  | "zh-TW"
+  | "ko-KR"
+  | "th-TH"
+  | "id-ID"
+  | "vi-VN";
 
 export interface StoryLine {
   index: number;
@@ -225,6 +233,9 @@ function localizeText(row: TextRow, locale: StoryLocale): string {
     "zh-CN": row.simplifiedChinese,
     "zh-TW": row.traditionalChinese,
     "ko-KR": row.korean,
+    "th-TH": undefined,
+    "id-ID": undefined,
+    "vi-VN": undefined,
   }[locale];
   // Prefer English over Japanese for UI-only locales when the dedicated field is empty.
   return localized?.trim() || row.english?.trim() || row.japanese?.trim() || "";

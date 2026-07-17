@@ -114,16 +114,19 @@ export function normalizeCharacters(
 
 
 function formatBirthday(month: number, day: number, locale: AppLocale): string {
-  if (locale === "zh-CN" || locale === "ja-JP") {
-    return `${month}月${day}日`; // i18n-allow-hardcoded
+  // Use a fixed non-leap year so month/day formatting is stable across engines.
+  const date = new Date(Date.UTC(2024, month - 1, day));
+  try {
+    return new Intl.DateTimeFormat(locale, {
+      month: "long",
+      day: "numeric",
+      timeZone: "UTC",
+    }).format(date);
+  } catch {
+    return new Intl.DateTimeFormat("en-US", {
+      month: "long",
+      day: "numeric",
+      timeZone: "UTC",
+    }).format(date);
   }
-  if (locale === "ko-KR") {
-    return `${month}월 ${day}일`; // i18n-allow-hardcoded
-  }
-  const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
-  const monthName = months[month - 1] || "";
-  return `${monthName} ${day}`;
 }

@@ -1,4 +1,5 @@
 import type { AppLocale } from "@/config/locales";
+import { t } from "@/i18n";
 import { getAssetUrl } from "@/lib/assets/url";
 import { localizeMasterText } from "@/lib/masterdata/localize-text";
 
@@ -74,16 +75,7 @@ export function normalizeComics(
         }
       });
 
-      let name = "";
-      if (locale === "zh-CN") {
-        name = `加载界面漫画 #${comic.id}`; // i18n-allow-hardcoded
-      } else if (locale === "ja-JP") {
-        name = `ローディング漫画 #${comic.id}`; // i18n-allow-hardcoded
-      } else if (locale === "ko-KR") {
-        name = `로딩 만화 #${comic.id}`; // i18n-allow-hardcoded
-      } else {
-        name = `Loading Comic #${comic.id}`;
-      }
+      let name = t(locale, "comics.loadingName", { id: comic.id });
 
       if (charNames.length > 0) {
         const cast = charNames.join(", ");

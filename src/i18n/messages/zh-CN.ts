@@ -42,7 +42,8 @@ export const zhCN = {
   },
   settings: {
     title: "设置",
-    language: "语言",
+    language: "语言 / Language",
+    machineTranslationNotice: "部分语言使用机器翻译，可能存在不准确之处。",
     colorScheme: "主题模式",
     options: {
       system: "跟随系统",
@@ -236,6 +237,37 @@ export const zhCN = {
       bio: "手帐",
     },
   },
+  story: {
+    categories: {
+      main: "主线剧情",
+      friendship: "羁绊剧情",
+      liveResult: "演出结束会话",
+      home: "主页地点剧情",
+      tutorial: "教程剧情",
+      other: "其它剧情",
+    },
+    ui: {
+      searchPlaceholder: "标题、角色、章节或 ADV ID",
+      reset: "重置筛选",
+      expand: "展开",
+      storyType: "剧情类型",
+      loadingMain: "正在整理主线章节…",
+      loadMainError: "主线剧情数据加载失败",
+      loading: "正在整理剧情资料…",
+      loadError: "剧情数据加载失败",
+      empty: "没有符合条件的剧情",
+      filterTitle: "剧情筛选",
+      filterButton: "筛选",
+      close: "关闭",
+      scriptUnavailable: "脚本资源暂不可用",
+      parsing: "正在解析脚本与语音…",
+      autoplay: "自动播放",
+      narration: "旁白",
+      playing: "自动播放中",
+      paused: "播放已暂停",
+      line: "第 {current} / {total} 句",
+    },
+  },
   seo: {
     home: {
       title: "BanG Dream! Our Notes 资料库与图鉴",
@@ -257,12 +289,10 @@ export const zhCN = {
       title: "卡牌图鉴",
       description: "浏览 BanG Dream! Our Notes 卡牌图鉴与高清插图，并按角色、稀有度、属性或所属乐队快速筛选。",
     },
-    stamps: {
-      title: "贴纸图鉴",
+    stamps: { title: "贴纸图鉴",
       description: "浏览 BanG Dream! Our Notes 角色贴纸、表情与高质量表情包插图资源。",
     },
-    comics: {
-      title: "漫画图鉴",
+    comics: { title: "漫画图鉴",
       description: "阅读和浏览 BanG Dream! Our Notes 游戏加载界面漫画及其原始漫画插图。",
     },
     items: {
@@ -445,6 +475,8 @@ export const zhCN = {
     copyright: "© 2026 Moenotes · 非官方资料站",
   },
   stamps: {
+    fallbackNameNoChar: "贴纸 #{id}",
+    fallbackName: "{name}贴纸 #{id}",
     searchPlaceholder: "搜索贴纸名、角色...",
     filterTitle: "筛选贴纸",
     results: "{count} 个贴纸",
@@ -460,6 +492,7 @@ export const zhCN = {
     copiedLink: "已复制贴纸的资源链接。",
   },
   comics: {
+    loadingName: "加载界面漫画 #{id}",
     searchPlaceholder: "搜索角色...",
     filterTitle: "筛选漫画",
     results: "{count} 话漫画",

@@ -21,9 +21,13 @@ export default defineConfig({
     defaultLocale: "zh-CN",
     locales: [
       "zh-CN",
+      { path: "zh-tw", codes: ["zh-TW"] },
       { path: "ja", codes: ["ja-JP"] },
       { path: "en", codes: ["en-US"] },
       { path: "ko", codes: ["ko-KR"] },
+      { path: "th", codes: ["th-TH"] },
+      { path: "id", codes: ["id-ID"] },
+      { path: "vi", codes: ["vi-VN"] },
     ],
     routing: {
       prefixDefaultLocale: false,

@@ -60,6 +60,9 @@ export default function SettingsDrawer({ locale, pathname }: SettingsDrawerProps
               </>
             )}
           </Popover>
+          <p className="mt-3 text-xs leading-5 text-[var(--mn-text-muted)]">
+            {t(locale, "settings.machineTranslationNotice")}
+          </p>
         </Section>
 
         <Section title={t(locale, "settings.colorScheme")}>

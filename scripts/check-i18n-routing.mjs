@@ -48,7 +48,9 @@ for (const astroLocale of astroLocaleObjects) {
   if (custom.path !== astroLocale.path) {
     errors.push(`Locale prefix mismatch for ${astroLocale.locale}: astro=${astroLocale.path}, custom=${custom.path}`);
   }
-  if (!localesConfig.includes(`${astroLocale.path}: "${astroLocale.locale}"`)) {
+  const prefixLocaleMarker = `${astroLocale.path}: "${astroLocale.locale}"`;
+  const quotedPrefixLocaleMarker = `"${astroLocale.path}": "${astroLocale.locale}"`;
+  if (!localesConfig.includes(prefixLocaleMarker) && !localesConfig.includes(quotedPrefixLocaleMarker)) {
     errors.push(`PATH_PREFIX_LOCALE missing ${astroLocale.path}: ${astroLocale.locale}`);
   }
 }

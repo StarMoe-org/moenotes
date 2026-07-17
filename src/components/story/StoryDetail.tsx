@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import type { AppLocale } from "@/config/locales";
+import { t } from "@/i18n";
 import type { ParsedStoryScript } from "@/lib/story/parser";
 import type { RawStoryCharacter } from "@/lib/story/data";
 import type { RawText } from "@/lib/cards/data";
@@ -54,43 +55,6 @@ function findCharacterId(
   return null;
 }
 
-
-const detailCopy: Record<AppLocale, {
-  autoplay: string;
-  narration: string;
-  playing: string;
-  paused: string;
-  line: (current: number, total: number) => string;
-}> = {
-  "zh-CN": {
-    autoplay: "自动播放", // i18n-allow-hardcoded
-    narration: "旁白", // i18n-allow-hardcoded
-    playing: "自动播放中", // i18n-allow-hardcoded
-    paused: "播放已暂停", // i18n-allow-hardcoded
-    line: (current, total) => `第 ${current} / ${total} 句`, // i18n-allow-hardcoded
-  },
-  "ja-JP": {
-    autoplay: "自動再生", // i18n-allow-hardcoded
-    narration: "ナレーション", // i18n-allow-hardcoded
-    playing: "自動再生中", // i18n-allow-hardcoded
-    paused: "一時停止中", // i18n-allow-hardcoded
-    line: (current, total) => `${current} / ${total} 行目`, // i18n-allow-hardcoded
-  },
-  "en-US": {
-    autoplay: "Autoplay",
-    narration: "Narration",
-    playing: "VOICING PLAYBACK",
-    paused: "PLAYBACK PAUSED",
-    line: (current, total) => `Dialogue Line ${current} / ${total}`,
-  },
-  "ko-KR": {
-    autoplay: "자동 재생",
-    narration: "나레이션",
-    playing: "자동 재생 중",
-    paused: "일시정지됨",
-    line: (current, total) => `대사 ${current} / ${total}`,
-  },
-};
 
 export default function StoryDetail({ locale, advId, initialTitle, initialScript, initialCharacters, initialTexts }: { locale: AppLocale; advId: number; initialTitle: string; initialScript: ParsedStoryScript | null; initialCharacters: RawStoryCharacter[]; initialTexts: RawText[] }) {
   const [title] = useState(initialTitle);
@@ -297,8 +261,8 @@ export default function StoryDetail({ locale, advId, initialTitle, initialScript
     return urls;
   };
 
-  if (error) return <div className="rounded-3xl border border-dashed border-[var(--mn-border)] bg-[var(--mn-paper)] p-10 text-center font-bold text-[var(--mn-text-muted)]">Story asset unavailable</div>;
-  if (!script) return <div className="rounded-3xl border border-dashed border-[var(--mn-border)] bg-[var(--mn-paper)] p-10 text-center font-bold text-[var(--mn-text-muted)]">Loading story…</div>;
+  if (error) return <div className="rounded-3xl border border-dashed border-[var(--mn-border)] bg-[var(--mn-paper)] p-10 text-center font-bold text-[var(--mn-text-muted)]">{t(locale, "story.ui.scriptUnavailable")}</div>;
+  if (!script) return <div className="rounded-3xl border border-dashed border-[var(--mn-border)] bg-[var(--mn-paper)] p-10 text-center font-bold text-[var(--mn-text-muted)]">{t(locale, "story.ui.parsing")}</div>;
 
   return <div className="mx-auto max-w-4xl relative pb-28">
     <audio
@@ -332,7 +296,7 @@ export default function StoryDetail({ locale, advId, initialTitle, initialScript
             <svg className="h-3.5 w-3.5 fill-current translate-x-0.5" viewBox="0 0 24 24">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
             </svg>
-            {detailCopy[locale].autoplay}
+            {t(locale, "story.ui.autoplay")}
           </button>
         </div>
       )}
@@ -357,7 +321,7 @@ export default function StoryDetail({ locale, advId, initialTitle, initialScript
               <img src={getCharacterFaceIconUrl(charId)} alt={line.speaker} className={`h-6 w-6 rounded-full border bg-[var(--mn-cream-deep)] object-cover transition-all ${isActive ? "border-[var(--mn-accent)] scale-110" : "border-[var(--mn-border)]"}`} />
             )}
             <strong className={`text-sm transition-colors duration-300 ${isActive ? "text-[var(--mn-accent)] font-black" : "text-[var(--mn-text-muted)] font-bold"}`}>
-              {line.speaker || detailCopy[locale].narration}
+              {line.speaker || t(locale, "story.ui.narration")}
             </strong>
           </div>
           {line.voiceUrls[0] && (
@@ -436,10 +400,10 @@ export default function StoryDetail({ locale, advId, initialTitle, initialScript
           {/* Middle dialogue status info */}
           <div className="flex flex-col items-center justify-center text-center">
             <span className="text-[9px] font-black tracking-widest text-[var(--mn-accent)] uppercase">
-              {isPlaying ? detailCopy[locale].playing : detailCopy[locale].paused}
+              {isPlaying ? t(locale, "story.ui.playing") : t(locale, "story.ui.paused")}
             </span>
             <span className="mt-0.5 text-xs font-black text-[var(--mn-text)]">
-              {detailCopy[locale].line(activeLineIndex + 1, script.lines.length)}
+              {t(locale, "story.ui.line", { current: activeLineIndex + 1, total: script.lines.length })}
             </span>
           </div>
 
