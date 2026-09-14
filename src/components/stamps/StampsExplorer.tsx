@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
-import BaseFilters, { FilterButton, FilterSection } from "@/components/shared/BaseFilters";
-import QuickFilterButton from "@/components/shared/QuickFilterButton";
+import BaseFilters, {
+  BandFilter,
+  CharacterFilter,
+} from "@/components/shared/BaseFilters";
+import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import Modal from "@/components/shared/Modal";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 import type { StampViewModel } from "@/lib/stamps/data";
-import {
-  getBandSmallIconUrl,
-  getCharacterFaceIconUrl,
-} from "@/lib/cards/assets";
 
 interface Props {
   locale: AppLocale;
@@ -129,14 +128,6 @@ export default function StampsExplorer({ locale, initialStamps, initialBandNames
 
   const hasActiveFilters = Boolean(query) || selectedBands.length > 0 || selectedCharacters.length > 0;
 
-  const toggleFilter = (list: number[], setList: (next: number[]) => void, value: number) => {
-    if (list.includes(value)) {
-      setList(list.filter((v) => v !== value));
-    } else {
-      setList([...list, value]);
-    }
-  };
-
   const handleBandToggle = (bandId: number) => {
     const nextBands = selectedBands.includes(bandId)
       ? selectedBands.filter((id) => id !== bandId)
@@ -250,8 +241,9 @@ export default function StampsExplorer({ locale, initialStamps, initialBandNames
     </>
   ) : null;
 
-  const filters = (disableCollapse: boolean) => (
+  const quickFilterContent = (
     <BaseFilters
+      variant="plain"
       title={t(locale, "stamps.filterTitle")}
       searchValue={query}
       onSearchChange={setQuery}
@@ -263,84 +255,68 @@ export default function StampsExplorer({ locale, initialStamps, initialBandNames
       onReset={resetFilters}
       resetLabel={t(locale, "filter.reset")}
       expandLabel={t(locale, "filter.expand")}
-      disableCollapse={disableCollapse}
     >
-      <FilterSection title={t(locale, "cards.band")}>
-        <div className="flex flex-wrap gap-2">
-          <FilterButton active={selectedBands.length === 0} onClick={handleBandReset}>ALL</FilterButton>
-          {bands.map((id) => {
-            const name = bandNamesMap.get(id) || `Band ${id}`;
-            return (
-              <FilterButton key={id} active={selectedBands.includes(id)} onClick={() => handleBandToggle(id)}>
-                <span className="flex items-center" title={name} aria-label={name}>
-                  <img className="h-5 w-auto object-contain" src={getBandSmallIconUrl(id)} alt={name} />
-                </span>
-              </FilterButton>
-            );
-          })}
-        </div>
-      </FilterSection>
+      <BandFilter
+        title={t(locale, "cards.band")}
+        bands={bands}
+        selectedBands={selectedBands}
+        getBandName={(id) => bandNamesMap.get(id) || `Band ${id}`}
+        onToggle={handleBandToggle}
+        onReset={handleBandReset}
+      />
 
-      {selectedBands.length > 0 && bandCharacters.length > 0 && (
-        <FilterSection title={t(locale, "nav.items.characters")}>
-          <div className="flex flex-wrap gap-2">
-            <FilterButton active={selectedCharacters.length === 0} onClick={() => setSelectedCharacters([])}>ALL</FilterButton>
-            {bandCharacters.map((char) => (
-              <FilterButton key={char.id} active={selectedCharacters.includes(char.id)} onClick={() => toggleFilter(selectedCharacters, setSelectedCharacters, char.id)}>
-                <span className="flex items-center" title={char.name} aria-label={char.name}>
-                  <img className="h-5 w-5 rounded-full object-cover bg-[var(--mn-cream-deep)]" src={getCharacterFaceIconUrl(char.id)} alt={char.name} />
-                </span>
-              </FilterButton>
-            ))}
-          </div>
-        </FilterSection>
-      )}
+      <CharacterFilter
+        title={t(locale, "nav.items.characters")}
+        characters={bandCharacters}
+        selectedCharacters={selectedCharacters}
+        onChange={setSelectedCharacters}
+      />
     </BaseFilters>
   );
 
+  useQuickFilter(t(locale, "stamps.filterTitle"), quickFilterContent, [
+    query,
+    selectedBands,
+    selectedCharacters,
+    bands,
+    bandCharacters,
+    hasActiveFilters,
+    filteredStamps.length,
+    stamps.length,
+    locale,
+  ]);
+
   return (
     <>
-      <div className="mb-6 lg:hidden">{filters(false)}</div>
-      <div className="grid min-w-0 gap-6 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start">
-        <aside className="sticky top-24 hidden min-w-0 lg:block">{filters(true)}</aside>
-        <section className="min-w-0" aria-live="polite">
-          {filteredStamps.length === 0 ? (
-            <EmptyState locale={locale} onReset={resetFilters} />
-          ) : (
-            <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-              {filteredStamps.map((stamp) => (
-                <button
-                  key={stamp.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedStamp(stamp);
-                    saveCurrentState();
-                  }}
-                  className="group flex flex-col items-center justify-between min-w-0 p-4 sm:p-5 overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)] text-center mn-wobble-hover"
-                  data-list-item-id={stamp.id}
-                  aria-label={stamp.name}
-                >
-                  <div className="aspect-[256/220] w-full flex items-center justify-center overflow-hidden rounded-2xl bg-[var(--mn-surface)] p-2 sm:p-3">
-                    <img className="max-h-full max-w-full object-contain" src={stamp.imageUrl} alt={stamp.name} loading="lazy" />
-                  </div>
-                  <div className="mt-4 w-full">
-                    <p className="truncate text-sm font-black text-[var(--mn-text)]">{stamp.name}</p>
-                    <p className="mt-1 text-[11px] font-bold text-[var(--mn-text-muted)]">#{stamp.id}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
-
-      <div className="lg:hidden">
-        <QuickFilterButton
-          title={t(locale, "stamps.filterTitle")}
-          buttonLabel={t(locale, "stamps.quickFilter")}
-          content={<div className="min-w-0">{filters(true)}</div>}
-        />
-      </div>
+      <section className="min-w-0" aria-live="polite">
+        {filteredStamps.length === 0 ? (
+          <EmptyState locale={locale} onReset={resetFilters} />
+        ) : (
+          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            {filteredStamps.map((stamp) => (
+              <button
+                key={stamp.id}
+                type="button"
+                onClick={() => {
+                  setSelectedStamp(stamp);
+                  saveCurrentState();
+                }}
+                className="group flex flex-col items-center justify-between min-w-0 p-4 sm:p-5 overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)] text-center mn-wobble-hover"
+                data-list-item-id={stamp.id}
+                aria-label={stamp.name}
+              >
+                <div className="aspect-[256/220] w-full flex items-center justify-center overflow-hidden rounded-2xl bg-[var(--mn-surface)] p-2 sm:p-3">
+                  <img className="max-h-full max-w-full object-contain" src={stamp.imageUrl} alt={stamp.name} loading="lazy" />
+                </div>
+                <div className="mt-4 w-full">
+                  <p className="truncate text-sm font-black text-[var(--mn-text)]">{stamp.name}</p>
+                  <p className="mt-1 text-[11px] font-bold text-[var(--mn-text-muted)]">#{stamp.id}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
 
       <Modal
         isOpen={selectedStamp !== null}

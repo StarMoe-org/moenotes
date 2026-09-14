@@ -279,7 +279,7 @@ export const viVN = {
     filters: { title: "Filter Demo", searchPlaceholder: "Search example...", category: "Category", all: "All", typeA: "Type A", typeB: "Type B", sort: "Sắp xếp", sortBy: "Sort by", language: "Ngôn ngữ", name: "Name", date: "Date", level: "Level", onlyComplete: "Completed only", reset: "Reset" },
     animations: { spring: "Spring Interaction", springDesc: "Hover lift + rotate — elastic spring transition", tap: "Tap Feedback", tapDesc: "Click scale — haptic feedback simulation", stagger: "Stagger Animation", staggerDesc: "Staggered fade-in — list items appear in sequence", wobble: "Wobble Effect", wobbleDesc: "Hover wobble — stamp/sticker style" },
   },
-  filter: { title: "Bộ lọc", search: "Tìm kiếm", sort: "Sắp xếp", reset: "Đặt lại bộ lọc", collapse: "Thu gọn", expand: "Mở rộng", count: "{filtered} / {total}" },
+  filter: { title: "Bộ lọc", search: "Tìm kiếm", sort: "Sắp xếp", reset: "Đặt lại bộ lọc", collapse: "Thu gọn", expand: "Mở rộng", count: "{filtered} / {total}", openQuickFilter: "Mở bộ lọc", drawerHintTitle: "Bộ lọc đã chuyển sang thanh bên", drawerHintBody: "Nhấp vào tab bên trái để mở hoặc thu gọn bộ lọc bất cứ lúc nào.", drawerHintDismiss: "Đã hiểu" },
   modal: { close: "Đóng" },
   footer: {
     desc: "A next-generation viewer for BanG Dream! Our Notes.",

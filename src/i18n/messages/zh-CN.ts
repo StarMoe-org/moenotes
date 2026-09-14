@@ -459,6 +459,10 @@ export const zhCN = {
     collapse: "收起",
     expand: "展开",
     count: "{filtered} / {total}",
+    openQuickFilter: "打开筛选器",
+    drawerHintTitle: "筛选器已移至侧边",
+    drawerHintBody: "点击左侧标签可随时展开或收起筛选条件。",
+    drawerHintDismiss: "知道了",
   },
   modal: {
     close: "关闭",

@@ -301,7 +301,7 @@ export const jaJP = {
     filters: { title: "フィルターデモ", searchPlaceholder: "検索例...", category: "カテゴリ", all: "すべて", typeA: "タイプ A", typeB: "タイプ B", sort: "ソート", sortBy: "並び順", language: "言語", name: "名前", date: "日付", level: "レベル", onlyComplete: "完了のみ", reset: "リセット" },
     animations: { spring: "スプリング", springDesc: "ホバーで浮上＋回転 —— 弾性バネトランジション", tap: "タップフィードバック", tapDesc: "クリックでスケール —— 触覚フィードバック", stagger: "スタッガー", staggerDesc: "順次フェードイン —— リスト項目が順番に出現", wobble: "ワブル", wobbleDesc: "ホバーで揺れ —— スタンプ/ステッカー風" },
   },
-  filter: { title: "フィルター", search: "検索", sort: "ソート", reset: "フィルターをリセット", collapse: "折りたたむ", expand: "展開", count: "{filtered} / {total}" },
+  filter: { title: "フィルター", search: "検索", sort: "ソート", reset: "フィルターをリセット", collapse: "折りたたむ", expand: "展開", count: "{filtered} / {total}", openQuickFilter: "フィルターを開く", drawerHintTitle: "フィルターがサイドに移動しました", drawerHintBody: "左のタブをクリックして、いつでもフィルターを展開または折りたたむことができます。", drawerHintDismiss: "了解" },
   modal: { close: "閉じる" },
   footer: {
     desc: "BanG Dream! Our Notes のための次世代 viewer です。",

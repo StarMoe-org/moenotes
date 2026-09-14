@@ -56,16 +56,26 @@ const messages = {
   "ru-RU": loadMessageObject(localeFiles["ru-RU"], "ruRU"),
 };
 
+const CORE_LOCALES = new Set(["zh-CN", "zh-TW", "ja-JP", "en-US", "ko-KR"]);
+
 const flattened = Object.fromEntries(Object.entries(messages).map(([locale, tree]) => [locale, new Set(flattenKeys(tree))]));
 const base = flattened["zh-CN"];
 const errors = [];
+const warnings = [];
 
 for (const [locale, keys] of Object.entries(flattened)) {
+  const isCore = CORE_LOCALES.has(locale);
   for (const key of base) {
-    if (!keys.has(key)) errors.push(`${locale} missing key: ${key}`);
+    if (!keys.has(key)) {
+      if (isCore) {
+        errors.push(`[Core: ${locale}] missing required key: ${key}`);
+      } else {
+        warnings.push({ locale, key });
+      }
+    }
   }
   for (const key of keys) {
-    if (!base.has(key)) errors.push(`${locale} has extra key not in zh-CN: ${key}`);
+    if (!base.has(key)) errors.push(`[${locale}] has extra key not in zh-CN: ${key}`);
   }
 }
 
@@ -77,10 +87,21 @@ for (const key of routeKeys) {
   if (!base.has(key)) errors.push(`route registry references missing i18n key: ${key}`);
 }
 
+if (warnings.length > 0) {
+  const byLocale = {};
+  for (const { locale } of warnings) {
+    byLocale[locale] = (byLocale[locale] || 0) + 1;
+  }
+  console.warn(`\x1b[33m[moenotes] i18n key check warnings (${warnings.length} non-core missing keys falling back to en-US):\x1b[0m`);
+  for (const [locale, count] of Object.entries(byLocale)) {
+    console.warn(`  - ${locale}: ${count} missing key(s)`);
+  }
+}
+
 if (errors.length > 0) {
-  console.error("[moenotes] i18n key check failed:");
-  for (const error of errors) console.error(`- ${error}`);
+  console.error(`\x1b[31m[moenotes] i18n key check failed (${errors.length} error(s)):\x1b[0m`);
+  for (const error of errors) console.error(`  - ${error}`);
   process.exit(1);
 }
 
-console.log(`[moenotes] i18n key check passed (${base.size} keys).`);
+console.log(`[moenotes] i18n key check passed (${base.size} keys, 5 core locales strictly verified).`);

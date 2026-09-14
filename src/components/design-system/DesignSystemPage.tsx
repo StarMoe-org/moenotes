@@ -521,6 +521,7 @@ function FiltersSection({
       <div className="grid grid-cols-1 w-full max-w-full gap-6 lg:grid-cols-2">
         <div className="w-full min-w-0">
           <BaseFilters
+            variant="card"
             title={t(locale, "filter.title")}
             searchValue={search}
             onSearchChange={setSearch}

@@ -459,6 +459,10 @@ export const zhTW = {
     collapse: "收起",
     expand: "展開",
     count: "{filtered} / {total}",
+    openQuickFilter: "開啟篩選器",
+    drawerHintTitle: "篩選器已移至側邊",
+    drawerHintBody: "點擊左側標籤可隨時展開或收起篩選條件。",
+    drawerHintDismiss: "知道了",
   },
   modal: {
     close: "關閉",

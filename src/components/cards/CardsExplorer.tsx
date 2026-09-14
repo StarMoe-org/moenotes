@@ -2,20 +2,22 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
-import BaseFilters, { FilterButton, FilterSection } from "@/components/shared/BaseFilters";
-import QuickFilterButton from "@/components/shared/QuickFilterButton";
+import BaseFilters, {
+  RarityFilter,
+  AttributeFilter,
+  BandFilter,
+  CharacterFilter,
+} from "@/components/shared/BaseFilters";
+import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import MemberCardArtwork from "@/components/shared/MemberCardArtwork";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 import {
   type CardViewModel,
 } from "@/lib/cards/data";
 import {
-  getCardTypeIconUrl,
   getRarityIconUrl,
-  getBandSmallIconUrl,
   getBandLogoUrl,
   getBandLogoWhiteUrl,
-  getCharacterFaceIconUrl,
   type CardRarity,
   type CardType,
 } from "@/lib/cards/assets";
@@ -110,14 +112,6 @@ export default function CardsExplorer({ locale, initialCards }: Props) {
 
   const hasActiveFilters = Boolean(query) || selectedRarities.length > 0 || selectedCardTypes.length > 0 || selectedBands.length > 0 || selectedCharacters.length > 0;
 
-  const toggleFilter = (list: number[], setList: (next: number[]) => void, value: number) => {
-    if (list.includes(value)) {
-      setList(list.filter((v) => v !== value));
-    } else {
-      setList([...list, value]);
-    }
-  };
-
   const handleBandToggle = (bandId: number) => {
     const nextBands = selectedBands.includes(bandId)
       ? selectedBands.filter((id) => id !== bandId)
@@ -153,8 +147,9 @@ export default function CardsExplorer({ locale, initialCards }: Props) {
     memory.clearState();
   };
 
-  const filters = (disableCollapse: boolean) => (
+  const quickFilterContent = (
     <BaseFilters
+      variant="plain"
       title={t(locale, "cards.filterTitle")}
       searchValue={query}
       onSearchChange={setQuery}
@@ -166,96 +161,66 @@ export default function CardsExplorer({ locale, initialCards }: Props) {
       onReset={resetFilters}
       resetLabel={t(locale, "filter.reset")}
       expandLabel={t(locale, "filter.expand")}
-      disableCollapse={disableCollapse}
     >
-      <FilterSection title={t(locale, "cards.rarity") }>
-        <div className="flex flex-wrap gap-2">
-          <FilterButton active={selectedRarities.length === 0} onClick={() => setSelectedRarities([])}>ALL</FilterButton>
-          {rarities.map((value) => {
-            const name = t(locale, `cards.rarities.${value}`);
-            return (
-              <FilterButton key={value} active={selectedRarities.includes(value)} onClick={() => toggleFilter(selectedRarities, setSelectedRarities, value)}>
-                <span className="flex items-center" title={name} aria-label={name}>
-                  <img className="h-5 w-auto" src={getRarityIconUrl(value)} alt={name} />
-                </span>
-              </FilterButton>
-            );
-          })}
-        </div>
-      </FilterSection>
+      <RarityFilter
+        title={t(locale, "cards.rarity")}
+        rarities={rarities}
+        selectedRarities={selectedRarities as CardRarity[]}
+        onChange={setSelectedRarities}
+        getRarityLabel={(value) => t(locale, `cards.rarities.${value}`)}
+      />
 
-      <FilterSection title={t(locale, "cards.attribute") }>
-        <div className="flex flex-wrap gap-2">
-          <FilterButton active={selectedCardTypes.length === 0} onClick={() => setSelectedCardTypes([])}>ALL</FilterButton>
-          {cardTypes.map((value) => {
-            const name = t(locale, `cards.attributes.${value}`);
-            return (
-              <FilterButton key={value} active={selectedCardTypes.includes(value)} onClick={() => toggleFilter(selectedCardTypes, setSelectedCardTypes, value)}>
-                <span className="flex items-center" title={name} aria-label={name}>
-                  <img className="h-5 w-5" src={getCardTypeIconUrl(value)} alt={name} />
-                </span>
-              </FilterButton>
-            );
-          })}
-        </div>
-      </FilterSection>
+      <AttributeFilter
+        title={t(locale, "cards.attribute")}
+        attributes={cardTypes}
+        selectedAttributes={selectedCardTypes as CardType[]}
+        onChange={setSelectedCardTypes}
+        getAttributeLabel={(value) => t(locale, `cards.attributes.${value}`)}
+      />
 
-      <FilterSection title={t(locale, "cards.band") }>
-        <div className="flex flex-wrap gap-2">
-          <FilterButton active={selectedBands.length === 0} onClick={handleBandReset}>ALL</FilterButton>
-          {bands.map(([id, name]) => (
-            <FilterButton key={id} active={selectedBands.includes(id)} onClick={() => handleBandToggle(id)}>
-              <span className="flex items-center" title={name} aria-label={name}>
-                <img className="h-5 w-auto object-contain" src={getBandSmallIconUrl(id)} alt={name} />
-              </span>
-            </FilterButton>
-          ))}
-        </div>
-      </FilterSection>
+      <BandFilter
+        title={t(locale, "cards.band")}
+        bands={bands}
+        selectedBands={selectedBands}
+        onToggle={handleBandToggle}
+        onReset={handleBandReset}
+      />
 
-      {selectedBands.length > 0 && bandCharacters.length > 0 && (
-        <FilterSection title={t(locale, "nav.items.characters")}>
-          <div className="flex flex-wrap gap-2">
-            <FilterButton active={selectedCharacters.length === 0} onClick={() => setSelectedCharacters([])}>ALL</FilterButton>
-            {bandCharacters.map((char) => (
-              <FilterButton key={char.id} active={selectedCharacters.includes(char.id)} onClick={() => toggleFilter(selectedCharacters, setSelectedCharacters, char.id)}>
-                <span className="flex items-center" title={char.name} aria-label={char.name}>
-                  <img className="h-5 w-5 rounded-full object-cover bg-[var(--mn-cream-deep)]" src={getCharacterFaceIconUrl(char.id)} alt={char.name} />
-                </span>
-              </FilterButton>
-            ))}
-          </div>
-        </FilterSection>
-      )}
+      <CharacterFilter
+        title={t(locale, "nav.items.characters")}
+        characters={bandCharacters}
+        selectedCharacters={selectedCharacters}
+        onChange={setSelectedCharacters}
+      />
     </BaseFilters>
   );
 
-  return (
-    <>
-      <div className="mb-6 lg:hidden">{filters(false)}</div>
-      <div className="grid min-w-0 gap-6 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start">
-        <aside className="sticky top-24 hidden min-w-0 lg:block">{filters(true)}</aside>
-        <section className="min-w-0" aria-live="polite">
-          {filteredCards.length === 0 ? (
-            <EmptyState locale={locale} onReset={resetFilters} />
-          ) : (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4xl:grid-cols-7 5xl:grid-cols-8">
-              {filteredCards.map((card) => (
-                <CardItem key={card.id} card={card} locale={locale} onCardClick={saveCurrentState} />
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
+  useQuickFilter(t(locale, "cards.filterTitle"), quickFilterContent, [
+    query,
+    selectedRarities,
+    selectedCardTypes,
+    selectedBands,
+    selectedCharacters,
+    bands,
+    bandCharacters,
+    hasActiveFilters,
+    filteredCards.length,
+    cards.length,
+    locale,
+  ]);
 
-      <div className="lg:hidden">
-        <QuickFilterButton
-          title={t(locale, "cards.filterTitle")}
-          buttonLabel={t(locale, "cards.quickFilter")}
-          content={<div className="min-w-0">{filters(true)}</div>}
-        />
-      </div>
-    </>
+  return (
+    <section className="min-w-0" aria-live="polite">
+      {filteredCards.length === 0 ? (
+        <EmptyState locale={locale} onReset={resetFilters} />
+      ) : (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4xl:grid-cols-7 5xl:grid-cols-8">
+          {filteredCards.map((card) => (
+            <CardItem key={card.id} card={card} locale={locale} onCardClick={saveCurrentState} />
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 

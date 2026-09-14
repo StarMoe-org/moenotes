@@ -279,7 +279,7 @@ export const idID = {
     filters: { title: "Filter Demo", searchPlaceholder: "Search example...", category: "Category", all: "All", typeA: "Type A", typeB: "Type B", sort: "Urutkan", sortBy: "Sort by", language: "Bahasa", name: "Name", date: "Date", level: "Level", onlyComplete: "Completed only", reset: "Reset" },
     animations: { spring: "Spring Interaction", springDesc: "Hover lift + rotate — elastic spring transition", tap: "Tap Feedback", tapDesc: "Click scale — haptic feedback simulation", stagger: "Stagger Animation", staggerDesc: "Staggered fade-in — list items appear in sequence", wobble: "Wobble Effect", wobbleDesc: "Hover wobble — stamp/sticker style" },
   },
-  filter: { title: "Filter", search: "Cari", sort: "Urutkan", reset: "Reset filter", collapse: "Ciutkan", expand: "Bentangkan", count: "{filtered} / {total}" },
+  filter: { title: "Filter", search: "Cari", sort: "Urutkan", reset: "Reset filter", collapse: "Ciutkan", expand: "Bentangkan", count: "{filtered} / {total}", openQuickFilter: "Buka filter", drawerHintTitle: "Filter dipindahkan ke samping", drawerHintBody: "Klik tab di sebelah kiri untuk membuka atau menutup filter kapan saja.", drawerHintDismiss: "Mengerti" },
   modal: { close: "Tutup" },
   footer: {
     desc: "A next-generation viewer for BanG Dream! Our Notes.",

@@ -501,6 +501,10 @@ export const ruRU = {
     collapse: "Свернуть",
     expand: "Развернуть",
     count: "{filtered} / {total}",
+    openQuickFilter: "Открыть фильтры",
+    drawerHintTitle: "Фильтры перемещены на боковую панель",
+    drawerHintBody: "Нажмите на вкладку слева, чтобы в любое время развернуть или свернуть фильтры.",
+    drawerHintDismiss: "Понятно",
   },
   modal: {
     close: "Закрыть",

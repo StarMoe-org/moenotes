@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import BaseFilters, { FilterSection } from "@/components/shared/BaseFilters";
-import QuickFilterButton from "@/components/shared/QuickFilterButton";
+import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import Popover from "@/components/shared/Popover";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 import {
@@ -74,8 +74,9 @@ export default function ItemsExplorer({ locale, initialItems }: Props) {
     memory.clearState();
   };
 
-  const filters = (disableCollapse: boolean) => (
+  const quickFilterContent = (
     <BaseFilters
+      variant="plain"
       title={t(locale, "items.filterTitle")}
       searchValue={query}
       onSearchChange={setQuery}
@@ -87,7 +88,6 @@ export default function ItemsExplorer({ locale, initialItems }: Props) {
       onReset={resetFilters}
       resetLabel={t(locale, "filter.reset")}
       expandLabel={t(locale, "filter.expand")}
-      disableCollapse={disableCollapse}
     >
       <FilterSection title={t(locale, "nav.items.items")}>
         <div className="relative mt-2">
@@ -141,32 +141,28 @@ export default function ItemsExplorer({ locale, initialItems }: Props) {
     </BaseFilters>
   );
 
-  return (
-    <>
-      <div className="mb-6 lg:hidden">{filters(false)}</div>
-      <div className="grid min-w-0 gap-6 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start">
-        <aside className="sticky top-24 hidden min-w-0 lg:block">{filters(true)}</aside>
-        <section className="min-w-0" aria-live="polite">
-          {filteredItems.length === 0 ? (
-            <EmptyState locale={locale} onReset={resetFilters} />
-          ) : (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4xl:grid-cols-7 5xl:grid-cols-8">
-              {filteredItems.map((item) => (
-                <ItemCardItem key={item.id} item={item} locale={locale} />
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
+  useQuickFilter(t(locale, "items.filterTitle"), quickFilterContent, [
+    query,
+    selectedGroups,
+    displayGroups,
+    hasActiveFilters,
+    filteredItems.length,
+    items.length,
+    locale,
+  ]);
 
-      <div className="lg:hidden">
-        <QuickFilterButton
-          title={t(locale, "items.filterTitle")}
-          buttonLabel={t(locale, "items.quickFilter")}
-          content={<div className="min-w-0">{filters(true)}</div>}
-        />
-      </div>
-    </>
+  return (
+    <section className="min-w-0" aria-live="polite">
+      {filteredItems.length === 0 ? (
+        <EmptyState locale={locale} onReset={resetFilters} />
+      ) : (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4xl:grid-cols-7 5xl:grid-cols-8">
+          {filteredItems.map((item) => (
+            <ItemCardItem key={item.id} item={item} locale={locale} />
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 

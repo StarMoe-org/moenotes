@@ -501,6 +501,10 @@ export const ptBR = {
     collapse: "Recolher",
     expand: "Expandir",
     count: "{filtered} / {total}",
+    openQuickFilter: "Abrir filtros",
+    drawerHintTitle: "Filtros na barra lateral",
+    drawerHintBody: "Clique na aba à esquerda para expandir ou recolher os filtros a qualquer momento.",
+    drawerHintDismiss: "Entendi",
   },
   modal: {
     close: "Fechar",

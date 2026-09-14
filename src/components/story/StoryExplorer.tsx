@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import type { AppLocale } from "@/config/locales";
 import BaseFilters, { FilterButton, FilterSection } from "@/components/shared/BaseFilters";
-import QuickFilterButton from "@/components/shared/QuickFilterButton";
+import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import Modal from "@/components/shared/Modal";
 import { getAssetUrl } from "@/lib/assets/url";
 import { getCharacterFaceIconUrl } from "@/lib/cards/assets";
@@ -34,7 +34,55 @@ export default function StoryExplorer({ locale, initialCategory, initialStories,
   const filtered = useMemo(() => stories.filter((story) => inSection(story) && (initialCategory !== "other" || otherCategories.length === 0 || otherCategories.includes(story.category)) && (!query.trim() || story.searchText.includes(query.trim().toLocaleLowerCase()))), [stories, initialCategory, otherCategories, query]);
   const reset = () => { setQuery(""); setOtherCategories([]); };
   const categoryTotal = stories.filter(inSection).length;
-  const filters = (disableCollapse: boolean) => <BaseFilters title={t(locale, storyCategoryKey(initialCategory))} searchValue={query} onSearchChange={setQuery} searchLabel="Search" searchPlaceholder={t(locale, "story.ui.searchPlaceholder")} resultCount={filtered.length} totalCount={categoryTotal} hasActiveFilters={Boolean(query || otherCategories.length)} onReset={reset} resetLabel={t(locale, "story.ui.reset")} expandLabel={t(locale, "story.ui.expand")} disableCollapse={disableCollapse}>{initialCategory === "other" ? <FilterSection title={t(locale, "story.ui.storyType")}><div className="flex flex-wrap gap-2"><FilterButton active={otherCategories.length === 0} onClick={() => setOtherCategories([])}>ALL</FilterButton>{(["live-result", "home", "tutorial"] as StoryCategory[]).map((category) => <FilterButton key={category} active={otherCategories.includes(category)} onClick={() => setOtherCategories(otherCategories.includes(category) ? otherCategories.filter((item) => item !== category) : [...otherCategories, category])}>{t(locale, storyCategoryKey(category))}</FilterButton>)}</div></FilterSection> : <div />}</BaseFilters>;
+  const quickFilterContent = (
+    <BaseFilters
+      variant="plain"
+      title={t(locale, storyCategoryKey(initialCategory))}
+      searchValue={query}
+      onSearchChange={setQuery}
+      searchLabel="Search"
+      searchPlaceholder={t(locale, "story.ui.searchPlaceholder")}
+      resultCount={filtered.length}
+      totalCount={categoryTotal}
+      hasActiveFilters={Boolean(query || otherCategories.length)}
+      onReset={reset}
+      resetLabel={t(locale, "story.ui.reset")}
+      expandLabel={t(locale, "story.ui.expand")}
+    >
+      {initialCategory === "other" ? (
+        <FilterSection title={t(locale, "story.ui.storyType")}>
+          <div className="flex flex-wrap gap-2">
+            <FilterButton active={otherCategories.length === 0} onClick={() => setOtherCategories([])}>
+              ALL
+            </FilterButton>
+            {(["live-result", "home", "tutorial"] as StoryCategory[]).map((category) => (
+              <FilterButton
+                key={category}
+                active={otherCategories.includes(category)}
+                onClick={() =>
+                  setOtherCategories(
+                    otherCategories.includes(category)
+                      ? otherCategories.filter((item) => item !== category)
+                      : [...otherCategories, category]
+                  )
+                }
+              >
+                {t(locale, storyCategoryKey(category))}
+              </FilterButton>
+            ))}
+          </div>
+        </FilterSection>
+      ) : (
+        <div />
+      )}
+    </BaseFilters>
+  );
+
+  useQuickFilter(
+    initialCategory !== "main" ? t(locale, storyCategoryKey(initialCategory)) : "",
+    initialCategory !== "main" ? quickFilterContent : null,
+    [initialCategory, query, otherCategories, filtered.length, categoryTotal, locale]
+  );
 
   if (initialCategory === "main") {
     if (loading) return <State text={t(locale, "story.ui.loadingMain")} />;
@@ -42,14 +90,26 @@ export default function StoryExplorer({ locale, initialCategory, initialStories,
     return <MainStoryGroups stories={filtered} locale={locale} />;
   }
 
-  return <>
-    <div className="mb-6 lg:hidden">{filters(false)}</div>
-    <div className="grid min-w-0 gap-6 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start"><aside className="sticky top-24 hidden lg:block">{filters(true)}</aside><section className="min-w-0" aria-live="polite">
-      {loading ? <State text={t(locale, "story.ui.loading")} /> : error ? <State text={t(locale, "story.ui.loadError")} action={() => setReload((v) => v + 1)} /> : filtered.length === 0 ? <State text={t(locale, "story.ui.empty")} action={reset} /> : <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{filtered.map((story) => <StoryCard key={story.id} story={story} locale={locale} onOpen={() => setActive(story)} />)}</div>}
-    </section></div>
-    <div className="lg:hidden"><QuickFilterButton title={t(locale, "story.ui.filterTitle")} buttonLabel={t(locale, "story.ui.filterButton")} content={filters(true)} /></div>
-    <StoryReader story={active} locale={locale} characters={characters} texts={texts} onClose={() => setActive(null)} />
-  </>;
+  return (
+    <>
+      <section className="min-w-0" aria-live="polite">
+        {loading ? (
+          <State text={t(locale, "story.ui.loading")} />
+        ) : error ? (
+          <State text={t(locale, "story.ui.loadError")} action={() => setReload((v) => v + 1)} />
+        ) : filtered.length === 0 ? (
+          <State text={t(locale, "story.ui.empty")} action={reset} />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {filtered.map((story) => (
+              <StoryCard key={story.id} story={story} locale={locale} onOpen={() => setActive(story)} />
+            ))}
+          </div>
+        )}
+      </section>
+      <StoryReader story={active} locale={locale} characters={characters} texts={texts} onClose={() => setActive(null)} />
+    </>
+  );
 }
 
 function MainStoryGroups({ stories, locale }: { stories: StoryViewModel[]; locale: AppLocale }) {

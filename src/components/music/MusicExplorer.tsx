@@ -2,8 +2,11 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
-import BaseFilters, { FilterButton, FilterSection } from "@/components/shared/BaseFilters";
-import QuickFilterButton from "@/components/shared/QuickFilterButton";
+import BaseFilters, {
+  AttributeFilter,
+  BandFilter,
+} from "@/components/shared/BaseFilters";
+import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 import {
   type MusicViewModel,
@@ -86,14 +89,6 @@ export default function MusicExplorer({ locale, initialSongs }: Props) {
 
   const hasActiveFilters = Boolean(query) || selectedTypes.length > 0 || selectedBands.length > 0;
 
-  const toggleFilter = (list: number[], setList: (next: number[]) => void, value: number) => {
-    if (list.includes(value)) {
-      setList(list.filter((v) => v !== value));
-    } else {
-      setList([...list, value]);
-    }
-  };
-
   const resetFilters = () => {
     setQuery("");
     setSelectedTypes([]);
@@ -101,8 +96,9 @@ export default function MusicExplorer({ locale, initialSongs }: Props) {
     memory.clearState();
   };
 
-  const filters = (disableCollapse: boolean) => (
+  const quickFilterContent = (
     <BaseFilters
+      variant="plain"
       title={t(locale, "music.filterTitle")}
       searchValue={query}
       onSearchChange={setQuery}
@@ -114,65 +110,47 @@ export default function MusicExplorer({ locale, initialSongs }: Props) {
       onReset={resetFilters}
       resetLabel={t(locale, "filter.reset")}
       expandLabel={t(locale, "filter.expand")}
-      disableCollapse={disableCollapse}
     >
-      <FilterSection title={t(locale, "cards.attribute")}>
-        <div className="flex flex-wrap gap-2">
-          <FilterButton active={selectedTypes.length === 0} onClick={() => setSelectedTypes([])}>ALL</FilterButton>
-          {musicTypes.map((value) => {
-            const name = t(locale, `cards.attributes.${value}`);
-            return (
-              <FilterButton key={value} active={selectedTypes.includes(value)} onClick={() => toggleFilter(selectedTypes, setSelectedTypes, value)}>
-                <span className="flex items-center" title={name} aria-label={name}>
-                  <img className="h-5 w-5" src={getCardTypeIconUrl(value as CardType)} alt={name} />
-                </span>
-              </FilterButton>
-            );
-          })}
-        </div>
-      </FilterSection>
+      <AttributeFilter
+        title={t(locale, "cards.attribute")}
+        attributes={musicTypes}
+        selectedAttributes={selectedTypes}
+        onChange={setSelectedTypes}
+        getAttributeLabel={(value) => t(locale, `cards.attributes.${value}`)}
+      />
 
-      <FilterSection title={t(locale, "cards.band")}>
-        <div className="flex flex-wrap gap-2">
-          <FilterButton active={selectedBands.length === 0} onClick={() => setSelectedBands([])}>ALL</FilterButton>
-          {bands.map(([id, name]) => (
-            <FilterButton key={id} active={selectedBands.includes(id)} onClick={() => toggleFilter(selectedBands, setSelectedBands, id)}>
-              <span className="flex items-center" title={name} aria-label={name}>
-                <img className="h-5 w-auto object-contain" src={getBandSmallIconUrl(id)} alt={name} />
-              </span>
-            </FilterButton>
-          ))}
-        </div>
-      </FilterSection>
+      <BandFilter
+        title={t(locale, "cards.band")}
+        bands={bands}
+        selectedBands={selectedBands}
+        onChange={setSelectedBands}
+      />
     </BaseFilters>
   );
 
-  return (
-    <>
-      <div className="mb-6 lg:hidden">{filters(false)}</div>
-      <div className="grid min-w-0 gap-6 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start">
-        <aside className="sticky top-24 hidden min-w-0 lg:block">{filters(true)}</aside>
-        <section className="min-w-0" aria-live="polite">
-          {filteredSongs.length === 0 ? (
-            <EmptyState locale={locale} onReset={resetFilters} />
-          ) : (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6">
-              {filteredSongs.map((song) => (
-                <SongCard key={song.id} song={song} locale={locale} onClick={saveCurrentState} />
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
+  useQuickFilter(t(locale, "music.filterTitle"), quickFilterContent, [
+    query,
+    selectedTypes,
+    selectedBands,
+    bands,
+    hasActiveFilters,
+    filteredSongs.length,
+    songs.length,
+    locale,
+  ]);
 
-      <div className="lg:hidden">
-        <QuickFilterButton
-          title={t(locale, "music.filterTitle")}
-          buttonLabel={t(locale, "cards.quickFilter")}
-          content={<div className="min-w-0">{filters(true)}</div>}
-        />
-      </div>
-    </>
+  return (
+    <section className="min-w-0" aria-live="polite">
+      {filteredSongs.length === 0 ? (
+        <EmptyState locale={locale} onReset={resetFilters} />
+      ) : (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6">
+          {filteredSongs.map((song) => (
+            <SongCard key={song.id} song={song} locale={locale} onClick={saveCurrentState} />
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 

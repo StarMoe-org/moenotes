@@ -1,5 +1,7 @@
 :root {
   --mn-layout-max-width: 120rem;
+  --mn-filter-drawer-w: 20rem;
+  --mn-filter-offset: 0rem;
 
   /* ── Neutrals ── */
   --mn-bg: #FAF6F0;

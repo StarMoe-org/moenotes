@@ -279,7 +279,7 @@ export const koKR = {
     filters: { title: "필터 데모", searchPlaceholder: "검색 예시...", category: "카테고리", all: "전체", typeA: "타입 A", typeB: "타입 B", sort: "정렬", sortBy: "정렬 기준", language: "언어", name: "이름", date: "날짜", level: "레벨", onlyComplete: "완료만", reset: "초기화" },
     animations: { spring: "스프링 인터랙션", springDesc: "호버 리프트 + 회전 — 탄성 스프링 전환", tap: "탭 피드백", tapDesc: "클릭 스케일 — 햅틱 피드백 시뮬레이션", stagger: "스태거 애니메이션", staggerDesc: "순차 페이드인 — 리스트 항목이 차례로 나타남", wobble: "흔들림 효과", wobbleDesc: "호버 흔들림 — 스탬프/스티커 스타일" },
   },
-  filter: { title: "필터", search: "검색", sort: "정렬", reset: "필터 초기화", collapse: "접기", expand: "펼치기", count: "{filtered} / {total}" },
+  filter: { title: "필터", search: "검색", sort: "정렬", reset: "필터 초기화", collapse: "접기", expand: "펼치기", count: "{filtered} / {total}", openQuickFilter: "필터 열기", drawerHintTitle: "필터가 사이드로 이동했습니다", drawerHintBody: "왼쪽 탭을 클릭하여 언제든지 필터를 펼치거나 접을 수 있습니다.", drawerHintDismiss: "확인" },
   modal: { close: "닫기" },
   footer: {
     desc: "BanG Dream! Our Notes를 위한 차세대 뷰어.",

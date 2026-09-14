@@ -501,6 +501,10 @@ export const deDE = {
     collapse: "Einklappen",
     expand: "Ausklappen",
     count: "{filtered} / {total}",
+    openQuickFilter: "Filter öffnen",
+    drawerHintTitle: "Filter in die Seitenleiste verschoben",
+    drawerHintBody: "Klicken Sie auf den linken Reiter, um die Filter jederzeit ein- oder auszuklappen.",
+    drawerHintDismiss: "Verstanden",
   },
   modal: {
     close: "Schließen",

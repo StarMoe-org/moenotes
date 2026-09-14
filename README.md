@@ -91,7 +91,7 @@ bun run lint
 | `ko-KR` | `/ko` | 核心 |
 | `th-TH` | `/th` | UI（masterdata en→ja→zh） |
 | `id-ID` | `/id` | UI（masterdata en→ja→zh） |
-| `vi-VN` | `/vi` | UI（masterdata en→ja→zh） |
+| `vi-VN` | `/vi` | UI（masterdata en→ja→zh
 | `es-ES` | `/es` | UI（masterdata en→ja→zh） |
 | `pt-BR` | `/pt` | UI（masterdata en→ja→zh） |
 | `fr-FR` | `/fr` | UI（masterdata en→ja→zh） |

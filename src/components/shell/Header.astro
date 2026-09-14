@@ -59,123 +59,165 @@ const hasCrumbs = crumbs.length > 1;
   </div>
 </header>
 
-<script is:inline>
-  (() => {
-    const teardownKey = "__moenotesHeaderTeardown";
-    const initKey = "__moenotesHeaderInit";
-    const beforeSwapKey = "__moenotesHeaderBeforeSwap";
+<script>
+  import { storageKeys } from "@/config/storage";
+  import { safeGetLocalStorage, safeSetLocalStorage } from "@/lib/storage/safe-storage";
 
-    const init = () => {
-      window[teardownKey]?.();
+  const teardownKey = "__moenotesHeaderTeardown";
+  const initKey = "__moenotesHeaderInit";
+  const beforeSwapKey = "__moenotesHeaderBeforeSwap";
 
-      const toggleBtn = document.getElementById("breadcrumbs-toggle");
-      const container = document.getElementById("mobile-breadcrumbs-container");
-      const chevron = document.getElementById("toggle-chevron");
-      const headerCard = document.getElementById("header-card");
-      const root = document.documentElement;
-      const mediaQuery = window.matchMedia("(max-width: 767.98px)");
-      /** @type {number | undefined} */
-      let overflowTimer;
-      /** @type {ResizeObserver | undefined} */
-      let headerResizeObserver;
+  const getStoredOpen = (): boolean => {
+    const stored = safeGetLocalStorage(storageKeys.breadcrumbsOpen);
+    return stored === null ? true : stored === "true";
+  };
 
-      const clearOverflowTimer = () => {
-        if (overflowTimer) {
-          window.clearTimeout(overflowTimer);
-          overflowTimer = undefined;
-        }
-      };
+  const setStoredOpen = (open: boolean): void => {
+    safeSetLocalStorage(storageKeys.breadcrumbsOpen, String(open));
+  };
 
-      const updateHeaderOffset = () => {
-        if (!headerCard || !mediaQuery.matches) {
-          root.style.removeProperty("--mn-header-bottom");
-          return;
-        }
+  const init = () => {
+    (window as unknown as Record<string, (() => void) | undefined>)[teardownKey]?.();
 
-        root.style.setProperty("--mn-header-bottom", `${headerCard.offsetHeight + 24}px`);
-      };
+    const toggleBtn = document.getElementById("breadcrumbs-toggle");
+    const container = document.getElementById("mobile-breadcrumbs-container");
+    const chevron = document.getElementById("toggle-chevron");
+    const headerCard = document.getElementById("header-card");
+    const root = document.documentElement;
+    const mediaQuery = window.matchMedia("(max-width: 767.98px)");
+    let overflowTimer: number | undefined;
+    let headerResizeObserver: ResizeObserver | undefined;
 
-      const setOpen = (isOpen) => {
-        if (!toggleBtn || !container || !chevron) return;
-
-        clearOverflowTimer();
-        container.classList.toggle("is-open", isOpen);
-        toggleBtn.setAttribute("aria-expanded", String(isOpen));
-        chevron.style.transform = isOpen ? "rotate(180deg)" : "rotate(0deg)";
-        toggleBtn.classList.toggle("bg-[var(--mn-accent-soft)]", isOpen);
-        toggleBtn.classList.toggle("text-[var(--mn-accent-deep)]", isOpen);
-        toggleBtn.classList.toggle("text-[var(--mn-text-muted)]", !isOpen);
-
-        if (!mediaQuery.matches) {
-          container.style.maxHeight = "";
-          container.style.overflow = "";
-          updateHeaderOffset();
-          return;
-        }
-
-        container.style.overflow = "hidden";
-        container.style.maxHeight = isOpen ? `${container.scrollHeight}px` : "0";
-        updateHeaderOffset();
-
-        if (isOpen) {
-          overflowTimer = window.setTimeout(() => {
-            if (container.classList.contains("is-open")) {
-              container.style.overflow = "visible";
-            }
-          }, 300);
-        }
-      };
-
-      const handleToggle = () => setOpen(!container?.classList.contains("is-open"));
-      const handleResize = () => {
-        const isOpen = container?.classList.contains("is-open") ?? false;
-        setOpen(isOpen);
-      };
-
-      if (headerCard && "ResizeObserver" in window) {
-        headerResizeObserver = new ResizeObserver(updateHeaderOffset);
-        headerResizeObserver.observe(headerCard);
+    const clearOverflowTimer = () => {
+      if (overflowTimer) {
+        window.clearTimeout(overflowTimer);
+        overflowTimer = undefined;
       }
-
-      document.fonts?.ready.then(updateHeaderOffset).catch(() => {});
-
-      if (toggleBtn && container && chevron && headerCard) {
-        setOpen(container.classList.contains("is-open"));
-        toggleBtn.addEventListener("click", handleToggle);
-        window.addEventListener("resize", handleResize);
-      } else {
-        updateHeaderOffset();
-        window.addEventListener("resize", updateHeaderOffset);
-      }
-
-      window[teardownKey] = () => {
-        clearOverflowTimer();
-        headerResizeObserver?.disconnect();
-        toggleBtn?.removeEventListener("click", handleToggle);
-        window.removeEventListener("resize", handleResize);
-        window.removeEventListener("resize", updateHeaderOffset);
-      };
     };
 
-    if (window[initKey]) {
-      document.removeEventListener("astro:page-load", window[initKey]);
-      document.removeEventListener("DOMContentLoaded", window[initKey]);
-    }
-    if (window[beforeSwapKey]) {
-      document.removeEventListener("astro:before-swap", window[beforeSwapKey]);
+    const updateHeaderOffset = () => {
+      if (!headerCard || !mediaQuery.matches) {
+        root.style.removeProperty("--mn-header-bottom");
+        return;
+      }
+
+      root.style.setProperty("--mn-header-bottom", `${headerCard.offsetHeight + 24}px`);
+    };
+
+    const setOpen = (isOpen: boolean, animate = true) => {
+      if (!toggleBtn || !container || !chevron) return;
+
+      clearOverflowTimer();
+      container.classList.toggle("is-open", isOpen);
+      toggleBtn.setAttribute("aria-expanded", String(isOpen));
+      toggleBtn.classList.toggle("bg-[var(--mn-accent-soft)]", isOpen);
+      toggleBtn.classList.toggle("text-[var(--mn-accent-deep)]", isOpen);
+      toggleBtn.classList.toggle("text-[var(--mn-text-muted)]", !isOpen);
+
+      if (!animate) {
+        container.style.transition = "none";
+        chevron.style.transition = "none";
+      }
+
+      chevron.style.transform = isOpen ? "rotate(180deg)" : "rotate(0deg)";
+
+      if (!mediaQuery.matches) {
+        container.style.maxHeight = "";
+        container.style.overflow = "";
+        updateHeaderOffset();
+        if (!animate) {
+          void container.offsetHeight;
+          container.style.transition = "";
+          chevron.style.transition = "";
+        }
+        return;
+      }
+
+      container.style.overflow = isOpen && !animate ? "visible" : "hidden";
+      container.style.maxHeight = isOpen ? `${container.scrollHeight}px` : "0";
+      updateHeaderOffset();
+
+      if (!animate) {
+        void container.offsetHeight;
+        container.style.transition = "";
+        chevron.style.transition = "";
+      } else if (isOpen) {
+        overflowTimer = window.setTimeout(() => {
+          if (container.classList.contains("is-open")) {
+            container.style.overflow = "visible";
+          }
+        }, 300);
+      }
+    };
+
+    const handleToggle = () => {
+      const willOpen = !container?.classList.contains("is-open");
+      setStoredOpen(willOpen);
+      setOpen(willOpen, true);
+    };
+
+    const handleResize = () => {
+      const isOpen = container?.classList.contains("is-open") ?? false;
+      setOpen(isOpen, false);
+    };
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === storageKeys.breadcrumbsOpen && e.newValue !== null) {
+        setOpen(e.newValue === "true", true);
+      }
+    };
+
+    if (headerCard && "ResizeObserver" in window) {
+      headerResizeObserver = new ResizeObserver(updateHeaderOffset);
+      headerResizeObserver.observe(headerCard);
     }
 
-    window[initKey] = init;
-    window[beforeSwapKey] = () => window[teardownKey]?.();
+    document.fonts?.ready.then(() => {
+      if (container?.classList.contains("is-open") && mediaQuery.matches) {
+        container.style.maxHeight = `${container.scrollHeight}px`;
+      }
+      updateHeaderOffset();
+    }).catch(() => {});
 
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", init, { once: true });
+    if (toggleBtn && container && chevron && headerCard) {
+      setOpen(getStoredOpen(), false);
+      toggleBtn.addEventListener("click", handleToggle);
+      window.addEventListener("resize", handleResize);
+      window.addEventListener("storage", handleStorage);
     } else {
-      init();
+      updateHeaderOffset();
+      window.addEventListener("resize", updateHeaderOffset);
     }
 
-    document.addEventListener("astro:page-load", window[initKey]);
-    document.addEventListener("astro:before-swap", window[beforeSwapKey]);
-  })();
+    (window as unknown as Record<string, (() => void) | undefined>)[teardownKey] = () => {
+      clearOverflowTimer();
+      headerResizeObserver?.disconnect();
+      toggleBtn?.removeEventListener("click", handleToggle);
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("resize", updateHeaderOffset);
+      window.removeEventListener("storage", handleStorage);
+    };
+  };
+
+  const win = window as unknown as Record<string, (() => void) | undefined>;
+  if (win[initKey]) {
+    document.removeEventListener("astro:page-load", win[initKey]!);
+    document.removeEventListener("DOMContentLoaded", win[initKey]!);
+  }
+  if (win[beforeSwapKey]) {
+    document.removeEventListener("astro:before-swap", win[beforeSwapKey]!);
+  }
+
+  win[initKey] = init;
+  win[beforeSwapKey] = () => (window as unknown as Record<string, (() => void) | undefined>)[teardownKey]?.();
+
+  init();
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init, { once: true });
+  }
+
+  document.addEventListener("astro:page-load", win[initKey]!);
+  document.addEventListener("astro:before-swap", win[beforeSwapKey]!);
 </script>
 

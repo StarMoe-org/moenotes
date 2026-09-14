@@ -279,7 +279,7 @@ export const thTH = {
     filters: { title: "Filter Demo", searchPlaceholder: "Search example...", category: "Category", all: "All", typeA: "Type A", typeB: "Type B", sort: "เรียงลำดับ", sortBy: "Sort by", language: "ภาษา", name: "Name", date: "Date", level: "Level", onlyComplete: "Completed only", reset: "Reset" },
     animations: { spring: "Spring Interaction", springDesc: "Hover lift + rotate — elastic spring transition", tap: "Tap Feedback", tapDesc: "Click scale — haptic feedback simulation", stagger: "Stagger Animation", staggerDesc: "Staggered fade-in — list items appear in sequence", wobble: "Wobble Effect", wobbleDesc: "Hover wobble — stamp/sticker style" },
   },
-  filter: { title: "ตัวกรอง", search: "ค้นหา", sort: "เรียงลำดับ", reset: "รีเซ็ตตัวกรอง", collapse: "ย่อ", expand: "ขยาย", count: "{filtered} / {total}" },
+  filter: { title: "ตัวกรอง", search: "ค้นหา", sort: "เรียงลำดับ", reset: "รีเซ็ตตัวกรอง", collapse: "ย่อ", expand: "ขยาย", count: "{filtered} / {total}", openQuickFilter: "เปิดตัวกรอง", drawerHintTitle: "ย้ายตัวกรองไปไว้ที่แถบด้านข้างแล้ว", drawerHintBody: "คลิกแท็บทางด้านซ้ายเพื่อเปิดหรือซ่อนตัวกรองได้ตลอดเวลา", drawerHintDismiss: "เข้าใจแล้ว" },
   modal: { close: "ปิด" },
   footer: {
     desc: "A next-generation viewer for BanG Dream! Our Notes.",

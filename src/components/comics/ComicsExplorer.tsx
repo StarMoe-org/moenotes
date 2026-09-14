@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
-import BaseFilters, { FilterButton, FilterSection } from "@/components/shared/BaseFilters";
-import QuickFilterButton from "@/components/shared/QuickFilterButton";
+import BaseFilters, {
+  BandFilter,
+  CharacterFilter,
+} from "@/components/shared/BaseFilters";
+import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import Modal from "@/components/shared/Modal";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 import type { ComicViewModel } from "@/lib/comics/data";
-import {
-  getBandSmallIconUrl,
-  getCharacterFaceIconUrl,
-} from "@/lib/cards/assets";
 
 interface Props {
   locale: AppLocale;
@@ -105,14 +104,6 @@ export default function ComicsExplorer({ locale, initialComics, initialBandNames
   }, [comics, query, selectedBands, selectedCharacters]);
 
   const hasActiveFilters = Boolean(query) || selectedBands.length > 0 || selectedCharacters.length > 0;
-
-  const toggleFilter = (list: number[], setList: (next: number[]) => void, value: number) => {
-    if (list.includes(value)) {
-      setList(list.filter((v) => v !== value));
-    } else {
-      setList([...list, value]);
-    }
-  };
 
   const handleBandToggle = (bandId: number) => {
     const nextBands = selectedBands.includes(bandId)
@@ -227,8 +218,9 @@ export default function ComicsExplorer({ locale, initialComics, initialBandNames
     </>
   ) : null;
 
-  const filters = (disableCollapse: boolean) => (
+  const quickFilterContent = (
     <BaseFilters
+      variant="plain"
       title={t(locale, "comics.filterTitle")}
       searchValue={query}
       onSearchChange={setQuery}
@@ -240,86 +232,70 @@ export default function ComicsExplorer({ locale, initialComics, initialBandNames
       onReset={resetFilters}
       resetLabel={t(locale, "filter.reset")}
       expandLabel={t(locale, "filter.expand")}
-      disableCollapse={disableCollapse}
     >
-      <FilterSection title={t(locale, "cards.band")}>
-        <div className="flex flex-wrap gap-2">
-          <FilterButton active={selectedBands.length === 0} onClick={handleBandReset}>ALL</FilterButton>
-          {bands.map((id) => {
-            const name = bandNamesMap.get(id) || `Band ${id}`;
-            return (
-              <FilterButton key={id} active={selectedBands.includes(id)} onClick={() => handleBandToggle(id)}>
-                <span className="flex items-center" title={name} aria-label={name}>
-                  <img className="h-5 w-auto object-contain" src={getBandSmallIconUrl(id)} alt={name} />
-                </span>
-              </FilterButton>
-            );
-          })}
-        </div>
-      </FilterSection>
+      <BandFilter
+        title={t(locale, "cards.band")}
+        bands={bands}
+        selectedBands={selectedBands}
+        getBandName={(id) => bandNamesMap.get(id) || `Band ${id}`}
+        onToggle={handleBandToggle}
+        onReset={handleBandReset}
+      />
 
-      {selectedBands.length > 0 && bandCharacters.length > 0 && (
-        <FilterSection title={t(locale, "nav.items.characters")}>
-          <div className="flex flex-wrap gap-2">
-            <FilterButton active={selectedCharacters.length === 0} onClick={() => setSelectedCharacters([])}>ALL</FilterButton>
-            {bandCharacters.map((char) => (
-              <FilterButton key={char.id} active={selectedCharacters.includes(char.id)} onClick={() => toggleFilter(selectedCharacters, setSelectedCharacters, char.id)}>
-                <span className="flex items-center" title={char.name} aria-label={char.name}>
-                  <img className="h-5 w-5 rounded-full object-cover bg-[var(--mn-cream-deep)]" src={getCharacterFaceIconUrl(char.id)} alt={char.name} />
-                </span>
-              </FilterButton>
-            ))}
-          </div>
-        </FilterSection>
-      )}
+      <CharacterFilter
+        title={t(locale, "nav.items.characters")}
+        characters={bandCharacters}
+        selectedCharacters={selectedCharacters}
+        onChange={setSelectedCharacters}
+      />
     </BaseFilters>
   );
 
+  useQuickFilter(t(locale, "comics.filterTitle"), quickFilterContent, [
+    query,
+    selectedBands,
+    selectedCharacters,
+    bands,
+    bandCharacters,
+    hasActiveFilters,
+    filteredComics.length,
+    comics.length,
+    locale,
+  ]);
+
   return (
     <>
-      <div className="mb-6 lg:hidden">{filters(false)}</div>
-      <div className="grid min-w-0 gap-6 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start">
-        <aside className="sticky top-24 hidden min-w-0 lg:block">{filters(true)}</aside>
-        <section className="min-w-0" aria-live="polite">
-          {filteredComics.length === 0 ? (
-            <EmptyState locale={locale} onReset={resetFilters} />
-          ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-              {filteredComics.map((comic) => (
-                <button
-                  key={comic.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedComic(comic);
-                    saveCurrentState();
-                  }}
-                  className="group flex flex-col min-w-0 overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)] text-left"
-                  data-list-item-id={comic.id}
-                  aria-label={comic.name}
-                >
-                  <div className="aspect-[928/778] w-full flex items-center justify-center overflow-hidden bg-[var(--mn-surface)] border-b-[1.5px] border-[var(--mn-border)]">
-                    <img className="h-full w-full object-cover group-hover:scale-[1.02] transition duration-300" src={comic.imageUrl} alt={comic.name} loading="lazy" />
+      <section className="min-w-0" aria-live="polite">
+        {filteredComics.length === 0 ? (
+          <EmptyState locale={locale} onReset={resetFilters} />
+        ) : (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            {filteredComics.map((comic) => (
+              <button
+                key={comic.id}
+                type="button"
+                onClick={() => {
+                  setSelectedComic(comic);
+                  saveCurrentState();
+                }}
+                className="group flex flex-col min-w-0 overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)] text-left"
+                data-list-item-id={comic.id}
+                aria-label={comic.name}
+              >
+                <div className="aspect-[928/778] w-full flex items-center justify-center overflow-hidden bg-[var(--mn-surface)] border-b-[1.5px] border-[var(--mn-border)]">
+                  <img className="h-full w-full object-cover group-hover:scale-[1.02] transition duration-300" src={comic.imageUrl} alt={comic.name} loading="lazy" />
+                </div>
+                <div className="p-4 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="line-clamp-2 text-sm font-black leading-5 text-[var(--mn-text)]">{comic.name}</h3>
+                    <p className="mt-1.5 text-[10px] font-bold text-[var(--mn-text-muted)]">#{comic.id}</p>
                   </div>
-                  <div className="p-4 flex-1 flex flex-col justify-between">
-                    <div>
-                      <h3 className="line-clamp-2 text-sm font-black leading-5 text-[var(--mn-text)]">{comic.name}</h3>
-                      <p className="mt-1.5 text-[10px] font-bold text-[var(--mn-text-muted)]">#{comic.id}</p>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
-
-      <div className="lg:hidden">
-        <QuickFilterButton
-          title={t(locale, "comics.filterTitle")}
-          buttonLabel={t(locale, "comics.quickFilter")}
-          content={<div className="min-w-0">{filters(true)}</div>}
-        />
-      </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
 
       <Modal
         isOpen={selectedComic !== null}

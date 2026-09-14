@@ -501,6 +501,10 @@ export const esES = {
     collapse: "Contraer",
     expand: "Expandir",
     count: "{filtered} / {total}",
+    openQuickFilter: "Abrir filtros",
+    drawerHintTitle: "Filtros en la barra lateral",
+    drawerHintBody: "Haz clic en la pestaña de la izquierda para desplegar o contraer los filtros en cualquier momento.",
+    drawerHintDismiss: "Entendido",
   },
   modal: {
     close: "Cerrar",

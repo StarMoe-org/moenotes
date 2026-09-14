@@ -9,6 +9,7 @@ import ScrollRestorer from "@/components/shell/ScrollRestorer.astro";
 import ScrollToTop from "@/components/shared/ScrollToTop";
 import SettingsDrawer from "@/components/shell/SettingsDrawer";
 import Sidebar from "@/components/shell/Sidebar";
+import FilterDrawerHost from "@/components/shell/filter-drawer/FilterDrawerHost";
 import Footer from "@/components/shell/Footer.astro";
 import type { AppLocale } from "@/config/locales";
 import { buildBreadcrumbs } from "@/lib/route/breadcrumbs";
@@ -32,7 +33,8 @@ const activePath = breadcrumbDetail?.ancestors?.at(-1)?.path;
   <HeaderActions client:load locale={locale} />
 </Header>
 <Sidebar client:load locale={locale} pathname={pathname} activePath={activePath} />
-<main id="content" class:list={["mx-auto min-h-screen max-w-[120rem] px-4 pb-16 pt-[var(--mn-header-bottom,5rem)] transition-[padding] duration-300 md:pl-[calc(var(--mn-sidebar-offset,18rem)+1.5rem)] md:pr-6 md:pt-28", hasCrumbs ? "md:pt-36" : "md:pt-24"]}>
+<FilterDrawerHost client:load locale={locale} pathname={pathname} />
+<main id="content" class:list={["mx-auto min-h-screen max-w-[120rem] px-4 pb-16 pt-[var(--mn-header-bottom,5rem)] transition-[padding] duration-300 md:pl-[calc(var(--mn-sidebar-offset,18rem)+var(--mn-filter-offset,0rem)+1.5rem)] md:pr-6 md:pt-28", hasCrumbs ? "md:pt-36" : "md:pt-24"]}>
   <slot />
 </main>
 <Footer locale={locale} />

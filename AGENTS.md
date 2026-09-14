@@ -26,24 +26,25 @@ All locales listed in `SUPPORTED_LOCALES` are first-class: same keys, same routi
 
 ### Core vs non-core locales (Agent boundary)
 
-**Core locales (always keep green with feature work):** `zh-CN`, `ja-JP`, `en-US`.
+**Core locales (always keep green with feature work - 5 languages):**
+`zh-CN` (Simplified Chinese), `zh-TW` (Traditional Chinese), `ja-JP` (Japanese), `en-US` (English), `ko-KR` (Korean).
 
-**Non-core locales** (anything else under `src/i18n/messages/`, extra path prefixes, etc.):
+**Non-core locales** (`th-TH`, `id-ID`, `vi-VN`, `es-ES`, `pt-BR`, `fr-FR`, `de-DE`, `ru-RU`):
 
-- After ordinary feature / file changes, **finish the feature first** (logic, UI, routing, core three-locale copy).
-- **Stop and wait for explicit user confirmation** before editing non-core i18n packs, wiring, or bulk-filling translations.
-- **Do not** proactively open, rewrite, machine-translate, or “complete” non-core locale files unless the user asks.
-- When the user does ask to sync non-core locales, keep UTF-8 intact, 1:1 keys vs `zh-CN`, and preserve placeholders / HTML.
+- `bun run lint:i18n` strictly enforces 1:1 key alignment for the 5 **core** locales.
+- For **non-core** locales, missing keys only emit non-blocking CLI warnings, and runtime `t()` automatically falls back to `en-US`.
+- **Do not** proactively edit, machine-translate, or touch non-core locale files during routine feature work.
+- Only update non-core locale files when the user explicitly requests syncing them.
 
 ### When you add or change UI text
 
-1. For **core** locales, add the key to `zh-CN` / `ja-JP` / `en-US` (and any other locale currently in `SUPPORTED_LOCALES` **only if** the user already approved non-core work this task).
-2. Prefer writing English first in `en-US.ts`, then mirror into `zh-CN` / `ja-JP`.
-3. Do **not** leave a new key only in one **core** language. `bun run lint:i18n` requires 1:1 key alignment against `zh-CN` for every registered locale.
-4. Do **not** hardcode CJK UI strings in `.astro` / `.tsx` / `.ts` components. Use `t(locale, "…")`.
-5. Do **not** add `Record<AppLocale, …>` copy maps in components/libs. All user-facing strings go in `src/i18n/messages/*` and are read via `t()`.
-6. Escape hatch only with an inline `// i18n-allow-hardcoded` (or JSX comment) on that line.
-7. For non-core locales (when user-approved) it is OK to ship English temporarily **only if** keys still exist and SEO titles/descriptions meet length checks; prefer real translations for nav/shell/seo.
+1. For **core** locales, add the key to the 5 core files: `zh-CN`, `zh-TW`, `ja-JP`, `en-US`, `ko-KR`.
+2. Prefer drafting English first in `en-US.ts`, then mirror into the other 4 core locales.
+3. Do **not** leave a new key missing from any of the 5 **core** languages (`bun run lint:i18n` will fail if a core locale is missing a key).
+4. Do **not** touch non-core locale files unless user explicitly asks.
+5. Do **not** hardcode CJK UI strings in `.astro` / `.tsx` / `.ts` components. Use `t(locale, "…")`.
+6. Do **not** add `Record<AppLocale, …>` copy maps in components/libs. All user-facing strings go in `src/i18n/messages/*` and are read via `t()`.
+7. Escape hatch only with an inline `// i18n-allow-hardcoded` (or JSX comment) on that line.
 8. Settings language label should stay bilingual (`… / Language`) so users can always find the switcher.
 
 ### Runtime fallback (do not reverse this)

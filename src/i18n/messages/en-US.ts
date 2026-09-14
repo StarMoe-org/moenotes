@@ -279,7 +279,7 @@ export const enUS = {
     filters: { title: "Filter Demo", searchPlaceholder: "Search example...", category: "Category", all: "All", typeA: "Type A", typeB: "Type B", sort: "Sort", sortBy: "Sort by", language: "Language", name: "Name", date: "Date", level: "Level", onlyComplete: "Completed only", reset: "Reset" },
     animations: { spring: "Spring Interaction", springDesc: "Hover lift + rotate — elastic spring transition", tap: "Tap Feedback", tapDesc: "Click scale — haptic feedback simulation", stagger: "Stagger Animation", staggerDesc: "Staggered fade-in — list items appear in sequence", wobble: "Wobble Effect", wobbleDesc: "Hover wobble — stamp/sticker style" },
   },
-  filter: { title: "Filter", search: "Search", sort: "Sort", reset: "Reset filters", collapse: "Collapse", expand: "Expand", count: "{filtered} / {total}" },
+  filter: { title: "Filter", search: "Search", sort: "Sort", reset: "Reset filters", collapse: "Collapse", expand: "Expand", count: "{filtered} / {total}", openQuickFilter: "Open filter", drawerHintTitle: "Filters moved to the side", drawerHintBody: "Click the left tab to expand or collapse filters anytime.", drawerHintDismiss: "Got it" },
   modal: { close: "Close" },
   footer: {
     desc: "A next-generation viewer for BanG Dream! Our Notes.",
