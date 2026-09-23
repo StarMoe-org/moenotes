@@ -97,7 +97,7 @@ export default function FilterDrawerGuide({ locale }: FilterDrawerGuideProps) {
       <aside
         aria-label={t(locale, "filter.drawerHintTitle")}
         style={guideLeftStyle}
-        className="fixed top-28 z-50 pointer-events-none max-w-[calc(100vw-4.5rem)] sm:max-w-xs select-none"
+        className="fixed top-28 z-32 pointer-events-none max-w-[calc(100vw-4.5rem)] sm:max-w-xs select-none"
       >
         <motion.div
           className="pointer-events-auto relative rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)] p-4 flex flex-col gap-2.5 text-[var(--mn-text)]"

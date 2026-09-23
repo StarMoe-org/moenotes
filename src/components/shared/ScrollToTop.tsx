@@ -59,7 +59,7 @@ export default function ScrollToTop() {
           {...stampHoverProps}
           {...stampTapProps}
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 z-50 grid h-11 w-11 place-items-center rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)] transition-colors hover:bg-[var(--mn-cream-deep)] hover:shadow-[var(--mn-shadow-stamp-sm)]"
+          className="fixed bottom-8 right-8 z-30 grid h-11 w-11 place-items-center rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)] transition-colors hover:bg-[var(--mn-cream-deep)] hover:shadow-[var(--mn-shadow-stamp-sm)]"
           aria-label="Scroll to top"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">

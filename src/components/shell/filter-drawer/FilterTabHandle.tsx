@@ -70,7 +70,7 @@ export default function FilterTabHandle({ locale }: FilterTabHandleProps) {
           aria-controls={FILTER_DRAWER_ID}
           aria-expanded={isOpen}
           title={shortcutLabel}
-          className="fixed top-32 z-35 group flex flex-col items-center justify-center gap-1.5 py-3.5 px-2 min-h-[48px] rounded-r-2xl border-[1.5px] border-l-0 border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] hover:shadow-[var(--mn-shadow-stamp-sm)] transition-shadow cursor-pointer select-none touch-manipulation transform-gpu"
+          className="fixed top-32 z-31 group flex flex-col items-center justify-center gap-1.5 py-3.5 px-2 min-h-[48px] rounded-r-2xl border-[1.5px] border-l-0 border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] hover:shadow-[var(--mn-shadow-stamp-sm)] transition-shadow cursor-pointer select-none touch-manipulation transform-gpu"
         >
           {/* Funnel Icon */}
           <svg

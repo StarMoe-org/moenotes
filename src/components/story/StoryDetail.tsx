@@ -337,7 +337,7 @@ export default function StoryDetail({ locale, advId, initialTitle, initialScript
 
     {/* Floating Player Dock */}
     {isAutoplayMode && activeLineIndex !== null && (
-      <div className="fixed bottom-6 left-1/2 z-[60] w-[92%] max-w-[480px] -translate-x-1/2 overflow-hidden rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)]/95 shadow-[var(--mn-shadow-stamp)] backdrop-blur-md transition-all duration-300">
+      <div className="fixed bottom-6 left-1/2 z-[33] w-[92%] max-w-[480px] -translate-x-1/2 overflow-hidden rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)]/95 shadow-[var(--mn-shadow-stamp)] backdrop-blur-md transition-all duration-300">
         {/* Progress Bar at top edge of the pill */}
         <div className="h-1 w-full bg-[var(--mn-border)]">
           <div
