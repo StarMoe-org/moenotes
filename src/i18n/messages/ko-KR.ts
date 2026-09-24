@@ -92,7 +92,7 @@ export const koKR = {
     skillsDescription: "스킬 이름, 아이콘, 최대 레벨 효과는 해당 MasterData 테이블에서 동적으로 결합됩니다.",
     skillKinds: { leader: "리더 스킬", live: "라이브 스킬", gekisou: "격주 스킬" },
     skillMeta: "Lv.{level} · ID #{id}",
-    skillFallback: "최대 레벨 효과: {values}",
+    skillFallback: "효과: {values}",
     assets: {
       title: "카드 에셋",
       description: "전체 아트, 투명 캐릭터 레이어, 배경, 썸네일, 스킬 스프라이트를 미리 보고 열거나 복사할 수 있습니다.",
@@ -109,6 +109,7 @@ export const koKR = {
     },
     rarities: { "2": "R", "3": "SR", "4": "SSR" },
     attributes: { "1": "빨강", "2": "파랑", "3": "초록", "4": "노랑", "5": "보라" },
+    growth: { level: "레벨", levelValue: "Lv.{level} / {limit}", decrease: "레벨 낮추기", increase: "레벨 올리기", max: "최대", training: "특훈", awaken: "각성", power: "종합력", skillLevel: "스킬 레벨", leaderSkillHint: "리더 스킬 레벨은 각성 횟수와 연동되어, 변경하면 각성도 함께 바뀝니다." },
   },
   supportCards: {
     searchPlaceholder: "타이틀, 캐릭터 검색...",
@@ -130,6 +131,7 @@ export const koKR = {
       gekisouSupport: "격주 서포트 스킬"
     },
     diaryTitle: "다이어리",
+    growth: { limitBreak: "상한 해제", skillLevelHint: "스킬 레벨은 상한 해제 횟수에 따라 오릅니다." },
   },
   music: {
     searchPlaceholder: "타이틀, 작곡가, 밴드, 보컬 검색...",

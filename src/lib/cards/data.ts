@@ -21,6 +21,9 @@ export interface RawMemberCard {
   performancePowerMax: number;
   technicPowerMax: number;
   visualPowerMax: number;
+  memberCardLevelGroup: number;
+  memberCardAwakeGroup: number;
+  memberCardRankGroup: number;
 }
 
 export interface RawCharacter {

@@ -120,7 +120,7 @@ export const zhCN = {
     skillsDescription: "技能名称、图标和最高等级效果均由对应技能 MasterData 动态关联。",
     skillKinds: { leader: "队长技能", live: "Live 技能", gekisou: "击奏技能" },
     skillMeta: "Lv.{level} · ID #{id}",
-    skillFallback: "最高等级效果：{values}",
+    skillFallback: "效果：{values}",
     assets: {
       title: "卡牌资源",
       description: "预览完整卡图、角色透明层、背景、缩略图和技能演出条。点击资源可打开大图并复制。",
@@ -137,6 +137,7 @@ export const zhCN = {
     },
     rarities: { "2": "R", "3": "SR", "4": "SSR" },
     attributes: { "1": "红赤", "2": "绀碧", "3": "翡翠", "4": "山吹", "5": "紫苑" },
+    growth: { level: "等级", levelValue: "Lv.{level} / {limit}", decrease: "降低等级", increase: "提升等级", max: "最大", training: "特训", awaken: "觉醒", power: "综合力", skillLevel: "技能等级", leaderSkillHint: "队长技能等级与觉醒次数联动，调整时会同步修改觉醒。" },
   },
   supportCards: {
     searchPlaceholder: "搜索卡名、角色...",
@@ -158,6 +159,7 @@ export const zhCN = {
       gekisouSupport: "击奏支援技能"
     },
     diaryTitle: "卡面手帐",
+    growth: { limitBreak: "上限解锁", skillLevelHint: "技能等级随上限解锁次数提升。" },
   },
   music: {
     searchPlaceholder: "搜索歌名、词曲、乐队或歌手...",

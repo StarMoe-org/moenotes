@@ -120,7 +120,7 @@ export const zhTW = {
     skillsDescription: "技能名稱、圖標和最高等級效果均由對應技能 MasterData 動態關聯。",
     skillKinds: { leader: "隊長技能", live: "Live 技能", gekisou: "擊奏技能" },
     skillMeta: "Lv.{level} · ID #{id}",
-    skillFallback: "最高等級效果：{values}",
+    skillFallback: "效果：{values}",
     assets: {
       title: "卡牌資源",
       description: "預覽完整卡圖、角色透明層、背景、縮略圖和技能演出條。點擊資源可打開大圖並複製。",
@@ -137,6 +137,7 @@ export const zhTW = {
     },
     rarities: { "2": "R", "3": "SR", "4": "SSR" },
     attributes: { "1": "紅赤", "2": "紺碧", "3": "翡翠", "4": "山吹", "5": "紫苑" },
+    growth: { level: "等級", levelValue: "Lv.{level} / {limit}", decrease: "降低等級", increase: "提升等級", max: "上限", training: "特訓", awaken: "覺醒", power: "綜合力", skillLevel: "技能等級", leaderSkillHint: "隊長技能等級與覺醒次數連動，調整時會同步修改覺醒。" },
   },
   supportCards: {
     searchPlaceholder: "搜索卡名、角色...",
@@ -158,6 +159,7 @@ export const zhTW = {
       gekisouSupport: "擊奏支援技能"
     },
     diaryTitle: "卡面手帳",
+    growth: { limitBreak: "開放上限", skillLevelHint: "技能等級隨開放上限次數提升。" },
   },
   music: {
     searchPlaceholder: "搜索歌名、詞曲、樂隊或歌手...",

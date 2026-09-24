@@ -60,14 +60,19 @@ export interface SkillEffectViewModel {
   targetIds: number[];
 }
 
+export interface SkillLevelViewModel {
+  level: number;
+  description: string;
+  effects: SkillEffectViewModel[];
+}
+
 export interface SkillViewModel {
   kind: SkillKind;
   id: number;
-  level: number;
   name: string;
-  description: string;
   iconUrl: string;
-  effects: SkillEffectViewModel[];
+  /** Every level present in the effect table, ascending. Never empty. */
+  levels: SkillLevelViewModel[];
 }
 
 export function normalizeSkill(
@@ -87,32 +92,42 @@ export function normalizeSkill(
   const icon = icons.find((entry) => entry.id === definition.skillIconID);
   const textMap = new Map(texts.map((entry) => [entry.id, entry]));
   const relevant = effects.filter((entry) => skillEffectId(entry, kind) === skillId);
-  const level = Math.max(1, ...relevant.map((entry) => entry.level));
-
-  const levelEffects = relevant.filter((entry) => entry.level === level).sort((a, b) => a.id - b.id);
   const template = localizeText(textMap.get(definition.descriptionTextFormatID), locale);
 
   return {
     kind,
     id: skillId,
-    level,
     name: localizeText(textMap.get(definition.nameTextID), locale) || definition.nameTextID,
-    description: formatDescription(template, levelEffects, conditionSets, conditions, cumulativeConditions),
     iconUrl: icon?.normalIconAssetName ? getSkillIconUrl(icon.normalIconAssetName) : "",
-    effects: levelEffects
-      .map((entry) => {
-        const duration = entry.activationTimeSecond && entry.activationTimeSecond < 99999 ? entry.activationTimeSecond : undefined;
-        return {
-          id: entry.id,
-          ...(duration !== undefined ? { duration } : {}),
-          value: entry.effectValue,
-          ...(entry.maxEffectValue ? { maxValue: entry.maxEffectValue } : {}),
-          effectType: entry.skillEffectType,
-          ...(entry.skillConditionGroup ? { conditionGroup: entry.skillConditionGroup } : {}),
-          ...(entry.skillCumulativeConditionID ? { cumulativeConditionId: entry.skillCumulativeConditionID } : {}),
-          targetIds: entry.skillTargetIDs ?? [],
-        };
-      }),
+    levels: groupEffectsByLevel(relevant).map(([level, levelEffects]) => ({
+      level,
+      description: formatDescription(template, levelEffects, conditionSets, conditions, cumulativeConditions),
+      effects: levelEffects.map(toSkillEffectViewModel),
+    })),
+  };
+}
+
+/** Groups effect rows by skill level (ascending); a skill without rows yields a single empty level 1. */
+export function groupEffectsByLevel<T extends RawSkillEffect>(effects: T[]): Array<[number, T[]]> {
+  const byLevel = new Map<number, T[]>();
+  effects.forEach((entry) => byLevel.set(entry.level, [...(byLevel.get(entry.level) ?? []), entry]));
+  if (byLevel.size === 0) return [[1, []]];
+  return [...byLevel.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([level, entries]) => [level, entries.sort((a, b) => a.id - b.id)]);
+}
+
+export function toSkillEffectViewModel(entry: RawSkillEffect): SkillEffectViewModel {
+  const duration = entry.activationTimeSecond && entry.activationTimeSecond < 99999 ? entry.activationTimeSecond : undefined;
+  return {
+    id: entry.id,
+    ...(duration !== undefined ? { duration } : {}),
+    value: entry.effectValue,
+    ...(entry.maxEffectValue ? { maxValue: entry.maxEffectValue } : {}),
+    effectType: entry.skillEffectType,
+    ...(entry.skillConditionGroup ? { conditionGroup: entry.skillConditionGroup } : {}),
+    ...(entry.skillCumulativeConditionID ? { cumulativeConditionId: entry.skillCumulativeConditionID } : {}),
+    targetIds: entry.skillTargetIDs ?? [],
   };
 }
 

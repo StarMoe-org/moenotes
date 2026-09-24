@@ -20,6 +20,15 @@ import {
   type RawSkillIcon,
   type SkillViewModel,
 } from "@/lib/cards/skills";
+import {
+  buildMemberCardGrowth,
+  type MemberCardGrowth,
+  type RawCardLevel,
+  type RawMemberCardAwake,
+  type RawMemberCardLevelLimit,
+  type RawMemberCardRank,
+} from "@/lib/cards/growth";
+import { buildSupportCardGrowth, type RawSupportCardRank, type SupportCardGrowth } from "@/lib/support-cards/growth";
 import { normalizeCharacters, type CharacterViewModel, type RawCharacter as RawCharacterDetail } from "@/lib/characters/data";
 import { normalizeSupportCards, type RawSupportCard, type SupportCardViewModel } from "@/lib/support-cards/data";
 import { normalizeSupportSkill, type RawSupportSkillEffect } from "@/lib/support-cards/skills";
@@ -66,11 +75,13 @@ export interface CharacterBandModel {
 export interface CardDetailData {
   card: CardViewModel | null;
   skills: SkillViewModel[];
+  growth: MemberCardGrowth;
 }
 
 export interface SupportCardDetailData {
   card: SupportCardViewModel | null;
   skills: SkillViewModel[];
+  growth: SupportCardGrowth;
 }
 
 export interface CharacterDetailData {
@@ -263,8 +274,13 @@ export function getBuildStoryReaderLookup(): Promise<StoryReaderLookup> {
 
 export function getBuildCardDetail(locale: AppLocale, cardId: number): Promise<CardDetailData> {
   return memo(`card-detail:${locale}:${cardId}`, async () => {
-    const [cards, liveSkills, liveEffects, leaderSkills, leaderEffects, gekisouSkills, gekisouEffects, icons, conditionSets, conditions, cumulativeConditions, texts] = await Promise.all([
+    const [cards, rawCards, levels, levelLimits, awakes, ranks, liveSkills, liveEffects, leaderSkills, leaderEffects, gekisouSkills, gekisouEffects, icons, conditionSets, conditions, cumulativeConditions, texts] = await Promise.all([
       getBuildCards(locale),
+      table<RawMemberCard>("MasterMemberCard.json"),
+      table<RawCardLevel>("MasterMemberCardLevel.json"),
+      table<RawMemberCardLevelLimit>("MasterMemberCardLevelLimit.json"),
+      table<RawMemberCardAwake>("MasterMemberCardAwake.json"),
+      table<RawMemberCardRank>("MasterMemberCardRank.json"),
       table<RawSkillDefinition>("MasterLiveSkill.json"),
       table<RawSkillEffect>("MasterLiveSkillEffect.json"),
       table<RawSkillDefinition>("MasterLeaderSkill.json"),
@@ -278,20 +294,25 @@ export function getBuildCardDetail(locale: AppLocale, cardId: number): Promise<C
       table<RawText>("MasterText.json"),
     ]);
     const card = cards.find((entry) => entry.id === cardId) ?? null;
-    if (!card) return { card: null, skills: [] };
+    const rawCard = rawCards._allData.find((entry) => entry.id === cardId);
+    if (!card || !rawCard) return { card: null, skills: [], growth: { levelCurve: [], awakeSteps: [], rankSteps: [] } };
+    const growth = buildMemberCardGrowth(rawCard, levels._allData, levelLimits._allData, awakes._allData, ranks._allData);
     const skills = [
       normalizeSkill("leader", card.leaderSkillId, leaderSkills._allData, leaderEffects._allData, icons._allData, texts._allData, locale, conditionSets._allData, conditions._allData, cumulativeConditions._allData),
       normalizeSkill("live", card.liveSkillId, liveSkills._allData, liveEffects._allData, icons._allData, texts._allData, locale, conditionSets._allData, conditions._allData, cumulativeConditions._allData),
       normalizeSkill("gekisou", card.gekisouSkillId, gekisouSkills._allData, gekisouEffects._allData, icons._allData, texts._allData, locale, conditionSets._allData, conditions._allData, cumulativeConditions._allData),
     ].filter((entry): entry is SkillViewModel => entry !== null);
-    return { card, skills };
+    return { card, skills, growth };
   });
 }
 
 export function getBuildSupportCardDetail(locale: AppLocale, cardId: number): Promise<SupportCardDetailData> {
   return memo(`support-card-detail:${locale}:${cardId}`, async () => {
-    const [cards, supportSkills, supportEffects, gekisouSkills, gekisouEffects, icons, conditionSets, conditions, cumulativeConditions, texts, characters] = await Promise.all([
+    const [cards, rawCards, levels, ranks, supportSkills, supportEffects, gekisouSkills, gekisouEffects, icons, conditionSets, conditions, cumulativeConditions, texts, characters] = await Promise.all([
       getBuildSupportCards(locale),
+      table<RawSupportCard>("MasterSupportCard.json"),
+      table<RawCardLevel>("MasterSupportCardLevel.json"),
+      table<RawSupportCardRank>("MasterSupportCardRank.json"),
       table<RawSkillDefinition>("MasterSupportSkill.json"),
       table<RawSupportSkillEffect>("MasterSupportSkillEffect.json"),
       table<RawSkillDefinition>("MasterGekisouSupportSkill.json"),
@@ -304,13 +325,15 @@ export function getBuildSupportCardDetail(locale: AppLocale, cardId: number): Pr
       table<RawCharacter>("MasterCharacter.json"),
     ]);
     const card = cards.find((entry) => entry.id === cardId) ?? null;
-    if (!card) return { card: null, skills: [] };
+    const rawCard = rawCards._allData.find((entry) => entry.id === cardId);
+    if (!card || !rawCard) return { card: null, skills: [], growth: { levelCurve: [], rankSteps: [] } };
+    const growth = buildSupportCardGrowth(rawCard, levels._allData, ranks._allData);
     const characterMap = new Map(characters._allData.map((entry) => [entry.id, entry]));
     const skills = [
       normalizeSupportSkill("support", card.supportSkillId01, supportSkills._allData, supportEffects._allData, icons._allData, texts._allData, locale, conditionSets._allData, conditions._allData, cumulativeConditions._allData, characterMap),
       normalizeSupportSkill("gekisou-support", card.gekisouSupportSkillId01, gekisouSkills._allData, gekisouEffects._allData, icons._allData, texts._allData, locale, conditionSets._allData, conditions._allData, cumulativeConditions._allData, characterMap),
     ].filter((entry): entry is SkillViewModel => entry !== null);
-    return { card, skills };
+    return { card, skills, growth };
   });
 }
 

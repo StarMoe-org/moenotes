@@ -18,8 +18,20 @@ import {
 } from "@/lib/cards/assets";
 import type { CardViewModel } from "@/lib/cards/data";
 import {
+  maxMemberCardBuild,
+  maxSkillLevel,
+  memberCardLevelLimit,
+  memberCardParameters,
+  pickSkillLevel,
+  type MemberCardBuild,
+  type MemberCardGrowth,
+} from "@/lib/cards/growth";
+import {
+  type SkillKind,
+  type SkillLevelViewModel,
   type SkillViewModel,
 } from "@/lib/cards/skills";
+import { LevelControl, StepControl } from "@/components/shared/CardGrowthControls";
 
 interface Props {
   locale: AppLocale;
@@ -30,6 +42,7 @@ interface Props {
 interface DetailData {
   card: CardViewModel | null;
   skills: SkillViewModel[];
+  growth: MemberCardGrowth;
 }
 
 interface AssetPreview {
@@ -64,6 +77,10 @@ export default function CardDetail({ locale, initialData }: Props) {
   const [downloadState, setDownloadState] = useState<("idle" | "downloading" | "success")>("idle");
 
   const card = data.card;
+  const growth = data.growth;
+  const maxBuild = useMemo(() => maxMemberCardBuild(growth), [growth]);
+  const [build, setBuild] = useState<MemberCardBuild>(maxBuild);
+  const [skillLevels, setSkillLevels] = useState<Partial<Record<SkillKind, number>>>({});
   const assets = useMemo<AssetPreview[]>(() => {
     if (!card) return [];
     return [
@@ -227,7 +244,24 @@ export default function CardDetail({ locale, initialData }: Props) {
 
   const attribute = t(locale, `cards.attributes.${card.cardType}`);
   const rarity = t(locale, `cards.rarities.${card.rarity}`);
-  const maxParameter = Math.max(card.performancePower, card.technicPower, card.visualPower);
+  const levelLimit = memberCardLevelLimit(growth, build.awakeCount);
+  const parameters = memberCardParameters(card, growth, build);
+  const maxParameters = memberCardParameters(card, growth, maxBuild);
+  const parameterScale = Math.max(maxParameters.performancePower, maxParameters.technicPower, maxParameters.visualPower);
+  const isMaxBuild = build.level === maxBuild.level && build.awakeCount === maxBuild.awakeCount && build.rank === maxBuild.rank;
+  const leaderSkillLevel = growth.rankSteps.find((step) => step.rank === build.rank)?.leaderSkillLevel;
+  const skillLevelFor = (skill: SkillViewModel) =>
+    (skill.kind === "leader" && leaderSkillLevel !== undefined ? leaderSkillLevel : skillLevels[skill.kind]) ?? maxSkillLevel(skill);
+  // The leader skill level is derived from the rank (in-game Awaken), so changing it moves the rank instead.
+  const setSkillLevel = (skill: SkillViewModel, level: number) => {
+    const rankStep = skill.kind === "leader"
+      ? [...growth.rankSteps].reverse().find((step) => step.leaderSkillLevel <= level) ?? growth.rankSteps[0]
+      : undefined;
+    if (rankStep) setBuild((current) => ({ ...current, rank: rankStep.rank }));
+    else setSkillLevels((current) => ({ ...current, [skill.kind]: level }));
+  };
+  const setAwakeCount = (awakeCount: number) =>
+    setBuild((current) => ({ ...current, awakeCount, level: Math.min(current.level, memberCardLevelLimit(growth, awakeCount)) }));
 
   const previewActions = selectedAsset ? (
     <>
@@ -484,20 +518,44 @@ export default function CardDetail({ locale, initialData }: Props) {
             </div>
             {/* Body Section */}
             <div className="p-6 sm:p-8 space-y-5">
+              {growth.levelCurve.length > 0 && (
+                <div className="space-y-4 border-b-[1.5px] border-dashed border-[var(--mn-border)]/60 pb-5">
+                  <LevelControl locale={locale} level={build.level} limit={levelLimit} onChange={(level) => setBuild((current) => ({ ...current, level }))} />
+                  {growth.awakeSteps.length > 1 && (
+                    <StepControl
+                      label={t(locale, "cards.growth.training")}
+                      value={build.awakeCount}
+                      options={growth.awakeSteps.map((step) => step.awakeCount)}
+                      formatOption={(_, index) => String(index)}
+                      onChange={setAwakeCount}
+                    />
+                  )}
+                  {growth.rankSteps.length > 1 && (
+                    <StepControl
+                      label={t(locale, "cards.growth.awaken")}
+                      value={build.rank}
+                      options={growth.rankSteps.map((step) => step.rank)}
+                      formatOption={(_, index) => String(index)}
+                      onChange={(rank) => setBuild((current) => ({ ...current, rank }))}
+                    />
+                  )}
+                </div>
+              )}
+
               {/* Highlighted Total Parameter Row */}
               <div className="flex items-center justify-between border-b-[1.5px] border-dashed border-[var(--mn-border)]/60 pb-4">
                 <span className="text-sm font-semibold text-[var(--mn-text-muted)]">
-                  {t(locale, "cards.detailPower")}
+                  {t(locale, isMaxBuild ? "cards.detailPower" : "cards.growth.power")}
                 </span>
                 <span className="font-mono text-xl font-bold text-[var(--mn-accent-deep)]">
-                  {card.totalPower.toLocaleString(locale)}
+                  {parameters.totalPower.toLocaleString(locale)}
                 </span>
               </div>
 
               <div className="space-y-4">
-                <ParameterBar label={t(locale, "cards.parameters.performance")} value={card.performancePower} max={maxParameter} color="var(--mn-accent)" locale={locale} />
-                <ParameterBar label={t(locale, "cards.parameters.technique")} value={card.technicPower} max={maxParameter} color="var(--mn-cyan)" locale={locale} />
-                <ParameterBar label={t(locale, "cards.parameters.visual")} value={card.visualPower} max={maxParameter} color="var(--mn-mint)" locale={locale} />
+                <ParameterBar label={t(locale, "cards.parameters.performance")} value={parameters.performancePower} max={parameterScale} color="var(--mn-accent)" locale={locale} />
+                <ParameterBar label={t(locale, "cards.parameters.technique")} value={parameters.technicPower} max={parameterScale} color="var(--mn-cyan)" locale={locale} />
+                <ParameterBar label={t(locale, "cards.parameters.visual")} value={parameters.visualPower} max={parameterScale} color="var(--mn-mint)" locale={locale} />
               </div>
             </div>
           </div>
@@ -512,7 +570,16 @@ export default function CardDetail({ locale, initialData }: Props) {
             </div>
             {/* Body Section */}
             <div className="p-6 sm:p-8 flex flex-col gap-4">
-              {data.skills.map((skill) => <SkillCard key={skill.kind} skill={skill} locale={locale} />)}
+              {data.skills.map((skill) => (
+                <SkillCard
+                  key={skill.kind}
+                  skill={skill}
+                  level={skillLevelFor(skill)}
+                  locale={locale}
+                  hint={skill.kind === "leader" && growth.rankSteps.length > 0 ? t(locale, "cards.growth.leaderSkillHint") : undefined}
+                  onLevelChange={(level) => setSkillLevel(skill, level)}
+                />
+              ))}
             </div>
           </div>
 
@@ -569,21 +636,40 @@ function ParameterBar({ label, value, max, color, locale }: { label: string; val
   );
 }
 
-function SkillCard({ skill, locale }: { skill: SkillViewModel; locale: AppLocale }) {
+function SkillCard({
+  skill,
+  level,
+  locale,
+  hint,
+  onLevelChange,
+}: {
+  skill: SkillViewModel;
+  level: number;
+  locale: AppLocale;
+  hint?: string | undefined;
+  onLevelChange: (level: number) => void;
+}) {
+  const current = pickSkillLevel(skill, level);
   return (
     <article className="rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface-strong)] p-5 shadow-[var(--mn-shadow-stamp)]">
       <div className="flex items-start gap-4">
         {skill.iconUrl ? <img className="h-14 w-14 shrink-0 rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] object-contain p-1" src={skill.iconUrl} alt="" aria-hidden="true" /> : null}
-        <div className="min-w-0"><p className="text-xs font-semibold uppercase tracking-wider text-[var(--mn-accent-deep)]">{t(locale, `cards.skillKinds.${skill.kind}`)}</p><h3 className="mt-1 text-base font-semibold leading-6 text-[var(--mn-text)]">{skill.name}</h3><p className="mt-1 text-xs text-[var(--mn-text-muted)]">{t(locale, "cards.skillMeta", { level: skill.level, id: skill.id })}</p></div>
+        <div className="min-w-0"><p className="text-xs font-semibold uppercase tracking-wider text-[var(--mn-accent-deep)]">{t(locale, `cards.skillKinds.${skill.kind}`)}</p><h3 className="mt-1 text-base font-semibold leading-6 text-[var(--mn-text)]">{skill.name}</h3><p className="mt-1 text-xs text-[var(--mn-text-muted)]">{t(locale, "cards.skillMeta", { level: current.level, id: skill.id })}</p></div>
       </div>
+      {skill.levels.length > 1 ? (
+        <div className="mt-4">
+          <StepControl label={t(locale, "cards.growth.skillLevel")} value={current.level} options={skill.levels.map((entry) => entry.level)} onChange={onLevelChange} />
+        </div>
+      ) : null}
+      {hint ? <p className="mt-3 text-xs font-medium text-[var(--mn-text-muted)]">{hint}</p> : null}
       <p className="mt-4 whitespace-pre-line rounded-2xl border border-dashed border-[var(--mn-border)] bg-[var(--mn-paper)] p-4 text-sm font-medium leading-7 text-[var(--mn-text)]">
-        {skill.description || fallbackSkillDescription(skill, locale)}
+        {current.description || fallbackSkillDescription(current, locale)}
       </p>
     </article>
   );
 }
 
-function fallbackSkillDescription(skill: SkillViewModel, locale: AppLocale): string {
+function fallbackSkillDescription(skill: SkillLevelViewModel, locale: AppLocale): string {
   const values = skill.effects.map((effect) => {
     const value = effect.effectType < 10000 ? `${(effect.value / 100).toLocaleString(locale, { maximumFractionDigits: 1 })}%` : effect.value.toLocaleString(locale);
     return effect.duration === undefined ? value : `${effect.duration.toFixed(1)}s · ${value}`;

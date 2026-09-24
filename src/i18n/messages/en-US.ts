@@ -92,7 +92,7 @@ export const enUS = {
     skillsDescription: "Skill names, icons, and maximum-level effects are dynamically joined from the corresponding MasterData tables.",
     skillKinds: { leader: "Leader Skill", live: "Live Skill", gekisou: "Gekisou Skill" },
     skillMeta: "Lv.{level} · ID #{id}",
-    skillFallback: "Maximum-level effect: {values}",
+    skillFallback: "Effect: {values}",
     assets: {
       title: "Card assets",
       description: "Preview the full artwork, transparent character layer, background, thumbnail, and skill sprite. Open an asset to view and copy it.",
@@ -109,6 +109,7 @@ export const enUS = {
     },
     rarities: { "2": "R", "3": "SR", "4": "SSR" },
     attributes: { "1": "Red", "2": "Blue", "3": "Green", "4": "Yellow", "5": "Purple" },
+    growth: { level: "Level", levelValue: "Lv.{level} / {limit}", decrease: "Decrease level", increase: "Increase level", max: "MAX", training: "Training", awaken: "Awaken", power: "Total power", skillLevel: "Skill level", leaderSkillHint: "Leader skill level is tied to the Awaken count; changing it also changes Awaken." },
   },
   supportCards: {
     searchPlaceholder: "Search titles, characters...",
@@ -130,6 +131,7 @@ export const enUS = {
       gekisouSupport: "Gekisou Support Skill"
     },
     diaryTitle: "Diary",
+    growth: { limitBreak: "Limit Break", skillLevelHint: "Skill levels rise with the Limit Break count." },
   },
   music: {
     searchPlaceholder: "Search titles, authors, bands, or singers...",

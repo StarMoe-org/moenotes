@@ -2,14 +2,16 @@ import type { AppLocale } from "@/config/locales";
 import { getSkillIconUrl } from "@/lib/cards/assets";
 import type { RawText, RawCharacter } from "@/lib/cards/data";
 import { localizeMasterText } from "@/lib/masterdata/localize-text";
-import type {
-  RawSkillDefinition,
-  RawSkillEffect,
-  RawSkillIcon,
-  RawSkillCondition,
-  RawSkillConditionSet,
-  RawSkillCumulativeCondition,
-  SkillViewModel,
+import {
+  groupEffectsByLevel,
+  toSkillEffectViewModel,
+  type RawSkillDefinition,
+  type RawSkillEffect,
+  type RawSkillIcon,
+  type RawSkillCondition,
+  type RawSkillConditionSet,
+  type RawSkillCumulativeCondition,
+  type SkillViewModel,
 } from "@/lib/cards/skills";
 
 // Extended support skill effect type including both standard and support card linking IDs
@@ -43,39 +45,27 @@ export function normalizeSupportSkill(
   const relevant = effects.filter((entry) => skillEffectId(entry, kind) === skillId);
   if (relevant.length === 0) return null;
 
-  const level = Math.max(1, ...relevant.map((entry) => entry.level));
-  const levelEffects = relevant.filter((entry) => entry.level === level).sort((a, b) => a.id - b.id);
   const template = localizeText(textMap.get(definition.descriptionTextFormatID), locale);
   const resolveText = (id: string) => localizeText(textMap.get(id), locale) || id;
 
   return {
     kind: kind === "support" ? "live" : "gekisou", // map to standard SkillKind for standard UI components if needed
     id: skillId,
-    level,
     name: localizeText(textMap.get(definition.nameTextID), locale) || definition.nameTextID,
-    description: formatDescription(
-      template,
-      levelEffects,
-      conditionSets,
-      conditions,
-      cumulativeConditions,
-      characterMap,
-      resolveText,
-    ),
     iconUrl: icon?.normalIconAssetName ? getSkillIconUrl(icon.normalIconAssetName) : "",
-    effects: levelEffects.map((entry) => {
-      const duration = entry.activationTimeSecond && entry.activationTimeSecond < 99999 ? entry.activationTimeSecond : undefined;
-      return {
-        id: entry.id,
-        ...(duration !== undefined ? { duration } : {}),
-        value: entry.effectValue,
-        ...(entry.maxEffectValue ? { maxValue: entry.maxEffectValue } : {}),
-        effectType: entry.skillEffectType,
-        ...(entry.skillConditionGroup ? { conditionGroup: entry.skillConditionGroup } : {}),
-        ...(entry.skillCumulativeConditionID ? { cumulativeConditionId: entry.skillCumulativeConditionID } : {}),
-        targetIds: entry.skillTargetIDs ?? [],
-      };
-    }),
+    levels: groupEffectsByLevel(relevant).map(([level, levelEffects]) => ({
+      level,
+      description: formatDescription(
+        template,
+        levelEffects,
+        conditionSets,
+        conditions,
+        cumulativeConditions,
+        characterMap,
+        resolveText,
+      ),
+      effects: levelEffects.map(toSkillEffectViewModel),
+    })),
   };
 }
 

@@ -114,7 +114,7 @@ export const jaJP = {
     skillsDescription: "スキル名、アイコン、最大レベル効果は対応する MasterData から動的に関連付けます。",
     skillKinds: { leader: "リーダースキル", live: "ライブスキル", gekisou: "激奏スキル" },
     skillMeta: "Lv.{level} · ID #{id}",
-    skillFallback: "最大レベル効果：{values}",
+    skillFallback: "効果：{values}",
     assets: {
       title: "カードアセット",
       description: "フルイラスト、透過キャラクター、背景、サムネイル、スキルスプライトを表示します。クリックすると拡大表示とコピーができます。",
@@ -131,6 +131,7 @@ export const jaJP = {
     },
     rarities: { "2": "R", "3": "SR", "4": "SSR" },
     attributes: { "1": "紅赤", "2": "紺碧", "3": "翡翠", "4": "山吹", "5": "紫苑" },
+    growth: { level: "レベル", levelValue: "Lv.{level} / {limit}", decrease: "レベルを下げる", increase: "レベルを上げる", max: "最大", training: "特訓", awaken: "覚醒", power: "総合力", skillLevel: "スキルレベル", leaderSkillHint: "リーダースキルレベルは覚醒回数と連動しており、変更すると覚醒も変わります。" },
   },
   supportCards: {
     searchPlaceholder: "カード名・キャラクターを検索...",
@@ -152,6 +153,7 @@ export const jaJP = {
       gekisouSupport: "激奏サポートスキル"
     },
     diaryTitle: "メンバー手帳",
+    growth: { limitBreak: "上限解放", skillLevelHint: "スキルレベルは上限解放回数に応じて上がります。" },
   },
   music: {
     searchPlaceholder: "曲名、作詞、作曲、バンド、ボーカルで検索...",
