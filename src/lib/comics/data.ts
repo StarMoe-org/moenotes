@@ -39,9 +39,9 @@ export interface RawBand {
 
 export type RawText = MasterTextRow;
 
-export function getComicImageUrl(imageAsset: string): string {
+export function getComicImageUrl(imageAsset: string, locale: AppLocale): string {
   const path = `Image/Comic/${imageAsset}.png`;
-  return getAssetUrl({ path });
+  return getAssetUrl({ path, locale });
 }
 
 export function normalizeComics(
@@ -82,7 +82,7 @@ export function normalizeComics(
         characterNames: charNames,
         bandIds,
         name,
-        imageUrl: getComicImageUrl(comic.imageAsset),
+        imageUrl: getComicImageUrl(comic.imageAsset, locale),
         searchText: [name, ...charNames, comic.id].join(" ").toLowerCase(),
       };
     })

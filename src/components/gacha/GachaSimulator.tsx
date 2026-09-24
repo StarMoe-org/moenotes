@@ -116,7 +116,7 @@ export default function GachaSimulator({ locale, gacha }: Props) {
                     </div>
                   ) : (
                     <div className="grid aspect-[3/4] place-items-center p-2">
-                      <img className="max-h-[60%] w-auto object-contain" src={item ? getItemIconUrl(item.imagePath) : ""} alt="" loading="lazy" />
+                      <img className="max-h-[60%] w-auto object-contain" src={item ? getItemIconUrl(item.imagePath, locale) : ""} alt="" loading="lazy" />
                       <span className="font-mono text-[11px] font-bold text-[var(--mn-accent-deep)]">{t(locale, "gacha.itemAmount", { count: formatCompactCount(entry.amount) })}</span>
                     </div>
                   )}

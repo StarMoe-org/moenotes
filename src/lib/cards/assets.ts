@@ -1,3 +1,4 @@
+import type { AppLocale } from "@/config/locales";
 import { getAssetUrl } from "@/lib/assets/url";
 
 export type CardRarity = 2 | 3 | 4;
@@ -53,12 +54,13 @@ export function getCharacterBoardIconUrl(characterId: number): string {
   return getAssetUrl({ path: `Character/Image/${characterId}/board_icon.png` });
 }
 
-export function getBandLogoUrl(bandId: number): string {
-  return getAssetUrl({ path: `Band/${bandId}/band_logo.png` });
+// Some band logos are lettered per language.
+export function getBandLogoUrl(bandId: number, locale: AppLocale): string {
+  return getAssetUrl({ path: `Band/${bandId}/band_logo.png`, locale });
 }
 
-export function getBandLogoWhiteUrl(bandId: number): string {
-  return getAssetUrl({ path: `Band/${bandId}/band_logo_white.png` });
+export function getBandLogoWhiteUrl(bandId: number, locale: AppLocale): string {
+  return getAssetUrl({ path: `Band/${bandId}/band_logo_white.png`, locale });
 }
 
 export function getBandSmallIconUrl(bandId: number): string {

@@ -176,7 +176,7 @@ export default function ItemsExplorer({ locale, initialItems }: Props) {
 
 function ItemCardItem({ item, locale }: { item: ItemViewModel; locale: AppLocale }) {
   const [failed, setFailed] = useState(false);
-  const source = getItemIconUrl(item.imagePath);
+  const source = getItemIconUrl(item.imagePath, locale);
 
   const handleImageError = () => {
     setFailed(true);

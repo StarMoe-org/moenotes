@@ -54,7 +54,7 @@ export function normalizeDegrees(degrees: RawDegree[], characters: RawCharacter[
         name,
         source,
         type: degree.degreeType,
-        imageUrl: getImageAssetUrl(degree.imagePath),
+        imageUrl: getImageAssetUrl(degree.imagePath, locale),
         characterIds,
         bandIds,
         orderNum: degree.orderNum,

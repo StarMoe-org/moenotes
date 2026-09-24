@@ -1,7 +1,9 @@
+import type { AppLocale } from "@/config/locales";
 import { getAssetUrl } from "@/lib/assets/url";
 
-export function getItemIconUrl(imagePath: string): string {
+// Ticket icons are lettered per language.
+export function getItemIconUrl(imagePath: string, locale: AppLocale): string {
   if (!imagePath) return "";
   const path = imagePath.includes(".") ? imagePath : `${imagePath}.png`;
-  return getAssetUrl({ path });
+  return getAssetUrl({ path, locale });
 }

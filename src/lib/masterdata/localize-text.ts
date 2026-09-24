@@ -12,12 +12,13 @@ export interface MasterTextRow {
 
 export type LocalizableMasterText = Partial<MasterTextRow>;
 
-type MasterTextField = Exclude<keyof MasterTextRow, "id">;
+export type MasterTextField = Exclude<keyof MasterTextRow, "id">;
 
 // Untranslated cells sometimes carry a text key instead of copy (english "Music_Tilte_33", "Tag_Name_Ikka").
 const UNTRANSLATED_KEY = /^[A-Z][A-Za-z]*(?:_[A-Za-z0-9]+)+$/;
 
-function fieldOrder(locale: AppLocale): MasterTextField[] {
+/** Language columns in the order a UI locale reads them; release assets follow the same chain. */
+export function masterTextFieldOrder(locale: AppLocale): MasterTextField[] {
   if (locale === "zh-CN") return ["simplifiedChinese", "traditionalChinese", "japanese", "english", "korean"];
   if (locale === "zh-TW") return ["traditionalChinese", "simplifiedChinese", "japanese", "english", "korean"];
   if (locale === "ja-JP") return ["japanese", "english", "simplifiedChinese", "traditionalChinese", "korean"];
@@ -39,7 +40,7 @@ function isUsable(value: string | undefined, id: string | undefined): value is s
 export function localizeMasterText(entry: LocalizableMasterText | undefined, locale: AppLocale): string {
   if (!entry) return "";
   const id = entry.id === undefined ? undefined : String(entry.id);
-  for (const field of fieldOrder(locale)) {
+  for (const field of masterTextFieldOrder(locale)) {
     const value = entry[field];
     if (isUsable(value, id)) return value;
   }

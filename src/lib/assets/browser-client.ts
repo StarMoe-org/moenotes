@@ -11,7 +11,7 @@ export class AssetBrowserError extends Error {
 }
 
 export function assetBrowserUrl(path: string, query: Record<string, string | number> = {}): string {
-  const url = new URL(`${assetConfig.browserApi}/${path}`);
+  const url = new URL(`${assetConfig.api}/${path}`);
   for (const [key, value] of Object.entries(query)) url.searchParams.set(key, String(value));
   return url.toString();
 }

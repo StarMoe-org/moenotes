@@ -1,6 +1,6 @@
 import type { AppLocale } from "@/config/locales";
 import { getAssetUrl } from "@/lib/assets/url";
-import { getReleaseAudioUrl } from "@/lib/story/release-audio";
+import type { ReleaseAudio } from "@/lib/story/release-audio";
 import { localizeMasterText, type MasterTextRow } from "@/lib/masterdata/localize-text";
 
 export interface MasterTable<T> {
@@ -102,13 +102,21 @@ export function validateMasterTable<T>(raw: unknown): MasterTable<T> {
 }
 
 export function getMusicJacketUrl(jacketAssetName: string): string {
-  // Use raw type to avoid automatic webp extension conversion and keep png
+  // The index is keyed by the MasterData PNG path; the published file is WebP.
   return getAssetUrl({ path: `Image/Jacket/${jacketAssetName}.png`, type: "raw" });
 }
 
-/** Songs use the same release audio layout as other CRI sounds: Cri/Sound/<cue sheet>/<cue>. */
-export function getMusicAudioUrl(sound: MusicSoundCue | undefined): string | undefined {
-  return sound ? getReleaseAudioUrl(sound.cueSheetName, sound.cueName) : undefined;
+/** Songs resolve like other CRI sounds, by cue sheet and exact cue. */
+export function getMusicAudioUrl(audio: ReleaseAudio, sound: MusicSoundCue | undefined): string | undefined {
+  return sound ? audio.url(sound.cueSheetName, sound.cueName) : undefined;
+}
+
+/** Cue sheets of every song's full and preview audio, whose manifests normalizeMusic needs loaded. */
+export function getMusicCueSheets(musicList: RawMusic[], sounds: MusicSoundCue[]): string[] {
+  const soundMap = new Map(sounds.map((sound) => [sound.id, sound]));
+  return musicList
+    .flatMap((music) => [soundMap.get(music.musicSoundID), soundMap.get(music.jingleSoundID)])
+    .flatMap((sound) => (sound?.cueSheetName ? [sound.cueSheetName] : []));
 }
 
 export function normalizeMusic(
@@ -118,7 +126,8 @@ export function normalizeMusic(
   bands: RawBand[],
   texts: RawText[],
   locale: AppLocale,
-  sounds: MusicSoundCue[] = [],
+  sounds: MusicSoundCue[],
+  audio: ReleaseAudio,
 ): MusicViewModel[] {
   const soundMap = new Map(sounds.map((sound) => [sound.id, sound]));
   const textMap = new Map(texts.map((entry) => [entry.id, entry]));
@@ -197,8 +206,8 @@ export function normalizeMusic(
       vocalists,
       searchText: searchParts.join(" ").toLowerCase(),
       musicSoundID: music.musicSoundID,
-      audioUrl: getMusicAudioUrl(soundMap.get(music.musicSoundID)),
-      previewAudioUrl: getMusicAudioUrl(soundMap.get(music.jingleSoundID)),
+      audioUrl: getMusicAudioUrl(audio, soundMap.get(music.musicSoundID)),
+      previewAudioUrl: getMusicAudioUrl(audio, soundMap.get(music.jingleSoundID)),
     };
   });
 }

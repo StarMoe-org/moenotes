@@ -66,7 +66,7 @@ export default function HomeCarousel({ locale, slides }: Props) {
   const title = active.title || kindLabel;
   const schedule = formatScheduleRange(active.startAt, active.endAt, locale);
   const href = active.link ? homeLinkHref(active.link, locale) : null;
-  const banner = <BannerImage eager className="mn-list-caption border border-[var(--mn-glass-border)]" src={getImageAssetUrl(active.imagePath)} alt={title} fallback={title} />;
+  const banner = <BannerImage eager className="mn-list-caption border border-[var(--mn-glass-border)]" src={getImageAssetUrl(active.imagePath, locale)} alt={title} fallback={title} />;
 
   return (
     <section
@@ -135,7 +135,7 @@ export default function HomeCarousel({ locale, slides }: Props) {
                   aria-current={current ? "true" : undefined}
                   className={`mn-focus mn-list-caption relative block w-28 overflow-hidden border transition sm:w-36 ${current ? "border-[var(--mn-accent)] opacity-100" : "border-[var(--mn-glass-border)] opacity-60 hover:opacity-100"}`}
                 >
-                  <BannerImage src={getImageAssetUrl(slide.imagePath)} alt="" fallback={slideTitle} />
+                  <BannerImage src={getImageAssetUrl(slide.imagePath, locale)} alt="" fallback={slideTitle} />
                   {current && (
                     <span className="absolute inset-x-0 bottom-0 h-1 bg-[color-mix(in_srgb,var(--mn-paper)_60%,transparent)]" aria-hidden="true">
                       <span key={`${slide.id}-${autoplay}`} className={`block h-full origin-left bg-[var(--mn-accent)] ${autoplay ? "mn-carousel-progress" : ""}`} />

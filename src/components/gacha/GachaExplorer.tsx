@@ -175,7 +175,7 @@ function GachaCard({ gacha, locale, now, onClick }: { gacha: GachaViewModel; loc
       aria-label={t(locale, "gacha.openDetail", { name: gacha.name })}
     >
       <div className="relative border-b border-[var(--mn-glass-border)]">
-        <BannerImage src={getImageAssetUrl(gacha.bannerPath)} alt="" fallback={gacha.name} />
+        <BannerImage src={getImageAssetUrl(gacha.bannerPath, locale)} alt="" fallback={gacha.name} />
         <div className="absolute left-2 top-2 flex max-w-[calc(100%-1rem)] flex-wrap gap-1.5">
           <ScheduleBadge locale={locale} startAt={gacha.startAt} endAt={gacha.endAt} now={now} />
           {gacha.isLimited && <LimitedChip locale={locale} />}

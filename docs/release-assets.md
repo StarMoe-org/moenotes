@@ -1,55 +1,74 @@
 # Release asset layout
 
-The release bucket is configured by `assetConfig.releaseSource`. Existing logical
-PNG paths resolve through the generated image index; member-card `_atlas` paths
-select the original named image, not a face/formation crop. Export sequence
-numbers vary between assets and must not be hardcoded.
+Release assets come from the moenotes-assets service configured by `assetConfig.api`
+(`https://assets.bdon.moe`, override with `PUBLIC_ASSET_API`). The service has no
+path-based routes: files are served only as `/files/{file_id}` and export manifests as
+`/exports/{export_id}`. The site never builds a URL from an asset path; it looks the
+ID up in `src/lib/assets/generated`, and a path the index does not list resolves to
+no URL, so the UI shows its unavailable state.
 
-Story tables use `Adv/Episode/<script>/<script>-<table>/<script>-<table>.json`.
-Only tables present in the manifest are redirected. The existing parser accepts
-their `_header` / `_allData` representation.
+The service keeps one catalog per asset language (`zh-Hans`, `zh-Hant`, `en`, `ko`,
+`ja`) for region `tw`. Each index value is a single ID when every language publishes
+the same content, or an object keyed by asset language when content differs.
+`selectReleaseId` walks the same language chain as `localizeMasterText`, so zh-CN
+prefers `zh-Hans`, zh-TW prefers `zh-Hant`, and UI-only locales read English first.
+Helpers for lettered artwork (band logos, banners, comics, stamps, titles, gacha
+art, tickets, story banners) take the page locale; other callers default to zh-CN.
 
-Story audio resolves by the exact cue-sheet key and cue label to an M4A object.
-The release resolver does not subtract one from a cue number. That adjustment
-remains confined to the legacy WAV resolver. An audio package with multiple
-cues is not treated as a single sound unless its matching cue is known.
+- `images.json`: logical PNG path without extension → lossless WebP file ID. The
+  label must equal the key's last segment, so member-card `_atlas` paths select the
+  original named image, not a face/formation crop.
+- `stories.json`: script → table (`Episode`, `Text`, `Sound`, `SoundCueSheet`,
+  `Video`) → JSON file ID. Only the story parser imports it. The existing parser
+  accepts the tables' `_header` / `_allData` representation.
+- `audio.json`: `Cri/Sound/<cue sheet>` → export ID. Shipping every cue's file ID
+  would add roughly 0.9 MB (gzip) to story pages, so `loadReleaseAudio` fetches the
+  sheet's manifest and matches cues by exact label. Labels whose files differ in
+  content are ambiguous and resolve to nothing. The cue number is not adjusted.
+  Stories load their cue sheets in `fetchAndParseStory`; songs load theirs at build
+  time in `getBuildMusic`.
+
+Downloads use `getAssetFileName` (`<asset name>.webp`) because file URLs carry no name.
+`cachedFetch` stores `/files` and `/exports` responses, which are immutable per ID.
 
 ## Refreshing the index
 
-Download `_meta/manifest.json` from the configured release bucket to a local
-file, then run:
-
 ```sh
-node scripts/sync-release-assets.mjs <manifest.json>
+node scripts/sync-release-assets.mjs            # --api=<url> --region=<id> to override
 bun test tests/release-assets.test.ts tests/story-assets.test.ts
 bun run lint
 bun run check:search-seo
 ASTRO_TELEMETRY_DISABLED=1 bun run check
 ```
 
-The generator saves only relative paths, source labels, and available table
-names. It selects exact image labels in deterministic object-key order, excludes
-thumbnail outputs, and skips audio labels with conflicting content hashes.
-Review and commit the generated JSON along with any resolver changes.
+The script reads each language's current catalog, lists its assets and fetches the
+export manifest for every key in scope. No public route looks exports up by key,
+so the script derives export IDs the way the service does:
+`sha256(JSON.stringify([snapshot, key, "csharp-json-png-webp-aac-h264-v3"]))`.
+Every manifest's `id`, `snapshot`, `key` and `profile` are checked, and a changed
+profile fails the run. Published manifests are cached in
+`node_modules/.cache/moenotes-assets`; a 404 means not exported (yet) and is not
+cached. Existing file URLs stay valid after the service refreshes a catalog, so the
+committed index keeps working until it is regenerated. Review and commit the
+generated JSON along with any resolver changes.
 
-The verified 2026-09-24 manifest supplies 1,583 image keys, 946 story groups, and
-738 audio sheets. Formal-host checks covered release character icons, card
-artwork, JSON tables and M4A responses; one main-story chapter parsed into 115
-lines with 110 release audio links.
+## 2026-09-25 sync
 
-The image scope also covers gacha banners and logos, home and limited-mission
-banners, season pass banners, login bonus sheets, title (`Image/Degree`) art,
-profile backgrounds with their thumbnails, and home spot thumbnails. With these,
-the same manifest yields 1,842 image keys; the earlier keys are unchanged.
+Snapshots: `zh-Hant` 748b0982…, `zh-Hans` 206ab22b…, `en` 6624a60e…, `ko` e3dcf8eb…,
+`ja` cb158e12…. The index lists 1,841 images (167 differ by language: band logos
+for bands 3 and 5, banners, comics, stamps, titles, backgrounds, tickets, story
+banners and icons, gacha banners and logos, the season pass banner and login bonus
+sheets), 946 stories with 4,730 tables, and 937 cue sheets. Story tables and audio
+are identical in all five languages.
 
-The release bucket is the only asset source; the old test-server bucket and its
-backup are no longer referenced. A path the index does not list resolves to no
-URL, and the UI shows its unavailable state instead of guessing an object name.
+Checks against the live host: all 2,471 image file IDs returned `image/webp` and all
+4,730 table IDs `application/json`. `adv_script_mygo_001_1_01` parsed into 115
+lines with 110 voice links, and sampled voice/BGM/SE files returned `audio/mp4`.
+Compared with the old bucket, sampled images had identical dimensions and visible
+pixels within 1/255.
 
-Known gaps in the 2026-09-24 export: song audio (cue sheets such as
-`A_Abracadabra` and `A_Abracadabra_short`) and ADV `Adv/Stage` / `Adv/Still`
-art. The asset catalog lists the song bundles (e.g.
-`cri_assets_cri_sound_a_abracadabra.bundle`), but they have not been downloaded
-or decoded yet. Songs resolve like every other CRI sound, by cue sheet and cue
-name under `Cri/Sound/<cue sheet>/`, so they appear once a refreshed manifest
-includes them and the index is regenerated.
+Known gaps: `MemberCard/30/member_character` and one ACB sheet have no export;
+`Fwk.Sound.SplitAcbData` resources and member-card USM movies are not exported.
+Only `_short` song versions exist, so songs get preview audio but no full track.
+The service lists ADV `Adv/Stage` / `Adv/Still` textures, but they are not in the
+image scope yet, so story backgrounds and stills still resolve to nothing.

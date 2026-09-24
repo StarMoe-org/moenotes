@@ -1,12 +1,24 @@
+import { DEFAULT_LOCALE, type AppLocale } from "@/config/locales";
+import storyTables from "@/lib/assets/generated/stories.json";
+import { releaseFileUrl, selectReleaseId, type ReleaseEntry } from "@/lib/assets/release";
 import { getAssetUrl } from "@/lib/assets/url";
-import { getReleaseAudioUrl } from "./release-audio";
+import { loadReleaseAudio, type ReleaseAudio } from "./release-audio";
 
 export type StoryScriptTable = "Episode" | "Sound" | "SoundCueSheet" | "Text" | "Video";
 
+/** Published table file IDs by script name; only the story parser needs them, so they stay out of the image index. */
+const stories: Readonly<Record<string, Readonly<Partial<Record<StoryScriptTable, ReleaseEntry>>>>> = storyTables;
+
 /** Published JSON for a story table, or "" when the release index does not list it. */
-export function getStoryScriptTableUrl(scriptName: string, table: StoryScriptTable): string {
+export function getStoryScriptTableUrl(scriptName: string, table: StoryScriptTable, locale: AppLocale = DEFAULT_LOCALE): string {
   const cleanName = cleanSegment(scriptName);
-  return getAssetUrl({ path: `Adv/Episode/${cleanName}/${cleanName}-${table}.txt` });
+  const id = Object.hasOwn(stories, cleanName) ? selectReleaseId(stories[cleanName]?.[table], locale) : undefined;
+  return id ? releaseFileUrl(id) : "";
+}
+
+/** Loads the release audio of a story's cue sheets before its lines are resolved. */
+export function loadStoryAudio(cueSheetNames: Iterable<string>, locale: AppLocale, fetcher?: typeof fetch): Promise<ReleaseAudio> {
+  return loadReleaseAudio([...cueSheetNames].map(cleanSegment).filter(Boolean), locale, fetcher);
 }
 
 // Stage backgrounds and stills are not part of the release export yet; these resolve once the index lists them.
@@ -24,12 +36,12 @@ export function getStoryStillUrl(targetAssetName: string): string | undefined {
   return getAssetUrl({ path: `Adv/Still/${directory}/data/${assetName}.png` }) || undefined;
 }
 
-export function getStoryBgmUrl(cueSheetName: string): string | undefined {
-  return getReleaseAudioUrl(cleanSegment(cueSheetName));
+export function getStoryBgmUrl(audio: ReleaseAudio, cueSheetName: string): string | undefined {
+  return audio.url(cleanSegment(cueSheetName));
 }
 
-export function getStorySeUrl(cueSheetName: string): string | undefined {
-  return getReleaseAudioUrl(cleanSegment(cueSheetName));
+export function getStorySeUrl(audio: ReleaseAudio, cueSheetName: string): string | undefined {
+  return audio.url(cleanSegment(cueSheetName));
 }
 
 export interface StoryVoiceAsset {
@@ -40,11 +52,11 @@ export interface StoryVoiceAsset {
 }
 
 /** Voice lines resolve by their exact cue sheet and cue name in the release audio index. */
-export function getStoryVoiceUrl(asset: StoryVoiceAsset): string | undefined {
+export function getStoryVoiceUrl(audio: ReleaseAudio, asset: StoryVoiceAsset): string | undefined {
   const cueName = cleanSegment(asset.cueName);
   const cueSheetName = cleanSegment(asset.cueSheetName);
   if (!cueName || !cueSheetName) return undefined;
-  return getReleaseAudioUrl(cueSheetName, cueName);
+  return audio.url(cueSheetName, cueName);
 }
 
 function cleanSegment(value: string): string {

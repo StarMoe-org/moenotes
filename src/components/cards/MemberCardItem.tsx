@@ -49,7 +49,7 @@ export default function MemberCardItem({ card, locale, onClick, badge }: Props) 
         </div>
         <div className="mt-auto pt-2 flex items-center justify-between gap-2 border-t border-dashed border-[var(--mn-text-muted)]/40">
           <img className="h-5 w-auto max-w-14 object-contain" src={getRarityIconUrl(card.rarity)} alt={t(locale, `cards.rarities.${card.rarity}`)} />
-          <BandLogo bandId={card.bandId} bandName={card.bandName} />
+          <BandLogo bandId={card.bandId} bandName={card.bandName} locale={locale} />
         </div>
       </div>
     </a>

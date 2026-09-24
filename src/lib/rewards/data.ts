@@ -277,7 +277,7 @@ export function normalizeRewardEntries(data: RewardsMasterData, resolve: RewardR
     );
     const allRewards = levels.flatMap((level) => [...level.free, ...level.premium]);
     return {
-      ...summary("seasonPass", pass.id, text(pass.nameTextId) || `#${pass.id}`, pass.bannerAsset ? getImageAssetUrl(`SeasonPass/Banner/${pass.bannerAsset}`) : "", pass.startAt, pass.endAt, allRewards),
+      ...summary("seasonPass", pass.id, text(pass.nameTextId) || `#${pass.id}`, pass.bannerAsset ? getImageAssetUrl(`SeasonPass/Banner/${pass.bannerAsset}`, locale) : "", pass.startAt, pass.endAt, allRewards),
       kind: "seasonPass",
       description: text(pass.descriptionTextId),
       levels,
@@ -302,7 +302,7 @@ export function normalizeRewardEntries(data: RewardsMasterData, resolve: RewardR
     }));
     const allRewards = sheets.flatMap((sheet) => sheet.days.flatMap((day) => day.rewards));
     return {
-      ...summary("loginBonus", bonus.id, text(bonus.nameTextID) || `#${bonus.id}`, getImageAssetUrl(bonus.sheetImageAsset), bonus.startAt, bonus.endAt, allRewards),
+      ...summary("loginBonus", bonus.id, text(bonus.nameTextID) || `#${bonus.id}`, getImageAssetUrl(bonus.sheetImageAsset, locale), bonus.startAt, bonus.endAt, allRewards),
       kind: "loginBonus",
       isLoop: bonus.isLoop,
       sheets,
@@ -321,7 +321,7 @@ export function normalizeRewardEntries(data: RewardsMasterData, resolve: RewardR
     const completeRewards = resolveRows(missionRewardRows, group.completeRewardIds ?? []);
     const allRewards = [...completeRewards, ...days.flatMap((day) => day.missions.flatMap((mission) => mission.rewards))];
     return {
-      ...summary("mission", group.id, text(group.nameTextID) || `#${group.id}`, group.bannerAsset ? getImageAssetUrl(`Image/Banner/${group.bannerAsset}`) : "", group.startAt, group.endAt, allRewards),
+      ...summary("mission", group.id, text(group.nameTextID) || `#${group.id}`, group.bannerAsset ? getImageAssetUrl(`Image/Banner/${group.bannerAsset}`, locale) : "", group.startAt, group.endAt, allRewards),
       kind: "mission",
       days,
       completeRewards,

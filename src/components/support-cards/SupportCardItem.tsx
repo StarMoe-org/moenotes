@@ -57,7 +57,7 @@ export default function SupportCardItem({ card, locale, onClick, badge }: Props)
           {rarityIcon
             ? <img className="h-5 w-auto max-w-14 object-contain" src={rarityIcon} alt={rarityLabel} />
             : <span className="text-xs font-black text-[var(--mn-accent-deep)]">{rarityLabel}</span>}
-          <BandLogo bandId={card.bandId} bandName={card.bandName} />
+          <BandLogo bandId={card.bandId} bandName={card.bandName} locale={locale} />
         </div>
       </div>
     </a>

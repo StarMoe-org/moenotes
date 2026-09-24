@@ -65,7 +65,7 @@ export default function MusicDetail({ locale, initialSong }: Props) {
   const downloadJacket = async () => {
     if (!song) return;
     setDownloadState("downloading");
-    await saveRemoteFile(song.jacketUrl, `${song.jacketAssetName}.png`);
+    await saveRemoteFile(song.jacketUrl, `${song.jacketAssetName}.webp`);
     setDownloadState("success");
     setTimeout(() => setDownloadState("idle"), 1500);
   };
@@ -242,14 +242,14 @@ export default function MusicDetail({ locale, initialSong }: Props) {
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <img
                       className="h-6 w-auto object-contain block dark:hidden"
-                      src={getBandLogoUrl(song.bandId)}
+                      src={getBandLogoUrl(song.bandId, locale)}
                       alt=""
                       aria-hidden="true"
                       onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                     />
                     <img
                       className="h-6 w-auto object-contain hidden dark:block"
-                      src={getBandLogoWhiteUrl(song.bandId)}
+                      src={getBandLogoWhiteUrl(song.bandId, locale)}
                       alt=""
                       aria-hidden="true"
                       onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
@@ -419,9 +419,9 @@ function SongAudioPanel({ locale, song }: { locale: AppLocale; song: MusicViewMo
   const track = tracks[Math.min(active, tracks.length - 1)]!;
   const download = async (item: (typeof tracks)[number]) => {
     setDownloading(item.kind);
-    const extension = item.url.split(".").pop()?.split("?")[0] || "m4a";
     const suffix = item.kind === "preview" ? "_short" : "";
-    await saveRemoteFile(item.url, `${safeFilename(song.title)}${suffix}.${extension}`);
+    // Release audio is published as AAC in M4A; file URLs end in an ID, not a name.
+    await saveRemoteFile(item.url, `${safeFilename(song.title)}${suffix}.m4a`);
     setDownloading(null);
   };
 

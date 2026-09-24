@@ -34,8 +34,8 @@ export function normalizeBackgrounds(backgrounds: RawBackground[], texts: RawTex
         name,
         description,
         type: background.itemType,
-        imageUrl: getImageAssetUrl(background.assetPath),
-        thumbnailUrl: getImageAssetUrl(background.thumbnailAssetPath || background.assetPath),
+        imageUrl: getImageAssetUrl(background.assetPath, locale),
+        thumbnailUrl: getImageAssetUrl(background.thumbnailAssetPath || background.assetPath, locale),
         searchText: [name, description, background.id].join(" ").toLocaleLowerCase(),
       };
     })

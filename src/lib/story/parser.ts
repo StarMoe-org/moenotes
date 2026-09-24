@@ -5,8 +5,11 @@ import {
   getStorySeUrl,
   getStoryStillUrl,
   getStoryVoiceUrl,
+  loadStoryAudio,
   type StoryScriptTable,
 } from "@/lib/story/assets";
+import type { ReleaseAudio } from "@/lib/story/release-audio";
+import { fetchReleaseJson } from "@/lib/assets/release";
 import { localizeMasterText } from "@/lib/masterdata/localize-text";
 
 export type StoryLocale =
@@ -100,13 +103,14 @@ export async function fetchAndParseStory(scriptName: string, options: ParseStory
   const locale = options.locale ?? "ja-JP";
   const fetcher = options.fetcher ?? fetch;
   const [episode, text, sound, cueSheets] = await Promise.all([
-    fetchStoryTable<EpisodeRow>(scriptName, "Episode", fetcher),
-    fetchStoryTable<TextRow>(scriptName, "Text", fetcher),
-    fetchStoryTable<SoundRow>(scriptName, "Sound", fetcher),
-    fetchStoryTable<SoundCueSheetRow>(scriptName, "SoundCueSheet", fetcher),
+    fetchStoryTable<EpisodeRow>(scriptName, "Episode", locale, fetcher),
+    fetchStoryTable<TextRow>(scriptName, "Text", locale, fetcher),
+    fetchStoryTable<SoundRow>(scriptName, "Sound", locale, fetcher),
+    fetchStoryTable<SoundCueSheetRow>(scriptName, "SoundCueSheet", locale, fetcher),
   ]);
+  const audio = await loadStoryAudio(cueSheets.allData.flatMap((row) => (row.cueSheetName ? [row.cueSheetName] : [])), locale, fetcher);
 
-  return parseStoryTables(scriptName, { episode, text, sound, cueSheets }, locale);
+  return parseStoryTables(scriptName, { episode, text, sound, cueSheets }, audio, locale);
 }
 
 export function parseStoryTables(
@@ -117,6 +121,7 @@ export function parseStoryTables(
     sound: NormalizedTable<SoundRow>;
     cueSheets: NormalizedTable<SoundCueSheetRow>;
   },
+  audio: ReleaseAudio,
   locale: StoryLocale = "ja-JP",
 ): ParsedStoryScript {
   const texts = new Map(tables.text.allData.map((row) => [String(row.id ?? ""), row]));
@@ -139,8 +144,8 @@ export function parseStoryTables(
       if (stillUrl) stills.add(stillUrl);
     }
 
-    collectSoundUrl(row.bgmID, cueSheets, getStoryBgmUrl, bgmUrls);
-    collectSoundUrl(row.seID, cueSheets, getStorySeUrl, seUrls);
+    collectSoundUrl(row.bgmID, cueSheets, (name) => getStoryBgmUrl(audio, name), bgmUrls);
+    collectSoundUrl(row.seID, cueSheets, (name) => getStorySeUrl(audio, name), seUrls);
 
     if ((row.command !== 2 && row.command !== 20) || !row.advTextID) continue;
     const textRow = texts.get(row.advTextID);
@@ -154,7 +159,7 @@ export function parseStoryTables(
       if (!soundRow?.cueName || soundRow.soundCueSheetID === undefined) return [];
       const cueSheet = cueSheets.get(String(soundRow.soundCueSheetID));
       if (!cueSheet?.cueSheetName) return [];
-      const url = getStoryVoiceUrl({
+      const url = getStoryVoiceUrl(audio, {
         scriptName,
         cueName: soundRow.cueName,
         cueSheetName: cueSheet.cueSheetName,
@@ -198,39 +203,15 @@ export function normalizeStoryTable<T>(value: unknown): NormalizedTable<T> {
   };
 }
 
-async function fetchStoryTable<T>(scriptName: string, table: StoryScriptTable, fetcher: typeof fetch): Promise<NormalizedTable<T>> {
-  const cacheKey = `${scriptName}:${table}`;
-  let request = storyTableCache.tables.get(cacheKey);
+async function fetchStoryTable<T>(scriptName: string, table: StoryScriptTable, locale: StoryLocale, fetcher: typeof fetch): Promise<NormalizedTable<T>> {
+  const url = getStoryScriptTableUrl(scriptName, table, locale);
+  if (!url) throw new Error(`Story table is not in the release export: ${scriptName}-${table}`);
+  let request = storyTableCache.tables.get(url);
   if (!request) {
-    request = loadStoryTable(scriptName, table, fetcher);
-    storyTableCache.tables.set(cacheKey, request);
+    request = fetchReleaseJson<unknown>(url, fetcher).then((value) => normalizeStoryTable<unknown>(value));
+    storyTableCache.tables.set(url, request);
   }
   return request as Promise<NormalizedTable<T>>;
-}
-
-async function loadStoryTable(scriptName: string, table: StoryScriptTable, fetcher: typeof fetch): Promise<NormalizedTable<unknown>> {
-  const url = getStoryScriptTableUrl(scriptName, table);
-  if (!url) throw new Error(`Story table is not in the release export: ${scriptName}-${table}`);
-  let lastError: unknown;
-
-  for (let attempt = 1; attempt <= 4; attempt += 1) {
-    try {
-      const response = await fetcher(url);
-      if (!response.ok) {
-        if (response.status < 500 && response.status !== 429) {
-          throw new Error(`Failed to fetch ${scriptName}-${table}: HTTP ${response.status}`);
-        }
-        throw new Error(`Retryable story response: HTTP ${response.status}`);
-      }
-      return normalizeStoryTable<unknown>(await response.json());
-    } catch (error) {
-      lastError = error;
-      if (attempt === 4) break;
-      await new Promise((resolve) => setTimeout(resolve, attempt * 500));
-    }
-  }
-
-  throw lastError instanceof Error ? lastError : new Error(`Failed to fetch ${scriptName}-${table}`);
 }
 
 function localizeText(row: TextRow, locale: StoryLocale): string {

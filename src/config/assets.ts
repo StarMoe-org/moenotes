@@ -1,8 +1,10 @@
 export const assetConfig = {
-  /** Assets exported from the live client. Object names carry export sequence numbers, so paths resolve through src/lib/assets/generated. */
-  releaseSource: "https://storage.bdon.moe/moenotes",
-  browserApi: (import.meta.env.PUBLIC_ASSET_BROWSER_API || "https://assets.bdon.moe").replace(/\/+$/, ""),
-  browserRegion: "tw",
+  /**
+   * moenotes-assets service: published files (/files/{id}), export manifests (/exports/{id}) and the bundle browser API.
+   * It has no path-based routes; file IDs come from src/lib/assets/generated (scripts/sync-release-assets.mjs).
+   */
+  api: (import.meta.env.PUBLIC_ASSET_API || "https://assets.bdon.moe").replace(/\/+$/, ""),
+  region: "tw",
   fonts: {
     googlePreconnect: "https://fonts.googleapis.com",
     googleStaticPreconnect: "https://fonts.gstatic.com",

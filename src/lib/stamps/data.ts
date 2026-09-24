@@ -41,9 +41,9 @@ export interface RawBand {
 
 export type RawText = MasterTextRow;
 
-export function getStampImageUrl(assetPath: string): string {
+export function getStampImageUrl(assetPath: string, locale: AppLocale): string {
   const path = assetPath.endsWith(".png") ? assetPath : `${assetPath}.png`;
-  return getAssetUrl({ path });
+  return getAssetUrl({ path, locale });
 }
 
 export function normalizeStamps(
@@ -85,7 +85,7 @@ export function normalizeStamps(
         characterNames: charNames,
         bandIds,
         name,
-        imageUrl: getStampImageUrl(stamp.stampAsset),
+        imageUrl: getStampImageUrl(stamp.stampAsset, locale),
         searchText: [name, ...charNames, stamp.id].join(" ").toLowerCase(),
       };
     })

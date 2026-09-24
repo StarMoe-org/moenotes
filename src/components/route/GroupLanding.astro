@@ -15,7 +15,9 @@ const children = getNavChildren(group);
 ---
 
 <section class="rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-6 shadow-[var(--mn-shadow-stamp-lg)] sm:p-8">
-  <p class="mb-6 max-w-3xl font-medium leading-8 text-[var(--mn-text-muted)]">{t(locale, "page.groupIntro")}</p>
+  {t(locale, "page.groupIntro") ? (
+    <p class="mb-6 max-w-3xl font-medium leading-8 text-[var(--mn-text-muted)]">{t(locale, "page.groupIntro")}</p>
+  ) : null}
   <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
     {children.length === 0 ? (
       <article class="relative rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface-strong)] p-6 shadow-[var(--mn-shadow-stamp)]">

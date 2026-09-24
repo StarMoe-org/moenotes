@@ -70,7 +70,7 @@ export function createRewardResolver(sources: RewardSources, locale: AppLocale):
     switch (kind) {
       case "item": {
         const item = items.get(id);
-        return item ? { ...base, name: item.name, imageUrl: getItemIconUrl(item.imagePath), link: { routeId: "items" } } : base;
+        return item ? { ...base, name: item.name, imageUrl: getItemIconUrl(item.imagePath, locale), link: { routeId: "items" } } : base;
       }
       case "member": {
         const card = cards.get(id);
@@ -94,7 +94,7 @@ export function createRewardResolver(sources: RewardSources, locale: AppLocale):
       }
       case "spot": {
         const spot = spots.get(id);
-        return spot ? { ...base, name: localizeMasterText(textMap.get(spot.nameTextId), locale), imageUrl: getImageAssetUrl(spot.thumbnailAssetPath) } : base;
+        return spot ? { ...base, name: localizeMasterText(textMap.get(spot.nameTextId), locale), imageUrl: getImageAssetUrl(spot.thumbnailAssetPath, locale) } : base;
       }
       default:
         return base;

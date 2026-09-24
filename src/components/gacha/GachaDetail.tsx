@@ -60,7 +60,7 @@ export default function GachaDetail({ locale, gacha }: Props) {
             <BannerImage
               eager
               className="rounded-xl border border-[var(--mn-glass-border)]"
-              src={getImageAssetUrl(gacha.bannerPath)}
+              src={getImageAssetUrl(gacha.bannerPath, locale)}
               alt={t(locale, "gacha.bannerAlt", { name: gacha.name })}
               fallback={gacha.name}
             />
@@ -125,7 +125,7 @@ export default function GachaDetail({ locale, gacha }: Props) {
                   <ul className="mt-3 grid gap-2 sm:grid-cols-2">
                     {gacha.items.map((item) => (
                       <li key={item.id} className="flex min-w-0 items-center gap-3 rounded-2xl border border-[var(--mn-glass-border)] bg-[var(--mn-surface)] p-2.5">
-                        <img className="h-10 w-10 shrink-0 object-contain" src={getItemIconUrl(item.imagePath)} alt="" loading="lazy" />
+                        <img className="h-10 w-10 shrink-0 object-contain" src={getItemIconUrl(item.imagePath, locale)} alt="" loading="lazy" />
                         <span className="min-w-0 flex-1 truncate text-sm font-bold text-[var(--mn-text)]">{item.name}</span>
                         <span className="shrink-0 font-mono text-sm font-black tabular-nums text-[var(--mn-accent-deep)]" title={item.amount.toLocaleString(locale)}>{t(locale, "gacha.itemAmount", { count: formatCompactCount(item.amount) })}</span>
                       </li>
@@ -210,7 +210,9 @@ function RatePanel({ locale, pools }: { locale: AppLocale; pools: GachaPool[] })
             );
           })}
         </ul>
-        <p className="mt-5 border-t border-[var(--mn-glass-border)] pt-3 text-xs leading-6 text-[var(--mn-text-muted)]">{t(locale, "gacha.ratesNote")}</p>
+        {t(locale, "gacha.ratesNote") ? (
+          <p className="mt-5 border-t border-[var(--mn-glass-border)] pt-3 text-xs leading-6 text-[var(--mn-text-muted)]">{t(locale, "gacha.ratesNote")}</p>
+        ) : null}
       </div>
     </div>
   );

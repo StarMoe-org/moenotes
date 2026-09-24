@@ -60,11 +60,11 @@ function fileIcon(file: BundleContent): IconName {
 export default function AssetViewer({ locale }: Props) {
   const regions = useAssetBrowserQuery<AssetRegion[]>(assetBrowserUrl("regions"));
   const [scope, setScope] = useState({ language: "", snapshot: "" });
-  const region = regions.data?.find((item) => item.id === assetConfig.browserRegion);
+  const region = regions.data?.find((item) => item.id === assetConfig.region);
   const languages = region ? [...new Set([region.default_locale, ...region.locales])] : [];
   const language = region && languages.includes(scope.language) ? scope.language : region?.default_locale ?? "";
   const languageNames = useMemo(() => new Intl.DisplayNames([locale], { type: "language" }), [locale]);
-  const catalogs = useAssetBrowserQuery<AssetCatalog[]>(region ? assetBrowserUrl("catalogs", { region: assetConfig.browserRegion, locale: language }) : null);
+  const catalogs = useAssetBrowserQuery<AssetCatalog[]>(region ? assetBrowserUrl("catalogs", { region: assetConfig.region, locale: language }) : null);
   const catalog = catalogs.data?.find((item) => item.snapshot === scope.snapshot) ?? defaultCatalog(catalogs.data ?? []);
   const snapshot = catalog?.snapshot ?? "";
   const [navigation, setNavigation] = useState({ snapshot: "", entries: [ROOT], position: 0 });

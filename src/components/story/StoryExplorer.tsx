@@ -141,7 +141,7 @@ function MainStoryGroups({ stories, locale, sort }: { stories: StoryViewModel[];
       </div>
       <div className="grid gap-3 border-t-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] p-4 sm:grid-cols-2 lg:grid-cols-3 sm:p-6">
         {sortEntries(episodes, sort, locale).map((episode) => <a key={episode.id} href={localizePath(`/story/${episode.advId}`, locale)} className="mn-list-card mn-list-card-row group flex items-center gap-4 rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)] p-3 shadow-[var(--mn-shadow-stamp-sm)] transition hover:-translate-y-0.5 hover:shadow-[var(--mn-shadow-stamp)]">
-          <img src={getAssetUrl({ path: `Story/Banner/Episode/${episode.assets.banner}.png`, type: "raw" })} alt="" className="h-16 w-28 shrink-0 rounded-xl object-cover" loading="lazy" />
+          <img src={getAssetUrl({ path: `Story/Banner/Episode/${episode.assets.banner}.png`, type: "raw", locale })} alt="" className="h-16 w-28 shrink-0 rounded-xl object-cover" loading="lazy" />
           <div className="min-w-0"><p className="text-[11px] font-black text-[var(--mn-accent)]">EPISODE {episode.episodeNumber}</p><h3 className="mt-1 line-clamp-2 text-sm font-black text-[var(--mn-text)]">{episode.title}</h3></div>
         </a>)}
       </div>
@@ -152,7 +152,7 @@ function MainStoryGroups({ stories, locale, sort }: { stories: StoryViewModel[];
 function StoryCard({ story, locale, onOpen }: { story: StoryViewModel; locale: AppLocale; onOpen: () => void }) {
   const hasCover = story.category === "main" || story.category === "friendship";
   const image = hasCover ? (story.assets.banner || story.assets.image) : "";
-  const imageUrl = image ? getAssetUrl({ path: `Story/Banner/${story.assets.banner ? "Episode" : "Chapter"}/${image}.png`, type: "raw" }) : "";
+  const imageUrl = image ? getAssetUrl({ path: `Story/Banner/${story.assets.banner ? "Episode" : "Chapter"}/${image}.png`, type: "raw", locale }) : "";
 
   const className = "mn-list-card group block w-full overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] text-left shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)]";
   const content = <>

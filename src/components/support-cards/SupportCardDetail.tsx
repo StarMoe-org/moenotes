@@ -31,6 +31,7 @@ import {
   getBandSmallIconUrl,
   getCharacterFaceIconUrl,
 } from "@/lib/cards/assets";
+import { getAssetFileName } from "@/lib/assets/url";
 import { LevelControl, StepControl } from "@/components/shared/CardGrowthControls";
 
 interface Props {
@@ -196,7 +197,7 @@ export default function SupportCardDetail({ locale, initialData }: Props) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const filename = selectedAsset.url.split("/").pop() || "download";
+      const filename = getAssetFileName(selectedAsset.url) || "download";
       a.download = filename;
       document.body.appendChild(a);
       a.click();
@@ -448,14 +449,14 @@ export default function SupportCardDetail({ locale, initialData }: Props) {
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <img
                       className="h-6 w-auto object-contain block dark:hidden"
-                      src={getBandLogoUrl(card.bandId)}
+                      src={getBandLogoUrl(card.bandId, locale)}
                       alt=""
                       aria-hidden="true"
                       onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                     />
                     <img
                       className="h-6 w-auto object-contain hidden dark:block"
-                      src={getBandLogoWhiteUrl(card.bandId)}
+                      src={getBandLogoWhiteUrl(card.bandId, locale)}
                       alt=""
                       aria-hidden="true"
                       onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}

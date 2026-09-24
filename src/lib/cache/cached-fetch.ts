@@ -20,7 +20,8 @@ type FetchCacheWindow = Window & typeof globalThis & {
   __moenotesOriginalFetch?: typeof globalThis.fetch;
 };
 
-const assetSourcePrefixes = [assetConfig.releaseSource.replace(/\/+$/, "")];
+// Published files and export manifests are immutable per ID; browser API listings are not cached.
+const assetSourcePrefixes = [`${assetConfig.api}/files`, `${assetConfig.api}/exports`];
 const inFlightRequests = new Map<string, Promise<Response>>();
 let nativeFetchRef: typeof globalThis.fetch | null = null;
 
