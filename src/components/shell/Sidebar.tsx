@@ -1,6 +1,6 @@
 import BrandLogo from "@/components/shared/BrandLogo";
 import { useEffect, useMemo, useRef, useState, Fragment, type KeyboardEvent, type ReactNode } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { AppLocale } from "@/config/locales";
 import { localizePath, stripLocaleFromPathname, normalizePathname } from "@/i18n/routing";
 import { t } from "@/i18n";
@@ -22,6 +22,7 @@ interface SidebarProps {
 
 export default function Sidebar({ locale, pathname, activePath }: SidebarProps) {
   const [desktopOpen] = useSidebarState();
+  const reducedMotion = useReducedMotion();
   const [mounted, setMounted] = useState(false);
   const { isOpen: mobileOpen, close: closeMobile } = useOverlay("mobile-sidebar");
   const mobilePanelRef = useRef<HTMLElement>(null);
@@ -70,7 +71,11 @@ export default function Sidebar({ locale, pathname, activePath }: SidebarProps) 
   return (
     <>
       <aside
-        className={`fixed top-24 z-30 hidden h-[calc(100vh-7.5rem)] w-64 shrink-0 md:block ${mounted ? "transition duration-300" : ""} ${desktopOpen ? "translate-x-0 opacity-100" : "pointer-events-none -translate-x-[18rem] opacity-0"}`}
+        className="mn-desktop-sidebar fixed top-24 z-30 hidden h-[calc(100vh-7.5rem)] w-64 shrink-0 md:block"
+        data-open={desktopOpen}
+        data-ready={mounted}
+        inert={!desktopOpen}
+        aria-hidden={!desktopOpen}
         style={{ left: "calc(max(1.0rem, (100vw - var(--mn-layout-max-width, 120rem)) / 2 + 1.0rem))" }}
       >
         <SidebarFrame>
@@ -100,10 +105,10 @@ export default function Sidebar({ locale, pathname, activePath }: SidebarProps) 
                 top: "var(--mn-header-bottom, 80px)",
                 height: "calc(100dvh - var(--mn-header-bottom, 80px) - 16px)"
               }}
-              initial={{ x: "-105%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-105%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 220 }}
+              initial={{ x: reducedMotion ? 0 : -24, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: reducedMotion ? 0 : -24, opacity: 0 }}
+              transition={{ duration: reducedMotion ? 0.16 : 0.26, ease: [0.22, 1, 0.36, 1] }}
             >
               <SidebarNav locale={locale} pathname={pathname} activePath={activePath} groups={groups} onNavigate={closeMobile} />
             </motion.aside>

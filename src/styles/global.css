@@ -378,3 +378,18 @@ html[data-theme="dark"] .mn-brand .mn-brand-starlight, .mn-brand.mn-brand-light 
   .mn-list-card { border-radius: 3px 18px 3px 18px; }
 }
 @media (prefers-reduced-motion: reduce) { .mn-list-card:hover, .mn-list-card:active { transform: none; } }
+
+/* Navigation remains perceptible in reduced-motion mode: fade without travel. */
+.mn-desktop-sidebar { opacity: 1; transform: translateX(0); }
+.mn-desktop-sidebar[data-ready="true"] {
+  transition: opacity 220ms ease, transform 280ms cubic-bezier(.22,1,.36,1);
+}
+.mn-desktop-sidebar[data-open="false"] { opacity: 0; transform: translateX(-24px); pointer-events: none; }
+@media (prefers-reduced-motion: reduce) {
+  .mn-desktop-sidebar[data-ready="true"] {
+    transition-property: opacity;
+    transition-duration: 160ms !important;
+    transition-timing-function: ease;
+  }
+  .mn-desktop-sidebar[data-open] { transform: none; }
+}
