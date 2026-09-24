@@ -12,7 +12,7 @@ UI copy lives in `src/i18n/messages/*.ts`. Locale registry is `src/config/locale
 | `zh-TW` | `/zh-tw` | Traditional Chinese (UI + masterdata traditional field) |
 | `ja-JP` | `/ja` | Core |
 | `en-US` | `/en` | Core **and runtime fallback** |
-| `ko-KR` | `/ko` | Core |
+| `ko-KR` | `/ko` | Core (UI + masterdata korean field) |
 | `th-TH` | `/th` | UI locale (masterdata falls back en→ja→zh) |
 | `id-ID` | `/id` | UI locale (masterdata falls back en→ja→zh) |
 | `vi-VN` | `/vi` | UI locale (masterdata falls back en→ja→zh) |
@@ -59,12 +59,13 @@ Never fall back to the raw i18n key in user-facing UI. Missing copy should look 
 
 Masterdata text (game tables) uses `localizeMasterText` in `src/lib/masterdata/localize-text.ts`:
 
-- `zh-CN` → simplified → traditional → ja → en
-- `zh-TW` → traditional → simplified → ja → en
-- `ja-JP` → ja → en → zh
-- `en-US` / `ko-KR` / `th-TH` / `id-ID` / `vi-VN` / `es-ES` / `pt-BR` / `fr-FR` / `de-DE` / `ru-RU` / future UI-only locales → en → ja → zh
+- `zh-CN` → simplified → traditional → ja → en → ko
+- `zh-TW` → traditional → simplified → ja → en → ko
+- `ja-JP` → ja → en → zh → ko
+- `ko-KR` → ko → en → ja → zh
+- `en-US` / `th-TH` / `id-ID` / `vi-VN` / `es-ES` / `pt-BR` / `fr-FR` / `de-DE` / `ru-RU` / future UI-only locales → en → ja → zh → ko
 
-Game master tables currently ship ja/en/zh fields only. UI-only locales still work; content names may show English until masterdata grows dedicated fields.
+`MasterText` ships five fields: `japanese` / `english` / `simplifiedChinese` / `traditionalChinese` / `korean`. Blank cells and untranslated keys left in a cell (e.g. english `Music_Tilte_33`) count as missing and fall through to the next language. UI-only locales still work; content names show English until masterdata grows dedicated fields. Story script `Text` tables go through the same helper.
 
 ### Adding a new locale later
 

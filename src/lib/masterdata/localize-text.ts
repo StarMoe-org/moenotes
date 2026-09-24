@@ -1,27 +1,47 @@
 import type { AppLocale } from "@/config/locales";
 
-export interface LocalizableMasterText {
-  japanese?: string;
-  english?: string;
-  simplifiedChinese?: string;
-  traditionalChinese?: string;
+/** One MasterText.json row (leading `_` already stripped by `validateMasterTable`). */
+export interface MasterTextRow {
+  id: string;
+  japanese: string;
+  english: string;
+  simplifiedChinese: string;
+  traditionalChinese: string;
+  korean: string;
+}
+
+export type LocalizableMasterText = Partial<MasterTextRow>;
+
+type MasterTextField = Exclude<keyof MasterTextRow, "id">;
+
+// Untranslated cells sometimes carry a text key instead of copy (english "Music_Tilte_33", "Tag_Name_Ikka").
+const UNTRANSLATED_KEY = /^[A-Z][A-Za-z]*(?:_[A-Za-z0-9]+)+$/;
+
+function fieldOrder(locale: AppLocale): MasterTextField[] {
+  if (locale === "zh-CN") return ["simplifiedChinese", "traditionalChinese", "japanese", "english", "korean"];
+  if (locale === "zh-TW") return ["traditionalChinese", "simplifiedChinese", "japanese", "english", "korean"];
+  if (locale === "ja-JP") return ["japanese", "english", "simplifiedChinese", "traditionalChinese", "korean"];
+  if (locale === "ko-KR") return ["korean", "english", "japanese", "simplifiedChinese", "traditionalChinese"];
+  // en-US and UI-only locales (th/id/vi/es/pt/fr/de/ru, …)
+  return ["english", "japanese", "simplifiedChinese", "traditionalChinese", "korean"];
+}
+
+function isUsable(value: string | undefined, id: string | undefined): value is string {
+  if (!value?.trim()) return false;
+  return value !== id && !UNTRANSLATED_KEY.test(value);
 }
 
 /**
  * Resolve masterdata text for a UI locale.
- * Master tables currently ship ja/en/zh fields — UI-only locales fall back en→ja→zh.
+ * MasterText ships ja / en / zh-Hans / zh-Hant / ko; blank cells and untranslated keys fall through
+ * to the next language in the locale's chain. UI-only locales read English first.
  */
 export function localizeMasterText(entry: LocalizableMasterText | undefined, locale: AppLocale): string {
   if (!entry) return "";
-  const ja = entry.japanese || "";
-  const en = entry.english || "";
-  const zhHans = entry.simplifiedChinese || "";
-  const zhHant = entry.traditionalChinese || "";
-  const zh = zhHans || zhHant;
-
-  if (locale === "zh-CN") return zhHans || zhHant || ja || en;
-  if (locale === "zh-TW") return zhHant || zhHans || ja || en;
-  if (locale === "ja-JP") return ja || en || zh;
-  // en-US and UI-only locales (ko/th/id/vi/es/pt/fr/de/ru, …)
-  return en || ja || zh;
+  const id = entry.id === undefined ? undefined : String(entry.id);
+  for (const field of fieldOrder(locale)) {
+    const value = entry[field];
+    if (isUsable(value, id)) return value;
+  }
+  return "";
 }

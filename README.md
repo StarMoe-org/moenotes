@@ -88,10 +88,10 @@ bun run lint
 | `zh-TW` | `/zh-tw` | 繁体中文 |
 | `ja-JP` | `/ja` | 核心 |
 | `en-US` | `/en` | 核心，**运行时缺失文案回退语言** |
-| `ko-KR` | `/ko` | 核心 |
+| `ko-KR` | `/ko` | 核心（masterdata korean 字段） |
 | `th-TH` | `/th` | UI（masterdata en→ja→zh） |
 | `id-ID` | `/id` | UI（masterdata en→ja→zh） |
-| `vi-VN` | `/vi` | UI（masterdata en→ja→zh
+| `vi-VN` | `/vi` | UI（masterdata en→ja→zh） |
 | `es-ES` | `/es` | UI（masterdata en→ja→zh） |
 | `pt-BR` | `/pt` | UI（masterdata en→ja→zh） |
 | `fr-FR` | `/fr` | UI（masterdata en→ja→zh） |

@@ -7,6 +7,7 @@ import {
   getStoryVoiceUrl,
   type StoryScriptTable,
 } from "@/lib/story/assets";
+import { localizeMasterText } from "@/lib/masterdata/localize-text";
 
 export type StoryLocale =
   | "ja-JP"
@@ -232,23 +233,8 @@ async function loadStoryTable(scriptName: string, table: StoryScriptTable, fetch
 }
 
 function localizeText(row: TextRow, locale: StoryLocale): string {
-  const localized = {
-      "ja-JP": row.japanese,
-      "en-US": row.english,
-      "zh-CN": row.simplifiedChinese,
-      "zh-TW": row.traditionalChinese,
-      "ko-KR": row.korean,
-      "th-TH": undefined,
-      "id-ID": undefined,
-      "vi-VN": undefined,
-      "es-ES": undefined,
-      "pt-BR": undefined,
-      "fr-FR": undefined,
-      "de-DE": undefined,
-      "ru-RU": undefined,
-    }[locale];
-    return localized?.trim() || row.english?.trim() || row.japanese?.trim() || "";
-  }
+  return localizeMasterText(row, locale).trim();
+}
 
 function collectSoundUrl(
   id: string | number | undefined,

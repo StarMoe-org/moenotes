@@ -1,7 +1,7 @@
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { getAssetUrl } from "@/lib/assets/url";
-import { localizeMasterText } from "@/lib/masterdata/localize-text";
+import { localizeMasterText, type MasterTextRow } from "@/lib/masterdata/localize-text";
 
 export interface RawStamp {
   id: number;
@@ -39,13 +39,7 @@ export interface RawBand {
   mainColorCode: string;
 }
 
-export interface RawText {
-  id: string;
-  japanese: string;
-  english: string;
-  simplifiedChinese: string;
-  traditionalChinese: string;
-}
+export type RawText = MasterTextRow;
 
 export function getStampImageUrl(assetPath: string): string {
   const path = assetPath.endsWith(".png") ? assetPath : `${assetPath}.png`;

@@ -1,5 +1,5 @@
 import type { AppLocale } from "@/config/locales";
-import { localizeMasterText } from "@/lib/masterdata/localize-text";
+import { localizeMasterText, type MasterTextRow } from "@/lib/masterdata/localize-text";
 
 export interface MasterTable<T> {
   _allData: T[];
@@ -38,13 +38,7 @@ export interface RawBand {
   mainColorCode: string;
 }
 
-export interface RawText {
-  id: string;
-  japanese: string;
-  english: string;
-  simplifiedChinese: string;
-  traditionalChinese: string;
-}
+export type RawText = MasterTextRow;
 
 export interface CardViewModel {
   id: number;
