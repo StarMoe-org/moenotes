@@ -1,6 +1,6 @@
 import type { AppLocale } from "@/config/locales";
 import { getAssetUrl } from "@/lib/assets/url";
-import type { ReleaseAudio } from "@/lib/story/release-audio";
+import { getCueUrl } from "@/lib/story/assets";
 import { localizeMasterText, type MasterTextRow } from "@/lib/masterdata/localize-text";
 
 export interface MasterTable<T> {
@@ -107,16 +107,8 @@ export function getMusicJacketUrl(jacketAssetName: string): string {
 }
 
 /** Songs resolve like other CRI sounds, by cue sheet and exact cue. */
-export function getMusicAudioUrl(audio: ReleaseAudio, sound: MusicSoundCue | undefined): string | undefined {
-  return sound ? audio.url(sound.cueSheetName, sound.cueName) : undefined;
-}
-
-/** Cue sheets of every song's full and preview audio, whose manifests normalizeMusic needs loaded. */
-export function getMusicCueSheets(musicList: RawMusic[], sounds: MusicSoundCue[]): string[] {
-  const soundMap = new Map(sounds.map((sound) => [sound.id, sound]));
-  return musicList
-    .flatMap((music) => [soundMap.get(music.musicSoundID), soundMap.get(music.jingleSoundID)])
-    .flatMap((sound) => (sound?.cueSheetName ? [sound.cueSheetName] : []));
+export function getMusicAudioUrl(sound: MusicSoundCue | undefined, locale: AppLocale): string | undefined {
+  return sound ? getCueUrl(sound.cueSheetName, sound.cueName, locale) : undefined;
 }
 
 export function normalizeMusic(
@@ -126,8 +118,7 @@ export function normalizeMusic(
   bands: RawBand[],
   texts: RawText[],
   locale: AppLocale,
-  sounds: MusicSoundCue[],
-  audio: ReleaseAudio,
+  sounds: MusicSoundCue[] = [],
 ): MusicViewModel[] {
   const soundMap = new Map(sounds.map((sound) => [sound.id, sound]));
   const textMap = new Map(texts.map((entry) => [entry.id, entry]));
@@ -206,8 +197,8 @@ export function normalizeMusic(
       vocalists,
       searchText: searchParts.join(" ").toLowerCase(),
       musicSoundID: music.musicSoundID,
-      audioUrl: getMusicAudioUrl(audio, soundMap.get(music.musicSoundID)),
-      previewAudioUrl: getMusicAudioUrl(audio, soundMap.get(music.jingleSoundID)),
+      audioUrl: getMusicAudioUrl(soundMap.get(music.musicSoundID), locale),
+      previewAudioUrl: getMusicAudioUrl(soundMap.get(music.jingleSoundID), locale),
     };
   });
 }

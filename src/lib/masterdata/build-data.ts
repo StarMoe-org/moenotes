@@ -33,7 +33,6 @@ import { normalizeCharacters, type CharacterViewModel, type RawCharacter as RawC
 import { normalizeSupportCards, type RawSupportCard, type SupportCardViewModel } from "@/lib/support-cards/data";
 import { normalizeSupportSkill, type RawSupportSkillEffect } from "@/lib/support-cards/skills";
 import {
-  getMusicCueSheets,
   normalizeMusic,
   type MusicViewModel,
   type RawBand as RawMusicBand,
@@ -60,7 +59,6 @@ import {
   type StoryViewModel,
 } from "@/lib/story/data";
 import { fetchAndParseStory, type ParsedStoryScript } from "@/lib/story/parser";
-import { loadReleaseAudio } from "@/lib/story/release-audio";
 import {
   normalizeGachas,
   toGachaSummary,
@@ -212,8 +210,7 @@ export function getBuildMusic(locale: AppLocale): Promise<MusicViewModel[]> {
     ]);
     const sheetNames = new Map(cueSheets._allData.map((sheet) => [sheet.id, sheet.cueSheetName]));
     const soundCues = sounds._allData.map((sound) => ({ id: sound.id, cueName: sound.cueName, cueSheetName: sheetNames.get(sound.soundCueSheetID) ?? "" }));
-    const audio = await loadReleaseAudio(getMusicCueSheets(music._allData, soundCues), locale);
-    return normalizeMusic(music._allData, scores._allData, characters._allData, bands._allData, texts._allData, locale, soundCues, audio);
+    return normalizeMusic(music._allData, scores._allData, characters._allData, bands._allData, texts._allData, locale, soundCues);
   });
 }
 

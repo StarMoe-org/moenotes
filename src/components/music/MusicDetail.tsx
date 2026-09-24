@@ -420,7 +420,7 @@ function SongAudioPanel({ locale, song }: { locale: AppLocale; song: MusicViewMo
   const download = async (item: (typeof tracks)[number]) => {
     setDownloading(item.kind);
     const suffix = item.kind === "preview" ? "_short" : "";
-    // Release audio is published as AAC in M4A; file URLs end in an ID, not a name.
+    // Release audio is published as AAC in M4A.
     await saveRemoteFile(item.url, `${safeFilename(song.title)}${suffix}.m4a`);
     setDownloading(null);
   };

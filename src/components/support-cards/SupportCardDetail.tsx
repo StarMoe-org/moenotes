@@ -31,7 +31,6 @@ import {
   getBandSmallIconUrl,
   getCharacterFaceIconUrl,
 } from "@/lib/cards/assets";
-import { getAssetFileName } from "@/lib/assets/url";
 import { LevelControl, StepControl } from "@/components/shared/CardGrowthControls";
 
 interface Props {
@@ -197,7 +196,7 @@ export default function SupportCardDetail({ locale, initialData }: Props) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const filename = getAssetFileName(selectedAsset.url) || "download";
+      const filename = selectedAsset.url.split("/").pop() || "download";
       a.download = filename;
       document.body.appendChild(a);
       a.click();

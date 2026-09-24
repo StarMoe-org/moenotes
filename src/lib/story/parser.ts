@@ -5,10 +5,8 @@ import {
   getStorySeUrl,
   getStoryStillUrl,
   getStoryVoiceUrl,
-  loadStoryAudio,
   type StoryScriptTable,
 } from "@/lib/story/assets";
-import type { ReleaseAudio } from "@/lib/story/release-audio";
 import { fetchReleaseJson } from "@/lib/assets/release";
 import { localizeMasterText } from "@/lib/masterdata/localize-text";
 
@@ -108,9 +106,8 @@ export async function fetchAndParseStory(scriptName: string, options: ParseStory
     fetchStoryTable<SoundRow>(scriptName, "Sound", locale, fetcher),
     fetchStoryTable<SoundCueSheetRow>(scriptName, "SoundCueSheet", locale, fetcher),
   ]);
-  const audio = await loadStoryAudio(cueSheets.allData.flatMap((row) => (row.cueSheetName ? [row.cueSheetName] : [])), locale, fetcher);
 
-  return parseStoryTables(scriptName, { episode, text, sound, cueSheets }, audio, locale);
+  return parseStoryTables(scriptName, { episode, text, sound, cueSheets }, locale);
 }
 
 export function parseStoryTables(
@@ -121,7 +118,6 @@ export function parseStoryTables(
     sound: NormalizedTable<SoundRow>;
     cueSheets: NormalizedTable<SoundCueSheetRow>;
   },
-  audio: ReleaseAudio,
   locale: StoryLocale = "ja-JP",
 ): ParsedStoryScript {
   const texts = new Map(tables.text.allData.map((row) => [String(row.id ?? ""), row]));
@@ -144,8 +140,8 @@ export function parseStoryTables(
       if (stillUrl) stills.add(stillUrl);
     }
 
-    collectSoundUrl(row.bgmID, cueSheets, (name) => getStoryBgmUrl(audio, name), bgmUrls);
-    collectSoundUrl(row.seID, cueSheets, (name) => getStorySeUrl(audio, name), seUrls);
+    collectSoundUrl(row.bgmID, cueSheets, (name) => getStoryBgmUrl(name, locale), bgmUrls);
+    collectSoundUrl(row.seID, cueSheets, (name) => getStorySeUrl(name, locale), seUrls);
 
     if ((row.command !== 2 && row.command !== 20) || !row.advTextID) continue;
     const textRow = texts.get(row.advTextID);
@@ -159,12 +155,12 @@ export function parseStoryTables(
       if (!soundRow?.cueName || soundRow.soundCueSheetID === undefined) return [];
       const cueSheet = cueSheets.get(String(soundRow.soundCueSheetID));
       if (!cueSheet?.cueSheetName) return [];
-      const url = getStoryVoiceUrl(audio, {
+      const url = getStoryVoiceUrl({
         scriptName,
         cueName: soundRow.cueName,
         cueSheetName: cueSheet.cueSheetName,
         soundId: soundRow.id ?? voiceId,
-      });
+      }, locale);
       return url ? [url] : [];
     });
 

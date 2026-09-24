@@ -1,4 +1,5 @@
 import { assetConfig } from "@/config/assets";
+import { ASSET_LANGUAGES } from "@/lib/assets/release";
 import { cacheConfig } from "@/config/cache";
 import { storageKeys } from "@/config/storage";
 import { getAssetCache, setAssetCache, type AssetCacheEntry } from "@/lib/cache/asset-cache";
@@ -20,8 +21,8 @@ type FetchCacheWindow = Window & typeof globalThis & {
   __moenotesOriginalFetch?: typeof globalThis.fetch;
 };
 
-// Published files and export manifests are immutable per ID; browser API listings are not cached.
-const assetSourcePrefixes = [`${assetConfig.api}/files`, `${assetConfig.api}/exports`];
+// Published asset paths; browser API listings are requested with no-store and bypass this cache.
+const assetSourcePrefixes = ASSET_LANGUAGES.map((language) => `${assetConfig.api}/${language}`);
 const inFlightRequests = new Map<string, Promise<Response>>();
 let nativeFetchRef: typeof globalThis.fetch | null = null;
 

@@ -1,74 +1,44 @@
 # Release asset layout
 
 Release assets come from the moenotes-assets service configured by `assetConfig.api`
-(`https://assets.bdon.moe`, override with `PUBLIC_ASSET_API`). The service has no
-path-based routes: files are served only as `/files/{file_id}` and export manifests as
-`/exports/{export_id}`. The site never builds a URL from an asset path; it looks the
-ID up in `src/lib/assets/generated`, and a path the index does not list resolves to
-no URL, so the UI shows its unavailable state.
+(`https://assets.bdon.moe`, override with `PUBLIC_ASSET_API`). The site builds every
+asset URL from its path; there is no generated index or sync step, so files the service
+exports appear without rebuilding the site.
 
-The service keeps one catalog per asset language (`zh-Hans`, `zh-Hant`, `en`, `ko`,
-`ja`) for region `tw`. Each index value is a single ID when every language publishes
-the same content, or an object keyed by asset language when content differs.
-`selectReleaseId` walks the same language chain as `localizeMasterText`, so zh-CN
-prefers `zh-Hans`, zh-TW prefers `zh-Hant`, and UI-only locales read English first.
-Helpers for lettered artwork (band logos, banners, comics, stamps, titles, gacha
-art, tickets, story banners) take the page locale; other callers default to zh-CN.
-
-- `images.json`: logical PNG path without extension → lossless WebP file ID. The
-  label must equal the key's last segment, so member-card `_atlas` paths select the
-  original named image, not a face/formation crop.
-- `stories.json`: script → table (`Episode`, `Text`, `Sound`, `SoundCueSheet`,
-  `Video`) → JSON file ID. Only the story parser imports it. The existing parser
-  accepts the tables' `_header` / `_allData` representation.
-- `audio.json`: `Cri/Sound/<cue sheet>` → export ID. Shipping every cue's file ID
-  would add roughly 0.9 MB (gzip) to story pages, so `loadReleaseAudio` fetches the
-  sheet's manifest and matches cues by exact label. Labels whose files differ in
-  content are ambiguous and resolve to nothing. The cue number is not adjusted.
-  Stories load their cue sheets in `fetchAndParseStory`; songs load theirs at build
-  time in `getBuildMusic`.
-
-Downloads use `getAssetFileName` (`<asset name>.webp`) because file URLs carry no name.
-`cachedFetch` stores `/files` and `/exports` responses, which are immutable per ID.
-
-## Refreshing the index
-
-```sh
-node scripts/sync-release-assets.mjs            # --api=<url> --region=<id> to override
-bun test tests/release-assets.test.ts tests/story-assets.test.ts
-bun run lint
-bun run check:search-seo
-ASTRO_TELEMETRY_DISABLED=1 bun run check
+```text
+{api}/{language}/{key}/{label}.{ext}
+https://assets.bdon.moe/zh-Hans/Character/Image/11/character_face_icon/character_face_icon.webp
+https://assets.bdon.moe/ja/Cri/Sound/A_Abracadabra/A_Abracadabra.m4a
+https://assets.bdon.moe/zh-Hans/Cri/Sound/A_Abracadabra/        (lists the key's files)
 ```
 
-The script reads each language's current catalog, lists its assets and fetches the
-export manifest for every key in scope. No public route looks exports up by key,
-so the script derives export IDs the way the service does:
-`sha256(JSON.stringify([snapshot, key, "csharp-json-png-webp-aac-h264-v3"]))`.
-Every manifest's `id`, `snapshot`, `key` and `profile` are checked, and a changed
-profile fails the run. Published manifests are cached in
-`node_modules/.cache/moenotes-assets`; a 404 means not exported (yet) and is not
-cached. Existing file URLs stay valid after the service refreshes a catalog, so the
-committed index keeps working until it is regenerated. Review and commit the
-generated JSON along with any resolver changes.
+The service maps a path onto the newest snapshot that has published the key and answers
+404 for anything not exported. Path responses use a 10-minute cache with the content
+ETag; see the service's `docs/API.md` (Path routes).
 
-## 2026-09-25 sync
+- **Language**: `assetLanguage` takes the locale's first MasterText language (zh-CN →
+  `zh-Hans`, zh-TW → `zh-Hant`, ja-JP → `ja`, ko-KR → `ko`, everything else → `en`).
+  Most files are identical in every language; lettered art (band logos, banners, comics,
+  stamps, titles, gacha art, tickets, story banners) differs, so those helpers take the
+  page locale. Other callers default to zh-CN.
+- **Images**: a MasterData PNG path becomes `<key>/<basename>.webp` (lossless WebP).
+  Member-card `_atlas` paths name the original full image, not a face/formation crop.
+- **Story tables**: `Adv/Episode/<script>/<script>-<table>/<script>-<table>.json`; the
+  parser accepts the tables' `_header` / `_allData` representation.
+- **Audio**: `Cri/Sound/<cue sheet>/<cue>.m4a` by exact cue name; the cue number is not
+  adjusted. BGM and SE sheets publish one cue named after the sheet. Full songs
+  (`Fwk.Sound.SplitAcbData`) and previews (`*_short`) resolve the same way.
+- **Backgrounds and stills**: `Adv/Stage/<name>/data/<name>` and
+  `Adv/Still/<dir>/data/<name>` are exported; the story UI does not render them yet.
 
-Snapshots: `zh-Hant` 748b0982…, `zh-Hans` 206ab22b…, `en` 6624a60e…, `ko` e3dcf8eb…,
-`ja` cb158e12…. The index lists 1,841 images (167 differ by language: band logos
-for bands 3 and 5, banners, comics, stamps, titles, backgrounds, tickets, story
-banners and icons, gacha banners and logos, the season pass banner and login bonus
-sheets), 946 stories with 4,730 tables, and 937 cue sheets. Story tables and audio
-are identical in all five languages.
+Because URLs are built rather than looked up, the site cannot tell in advance whether a
+file exists. A missing file fails to load (images fall back where the component handles
+errors; a voice line without an export fails when played). Downloads take the file name
+from the URL (`member_full.webp`, `<title>.m4a`). `cachedFetch` stores responses under the
+language prefixes for offline/stale fallback; browser API listings use `no-store`.
 
-Checks against the live host: all 2,471 image file IDs returned `image/webp` and all
-4,730 table IDs `application/json`. `adv_script_mygo_001_1_01` parsed into 115
-lines with 110 voice links, and sampled voice/BGM/SE files returned `audio/mp4`.
-Compared with the old bucket, sampled images had identical dimensions and visible
-pixels within 1/255.
+In `astro dev`, build data is memoized on `globalThis` and survives hot reloads; restart
+the dev server after changing how asset URLs are built.
 
-Known gaps: `MemberCard/30/member_character` and one ACB sheet have no export;
-`Fwk.Sound.SplitAcbData` resources and member-card USM movies are not exported.
-Only `_short` song versions exist, so songs get preview audio but no full track.
-The service lists ADV `Adv/Stage` / `Adv/Still` textures, but they are not in the
-image scope yet, so story backgrounds and stills still resolve to nothing.
+Known gaps (2026-09-25): `MemberCard/30/member_character` and one ACB sheet have no
+export; member-card USM movies are not exported.

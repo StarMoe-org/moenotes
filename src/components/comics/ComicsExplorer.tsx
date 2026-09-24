@@ -11,7 +11,6 @@ import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import Modal from "@/components/shared/Modal";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 import type { ComicViewModel } from "@/lib/comics/data";
-import { getAssetFileName } from "@/lib/assets/url";
 
 interface Props {
   locale: AppLocale;
@@ -177,7 +176,7 @@ export default function ComicsExplorer({ locale, initialComics, initialBandNames
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const filename = getAssetFileName(selectedComic.imageUrl) || `comic_${selectedComic.id}`;
+      const filename = selectedComic.imageUrl.split("/").pop() || `comic_${selectedComic.id}`;
       a.download = filename;
       document.body.appendChild(a);
       a.click();

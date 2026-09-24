@@ -14,7 +14,6 @@ import {
   getCharacterBoardIconUrl,
   getRarityIconUrl,
 } from "@/lib/cards/assets";
-import { getAssetFileName } from "@/lib/assets/url";
 import {
   type CardViewModel,
 } from "@/lib/cards/data";
@@ -176,7 +175,7 @@ export default function CharacterDetail({ locale, initialData }: Props) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const filename = getAssetFileName(selectedAsset.url) || "download";
+      const filename = selectedAsset.url.split("/").pop() || "download";
       a.download = filename;
       document.body.appendChild(a);
       a.click();

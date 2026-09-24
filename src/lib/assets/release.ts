@@ -2,10 +2,7 @@ import { assetConfig } from "@/config/assets";
 import type { AppLocale } from "@/config/locales";
 import { masterTextFieldOrder, type MasterTextField } from "@/lib/masterdata/localize-text";
 
-/** Generated index value: one ID when every asset language publishes the same content, otherwise IDs by asset language. */
-export type ReleaseEntry = string | Readonly<Record<string, string>>;
-
-// Asset-server language codes for the MasterText columns, so localized artwork follows the same chain as text.
+// Asset-server language codes for the MasterText columns: a locale reads assets in its first text language.
 const assetLanguageByField: Readonly<Record<MasterTextField, string>> = {
   simplifiedChinese: "zh-Hans",
   traditionalChinese: "zh-Hant",
@@ -14,25 +11,22 @@ const assetLanguageByField: Readonly<Record<MasterTextField, string>> = {
   korean: "ko",
 };
 
-export function selectReleaseId(entry: ReleaseEntry | undefined, locale: AppLocale): string | undefined {
-  if (typeof entry === "string") return entry;
-  if (!entry || typeof entry !== "object") return undefined;
-  for (const field of masterTextFieldOrder(locale)) {
-    const id = entry[assetLanguageByField[field]];
-    if (id) return id;
-  }
-  return undefined;
+export const ASSET_LANGUAGES: readonly string[] = Object.values(assetLanguageByField);
+
+export function assetLanguage(locale: AppLocale): string {
+  return assetLanguageByField[masterTextFieldOrder(locale)[0]!];
 }
 
-export function releaseFileUrl(fileId: string): string {
-  return `${assetConfig.api}/files/${fileId}`;
+/**
+ * Published file by asset path: `/{language}/{key}/{label}.{ext}`. The service maps the path onto the newest
+ * export of the key, so new exports appear without rebuilding the site; unexported paths answer 404.
+ */
+export function releaseFileUrl(key: string, fileName: string, locale: AppLocale): string {
+  const segments = [assetLanguage(locale), ...key.split("/"), fileName].map(encodeURIComponent);
+  return `${assetConfig.api}/${segments.join("/")}`;
 }
 
-export function releaseExportUrl(exportId: string): string {
-  return `${assetConfig.api}/exports/${exportId}`;
-}
-
-/** Published JSON (story tables, export manifests); server errors and rate limits are retried. */
+/** Published JSON (story tables); server errors and rate limits are retried. */
 export async function fetchReleaseJson<T>(url: string, fetcher: typeof fetch): Promise<T> {
   for (let attempt = 1; ; attempt += 1) {
     let response: Response | undefined;
