@@ -1,3 +1,5 @@
+import { useListSort } from "@/lib/filter/use-list-sort";
+import { sortEntries } from "@/lib/filter/list-sort";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
@@ -37,6 +39,7 @@ export default function SupportCardsExplorer({ locale, initialSupportCards }: Pr
   const memory = useListPageMemory("support-cards");
   const [cards] = useState<SupportCardViewModel[]>(initialSupportCards);
   const [query, setQuery] = useState("");
+  const sort = useListSort("support-cards", locale, "date rarity");
   const [selectedRarities, setSelectedRarities] = useState<number[]>([]);
   const [selectedCardTypes, setSelectedCardTypes] = useState<number[]>([]);
   const [selectedBands, setSelectedBands] = useState<number[]>([]);
@@ -118,7 +121,9 @@ export default function SupportCardsExplorer({ locale, initialSupportCards }: Pr
     });
   }, [cards, query, selectedRarities, selectedCardTypes, selectedBands, selectedCharacters]);
 
-  const hasActiveFilters =
+  const sortedEntries = useMemo(() => sortEntries(filteredCards, sort.value, locale), [filteredCards, sort.value, locale]);
+
+  const hasActiveFilters = sort.value !== "default" ||
     Boolean(query) ||
     selectedRarities.length > 0 ||
     selectedCardTypes.length > 0 ||
@@ -151,6 +156,7 @@ export default function SupportCardsExplorer({ locale, initialSupportCards }: Pr
   };
 
   const resetFilters = () => {
+    sort.onChange("default");
     setQuery("");
     setSelectedRarities([]);
     setSelectedCardTypes([]);
@@ -161,6 +167,7 @@ export default function SupportCardsExplorer({ locale, initialSupportCards }: Pr
 
   const quickFilterContent = (
     <BaseFilters
+      sort={sort}
       variant="plain"
       title={t(locale, "supportCards.filterTitle")}
       searchValue={query}
@@ -210,6 +217,7 @@ export default function SupportCardsExplorer({ locale, initialSupportCards }: Pr
   );
 
   useQuickFilter(t(locale, "supportCards.filterTitle"), quickFilterContent, [
+    sort.value,
     query,
     selectedRarities,
     selectedCardTypes,
@@ -229,7 +237,7 @@ export default function SupportCardsExplorer({ locale, initialSupportCards }: Pr
         <EmptyState locale={locale} onReset={resetFilters} />
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4xl:grid-cols-7 5xl:grid-cols-8">
-          {filteredCards.map((card) => (
+          {sortedEntries.map((card) => (
             <SupportCardItem key={card.id} card={card} locale={locale} onCardClick={saveCurrentState} />
           ))}
         </div>

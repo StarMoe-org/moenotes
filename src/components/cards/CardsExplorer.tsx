@@ -1,3 +1,5 @@
+import { useListSort } from "@/lib/filter/use-list-sort";
+import { sortEntries } from "@/lib/filter/list-sort";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
@@ -34,6 +36,7 @@ export default function CardsExplorer({ locale, initialCards }: Props) {
   const memory = useListPageMemory("cards");
   const [cards] = useState<CardViewModel[]>(initialCards);
   const [query, setQuery] = useState("");
+  const sort = useListSort("cards", locale, "date rarity");
   const [selectedRarities, setSelectedRarities] = useState<number[]>([]);
   const [selectedCardTypes, setSelectedCardTypes] = useState<number[]>([]);
   const [selectedBands, setSelectedBands] = useState<number[]>([]);
@@ -110,7 +113,9 @@ export default function CardsExplorer({ locale, initialCards }: Props) {
     });
   }, [cards, query, selectedRarities, selectedCardTypes, selectedBands, selectedCharacters]);
 
-  const hasActiveFilters = Boolean(query) || selectedRarities.length > 0 || selectedCardTypes.length > 0 || selectedBands.length > 0 || selectedCharacters.length > 0;
+  const sortedEntries = useMemo(() => sortEntries(filteredCards, sort.value, locale), [filteredCards, sort.value, locale]);
+
+  const hasActiveFilters = sort.value !== "default" || Boolean(query) || selectedRarities.length > 0 || selectedCardTypes.length > 0 || selectedBands.length > 0 || selectedCharacters.length > 0;
 
   const handleBandToggle = (bandId: number) => {
     const nextBands = selectedBands.includes(bandId)
@@ -139,6 +144,7 @@ export default function CardsExplorer({ locale, initialCards }: Props) {
   };
 
   const resetFilters = () => {
+    sort.onChange("default");
     setQuery("");
     setSelectedRarities([]);
     setSelectedCardTypes([]);
@@ -149,6 +155,7 @@ export default function CardsExplorer({ locale, initialCards }: Props) {
 
   const quickFilterContent = (
     <BaseFilters
+      sort={sort}
       variant="plain"
       title={t(locale, "cards.filterTitle")}
       searchValue={query}
@@ -196,6 +203,7 @@ export default function CardsExplorer({ locale, initialCards }: Props) {
   );
 
   useQuickFilter(t(locale, "cards.filterTitle"), quickFilterContent, [
+    sort.value,
     query,
     selectedRarities,
     selectedCardTypes,
@@ -215,7 +223,7 @@ export default function CardsExplorer({ locale, initialCards }: Props) {
         <EmptyState locale={locale} onReset={resetFilters} />
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4xl:grid-cols-7 5xl:grid-cols-8">
-          {filteredCards.map((card) => (
+          {sortedEntries.map((card) => (
             <CardItem key={card.id} card={card} locale={locale} onCardClick={saveCurrentState} />
           ))}
         </div>

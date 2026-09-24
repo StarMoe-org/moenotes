@@ -1,5 +1,6 @@
 import { assetConfig } from "@/config/assets";
 import type { AssetRequest } from "@/types/assets";
+import { resolveReleaseAssetPath } from "./release-path";
 
 const EXTENSION_BY_TYPE = {
   image: ".webp",
@@ -18,13 +19,17 @@ export function getAssetUrl(request: AssetRequest): string {
   const source = getPreferredAssetSource(request);
   const type = request.type ?? "raw";
   const cleanPath = request.path.replace(/^\/+/, "");
-  return `${assetConfig.sources[source]}/${cleanPath}${EXTENSION_BY_TYPE[type]}`;
+  const path = `${cleanPath}${EXTENSION_BY_TYPE[type]}`;
+  const releasePath = source === "main" && assetConfig.releaseEnabled ? resolveReleaseAssetPath(path) : undefined;
+  return releasePath ? `${assetConfig.releaseSource}/${releasePath}` : `${assetConfig.sources[source]}/${path}`;
 }
 
 export function getAssetFallbackUrls(request: AssetRequest): string[] {
-  return getAssetSourceFallbackOrder(getPreferredAssetSource(request))
-    .map((source) => getAssetUrl({ ...request, source }))
-    .filter((url, index, all) => all.indexOf(url) === index);
+  const urls = getAssetSourceFallbackOrder(getPreferredAssetSource(request))
+    .map((source) => getAssetUrl({ ...request, source }));
+  const legacy = `${assetConfig.sources.main}/${request.path.replace(/^\/+/, "")}${EXTENSION_BY_TYPE[request.type ?? "raw"]}`;
+  if (!urls.includes(legacy)) urls.splice(getPreferredAssetSource(request) === "main" ? 1 : 2, 0, legacy);
+  return urls.filter((url, index, all) => all.indexOf(url) === index);
 }
 
 function getPreferredAssetSource(request: AssetRequest): "main" | "backup" {

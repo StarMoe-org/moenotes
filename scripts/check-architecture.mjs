@@ -19,7 +19,7 @@ const allowedFetchFiles = new Set([
   "src/components/music/MusicDetail.tsx",
   "src/components/stamps/StampsExplorer.tsx",
   "src/components/support-cards/SupportCardDetail.tsx",
-  "src/components/tools/AssetViewer.tsx",
+  "src/lib/assets/browser-client.ts",
 ]);
 
 const allowedDomainFiles = new Set([

@@ -20,7 +20,7 @@ type FetchCacheWindow = Window & typeof globalThis & {
   __moenotesOriginalFetch?: typeof globalThis.fetch;
 };
 
-const assetSourcePrefixes = Object.values(assetConfig.sources).map((source) => source.replace(/\/+$/, ""));
+const assetSourcePrefixes = [...Object.values(assetConfig.sources), assetConfig.releaseSource].map((source) => source.replace(/\/+$/, ""));
 const inFlightRequests = new Map<string, Promise<Response>>();
 let nativeFetchRef: typeof globalThis.fetch | null = null;
 

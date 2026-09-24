@@ -1,3 +1,4 @@
+import SortControl, { type SortControlProps } from "./SortControl";
 import { type ReactNode, useEffect, useId, useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useSpringAnimation } from "@/lib/animation/use-animation";
@@ -12,6 +13,7 @@ export * from "@/components/shared/filters";
 export interface BaseFiltersProps {
   /** Visual style: "plain" (flat for drawer) or "card" (standalone panel with own header/card, default: "plain") */
   variant?: "card" | "plain";
+  sort?: SortControlProps;
   title?: string;
   searchValue: string;
   onSearchChange: (value: string) => void;
@@ -147,6 +149,7 @@ function FilterSearchInput({ id, value, onChange, placeholder }: FilterSearchInp
 
 export default function BaseFilters({
   variant = "plain",
+  sort,
   title = "Filter",
   searchValue,
   onSearchChange,
@@ -221,6 +224,8 @@ export default function BaseFilters({
           )}
         </div>
       )}
+
+      {sort && <SortControl {...sort} />}
 
       {/* Custom Sections */}
       <div className="space-y-4 pt-1">{children}</div>

@@ -1,713 +1,173 @@
-import { useState, useEffect, useMemo } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { t } from "@/i18n";
 import type { AppLocale } from "@/config/locales";
 import { assetConfig } from "@/config/assets";
+import BaseFilters, { FilterSection } from "@/components/shared/BaseFilters";
 import Modal from "@/components/shared/Modal";
+import Popover from "@/components/shared/Popover";
+import { openFilterDrawer, useQuickFilter } from "@/lib/filter/use-quick-filter";
+import { useAssetBrowserQuery } from "@/components/tools/use-asset-browser-query";
+import { AssetBrowserError, assetBrowserUrl, defaultCatalog } from "@/lib/assets/browser-client";
+import type { AssetCatalog, AssetRegion, BundleBrowsePage, BundleContent, BundleScanStatus } from "@/types/asset-browser";
 
-interface Props {
-  locale: AppLocale;
+interface Props { locale: AppLocale }
+interface Location { directory: string; page: number }
+type IconName = "folder" | "file" | "image" | "audio" | "video" | "back" | "forward" | "up" | "refresh" | "list" | "grid" | "filter" | "home";
+const PAGE_SIZE = 50;
+const ROOT: Location = { directory: "", page: 0 };
+const buttonClass = "mn-focus rounded-lg p-2 text-[var(--mn-text-muted)] transition hover:bg-[var(--mn-accent-soft)] hover:text-[var(--mn-text)] disabled:cursor-not-allowed disabled:opacity-30";
+
+function Icon({ name, className = "h-4 w-4" }: { name: IconName; className?: string }) {
+  const paths: Record<IconName, ReactNode> = {
+    folder: <path d="M3 7V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v11a2 2 0 0 1-2-2V7Zm0 3h18" />,
+    file: <path d="M14 2H5v20h14V7Zm0 0v5h5" />,
+    image: <><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8" cy="8" r="1" /><path d="m3 17 6-6 4 4 3-3 5 5" /></>,
+    audio: <><path d="M9 18V5l11-2v13M9 9l11-2" /><circle cx="6" cy="18" r="3" /><circle cx="17" cy="16" r="3" /></>,
+    video: <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="m10 8 6 4-6 4Z" /></>,
+    back: <path d="m12 5-7 7 7 7M5 12h15" />,
+    forward: <path d="m12 5 7 7-7 7M19 12H4" />,
+    up: <path d="m5 12 7-7 7 7M12 5v15" />,
+    refresh: <path d="M20 7a9 9 0 1 0 1 8M20 3v5h-5" />,
+    list: <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />,
+    grid: <><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></>,
+    filter: <path d="M3 4h18v3l-7 7v5l-4 2v-7L3 7Z" />,
+    home: <path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-8h6v8" />,
+  };
+  return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
 }
 
-interface S3File {
-  key: string;
-  size: number;
-  lastModified: string;
+function ToolButton({ icon, label, onClick, disabled = false, active = false }: { icon: IconName; label: string; onClick: () => void; disabled?: boolean; active?: boolean }) {
+  return <button type="button" className={`${buttonClass} ${active ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : ""}`} title={label} aria-label={label} aria-pressed={icon === "list" || icon === "grid" ? active : undefined} disabled={disabled} onClick={onClick}><Icon name={icon} /></button>;
 }
 
-interface UnifiedItem {
-  type: "folder" | "file";
-  name: string;
-  key: string;
-  size?: number;
-  lastModified?: string;
+function ScopeSelect({ title, value, options, onChange }: { title: string; value: string; options: { value: string; label: string }[]; onChange: (value: string) => void }) {
+  return <FilterSection title={title}>
+    <Popover matchTriggerWidth trigger={({ ref, onClick, ...aria }) => <button ref={ref} type="button" onClick={onClick} {...aria} disabled={!options.length} aria-label={`${title}: ${options.find((option) => option.value === value)?.label ?? ""}`} className="mn-focus mn-stamp-press flex w-full items-center justify-between gap-2 rounded-xl border border-[var(--mn-border)] bg-[var(--mn-paper)] px-3 py-2.5 text-left text-sm font-bold disabled:opacity-50"><span className="min-w-0 truncate">{options.find((option) => option.value === value)?.label ?? "—"}</span><svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></button>}>
+      {({ close }) => <div className="space-y-1" role="group" aria-label={title}>{options.map((option) => <button key={option.value} type="button" aria-pressed={option.value === value} className={`mn-focus block w-full rounded-lg px-3 py-2 text-left text-sm ${option.value === value ? "bg-[var(--mn-accent-soft)] font-bold text-[var(--mn-accent-deep)]" : "hover:bg-[var(--mn-surface)]"}`} onClick={() => { onChange(option.value); close(); }}>{option.label}</button>)}</div>}
+    </Popover>
+  </FilterSection>;
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 Bytes";
-  const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+function parentDirectory(path: string): string { return path.slice(0, Math.max(0, path.lastIndexOf("/"))); }
+function fileIcon(file: BundleContent): IconName {
+  const extension = file.path.split(".").pop()?.toLowerCase();
+  if (["png", "jpg", "jpeg", "webp", "spriteatlasv2"].includes(extension ?? "")) return "image";
+  if (["acb", "awb", "hca", "aac", "ogg"].includes(extension ?? "")) return "audio";
+  if (["usm", "mp4", "webm"].includes(extension ?? "")) return "video";
+  return "file";
 }
-
-// Icons as SVG components
-const FolderIcon = () => (
-  <svg className="h-6 w-6 text-[var(--mn-accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
-    <path d="M2 10h20" />
-  </svg>
-);
-
-const ImageIcon = () => (
-  <svg className="h-5 w-5 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-    <circle cx="9" cy="9" r="2" />
-    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-  </svg>
-);
-
-const AudioIcon = () => (
-  <svg className="h-5 w-5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M9 18V5l12-2v13" />
-    <circle cx="6" cy="18" r="3" />
-    <circle cx="18" cy="16" r="3" />
-  </svg>
-);
-
-const FileTextIcon = () => (
-  <svg className="h-5 w-5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-    <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-    <path d="M10 9H8" />
-    <path d="M16 13H8" />
-    <path d="M16 17H8" />
-  </svg>
-);
-
-const CodeIcon = () => (
-  <svg className="h-5 w-5 text-cyan-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <polyline points="16 18 22 12 16 6" />
-    <polyline points="8 6 2 12 8 18" />
-  </svg>
-);
-
-const FileIcon = () => (
-  <svg className="h-5 w-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-    <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-  </svg>
-);
-
-const ListIcon = () => (
-  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-  </svg>
-);
-
-const GridIcon = () => (
-  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-    <rect x="3" y="3" width="7" height="7" rx="1" />
-    <rect x="14" y="3" width="7" height="7" rx="1" />
-    <rect x="14" y="14" width="7" height="7" rx="1" />
-    <rect x="3" y="14" width="7" height="7" rx="1" />
-  </svg>
-);
 
 export default function AssetViewer({ locale }: Props) {
-  const [currentFiles, setCurrentFiles] = useState<S3File[]>([]);
-  const [currentFolders, setCurrentFolders] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  // Navigation & Search State
-  const [currentPath, setCurrentPath] = useState<string>("");
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [selectedFile, setSelectedFile] = useState<S3File | null>(null);
+  const regions = useAssetBrowserQuery<AssetRegion[]>(assetBrowserUrl("regions"));
+  const [scope, setScope] = useState({ language: "", snapshot: "" });
+  const region = regions.data?.find((item) => item.id === assetConfig.browserRegion);
+  const languages = region ? [...new Set([region.default_locale, ...region.locales])] : [];
+  const language = region && languages.includes(scope.language) ? scope.language : region?.default_locale ?? "";
+  const languageNames = useMemo(() => new Intl.DisplayNames([locale], { type: "language" }), [locale]);
+  const catalogs = useAssetBrowserQuery<AssetCatalog[]>(region ? assetBrowserUrl("catalogs", { region: assetConfig.browserRegion, locale: language }) : null);
+  const catalog = catalogs.data?.find((item) => item.snapshot === scope.snapshot) ?? defaultCatalog(catalogs.data ?? []);
+  const snapshot = catalog?.snapshot ?? "";
+  const [navigation, setNavigation] = useState({ snapshot: "", entries: [ROOT], position: 0 });
+  const history = navigation.snapshot === snapshot ? navigation.entries : [ROOT];
+  const position = navigation.snapshot === snapshot ? navigation.position : 0;
+  const location = history[position] ?? ROOT;
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState("default");
+  const [view, setView] = useState<"list" | "grid">("list");
+  const [selection, setSelection] = useState<{ snapshot: string; file: BundleContent } | null>(null);
+  const status = useAssetBrowserQuery<BundleScanStatus>(snapshot ? assetBrowserUrl("scan/status", { snapshot }) : null, 10000);
+  const browseUrl = snapshot ? assetBrowserUrl("browse", { snapshot, directory: location.directory, query, offset: location.page * PAGE_SIZE, limit: PAGE_SIZE, descending: sort === "nameDescending" ? 1 : 0, scan: status.data?.scanned ?? 0 }) : null;
+  const browse = useAssetBrowserQuery<BundleBrowsePage>(browseUrl);
+  const folders = location.page === 0 ? browse.data?.folders ?? [] : [];
+  const files = browse.data?.files ?? [];
+  const fileCount = browse.data?.total ?? 0;
+  const pageCount = Math.max(1, Math.ceil(fileCount / PAGE_SIZE));
+  const page = Math.min(location.page, pageCount - 1);
 
-  // File Preview dynamic loading state
-  const [previewContent, setPreviewContent] = useState<string | null>(null);
-  const [previewLoading, setPreviewLoading] = useState(false);
-  const [previewError, setPreviewError] = useState<string | null>(null);
+  const clearSearch = () => { setQuery(""); setSelection(null); };
+  const navigate = (next: Location) => { setNavigation({ snapshot, entries: [...history.slice(0, position + 1), next], position: position + 1 }); clearSearch(); };
+  const changePage = (next: number) => setNavigation({ snapshot, entries: history.map((entry, i) => i === position ? { ...entry, page: next } : entry), position });
+  const travel = (next: number) => { setNavigation({ snapshot, entries: history, position: next }); clearSearch(); };
+  const changeScope = (next: typeof scope) => { setScope(next); clearSearch(); };
+  const resetFilters = () => { setQuery(""); setSort("default"); changePage(0); };
+  const setSearch = (value: string) => { setQuery(value); changePage(0); };
+  const crumbs = location.directory.split("/").filter(Boolean).map((name, index, parts) => ({ name, directory: parts.slice(0, index + 1).join("/") }));
+  const hasFilters = Boolean(query || sort !== "default");
+  const scanIncomplete = Boolean(status.data && status.data.scanned < status.data.total);
 
-  // Copy and download button states for header
-  const [copyState, setCopyState] = useState<"idle" | "copying" | "success" | "error">("idle");
-  const [downloadState, setDownloadState] = useState<"idle" | "downloading" | "success">("idle");
+  const filterContent = <BaseFilters sort={{
+    label: t(locale, "assetBrowser.sort"), value: sort,
+    defaultOption: { value: "default", label: t(locale, "sorting.default") },
+    options: [{ value: "name", reverseValue: "nameDescending", label: t(locale, "assetBrowser.name"), initialDirection: "asc" }],
+    ascendingLabel: t(locale, "sorting.ascending"), descendingLabel: t(locale, "sorting.descending"),
+    onChange: (value) => { setSort(value); changePage(0); },
+  }} variant="plain" title={t(locale, "assetBrowser.filterTitle")} searchValue={query} onSearchChange={setSearch} searchLabel={t(locale, "filter.search")} searchPlaceholder={t(locale, "assetBrowser.searchPlaceholder")} hasActiveFilters={hasFilters} onReset={resetFilters} resetLabel={t(locale, "filter.reset")} expandLabel={t(locale, "filter.expand")}>
+    <ScopeSelect title={t(locale, "assetBrowser.language")} value={language} options={languages.map((value) => ({ value, label: languageNames.of(value) ?? value }))} onChange={(value) => changeScope({ language: value, snapshot: "" })} />
+    <ScopeSelect title={t(locale, "assetBrowser.snapshot")} value={snapshot} options={(catalogs.data ?? []).map((item) => ({ value: item.snapshot, label: `${item.version} · ${new Date(item.created * 1000).toLocaleString(locale)}${item.current ? ` · ${t(locale, "assetBrowser.current")}` : ""}` }))} onChange={(value) => changeScope({ language, snapshot: value })} />
+  </BaseFilters>;
+  useQuickFilter(t(locale, "assetBrowser.filterTitle"), filterContent, [locale, query, sort, region, language, catalog, regions.data, catalogs.data, navigation]);
 
-  // View mode state
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const loading = regions.status === "loading" || (Boolean(region) && catalogs.status === "loading") || (Boolean(catalog) && browse.status === "loading");
+  const failed = regions.status === "error" ? regions : catalogs.status === "error" ? catalogs : catalog && browse.status === "error" ? browse : null;
+  const emptyMessage = !region ? "assetBrowser.noLanguages" : !catalog ? "assetBrowser.noCatalogs" : hasFilters ? "assetBrowser.noMatches" : scanIncomplete ? "assetBrowser.scanPending" : "assetBrowser.emptyFolder";
+  const refresh = () => { if (failed) failed.reload(); else { regions.reload(); catalogs.reload(); status.reload(); browse.reload(); } };
 
-  const bucketUrl = assetConfig.sources.main;
-
-  // Fetch S3 list files for current directory only (using Prefix and Delimiter)
-  const fetchDirectory = async (path: string) => {
-    setLoading(true);
-    setError(null);
-    setSelectedFile(null); // Clear selected preview on folder change
-    setSearchQuery(""); // Clear search filter on directory shift
-
-    let allFiles: S3File[] = [];
-    let allFolders: string[] = [];
-    let token: string | null = null;
-    let pageCount = 0;
-    const maxPages = 5; // Safe guard for very large directories
-    const prefix = path ? path + "/" : "";
-
-    try {
-      do {
-        pageCount++;
-        const queryParams = new URLSearchParams({
-          "list-type": "2",
-          "delimiter": "/",
-          "prefix": prefix
-        });
-        if (token) {
-          queryParams.set("continuation-token", token);
-        }
-        
-        const response = await fetch(`${bucketUrl}?${queryParams.toString()}`);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch S3 bucket. Status: ${response.status}`);
-        }
-        
-        const xmlText = await response.text();
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-        
-        // Check for S3 error
-        const errorNode = xmlDoc.getElementsByTagName("Error")[0];
-        if (errorNode) {
-          const errMsg = errorNode.getElementsByTagName("Message")[0]?.textContent || "S3 Error";
-          throw new Error(errMsg);
-        }
-
-        // Parse CommonPrefixes (direct subdirectories)
-        const commonPrefixes = Array.from(xmlDoc.getElementsByTagName("CommonPrefixes"));
-        const folders = commonPrefixes.map(item => {
-          const prefixVal = item.getElementsByTagName("Prefix")[0]?.textContent || "";
-          const clean = prefixVal.replace(/\/$/, "");
-          const lastSlash = clean.lastIndexOf("/");
-          return lastSlash === -1 ? clean : clean.slice(lastSlash + 1);
-        }).filter(Boolean);
-
-        allFolders = [...allFolders, ...folders];
-
-        // Parse Contents (direct files)
-        const contents = Array.from(xmlDoc.getElementsByTagName("Contents"));
-        const files: S3File[] = contents.map(item => {
-          const key = item.getElementsByTagName("Key")[0]?.textContent || "";
-          const size = parseInt(item.getElementsByTagName("Size")[0]?.textContent || "0", 10);
-          const lastModified = item.getElementsByTagName("LastModified")[0]?.textContent || "";
-          return { key, size, lastModified };
-        }).filter(f => f.key !== prefix && !f.key.endsWith("/")); // Filter directory marker objects
-
-        allFiles = [...allFiles, ...files];
-        
-        const isTruncated = xmlDoc.getElementsByTagName("IsTruncated")[0]?.textContent === "true";
-        token = isTruncated ? (xmlDoc.getElementsByTagName("NextContinuationToken")[0]?.textContent || null) : null;
-        
-      } while (token && pageCount < maxPages);
-
-      setCurrentFolders(allFolders.sort((a, b) => a.localeCompare(b)));
-      setCurrentFiles(allFiles.sort((a, b) => a.key.localeCompare(b.key)));
-    } catch (err: any) {
-      console.error(err);
-      setError(err?.message || "Failed to load directory contents.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchDirectory(currentPath);
-  }, [currentPath]);
-
-  // Fetch text file preview content when selected file changes
-  useEffect(() => {
-    if (!selectedFile) {
-      setPreviewContent(null);
-      setPreviewError(null);
-      return;
-    }
-
-    const ext = selectedFile.key.split(".").pop()?.toLowerCase();
-    const isTextReadable = ["txt", "json", "xml", "csv", "md", "js", "ts", "yml", "yaml", "html", "css"].includes(ext || "");
-
-    if (!isTextReadable) {
-      setPreviewContent(null);
-      setPreviewError(null);
-      return;
-    }
-
-    const fetchPreview = async () => {
-      setPreviewLoading(true);
-      setPreviewError(null);
-      setPreviewContent(null);
-      try {
-        const fileUrl = `${bucketUrl}/${selectedFile.key}`;
-        const res = await fetch(fileUrl);
-        if (!res.ok) {
-          throw new Error(`Failed to load file preview (${res.status})`);
-        }
-        const text = await res.text();
-        
-        // Attempt JSON pretty printing if it ends in .json
-        if (ext === "json") {
-          try {
-            const parsed = JSON.parse(text);
-            setPreviewContent(JSON.stringify(parsed, null, 2));
-          } catch {
-            setPreviewContent(text);
-          }
-        } else {
-          setPreviewContent(text);
-        }
-      } catch (err: any) {
-        setPreviewError(err?.message || "Could not load preview.");
-      } finally {
-        setPreviewLoading(false);
-      }
-    };
-
-    fetchPreview();
-  }, [selectedFile]);
-
-  // Merge folders and files into a single, folder-first sorted list (Unified List)
-  const unifiedItems = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-
-    // Map folder strings to UnifiedItem
-    const foldersMapped: UnifiedItem[] = currentFolders.map(folder => ({
-      type: "folder",
-      name: folder,
-      key: currentPath ? `${currentPath}/${folder}` : folder
-    }));
-
-    // Map file metadata to UnifiedItem
-    const filesMapped: UnifiedItem[] = currentFiles.map(file => {
-      const filename = file.key.slice(currentPath ? currentPath.length + 1 : 0);
-      return {
-        type: "file",
-        name: filename,
-        key: file.key,
-        size: file.size,
-        lastModified: file.lastModified
-      };
-    });
-
-    // Apply local query filter if needed
-    let filteredFolders = foldersMapped;
-    let filteredFiles = filesMapped;
-    if (query) {
-      filteredFolders = foldersMapped.filter(f => f.name.toLowerCase().includes(query));
-      filteredFiles = filesMapped.filter(f => f.name.toLowerCase().includes(query));
-    }
-
-    // Sort folders alphabetically, files alphabetically, and join them folder-first
-    const sortedFolders = filteredFolders.sort((a, b) => a.name.localeCompare(b.name));
-    const sortedFiles = filteredFiles.sort((a, b) => a.name.localeCompare(b.name));
-
-    return [...sortedFolders, ...sortedFiles];
-  }, [currentFolders, currentFiles, currentPath, searchQuery]);
-
-  // Breadcrumbs paths
-  const breadcrumbs = useMemo(() => {
-    if (!currentPath) return [];
-    const parts = currentPath.split("/");
-    return parts.map((part, index) => {
-      const path = parts.slice(0, index + 1).join("/");
-      return { name: part, path };
-    });
-  }, [currentPath]);
-
-  // Helper to determine file icon
-  const getFileIcon = (key: string) => {
-    const ext = key.split(".").pop()?.toLowerCase() || "";
-    if (["png", "jpg", "jpeg", "webp", "gif", "svg", "ico"].includes(ext)) {
-      return <ImageIcon />;
-    }
-    if (["mp3", "wav", "ogg", "m4a", "flac"].includes(ext)) {
-      return <AudioIcon />;
-    }
-    if (["json"].includes(ext)) {
-      return <CodeIcon />;
-    }
-    if (["txt", "md", "csv", "xml", "html", "css"].includes(ext)) {
-      return <FileTextIcon />;
-    }
-    return <FileIcon />;
-  };
-
-  // Copy target key URL
-  const handleCopy = async () => {
-    if (!selectedFile) return;
-    setCopyState("copying");
-    try {
-      const url = `${bucketUrl}/${selectedFile.key}`;
-      await navigator.clipboard.writeText(url);
-      setCopyState("success");
-    } catch {
-      setCopyState("error");
-    }
-    setTimeout(() => setCopyState("idle"), 1500);
-  };
-
-  // Download target key binary
-  const handleDownload = async () => {
-    if (!selectedFile) return;
-    setDownloadState("downloading");
-    const fileUrl = `${bucketUrl}/${selectedFile.key}`;
-    try {
-      const response = await fetch(fileUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      const filename = selectedFile.key.split("/").pop() || "download";
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      setDownloadState("success");
-    } catch {
-      window.open(fileUrl, "_blank");
-      setDownloadState("success");
-    }
-    setTimeout(() => setDownloadState("idle"), 1500);
-  };
-
-  // Header Actions configuration for Modal
-  const previewActions = selectedFile ? (
-    <>
-      <button
-        type="button"
-        onClick={handleDownload}
-        disabled={downloadState === "downloading"}
-        className="grid h-8 w-8 place-items-center rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:text-[var(--mn-text)] disabled:opacity-50"
-        title="Download File"
-      >
-        {downloadState === "idle" && (
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
-        )}
-        {downloadState === "downloading" && <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9" strokeWidth="2" className="opacity-30" /><path d="M12 3a9 9 0 019 9" strokeWidth="2" strokeLinecap="round" /></svg>}
-        {downloadState === "success" && <svg className="h-4 w-4 text-[var(--mn-mint-deep)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
-      </button>
-
-      <button
-        type="button"
-        onClick={handleCopy}
-        disabled={copyState === "copying"}
-        className="grid h-8 w-8 place-items-center rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:text-[var(--mn-text)] disabled:opacity-50"
-        title="Copy URL"
-      >
-        {copyState === "idle" && (
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
-        )}
-        {copyState === "copying" && <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9" strokeWidth="2" className="opacity-30" /><path d="M12 3a9 9 0 019 9" strokeWidth="2" strokeLinecap="round" /></svg>}
-        {copyState === "success" && <svg className="h-4 w-4 text-[var(--mn-mint-deep)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
-        {copyState === "error" && <svg className="h-4 w-4 text-[var(--mn-rose)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>}
-      </button>
-    </>
-  ) : null;
-
-  return (
-    <div className="relative min-h-[500px]">
-      {/* Search and Navigation Bar */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        {/* Path Breadcrumbs */}
-        <div className="flex flex-wrap items-center gap-1.5 text-[15px] font-bold text-[var(--mn-text)]">
-          <button
-            onClick={() => { setCurrentPath(""); }}
-            className="rounded-lg px-2.5 py-1.5 hover:bg-[var(--mn-cream-deep)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--mn-accent)]"
-          >
-            Root
-          </button>
-          
-          {breadcrumbs.map((bc) => (
-            <div key={bc.path} className="flex items-center gap-1.5">
-              <span className="text-[var(--mn-text-muted)]">/</span>
-              <button
-                onClick={() => { setCurrentPath(bc.path); }}
-                className="rounded-lg px-2.5 py-1.5 hover:bg-[var(--mn-cream-deep)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--mn-accent)]"
-              >
-                {bc.name}
-              </button>
-            </div>
-          ))}
+  return <section className="min-w-0 text-[var(--mn-text)]" aria-label={t(locale, "assetBrowser.title")}>
+    <div className="overflow-hidden rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-sm)]">
+      <div className="flex flex-wrap items-center gap-2 border-b border-[var(--mn-border)] bg-[var(--mn-surface)] px-3 py-2">
+        <div className="flex items-center gap-0.5">
+          <ToolButton icon="back" label={t(locale, "assetBrowser.back")} onClick={() => travel(position - 1)} disabled={position === 0} />
+          <ToolButton icon="forward" label={t(locale, "assetBrowser.forward")} onClick={() => travel(position + 1)} disabled={position >= history.length - 1} />
+          <ToolButton icon="up" label={t(locale, "assetBrowser.up")} onClick={() => navigate({ directory: parentDirectory(location.directory), page: 0 })} disabled={!location.directory} />
+          <ToolButton icon="refresh" label={t(locale, "actions.refresh")} onClick={refresh} />
         </div>
-
-        {/* Search/Filter Input */}
-        <div className="relative max-w-sm w-full">
-          <input
-            type="text"
-            placeholder={t(locale, "cards.searchPlaceholder")}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-surface)] py-2.5 pl-10 pr-4 text-sm font-medium text-[var(--mn-text)] outline-none transition-all focus:border-[var(--mn-accent)] placeholder-[var(--mn-text-muted)]"
-          />
-          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--mn-text-muted)]">
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.602 10.602Z" /></svg>
-          </div>
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
-            </button>
-          )}
+        <nav className="order-last w-full min-w-0 sm:order-none sm:w-auto sm:flex-1" aria-label={t(locale, "assetBrowser.pathNavigation")}>
+          <ol className="flex flex-wrap items-center gap-1 text-xs">
+            <li><button type="button" className={`${buttonClass} flex items-center gap-1.5`} aria-current={!crumbs.length ? "location" : undefined} onClick={() => navigate(ROOT)}><Icon name="home" />{t(locale, "assetBrowser.root")}</button></li>
+            {crumbs.map((crumb, index) => <li key={crumb.directory} className="flex min-w-0 items-center gap-1"><span aria-hidden="true" className="text-[var(--mn-text-muted)]">/</span><button type="button" className={`${buttonClass} max-w-56 truncate`} title={crumb.name} aria-current={index === crumbs.length - 1 ? "location" : undefined} onClick={() => navigate({ directory: crumb.directory, page: 0 })}>{crumb.name}</button></li>)}
+          </ol>
+        </nav>
+        <div className="ml-auto flex items-center gap-0.5">
+          <ToolButton icon="list" label={t(locale, "assetBrowser.list")} active={view === "list"} onClick={() => setView("list")} />
+          <ToolButton icon="grid" label={t(locale, "assetBrowser.grid")} active={view === "grid"} onClick={() => setView("grid")} />
+          <ToolButton icon="filter" label={t(locale, "filter.openQuickFilter")} active={hasFilters} onClick={openFilterDrawer} />
         </div>
       </div>
-
-      {/* Main Content Area */}
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="relative h-16 w-16">
-            <div className="absolute inset-0 rounded-full border-4 border-[var(--mn-accent-soft)]"></div>
-            <div className="absolute inset-0 rounded-full border-4 border-t-[var(--mn-accent)] animate-spin"></div>
-          </div>
-          <p className="mt-6 text-sm font-semibold text-[var(--mn-accent-deep)]">Loading contents...</p>
-        </div>
-      ) : error ? (
-        <div className="rounded-3xl border-2 border-[var(--mn-border)] bg-[var(--mn-surface)] p-8 text-center">
-          <svg className="mx-auto h-12 w-12 text-[var(--mn-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
-          <h3 className="mt-4 font-[var(--mn-font-display)] text-xl text-[var(--mn-text)]">Request Failed</h3>
-          <p className="mt-2 text-sm text-[var(--mn-text-muted)]">{error}</p>
-          <button
-            onClick={() => fetchDirectory(currentPath)}
-            className="mt-6 mn-stamp rounded-full px-5 py-2.5 text-xs font-black shadow-[var(--mn-shadow-stamp-sm)]"
-          >
-            Retry Fetch
-          </button>
-        </div>
-      ) : (
-        /* Unified Explorer Panel */
-        <div className="space-y-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h3 className="text-[13px] font-black uppercase tracking-widest text-[var(--mn-text-muted)]">
-              {currentPath ? currentPath.split("/").pop() : "Root Contents"} ({unifiedItems.length} items)
-            </h3>
-            
-            {/* View layout controls */}
-            {unifiedItems.length > 0 && (
-              <div className="flex items-center gap-4">
-                {/* View switcher */}
-                <div className="flex border-2 border-[var(--mn-border)] rounded-full overflow-hidden bg-[var(--mn-paper)] shrink-0">
-                  <button
-                    onClick={() => setViewMode("list")}
-                    aria-label="List view"
-                    className={`flex items-center justify-center p-2 transition-colors ${viewMode === "list" ? "bg-[var(--mn-accent)] text-white" : "text-[var(--mn-text)] hover:bg-[var(--mn-cream-deep)]"}`}
-                  >
-                    <ListIcon />
-                  </button>
-                  <button
-                    onClick={() => setViewMode("grid")}
-                    aria-label="Grid view"
-                    className={`flex items-center justify-center p-2 transition-colors ${viewMode === "grid" ? "bg-[var(--mn-accent)] text-white" : "text-[var(--mn-text)] hover:bg-[var(--mn-cream-deep)]"}`}
-                  >
-                    <GridIcon />
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <div className="rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow)] overflow-hidden">
-            {unifiedItems.length === 0 && !currentPath ? (
-              <div className="py-16 text-center text-sm font-semibold text-[var(--mn-text-muted)]">
-                The directory is empty.
-              </div>
-            ) : unifiedItems.length === 0 ? (
-              <div className="py-16 text-center text-sm font-semibold text-[var(--mn-text-muted)]">
-                No items match your filter criteria.
-              </div>
-            ) : viewMode === "list" ? (
-              /* List Mode (Table layout) */
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-[13px]">
-                  <thead>
-                    <tr className="bg-[var(--mn-cream-deep)]/40 border-b border-[var(--mn-border)] font-bold text-[var(--mn-text)]">
-                      <th className="px-6 py-3">Name</th>
-                      <th className="px-6 py-3 w-32">Size</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--mn-border)] divide-dashed">
-                    {/* Parent Folder navigation in list mode */}
-                    {currentPath && !searchQuery && (
-                      <tr
-                        onClick={() => {
-                          const idx = currentPath.lastIndexOf("/");
-                          const next = idx === -1 ? "" : currentPath.slice(0, idx);
-                          setCurrentPath(next);
-                        }}
-                        className="hover:bg-[var(--mn-cream-deep)]/30 cursor-pointer font-bold text-[var(--mn-text-muted)]"
-                      >
-                        <td className="px-6 py-3 flex items-center gap-3">
-                          <span className="shrink-0">
-                            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
-                          </span>
-                          <span>.. (Go Up)</span>
-                        </td>
-                        <td className="px-6 py-3">—</td>
-                      </tr>
-                    )}
-
-                    {unifiedItems.map(item => (
-                      <tr
-                        key={item.key}
-                        onClick={() => {
-                          if (item.type === "folder") {
-                            setCurrentPath(item.key);
-                          } else {
-                            setSelectedFile({
-                              key: item.key,
-                              size: item.size || 0,
-                              lastModified: item.lastModified || ""
-                            });
-                          }
-                        }}
-                        className={`hover:bg-[var(--mn-cream-deep)]/30 cursor-pointer transition-colors ${selectedFile?.key === item.key ? "bg-[var(--mn-accent-soft)]/45 font-bold" : ""}`}
-                      >
-                        <td className={`px-6 py-3.5 flex items-center gap-3 font-bold text-[var(--mn-text)] ${item.type === "folder" ? "text-[var(--mn-accent-deep)]" : ""}`}>
-                          <span className="shrink-0">
-                            {item.type === "folder" ? <FolderIcon /> : getFileIcon(item.key)}
-                          </span>
-                          <span className="truncate max-w-xs md:max-w-md select-all" title={item.name}>{item.name}</span>
-                        </td>
-                        <td className="px-6 py-3.5 text-[var(--mn-text-muted)] font-medium">
-                          {item.type === "file" ? (
-                            <span className="inline-block rounded-full bg-[var(--mn-cream-deep)] px-2.5 py-0.5 font-bold text-[var(--mn-text)] font-sans">
-                              {formatBytes(item.size || 0)}
-                            </span>
-                          ) : (
-                            <span className="text-gray-300">—</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              /* Grid Mode (Card layouts) */
-              <div className="p-6 grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                {/* Parent Folder navigation in grid mode */}
-                {currentPath && !searchQuery && (
-                  <button
-                    onClick={() => {
-                      const idx = currentPath.lastIndexOf("/");
-                      const next = idx === -1 ? "" : currentPath.slice(0, idx);
-                      setCurrentPath(next);
-                    }}
-                    className="mn-list-card mn-card flex flex-col items-center justify-center p-4 border border-[var(--mn-border)] rounded-2xl hover:border-[var(--mn-accent)] text-center gap-2 bg-[var(--mn-paper)]"
-                  >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--mn-cream-deep)] shadow-[var(--mn-shadow-stamp-sm)]">
-                      <svg className="h-5 w-5 text-[var(--mn-text-muted)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
-                    </div>
-                    <div className="min-w-0 w-full">
-                      <p className="text-xs font-bold text-[var(--mn-text)] truncate px-1">Go Up</p>
-                      <p className="text-[10px] text-[var(--mn-text-muted)] font-bold mt-0.5">Parent dir</p>
-                    </div>
-                  </button>
-                )}
-
-                {unifiedItems.map(item => (
-                  <button
-                    key={item.key}
-                    onClick={() => {
-                      if (item.type === "folder") {
-                        setCurrentPath(item.key);
-                      } else {
-                        setSelectedFile({
-                          key: item.key,
-                          size: item.size || 0,
-                          lastModified: item.lastModified || ""
-                        });
-                      }
-                    }}
-                    className={`mn-list-card mn-card flex flex-col items-center justify-center p-4 border rounded-2xl hover:border-[var(--mn-accent)] text-center gap-2 bg-[var(--mn-paper)] ${selectedFile?.key === item.key ? "border-[var(--mn-accent)] bg-[var(--mn-accent-soft)]/30" : "border-[var(--mn-border)]"}`}
-                  >
-                    <div className={`flex h-12 w-12 items-center justify-center rounded-xl shadow-[var(--mn-shadow-stamp-sm)] ${item.type === "folder" ? "bg-[var(--mn-accent-soft)]" : "bg-[var(--mn-cream-deep)]"}`}>
-                      {item.type === "folder" ? <FolderIcon /> : getFileIcon(item.key)}
-                    </div>
-                    <div className="min-w-0 w-full">
-                      <p className="text-xs font-bold text-[var(--mn-text)] truncate px-1" title={item.name}>{item.name}</p>
-                      <p className="text-[10px] text-[var(--mn-text-muted)] font-bold mt-0.5">
-                        {item.type === "folder" ? "Directory" : formatBytes(item.size || 0)}
-                      </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Shared Popup Modal Preview dialog */}
-      <Modal
-        isOpen={selectedFile !== null}
-        onClose={() => {
-          setSelectedFile(null);
-          setCopyState("idle");
-          setDownloadState("idle");
-        }}
-        title={selectedFile?.key.split("/").pop() || ""}
-        size="lg"
-        headerActions={previewActions}
-      >
-        {selectedFile && (
-          <div className="space-y-6">
-            {/* Properties Card (just Key and Size) */}
-            <div className="rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-surface)] p-4 space-y-2.5 text-xs text-[var(--mn-text)] font-medium">
-              <div className="flex justify-between py-1 border-b border-[var(--mn-border)] border-dashed border-opacity-30">
-                <span className="text-[var(--mn-text-muted)]">Key</span>
-                <span className="font-bold text-right truncate max-w-[70%] select-all" title={selectedFile.key}>{selectedFile.key}</span>
-              </div>
-              <div className="flex justify-between py-1">
-                <span className="text-[var(--mn-text-muted)]">Size</span>
-                <span className="font-bold">{formatBytes(selectedFile.size)}</span>
-              </div>
-            </div>
-
-            {/* Media Preview Box */}
-            <div>
-              {/* Image Previews */}
-              {["png", "jpg", "jpeg", "webp", "gif", "svg", "ico"].includes(selectedFile.key.split(".").pop()?.toLowerCase() || "") ? (
-                <div className="rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-slate-100 p-2 shadow-inner flex items-center justify-center overflow-hidden min-h-[220px]">
-                  <img
-                    src={`${bucketUrl}/${selectedFile.key}`}
-                    alt="Preview"
-                    className="max-h-[50vh] max-w-full object-contain rounded-xl"
-                    loading="lazy"
-                  />
-                </div>
-              ) : /* Audio Previews */
-              ["mp3", "wav", "ogg", "m4a", "flac"].includes(selectedFile.key.split(".").pop()?.toLowerCase() || "") ? (
-                <div className="rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] p-6 text-center">
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 mb-4 animate-pulse">
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2Zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2ZM9 10l12-3" /></svg>
-                  </div>
-                  <audio
-                    controls
-                    src={`${bucketUrl}/${selectedFile.key}`}
-                    className="w-full focus:outline-none"
-                  />
-                </div>
-              ) : /* Readable Text Preview */
-              ["txt", "json", "xml", "csv", "md", "js", "ts", "yml", "yaml", "html", "css"].includes(selectedFile.key.split(".").pop()?.toLowerCase() || "") ? (
-                <div className="relative">
-                  {previewLoading ? (
-                    <div className="flex flex-col items-center justify-center py-10 rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-surface)] min-h-[150px]">
-                      <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--mn-accent-soft)] border-t-[var(--mn-accent)]"></div>
-                      <p className="mt-4 text-xs font-semibold text-[var(--mn-text-muted)]">Loading content preview...</p>
-                    </div>
-                  ) : previewError ? (
-                    <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-center text-xs text-red-600">
-                      Failed to fetch file content preview.<br />
-                      {previewError}
-                    </div>
-                  ) : (
-                    <pre className="p-4 max-h-[45vh] overflow-auto bg-[var(--mn-surface)] border border-[var(--mn-border)] rounded-2xl font-mono text-[11px] leading-relaxed text-[var(--mn-text)] whitespace-pre-wrap break-all select-all">
-                      {previewContent}
-                    </pre>
-                  )}
-                </div>
-              ) : (
-                /* No preview available */
-                <div className="rounded-2xl border border-[var(--mn-border)] border-dashed bg-[var(--mn-surface)] py-12 text-center text-xs font-bold text-[var(--mn-text-muted)]">
-                  Previews are not supported for this file type.<br />
-                  Use the header download button to save this file.
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </Modal>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--mn-border)] px-4 py-2 text-xs text-[var(--mn-text-muted)]">
+        <span>{language ? languageNames.of(language) ?? language : ""}{catalog ? ` / ${catalog.version} · ${new Date(catalog.created * 1000).toLocaleDateString(locale)}` : ""}</span>
+        {status.data && <span role="status">{t(locale, "assetBrowser.scanProgress", { scanned: status.data.scanned, total: status.data.total })}</span>}
+      </div>
+      {failed ? <div role="alert" className="space-y-3 p-12 text-center"><p className="font-bold">{t(locale, "assetBrowser.loadError")}</p><p className="text-sm text-[var(--mn-text-muted)]">{t(locale, failed.error instanceof AssetBrowserError && failed.error.status === 404 ? "assetBrowser.notAvailable" : "assetBrowser.loadErrorHint")}</p><button type="button" className={buttonClass} onClick={failed.reload}>{t(locale, "assetBrowser.retry")}</button></div>
+        : loading ? <div role="status" className="flex min-h-72 flex-col items-center justify-center gap-4 text-sm text-[var(--mn-text-muted)]"><span className="h-7 w-7 animate-spin rounded-full border-2 border-[var(--mn-border)] border-t-[var(--mn-accent)]" /><p>{t(locale, "assetBrowser.loading")}</p></div>
+        : !folders.length && !files.length ? <div className="flex min-h-72 flex-col items-center justify-center gap-3 p-8 text-center text-sm text-[var(--mn-text-muted)]"><Icon name="folder" className="h-10 w-10 opacity-50" /><p>{t(locale, emptyMessage)}</p>{hasFilters && <button type="button" className={buttonClass} onClick={resetFilters}>{t(locale, "filter.reset")}</button>}</div>
+        : <>
+          {view === "list" && <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,12rem)] gap-3 border-b border-[var(--mn-border)] bg-[var(--mn-surface)] px-4 py-2 text-xs font-bold text-[var(--mn-text-muted)]"><span>{t(locale, "assetBrowser.name")}</span><span>{t(locale, "assetBrowser.bundle")}</span></div>}
+          <ul aria-label={t(locale, "assetBrowser.directoryContents")} className={view === "grid" ? "grid grid-cols-2 gap-2 p-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" : "divide-y divide-[var(--mn-border)]"}>
+            {folders.map((folder) => <li key={`folder:${folder.path}`} className="min-w-0"><button type="button" aria-label={folder.name} title={folder.path} onClick={() => navigate({ directory: folder.path, page: 0 })} className={`mn-focus group w-full text-left transition hover:bg-[var(--mn-accent-soft)] ${view === "grid" ? "flex h-full flex-col items-center gap-3 rounded-xl px-3 py-5 text-center" : "grid grid-cols-[minmax(0,1fr)_minmax(0,12rem)] items-center gap-3 px-4 py-3"}`}><span className="flex min-w-0 items-center gap-3"><Icon name="folder" className={`${view === "grid" ? "h-10 w-10" : "h-6 w-6"} shrink-0 text-amber-500`} /><span className="min-w-0 truncate text-sm font-medium">{folder.name}</span></span><span className="truncate text-xs text-[var(--mn-text-muted)]">—</span></button></li>)}
+            {files.map((file, index) => <li key={`file:${file.bundle_id}:${file.path}:${file.path_id}:${index}`} className="min-w-0"><button type="button" aria-label={file.path} title={file.path} onClick={() => setSelection({ snapshot, file })} className={`mn-focus group w-full text-left transition hover:bg-[var(--mn-accent-soft)] ${view === "grid" ? "flex h-full flex-col items-center gap-3 rounded-xl px-3 py-5 text-center" : "grid grid-cols-[minmax(0,1fr)_minmax(0,12rem)] items-center gap-3 px-4 py-3"}`}><span className="flex min-w-0 items-center gap-3"><Icon name={fileIcon(file)} className={`${view === "grid" ? "h-10 w-10" : "h-6 w-6"} shrink-0 text-[var(--mn-accent)]`} /><span className="min-w-0"><span className="block truncate text-sm font-medium">{query ? file.path : file.path.split("/").pop()}</span>{query && <span className="block truncate text-[10px] text-[var(--mn-text-muted)]">{file.path}</span>}</span></span><span className="truncate text-xs text-[var(--mn-text-muted)]" title={file.bundle_key}>{file.bundle_key}</span></button></li>)}
+          </ul>
+        </>}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--mn-border)] bg-[var(--mn-surface)] px-4 py-2 text-xs text-[var(--mn-text-muted)]">
+        <span aria-live="polite">{t(locale, "assetBrowser.itemCount", { count: (browse.data?.folders.length ?? 0) + fileCount })}</span>
+        {fileCount > PAGE_SIZE && <nav aria-label={t(locale, "assetBrowser.pagination")} className="flex items-center gap-2"><span>{t(locale, "assetBrowser.range", { from: page * PAGE_SIZE + 1, to: Math.min((page + 1) * PAGE_SIZE, fileCount), total: fileCount })}</span><button type="button" className={buttonClass} disabled={page === 0} onClick={() => changePage(page - 1)}>{t(locale, "assetBrowser.previous")}</button><button type="button" className={buttonClass} disabled={page >= pageCount - 1} onClick={() => changePage(page + 1)}>{t(locale, "assetBrowser.next")}</button></nav>}
+      </div>
     </div>
-  );
+    <ContentDetails key={selection?.file.path ?? "none"} locale={locale} file={selection?.snapshot === snapshot ? selection.file : null} onClose={() => setSelection(null)} />
+  </section>;
+}
+
+function ContentDetails({ locale, file, onClose }: Props & { file: BundleContent | null; onClose: () => void }) {
+  const [copyState, setCopyState] = useState("copy");
+  const rows: [string, string][] = file ? [
+    [t(locale, "assetBrowser.fileKey"), file.path],
+    [t(locale, "assetBrowser.bundle"), file.bundle_key],
+    [t(locale, "assetBrowser.archiveId"), file.bundle_id],
+    ...(file.source ? [[t(locale, "assetBrowser.containerFile"), file.source] as [string, string]] : []),
+    ...(file.path_id !== null ? [[t(locale, "assetBrowser.pathId"), String(file.path_id)] as [string, string]] : []),
+  ] : [];
+  return <Modal isOpen={Boolean(file)} onClose={onClose} title={t(locale, "assetBrowser.fileDetails")} closeLabel={t(locale, "actions.close")} size="lg">
+    <dl className="divide-y divide-[var(--mn-border)] text-xs">{rows.map(([label, value]) => <div key={label} className="grid gap-1 py-3 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4"><dt className="text-[var(--mn-text-muted)]">{label}</dt><dd className="min-w-0 break-all font-mono select-text">{value}</dd></div>)}</dl>
+    <button type="button" className={`${buttonClass} my-3 border border-[var(--mn-border)] text-sm`} aria-live="polite" onClick={async () => { try { await navigator.clipboard.writeText(file?.path ?? ""); setCopyState("copied"); } catch { setCopyState("copyError"); } }}>{t(locale, `assetBrowser.${copyState}`)}</button>
+    <p className="text-xs text-[var(--mn-text-muted)]">{t(locale, "assetBrowser.previewUnavailable")}</p>
+  </Modal>;
 }

@@ -1,3 +1,5 @@
+import { useListSort } from "@/lib/filter/use-list-sort";
+import { sortEntries } from "@/lib/filter/list-sort";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
@@ -30,6 +32,7 @@ export default function MusicExplorer({ locale, initialSongs }: Props) {
   
   const [songs] = useState<MusicViewModel[]>(initialSongs);
   const [query, setQuery] = useState("");
+  const sort = useListSort("music", locale, "date");
   const [selectedTypes, setSelectedTypes] = useState<number[]>([]);
   const [selectedBands, setSelectedBands] = useState<number[]>([]);
 
@@ -87,9 +90,12 @@ export default function MusicExplorer({ locale, initialSongs }: Props) {
     });
   }, [songs, query, selectedTypes, selectedBands]);
 
-  const hasActiveFilters = Boolean(query) || selectedTypes.length > 0 || selectedBands.length > 0;
+  const sortedEntries = useMemo(() => sortEntries(filteredSongs, sort.value, locale), [filteredSongs, sort.value, locale]);
+
+  const hasActiveFilters = sort.value !== "default" || Boolean(query) || selectedTypes.length > 0 || selectedBands.length > 0;
 
   const resetFilters = () => {
+    sort.onChange("default");
     setQuery("");
     setSelectedTypes([]);
     setSelectedBands([]);
@@ -98,6 +104,7 @@ export default function MusicExplorer({ locale, initialSongs }: Props) {
 
   const quickFilterContent = (
     <BaseFilters
+      sort={sort}
       variant="plain"
       title={t(locale, "music.filterTitle")}
       searchValue={query}
@@ -129,6 +136,7 @@ export default function MusicExplorer({ locale, initialSongs }: Props) {
   );
 
   useQuickFilter(t(locale, "music.filterTitle"), quickFilterContent, [
+    sort.value,
     query,
     selectedTypes,
     selectedBands,
@@ -145,7 +153,7 @@ export default function MusicExplorer({ locale, initialSongs }: Props) {
         <EmptyState locale={locale} onReset={resetFilters} />
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6">
-          {filteredSongs.map((song) => (
+          {sortedEntries.map((song) => (
             <SongCard key={song.id} song={song} locale={locale} onClick={saveCurrentState} />
           ))}
         </div>

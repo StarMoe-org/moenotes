@@ -1,4 +1,8 @@
 export const assetConfig = {
+  releaseEnabled: true,
+  releaseSource: "https://storage.bdon.moe/moenotes",
+  browserApi: "https://assets.bdon.moe",
+  browserRegion: "tw",
   sources: {
     main: "https://storage.bdon.moe/ournotes-assets",
     backup: "https://assets-backup.moesekai.dev/ournotes",

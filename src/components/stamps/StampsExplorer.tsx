@@ -1,3 +1,5 @@
+import { useListSort } from "@/lib/filter/use-list-sort";
+import { sortEntries } from "@/lib/filter/list-sort";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
@@ -21,6 +23,7 @@ export default function StampsExplorer({ locale, initialStamps, initialBandNames
   const [stamps] = useState<StampViewModel[]>(initialStamps);
   
   const [query, setQuery] = useState("");
+  const sort = useListSort("stamps", locale, "");
   const [selectedBands, setSelectedBands] = useState<number[]>([]);
   const [selectedCharacters, setSelectedCharacters] = useState<number[]>([]);
   
@@ -126,7 +129,9 @@ export default function StampsExplorer({ locale, initialStamps, initialBandNames
     });
   }, [stamps, query, selectedBands, selectedCharacters]);
 
-  const hasActiveFilters = Boolean(query) || selectedBands.length > 0 || selectedCharacters.length > 0;
+  const sortedEntries = useMemo(() => sortEntries(filteredStamps, sort.value, locale), [filteredStamps, sort.value, locale]);
+
+  const hasActiveFilters = sort.value !== "default" || Boolean(query) || selectedBands.length > 0 || selectedCharacters.length > 0;
 
   const handleBandToggle = (bandId: number) => {
     const nextBands = selectedBands.includes(bandId)
@@ -154,6 +159,7 @@ export default function StampsExplorer({ locale, initialStamps, initialBandNames
   };
 
   const resetFilters = () => {
+    sort.onChange("default");
     setQuery("");
     setSelectedBands([]);
     setSelectedCharacters([]);
@@ -243,6 +249,7 @@ export default function StampsExplorer({ locale, initialStamps, initialBandNames
 
   const quickFilterContent = (
     <BaseFilters
+      sort={sort}
       variant="plain"
       title={t(locale, "stamps.filterTitle")}
       searchValue={query}
@@ -275,6 +282,7 @@ export default function StampsExplorer({ locale, initialStamps, initialBandNames
   );
 
   useQuickFilter(t(locale, "stamps.filterTitle"), quickFilterContent, [
+    sort.value,
     query,
     selectedBands,
     selectedCharacters,
@@ -293,7 +301,7 @@ export default function StampsExplorer({ locale, initialStamps, initialBandNames
           <EmptyState locale={locale} onReset={resetFilters} />
         ) : (
           <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {filteredStamps.map((stamp) => (
+            {sortedEntries.map((stamp) => (
               <button
                 key={stamp.id}
                 type="button"

@@ -1,7 +1,4 @@
 import type { AppRoute } from "@/types/route";
-import { CARD_IDS } from "@/lib/cards/constants";
-import { SUPPORT_CARD_IDS } from "@/lib/support-cards/constants";
-import { MUSIC_IDS } from "@/lib/music/constants";
 
 export const routeRegistry = [
   {
@@ -62,10 +59,7 @@ export const routeRegistry = [
             },
             nav: false,
             searchable: false,
-            staticParams: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((id) => ({
-              params: { id: String(id) },
-              breadcrumbDetail: { label: `#${id}` },
-            })),
+            staticParams: async () => (await import("@/lib/route/masterdata-params")).getMasterdataDetailParams("characters"),
           },
         ],
       },
@@ -98,10 +92,7 @@ export const routeRegistry = [
             },
             nav: false,
             searchable: false,
-            staticParams: CARD_IDS.map((id) => ({
-              params: { id: String(id) },
-              breadcrumbDetail: { label: `#${id}` },
-            })),
+            staticParams: async () => (await import("@/lib/route/masterdata-params")).getMasterdataDetailParams("cards"),
           },
         ],
       },
@@ -134,10 +125,7 @@ export const routeRegistry = [
             },
             nav: false,
             searchable: false,
-            staticParams: SUPPORT_CARD_IDS.map((id) => ({
-              params: { id: String(id) },
-              breadcrumbDetail: { label: `#${id}` },
-            })),
+            staticParams: async () => (await import("@/lib/route/masterdata-params")).getMasterdataDetailParams("support-cards"),
           },
         ],
       },
@@ -170,10 +158,7 @@ export const routeRegistry = [
             },
             nav: false,
             searchable: false,
-            staticParams: MUSIC_IDS.map((id) => ({
-              params: { id: String(id) },
-              breadcrumbDetail: { label: `#${id}` },
-            })),
+            staticParams: async () => (await import("@/lib/route/masterdata-params")).getMasterdataDetailParams("music"),
           },
         ],
       },
@@ -294,7 +279,7 @@ export const routeRegistry = [
         seo: { titleKey: "seo.storyDetail.title", descriptionKey: "seo.storyDetail.description" },
         nav: false,
         searchable: false,
-        staticParams: [10000, 10001, 10002, 10020, 10021, 10022, 10459, 10498].map((id) => ({ params: { id: String(id) }, breadcrumbDetail: { label: `ADV ${id}` } })),
+        staticParams: async () => (await import("@/lib/route/masterdata-params")).getMasterdataStoryParams(),
       },
     ],
   },

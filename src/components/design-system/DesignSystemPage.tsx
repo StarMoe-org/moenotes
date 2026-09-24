@@ -1,3 +1,4 @@
+import SortControl, { type SortFieldOption } from "@/components/shared/SortControl";
 import BrandLogo from "@/components/shared/BrandLogo";
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -23,21 +24,21 @@ export default function DesignSystemPage({ locale }: Props) {
   // Lifted Filter States
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
-  const [sortBy, setSortBy] = useState("name");
+  const [sortBy, setSortBy] = useState("default");
   const [language, setLanguage] = useState("all");
   const [toggle, setToggle] = useState(false);
 
   const total = 128;
   const filtered = search || category !== "all" || toggle || language !== "all" ? 42 : total;
-  const hasActive = search !== "" || category !== "all" || toggle || sortBy !== "name" || language !== "all";
+  const hasActive = search !== "" || category !== "all" || toggle || sortBy !== "default" || language !== "all";
 
-  const reset = () => { setSearch(""); setCategory("all"); setSortBy("name"); setLanguage("all"); setToggle(false); };
+  const reset = () => { setSearch(""); setCategory("all"); setSortBy("default"); setLanguage("all"); setToggle(false); };
 
   const sortOptions = [
-    { value: "name", label: t(locale, "designSystem.filters.name") },
-    { value: "date", label: t(locale, "designSystem.filters.date") },
-    { value: "level", label: t(locale, "designSystem.filters.level") },
-  ];
+    { value: "nameAsc", reverseValue: "nameDesc", label: t(locale, "designSystem.filters.name"), initialDirection: "asc" },
+    { value: "dateDesc", reverseValue: "dateAsc", label: t(locale, "designSystem.filters.date"), initialDirection: "desc" },
+    { value: "levelDesc", reverseValue: "levelAsc", label: t(locale, "designSystem.filters.level"), initialDirection: "desc" },
+  ] satisfies SortFieldOption[];
 
   const languageOptions = [
     { value: "all", label: t(locale, "designSystem.filters.all") },
@@ -142,9 +143,7 @@ export default function DesignSystemPage({ locale }: Props) {
                   ))}
                 </div>
               </FilterSection>
-              <FilterSection title={t(locale, "designSystem.filters.sortBy")}>
-                <FilterSelect value={sortBy} options={sortOptions} onChange={setSortBy} />
-              </FilterSection>
+              <SortControl label={t(locale, "filter.sort")} value={sortBy} defaultOption={{ value: "default", label: t(locale, "sorting.default") }} options={sortOptions} ascendingLabel={t(locale, "sorting.ascending")} descendingLabel={t(locale, "sorting.descending")} onChange={setSortBy} />
               <FilterSection title={t(locale, "designSystem.filters.language")}>
                 <FilterSelect value={language} options={languageOptions} onChange={setLanguage} />
               </FilterSection>
@@ -505,7 +504,7 @@ interface FiltersSectionProps {
   total: number;
   hasActive: boolean;
   reset: () => void;
-  sortOptions: { value: string; label: string }[];
+  sortOptions: SortFieldOption[];
   languageOptions: { value: string; label: string }[];
 }
 
@@ -556,9 +555,7 @@ function FiltersSection({
                 ))}
               </div>
             </FilterSection>
-            <FilterSection title={t(locale, "designSystem.filters.sortBy")}>
-              <FilterSelect value={sortBy} options={sortOptions} onChange={setSortBy} />
-            </FilterSection>
+            <SortControl label={t(locale, "filter.sort")} value={sortBy} defaultOption={{ value: "default", label: t(locale, "sorting.default") }} options={sortOptions} ascendingLabel={t(locale, "sorting.ascending")} descendingLabel={t(locale, "sorting.descending")} onChange={setSortBy} />
             <FilterSection title={t(locale, "designSystem.filters.language")}>
               <FilterSelect value={language} options={languageOptions} onChange={setLanguage} />
             </FilterSection>

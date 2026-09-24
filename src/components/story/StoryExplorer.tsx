@@ -1,3 +1,5 @@
+import { useListSort } from "@/lib/filter/use-list-sort";
+import { sortEntries, type ListSort } from "@/lib/filter/list-sort";
 import { useEffect, useMemo, useState, useRef } from "react";
 import type { AppLocale } from "@/config/locales";
 import BaseFilters, { FilterButton, FilterSection } from "@/components/shared/BaseFilters";
@@ -20,6 +22,7 @@ function storyCategoryKey(category: StoryCategory | "other"): string {
 }
 
 export default function StoryExplorer({ locale, initialCategory, initialStories, initialCharacters, initialTexts }: { locale: AppLocale; initialCategory: StorySection; initialStories: StoryViewModel[]; initialCharacters: RawStoryCharacter[]; initialTexts: RawText[] }) {
+  const sort = useListSort(`story-${initialCategory}`, locale, "date");
   const [stories] = useState<StoryViewModel[]>(initialStories);
   const [query, setQuery] = useState("");
   const [otherCategories, setOtherCategories] = useState<StoryCategory[]>([]);
@@ -32,10 +35,12 @@ export default function StoryExplorer({ locale, initialCategory, initialStories,
 
   const inSection = (story: StoryViewModel) => initialCategory === "other" ? ["live-result", "home", "tutorial"].includes(story.category) : story.category === initialCategory;
   const filtered = useMemo(() => stories.filter((story) => inSection(story) && (initialCategory !== "other" || otherCategories.length === 0 || otherCategories.includes(story.category)) && (!query.trim() || story.searchText.includes(query.trim().toLocaleLowerCase()))), [stories, initialCategory, otherCategories, query]);
-  const reset = () => { setQuery(""); setOtherCategories([]); };
+  const sortedStories = useMemo(() => sortEntries(filtered, sort.value, locale), [filtered, sort.value, locale]);
+  const reset = () => { sort.onChange("default"); setQuery(""); setOtherCategories([]); };
   const categoryTotal = stories.filter(inSection).length;
-  const quickFilterContent = (
+  const quickFilterContent = initialCategory === "main" ? null : (
     <BaseFilters
+      sort={sort}
       variant="plain"
       title={t(locale, storyCategoryKey(initialCategory))}
       searchValue={query}
@@ -44,7 +49,7 @@ export default function StoryExplorer({ locale, initialCategory, initialStories,
       searchPlaceholder={t(locale, "story.ui.searchPlaceholder")}
       resultCount={filtered.length}
       totalCount={categoryTotal}
-      hasActiveFilters={Boolean(query || otherCategories.length)}
+      hasActiveFilters={sort.value !== "default" || Boolean(query || otherCategories.length)}
       onReset={reset}
       resetLabel={t(locale, "story.ui.reset")}
       expandLabel={t(locale, "story.ui.expand")}
@@ -79,15 +84,15 @@ export default function StoryExplorer({ locale, initialCategory, initialStories,
   );
 
   useQuickFilter(
-    initialCategory !== "main" ? t(locale, storyCategoryKey(initialCategory)) : "",
-    initialCategory !== "main" ? quickFilterContent : null,
-    [initialCategory, query, otherCategories, filtered.length, categoryTotal, locale]
+    t(locale, storyCategoryKey(initialCategory)),
+    quickFilterContent,
+    [initialCategory, query, otherCategories, filtered.length, categoryTotal, locale, sort.value]
   );
 
   if (initialCategory === "main") {
     if (loading) return <State text={t(locale, "story.ui.loadingMain")} />;
     if (error) return <State text={t(locale, "story.ui.loadMainError")} action={() => setReload((v) => v + 1)} />;
-    return <MainStoryGroups stories={filtered} locale={locale} />;
+    return <MainStoryGroups stories={stories.filter(inSection)} locale={locale} sort="default" />;
   }
 
   return (
@@ -101,7 +106,7 @@ export default function StoryExplorer({ locale, initialCategory, initialStories,
           <State text={t(locale, "story.ui.empty")} action={reset} />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {filtered.map((story) => (
+            {sortedStories.map((story) => (
               <StoryCard key={story.id} story={story} locale={locale} onOpen={() => setActive(story)} />
             ))}
           </div>
@@ -112,11 +117,11 @@ export default function StoryExplorer({ locale, initialCategory, initialStories,
   );
 }
 
-function MainStoryGroups({ stories, locale }: { stories: StoryViewModel[]; locale: AppLocale }) {
+function MainStoryGroups({ stories, locale, sort }: { stories: StoryViewModel[]; locale: AppLocale; sort: ListSort }) {
   const chapters = [...new Map(stories.map((story) => [story.chapterId, story])).values()]
     .sort((a, b) => (a.chapterId ?? 0) - (b.chapterId ?? 0));
 
-  return <div className="space-y-8">{chapters.map((chapter) => {
+  return <div className="space-y-8">{sortEntries(chapters.map((chapter) => ({ ...chapter, title: chapter.chapterName })), sort, locale).map((chapter) => {
     const episodes = stories.filter((story) => story.chapterId === chapter.chapterId).sort((a, b) => (a.episodeNumber ?? 0) - (b.episodeNumber ?? 0));
     const chapterAsset = chapter.chapterBanner || chapter.chapterImage;
     const chapterImageUrl = chapterAsset ? getAssetUrl({ path: `Story/${chapter.chapterBanner ? "Banner" : "Image"}/Chapter/${chapterAsset}.png`, type: "raw" }) : "";
@@ -135,7 +140,7 @@ function MainStoryGroups({ stories, locale }: { stories: StoryViewModel[]; local
         </div>
       </div>
       <div className="grid gap-3 border-t-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] p-4 sm:grid-cols-2 lg:grid-cols-3 sm:p-6">
-        {episodes.map((episode) => <a key={episode.id} href={localizePath(`/story/${episode.advId}`, locale)} className="mn-list-card mn-list-card-row group flex items-center gap-4 rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)] p-3 shadow-[var(--mn-shadow-stamp-sm)] transition hover:-translate-y-0.5 hover:shadow-[var(--mn-shadow-stamp)]">
+        {sortEntries(episodes, sort, locale).map((episode) => <a key={episode.id} href={localizePath(`/story/${episode.advId}`, locale)} className="mn-list-card mn-list-card-row group flex items-center gap-4 rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)] p-3 shadow-[var(--mn-shadow-stamp-sm)] transition hover:-translate-y-0.5 hover:shadow-[var(--mn-shadow-stamp)]">
           <img src={getAssetUrl({ path: `Story/Banner/Episode/${episode.assets.banner}.png`, type: "raw" })} alt="" className="h-16 w-28 shrink-0 rounded-xl object-cover" loading="lazy" />
           <div className="min-w-0"><p className="text-[11px] font-black text-[var(--mn-accent)]">EPISODE {episode.episodeNumber}</p><h3 className="mt-1 line-clamp-2 text-sm font-black text-[var(--mn-text)]">{episode.title}</h3></div>
         </a>)}

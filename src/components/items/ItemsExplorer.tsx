@@ -1,3 +1,5 @@
+import { useListSort } from "@/lib/filter/use-list-sort";
+import { sortEntries } from "@/lib/filter/list-sort";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
@@ -21,6 +23,7 @@ export default function ItemsExplorer({ locale, initialItems }: Props) {
   const memory = useListPageMemory("items");
   const [items] = useState<ItemViewModel[]>(initialItems);
   const [query, setQuery] = useState("");
+  const sort = useListSort("items", locale, "");
   const [selectedGroups, setSelectedGroups] = useState<number[]>([]);
 
   useEffect(() => {
@@ -66,9 +69,12 @@ export default function ItemsExplorer({ locale, initialItems }: Props) {
     });
   }, [items, query, selectedGroups]);
 
-  const hasActiveFilters = Boolean(query) || selectedGroups.length > 0;
+  const sortedEntries = useMemo(() => sortEntries(filteredItems, sort.value, locale), [filteredItems, sort.value, locale]);
+
+  const hasActiveFilters = sort.value !== "default" || Boolean(query) || selectedGroups.length > 0;
 
   const resetFilters = () => {
+    sort.onChange("default");
     setQuery("");
     setSelectedGroups([]);
     memory.clearState();
@@ -76,6 +82,7 @@ export default function ItemsExplorer({ locale, initialItems }: Props) {
 
   const quickFilterContent = (
     <BaseFilters
+      sort={sort}
       variant="plain"
       title={t(locale, "items.filterTitle")}
       searchValue={query}
@@ -142,6 +149,7 @@ export default function ItemsExplorer({ locale, initialItems }: Props) {
   );
 
   useQuickFilter(t(locale, "items.filterTitle"), quickFilterContent, [
+    sort.value,
     query,
     selectedGroups,
     displayGroups,
@@ -157,7 +165,7 @@ export default function ItemsExplorer({ locale, initialItems }: Props) {
         <EmptyState locale={locale} onReset={resetFilters} />
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4xl:grid-cols-7 5xl:grid-cols-8">
-          {filteredItems.map((item) => (
+          {sortedEntries.map((item) => (
             <ItemCardItem key={item.id} item={item} locale={locale} />
           ))}
         </div>

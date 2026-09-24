@@ -1,3 +1,5 @@
+import { useListSort } from "@/lib/filter/use-list-sort";
+import { sortEntries } from "@/lib/filter/list-sort";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
@@ -21,6 +23,7 @@ export default function ComicsExplorer({ locale, initialComics, initialBandNames
   const [comics] = useState<ComicViewModel[]>(initialComics);
   
   const [query, setQuery] = useState("");
+  const sort = useListSort("comics", locale, "");
   const [selectedBands, setSelectedBands] = useState<number[]>([]);
   const [selectedCharacters, setSelectedCharacters] = useState<number[]>([]);
   
@@ -103,7 +106,9 @@ export default function ComicsExplorer({ locale, initialComics, initialBandNames
     });
   }, [comics, query, selectedBands, selectedCharacters]);
 
-  const hasActiveFilters = Boolean(query) || selectedBands.length > 0 || selectedCharacters.length > 0;
+  const sortedEntries = useMemo(() => sortEntries(filteredComics, sort.value, locale), [filteredComics, sort.value, locale]);
+
+  const hasActiveFilters = sort.value !== "default" || Boolean(query) || selectedBands.length > 0 || selectedCharacters.length > 0;
 
   const handleBandToggle = (bandId: number) => {
     const nextBands = selectedBands.includes(bandId)
@@ -131,6 +136,7 @@ export default function ComicsExplorer({ locale, initialComics, initialBandNames
   };
 
   const resetFilters = () => {
+    sort.onChange("default");
     setQuery("");
     setSelectedBands([]);
     setSelectedCharacters([]);
@@ -220,6 +226,7 @@ export default function ComicsExplorer({ locale, initialComics, initialBandNames
 
   const quickFilterContent = (
     <BaseFilters
+      sort={sort}
       variant="plain"
       title={t(locale, "comics.filterTitle")}
       searchValue={query}
@@ -252,6 +259,7 @@ export default function ComicsExplorer({ locale, initialComics, initialBandNames
   );
 
   useQuickFilter(t(locale, "comics.filterTitle"), quickFilterContent, [
+    sort.value,
     query,
     selectedBands,
     selectedCharacters,
@@ -270,7 +278,7 @@ export default function ComicsExplorer({ locale, initialComics, initialBandNames
           <EmptyState locale={locale} onReset={resetFilters} />
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {filteredComics.map((comic) => (
+            {sortedEntries.map((comic) => (
               <button
                 key={comic.id}
                 type="button"

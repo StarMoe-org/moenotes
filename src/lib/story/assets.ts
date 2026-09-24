@@ -1,19 +1,8 @@
 import { getAssetUrl } from "@/lib/assets/url";
+import { characterIdByAssetName } from "@/config/asset-names";
+import { getReleaseAudioUrl } from "./release-audio";
 
 export type StoryScriptTable = "Episode" | "Sound" | "SoundCueSheet" | "Text" | "Video";
-
-const CHARACTER_ID_BY_ASSET_NAME: Record<string, string> = {
-  tomori: "001",
-  anon: "002",
-  rana: "003",
-  soyo: "004",
-  taki: "005",
-  uika: "006",
-  mutsumi: "007",
-  umiri: "008",
-  nyamu: "009",
-  sakiko: "010",
-};
 
 export function getStoryScriptTableUrl(scriptName: string, table: StoryScriptTable): string {
   const cleanName = cleanSegment(scriptName);
@@ -67,19 +56,26 @@ export function getStoryVoiceUrl(asset: StoryVoiceAsset): string | undefined {
   const cueName = cleanSegment(asset.cueName);
   const cueSheetName = cleanSegment(asset.cueSheetName);
   if (!cueName || !cueSheetName) return undefined;
+  const releaseUrl = getReleaseAudioUrl(cueSheetName, cueName);
+  if (releaseUrl) return releaseUrl;
 
   if (cueSheetName.startsWith("adv_voice_linkstory_")) {
     const names = cueSheetName
       .slice("adv_voice_linkstory_".length)
       .split("_")
       .filter((part) => part && !/^\d+$/.test(part));
-    const pair = names.slice(0, 2).map((name) => CHARACTER_ID_BY_ASSET_NAME[name]);
+    const pair = names.slice(0, 2).map((name) => {
+      const id = characterIdByAssetName[name];
+      return id === undefined ? undefined : String(id).padStart(3, "0");
+    });
     if (pair.length === 2 && pair.every(Boolean)) {
       const adjustedCueName = adjustVoiceCueName(cueName);
       return getAssetUrl({
         path: `Cri/Sound/Adv/Voice/Linkstory/${pair.join("_")}/${cueSheetName}/${adjustedCueName}.wav`,
       });
     }
+    // Unknown link-story names must not fall through to a band-story path.
+    return undefined;
   }
 
   if (cueSheetName.startsWith("adv_voice_")) {
@@ -113,7 +109,7 @@ export function getStoryVoiceUrl(asset: StoryVoiceAsset): string | undefined {
 function getAdvSoundUrl(kind: "Bgm" | "Se", cueSheetName: string): string | undefined {
   const cleanName = cleanSegment(cueSheetName);
   if (!cleanName) return undefined;
-  return getAssetUrl({ path: `Cri/Sound/Adv/${kind}/${cleanName}.wav` });
+  return getReleaseAudioUrl(cleanName) ?? getAssetUrl({ path: `Cri/Sound/Adv/${kind}/${cleanName}.wav` });
 }
 
 function getOneBasedSoundIndex(soundId: string | number, modulus: number): number | undefined {

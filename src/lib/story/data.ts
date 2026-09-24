@@ -1,4 +1,5 @@
 import type { AppLocale } from "@/config/locales";
+import { bandIdByAssetName } from "@/config/asset-names";
 import {
   validateMasterTable as validateSharedMasterTable,
   type MasterTable,
@@ -374,7 +375,7 @@ export function classifyAdv(adv: RawAdv): StoryCategory | null {
   if (asset.startsWith("adv_script_afterlive_")) return "live-result";
   if (asset.startsWith("adv_script_home_")) return "home";
   if (asset.includes("_linkstory_")) return "friendship";
-  if (asset.startsWith("adv_script_mygo_") || asset.startsWith("adv_script_mujica_")) return "main";
+  if (Object.keys(bandIdByAssetName).some((name) => asset.startsWith(`adv_script_${name}_`))) return "main";
   return null;
 }
 

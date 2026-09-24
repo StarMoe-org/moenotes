@@ -319,6 +319,11 @@ html[data-theme="dark"] .mn-brand .mn-brand-starlight, .mn-brand.mn-brand-light 
 .mn-system-tabs button[aria-pressed="true"], .mn-command-option[aria-selected="true"] {
   background: var(--mn-orbit-night); color: var(--mn-orbit-light); border-color: var(--mn-orbit-edge);
 }
+.mn-sort-control .mn-filter-chip[aria-pressed="true"] {
+  background: var(--mn-orbit-night); color: var(--mn-orbit-light); border-color: var(--mn-orbit-edge);
+  box-shadow: inset 3px 0 0 var(--mn-accent);
+}
+.mn-sort-control .mn-filter-chip[aria-pressed="true"] span:last-child { color: inherit; }
 .mn-command-option[aria-selected="true"] span { color: inherit; }
 .mn-system-header { border-left: 3px solid var(--mn-accent); }
 .mn-system-header::after { border-radius: 50%; transform: rotate(-12deg); width: 420px; height: 180px; top: -70px; right: -180px; }
