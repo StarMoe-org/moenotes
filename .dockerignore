@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.astro/
+.git/
+.github/
+.agents/
+.claude/
+.plan/
+artifacts/
+.env
+.env.*
+*.log

@@ -1,7 +1,7 @@
 export const assetConfig = {
   releaseEnabled: true,
   releaseSource: "https://storage.bdon.moe/moenotes",
-  browserApi: "https://assets.bdon.moe",
+  browserApi: (import.meta.env.PUBLIC_ASSET_BROWSER_API || "https://assets.bdon.moe").replace(/\/+$/, ""),
   browserRegion: "tw",
   sources: {
     main: "https://storage.bdon.moe/ournotes-assets",

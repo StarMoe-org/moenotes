@@ -72,7 +72,10 @@ export const zhTW = {
     containerFile: "Unity 容器檔案",
     pathId: "Unity 路徑 ID",
     scanProgress: "已掃描 Bundle：{scanned} / {total}",
+    scanLocal: "{count} 個本地 Bundle 無法掃描",
+    scanFailed: "{count} 個掃描失敗",
     scanPending: "正在掃描 Bundle，檔案索引完成後會逐步顯示在此處。",
+    scanIncomplete: "部分 Bundle 掃描失敗。已建立索引的檔案仍可瀏覽，管理員可重新掃描。",
     archiveId: "壓縮包 ID",
     resourceType: "類型",
     provider: "提供者",
@@ -440,7 +443,7 @@ export const zhTW = {
     },
     assetViewer: {
       title: "Our Notes 遊戲資源查看器",
-      description: "在線搜索和瀏覽 BanG Dream! Our Notes 卡牌插圖、樂曲封面、角色圖片及其他公開遊戲資源。",
+      description: "依內部檔案路徑瀏覽 BanG Dream! Our Notes 的 Bundle 掃描清單，並查看檔案所屬的 Bundle。",
     },
     about: {
       title: "關於 Moenotes",

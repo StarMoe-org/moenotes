@@ -61,7 +61,7 @@ export interface BundleContent {
   path: string;
   kind: "asset" | "payload";
   source: string;
-  path_id: number | null;
+  path_id: string | null;
   bundle_id: string;
   bundle_key: string;
 }
@@ -83,4 +83,5 @@ export interface BundleScanStatus {
   scanned: number;
   entries: number;
   local_bundles: number;
+  failed: number;
 }

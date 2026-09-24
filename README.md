@@ -45,6 +45,34 @@ bun run build
 bun run preview
 ```
 
+### 6. Docker 静态预览与 GHCR
+
+镜像使用 Bun 构建 Astro 页面，再由 Caddy 服务 `dist/` 静态文件。可在本地构建并查看：
+
+```bash
+docker build -t moenotes-preview .
+docker run --rm -p 8080:80 moenotes-preview
+```
+
+打开 `http://localhost:8080`。容器会按静态文件返回各语言页面、`robots.txt` 和 `sitemap.xml`，不存在的路径返回项目的 404 页面。
+
+需要发布临时镜像时，在 GitHub Actions 中运行 **Publish preview image**，可选择要构建的分支或提交。工作流会推送 `ghcr.io/moe-sekai/moenotes:preview` 和对应的 `sha-<完整提交 SHA>` 标签。部署机器可以执行：
+
+```bash
+docker pull ghcr.io/moe-sekai/moenotes:preview
+docker run -d --name moenotes-preview -p 8080:80 ghcr.io/moe-sekai/moenotes:preview
+```
+
+GHCR 只保存镜像；展示页面仍需在部署机器上运行容器，并将域名或反向代理指向容器端口。如果包设为私有，拉取前需先登录 GHCR。`preview` 标签会被下一次手动发布覆盖，`sha-...` 标签用于固定某次构建。
+
+如果由容器直接处理域名和 HTTPS，将域名 A/AAAA 记录指向部署机器，并开放 80/443 端口，然后以实际域名替换下方的 `bdon.moe`：
+
+```bash
+docker run -d --name moenotes-preview -e SITE_ADDRESS=bdon.moe -p 80:80 -p 443:443 -v moenotes-caddy-data:/data -v moenotes-caddy-config:/config ghcr.io/moe-sekai/moenotes:preview
+```
+
+Caddy 会自动申请和续期证书。保留 `/data` 数据卷可避免容器重建后重复申请证书。默认的 `SITE_ADDRESS=:80` 仅用于本地 HTTP 预览；站点原有的 `robots.txt`、站点地图和 canonical URL 会照常发布。
+
 ---
 
 ## 🔍 代码规范与检查 (Coding Standards & Linting)

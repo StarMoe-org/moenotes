@@ -76,7 +76,7 @@ export default function AssetViewer({ locale }: Props) {
   const [view, setView] = useState<"list" | "grid">("list");
   const [selection, setSelection] = useState<{ snapshot: string; file: BundleContent } | null>(null);
   const status = useAssetBrowserQuery<BundleScanStatus>(snapshot ? assetBrowserUrl("scan/status", { snapshot }) : null, 10000);
-  const browseUrl = snapshot ? assetBrowserUrl("browse", { snapshot, directory: location.directory, query, offset: location.page * PAGE_SIZE, limit: PAGE_SIZE, descending: sort === "nameDescending" ? 1 : 0, scan: status.data?.scanned ?? 0 }) : null;
+  const browseUrl = snapshot ? assetBrowserUrl("browse", { snapshot, directory: location.directory, query, offset: location.page * PAGE_SIZE, limit: PAGE_SIZE, descending: sort === "nameDescending" ? "true" : "false", scan: status.data?.scanned ?? 0 }) : null;
   const browse = useAssetBrowserQuery<BundleBrowsePage>(browseUrl);
   const folders = location.page === 0 ? browse.data?.folders ?? [] : [];
   const files = browse.data?.files ?? [];
@@ -109,7 +109,7 @@ export default function AssetViewer({ locale }: Props) {
 
   const loading = regions.status === "loading" || (Boolean(region) && catalogs.status === "loading") || (Boolean(catalog) && browse.status === "loading");
   const failed = regions.status === "error" ? regions : catalogs.status === "error" ? catalogs : catalog && browse.status === "error" ? browse : null;
-  const emptyMessage = !region ? "assetBrowser.noLanguages" : !catalog ? "assetBrowser.noCatalogs" : hasFilters ? "assetBrowser.noMatches" : scanIncomplete ? "assetBrowser.scanPending" : "assetBrowser.emptyFolder";
+  const emptyMessage = !region ? "assetBrowser.noLanguages" : !catalog ? "assetBrowser.noCatalogs" : hasFilters ? "assetBrowser.noMatches" : scanIncomplete ? status.data?.failed ? "assetBrowser.scanIncomplete" : "assetBrowser.scanPending" : "assetBrowser.emptyFolder";
   const refresh = () => { if (failed) failed.reload(); else { regions.reload(); catalogs.reload(); status.reload(); browse.reload(); } };
 
   return <section className="min-w-0 text-[var(--mn-text)]" aria-label={t(locale, "assetBrowser.title")}>
@@ -135,7 +135,7 @@ export default function AssetViewer({ locale }: Props) {
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--mn-border)] px-4 py-2 text-xs text-[var(--mn-text-muted)]">
         <span>{language ? languageNames.of(language) ?? language : ""}{catalog ? ` / ${catalog.version} · ${new Date(catalog.created * 1000).toLocaleDateString(locale)}` : ""}</span>
-        {status.data && <span role="status">{t(locale, "assetBrowser.scanProgress", { scanned: status.data.scanned, total: status.data.total })}</span>}
+        {status.data && <span role="status">{t(locale, "assetBrowser.scanProgress", { scanned: status.data.scanned, total: status.data.total })}{status.data.failed > 0 && ` · ${t(locale, "assetBrowser.scanFailed", { count: status.data.failed })}`}{status.data.local_bundles > 0 && ` · ${t(locale, "assetBrowser.scanLocal", { count: status.data.local_bundles })}`}</span>}
       </div>
       {failed ? <div role="alert" className="space-y-3 p-12 text-center"><p className="font-bold">{t(locale, "assetBrowser.loadError")}</p><p className="text-sm text-[var(--mn-text-muted)]">{t(locale, failed.error instanceof AssetBrowserError && failed.error.status === 404 ? "assetBrowser.notAvailable" : "assetBrowser.loadErrorHint")}</p><button type="button" className={buttonClass} onClick={failed.reload}>{t(locale, "assetBrowser.retry")}</button></div>
         : loading ? <div role="status" className="flex min-h-72 flex-col items-center justify-center gap-4 text-sm text-[var(--mn-text-muted)]"><span className="h-7 w-7 animate-spin rounded-full border-2 border-[var(--mn-border)] border-t-[var(--mn-accent)]" /><p>{t(locale, "assetBrowser.loading")}</p></div>
