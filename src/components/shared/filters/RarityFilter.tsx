@@ -59,7 +59,7 @@ export function RarityFilter<T extends string | number = CardRarity>({
             onClick={() => handleToggle(r)}
           >
             <span className="flex items-center" title={label} aria-label={label}>
-              <img className="h-5 w-auto" src={iconUrl} alt={label} loading="lazy" />
+              {iconUrl ? <img className="h-5 w-auto" src={iconUrl} alt={label} loading="lazy" /> : label}
             </span>
           </FilterButton>
         );

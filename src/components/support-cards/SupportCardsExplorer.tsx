@@ -3,7 +3,6 @@ import { sortEntries } from "@/lib/filter/list-sort";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
-import { localizePath } from "@/i18n/routing";
 import BaseFilters, {
   RarityFilter,
   AttributeFilter,
@@ -11,7 +10,7 @@ import BaseFilters, {
   CharacterFilter,
 } from "@/components/shared/BaseFilters";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
-import SupportCardArtwork from "./SupportCardArtwork";
+import SupportCardItem from "./SupportCardItem";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 import {
   type SupportCardViewModel,
@@ -22,17 +21,13 @@ import {
   type SupportCardRarity,
   type SupportCardType,
 } from "@/lib/support-cards/assets";
-import {
-  getBandLogoUrl,
-  getBandLogoWhiteUrl,
-} from "@/lib/cards/assets";
 
 interface Props {
   locale: AppLocale;
   initialSupportCards: SupportCardViewModel[];
 }
 
-const rarities: SupportCardRarity[] = [4, 3, 2];
+const rarities: SupportCardRarity[] = [10, 4, 3, 2];
 const cardTypes: SupportCardType[] = [1, 2, 3, 4, 5];
 
 export default function SupportCardsExplorer({ locale, initialSupportCards }: Props) {
@@ -238,92 +233,11 @@ export default function SupportCardsExplorer({ locale, initialSupportCards }: Pr
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4xl:grid-cols-7 5xl:grid-cols-8">
           {sortedEntries.map((card) => (
-            <SupportCardItem key={card.id} card={card} locale={locale} onCardClick={saveCurrentState} />
+            <SupportCardItem key={card.id} card={card} locale={locale} onClick={saveCurrentState} />
           ))}
         </div>
       )}
     </section>
-  );
-}
-
-function SupportCardItem({
-  card,
-  locale,
-  onCardClick,
-}: {
-  card: SupportCardViewModel;
-  locale: AppLocale;
-  onCardClick: () => void;
-}) {
-  const alt = t(locale, "supportCards.cardImageAlt", { title: card.title, character: card.name });
-
-  return (
-    <a
-      href={localizePath(`/support-cards/${card.id}`, locale)}
-      onClick={onCardClick}
-      className="mn-list-card group flex flex-col min-w-0 overflow-hidden border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)]"
-      data-list-item-id={card.id}
-      aria-label={t(locale, "supportCards.openDetail", { title: card.title, character: card.name })}
-    >
-      <SupportCardArtwork
-        assetId={card.assetId}
-        characterIds={card.characterIds}
-        rarity={card.rarity}
-        cardType={card.cardType}
-        alt={alt}
-        attributeLabel={t(locale, `cards.attributes.${card.cardType}`)}
-        fallbackLabel={card.name}
-      />
-      <div className="flex flex-col flex-1 min-w-0 p-3 sm:p-4">
-        <div className="flex min-w-0 items-start gap-2">
-          <span
-            className="mt-1 h-3 w-3 shrink-0 rounded-full border border-[var(--mn-border)]"
-            style={{
-              backgroundColor: card.characters[0]?.color || "var(--mn-accent)",
-            }}
-            aria-hidden="true"
-          />
-          <div className="min-w-0">
-            <h3 className="line-clamp-2 text-sm font-black leading-5 text-[var(--mn-text)]">{card.title}</h3>
-            <p className="mt-1 truncate text-xs font-medium text-[var(--mn-text-muted)]">{card.name}</p>
-          </div>
-        </div>
-        <div className="mt-auto pt-2 flex items-center justify-between gap-2 border-t border-dashed border-[var(--mn-text-muted)]/40">
-          <img
-            className="h-5 w-auto max-w-14 object-contain"
-            src={getSupportRarityIconUrl(card.rarity)}
-            alt={t(locale, `cards.rarities.${card.rarity}`)}
-          />
-          <div className="flex items-center min-w-0">
-            <img
-              className="h-4 w-auto max-w-[70px] object-contain block dark:hidden"
-              src={getBandLogoUrl(card.bandId)}
-              alt=""
-              aria-hidden="true"
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = "none";
-                const sibling = (e.target as HTMLElement).nextElementSibling?.nextElementSibling as HTMLElement;
-                if (sibling) sibling.style.display = "inline";
-              }}
-            />
-            <img
-              className="h-4 w-auto max-w-[70px] object-contain hidden dark:block"
-              src={getBandLogoWhiteUrl(card.bandId)}
-              alt=""
-              aria-hidden="true"
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = "none";
-                const sibling = (e.target as HTMLElement).nextElementSibling as HTMLElement;
-                if (sibling) sibling.style.display = "inline";
-              }}
-            />
-            <span className="truncate text-[11px] font-medium text-[var(--mn-text-muted)] hidden">
-              {card.bandName}
-            </span>
-          </div>
-        </div>
-      </div>
-    </a>
   );
 }
 

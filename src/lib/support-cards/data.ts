@@ -27,7 +27,7 @@ export interface RawSupportCard {
 export interface SupportCardViewModel {
   id: number;
   assetId: number;
-  rarity: 2 | 3 | 4;
+  rarity: 2 | 3 | 4 | 10;
   cardType: 1 | 2 | 3 | 4 | 5;
   title: string; // Resolves descriptionTextID (e.g. "SupportSubtitle_1")
   name: string;  // Resolves nameTextID (e.g. "Snap_Name_Tomori")
@@ -65,8 +65,8 @@ export function normalizeSupportCards(
   const resolveText = (id: string) => localizeMasterText(textMap.get(id), locale) || id;
 
   return supportCards
-    .filter((card): card is RawSupportCard & { rarity: 2 | 3 | 4; cardType: 1 | 2 | 3 | 4 | 5 } =>
-      [2, 3, 4].includes(card.rarity) && [1, 2, 3, 4, 5].includes(card.cardType),
+    .filter((card): card is RawSupportCard & { rarity: 2 | 3 | 4 | 10; cardType: 1 | 2 | 3 | 4 | 5 } =>
+      [2, 3, 4, 10].includes(card.rarity) && [1, 2, 3, 4, 5].includes(card.cardType),
     )
     .map((card) => {
       const title = resolveText(card.descriptionTextID);

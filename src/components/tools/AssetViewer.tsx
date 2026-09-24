@@ -8,7 +8,7 @@ import Popover from "@/components/shared/Popover";
 import { openFilterDrawer, useQuickFilter } from "@/lib/filter/use-quick-filter";
 import { useAssetBrowserQuery } from "@/components/tools/use-asset-browser-query";
 import { AssetBrowserError, assetBrowserUrl, defaultCatalog } from "@/lib/assets/browser-client";
-import type { AssetCatalog, AssetRegion, BundleBrowsePage, BundleContent, BundleScanStatus } from "@/types/asset-browser";
+import type { AssetCatalog, AssetRegion, BundleBrowsePage, BundleContent, BundleContentPage, BundleScanStatus } from "@/types/asset-browser";
 
 interface Props { locale: AppLocale }
 interface Location { directory: string; page: number }
@@ -152,12 +152,15 @@ export default function AssetViewer({ locale }: Props) {
         {fileCount > PAGE_SIZE && <nav aria-label={t(locale, "assetBrowser.pagination")} className="flex items-center gap-2"><span>{t(locale, "assetBrowser.range", { from: page * PAGE_SIZE + 1, to: Math.min((page + 1) * PAGE_SIZE, fileCount), total: fileCount })}</span><button type="button" className={buttonClass} disabled={page === 0} onClick={() => changePage(page - 1)}>{t(locale, "assetBrowser.previous")}</button><button type="button" className={buttonClass} disabled={page >= pageCount - 1} onClick={() => changePage(page + 1)}>{t(locale, "assetBrowser.next")}</button></nav>}
       </div>
     </div>
-    <ContentDetails key={selection?.file.path ?? "none"} locale={locale} file={selection?.snapshot === snapshot ? selection.file : null} onClose={() => setSelection(null)} />
+    <ContentDetails key={selection ? `${selection.file.bundle_id}:${selection.file.path}` : "none"} locale={locale} snapshot={snapshot} file={selection?.snapshot === snapshot ? selection.file : null} onClose={() => setSelection(null)} />
   </section>;
 }
 
-function ContentDetails({ locale, file, onClose }: Props & { file: BundleContent | null; onClose: () => void }) {
+function ContentDetails({ locale, snapshot, file, onClose }: Props & { snapshot: string; file: BundleContent | null; onClose: () => void }) {
   const [copyState, setCopyState] = useState("copy");
+  const [showContents, setShowContents] = useState(false);
+  const [contentsPage, setContentsPage] = useState(0);
+  const contents = useAssetBrowserQuery<BundleContentPage>(file && showContents ? assetBrowserUrl(`bundles/${encodeURIComponent(file.bundle_id)}/contents`, { snapshot, offset: contentsPage * PAGE_SIZE, limit: PAGE_SIZE }) : null);
   const rows: [string, string][] = file ? [
     [t(locale, "assetBrowser.fileKey"), file.path],
     [t(locale, "assetBrowser.bundle"), file.bundle_key],
@@ -168,6 +171,16 @@ function ContentDetails({ locale, file, onClose }: Props & { file: BundleContent
   return <Modal isOpen={Boolean(file)} onClose={onClose} title={t(locale, "assetBrowser.fileDetails")} closeLabel={t(locale, "actions.close")} size="lg">
     <dl className="divide-y divide-[var(--mn-border)] text-xs">{rows.map(([label, value]) => <div key={label} className="grid gap-1 py-3 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4"><dt className="text-[var(--mn-text-muted)]">{label}</dt><dd className="min-w-0 break-all font-mono select-text">{value}</dd></div>)}</dl>
     <button type="button" className={`${buttonClass} my-3 border border-[var(--mn-border)] text-sm`} aria-live="polite" onClick={async () => { try { await navigator.clipboard.writeText(file?.path ?? ""); setCopyState("copied"); } catch { setCopyState("copyError"); } }}>{t(locale, `assetBrowser.${copyState}`)}</button>
+    <div className="border-t border-[var(--mn-border)] py-3">
+      <button type="button" className={`${buttonClass} border border-[var(--mn-border)] text-sm`} aria-expanded={showContents} onClick={() => setShowContents((value) => !value)}>{t(locale, "assetBrowser.viewBundleContents")}</button>
+      {showContents && <div className="mt-3 text-xs">
+        {contents.status === "loading" ? <p>{t(locale, "assetBrowser.loading")}</p> : contents.status === "error" ? <p role="alert">{t(locale, "assetBrowser.loadError")}</p> : <>
+          <p className="mb-2 text-[var(--mn-text-muted)]">{t(locale, "assetBrowser.range", { from: contents.data.total ? contentsPage * PAGE_SIZE + 1 : 0, to: Math.min((contentsPage + 1) * PAGE_SIZE, contents.data.total), total: contents.data.total })}</p>
+          <ul className="max-h-52 divide-y divide-[var(--mn-border)] overflow-auto rounded-lg border border-[var(--mn-border)]">{contents.data.contents.map((item, index) => <li key={`${item.kind}:${item.path}:${item.path_id}:${index}`} className="flex gap-2 px-3 py-2"><span className="shrink-0 text-[var(--mn-text-muted)]">{t(locale, `assetBrowser.contentKinds.${item.kind}`)}</span><span className="min-w-0 break-all font-mono select-text">{item.path}</span></li>)}</ul>
+          {contents.data.total > PAGE_SIZE && <div className="mt-2 flex gap-2"><button type="button" className={buttonClass} disabled={contentsPage === 0} onClick={() => setContentsPage((page) => page - 1)}>{t(locale, "assetBrowser.previous")}</button><button type="button" className={buttonClass} disabled={(contentsPage + 1) * PAGE_SIZE >= contents.data.total} onClick={() => setContentsPage((page) => page + 1)}>{t(locale, "assetBrowser.next")}</button></div>}
+        </>}
+      </div>}
+    </div>
     <p className="text-xs text-[var(--mn-text-muted)]">{t(locale, "assetBrowser.previewUnavailable")}</p>
   </Modal>;
 }

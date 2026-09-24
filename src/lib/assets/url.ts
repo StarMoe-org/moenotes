@@ -24,6 +24,12 @@ export function getAssetUrl(request: AssetRequest): string {
   return releasePath ? `${assetConfig.releaseSource}/${releasePath}` : `${assetConfig.sources[source]}/${path}`;
 }
 
+/** PNG artwork addressed by its MasterData asset path; the extension is optional. */
+export function getImageAssetUrl(path: string): string {
+  if (!path) return "";
+  return getAssetUrl({ path: path.endsWith(".png") ? path : `${path}.png` });
+}
+
 export function getAssetFallbackUrls(request: AssetRequest): string[] {
   const urls = getAssetSourceFallbackOrder(getPreferredAssetSource(request))
     .map((source) => getAssetUrl({ ...request, source }));

@@ -17,6 +17,24 @@ function sourceBases(): string[] {
   return [...new Set(Object.values(masterdataConfig.sources).map((base) => base.replace(/\/+$/, "")))];
 }
 
+/** Build-time override: read a local masterdata checkout (same layout as the mirrors) instead of the network. */
+function localSourceDir(): string | undefined {
+  const processEnv = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env;
+  const dir = (import.meta.env.MOENOTES_MASTERDATA_DIR as string | undefined) ?? processEnv?.MOENOTES_MASTERDATA_DIR;
+  return dir?.trim() || undefined;
+}
+
+interface NodeFs {
+  readFile(path: string, encoding: "utf8"): Promise<string>;
+}
+// A variable specifier keeps the Node built-in out of type checking and client bundles; only builds reach it.
+const NODE_FS = "node:fs/promises";
+
+async function readLocalJson(dir: string, path: string): Promise<unknown> {
+  const { readFile } = await import(/* @vite-ignore */ NODE_FS) as NodeFs;
+  return JSON.parse(await readFile(`${dir.replace(/[\\/]+$/, "")}/${path.replace(/^\/+/, "")}`, "utf8")) as unknown;
+}
+
 export function getBuildManifest(): Promise<VersionManifest> {
   state.manifest ??= fetchBuildManifest();
   return state.manifest;
@@ -40,6 +58,12 @@ export async function getBuildMasterData<T>(
 }
 
 async function fetchBuildManifest(): Promise<VersionManifest> {
+  const localDir = localSourceDir();
+  if (localDir) {
+    const raw = await readLocalJson(localDir, masterdataConfig.versionPath).catch(() => ({})) as Partial<VersionManifest>;
+    return { ...raw, dataVersion: raw.dataVersion || raw.version || "local", isFallback: false } as VersionManifest;
+  }
+
   const errors: string[] = [];
 
   for (const base of sourceBases()) {
@@ -57,6 +81,9 @@ async function fetchBuildManifest(): Promise<VersionManifest> {
 }
 
 async function fetchBuildTable(path: string): Promise<unknown> {
+  const localDir = localSourceDir();
+  if (localDir) return readLocalJson(localDir, `${masterdataConfig.masterPath}/${path}`);
+
   const version = await getBuildDataVersion();
   const errors: string[] = [];
 

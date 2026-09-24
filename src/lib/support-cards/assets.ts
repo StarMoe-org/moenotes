@@ -1,9 +1,9 @@
 import { getAssetUrl } from "@/lib/assets/url";
 
-export type SupportCardRarity = 2 | 3 | 4;
+export type SupportCardRarity = 2 | 3 | 4 | 10;
 export type SupportCardType = 1 | 2 | 3 | 4 | 5;
 
-const rarityNames: Record<SupportCardRarity, "R" | "SR" | "SSR"> = {
+const rarityNames: Partial<Record<SupportCardRarity, "R" | "SR" | "SSR">> = {
   2: "R",
   3: "SR",
   4: "SSR",
@@ -30,11 +30,13 @@ export function getSupportCardSkillSpriteUrl(assetId: number): string {
 }
 
 export function getSupportCardFrameUrl(rarity: SupportCardRarity): string {
-  return `/assets/FrameSupportThum_${rarityNames[rarity]}.png`;
+  const name = rarityNames[rarity];
+  return name ? `/assets/FrameSupportThum_${name}.png` : "";
 }
 
 export function getSupportRarityIconUrl(rarity: SupportCardRarity): string {
-  return `/assets/SP_CardRarityIcon_${rarityNames[rarity]}.png`;
+  const name = rarityNames[rarity];
+  return name ? `/assets/SP_CardRarityIcon_${name}.png` : "";
 }
 
 export function getSupportCardTypeIconUrl(cardType: SupportCardType): string {

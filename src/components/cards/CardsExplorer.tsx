@@ -3,7 +3,6 @@ import { sortEntries } from "@/lib/filter/list-sort";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
-import { localizePath } from "@/i18n/routing";
 import BaseFilters, {
   RarityFilter,
   AttributeFilter,
@@ -11,15 +10,12 @@ import BaseFilters, {
   CharacterFilter,
 } from "@/components/shared/BaseFilters";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
-import MemberCardArtwork from "@/components/shared/MemberCardArtwork";
+import MemberCardItem from "@/components/cards/MemberCardItem";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 import {
   type CardViewModel,
 } from "@/lib/cards/data";
 import {
-  getRarityIconUrl,
-  getBandLogoUrl,
-  getBandLogoWhiteUrl,
   type CardRarity,
   type CardType,
 } from "@/lib/cards/assets";
@@ -224,72 +220,11 @@ export default function CardsExplorer({ locale, initialCards }: Props) {
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4xl:grid-cols-7 5xl:grid-cols-8">
           {sortedEntries.map((card) => (
-            <CardItem key={card.id} card={card} locale={locale} onCardClick={saveCurrentState} />
+            <MemberCardItem key={card.id} card={card} locale={locale} onClick={saveCurrentState} />
           ))}
         </div>
       )}
     </section>
-  );
-}
-
-function CardItem({ card, locale, onCardClick }: { card: CardViewModel; locale: AppLocale; onCardClick: () => void }) {
-  const alt = t(locale, "cards.cardImageAlt", { title: card.title, character: card.characterName });
-
-  return (
-    <a
-      href={localizePath(`/cards/${card.id}`, locale)}
-      onClick={onCardClick}
-      className="mn-list-card group flex flex-col min-w-0 overflow-hidden border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)]"
-      data-list-item-id={card.id}
-      aria-label={t(locale, "cards.openDetail", { title: card.title, character: card.characterName })}
-    >
-      <MemberCardArtwork
-        assetId={card.assetId}
-        characterId={card.characterId}
-        rarity={card.rarity}
-        cardType={card.cardType}
-        alt={alt}
-        attributeLabel={t(locale, `cards.attributes.${card.cardType}`)}
-        fallbackLabel={card.characterName}
-      />
-      <div className="flex flex-col flex-1 min-w-0 p-3 sm:p-4">
-        <div className="flex min-w-0 items-start gap-2">
-          <span className="mt-1 h-3 w-3 shrink-0 rounded-full border border-[var(--mn-border)]" style={{ backgroundColor: card.characterColor }} aria-hidden="true" />
-          <div className="min-w-0">
-            <h3 className="line-clamp-2 text-sm font-black leading-5 text-[var(--mn-text)]">{card.title}</h3>
-            <p className="mt-1 truncate text-xs font-medium text-[var(--mn-text-muted)]">{card.characterName}</p>
-          </div>
-        </div>
-        <div className="mt-auto pt-2 flex items-center justify-between gap-2 border-t border-dashed border-[var(--mn-text-muted)]/40">
-          <img className="h-5 w-auto max-w-14 object-contain" src={getRarityIconUrl(card.rarity)} alt={t(locale, `cards.rarities.${card.rarity}`)} />
-          <div className="flex items-center min-w-0">
-            <img
-              className="h-4 w-auto max-w-[70px] object-contain block dark:hidden"
-              src={getBandLogoUrl(card.bandId)}
-              alt=""
-              aria-hidden="true"
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = 'none';
-                const sibling = (e.target as HTMLElement).nextElementSibling?.nextElementSibling as HTMLElement;
-                if (sibling) sibling.style.display = 'inline';
-              }}
-            />
-            <img
-              className="h-4 w-auto max-w-[70px] object-contain hidden dark:block"
-              src={getBandLogoWhiteUrl(card.bandId)}
-              alt=""
-              aria-hidden="true"
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = 'none';
-                const sibling = (e.target as HTMLElement).nextElementSibling as HTMLElement;
-                if (sibling) sibling.style.display = 'inline';
-              }}
-            />
-            <span className="truncate text-[11px] font-medium text-[var(--mn-text-muted)] hidden">{card.bandName}</span>
-          </div>
-        </div>
-      </div>
-    </a>
   );
 }
 

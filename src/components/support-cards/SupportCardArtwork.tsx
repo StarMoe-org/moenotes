@@ -60,7 +60,7 @@ export default function SupportCardArtwork({
           {fallbackLabel}
         </div>
       )}
-      <img className="pointer-events-none absolute inset-0 h-full w-full" src={getSupportCardFrameUrl(rarity)} alt="" aria-hidden="true" />
+      {getSupportCardFrameUrl(rarity) && <img className="pointer-events-none absolute inset-0 h-full w-full" src={getSupportCardFrameUrl(rarity)} alt="" aria-hidden="true" />}
       <img className="absolute left-1.5 top-1.5 h-6 w-6 drop-shadow-sm" src={getSupportCardTypeIconUrl(cardType)} alt={attributeLabel} />
     </div>
   );

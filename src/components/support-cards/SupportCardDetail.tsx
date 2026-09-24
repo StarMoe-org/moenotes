@@ -465,7 +465,9 @@ export default function SupportCardDetail({ locale, initialData }: Props) {
                   <h2 className="mt-1 font-[var(--mn-font-display)] text-3xl leading-tight text-[var(--mn-text)] sm:text-4xl">{card.title}</h2>
                   <p className="mt-3 text-base font-medium text-[var(--mn-text-muted)]">{card.name}</p>
                 </div>
-                <img className="h-12 w-auto" src={getSupportRarityIconUrl(card.rarity)} alt={rarity} />
+                {getSupportRarityIconUrl(card.rarity)
+                  ? <img className="h-12 w-auto" src={getSupportRarityIconUrl(card.rarity)} alt={rarity} />
+                  : <span className="text-sm font-black text-[var(--mn-accent)]">{rarity}</span>}
               </div>
             </div>
 

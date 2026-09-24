@@ -1,10 +1,10 @@
 ---
-import Hero from "@/components/home/Hero.astro";
+import HomePage from "@/components/home/HomePage.astro";
 import AppLayout from "@/layouts/AppLayout.astro";
 const locale = "zh-CN" as const;
 const pathname = "/";
 ---
 
 <AppLayout locale={locale} pathname={pathname}>
-  <Hero locale={locale} />
+  <HomePage locale={locale} />
 </AppLayout>

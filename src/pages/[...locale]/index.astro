@@ -8,12 +8,14 @@ import SupportCardDetailPage from "@/components/support-cards/SupportCardDetailP
 import CharactersPage from "@/components/characters/CharactersPage.astro";
 import CharacterDetailPage from "@/components/characters/CharacterDetailPage.astro";
 import AboutPage from "@/components/about/AboutPage.astro";
-import Hero from "@/components/home/Hero.astro";
+import HomePage from "@/components/home/HomePage.astro";
 import MusicPage from "@/components/music/MusicPage.astro";
 import MusicDetailPage from "@/components/music/MusicDetailPage.astro";
 import StampsPage from "@/components/stamps/StampsPage.astro";
 import ComicsPage from "@/components/comics/ComicsPage.astro";
 import ItemsPage from "@/components/items/ItemsPage.astro";
+import GachaPage from "@/components/gacha/GachaPage.astro";
+import GachaDetailPage from "@/components/gacha/GachaDetailPage.astro";
 import StoryPage from "@/components/story/StoryPage.astro";
 import StoryDetailPage from "@/components/story/StoryDetailPage.astro";
 import GroupLanding from "@/components/route/GroupLanding.astro";
@@ -47,7 +49,7 @@ const component = match.item.component ?? "page";
 
 <AppLayout locale={locale} pathname={pathname} meta={props.meta} breadcrumbDetail={props.breadcrumbDetail}>
   {component === "home" ? (
-    <Hero locale={locale} />
+    <HomePage locale={locale} />
   ) : component === "about" ? (
     <AboutPage locale={locale} />
   ) : component === "cards" ? (
@@ -69,6 +71,10 @@ const component = match.item.component ?? "page";
     <ComicsPage locale={locale} />
   ) : component === "items" ? (
     <ItemsPage locale={locale} />
+  ) : component === "gacha" ? (
+    <GachaPage locale={locale} />
+  ) : component === "gacha-detail" ? (
+    <GachaDetailPage locale={locale} gachaId={Number(match.params.id)} />
   ) : component === "story-main" ? (
     <StoryPage locale={locale} category="main" titleKey={match.item.seo.titleKey} descriptionKey={match.item.seo.descriptionKey} />
   ) : component === "story-friendship" ? (

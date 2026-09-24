@@ -122,6 +122,13 @@ body {
   animation: mn-marquee 32s linear infinite;
 }
 
+/* Autoplay timer on the active carousel thumbnail; the interval lives in HomeCarousel. */
+@keyframes mn-carousel-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.mn-carousel-progress { animation: mn-carousel-progress 6s linear forwards; }
+
 #content {
   min-width: 0;
 }
@@ -353,6 +360,11 @@ html[data-theme="dark"] .mn-brand .mn-brand-starlight, .mn-brand.mn-brand-light 
 .mn-page-heading-star { width: 23px; height: 23px; flex-shrink: 0; color: var(--mn-accent-deep); }
 .mn-page-heading-track { flex: 1; min-width: 28px; height: 10px; border-top: 1px solid var(--mn-glass-border); transform: skewY(-3deg); transform-origin: right; }
 .mn-page-heading p { max-width: 76ch; margin: 10px 0 0 36px; color: var(--mn-text-muted); font-size: 13px; line-height: 1.85; }
+/* Section heading: the route heading one step down, with room for trailing controls. */
+.mn-section-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 16px; min-width: 0; }
+.mn-section-heading h2 { min-width: 0; margin: 0; font-family: var(--mn-font-display); font-size: clamp(18px, 1.5vw, 22px); font-weight: 500; line-height: 1.3; letter-spacing: -.02em; color: var(--mn-text); overflow-wrap: anywhere; }
+.mn-section-heading-star { width: 16px; height: 16px; flex-shrink: 0; color: var(--mn-accent-deep); }
+.mn-section-heading-track { flex: 1; min-width: 16px; height: 8px; border-top: 1px solid var(--mn-glass-border); transform: skewY(-3deg); transform-origin: right; }
 /* Shared list silhouette: straight / arc / straight / arc, derived from orbit panels.
    No clip-path: game rarity frames, corner badges and focus outlines remain intact. */
 .mn-list-card {

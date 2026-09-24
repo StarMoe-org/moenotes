@@ -1,0 +1,60 @@
+---
+import HomeCarousel from "@/components/home/HomeCarousel";
+import HomeUpdates from "@/components/home/HomeUpdates";
+import RouteGlyph from "@/components/shared/RouteGlyph";
+import SectionHeading from "@/components/shared/SectionHeading";
+import type { AppLocale } from "@/config/locales";
+import { t } from "@/i18n";
+import { localizePath } from "@/i18n/routing";
+import { getBuildHomeData } from "@/lib/masterdata/build-data";
+import { getNavChildren, getNavigationGroups } from "@/lib/route/registry";
+
+interface Props {
+  locale: AppLocale;
+}
+
+const { locale } = Astro.props;
+const data = await getBuildHomeData(locale);
+// Same entries and order as the sidebar; a group without pages links to itself.
+const shortcuts = getNavigationGroups().flatMap((group) => {
+  const children = getNavChildren(group);
+  return children.length > 0 ? children : [group];
+});
+---
+
+<div class="space-y-10 pb-4">
+  <h1 class="sr-only">{t(locale, "home.heading")}</h1>
+
+  <section aria-labelledby="home-now">
+    <SectionHeading id="home-now" title={t(locale, "home.now")} />
+    <HomeCarousel client:load locale={locale} slides={data.slides} />
+  </section>
+
+  <HomeUpdates
+    client:load
+    locale={locale}
+    activities={data.activities}
+    songs={data.latestMusic}
+    cards={data.latestCards}
+    supportCards={data.latestSupportCards}
+  />
+
+  <nav aria-labelledby="home-shortcuts">
+    <SectionHeading id="home-shortcuts" title={t(locale, "home.shortcuts")} />
+    <ul class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-7">
+      {shortcuts.map((route) => (
+        <li class="min-w-0">
+          <a
+            href={localizePath(route.path, locale)}
+            class="mn-focus mn-list-card-row group flex min-w-0 items-center gap-3 border border-[var(--mn-glass-border)] bg-[var(--mn-paper)] px-3 py-2.5 text-sm font-bold text-[var(--mn-text)] transition hover:border-[var(--mn-accent)] hover:text-[var(--mn-accent-deep)]"
+          >
+            <span class="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]">
+              <RouteGlyph icon={route.nav && route.nav.icon ? route.nav.icon : "sparkles"} routeId={route.id} className="h-4 w-4" />
+            </span>
+            <span class="truncate">{t(locale, route.labelKey)}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+</div>

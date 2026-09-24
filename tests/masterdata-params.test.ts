@@ -5,17 +5,17 @@ import { validateMasterTable } from "../src/lib/cards/data";
 
 test("all dynamic routes derive their params instead of using fixed inventories", () => {
   const routes = getAllRoutes().filter(isDynamicRoute);
-  expect(routes).toHaveLength(5);
+  expect(routes).toHaveLength(6);
   for (const route of routes) expect(typeof route.staticParams).toBe("function");
 });
 
-test("release tables include new cards and exclude unsupported rarities", () => {
+test("release tables include supported cards and rarity 10 support cards", () => {
   const rows = validateMasterTable<{ id: number; rarity: number; cardType: number }>({ _allData: [
     { _id: 59, _rarity: 4, _cardType: 3 },
     { _id: 70, _rarity: 10, _cardType: 1 },
   ] })._allData;
   expect(detailParamsFromRows("cards", rows).map((row) => row.params.id)).toEqual(["59"]);
-  expect(detailParamsFromRows("support-cards", rows).map((row) => row.params.id)).toEqual(["59"]);
+  expect(detailParamsFromRows("support-cards", rows).map((row) => row.params.id)).toEqual(["59", "70"]);
 });
 
 test("new character/music IDs are deduplicated and invalid IDs omitted", () => {

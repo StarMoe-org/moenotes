@@ -35,6 +35,11 @@ bun run dev
 bun run dev:fresh
 ```
 
+构建期默认从 `metadata.bdon.moe` 拉取 masterdata。镜像未同步或不可用时，可指向本地 masterdata 仓库（目录结构与镜像相同，含 `master/` 与 `version/`）：
+```bash
+MOENOTES_MASTERDATA_DIR=../ournotes-masterdata-1 bun run dev
+```
+
 ### 4. 生产打包构建
 ```bash
 bun run build

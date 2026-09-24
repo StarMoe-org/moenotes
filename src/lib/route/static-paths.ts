@@ -3,7 +3,7 @@ import { buildDynamicPath, findRouteMatch, findRouteById, getAllRoutes, getAllSt
 import type { AppRoute, BreadcrumbDetail, RouteMatch, RouteParams } from "@/types/route";
 import type { PageMetadata } from "@/lib/seo/metadata";
 import { getBuildMasterData } from "@/lib/masterdata/build-snapshot";
-import { localizeMasterText } from "@/lib/masterdata/localize-text";
+import { localizeMasterText, type MasterTextRow } from "@/lib/masterdata/localize-text";
 import { normalizeCards, validateMasterTable } from "@/lib/cards/data";
 import { normalizeSupportCards } from "@/lib/support-cards/data";
 
@@ -45,6 +45,7 @@ export async function getStaticLocalizedPaths(): Promise<StaticLocalizedPath[]> 
   let supportCardMap: Map<number, Record<AppLocale, string>> | null = null;
   let characterMap: Map<number, Record<AppLocale, string>> | null = null;
   let musicMap: Map<number, Record<AppLocale, string>> | null = null;
+  let gachaMap: Map<number, Record<AppLocale, string>> | null = null;
   let storyMap: Map<number, { title: Record<AppLocale, string>; category: "main" | "friendship" | "other" }> | null = null;
 
   for (const route of getAllRoutes().filter(isDynamicRoute)) {
@@ -203,6 +204,34 @@ export async function getStaticLocalizedPaths(): Promise<StaticLocalizedPath[]> 
           }
 
           const localizedLabel = musicMap.get(songId)?.[locale];
+          if (localizedLabel) {
+            breadcrumbDetail = { label: localizedLabel };
+          }
+        }
+
+        if (route.component === "gacha-detail") {
+          const gachaId = Number(config.params.id);
+          if (!gachaMap) {
+            gachaMap = new Map();
+            try {
+              const [gachaTable, textTable] = await Promise.all([
+                getStaticMasterData("MasterGacha.json", { validate: validateMasterTable<{ id: number; nameTextId: string }> }),
+                getStaticMasterData("MasterText.json", { validate: validateMasterTable<MasterTextRow> }),
+              ]);
+              const textMap = new Map(textTable._allData.map((entry) => [entry.id, entry]));
+              for (const gacha of gachaTable._allData) {
+                const labels = {} as Record<AppLocale, string>;
+                for (const loc of SUPPORTED_LOCALES) {
+                  labels[loc] = localizeMasterText(textMap.get(gacha.nameTextId), loc) || `#${gacha.id}`;
+                }
+                gachaMap.set(gacha.id, labels);
+              }
+            } catch (err) {
+              console.error("Failed to preload dynamic gacha breadcrumbs:", err);
+            }
+          }
+
+          const localizedLabel = gachaMap.get(gachaId)?.[locale];
           if (localizedLabel) {
             breadcrumbDetail = { label: localizedLabel };
           }

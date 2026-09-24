@@ -1,0 +1,18 @@
+---
+import GachaExplorer from "@/components/gacha/GachaExplorer";
+import PageLayout from "@/layouts/PageLayout.astro";
+import type { AppLocale } from "@/config/locales";
+import { getBuildCharacters, getBuildGachas } from "@/lib/masterdata/build-data";
+
+interface Props {
+  locale: AppLocale;
+}
+
+const { locale } = Astro.props;
+const [gachas, { bands }] = await Promise.all([getBuildGachas(locale), getBuildCharacters(locale)]);
+const bandOptions: Array<[number, string]> = bands.map((band) => [band.id, band.name]);
+---
+
+<PageLayout locale={locale} titleKey="seo.gacha.title" descriptionKey="seo.gacha.description">
+  <GachaExplorer client:load locale={locale} initialGachas={gachas} bands={bandOptions} />
+</PageLayout>

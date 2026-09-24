@@ -59,6 +59,25 @@ import {
   type StoryViewModel,
 } from "@/lib/story/data";
 import { fetchAndParseStory, type ParsedStoryScript } from "@/lib/story/parser";
+import {
+  normalizeGachas,
+  toGachaSummary,
+  type GachaDetailViewModel,
+  type GachaViewModel,
+  type RawGacha,
+  type RawGachaLot,
+  type RawGachaPrize,
+  type RawGachaView,
+} from "@/lib/gacha/data";
+import {
+  buildHomeData,
+  type HomeData,
+  type RawEvent,
+  type RawHomeBanner,
+  type RawLimitedMissionGroup,
+  type RawLoginBonus,
+  type RawSeasonPass,
+} from "@/lib/home/data";
 
 interface BuildDataState {
   tables: Map<string, Promise<MasterTable<unknown>>>;
@@ -188,6 +207,62 @@ export function getBuildItems(locale: AppLocale): Promise<ItemViewModel[]> {
       table<RawText>("MasterText.json"),
     ]);
     return normalizeItems(items._allData, texts._allData, locale);
+  });
+}
+
+function getBuildGachaDetails(locale: AppLocale): Promise<GachaDetailViewModel[]> {
+  return memo(`gacha-details:${locale}`, async () => {
+    const [gachas, lots, prizes, views, cards, supportCards, items, texts] = await Promise.all([
+      table<RawGacha>("MasterGacha.json"),
+      table<RawGachaLot>("MasterGachaLot.json"),
+      table<RawGachaPrize>("MasterGachaPrize.json"),
+      table<RawGachaView>("MasterGachaView.json"),
+      getBuildCards(locale),
+      getBuildSupportCards(locale),
+      getBuildItems(locale),
+      table<RawText>("MasterText.json"),
+    ]);
+    return normalizeGachas(gachas._allData, lots._allData, prizes._allData, views._allData, cards, supportCards, items, texts._allData, locale);
+  });
+}
+
+export function getBuildGachas(locale: AppLocale): Promise<GachaViewModel[]> {
+  return memo(`gachas:${locale}`, async () => (await getBuildGachaDetails(locale)).map(toGachaSummary));
+}
+
+export async function getBuildGachaDetail(locale: AppLocale, gachaId: number): Promise<GachaDetailViewModel | null> {
+  return (await getBuildGachaDetails(locale)).find((gacha) => gacha.id === gachaId) ?? null;
+}
+
+export function getBuildHomeData(locale: AppLocale): Promise<HomeData> {
+  return memo(`home:${locale}`, async () => {
+    const [banners, events, missions, loginBonuses, seasonPasses, texts, gachas, music, cards, supportCards] = await Promise.all([
+      table<RawHomeBanner>("MasterHomeBanner.json"),
+      table<RawEvent>("MasterEvent.json"),
+      table<RawLimitedMissionGroup>("MasterLimitedMissionGroup.json"),
+      table<RawLoginBonus>("MasterLoginBonus.json"),
+      table<RawSeasonPass>("MasterSeasonPass.json"),
+      table<RawText>("MasterText.json"),
+      getBuildGachas(locale),
+      getBuildMusic(locale),
+      getBuildCards(locale),
+      getBuildSupportCards(locale),
+    ]);
+    return buildHomeData(
+      {
+        banners: banners._allData,
+        events: events._allData,
+        missions: missions._allData,
+        loginBonuses: loginBonuses._allData,
+        seasonPasses: seasonPasses._allData,
+        texts: texts._allData,
+      },
+      gachas,
+      music,
+      cards,
+      supportCards,
+      locale,
+    );
   });
 }
 

@@ -46,6 +46,8 @@ export interface RawStoryEpisode {
   storyRewardGroupId: number;
   thumbnail: string;
   unlockEpisodeNumber: number;
+  playerRank: number;
+  bandRank: number;
 }
 
 export interface RawStoryFriendshipEpisode {
@@ -129,6 +131,7 @@ export interface StoryMasterData {
 
 export interface StoryUnlockCondition {
   episodeNumber: number;
+  playerRank: number;
   characterRank: number;
   friendshipLevel: number;
   eventPoint: number;
@@ -228,7 +231,8 @@ export function normalizeStories(data: StoryMasterData, locale: AppLocale): Stor
         characterRank: episode.characterRank,
         friendshipLevel: 0,
         eventPoint: episode.eventPoint,
-        bandRank: 0,
+        playerRank: episode.playerRank ?? 0,
+        bandRank: episode.bandRank ?? 0,
         releaseChapterId: 0,
         releaseEpisodeId: 0,
       },
@@ -473,6 +477,7 @@ function buildStory(input: BuildStoryInput): StoryViewModel {
 function emptyUnlock(overrides: Partial<StoryUnlockCondition> = {}): StoryUnlockCondition {
   return {
     episodeNumber: 0,
+    playerRank: 0,
     characterRank: 0,
     friendshipLevel: 0,
     eventPoint: 0,

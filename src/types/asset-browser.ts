@@ -59,11 +59,15 @@ export interface ArchiveFilePage extends AssetBrowserPage {
 
 export interface BundleContent {
   path: string;
-  kind: "asset" | "payload";
+  kind: "asset" | "payload" | "unity_file";
   source: string;
   path_id: string | null;
   bundle_id: string;
   bundle_key: string;
+}
+
+export interface BundleContentPage extends AssetBrowserPage {
+  contents: BundleContent[];
 }
 
 export interface BundleBrowsePage {
