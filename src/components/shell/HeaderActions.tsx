@@ -21,7 +21,7 @@ export function HamburgerButtons({ locale }: Props) {
       {/* Mobile hamburger */}
       <button
         type="button"
-        className={`mn-focus grid h-12 w-12 place-items-center rounded-full border-[1.5px] border-[var(--mn-border)] shadow-[var(--mn-shadow-stamp)] hover:bg-[var(--mn-cream-deep)] md:hidden ${btnStamp} ${
+        className={`mn-focus grid h-12 w-12 place-items-center rounded-xl border border-[var(--mn-border)] shadow-[var(--mn-shadow-stamp)] hover:bg-[var(--mn-cream-deep)] md:hidden ${btnStamp} ${
           mobileOpen
             ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]"
             : "bg-[var(--mn-paper)] text-[var(--mn-text)]"
@@ -46,7 +46,7 @@ export function HamburgerButtons({ locale }: Props) {
       {/* Desktop hamburger */}
       <button
         type="button"
-        className={`mn-focus hidden h-12 w-12 place-items-center rounded-full border-[1.5px] border-[var(--mn-border)] shadow-[var(--mn-shadow-stamp)] hover:bg-[var(--mn-cream-deep)] md:grid ${btnStamp} ${
+        className={`mn-focus hidden h-12 w-12 place-items-center rounded-xl border border-[var(--mn-border)] shadow-[var(--mn-shadow-stamp)] hover:bg-[var(--mn-cream-deep)] md:grid ${btnStamp} ${
           desktopOpen
             ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]"
             : "bg-[var(--mn-paper)] text-[var(--mn-text-muted)]"
@@ -77,7 +77,7 @@ export default function HeaderActions({ locale }: Props) {
     <div className="ml-auto flex items-center gap-2">
       <button
         type="button"
-        className={`mn-focus flex h-10 items-center justify-center rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp)] hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)] w-10 sm:w-auto px-0 sm:px-4 gap-0 sm:gap-1.5 ${btnStamp}`}
+        className={`mn-focus flex h-10 items-center justify-center rounded-xl border border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp)] hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)] w-10 sm:w-auto px-0 sm:px-4 gap-0 sm:gap-1.5 ${btnStamp}`}
         aria-label={t(locale, "shell.openCommandPalette")}
         onClick={() => toggleOverlay("command")}
       >
@@ -91,7 +91,7 @@ export default function HeaderActions({ locale }: Props) {
       {/* Settings gear */}
       <button
         type="button"
-        className={`mn-focus h-10 rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-3 text-sm text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp)] hover:bg-[var(--mn-cream-deep)] ${btnStamp}`}
+        className={`mn-focus h-10 rounded-xl border border-[var(--mn-border)] bg-[var(--mn-paper)] px-3 text-sm text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp)] hover:bg-[var(--mn-cream-deep)] ${btnStamp}`}
         aria-label={t(locale, "shell.openSettings")}
         onClick={() => toggleOverlay("settings")}
       >

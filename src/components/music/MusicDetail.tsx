@@ -99,7 +99,7 @@ export default function MusicDetail({ locale, initialSong }: Props) {
           {t(locale, error ? "music.loadErrorDescription" : "music.detailNotFoundDescription")}
         </p>
         {error && (
-          <button type="button" onClick={() => setReloadKey((value) => value + 1)} className="mn-focus mn-stamp-press mt-6 rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-accent-deep)] px-6 py-3 text-sm font-bold text-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]">
+          <button type="button" onClick={() => setReloadKey((value) => value + 1)} className="mn-focus mn-stamp-press mt-6 rounded-full border border-[var(--mn-border)] bg-[var(--mn-accent-deep)] px-6 py-3 text-sm font-bold text-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]">
             {t(locale, "cards.retry")}
           </button>
         )}
@@ -146,25 +146,22 @@ export default function MusicDetail({ locale, initialSong }: Props) {
   return (
     <div className="space-y-8 w-full">
       <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(20rem,1fr)_1.5fr] lg:items-start">
-        {/* Left Column: Fixed / Sticky Book Pane */}
+        {/* Left Column: Fixed / Sticky Asset Pane */}
         <aside className="lg:sticky lg:top-24 w-full flex flex-col pt-8">
           <div
-            className="relative aspect-square w-full rounded-r-3xl rounded-l-md border-[1.5px] border-[var(--mn-border)] bg-[#fdfbf7] p-5 shadow-[var(--mn-shadow-stamp-lg)]"
-            style={{ perspective: "1500px", transformStyle: "preserve-3d" }}
+            className="relative aspect-square w-full rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)] p-5 shadow-[var(--mn-shadow-stamp-lg)]"
           >
             {/* Spine Crease */}
-            <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-black/[0.05] via-black/[0.02] to-transparent pointer-events-none z-20" />
-            <div className="absolute left-0 top-0 bottom-0 w-[1px] bg-black/10 z-20" />
 
             {/* Bookmarks on Top Edge */}
             <div className="absolute bottom-full left-4 right-4 flex gap-1 pb-[1px] z-10">
               <button
                 type="button"
                 onClick={() => setActiveTabId("jacket")}
-                className={`px-4 pt-1.5 pb-3 text-[10px] font-semibold tracking-wider uppercase border-[1.5px] border-b-0 border-[var(--mn-border)] rounded-t-xl transition-all origin-bottom -mb-[6px] rotate-[-1deg] ${
+                className={`px-4 pt-1.5 pb-3 text-[10px] font-semibold tracking-wider uppercase border border-b-0 border-[var(--mn-border)] rounded-t-xl transition-all origin-bottom -mb-[6px] rotate-[-1deg] ${
                   activeTabId === "jacket"
-                    ? "bg-[var(--mn-accent)] text-white shadow-md z-20 -translate-y-[2px]"
-                    : "bg-[#f5ebd7] text-[var(--mn-text)] hover:bg-[#eadecc] hover:-translate-y-[1px]"
+                    ? "bg-[var(--mn-accent)] text-[var(--mn-bg)] shadow-md z-20 -translate-y-[2px]"
+                    : "bg-[var(--mn-surface)] text-[var(--mn-text)] hover:bg-[var(--mn-accent-soft)] hover:-translate-y-[1px]"
                 }`}
               >
                 {t(locale, "music.assets.jacket")}
@@ -172,10 +169,10 @@ export default function MusicDetail({ locale, initialSong }: Props) {
               <button
                 type="button"
                 onClick={() => setActiveTabId("info")}
-                className={`px-4 pt-1.5 pb-3 text-[10px] font-semibold tracking-wider uppercase border-[1.5px] border-b-0 border-[var(--mn-border)] rounded-t-xl transition-all origin-bottom -mb-[6px] rotate-[1.5deg] ${
+                className={`px-4 pt-1.5 pb-3 text-[10px] font-semibold tracking-wider uppercase border border-b-0 border-[var(--mn-border)] rounded-t-xl transition-all origin-bottom -mb-[6px] rotate-[1.5deg] ${
                   activeTabId === "info"
-                    ? "bg-[var(--mn-accent)] text-white shadow-md z-20 -translate-y-[2px]"
-                    : "bg-[#f5ebd7] text-[var(--mn-text)] hover:bg-[#eadecc] hover:-translate-y-[1px]"
+                    ? "bg-[var(--mn-accent)] text-[var(--mn-bg)] shadow-md z-20 -translate-y-[2px]"
+                    : "bg-[var(--mn-surface)] text-[var(--mn-text)] hover:bg-[var(--mn-accent-soft)] hover:-translate-y-[1px]"
                 }`}
               >
                 {t(locale, "music.songInfoTitle")}
@@ -189,7 +186,7 @@ export default function MusicDetail({ locale, initialSong }: Props) {
                   <button
                     type="button"
                     onClick={() => setJacketModalOpen(true)}
-                    className="group relative block w-full h-full overflow-hidden rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-cream-deep)] shadow-inner transition hover:scale-[1.01]"
+                    className="group relative block w-full h-full overflow-hidden rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-cream-deep)] shadow-inner transition hover:scale-[1.01]"
                     aria-label={t(locale, "music.assets.previewFull")}
                   >
                     <img
@@ -205,7 +202,7 @@ export default function MusicDetail({ locale, initialSong }: Props) {
               ) : (
                 <div className="h-full w-full flex flex-col justify-between">
                   <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-                    <div className="rounded-2xl border border-dashed border-[var(--mn-border)] bg-[#fbf9f4] p-4 space-y-3 shadow-inner">
+                    <div className="rounded-2xl border border-solid border-[var(--mn-border)] bg-[var(--mn-surface)] p-4 space-y-3 shadow-inner">
                       <h4 className="font-[var(--mn-font-display)] text-sm tracking-tight text-[var(--mn-text)] border-b border-[var(--mn-border)]/60 pb-1.5">Song Notebook</h4>
                       <div className="space-y-2 text-[11px] font-bold text-[var(--mn-text-muted)]">
                         <div className="flex justify-between border-b border-[var(--mn-border)]/20 pb-1">
@@ -257,7 +254,7 @@ export default function MusicDetail({ locale, initialSong }: Props) {
           {/* Main Info */}
           <div className="mn-paper overflow-hidden">
             {/* Header Banner */}
-            <div className="border-b-[1.5px] border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_6%,transparent)] to-transparent p-6 sm:p-8">
+            <div className="border-b border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_6%,transparent)] to-transparent p-6 sm:p-8">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -320,7 +317,7 @@ export default function MusicDetail({ locale, initialSong }: Props) {
 
           {/* Difficulties Card */}
           <div className="mn-paper overflow-hidden">
-            <div className="border-b-[1.5px] border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_6%,transparent)] to-transparent px-6 py-4 sm:px-8">
+            <div className="border-b border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_6%,transparent)] to-transparent px-6 py-4 sm:px-8">
               <h3 className="font-[var(--mn-font-display)] text-xl text-[var(--mn-text)] sm:text-2xl">
                 {t(locale, "music.difficultiesTitle")}
               </h3>
@@ -355,7 +352,7 @@ export default function MusicDetail({ locale, initialSong }: Props) {
 
           {/* Back Action */}
           <div className="flex justify-start">
-            <a href={localizePath(getRoutePathById("music"), locale)} className="mn-focus mn-stamp-press inline-flex rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-6 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]">
+            <a href={localizePath(getRoutePathById("music"), locale)} className="mn-focus mn-stamp-press inline-flex rounded-full border border-[var(--mn-border)] bg-[var(--mn-paper)] px-6 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]">
               {t(locale, "music.backToList")}
             </a>
           </div>
@@ -371,7 +368,7 @@ export default function MusicDetail({ locale, initialSong }: Props) {
         size="md"
         headerActions={previewActions}
       >
-        <div className="w-full overflow-hidden rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)]">
+        <div className="w-full overflow-hidden rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-surface)]">
           <img
             className="mx-auto max-h-[65vh] w-full object-contain"
             src={song.jacketUrl}
@@ -455,7 +452,7 @@ function AudioPlayer({ src, title }: { src: string; title: string }) {
   };
 
   return (
-    <div className="mn-paper overflow-hidden border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-4 shadow-[var(--mn-shadow-stamp)] flex flex-col gap-3">
+    <div className="mn-paper overflow-hidden border border-[var(--mn-border)] bg-[var(--mn-paper)] p-4 shadow-[var(--mn-shadow-stamp)] flex flex-col gap-3">
       <audio
         ref={audioRef}
         src={src}
@@ -479,7 +476,7 @@ function AudioPlayer({ src, title }: { src: string; title: string }) {
         <button
           type="button"
           onClick={togglePlay}
-          className="mn-focus mn-stamp-press flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--mn-border)] bg-[var(--mn-accent)] text-white shadow-sm hover:scale-105 transition-all"
+          className="mn-focus mn-stamp-press flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--mn-border)] bg-[var(--mn-accent)] text-[var(--mn-bg)] shadow-sm hover:scale-105 transition-all"
           aria-label={isPlaying ? "Pause preview" : "Play preview"}
         >
           {isPlaying ? (

@@ -253,7 +253,7 @@ function SupportCardItem({
     <a
       href={localizePath(`/support-cards/${card.id}`, locale)}
       onClick={onCardClick}
-      className="group flex flex-col min-w-0 overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)]"
+      className="mn-list-card group flex flex-col min-w-0 overflow-hidden border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)]"
       data-list-item-id={card.id}
       aria-label={t(locale, "supportCards.openDetail", { title: card.title, character: card.name })}
     >

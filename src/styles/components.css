@@ -1,0 +1,56 @@
+/* Sirius component language. Game artwork and attribute colors remain content colors. */
+:root {
+  --mn-radius-panel: 20px;
+  --mn-radius-control: 10px;
+  --mn-overlay-scrim: rgba(7, 15, 34, .56);
+  --mn-overlay-shadow: 0 28px 100px #030b2533, 0 0 0 1px #a9cfff18;
+  --mn-panel-fill: linear-gradient(135deg, color-mix(in srgb, var(--mn-cyan) 7%, var(--mn-paper)), var(--mn-paper) 55%, color-mix(in srgb, var(--mn-pink) 6%, var(--mn-paper)));
+}
+html[data-theme="dark"] { --mn-overlay-scrim: rgba(2, 6, 18, .72); --mn-overlay-shadow: 0 28px 100px #0009, 0 0 36px #83baff0a; }
+.mn-overlay-backdrop { background: var(--mn-overlay-scrim); backdrop-filter: blur(7px); }
+.mn-overlay-panel, .mn-popover-panel, .mn-system-section {
+  border: 1px solid var(--mn-border);
+  border-radius: var(--mn-radius-panel);
+  background: var(--mn-panel-fill);
+  box-shadow: var(--mn-overlay-shadow);
+}
+.mn-overlay-panel { color: var(--mn-text); }
+.mn-overlay-heading {
+  min-height: 68px;
+  border-bottom: 1px solid var(--mn-border);
+  background: linear-gradient(100deg, color-mix(in srgb, var(--mn-accent) 9%, transparent), transparent);
+}
+.mn-overlay-symbol { width: 20px; height: 20px; color: var(--mn-accent-deep); flex-shrink: 0; }
+.mn-overlay-heading button, .mn-icon-button {
+  border-radius: var(--mn-radius-control);
+  border-width: 1px;
+  box-shadow: none;
+}
+.mn-overlay-body { padding: 24px; }
+.mn-popover-panel { border-radius: 14px; box-shadow: 0 14px 44px #06112a30; }
+.mn-popover-panel :is(button, a) { border-radius: 8px; }
+.mn-overlay-panel :is(input:not([type="checkbox"]):not([type="range"]), select, textarea), .mn-control {
+  border-radius: var(--mn-radius-control);
+  border-width: 1px;
+  box-shadow: none;
+}
+.mn-segmented { border: 1px solid var(--mn-border); border-radius: 12px; padding: 4px; box-shadow: none; }
+.mn-segmented button { border-radius: 8px; }
+.mn-segmented button[aria-pressed="true"] { background: var(--mn-accent-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mn-accent) 30%, transparent); }
+.mn-command-option { border-radius: 10px; border-width: 1px; }
+.mn-command-option[aria-selected="true"] { background: var(--mn-accent-soft); border-color: color-mix(in srgb, var(--mn-accent) 45%, transparent); box-shadow: none; }
+.mn-filter-chip { border-radius: 8px; border-width: 1px; box-shadow: none; }
+.mn-system-header { position: relative; overflow: hidden; padding: 36px; border: 1px solid var(--mn-border); border-radius: var(--mn-radius-panel); background: var(--mn-panel-fill); }
+.mn-system-header::after { content: ""; position: absolute; width: 300px; height: 300px; right: -130px; top: -150px; border: 1px solid var(--mn-border); border-radius: 50%; box-shadow: 0 0 0 30px color-mix(in srgb, var(--mn-accent) 4%, transparent), 0 0 0 70px color-mix(in srgb, var(--mn-accent) 3%, transparent); pointer-events: none; }
+.mn-system-section { box-shadow: var(--mn-shadow); }
+.mn-system-tabs { border-radius: 14px; background: var(--mn-glass); backdrop-filter: blur(16px); }
+.mn-system-tabs button { border-radius: 9px; border-color: transparent; }
+.mn-system-tabs button[aria-pressed="true"] { border-color: var(--mn-border); }
+.mn-texture-stars { background-image: radial-gradient(circle at 12px 15px, var(--mn-accent) 1px, transparent 1.5px), radial-gradient(circle at 38px 39px, var(--mn-pink) 1px, transparent 1.5px); background-size: 67px 59px; }
+.mn-texture-nebula { background: radial-gradient(ellipse at 0 0, color-mix(in srgb, var(--mn-cyan) 35%, transparent), transparent 70%), radial-gradient(ellipse at 100% 100%, color-mix(in srgb, var(--mn-pink) 35%, transparent), transparent 70%), var(--mn-paper); }
+.mn-texture-orbit { background-image: repeating-radial-gradient(ellipse at 80% 130%, transparent 0 25px, var(--mn-border) 26px 27px, transparent 28px 45px); }
+.mn-texture-grid { background-image: linear-gradient(var(--mn-border) 1px, transparent 1px), linear-gradient(90deg, var(--mn-border) 1px, transparent 1px); background-size: 24px 24px; }
+.mn-glow:hover { box-shadow: 0 0 24px color-mix(in srgb, var(--mn-accent) 22%, transparent); border-color: var(--mn-accent); }
+:where(button, a, input, select, textarea):focus-visible { outline: 2px solid var(--mn-accent); outline-offset: 3px; }
+:where(button):disabled { cursor: not-allowed; }
+@media (max-width: 600px) { .mn-overlay-body { padding: 18px; } .mn-system-header { padding: 24px; } }

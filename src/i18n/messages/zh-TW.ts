@@ -1,6 +1,7 @@
 import type { MessageTree } from "@/i18n/translate";
 
 export const zhTW = {
+  notFound: {"metaTitle": "找不到頁面", "title": "這段訊號，漂出了星圖。", "description": "網址可能已經改變，或頁面仍在準備中。回到首頁，繼續探索我們的星空吧。", "note": "如果這個連結本應有效，歡迎回報給開發者，幫助我們找回這段訊號。", "home": "返回首頁", "feedback": "回報這個連結"},
   nav: {
     home: "首頁",
     groups: {
@@ -60,7 +61,7 @@ export const zhTW = {
   },
   home: {
     title: "Moenotes",
-    description: "這裡是 StarMoe 團隊為 BanG Dream! 新企劃「Our Notes」製作的資料庫項目。我們選用奶油紙的底色與輕手作感的視覺語言，為你呈現少女們的音樂與故事。",
+    description: "循著星光，遇見屬於我們的音符。在 StarMoe 製作的 BanG Dream! Our Notes 資料庫中，探索角色、卡牌與樂曲，珍藏每一段閃耀的故事。",
     ctaPrimary: "進入資料庫",
     featuresTitle: "探索數據手冊",
     features: {
@@ -357,8 +358,9 @@ export const zhTW = {
     },
   },
   designSystem: {
+    sirius: {"stars": "星野", "nebula": "星雲", "orbit": "星軌", "grid": "座標網格", "card": "內容面板", "raised": "浮層面板", "surface": "靜謐底板"},
     title: "設計系統",
-    subtitle: "Moenotes 視覺語言參考 —— 色彩、字體、組件與交互動效。",
+    subtitle: "星軌上的音符：以簽名的走勢組織介面，以軌道截面塑造面板，以星光標記目前位置。",
     sections: {
       colors: "色彩",
       typography: "字體排印",
@@ -368,12 +370,12 @@ export const zhTW = {
       animations: "動畫",
     },
     colors: {
-      accent: "主色調",
+      accent: "天狼星藍",
       "accent-deep": "深主色",
       "accent-soft": "柔主色",
-      pink: "櫻花",
-      "pink-soft": "柔櫻花",
-      cyan: "青色",
+      pink: "星雲紫",
+      "pink-soft": "星雲薄霧",
+      cyan: "冰藍",
       amber: "琥珀",
       peach: "蜜桃",
       mint: "薄荷",
@@ -381,9 +383,9 @@ export const zhTW = {
       "mint-soft": "柔薄荷",
       yellow: "黃色",
       rose: "玫瑰",
-      "cream-deep": "深奶油",
-      "ink-soft": "柔墨",
-      paper: "紙張",
+      "cream-deep": "層疊底色",
+      "ink-soft": "次級墨色",
+      paper: "面板",
       background: "背景",
       surface: "表面",
       border: "邊框",
@@ -393,13 +395,13 @@ export const zhTW = {
     typography: {
       display: "展示字體",
       body: "正文字體",
-      hand: "手寫字體",
-      note: "筆記字體",
+      hand: "標籤字體",
+      note: "座標字體",
     },
     components: {
       buttons: "按鈕",
       inputs: "輸入框",
-      badges: "徽章與印章",
+      badges: "徽章",
       cards: "卡片",
       select: "下拉框",
       checkbox: "複選框",
@@ -407,7 +409,7 @@ export const zhTW = {
       primary: "主要",
       outline: "描邊",
       ghost: "幽靈",
-      stamp: "印章",
+      stamp: "徽章",
       selectPlaceholder: "請選擇...",
       optA: "選項 A",
       optB: "選項 B",
@@ -444,13 +446,13 @@ export const zhTW = {
     },
     animations: {
       spring: "彈簧交互",
-      springDesc: "懸停上浮 + 旋轉 —— 彈性彈簧過渡",
+      springDesc: "輕微上浮，柔和的彈簧過渡",
       tap: "點按反饋",
       tapDesc: "點擊縮放 —— 觸覺反饋模擬",
       stagger: "入場動畫",
       staggerDesc: "交錯淡入 —— 列表項依次出現",
-      wobble: "搖擺效果",
-      wobbleDesc: "懸停搖擺 —— 印章/貼紙風格",
+      wobble: "星光輝映",
+      wobbleDesc: "懸停時以柔和的藍色光暈突出面板。",
     },
   },
   filter: {
@@ -536,7 +538,7 @@ export const zhTW = {
   about: {
     teamIntro: "我們是來自 <a href=\"https://github.com/moe-sekai\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-[var(--mn-accent-deep)] underline decoration-2 decoration-[var(--mn-accent)] underline-offset-4 hover:text-[var(--mn-accent)]\">StarMoe</a> 的小團隊。做 <em>MoeSekai</em> 的兩年裡，我們一直在想：一個好的 wiki, 到底應該長什麼樣？",
     paragraph1: "我們看過太多<strong>極客式的表格</strong>、太多<strong>萬年不變的柵格</strong>，數據是準的，可一點都不像那個讓我們流淚的世界。所以這一次，對於 BanG Dream! 的全新企劃「Our Notes」，我們決定換一種語言來翻譯它——<span class=\"bg-[var(--mn-yellow)]/40 px-1 py-0.5 font-bold border-b border-[var(--mn-accent)]/40\">像一本可以被翻閱、被塗寫、被珍藏的筆記本。</span>",
-    paragraph2: "我們不再用藍色的漸變和冰冷的發光塊，而選了奶油的紙、墨黑的字、夕陽的橘和螢光筆的黃。因為青春不是一段算法生成的色卡，青春是被反覆塗抹、卻越塗越亮的那一頁。",
+    paragraph2: "以天狼星為靈感，讓藍白星光與淡紫星雲連接每一個頁面。清晰的文字與安靜的面板，為少女們的音樂、相遇和故事留出空間。",
     badgeMe: "我",
     signature: "東雪",
     specsTitle: "項目信息與技術棧",

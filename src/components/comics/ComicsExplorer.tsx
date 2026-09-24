@@ -278,7 +278,7 @@ export default function ComicsExplorer({ locale, initialComics, initialBandNames
                   setSelectedComic(comic);
                   saveCurrentState();
                 }}
-                className="group flex flex-col min-w-0 overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)] text-left"
+                className="mn-list-card group flex flex-col min-w-0 overflow-hidden border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)] text-left"
                 data-list-item-id={comic.id}
                 aria-label={comic.name}
               >

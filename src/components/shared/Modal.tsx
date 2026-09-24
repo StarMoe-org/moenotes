@@ -129,7 +129,7 @@ export default function Modal({
       {isOpen && (
         <div className="fixed inset-0 z-[200] isolate flex items-center justify-center p-4 sm:p-6">
           <motion.div
-            className="absolute inset-0 bg-black/35 backdrop-blur-[2px]"
+            className="absolute inset-0 mn-overlay-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -139,7 +139,7 @@ export default function Modal({
 
           <motion.div
             ref={panelRef}
-            className={`relative w-full ${sizeClasses[size]} max-h-[calc(100vh-2rem)] sm:max-h-[85vh] flex flex-col overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]`}
+            className={`mn-overlay-panel relative w-full ${sizeClasses[size]} max-h-[calc(100vh-2rem)] sm:max-h-[85vh] flex flex-col overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]`}
             initial={panelInitial}
             animate={panelAnimate}
             exit={panelExit}
@@ -153,9 +153,9 @@ export default function Modal({
               if (event.key === "Tab") trapFocus(event.nativeEvent, panelRef.current);
             }}
           >
-            <div className="flex shrink-0 items-center justify-between border-b-[1.5px] border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_8%,transparent)] to-transparent px-5 py-3.5">
+            <div className="mn-overlay-heading flex shrink-0 items-center justify-between border-b-[1.5px] border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_8%,transparent)] to-transparent px-5 py-3.5">
               <h2 id={titleId} className="flex items-center gap-2 font-[var(--mn-font-display)] text-base tracking-tight text-[var(--mn-text)]">
-                <span className="h-6 w-1.5 rounded-full bg-[var(--mn-accent)]" aria-hidden="true" />
+                <svg className="mn-overlay-symbol" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m12 2 2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z" stroke="currentColor" strokeWidth="1.2"/></svg>
                 {title}
               </h2>
               <div className="flex items-center gap-1.5">
@@ -173,7 +173,7 @@ export default function Modal({
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-5">
+            <div className="mn-overlay-body flex-1 overflow-y-auto p-5">
               {children}
             </div>
           </motion.div>

@@ -1,26 +1,17 @@
 import { useMemo } from "react";
-import type { Transition, Variants } from "framer-motion";
+import { useReducedMotion, type Transition, type Variants } from "framer-motion";
 
-/**
- * Animation hook — always full animations, ignores all settings and OS preferences.
- * Returns framer-motion props for the app's two button shape families.
- *
- * ┌─────────────┬──────────────────────────┬─────────────────────────────────┐
- * │ Spec        │ Shape                    │ Hover / Tap                     │
- * ├─────────────┼──────────────────────────┼─────────────────────────────────┤
- * │ Stamp       │ Circular / Square        │ rise + scale on hover           │
- * │ Float       │ Capsule / Pill           │ rise on hover                   │
- * └─────────────┴──────────────────────────┴─────────────────────────────────┘
- */
+/** Shared Sirius motion: subtle lift, soft arrival, and reduced-motion support. */
 export function useSpringAnimation() {
+  const reducedMotion = useReducedMotion();
   return useMemo(() => {
-    const springTransition: Transition = { type: "spring", stiffness: 280, damping: 18 };
+    const springTransition: Transition = { type: "spring", stiffness: 320, damping: 28 };
     const modalTransition: Transition = { type: "spring", stiffness: 300, damping: 28 };
 
-    const floatHoverProps = { whileHover: { y: -4 } };
-    const floatTapProps = { whileTap: { scale: 0.96 } };
+    const floatHoverProps = { whileHover: { y: -2 } };
+    const floatTapProps = { whileTap: { scale: 0.98 } };
 
-    const stampHoverProps = { whileHover: { y: -2, scale: 1.02 } };
+    const stampHoverProps = { whileHover: { y: -1, scale: 1.01 } };
     const stampTapProps = { whileTap: { scale: 0.98 } };
 
     const staggerContainer: Variants = {
@@ -36,15 +27,15 @@ export function useSpringAnimation() {
     };
 
     return {
-      isDisabled: false,
-      springTransition,
-      modalTransition,
-      floatHoverProps,
-      floatTapProps,
-      stampHoverProps,
-      stampTapProps,
-      staggerContainer,
-      staggerItem,
+      isDisabled: Boolean(reducedMotion),
+      springTransition: reducedMotion ? { duration: 0 } : springTransition,
+      modalTransition: reducedMotion ? { duration: 0 } : modalTransition,
+      floatHoverProps: reducedMotion ? {} : floatHoverProps,
+      floatTapProps: reducedMotion ? {} : floatTapProps,
+      stampHoverProps: reducedMotion ? {} : stampHoverProps,
+      stampTapProps: reducedMotion ? {} : stampTapProps,
+      staggerContainer: reducedMotion ? {} : staggerContainer,
+      staggerItem: reducedMotion ? {} : staggerItem,
     };
-  }, []);
+  }, [reducedMotion]);
 }

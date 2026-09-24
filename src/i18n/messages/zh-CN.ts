@@ -1,6 +1,7 @@
 import type { MessageTree } from "@/i18n/translate";
 
 export const zhCN = {
+  notFound: {"metaTitle": "页面未找到", "title": "这段讯号，漂出了星图。", "description": "地址可能已经改变，或页面仍在准备中。回到首页，继续探索我们的星空吧。", "note": "如果这个链接本应有效，欢迎反馈给开发者，帮助我们找回这段讯号。", "home": "返回首页", "feedback": "反馈这个链接"},
   nav: {
     home: "首页",
     groups: {
@@ -60,7 +61,7 @@ export const zhCN = {
   },
   home: {
     title: "Moenotes",
-    description: "这里是 StarMoe 团队为 BanG Dream! 新企划「Our Notes」制作的资料库项目。我们选用奶油纸的底色与轻手作感的视觉语言，为你呈现少女们的音乐与故事。",
+    description: "循着星光，遇见属于我们的音符。在 StarMoe 制作的 BanG Dream! Our Notes 资料库中，探索角色、卡牌与乐曲，珍藏每一段闪耀的故事。",
     ctaPrimary: "进入数据库",
     featuresTitle: "探索数据手册",
     features: {
@@ -357,8 +358,9 @@ export const zhCN = {
     },
   },
   designSystem: {
+    sirius: {"stars": "星野", "nebula": "星云", "orbit": "星轨", "grid": "坐标网格", "card": "内容面板", "raised": "浮层面板", "surface": "静谧底板"},
     title: "设计系统",
-    subtitle: "Moenotes 视觉语言参考 —— 色彩、字体、组件与交互动效。",
+    subtitle: "星轨上的音符：以签名的走势组织界面，以轨道截面塑造面板，以星光标记当前位置。",
     sections: {
       colors: "色彩",
       typography: "字体排印",
@@ -368,12 +370,12 @@ export const zhCN = {
       animations: "动画",
     },
     colors: {
-      accent: "主色调",
+      accent: "天狼星蓝",
       "accent-deep": "深主色",
       "accent-soft": "柔主色",
-      pink: "樱花",
-      "pink-soft": "柔樱花",
-      cyan: "青色",
+      pink: "星云紫",
+      "pink-soft": "星云薄雾",
+      cyan: "冰蓝",
       amber: "琥珀",
       peach: "蜜桃",
       mint: "薄荷",
@@ -381,9 +383,9 @@ export const zhCN = {
       "mint-soft": "柔薄荷",
       yellow: "黄色",
       rose: "玫瑰",
-      "cream-deep": "深奶油",
-      "ink-soft": "柔墨",
-      paper: "纸张",
+      "cream-deep": "层叠底色",
+      "ink-soft": "次级墨色",
+      paper: "面板",
       background: "背景",
       surface: "表面",
       border: "边框",
@@ -393,13 +395,13 @@ export const zhCN = {
     typography: {
       display: "展示字体",
       body: "正文字体",
-      hand: "手写字体",
-      note: "笔记字体",
+      hand: "标签字体",
+      note: "坐标字体",
     },
     components: {
       buttons: "按钮",
       inputs: "输入框",
-      badges: "徽章与印章",
+      badges: "徽章",
       cards: "卡片",
       select: "下拉框",
       checkbox: "复选框",
@@ -407,7 +409,7 @@ export const zhCN = {
       primary: "主要",
       outline: "描边",
       ghost: "幽灵",
-      stamp: "印章",
+      stamp: "徽章",
       selectPlaceholder: "请选择...",
       optA: "选项 A",
       optB: "选项 B",
@@ -444,13 +446,13 @@ export const zhCN = {
     },
     animations: {
       spring: "弹簧交互",
-      springDesc: "悬停上浮 + 旋转 —— 弹性弹簧过渡",
+      springDesc: "轻微上浮，柔和的弹簧过渡",
       tap: "点按反馈",
       tapDesc: "点击缩放 —— 触觉反馈模拟",
       stagger: "入场动画",
       staggerDesc: "交错淡入 —— 列表项依次出现",
-      wobble: "摇摆效果",
-      wobbleDesc: "悬停摇摆 —— 印章/贴纸风格",
+      wobble: "星光辉映",
+      wobbleDesc: "悬停时以柔和的蓝色光晕突出面板。",
     },
   },
   filter: {
@@ -536,7 +538,7 @@ export const zhCN = {
   about: {
     teamIntro: "我们是来自 <a href=\"https://github.com/moe-sekai\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-[var(--mn-accent-deep)] underline decoration-2 decoration-[var(--mn-accent)] underline-offset-4 hover:text-[var(--mn-accent)]\">StarMoe</a> 的小团队。做 <em>MoeSekai</em> 的两年里，我们一直在想：一个好的 wiki, 到底应该长什么样？",
     paragraph1: "我们看过太多<strong>极客式的表格</strong>、太多<strong>万年不变的栅格</strong>，数据是准的，可一点都不像那个让我们流泪的世界。所以这一次，对于 BanG Dream! 的全新企划「Our Notes」，我们决定换一种语言来翻译它——<span class=\"bg-[var(--mn-yellow)]/40 px-1 py-0.5 font-bold border-b border-[var(--mn-accent)]/40\">像一本可以被翻阅、被涂写、被珍藏的笔记本。</span>",
-    paragraph2: "我们不再用蓝色的渐变和冰冷的发光块，而选了奶油的纸、墨黑的字、夕阳的橘和荧光笔的黄。因为青春不是一段算法生成的色卡，青春是被反复涂抹、却越涂越亮的那一页。",
+    paragraph2: "以天狼星为灵感，让蓝白星光与淡紫星云连接每一个页面。清晰的文字与安静的面板，为少女们的音乐、相遇和故事留出空间。",
     badgeMe: "我",
     signature: "東雪",
     specsTitle: "项目信息与技术栈",

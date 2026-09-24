@@ -159,7 +159,7 @@ function SongCard({ song, locale, onClick }: { song: MusicViewModel; locale: App
     <a
       href={localizePath(`/music/${song.id}`, locale)}
       onClick={onClick}
-      className="mn-focus mn-stamp-press group block relative rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] overflow-hidden shadow-[var(--mn-shadow-stamp)] transition-all hover:scale-[1.01] hover:shadow-[var(--mn-shadow-stamp-lg)] hover:-translate-y-0.5"
+      className="mn-list-card mn-focus group block relative rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] overflow-hidden shadow-[var(--mn-shadow-stamp)] transition-all hover:scale-[1.01] hover:shadow-[var(--mn-shadow-stamp-lg)] hover:-translate-y-0.5"
     >
       {/* Top Cover Block */}
       <div className="relative aspect-square w-full shrink-0 border-b-[1.5px] border-[var(--mn-border)] bg-[var(--mn-cream-deep)] overflow-hidden">

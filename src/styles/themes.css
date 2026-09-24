@@ -1,24 +1,27 @@
 html[data-theme="dark"] {
   /* ── Neutrals ── */
-  --mn-bg: #1C1B19;
-  --mn-surface: rgba(34, 33, 30, 0.92);
-  --mn-surface-strong: rgba(42, 41, 37, 0.97);
-  --mn-glass: rgba(30, 29, 26, 0.92);
-  --mn-text: #F5F0E8;
-  --mn-ink-soft: #E8E0D2;
-  --mn-text-muted: #B8B0A2;
-  --mn-border: #4A4843;
-  --mn-cream-deep: #2A2926;
-  --mn-paper: #242320;
+  --mn-bg: #080F21;
+  --mn-surface: rgba(16, 27, 49, 0.92);
+  --mn-surface-strong: rgba(23, 36, 62, 0.97);
+  --mn-glass: rgba(13, 23, 43, 0.72);
+  --mn-glass-border: rgba(146, 182, 233, 0.22);
+  --mn-glass-highlight: rgba(203, 226, 255, 0.14);
+  --mn-glass-shadow: 0 16px 44px rgba(0, 5, 20, 0.28);
+  --mn-text: #EAF1FF;
+  --mn-ink-soft: #D2DDF3;
+  --mn-text-muted: #A0B0CD;
+  --mn-border: #2C3D5E;
+  --mn-cream-deep: #17243F;
+  --mn-paper: #101B31;
 
-  /* ── Accent / Orange ── */
-  --mn-accent: #F08B7A;
-  --mn-accent-deep: #E87461;
-  --mn-accent-soft: #3B2321;
+  /* ── Accent / Sirius blue ── */
+  --mn-accent: #9ACBFA;
+  --mn-accent-deep: #B2D8FF;
+  --mn-accent-soft: #1C3453;
 
   /* ── Pink / Sakura ── */
-  --mn-pink: #F5C4C4;
-  --mn-pink-soft: #352828;
+  --mn-pink: #C4BAF1;
+  --mn-pink-soft: #29233F;
 
   /* ── Cyan ── */
   --mn-cyan: #9ADAE9;
@@ -32,16 +35,14 @@ html[data-theme="dark"] {
 
   /* ── Mint / Moss ── */
   --mn-mint: #94C78B;
-  --mn-mint-deep: #5A8E50;
-  --mn-mint-soft: #263024;
+  --mn-mint-deep: #99D3B1;
+  --mn-mint-soft: #182F32;
 
   /* ── Rose ── */
   --mn-rose: #D47888;
 
   /* ── Decorative (theme-aware) ── */
-  --mn-dot-ink: rgba(245, 240, 232, 0.05);
-  --mn-tape-edge: rgba(0, 0, 0, 0.32);
-  --mn-tape-shadow: rgba(0, 0, 0, 0.25);
+  --mn-dot-ink: rgba(175, 206, 255, 0.16);
 
   /* ── Shadows ── */
   --mn-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.3), 0 2px 6px -1px rgba(0, 0, 0, 0.2);

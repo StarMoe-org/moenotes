@@ -100,7 +100,7 @@ export default function FilterDrawerGuide({ locale }: FilterDrawerGuideProps) {
         className="fixed top-28 z-32 pointer-events-none max-w-[calc(100vw-4.5rem)] sm:max-w-xs select-none"
       >
         <motion.div
-          className="pointer-events-auto relative rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)] p-4 flex flex-col gap-2.5 text-[var(--mn-text)]"
+          className="pointer-events-auto relative rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)] p-4 flex flex-col gap-2.5 text-[var(--mn-text)]"
           initial={{ opacity: 0, x: -10, scale: 0.96 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           exit={{ opacity: 0, x: -10, scale: 0.96 }}
@@ -129,7 +129,7 @@ export default function FilterDrawerGuide({ locale }: FilterDrawerGuideProps) {
             <button
               type="button"
               onClick={dismiss}
-              className="mn-stamp-press p-1 text-[var(--mn-text-muted)] hover:text-[var(--mn-text)] rounded-full transition-colors cursor-pointer shrink-0"
+              className="mn-stamp-press p-1 text-[var(--mn-text-muted)] hover:text-[var(--mn-text)] rounded-lg transition-colors cursor-pointer shrink-0"
               aria-label={t(locale, "actions.close")}
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

@@ -86,7 +86,7 @@ function CharacterCard({ char, locale, onClick }: { char: CharacterViewModel; lo
     <a
       href={localizePath(`/characters/${char.id}`, locale)}
       onClick={onClick}
-      className="group relative block aspect-[1/2.8] w-full overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] shadow-[var(--mn-shadow-stamp)] transition-all hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)]"
+      className="mn-list-card group relative block aspect-[1/2.8] w-full overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] shadow-[var(--mn-shadow-stamp)] transition-all hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)]"
       style={{ backgroundColor: char.mainColor }}
       aria-label={char.name}
     >
@@ -111,7 +111,7 @@ function CharacterCard({ char, locale, onClick }: { char: CharacterViewModel; lo
       </div>
 
       {/* Slanted Name tag sticker at the bottom */}
-      <div className="absolute bottom-4 left-3 right-3 z-10 bg-[var(--mn-paper)] border-[1.5px] border-[var(--mn-border)] rounded-2xl py-2.5 px-2 text-center shadow-[var(--mn-shadow-stamp-sm)] transition-transform duration-300 group-hover:scale-102 group-hover:rotate-[-1.5deg]">
+      <div className="mn-list-caption absolute bottom-4 left-3 right-3 z-10 bg-[var(--mn-paper)] border-[1.5px] border-[var(--mn-border)] rounded-2xl py-2.5 px-2 text-center shadow-[var(--mn-shadow-stamp-sm)] transition-transform duration-300 group-hover:scale-102">
         <span className="block text-xs font-black text-[var(--mn-text)] truncate">{char.name}</span>
         <span className="block text-[8px] font-bold text-[var(--mn-text-muted)] tracking-wider uppercase truncate mt-0.5">{char.enName}</span>
       </div>

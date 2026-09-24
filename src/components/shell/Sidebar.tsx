@@ -1,3 +1,4 @@
+import BrandLogo from "@/components/shared/BrandLogo";
 import { useEffect, useMemo, useRef, useState, Fragment, type KeyboardEvent, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { AppLocale } from "@/config/locales";
@@ -81,7 +82,7 @@ export default function Sidebar({ locale, pathname, activePath }: SidebarProps) 
         {mobileOpen && (
           <div className="fixed inset-0 z-[35] md:hidden" role="dialog" aria-modal="true">
             <motion.button
-              className="absolute inset-0 h-full w-full bg-black/40 backdrop-blur-[2px]"
+              className="absolute inset-0 h-full w-full mn-overlay-backdrop"
               aria-label={t(locale, "actions.close")}
               onClick={closeMobile}
               initial={{ opacity: 0 }}
@@ -91,7 +92,7 @@ export default function Sidebar({ locale, pathname, activePath }: SidebarProps) 
             />
             <motion.aside
               ref={mobilePanelRef}
-              className="absolute left-4 w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]"
+              className="mn-overlay-panel absolute left-4 w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]"
               tabIndex={-1}
               aria-label={t(locale, "shell.openSidebar")}
               onKeyDown={handleMobileKeyDown}
@@ -114,7 +115,7 @@ export default function Sidebar({ locale, pathname, activePath }: SidebarProps) 
 }
 
 function SidebarFrame({ children }: { children: ReactNode }) {
-  return <div className="h-full overflow-hidden rounded-[1.75rem] border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]">{children}</div>;
+  return <div className="mn-sidebar-frame h-full overflow-hidden rounded-[1.75rem] border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]">{children}</div>;
 }
 
 function SidebarNav({ locale, pathname, activePath, groups, onNavigate }: { locale: AppLocale; pathname: string; activePath?: string | undefined; groups: AppRoute[]; onNavigate?: () => void }) {
@@ -181,18 +182,19 @@ function SidebarNav({ locale, pathname, activePath, groups, onNavigate }: { loca
   };
 
   return (
-    <nav ref={scrollRef} className="h-full overflow-y-auto p-3.5" aria-label="Primary">
+    <nav ref={scrollRef} className="mn-orbit-nav h-full overflow-y-auto p-3.5" aria-label="Primary">
       <div className="relative mb-3 overflow-hidden rounded-[1.35rem] border border-[color-mix(in_oklab,var(--mn-border)_18%,transparent)] bg-[var(--mn-cream-deep)] px-4 py-3.5">
         <SidebarDoodle />
         <div className="relative">
-          <div className="font-[var(--mn-font-hand)] text-lg font-bold leading-none text-[var(--mn-accent-deep)]">Moenotes</div>
-          <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--mn-text-muted)]">Our Notes</div>
+          <BrandLogo className="mn-brand-sidebar" />
+
         </div>
       </div>
       <div className="space-y-2">
         {/* Home link */}
         <a
           href={localizePath("/", locale)}
+          aria-current={pathname === "/" ? "page" : undefined}
           onClick={onNavigate}
           className={`group flex items-center gap-3 rounded-2xl border px-3 py-2.5 text-[14px] font-black transition-colors ${
             pathname === "/"
@@ -257,6 +259,7 @@ function NavGroup({ group, locale, pathname, activePath, collapsed, onToggle, on
       >
         <a
           href={localizePath(group.path, locale)}
+          aria-current={isHeaderActive ? "page" : undefined}
           onClick={onNavigate}
           className="flex min-w-0 flex-1 items-center gap-3 rounded-xl py-1.5 text-[14px] font-black transition-colors"
         >
@@ -287,6 +290,7 @@ function NavGroup({ group, locale, pathname, activePath, collapsed, onToggle, on
               <Fragment key={item.id}>
                 <a
                   href={localizePath(item.path, locale)}
+                  aria-current={active ? "page" : undefined}
                   onClick={onNavigate}
                   className={`flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] font-medium transition-colors ${
                     active
@@ -335,5 +339,5 @@ function NavIcon({ icon, routeId, active = false, small = false }: { icon: Route
 }
 
 function SidebarDoodle() {
-  return <svg className="absolute -right-2 -top-3 h-24 w-24 rotate-6 text-[var(--mn-accent)] opacity-25" viewBox="0 0 96 96" fill="none" aria-hidden="true"><path d="M18 60c17-31 33-40 55-34-17 7-27 20-31 39 13-11 26-14 39-9-15 5-25 14-31 27" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/><path d="m19 18 3 8 8 3-8 3-3 8-3-8-8-3 8-3zM69 12l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="currentColor"/></svg>;
+  return <svg className="absolute -right-2 -top-3 h-24 w-24 text-[var(--mn-accent)] opacity-40" viewBox="0 0 96 96" fill="none" aria-hidden="true"><ellipse cx="48" cy="48" rx="40" ry="16" transform="rotate(-35 48 48)" stroke="currentColor"/><circle cx="48" cy="48" r="28" stroke="currentColor" strokeDasharray="2 6"/><path d="m48 22 5 21 21 5-21 5-5 21-5-21-21-5 21-5z" fill="currentColor"/><circle cx="78" cy="27" r="3" fill="currentColor"/></svg>;
 }

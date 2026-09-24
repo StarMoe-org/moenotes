@@ -138,7 +138,7 @@ export default function FilterDrawer({ locale, pathname }: FilterDrawerProps) {
         {isModal && (
           <motion.div
             key="filter-drawer-scrim"
-            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] touch-none"
+            className="fixed inset-0 z-40 mn-overlay-backdrop touch-none"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -164,7 +164,7 @@ export default function FilterDrawer({ locale, pathname }: FilterDrawerProps) {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: isModal ? "-100%" : -24, opacity: 0, transition: { duration: 0.15 } }}
             transition={{ type: "spring", damping: 28, stiffness: 260 }}
-            className={`fixed ${
+            className={`mn-overlay-panel fixed ${
               isModal
                 ? "left-3 right-3 sm:left-4 sm:right-auto sm:w-80 top-[var(--mn-header-bottom,5rem)] h-[calc(100dvh-var(--mn-header-bottom,5rem)-1rem)] z-45"
                 : "top-24 h-[calc(100vh-7.5rem)] w-80 z-30"
@@ -172,7 +172,7 @@ export default function FilterDrawer({ locale, pathname }: FilterDrawerProps) {
           >
             <div ref={panelRef} tabIndex={-1} className="flex flex-col flex-1 min-h-0 outline-none">
               {/* Header */}
-              <div className="flex items-center justify-between border-b-2 border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_10%,transparent)] to-transparent px-4 sm:px-5 py-3.5 select-none shrink-0">
+              <div className="mn-overlay-heading flex items-center justify-between border-b-2 border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_10%,transparent)] to-transparent px-4 sm:px-5 py-3.5 select-none shrink-0">
                 <span
                   id={titleId}
                   className="flex items-center gap-2 truncate font-[var(--mn-font-display)] text-sm font-bold tracking-tight text-[var(--mn-text)]"

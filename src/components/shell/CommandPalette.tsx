@@ -96,7 +96,7 @@ export default function CommandPalette({ locale }: CommandPaletteProps) {
       {isOpen && (
         <div className="fixed inset-0 z-50 flex justify-center items-start px-4 pt-[12vh]">
           <motion.div
-            className="absolute inset-0 bg-black/35 backdrop-blur-[2px]"
+            className="absolute inset-0 mn-overlay-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -106,7 +106,7 @@ export default function CommandPalette({ locale }: CommandPaletteProps) {
 
           <motion.div
             ref={panelRef}
-            className="relative z-10 w-full max-w-2xl overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]"
+            className="mn-overlay-panel relative z-10 w-full max-w-2xl overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]"
             initial={panelInitial}
             animate={panelAnimate}
             exit={panelExit}
@@ -147,7 +147,7 @@ export default function CommandPalette({ locale }: CommandPaletteProps) {
                       href={localizePath(item.path, locale)}
                       role="option"
                       aria-selected={active}
-                      className={`block rounded-full border-2 px-5 py-3 text-sm text-[var(--mn-text)] hover:border-[var(--mn-border)] hover:bg-[var(--mn-cream-deep)] hover:shadow-[var(--mn-shadow-stamp-sm)] ${active ? "border-[var(--mn-border)] bg-[var(--mn-cream-deep)] shadow-[var(--mn-shadow-stamp-sm)]" : "border-transparent"}`}
+                      className={`mn-command-option block rounded-full border-2 px-5 py-3 text-sm text-[var(--mn-text)] hover:border-[var(--mn-border)] hover:bg-[var(--mn-cream-deep)] hover:shadow-[var(--mn-shadow-stamp-sm)] ${active ? "border-[var(--mn-border)] bg-[var(--mn-cream-deep)] shadow-[var(--mn-shadow-stamp-sm)]" : "border-transparent"}`}
                       onMouseEnter={() => setActiveIndex(index)}
                       onClick={close}
                     >

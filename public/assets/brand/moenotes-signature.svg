@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="780" height="300" viewBox="0 0 780 300" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">Moenotes — Sirius signature</title>
+  <desc id="desc">Original flowing Moenotes lettering, finished with an orbital underline and a four-point Sirius star. Transparent background; vector paths only.</desc>
+  <g transform="rotate(-5 390 150)">
+  <g stroke="#304C83" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- M: an open entrance flourish and two tall, slanted stems. -->
+    <path d="M71 190 C39 210 55 225 92 203 C126 181 151 140 166 99 C181 57 174 46 164 66 C147 103 127 167 116 201 C136 165 168 114 186 99 C199 88 203 96 197 116 L171 190 C194 156 227 106 245 98 C264 89 258 111 249 133 L223 195 C218 211 231 207 253 183"/>
+    <!-- o -->
+    <path d="M286 157 C272 145 251 159 246 178 C240 198 250 210 265 204 C283 197 294 169 286 157 C280 150 278 160 288 168 C295 173 304 169 311 163"/>
+    <!-- e -->
+    <path d="M302 182 C321 181 338 165 331 157 C321 145 300 166 298 185 C296 205 316 213 343 189"/>
+    <!-- n -->
+    <path d="M347 159 L331 204 C346 179 365 154 378 154 C391 154 379 177 373 193 C366 215 387 205 403 186"/>
+    <!-- o -->
+    <path d="M436 157 C422 145 401 159 396 178 C390 198 400 210 415 204 C433 197 444 169 436 157 C430 150 428 160 438 168 C445 173 454 168 461 162"/>
+    <!-- t: ascender doubles as a shooting-star gesture. -->
+    <path d="M480 111 C474 134 451 184 450 197 C449 216 470 204 486 184 M448 150 C470 148 492 144 507 139"/>
+    <!-- e -->
+    <path d="M481 182 C500 181 517 165 510 157 C500 145 479 166 477 185 C475 205 495 213 522 189"/>
+    <!-- s and terminal flourish -->
+    <path d="M558 155 C545 145 528 160 533 171 C537 180 552 181 545 195 C537 212 512 211 518 197 C525 184 548 200 566 196 C583 192 597 180 611 166"/>
+
+    <path d="M136 235 C247 212 436 208 582 218 C626 221 646 227 628 235 C608 244 574 245 561 239" stroke-width="2.4"/>
+    <path d="M578 124 C606 103 631 89 661 79" stroke-width="1.6" opacity=".55"/>
+
+  </g>
+
+  <g fill="#648CCC">
+    <path d="M675 49 C673 69 669 75 651 79 C669 81 673 85 675 104 C679 85 683 81 701 79 C681 76 678 70 675 49Z"/>
+    <circle cx="631" cy="115" r="2.5"/>
+    <circle cx="711" cy="53" r="1.8"/>
+  </g>
+
+  </g>
+</svg>

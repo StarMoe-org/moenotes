@@ -152,7 +152,7 @@ export default function Popover({
             <div
               ref={panelRef}
               style={panelStyle}
-              className={`z-[220] rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp)] ${panelClassName}`}
+              className={`mn-popover-panel z-[220] rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp)] ${panelClassName}`}
               role="menu"
             >
               {typeof children === "function" ? children({ close }) : children}

@@ -583,7 +583,7 @@ export default function AssetViewer({ locale }: Props) {
                       const next = idx === -1 ? "" : currentPath.slice(0, idx);
                       setCurrentPath(next);
                     }}
-                    className="mn-card mn-stamp-press flex flex-col items-center justify-center p-4 border border-[var(--mn-border)] rounded-2xl hover:border-[var(--mn-accent)] text-center gap-2 bg-[var(--mn-paper)]"
+                    className="mn-list-card mn-card flex flex-col items-center justify-center p-4 border border-[var(--mn-border)] rounded-2xl hover:border-[var(--mn-accent)] text-center gap-2 bg-[var(--mn-paper)]"
                   >
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--mn-cream-deep)] shadow-[var(--mn-shadow-stamp-sm)]">
                       <svg className="h-5 w-5 text-[var(--mn-text-muted)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
@@ -609,7 +609,7 @@ export default function AssetViewer({ locale }: Props) {
                         });
                       }
                     }}
-                    className={`mn-card mn-stamp-press flex flex-col items-center justify-center p-4 border rounded-2xl hover:border-[var(--mn-accent)] text-center gap-2 bg-[var(--mn-paper)] ${selectedFile?.key === item.key ? "border-[var(--mn-accent)] bg-[var(--mn-accent-soft)]/30" : "border-[var(--mn-border)]"}`}
+                    className={`mn-list-card mn-card flex flex-col items-center justify-center p-4 border rounded-2xl hover:border-[var(--mn-accent)] text-center gap-2 bg-[var(--mn-paper)] ${selectedFile?.key === item.key ? "border-[var(--mn-accent)] bg-[var(--mn-accent-soft)]/30" : "border-[var(--mn-border)]"}`}
                   >
                     <div className={`flex h-12 w-12 items-center justify-center rounded-xl shadow-[var(--mn-shadow-stamp-sm)] ${item.type === "folder" ? "bg-[var(--mn-accent-soft)]" : "bg-[var(--mn-cream-deep)]"}`}>
                       {item.type === "folder" ? <FolderIcon /> : getFileIcon(item.key)}

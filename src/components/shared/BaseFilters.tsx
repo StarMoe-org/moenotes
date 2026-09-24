@@ -60,15 +60,16 @@ export function FilterToggle({ checked, onChange, label }: FilterToggleProps) {
     <motion.button
       type="button"
       onClick={() => onChange(!checked)}
+      aria-pressed={checked}
       {...stampTapProps}
       transition={springTransition}
-      className="flex w-full items-center justify-between rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-paper)] px-5 py-3 transition-colors hover:shadow-[var(--mn-shadow-stamp-sm)] cursor-pointer"
+      className="flex w-full items-center justify-between rounded-xl border border-[var(--mn-border)] bg-[var(--mn-paper)] px-5 py-3 transition-colors hover:shadow-[var(--mn-shadow-stamp-sm)] cursor-pointer"
     >
       <span className={`text-sm font-bold ${checked ? "text-[var(--mn-text)]" : "text-[var(--mn-text-muted)]"}`}>
         {label}
       </span>
       <div
-        className={`grid h-5 w-5 place-items-center rounded-full border-2 transition-colors ${
+        className={`grid h-5 w-5 place-items-center rounded-xl border transition-colors ${
           checked
             ? "border-[var(--mn-accent)] bg-[var(--mn-accent)] shadow-[0_0_0_2px_color-mix(in_oklab,var(--mn-accent)_20%,transparent)]"
             : "border-[var(--mn-border)] bg-[var(--mn-surface)]"
@@ -137,7 +138,7 @@ function FilterSearchInput({ id, value, onChange, placeholder }: FilterSearchInp
       onChange={handleChange}
       onCompositionStart={handleCompositionStart}
       onCompositionEnd={handleCompositionEnd}
-      className="w-full min-w-0 rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-surface)] py-2.5 pl-11 pr-5 text-sm text-[var(--mn-text)] placeholder:text-[var(--mn-text-muted)] focus:border-[var(--mn-accent)] focus:bg-[var(--mn-paper)] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_oklab,var(--mn-accent)_20%,transparent)]"
+      className="w-full min-w-0 rounded-xl border border-[var(--mn-border)] bg-[var(--mn-surface)] py-2.5 pl-11 pr-5 text-sm text-[var(--mn-text)] placeholder:text-[var(--mn-text-muted)] focus:border-[var(--mn-accent)] focus:bg-[var(--mn-paper)] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_oklab,var(--mn-accent)_20%,transparent)]"
     />
   );
 }
@@ -229,7 +230,7 @@ export default function BaseFilters({
         <button
           type="button"
           onClick={onReset}
-          className="mn-stamp-press flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-surface)] py-2.5 text-sm font-bold text-[var(--mn-text-muted)] transition hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)] cursor-pointer mt-4"
+          className="mn-stamp-press flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--mn-border)] bg-[var(--mn-surface)] py-2.5 text-sm font-bold text-[var(--mn-text-muted)] transition hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)] cursor-pointer mt-4"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -247,7 +248,7 @@ export default function BaseFilters({
 
   // 2. Standalone Card variant (For in-page static layouts like DesignSystem)
   return (
-    <div className="w-full max-w-full rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]">
+    <div className="w-full max-w-full rounded-3xl border border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]">
       {/* Header */}
       <button
         type="button"
@@ -263,7 +264,7 @@ export default function BaseFilters({
           </svg>
           {title}
           {hasActiveFilters && collapsed && (
-            <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--mn-accent)] lg:hidden" />
+            <span className="h-2 w-2 animate-pulse rounded-xl bg-[var(--mn-accent)] lg:hidden" />
           )}
         </span>
         <span className="flex items-center gap-2">

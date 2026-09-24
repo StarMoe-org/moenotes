@@ -1,4 +1,5 @@
 ---
+import BrandLogo from "@/components/shared/BrandLogo";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
@@ -20,16 +21,13 @@ const exploreLinks = [
 ];
 ---
 
-<footer class="mt-20 border-t-4 border-[var(--mn-accent)] bg-[var(--mn-paper)] text-[var(--mn-text)] transition-[padding] duration-300">
+<footer class="mn-site-footer mt-20 border-t-4 border-[var(--mn-accent)] bg-[var(--mn-paper)] text-[var(--mn-text)] transition-[padding] duration-300">
   <div class="mx-auto max-w-[120rem] px-6 py-12 md:pl-[calc(var(--mn-sidebar-offset,18rem)+1.5rem)] md:pr-6">
     <div class="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
       {/* Column 1: Logo & Info */}
       <div class="flex flex-col gap-4">
         <a href={localizePath(getRoutePathById("home"), locale)} class="flex items-center text-[var(--mn-text)]">
-          <span class="leading-none">
-            <span class="block font-[var(--mn-font-display)] text-xl font-black tracking-tight">Moenotes</span>
-            <span class="block font-[var(--mn-font-display)] text-[10px] uppercase tracking-[0.2em] text-[var(--mn-text-muted)]">OURNOTES VIEWER</span>
-          </span>
+          <BrandLogo className="mn-brand-shell" />
         </a>
         <p class="text-sm font-medium leading-relaxed text-[var(--mn-text-muted)]">
           {t(locale, "footer.desc")}

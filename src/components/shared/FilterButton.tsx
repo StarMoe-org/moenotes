@@ -17,24 +17,18 @@ export default function FilterButton({
   activeColor,
   children,
 }: FilterButtonProps) {
-  // Capsule / pill button → float animation (rise + slight rotate)
-  const { floatTapProps, springTransition, isDisabled } = useSpringAnimation();
-  const baseRotate = active ? -1 : 0.5;
-  const hoverRotate = active ? -0.5 : 1;
-  const motionProps = {
-    ...(isDisabled ? {} : { whileHover: { y: -4, rotate: hoverRotate } }),
-    ...floatTapProps,
-  };
+  const { floatTapProps, floatHoverProps, springTransition } = useSpringAnimation();
+  const motionProps = { ...floatHoverProps, ...floatTapProps };
 
   return (
     <motion.button
       type="button"
       onClick={onClick}
-      animate={{ rotate: baseRotate }}
+      aria-pressed={active}
       {...motionProps}
       transition={springTransition}
       className={[
-        "relative rounded-full border-2 border-[var(--mn-border)] px-3 py-1.5",
+        "mn-filter-chip relative rounded-lg border border-[var(--mn-border)] px-3 py-1.5",
         "text-xs font-bold transition-colors sm:text-sm",
         active
           ? "text-[var(--mn-bg)] shadow-[var(--mn-shadow-stamp-sm)]"

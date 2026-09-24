@@ -301,7 +301,7 @@ export default function StampsExplorer({ locale, initialStamps, initialBandNames
                   setSelectedStamp(stamp);
                   saveCurrentState();
                 }}
-                className="group flex flex-col items-center justify-between min-w-0 p-4 sm:p-5 overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)] text-center mn-wobble-hover"
+                className="mn-list-card group flex flex-col items-center justify-between min-w-0 p-4 sm:p-5 overflow-hidden border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)] text-center "
                 data-list-item-id={stamp.id}
                 aria-label={stamp.name}
               >

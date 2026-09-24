@@ -23,7 +23,7 @@ const children = getNavChildren(group);
         <p class="mt-2 text-sm font-medium leading-7 text-[var(--mn-text-muted)]">{t(locale, "page.placeholderDescription")}</p>
       </article>
     ) : children.map((item) => (
-      <a href={localizePath(item.path, locale)} class="group relative rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface-strong)] p-6 shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:bg-[var(--mn-cream-deep)]">
+      <a href={localizePath(item.path, locale)} class="mn-list-card group relative rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface-strong)] p-6 shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:bg-[var(--mn-cream-deep)]">
         <h2 class="text-lg font-black text-[var(--mn-text)] group-hover:text-[var(--mn-accent-deep)]">{t(locale, item.labelKey)}</h2>
         <p class="mt-2 text-sm font-medium leading-7 text-[var(--mn-text-muted)]">{t(locale, item.seo.descriptionKey)}</p>
         <span class="mt-5 inline-flex items-center gap-2 rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-accent-soft)] px-4 py-1.5 text-sm font-black text-[var(--mn-accent-deep)] shadow-[var(--mn-shadow-stamp-sm)]">

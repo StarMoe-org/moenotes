@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "./tokens.css";
 @import "./themes.css";
+@import "./components.css";
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
@@ -21,8 +22,11 @@ body {
   margin: 0;
   background-color: var(--mn-bg);
   background-image:
-    radial-gradient(circle at 1px 1px, var(--mn-dot-ink) 1px, transparent 0);
-  background-size: 28px 28px;
+    radial-gradient(ellipse at 85% 5%, color-mix(in srgb, var(--mn-pink) 25%, transparent), transparent 48%),
+    radial-gradient(ellipse at 10% 45%, color-mix(in srgb, var(--mn-cyan) 19%, transparent), transparent 55%),
+    radial-gradient(circle at 17px 31px, var(--mn-dot-ink) 1px, transparent 1.6px),
+    radial-gradient(circle at 71px 83px, var(--mn-dot-ink) .7px, transparent 1.4px);
+  background-size: 100% 100%, 100% 100%, 137px 173px, 211px 257px;
 }
 
 ::selection {
@@ -33,7 +37,7 @@ body {
 .mn-glass,
 .mn-paper {
   position: relative;
-  border: 1.5px solid var(--mn-border);
+  border: 1px solid var(--mn-border);
   background: var(--mn-glass);
   box-shadow: var(--mn-shadow);
   backdrop-filter: none;
@@ -42,7 +46,7 @@ body {
 
 .mn-card,
 .mn-sticker {
-  border: 1.5px solid var(--mn-border);
+  border: 1px solid var(--mn-border);
   background: var(--mn-paper);
   box-shadow: var(--mn-shadow-stamp-lg);
   border-radius: 1.5rem;
@@ -52,17 +56,17 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1.5px solid var(--mn-border);
+  border: 1px solid var(--mn-border);
   background: var(--mn-accent-deep);
-  color: var(--mn-paper);
+  color: var(--mn-bg);
   box-shadow: var(--mn-shadow-stamp-sm);
   font-family: var(--mn-font-display);
   letter-spacing: 0.06em;
   border-radius: 9999px;
 }
 
-/* ── Stamp press interaction (circular / square buttons) ──────
- * Hover: shift right-down + shadow shrink  — simulates pressing into paper.
+/* ── Shared button interaction (legacy class names) ──────
+ * Sirius uses a subtle lift and a soft accent glow.
  * Pair with resting shadow: --mn-shadow-stamp (use .mn-stamp-press)
  *                          or --mn-shadow-stamp-lg (use .mn-stamp-press-lg)
  * ─────────────────────────────────────────────────────────── */
@@ -97,32 +101,6 @@ body {
   outline-color: var(--mn-accent);
 }
 
-.mn-halftone {
-  background-image: radial-gradient(currentColor 1.2px, transparent 1.5px);
-  background-size: 8px 8px;
-}
-
-.mn-staff-bg {
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent 12px,
-    color-mix(in oklab, var(--mn-border) 7%, transparent) 12px,
-    color-mix(in oklab, var(--mn-border) 7%, transparent) 14px
-  );
-  background-size: 100% 70px;
-}
-
-.mn-stripes-warm {
-  background-image: repeating-linear-gradient(
-    45deg,
-    var(--mn-accent) 0,
-    var(--mn-accent) 6px,
-    var(--mn-amber) 6px,
-    var(--mn-amber) 12px
-  );
-}
-
 .mn-stripes-cream {
   background-image: repeating-linear-gradient(
     45deg,
@@ -133,40 +111,7 @@ body {
   );
 }
 
-.mn-tape::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: -10px;
-  z-index: 1;
-  width: 70px;
-  height: 18px;
-  border-left: 1px dashed var(--mn-tape-edge);
-  border-right: 1px dashed var(--mn-tape-edge);
-  background: color-mix(in oklab, var(--mn-yellow) 75%, transparent);
-  box-shadow: 0 1px 2px var(--mn-tape-shadow);
-  transform: translateX(-50%) rotate(-3deg);
-}
-
-.mn-hand-underline {
-  --mn-hand-underline-svg: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 8' preserveAspectRatio='none'><path d='M0 4 Q 25 0, 50 4 T 100 4' stroke='black' stroke-width='2' fill='none' stroke-linecap='round'/></svg>");
-  padding-bottom: 6px;
-  position: relative;
-}
-
-.mn-hand-underline::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 8px;
-  /* Theme-aware stroke color driven by accent token via mask */
-  background-color: var(--mn-accent);
-  -webkit-mask: var(--mn-hand-underline-svg) no-repeat 0 100% / 100% 8px;
-  mask: var(--mn-hand-underline-svg) no-repeat 0 100% / 100% 8px;
-  pointer-events: none;
-}
+.mn-heading-rule { display: inline-block; padding-bottom: 12px; border-bottom: 1px solid var(--mn-accent); }
 
 @keyframes mn-marquee {
   from { transform: translateX(0); }
@@ -175,15 +120,6 @@ body {
 
 .mn-marquee-track {
   animation: mn-marquee 32s linear infinite;
-}
-
-@keyframes mn-wobble {
-  0%, 100% { transform: rotate(-2deg); }
-  50% { transform: rotate(2deg); }
-}
-
-.mn-wobble:hover {
-  animation: mn-wobble 0.4s ease-in-out;
 }
 
 #content {
@@ -243,3 +179,202 @@ a:active {
   scrollbar-width: none;
 }
 
+
+/* Observatory surfaces; shared component classes remain stable. */
+#header-card, .mn-sidebar-frame {
+  background: var(--mn-glass);
+  border-width: 1px;
+  backdrop-filter: blur(18px);
+  border-radius: 20px;
+}
+.mn-card, .mn-sticker { border-radius: 18px; }
+.mn-stamp-press:hover, .mn-stamp-press-lg:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--mn-accent) 12%, transparent);
+}
+.mn-site-footer { border-top: 1px solid var(--mn-border); background: var(--mn-glass); }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* Frosted Sirius surfaces: blur the backdrop, never the content or artwork.
+   Dense artwork grids retain solid surfaces to avoid hundreds of blur layers. */
+.mn-glass, .mn-paper, #header-card, .mn-sidebar-frame,
+.mn-overlay-panel, .mn-popover-panel, .mn-system-tabs,
+.mn-system-header, .mn-system-section, .mn-glass-sample {
+  background: var(--mn-paper);
+  border-color: var(--mn-glass-border);
+  box-shadow: inset 0 1px 0 var(--mn-glass-highlight), var(--mn-glass-shadow);
+}
+.mn-overlay-panel { box-shadow: inset 0 1px 0 var(--mn-glass-highlight), var(--mn-overlay-shadow); }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .mn-glass, .mn-paper, #header-card, .mn-sidebar-frame,
+  .mn-overlay-panel, .mn-popover-panel, .mn-system-tabs,
+  .mn-system-header, .mn-system-section, .mn-glass-sample {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--mn-glass-highlight) 24%, transparent), transparent 48%), var(--mn-glass);
+    -webkit-backdrop-filter: blur(22px) saturate(135%);
+    backdrop-filter: blur(22px) saturate(135%);
+  }
+  /* Menus carry more pigment so small text stays readable over illustrations. */
+  .mn-popover-panel {
+    background: linear-gradient(var(--mn-glass), var(--mn-glass)), color-mix(in srgb, var(--mn-paper) 35%, transparent);
+  }
+}
+.mn-overlay-backdrop {
+  background: color-mix(in srgb, var(--mn-overlay-scrim) 78%, transparent);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+}
+.mn-overlay-heading { background: linear-gradient(110deg, color-mix(in srgb, var(--mn-cyan) 12%, transparent), color-mix(in srgb, var(--mn-pink) 6%, transparent)); }
+.mn-glass-stage {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--mn-border);
+  border-radius: 20px;
+  padding: 32px;
+  background: radial-gradient(circle at 18% 28%, var(--mn-cyan), transparent 45%), radial-gradient(circle at 84% 70%, var(--mn-pink), transparent 50%), var(--mn-cream-deep);
+}
+.mn-glass-stage::before {
+  content: "";
+  position: absolute;
+  width: 240px;
+  height: 100px;
+  left: 10%;
+  top: 24%;
+  border: 2px solid var(--mn-accent);
+  border-radius: 50%;
+  transform: rotate(-25deg);
+  pointer-events: none;
+}
+.mn-glass-sample { position: relative; max-width: 360px; margin: auto; padding: 24px; border: 1px solid var(--mn-glass-border); border-radius: 16px; }
+@media (prefers-reduced-transparency: reduce) {
+  .mn-glass, .mn-paper, #header-card, .mn-sidebar-frame,
+  .mn-overlay-panel, .mn-popover-panel, .mn-system-tabs,
+  .mn-system-header, .mn-system-section, .mn-glass-sample {
+    background: var(--mn-paper);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .mn-overlay-backdrop { background: var(--mn-overlay-scrim); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+
+/* ORBIT / SCORE — the signature's diagonal becomes the interface's direction.
+   A track locates you; a cut marks a destination; a star marks an active note. */
+:root {
+  --mn-orbit-cut: 18px;
+  --mn-orbit-night: rgba(129, 162, 211, .23);
+  --mn-orbit-light: #304e7e;
+  --mn-orbit-edge: rgba(101, 144, 202, .52);
+  --mn-orbit-heading: linear-gradient(168deg, rgba(159, 184, 223, .30) 70%, rgba(142, 180, 222, .42) 70.3%, rgba(188, 204, 231, .22) 72%);
+}
+html[data-theme="dark"] {
+  --mn-orbit-night: rgba(100, 148, 205, .24);
+  --mn-orbit-light: #d5eaff;
+  --mn-orbit-edge: rgba(152, 202, 240, .48);
+  --mn-orbit-heading: linear-gradient(168deg, rgba(92, 130, 180, .27) 70%, rgba(121, 174, 216, .38) 70.3%, rgba(84, 120, 163, .22) 72%);
+}
+.mn-brand { display: inline-block; position: relative; width: 156px; max-width: 100%; vertical-align: middle; flex-shrink: 0; }
+.mn-brand img { display: block; width: 100%; height: auto; }
+.mn-brand .mn-brand-starlight { display: none; }
+html[data-theme="dark"] .mn-brand .mn-brand-ink, .mn-brand.mn-brand-light .mn-brand-ink { display: none; }
+html[data-theme="dark"] .mn-brand .mn-brand-starlight, .mn-brand.mn-brand-light .mn-brand-starlight { display: block; }
+.mn-brand-shell { width: 148px; margin: -7px 0; }
+.mn-brand-sidebar { width: 160px; margin: -12px -7px; }
+.mn-brand-hero { width: 490px; max-width: 115%; margin: -30px -28px -28px; }
+.mn-brand-system { width: 220px; margin: -18px -16px 12px; }
+#header-card { border-radius: 3px 22px 3px 22px; border-bottom: 2px solid var(--mn-accent); }
+.mn-sidebar-frame { border-radius: 3px 22px 3px 22px; }
+.mn-orbit-nav { background-image: linear-gradient(174deg, transparent 110px, color-mix(in srgb, var(--mn-accent) 22%, transparent) 111px, transparent 112px); }
+.mn-orbit-nav a { position: relative; border-radius: 3px 12px 3px 12px; }
+.mn-orbit-nav a[aria-current="page"] {
+  color: var(--mn-orbit-light); background: var(--mn-orbit-night);
+  border-color: transparent; box-shadow: inset 3px 0 0 var(--mn-orbit-edge);
+}
+.mn-orbit-nav a[aria-current="page"]::after {
+  content: ""; width: 12px; height: 12px; margin-left: auto; flex-shrink: 0;
+  background: var(--mn-accent-deep); clip-path: polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);
+}
+.mn-orbit-nav a[aria-current="page"] > span:first-child { color: var(--mn-orbit-light); background: color-mix(in srgb, var(--mn-glass) 55%, transparent); box-shadow: none; }
+.mn-system-header, .mn-system-section, .mn-glass, .mn-paper,
+.mn-overlay-panel, .mn-popover-panel, .mn-glass-sample {
+  border-radius: 3px 24px 3px 24px;
+}
+.mn-overlay-panel { border-top: 2px solid var(--mn-accent); }
+.mn-overlay-heading {
+  color: var(--mn-orbit-light);
+  background: var(--mn-orbit-heading);
+  border-bottom: 1px solid var(--mn-orbit-edge);
+}
+.mn-overlay-heading :is(h2, span[id]) { color: var(--mn-orbit-light); }
+.mn-overlay-heading .mn-overlay-symbol { color: var(--mn-accent-deep); }
+.mn-overlay-heading button { background: var(--mn-glass); color: var(--mn-orbit-light); border-color: var(--mn-orbit-edge); border-radius: 2px 10px 2px 10px; }
+.mn-overlay-heading button:hover { background: var(--mn-accent-soft); color: var(--mn-accent-deep); }
+.mn-system-tabs { border-radius: 2px 14px 2px 14px; border-bottom: 2px solid var(--mn-accent); }
+.mn-system-tabs button, .mn-filter-chip, .mn-command-option { border-radius: 2px 12px 2px 12px; }
+.mn-system-tabs button[aria-pressed="true"], .mn-command-option[aria-selected="true"] {
+  background: var(--mn-orbit-night); color: var(--mn-orbit-light); border-color: var(--mn-orbit-edge);
+}
+.mn-command-option[aria-selected="true"] span { color: inherit; }
+.mn-system-header { border-left: 3px solid var(--mn-accent); }
+.mn-system-header::after { border-radius: 50%; transform: rotate(-12deg); width: 420px; height: 180px; top: -70px; right: -180px; }
+.mn-orbit-hero.sirius-hero { border-radius: 0; clip-path: polygon(0 0,calc(100% - 34px) 0,100% 34px,100% 100%,34px 100%,0 calc(100% - 34px)); border-top: 2px solid #a7d9ff; }
+.mn-orbit-entry.sirius-entry {
+  position: relative; border-radius: 2px 28px 2px 28px;
+  border-top: 2px solid var(--mn-accent);
+  background: linear-gradient(168deg, transparent 82%, color-mix(in srgb, var(--mn-accent) 9%, transparent) 82.3%), var(--mn-glass);
+}
+.mn-orbit-entry.sirius-entry:hover { transform: translate(3px,-4px); }
+.mn-orbit-entry .sirius-entry-icon { border-radius: 2px 12px 2px 12px; transform: rotate(-8deg); }
+.mn-orbit-entry .sirius-entry-icon svg { transform: rotate(8deg); }
+.mn-orbit-entry .sirius-entry-number { font-family: var(--mn-font-note); font-size: 20px; color: var(--mn-accent-deep); }
+.mn-orbit-entry .sirius-entry-bottom { border-top-style: solid; border-top-color: color-mix(in srgb,var(--mn-accent) 35%,transparent); }
+.mn-orbit-cta.sirius-cta { border-radius: 2px 14px 2px 14px; box-shadow: 4px 4px 0 #9ccfff30; border-bottom: 2px solid white; }
+.mn-orbit-cta.sirius-cta:hover { transform: translate(2px,-2px); box-shadow: 6px 6px 0 #9ccfff25; }
+@media (max-width: 600px) {
+  .mn-brand-shell { width: 112px; margin: -4px 0; }
+  .mn-brand-hero { width: 350px; margin: -15px -20px -18px; }
+  .mn-orbit-hero.sirius-hero { clip-path: polygon(0 0,calc(100% - 22px) 0,100% 22px,100% 100%,22px 100%,0 calc(100% - 22px)); }
+}
+
+/* Compact route heading: typography carries the hierarchy, not another panel. */
+.mn-page-heading { margin: 0 0 26px; padding: 10px 2px 19px; border-bottom: 1px solid var(--mn-glass-border); }
+.mn-page-heading-title { display: flex; align-items: center; gap: 13px; }
+.mn-page-heading h1 { min-width: 0; margin: 0; font-family: var(--mn-font-display); font-size: clamp(27px, 2.8vw, 38px); font-weight: 500; line-height: 1.25; letter-spacing: -.035em; color: var(--mn-text); overflow-wrap: anywhere; }
+.mn-page-heading-star { width: 23px; height: 23px; flex-shrink: 0; color: var(--mn-accent-deep); }
+.mn-page-heading-track { flex: 1; min-width: 28px; height: 10px; border-top: 1px solid var(--mn-glass-border); transform: skewY(-3deg); transform-origin: right; }
+.mn-page-heading p { max-width: 76ch; margin: 10px 0 0 36px; color: var(--mn-text-muted); font-size: 13px; line-height: 1.85; }
+/* Shared list silhouette: straight / arc / straight / arc, derived from orbit panels.
+   No clip-path: game rarity frames, corner badges and focus outlines remain intact. */
+.mn-list-card {
+  position: relative;
+  border: 1px solid var(--mn-glass-border);
+  border-radius: 3px 24px 3px 24px;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--mn-accent) 7%, transparent);
+  background-image: linear-gradient(168deg, transparent 87%, color-mix(in srgb, var(--mn-accent) 7%, transparent) 87.3%);
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.mn-list-card::after {
+  content: ""; position: absolute; bottom: 0; right: 0; width: 28px; height: 2px;
+  background: var(--mn-accent); opacity: .65; pointer-events: none;
+}
+.mn-list-card:focus-visible { outline: 2px solid var(--mn-accent); outline-offset: 3px; }
+@media (hover: hover) {
+  .mn-list-card:hover { transform: translate(2px,-3px); border-color: var(--mn-accent); box-shadow: -3px 5px 0 color-mix(in srgb, var(--mn-accent) 13%, transparent), 0 10px 24px color-mix(in srgb, var(--mn-accent) 10%, transparent); }
+}
+.mn-list-card:active { transform: translate(1px,-1px); }
+.mn-list-card-row { border-radius: 3px 18px 3px 18px; }
+.mn-list-group { border-radius: 3px 24px 3px 24px; }
+.mn-list-caption { border-radius: 2px 14px 2px 14px; }
+.mn-list-card .border-dashed { border-style: solid; border-color: var(--mn-glass-border); }
+@media (max-width: 600px) {
+  .mn-page-heading { padding-top: 14px; padding-left: 24px; margin-bottom: 20px; }
+  .mn-page-heading-title { gap: 9px; }
+  .mn-page-heading p { margin-left: 0; font-size: 12px; }
+  .mn-list-card { border-radius: 3px 18px 3px 18px; }
+}
+@media (prefers-reduced-motion: reduce) { .mn-list-card:hover, .mn-list-card:active { transform: none; } }

@@ -1,6 +1,7 @@
 import type { MessageTree } from "@/i18n/translate";
 
 export const enUS = {
+  notFound: {"metaTitle": "Page not found", "title": "This signal drifted beyond our star chart.", "description": "The address may have changed, or this page is still being prepared. Return home to keep exploring.", "note": "If this link should work, send it to the developers so we can find our way back.", "home": "Back to home", "feedback": "Report this link"},
   nav: {
     home: "Home",
     groups: { database: "Database", story: "Story", tools: "Tools", community: "About" },
@@ -32,7 +33,7 @@ export const enUS = {
   actions: { close: "Close", clearCache: "Clear cache", refresh: "Refresh", open: "Open", viewGroup: "View group" },
   home: {
     title: "Moenotes",
-    description: "Welcome to the BanG Dream! Our Notes database project by StarMoe. We use a warm paper aesthetic and hand-crafted design to showcase the girls' music and stories.",
+    description: "A universe of music and stories. Explore the characters, cards, and melodies of BanG Dream! Our Notes with StarMoe — and find your brightest star.",
     ctaPrimary: "Enter Database",
     featuresTitle: "Explore Database",
     features: {
@@ -271,15 +272,16 @@ export const enUS = {
     designSystem: { title: "Design System", description: "Moenotes visual language and component library reference." },
   },
   designSystem: {
+    sirius: {"stars": "Starfield", "nebula": "Nebula", "orbit": "Orbits", "grid": "Coordinates", "card": "Content panel", "raised": "Raised panel", "surface": "Quiet surface"},
     title: "Design System",
-    subtitle: "Moenotes visual language reference — colors, typography, components, and interactions.",
+    subtitle: "Orbit / Score: the signature sets the direction, orbital cuts shape the panels, and starlight marks your place.",
     sections: { colors: "Colors", typography: "Typography", components: "Components", modals: "Modals", filters: "Filters", animations: "Animations" },
-    colors: { accent: "Accent", "accent-deep": "Accent Deep", "accent-soft": "Accent Soft", pink: "Pink", "pink-soft": "Pink Soft", cyan: "Cyan", amber: "Amber", peach: "Peach", mint: "Mint", "mint-deep": "Mint Deep", "mint-soft": "Mint Soft", yellow: "Yellow", rose: "Rose", "cream-deep": "Cream Deep", "ink-soft": "Ink Soft", paper: "Paper", background: "Background", surface: "Surface", border: "Border", text: "Text", muted: "Muted" },
-    typography: { display: "Display Font", body: "Body Font", hand: "Hand Font", note: "Note Font" },
-    components: { buttons: "Buttons", inputs: "Inputs", badges: "Badges & Stamps", cards: "Cards", select: "Select", checkbox: "Checkbox", textures: "Textures", primary: "Primary", outline: "Outline", ghost: "Ghost", stamp: "Stamp", selectPlaceholder: "Choose option...", optA: "Option A", optB: "Option B", optC: "Option C" },
+    colors: { accent: "Sirius blue", "accent-deep": "Accent Deep", "accent-soft": "Accent Soft", pink: "Nebula violet", "pink-soft": "Nebula mist", cyan: "Ice blue", amber: "Amber", peach: "Peach", mint: "Mint", "mint-deep": "Mint Deep", "mint-soft": "Mint Soft", yellow: "Yellow", rose: "Rose", "cream-deep": "Layer", "ink-soft": "Secondary ink", paper: "Panel", background: "Background", surface: "Surface", border: "Border", text: "Text", muted: "Muted" },
+    typography: { display: "Display Font", body: "Body Font", hand: "Label font", note: "Coordinate font" },
+    components: { buttons: "Buttons", inputs: "Inputs", badges: "Badges", cards: "Cards", select: "Select", checkbox: "Checkbox", textures: "Textures", primary: "Primary", outline: "Outline", ghost: "Ghost", stamp: "Badge", selectPlaceholder: "Choose option...", optA: "Option A", optB: "Option B", optC: "Option C" },
     modals: { openSm: "Small Modal", openMd: "Medium Modal", openLg: "Large Modal", openXl: "Extra Large Modal", title: "Modal Example", body: "This is a demo of the generic modal component. Supports multiple size variants.", currentSize: "Current size", copyModal: "Copy Modal", copyModalTitle: "Image Preview", copy: "Copy", save: "Save" },
     filters: { title: "Filter Demo", searchPlaceholder: "Search example...", category: "Category", all: "All", typeA: "Type A", typeB: "Type B", sort: "Sort", sortBy: "Sort by", language: "Language", name: "Name", date: "Date", level: "Level", onlyComplete: "Completed only", reset: "Reset" },
-    animations: { spring: "Spring Interaction", springDesc: "Hover lift + rotate — elastic spring transition", tap: "Tap Feedback", tapDesc: "Click scale — haptic feedback simulation", stagger: "Stagger Animation", staggerDesc: "Staggered fade-in — list items appear in sequence", wobble: "Wobble Effect", wobbleDesc: "Hover wobble — stamp/sticker style" },
+    animations: { spring: "Spring Interaction", springDesc: "Subtle lift with a soft spring transition", tap: "Tap Feedback", tapDesc: "Click scale — haptic feedback simulation", stagger: "Stagger Animation", staggerDesc: "Staggered fade-in — list items appear in sequence", wobble: "Starlight glow", wobbleDesc: "A soft blue glow highlights the hovered surface." },
   },
   filter: { title: "Filter", search: "Search", sort: "Sort", reset: "Reset filters", collapse: "Collapse", expand: "Expand", count: "{filtered} / {total}", openQuickFilter: "Open filter", drawerHintTitle: "Filters moved to the side", drawerHintBody: "Click the left tab to expand or collapse filters anytime.", drawerHintDismiss: "Got it" },
   modal: { close: "Close" },
@@ -350,7 +352,7 @@ export const enUS = {
   about: {
     teamIntro: "we are a small team from <a href=\"https://github.com/moe-sekai\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-[var(--mn-accent-deep)] underline decoration-2 decoration-[var(--mn-accent)] underline-offset-4 hover:text-[var(--mn-accent)]\">StarMoe</a>. During the two years of building <em>MoeSekai</em>, we have been thinking: what should a good wiki actually look like?",
     paragraph1: "We have seen too many <strong>geeky tables</strong> and <strong>monotonous grids</strong>. The data is accurate, but it doesn't feel like the world that moved us to tears. So this time, for the new BanG Dream! project \"Our Notes\", we decided to translate it into a different language — <span class=\"bg-[var(--mn-yellow)]/40 px-1 py-0.5 font-bold border-b border-[var(--mn-accent)]/40\">like a notebook that can be flipped through, written on, and treasured.</span>",
-    paragraph2: "Instead of cold blue gradients and glowing panels, we chose cream paper, ink-black text, sunset orange, and highlighter yellow. Because youth is not a color palette generated by an algorithm; youth is that page repeatedly scribbled on, yet shining brighter with each rewrite.",
+    paragraph2: "Inspired by Sirius, blue-white starlight and violet nebulae connect every page. Clear typography and quiet surfaces leave room for the music, the characters, and their stories.",
     badgeMe: "Me",
     signature: "Exmeaning",
     specsTitle: "Project Specifications & Licensing",

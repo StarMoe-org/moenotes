@@ -120,7 +120,7 @@ function MainStoryGroups({ stories, locale }: { stories: StoryViewModel[]; local
     const episodes = stories.filter((story) => story.chapterId === chapter.chapterId).sort((a, b) => (a.episodeNumber ?? 0) - (b.episodeNumber ?? 0));
     const chapterAsset = chapter.chapterBanner || chapter.chapterImage;
     const chapterImageUrl = chapterAsset ? getAssetUrl({ path: `Story/${chapter.chapterBanner ? "Banner" : "Image"}/Chapter/${chapterAsset}.png`, type: "raw" }) : "";
-    return <section key={chapter.chapterId} className="overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]">
+    return <section key={chapter.chapterId} className="mn-list-group overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]">
       <div className="flex flex-col">
         {chapterImageUrl && (
           <div className="w-full aspect-[21/9] sm:aspect-[24/9] md:aspect-[3/1] bg-[var(--mn-cream-deep)] border-b-[1.5px] border-[var(--mn-border)] overflow-hidden">
@@ -135,7 +135,7 @@ function MainStoryGroups({ stories, locale }: { stories: StoryViewModel[]; local
         </div>
       </div>
       <div className="grid gap-3 border-t-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] p-4 sm:grid-cols-2 lg:grid-cols-3 sm:p-6">
-        {episodes.map((episode) => <a key={episode.id} href={localizePath(`/story/${episode.advId}`, locale)} className="group flex items-center gap-4 rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)] p-3 shadow-[var(--mn-shadow-stamp-sm)] transition hover:-translate-y-0.5 hover:shadow-[var(--mn-shadow-stamp)]">
+        {episodes.map((episode) => <a key={episode.id} href={localizePath(`/story/${episode.advId}`, locale)} className="mn-list-card mn-list-card-row group flex items-center gap-4 rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)] p-3 shadow-[var(--mn-shadow-stamp-sm)] transition hover:-translate-y-0.5 hover:shadow-[var(--mn-shadow-stamp)]">
           <img src={getAssetUrl({ path: `Story/Banner/Episode/${episode.assets.banner}.png`, type: "raw" })} alt="" className="h-16 w-28 shrink-0 rounded-xl object-cover" loading="lazy" />
           <div className="min-w-0"><p className="text-[11px] font-black text-[var(--mn-accent)]">EPISODE {episode.episodeNumber}</p><h3 className="mt-1 line-clamp-2 text-sm font-black text-[var(--mn-text)]">{episode.title}</h3></div>
         </a>)}
@@ -149,7 +149,7 @@ function StoryCard({ story, locale, onOpen }: { story: StoryViewModel; locale: A
   const image = hasCover ? (story.assets.banner || story.assets.image) : "";
   const imageUrl = image ? getAssetUrl({ path: `Story/Banner/${story.assets.banner ? "Episode" : "Chapter"}/${image}.png`, type: "raw" }) : "";
 
-  const className = "group block w-full overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] text-left shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)]";
+  const className = "mn-list-card group block w-full overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] text-left shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)]";
   const content = <>
     {hasCover && (
       <div className="aspect-[2/1] bg-[var(--mn-cream-deep)] border-b-[1.5px] border-[var(--mn-border)] overflow-hidden">

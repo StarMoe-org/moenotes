@@ -46,7 +46,7 @@ export function LevelControl({
           type="button"
           disabled={level >= limit}
           onClick={() => update(limit)}
-          className="mn-focus shrink-0 rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-3 py-1 text-xs font-bold text-[var(--mn-accent-deep)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:bg-[var(--mn-accent-soft)] disabled:cursor-default disabled:opacity-40 disabled:hover:bg-[var(--mn-paper)]"
+          className="mn-focus shrink-0 rounded-xl border border-[var(--mn-border)] bg-[var(--mn-paper)] px-3 py-1 text-xs font-bold text-[var(--mn-accent-deep)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:bg-[var(--mn-accent-soft)] disabled:cursor-default disabled:opacity-40 disabled:hover:bg-[var(--mn-paper)]"
         >
           {t(locale, "cards.growth.max")}
         </button>
@@ -71,14 +71,14 @@ export function StepControl({
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
       <span className="text-sm font-semibold text-[var(--mn-text-muted)]">{label}</span>
-      <div role="group" aria-label={label} className="flex gap-1 rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface-strong)] p-1 shadow-[var(--mn-shadow-stamp-sm)]">
+      <div role="group" aria-label={label} className="flex gap-1 rounded-xl border border-[var(--mn-border)] bg-[var(--mn-surface-strong)] p-1 shadow-[var(--mn-shadow-stamp-sm)]">
         {options.map((option, index) => (
           <button
             key={option}
             type="button"
             onClick={() => onChange(option)}
             aria-pressed={value === option}
-            className={`mn-focus min-w-9 rounded-full px-2.5 py-1 font-mono text-xs font-bold transition ${
+            className={`mn-focus min-w-9 rounded-xl px-2.5 py-1 font-mono text-xs font-bold transition ${
               value === option
                 ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]"
                 : "text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)]"
@@ -99,7 +99,7 @@ function RoundButton({ label, disabled, onClick, children }: { label: string; di
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className="mn-focus grid h-8 w-8 shrink-0 place-items-center rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:text-[var(--mn-text)] disabled:cursor-default disabled:opacity-40"
+      className="mn-focus grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:text-[var(--mn-text)] disabled:cursor-default disabled:opacity-40"
     >
       <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
         {children}

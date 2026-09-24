@@ -1,6 +1,7 @@
 import type { MessageTree } from "@/i18n/translate";
 
 export const jaJP = {
+  notFound: {"metaTitle": "ページが見つかりません", "title": "この信号は星図の外へ。", "description": "アドレスが変わったか、ページを準備中です。ホームに戻って探索を続けましょう。", "note": "有効なリンクのはずであれば、開発者にお知らせください。", "home": "ホームに戻る", "feedback": "リンクを報告"},
   nav: {
     home: "ホーム",
     groups: {
@@ -54,7 +55,7 @@ export const jaJP = {
   actions: { close: "閉じる", clearCache: "キャッシュ削除", refresh: "更新", open: "開く", viewGroup: "グループを見る" },
   home: {
     title: "Moenotes",
-    description: "StarMoe チームによる BanG Dream! の新プロジェクト「Our Notes」のデータベースプロジェクトへようこそ。温かみのある紙の質感と手作り感のあるデザインで、彼女たちの音楽と物語をお届けします。",
+    description: "星の光をたどって、私たちの音に出会う。StarMoe が届ける BanG Dream! Our Notes データベースで、キャラクター、カード、楽曲、そして輝く物語を見つけよう。",
     ctaPrimary: "データベースに入る",
     featuresTitle: "データベースを探索",
     features: {
@@ -293,15 +294,16 @@ export const jaJP = {
       designSystem: { title: "デザインシステム参考", description: "Moenotes のビジュアル言語とコンポーネントライブラリのリファレンスです。" },
   },
   designSystem: {
+    sirius: {"stars": "星空", "nebula": "星雲", "orbit": "軌道", "grid": "座標グリッド", "card": "コンテンツパネル", "raised": "浮遊パネル", "surface": "ベースパネル"},
     title: "デザインシステム",
-    subtitle: "Moenotes ビジュアル言語リファレンス —— カラー、タイポグラフィ、コンポーネント、インタラクション。",
+    subtitle: "星の軌道に響く音符。サインの流れを画面の方向に、軌道の断面をパネルの形に、星の光を現在地の印に。",
     sections: { colors: "カラー", typography: "タイポグラフィ", components: "コンポーネント", modals: "モーダル", filters: "フィルター", animations: "アニメーション" },
-    colors: { accent: "アクセント", "accent-deep": "ディープアクセント", "accent-soft": "ソフトアクセント", pink: "ピンク", "pink-soft": "ソフトピンク", cyan: "シアン", amber: "アンバー", peach: "ピーチ", mint: "ミント", "mint-deep": "ディープミント", "mint-soft": "ソフトミント", yellow: "イエロー", rose: "ローズ", "cream-deep": "ディープクリーム", "ink-soft": "ソフトインク", paper: "用紙", background: "背景", surface: "サーフェス", border: "ボーダー", text: "テキスト", muted: "ミュート" },
-    typography: { display: "ディスプレイ", body: "本文", hand: "手書き", note: "ノート" },
-    components: { buttons: "ボタン", inputs: "入力", badges: "バッジ＆スタンプ", cards: "カード", select: "セレクト", checkbox: "チェックボックス", textures: "テクスチャ", primary: "プライマリ", outline: "アウトライン", ghost: "ゴースト", stamp: "スタンプ", selectPlaceholder: "選択してください...", optA: "オプション A", optB: "オプション B", optC: "オプション C" },
+    colors: { accent: "シリウスブルー", "accent-deep": "ディープアクセント", "accent-soft": "ソフトアクセント", pink: "星雲パープル", "pink-soft": "星雲の霞", cyan: "アイスブルー", amber: "アンバー", peach: "ピーチ", mint: "ミント", "mint-deep": "ディープミント", "mint-soft": "ソフトミント", yellow: "イエロー", rose: "ローズ", "cream-deep": "レイヤー", "ink-soft": "補助文字色", paper: "パネル", background: "背景", surface: "サーフェス", border: "ボーダー", text: "テキスト", muted: "ミュート" },
+    typography: { display: "ディスプレイ", body: "本文", hand: "ラベル書体", note: "座標書体" },
+    components: { buttons: "ボタン", inputs: "入力", badges: "バッジ", cards: "カード", select: "セレクト", checkbox: "チェックボックス", textures: "テクスチャ", primary: "プライマリ", outline: "アウトライン", ghost: "ゴースト", stamp: "バッジ", selectPlaceholder: "選択してください...", optA: "オプション A", optB: "オプション B", optC: "オプション C" },
     modals: { openSm: "小モーダル", openMd: "中モーダル", openLg: "大モーダル", openXl: "特大モーダル", title: "モーダル例", body: "汎用モーダルコンポーネントのデモです。複数のサイズバリアントに対応。", currentSize: "現在のサイズ", copyModal: "コピーモーダル", copyModalTitle: "画像プレビュー", copy: "コピー", save: "保存" },
     filters: { title: "フィルターデモ", searchPlaceholder: "検索例...", category: "カテゴリ", all: "すべて", typeA: "タイプ A", typeB: "タイプ B", sort: "ソート", sortBy: "並び順", language: "言語", name: "名前", date: "日付", level: "レベル", onlyComplete: "完了のみ", reset: "リセット" },
-    animations: { spring: "スプリング", springDesc: "ホバーで浮上＋回転 —— 弾性バネトランジション", tap: "タップフィードバック", tapDesc: "クリックでスケール —— 触覚フィードバック", stagger: "スタッガー", staggerDesc: "順次フェードイン —— リスト項目が順番に出現", wobble: "ワブル", wobbleDesc: "ホバーで揺れ —— スタンプ/ステッカー風" },
+    animations: { spring: "スプリング", springDesc: "わずかな浮上と穏やかなスプリング遷移", tap: "タップフィードバック", tapDesc: "クリックでスケール —— 触覚フィードバック", stagger: "スタッガー", staggerDesc: "順次フェードイン —— リスト項目が順番に出現", wobble: "星の輝き", wobbleDesc: "ホバー時に淡い青の光でパネルを強調します。" },
   },
   filter: { title: "フィルター", search: "検索", sort: "ソート", reset: "フィルターをリセット", collapse: "折りたたむ", expand: "展開", count: "{filtered} / {total}", openQuickFilter: "フィルターを開く", drawerHintTitle: "フィルターがサイドに移動しました", drawerHintBody: "左のタブをクリックして、いつでもフィルターを展開または折りたたむことができます。", drawerHintDismiss: "了解" },
   modal: { close: "閉じる" },
@@ -372,7 +374,7 @@ export const jaJP = {
   about: {
     teamIntro: "私たちは <a href=\"https://github.com/moe-sekai\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-[var(--mn-accent-deep)] underline decoration-2 decoration-[var(--mn-accent)] underline-offset-4 hover:text-[var(--mn-accent)]\">StarMoe</a> から来た小さなチームです。<em>MoeSekai</em> を作ってからの2年間、私たちは考え続けてきました：良いWikiとは、一体どのような形であるべきなのか？",
     paragraph1: "私たちは、あまりにも多くの<strong>ギーク的な表</strong>や、<strong>何年も変わらないグリッド</strong>を見てきました。データは正確ですが、私たちが涙したあの世界とは似ても似つかないものでした。だからこそ今回、BanG Dream! の新しいプロジェクト「Our Notes」において、私たちは別の言葉で表現することを決意しました——<span class=\"bg-[var(--mn-yellow)]/40 px-1 py-0.5 font-bold border-b border-[var(--mn-accent)]/40\">めくられ、書き込まれ、大切にしまわれるノートのように。</span>",
-    paragraph2: "青いグラデーションや冷たい発光パーツはやめ、クリーム色の紙、墨色の文字、夕日のオレンジ、そして蛍光ペンの黄色を選びました。青春とはアルゴリズムが生成したカラーパレットではなく、何度も書き直され、そのたびに輝きを増していくあの1ページだからです。",
+    paragraph2: "シリウスをモチーフに、青白い星の光と淡い紫の星雲でページをつなぎます。読みやすい文字と落ち着いたパネルが、少女たちの音楽と物語を引き立てます。",
     badgeMe: "我",
     signature: "東雪",
     specsTitle: "ライセンスと技術スタック",

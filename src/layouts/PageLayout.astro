@@ -11,13 +11,12 @@ interface Props {
 const { locale, titleKey, descriptionKey } = Astro.props;
 ---
 
-<section class="mb-8">
-  <div class="mn-stamp mb-4 rounded-full px-4 py-1.5 text-xs uppercase">
-    Moenotes
+<header class="mn-page-heading">
+  <div class="mn-page-heading-title">
+    <svg class="mn-page-heading-star" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m12 2 2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z" stroke="currentColor" stroke-width="1.2"/></svg>
+    <h1>{t(locale, titleKey)}</h1>
+    <span class="mn-page-heading-track" aria-hidden="true"></span>
   </div>
-  <h1 class="max-w-4xl font-[var(--mn-font-display)] text-4xl leading-[1.02] tracking-tight text-[var(--mn-text)] sm:text-6xl">
-    <span class="mn-hand-underline">{t(locale, titleKey)}</span>
-  </h1>
-  <p class="mt-5 max-w-3xl text-base font-medium leading-8 text-[var(--mn-text-muted)]">{t(locale, descriptionKey)}</p>
-</section>
+  <p>{t(locale, descriptionKey)}</p>
+</header>
 <slot />

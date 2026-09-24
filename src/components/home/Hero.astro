@@ -1,4 +1,5 @@
 ---
+import BrandLogo from "@/components/shared/BrandLogo";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
@@ -15,107 +16,154 @@ const features = [
   {
     id: "characters",
     routeId: "characters",
-    color: "pink",
     // Users icon
     iconPath: `<circle cx="9" cy="8" r="3"/><path d="M3.5 20c.3-4 2.1-6 5.5-6s5.2 2 5.5 6M15 5.5a3 3 0 0 1 0 5.8M16 14c2.8.4 4.2 2.3 4.5 5"/>`
   },
   {
     id: "cards",
     routeId: "cards",
-    color: "cyan",
     // Cards icon
     iconPath: `<rect x="5" y="3" width="14" height="18" rx="2.5"/><circle cx="12" cy="9" r="2.5"/><path d="M8.5 17c.7-2.3 1.9-3.5 3.5-3.5s2.8 1.2 3.5 3.5"/>`
   },
   {
     id: "supportCards",
     routeId: "support-cards",
-    color: "amber",
     // Support cards icon
     iconPath: `<rect x="7" y="3" width="12" height="16" rx="2"/><path d="M7 6H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2"/><path d="m13 7 .9 2.1L16 10l-2.1.9L13 13l-.9-2.1L10 10l2.1-.9z"/>`
   },
   {
     id: "music",
     routeId: "music",
-    color: "mint",
     // Music icon
     iconPath: `<path d="M9 18V6l10-2v12"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/>`
   },
   {
     id: "items",
     routeId: "items",
-    color: "yellow",
     // Archive icon
     iconPath: `<path d="M4 7h16v14H4zM3 3h18v4H3z"/><path d="M9 11h6"/>`
   },
   {
     id: "assetViewer",
     routeId: "asset-viewer",
-    color: "accent",
     // Folder open icon
     iconPath: `<path d="M3 6h7l2 2h9l-2 11H5z"/>`
   }
 ] as const;
 ---
 
-<section class="relative overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-6 shadow-[var(--mn-shadow)] sm:p-10 lg:p-12">
-  <div class="mn-halftone absolute right-6 top-6 h-32 w-32 text-[var(--mn-accent)] opacity-10"></div>
-  <div class="relative max-w-4xl">
-    <h1 class="max-w-3xl font-[var(--mn-font-display)] text-5xl leading-[0.95] tracking-tight text-[var(--mn-text)] sm:text-7xl lg:text-8xl">
-      <span class="mn-hand-underline">{t(locale, "home.title")}</span>
-    </h1>
-    <p class="mt-6 max-w-2xl text-base font-medium leading-8 text-[var(--mn-text-muted)]">{t(locale, "home.description")}</p>
-    <div class="mt-8 flex flex-wrap gap-3">
-      <a href={localizePath(databasePath, locale)} class="mn-stamp mn-stamp-press rounded-full px-6 py-3.5 text-sm font-black shadow-[var(--mn-shadow-stamp)]">{t(locale, "home.ctaPrimary")}</a>
-    </div>
+<section class="sirius-hero mn-orbit-hero" aria-labelledby="home-title">
+  <div class="sirius-stars" aria-hidden="true">
+    {Array.from({ length: 65 }, (_, i) => <i style={`--x:${(i * 43 + 7) % 100}%;--y:${(i * 29 + 11) % 100}%;--size:${i % 5 === 0 ? 3 : 1.5}px;--delay:${i % 7}s`} />)}
+  </div>
+  <div class="sirius-art" aria-hidden="true">
+    <svg viewBox="0 0 600 600" fill="none">
+      <defs>
+        <radialGradient id="sirius-halo"><stop stop-color="#d5f3ff" stop-opacity=".8"/><stop offset=".12" stop-color="#89ceff" stop-opacity=".4"/><stop offset="1" stop-color="#78a0ff" stop-opacity="0"/></radialGradient>
+        <linearGradient id="sirius-orbit"><stop stop-color="#bdacff" stop-opacity=".05"/><stop offset=".5" stop-color="#bceaff" stop-opacity=".8"/><stop offset="1" stop-color="#bdacff" stop-opacity=".12"/></linearGradient>
+      </defs>
+      <circle cx="300" cy="300" r="230" fill="url(#sirius-halo)"/>
+      <g stroke="url(#sirius-orbit)">
+        <ellipse cx="300" cy="300" rx="264" ry="107" transform="rotate(-38 300 300)"/>
+        <ellipse cx="300" cy="300" rx="232" ry="170" transform="rotate(-38 300 300)"/>
+        <circle cx="300" cy="300" r="207" stroke-dasharray="2 9" opacity=".5"/>
+        <path d="M300 30v540M30 300h540" opacity=".2"/>
+      </g>
+      <path d="m300 169 8 120 123 11-123 8-8 123-11-123-120-8 120-11z" fill="#d8f2ff" opacity=".85"/>
+      <circle cx="300" cy="300" r="9" fill="white"/>
+      <circle cx="471" cy="139" r="4" fill="#d6caff"/>
+      <circle cx="114" cy="405" r="3" fill="#b4e6ff"/>
+      <path d="m431 366 3 11 11 3-11 3-3 11-3-11-11-3 11-3z" fill="#e7dfff"/>
+    </svg>
+    <span class="sirius-label">α CANIS MAJORIS <span> / </span> SIRIUS</span>
+  </div>
+  <div class="sirius-copy">
+    <p class="sirius-eyebrow"><span></span> BANG DREAM! OUR NOTES</p>
+    <h1 id="home-title"><BrandLogo light className="mn-brand-hero" /></h1>
+    <div class="sirius-rule" aria-hidden="true"></div>
+    <p class="sirius-description">{t(locale, "home.description")}</p>
+    <a href={localizePath(databasePath, locale)} class="sirius-cta mn-orbit-cta mn-focus">{t(locale, "home.ctaPrimary")}<span aria-hidden="true">↗</span></a>
+  </div>
+  <div class="sirius-hero-footer" aria-hidden="true"><span>01 / SIRIUS</span><span class="sirius-signal"></span><span>OUR NOTES, AMONG THE STARS</span></div>
+</section>
+
+<section class="sirius-index" aria-labelledby="index-title">
+  <div class="sirius-index-heading">
+    <div><p class="sirius-index-kicker">MOENOTES / INDEX</p><h2 id="index-title">{t(locale, "home.featuresTitle")}</h2></div>
+    <span class="sirius-index-line" aria-hidden="true"></span>
+    <span class="sirius-index-count" aria-hidden="true">01 — 06</span>
+  </div>
+  <div class="sirius-grid">
+    {features.map((feature, index) => (
+      <a href={localizePath(getRoutePathById(feature.routeId), locale)} class="sirius-entry mn-orbit-entry mn-focus">
+        <div class="sirius-entry-top">
+          <span class="sirius-entry-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={feature.iconPath} /></span>
+          <span class="sirius-entry-number" aria-hidden="true">0{index + 1}</span>
+        </div>
+        <h3>{t(locale, `home.features.${feature.id}`)}</h3>
+        <p>{t(locale, `home.features.${feature.id}Desc`)}</p>
+        <div class="sirius-entry-bottom"><span>{t(locale, "actions.open")}</span><span aria-hidden="true">↗</span></div>
+      </a>
+    ))}
   </div>
 </section>
 
-<section class="mt-12">
-  <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
-    <div>
-      <p class="font-[var(--mn-font-hand)] text-xl font-bold text-[var(--mn-accent-deep)]">MoeNotes Index</p>
-      <h2 class="font-[var(--mn-font-display)] text-3xl tracking-tight text-[var(--mn-text)] sm:text-5xl">{t(locale, "home.featuresTitle")}</h2>
-    </div>
-  </div>
-  
-  <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-    {features.map((feature) => {
-      const path = getRoutePathById(feature.routeId);
-      const colorClass = 
-        feature.color === "pink" ? "bg-[var(--mn-pink)]/25 text-[var(--mn-accent-deep)] border-[var(--mn-accent-deep)]/20" :
-        feature.color === "cyan" ? "bg-[var(--mn-cyan)]/25 text-[#1e5a75] border-[var(--mn-cyan)]/30" :
-        feature.color === "amber" ? "bg-[var(--mn-amber)]/25 text-[#7f5c22] border-[var(--mn-amber)]/30" :
-        feature.color === "mint" ? "bg-[var(--mn-mint)]/25 text-[var(--mn-mint-deep)] border-[var(--mn-mint-deep)]/20" :
-        feature.color === "yellow" ? "bg-[var(--mn-yellow)]/25 text-[#796414] border-[var(--mn-yellow)]/30" :
-        "bg-[var(--mn-accent)]/20 text-[var(--mn-accent-deep)] border-[var(--mn-accent)]/25";
-
-      return (
-        <a 
-          href={localizePath(path, locale)} 
-          class="mn-card mn-stamp-press-lg group flex flex-col justify-between p-6 transition-all duration-300 hover:border-[var(--mn-accent)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--mn-accent)]"
-        >
-          <div>
-            <div class={`mb-4 flex h-12 w-12 items-center justify-center rounded-full border-[1.5px] ${colorClass} shadow-[var(--mn-shadow-stamp-sm)]`}>
-              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" set:html={feature.iconPath} />
-            </div>
-            <h3 class="text-lg font-black text-[var(--mn-text)] group-hover:text-[var(--mn-accent-deep)] transition-colors duration-200">
-              {t(locale, `home.features.${feature.id}`)}
-            </h3>
-            <p class="mt-2 text-sm font-medium leading-relaxed text-[var(--mn-text-muted)]">
-              {t(locale, `home.features.${feature.id}Desc`)}
-            </p>
-          </div>
-          
-          <div class="mt-6 flex items-center justify-between">
-            <span class="text-xs font-bold uppercase tracking-widest text-[var(--mn-accent-deep)] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              {t(locale, "actions.open")}
-            </span>
-            <span class="text-lg font-black text-[var(--mn-text-muted)] group-hover:text-[var(--mn-accent-deep)] transition-all duration-200 transform group-hover:translate-x-1">
-              →
-            </span>
-          </div>
-        </a>
-      );
-    })}
-  </div>
-</section>
+<style>
+  .sirius-hero { position: relative; isolation: isolate; overflow: hidden; min-height: 490px; display: flex; align-items: center; border: 1px solid #415479; border-radius: 24px; color: #eef5ff; background: radial-gradient(ellipse at 83% 38%, #263e6a 0, transparent 43%), radial-gradient(ellipse at 85% 100%, #494066 0, transparent 60%), linear-gradient(120deg, #101b35, #101a33 55%, #202844); box-shadow: 0 18px 60px #07142618; }
+  .sirius-stars { position: absolute; inset: 0; z-index: -1; }
+  .sirius-stars i { position: absolute; left: var(--x); top: var(--y); width: var(--size); height: var(--size); border-radius: 50%; background: #d8eaff; opacity: .5; box-shadow: 0 0 7px #b2d7ff80; animation: starlight 6s ease-in-out var(--delay) infinite alternate; }
+  .sirius-copy { position: relative; z-index: 1; padding: 64px 48px 86px; width: 65%; }
+  .sirius-eyebrow { display: flex; align-items: center; gap: 10px; font-size: 10px; letter-spacing: .22em; color: #afc6e5; }
+  .sirius-eyebrow span { width: 6px; height: 6px; border-radius: 50%; background: #a6deff; box-shadow: 0 0 12px #a6deff; }
+  h1 { margin: 25px 0 0; font-family: var(--mn-font-display); font-size: clamp(44px, 5.8vw, 94px); font-weight: 500; line-height: 1.1; letter-spacing: -.065em; }
+  .sirius-title-star { display: inline-block; margin-left: 10px; color: #b4d6fb; width: .32em; height: .32em; vertical-align: top; margin-top: .16em; }
+  .sirius-rule { width: 48px; height: 1px; background: #a4cffa; margin: 26px 0 20px; }
+  .sirius-description { max-width: 440px; font-size: 14px; line-height: 2; color: #bfcde4; }
+  .sirius-cta { display: inline-flex; align-items: center; justify-content: space-between; gap: 40px; margin-top: 28px; border: 1px solid #d0e7ff; border-radius: 9px; background: #d1e8ff; color: #182b4d; padding: 13px 20px; font-size: 13px; font-weight: 600; }
+  .sirius-cta:hover { background: #fff; box-shadow: 0 0 28px #b4dfff30; transform: translateY(-2px); }
+  .sirius-cta span { font-size: 20px; line-height: 1; }
+  .sirius-art { position: absolute; width: 62%; right: -7%; top: 50%; transform: translateY(-50%); z-index: -1; }
+  .sirius-art svg { width: 100%; }
+  .sirius-label { display: block; margin-top: -60px; text-align: center; font-size: 8px; letter-spacing: .22em; color: #b5c9e7; }
+  .sirius-label span { margin: 0 8px; opacity: .4; }
+  .sirius-hero-footer { position: absolute; bottom: 0; left: 32px; right: 32px; height: 45px; display: flex; align-items: center; gap: 18px; border-top: 1px solid #c8dfff25; color: #9fb3d3; font-size: 8px; letter-spacing: .17em; }
+  .sirius-signal { flex: 1; }
+  .sirius-index { margin-top: 36px; }
+  .sirius-index-heading { display: flex; gap: 24px; align-items: end; margin-bottom: 22px; }
+  .sirius-index-kicker { font-size: 9px; letter-spacing: .22em; color: var(--mn-accent-deep); margin-bottom: 9px; }
+  h2 { font-size: 25px; font-weight: 500; letter-spacing: -.03em; }
+  .sirius-index-line { flex: 1; height: 1px; background: var(--mn-border); margin-bottom: 10px; }
+  .sirius-index-count { font-size: 10px; color: var(--mn-text-muted); letter-spacing: .1em; margin-bottom: 5px; }
+  .sirius-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .sirius-entry { display: flex; flex-direction: column; border: 1px solid var(--mn-border); border-radius: 16px; padding: 24px; background: var(--mn-glass); transition: transform .2s, border-color .2s, box-shadow .2s; }
+  .sirius-entry:hover { transform: translateY(-4px); border-color: var(--mn-accent); box-shadow: 0 10px 32px color-mix(in srgb, var(--mn-accent) 10%, transparent); }
+  .sirius-entry-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+  .sirius-entry-icon { display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid var(--mn-border); border-radius: 12px; color: var(--mn-accent-deep); background: var(--mn-accent-soft); }
+  .sirius-entry-icon svg { width: 21px; height: 21px; }
+  .sirius-entry:nth-child(3n + 1) .sirius-entry-icon { background: var(--mn-pink-soft); }
+  .sirius-entry-number { font-size: 11px; color: var(--mn-text-muted); letter-spacing: .1em; }
+  h3 { font-size: 17px; font-weight: 500; }
+  .sirius-entry p { margin-top: 10px; color: var(--mn-text-muted); font-size: 12px; line-height: 1.9; flex: 1; }
+  .sirius-entry-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 13px; border-top: 1px solid var(--mn-border); color: var(--mn-accent-deep); font-size: 10px; }
+  .sirius-entry-bottom span:last-child { font-size: 20px; line-height: 1; }
+  @keyframes starlight { to { opacity: .2; } }
+  @media (min-width: 1600px) { .sirius-hero { min-height: 550px; } .sirius-copy { padding-left: 64px; } }
+  @media (max-width: 1100px) { .sirius-copy { width: 75%; padding-left: 32px; } .sirius-art { right: -20%; width: 80%; opacity: .7; } .sirius-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 600px) {
+    .sirius-hero { min-height: 570px; border-radius: 20px; align-items: end; }
+    .sirius-copy { width: 100%; padding: 220px 24px 76px; background: linear-gradient(transparent, #101b35b8 45%); }
+    h1 { font-size: clamp(40px, 11vw, 64px); margin-top: 16px; }
+    .sirius-art { width: 370px; max-width: 110%; top: -56px; right: -32px; transform: none; opacity: .95; }
+    .sirius-label { display: none; }
+    .sirius-rule { margin: 18px 0 14px; }
+    .sirius-description { font-size: 13px; }
+    .sirius-eyebrow { font-size: 8px; }
+    .sirius-hero-footer { left: 24px; right: 24px; font-size: 6px; gap: 6px; }
+    .sirius-index-heading { gap: 12px; }
+    h2 { font-size: 23px; }
+    .sirius-grid { gap: 12px; }
+    .sirius-entry { padding: 18px; }
+    .sirius-entry p { font-size: 12px; }
+  }
+  @media (max-width: 360px) { .sirius-grid { grid-template-columns: 1fr; } }
+</style>

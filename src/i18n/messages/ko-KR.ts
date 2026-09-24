@@ -1,6 +1,7 @@
 import type { MessageTree } from "@/i18n/translate";
 
 export const koKR = {
+  notFound: {"metaTitle": "페이지를 찾을 수 없습니다", "title": "이 신호가 별지도 밖으로 떠났어요.", "description": "주소가 바뀌었거나 페이지를 준비 중입니다. 홈으로 돌아가 탐색을 계속해 보세요.", "note": "유효한 링크라면 개발자에게 알려 주세요.", "home": "홈으로 돌아가기", "feedback": "링크 신고"},
   nav: {
     home: "홈",
     groups: { database: "데이터베이스", story: "스토리", tools: "도구", community: "소개" },
@@ -32,7 +33,7 @@ export const koKR = {
   actions: { close: "닫기", clearCache: "캐시 지우기", refresh: "새로고침", open: "열기", viewGroup: "그룹 보기" },
   home: {
     title: "Moenotes",
-    description: "StarMoe의 BanG Dream! Our Notes 데이터베이스 프로젝트에 오신 것을 환영합니다. 따뜻한 종이 감성과 손으로 만든 듯한 디자인으로 소녀들의 음악과 이야기를 담습니다.",
+    description: "별빛을 따라 우리의 음표를 만나요. StarMoe가 만든 BanG Dream! Our Notes 데이터베이스에서 캐릭터, 카드, 악곡과 반짝이는 이야기를 만나 보세요.",
     ctaPrimary: "데이터베이스 입장",
     featuresTitle: "데이터베이스 둘러보기",
     features: {
@@ -271,15 +272,16 @@ export const koKR = {
         designSystem: { title: "디자인 시스템 레퍼런스", description: "Moenotes 비주얼 언어와 컴포넌트 라이브러리 레퍼런스를 확인할 수 있습니다." },
   },
   designSystem: {
+    sirius: {"stars": "별하늘", "nebula": "성운", "orbit": "궤도", "grid": "좌표 격자", "card": "콘텐츠 패널", "raised": "플로팅 패널", "surface": "기본 패널"},
     title: "디자인 시스템",
-    subtitle: "Moenotes 비주얼 언어 레퍼런스 — 색상, 타이포그래피, 컴포넌트, 인터랙션.",
+    subtitle: "별의 궤도 위 음표. 서명의 흐름은 화면의 방향이 되고, 궤도의 단면은 패널의 형태가 되며, 별빛은 현재 위치를 표시합니다.",
     sections: { colors: "색상", typography: "타이포그래피", components: "컴포넌트", modals: "모달", filters: "필터", animations: "애니메이션" },
-    colors: { accent: "Accent", "accent-deep": "Accent Deep", "accent-soft": "Accent Soft", pink: "Pink", "pink-soft": "Pink Soft", cyan: "Cyan", amber: "Amber", peach: "Peach", mint: "Mint", "mint-deep": "Mint Deep", "mint-soft": "Mint Soft", yellow: "Yellow", rose: "Rose", "cream-deep": "Cream Deep", "ink-soft": "Ink Soft", paper: "Paper", background: "Background", surface: "Surface", border: "Border", text: "Text", muted: "Muted" },
-    typography: { display: "Display Font", body: "Body Font", hand: "Hand Font", note: "Note Font" },
-    components: { buttons: "버튼", inputs: "입력", badges: "배지 & 스탬프", cards: "카드", select: "셀렉트", checkbox: "체크박스", textures: "텍스처", primary: "Primary", outline: "Outline", ghost: "Ghost", stamp: "Stamp", selectPlaceholder: "옵션 선택...", optA: "옵션 A", optB: "옵션 B", optC: "옵션 C" },
+    colors: { accent: "시리우스 블루", "accent-deep": "Accent Deep", "accent-soft": "Accent Soft", pink: "성운 보라", "pink-soft": "성운 안개", cyan: "아이스 블루", amber: "Amber", peach: "Peach", mint: "Mint", "mint-deep": "Mint Deep", "mint-soft": "Mint Soft", yellow: "Yellow", rose: "Rose", "cream-deep": "레이어", "ink-soft": "보조 글자색", paper: "패널", background: "Background", surface: "Surface", border: "Border", text: "Text", muted: "Muted" },
+    typography: { display: "Display Font", body: "Body Font", hand: "라벨 글꼴", note: "좌표 글꼴" },
+    components: { buttons: "버튼", inputs: "입력", badges: "배지", cards: "카드", select: "셀렉트", checkbox: "체크박스", textures: "텍스처", primary: "Primary", outline: "Outline", ghost: "Ghost", stamp: "배지", selectPlaceholder: "옵션 선택...", optA: "옵션 A", optB: "옵션 B", optC: "옵션 C" },
     modals: { openSm: "작은 모달", openMd: "중간 모달", openLg: "큰 모달", openXl: "초대형 모달", title: "모달 예시", body: "범용 모달 컴포넌트 데모입니다. 여러 크기 변형을 지원합니다.", currentSize: "현재 크기", copyModal: "복사 모달", copyModalTitle: "이미지 미리보기", copy: "복사", save: "저장" },
     filters: { title: "필터 데모", searchPlaceholder: "검색 예시...", category: "카테고리", all: "전체", typeA: "타입 A", typeB: "타입 B", sort: "정렬", sortBy: "정렬 기준", language: "언어", name: "이름", date: "날짜", level: "레벨", onlyComplete: "완료만", reset: "초기화" },
-    animations: { spring: "스프링 인터랙션", springDesc: "호버 리프트 + 회전 — 탄성 스프링 전환", tap: "탭 피드백", tapDesc: "클릭 스케일 — 햅틱 피드백 시뮬레이션", stagger: "스태거 애니메이션", staggerDesc: "순차 페이드인 — 리스트 항목이 차례로 나타남", wobble: "흔들림 효과", wobbleDesc: "호버 흔들림 — 스탬프/스티커 스타일" },
+    animations: { spring: "스프링 인터랙션", springDesc: "살짝 떠오르는 부드러운 스프링 전환", tap: "탭 피드백", tapDesc: "클릭 스케일 — 햅틱 피드백 시뮬레이션", stagger: "스태거 애니메이션", staggerDesc: "순차 페이드인 — 리스트 항목이 차례로 나타남", wobble: "별빛 효과", wobbleDesc: "마우스를 올리면 은은한 푸른 빛으로 패널을 강조합니다." },
   },
   filter: { title: "필터", search: "검색", sort: "정렬", reset: "필터 초기화", collapse: "접기", expand: "펼치기", count: "{filtered} / {total}", openQuickFilter: "필터 열기", drawerHintTitle: "필터가 사이드로 이동했습니다", drawerHintBody: "왼쪽 탭을 클릭하여 언제든지 필터를 펼치거나 접을 수 있습니다.", drawerHintDismiss: "확인" },
   modal: { close: "닫기" },
@@ -350,7 +352,7 @@ export const koKR = {
   about: {
     teamIntro: "우리는 <a href=\"https://github.com/moe-sekai\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-[var(--mn-accent-deep)] underline decoration-2 decoration-[var(--mn-accent)] underline-offset-4 hover:text-[var(--mn-accent)]\">StarMoe</a>의 작은 팀입니다. <em>MoeSekai</em>를 만들어 온 2년 동안 계속 고민했습니다. 좋은 위키는 어떤 모습이어야 할까요?",
     paragraph1: "우리는 너무 많은 <strong>긱스러운 표</strong>와 <strong>단조로운 그리드</strong>를 보았습니다. 데이터는 정확하지만, 우리를 울렸던 그 세계처럼 느껴지지 않았습니다. 그래서 이번 BanG Dream! 신작 \"Our Notes\"를 다른 언어로 옮기기로 했습니다 — <span class=\"bg-[var(--mn-yellow)]/40 px-1 py-0.5 font-bold border-b border-[var(--mn-accent)]/40\">넘기고, 적고, 소중히 간직할 수 있는 노트처럼.</span>",
-    paragraph2: "차가운 파란 그라데이션과 빛나는 패널 대신, 크림색 종이, 잉크 블랙 글자, 석양 오렌지, 형광 노랑을 골랐습니다. 청춘은 알고리즘이 만든 팔레트가 아니라, 여러 번 낙서해도 다시 쓸수록 더 빛나는 그 한 장이기 때문입니다.",
+    paragraph2: "시리우스에서 영감을 받은 청백색 별빛과 연보라 성운이 페이지를 연결합니다. 읽기 쉬운 글자와 차분한 패널로 소녀들의 음악과 이야기를 담습니다.",
     badgeMe: "나",
     signature: "Exmeaning",
     specsTitle: "프로젝트 사양 & 라이선스",

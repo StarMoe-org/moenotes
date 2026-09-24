@@ -10,13 +10,13 @@ interface Props {
 const { locale } = Astro.props;
 ---
 
-<div class="relative overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-6 shadow-[var(--mn-shadow-stamp-lg)] sm:p-10 lg:p-12">
+<div class="relative overflow-hidden rounded-3xl border border-[var(--mn-border)] bg-[var(--mn-paper)] p-6 shadow-[var(--mn-shadow-stamp-lg)] sm:p-10 lg:p-12">
   {/* Halftone texture decoration */}
-  <div class="mn-halftone absolute right-6 top-6 h-32 w-32 text-[var(--mn-accent)] opacity-10"></div>
+  <div class="mn-texture-orbit absolute right-6 top-6 h-32 w-32 text-[var(--mn-accent)] opacity-10"></div>
   
   <div class="relative max-w-4xl mx-auto">
     {/* Header Block */}
-    <div class="relative flex items-center justify-between border-b-[1.5px] border-dashed border-[var(--mn-border)]/20 pb-8">
+    <div class="relative flex items-center justify-between border-b-[1.5px] border-solid border-[var(--mn-border)]/20 pb-8">
       <div class="max-w-2xl text-2xl font-bold leading-normal text-[var(--mn-text)] sm:text-3xl">
         <span class="font-[var(--mn-font-display)] text-7xl italic font-black text-[var(--mn-accent)] leading-[0.7] float-left mr-2 select-none">H</span>
         <span class="relative top-1 font-[var(--mn-font-display)]" set:html={`i, ${t(locale, "about.teamIntro")}`} />
@@ -24,10 +24,10 @@ const { locale } = Astro.props;
       
       {/* Stamp badge */}
       <div class="relative hidden sm:flex h-24 w-24 shrink-0 items-center justify-center rounded-full border-2 border-[var(--mn-accent)] select-none">
-        <div class="absolute inset-1 rounded-full border border-dashed border-[var(--mn-accent)]/60"></div>
+        <div class="absolute inset-1 rounded-full border border-solid border-[var(--mn-accent)]/60"></div>
         <div class="text-center font-[var(--mn-font-display)] text-[9px] font-black uppercase tracking-wider text-[var(--mn-accent)]/80 leading-tight">
           <div>Vol.01</div>
-          <div>Spring</div>
+          <div>Sirius</div>
           <div>2026</div>
         </div>
       </div>
@@ -40,7 +40,7 @@ const { locale } = Astro.props;
     </div>
 
     {/* Specifications & License Section */}
-    <div class="mt-12 pt-8 border-t-[1.5px] border-dashed border-[var(--mn-border)]/20">
+    <div class="mt-12 pt-8 border-t-[1.5px] border-solid border-[var(--mn-border)]/20">
       <h3 class="font-[var(--mn-font-display)] text-xl font-black text-[var(--mn-text)] mb-6 flex items-center gap-2">
         <span class="inline-block w-2.5 h-2.5 rounded-full bg-[var(--mn-accent)]"></span>
         {t(locale, "about.specsTitle")}
@@ -48,7 +48,7 @@ const { locale } = Astro.props;
       
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
         {/* Open Source Card */}
-        <div class="relative flex flex-col justify-between border-[1.5px] border-dashed border-[var(--mn-border)]/30 rounded-2xl p-5 bg-[var(--mn-surface)] hover:bg-[var(--mn-surface-strong)] transition-colors duration-200">
+        <div class="relative flex flex-col justify-between border border-solid border-[var(--mn-border)]/30 rounded-2xl p-5 bg-[var(--mn-surface)] hover:bg-[var(--mn-surface-strong)] transition-colors duration-200">
           <div>
             <div class="flex items-center gap-2 font-[var(--mn-font-display)] text-base font-bold text-[var(--mn-text)] mb-3">
               <svg class="h-5 w-5 text-[var(--mn-accent-deep)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -70,7 +70,7 @@ const { locale } = Astro.props;
         </div>
 
         {/* Copyright & Assets Card */}
-        <div class="relative flex flex-col justify-between border-[1.5px] border-dashed border-[var(--mn-border)]/30 rounded-2xl p-5 bg-[var(--mn-surface)] hover:bg-[var(--mn-surface-strong)] transition-colors duration-200">
+        <div class="relative flex flex-col justify-between border border-solid border-[var(--mn-border)]/30 rounded-2xl p-5 bg-[var(--mn-surface)] hover:bg-[var(--mn-surface-strong)] transition-colors duration-200">
           <div>
             <div class="flex items-center gap-2 font-[var(--mn-font-display)] text-base font-bold text-[var(--mn-text)] mb-3">
               <svg class="h-5 w-5 text-[var(--mn-accent-deep)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -92,7 +92,7 @@ const { locale } = Astro.props;
         </div>
 
         {/* Tech Stack Card */}
-        <div class="relative flex flex-col justify-between border-[1.5px] border-dashed border-[var(--mn-border)]/30 rounded-2xl p-5 bg-[var(--mn-surface)] hover:bg-[var(--mn-surface-strong)] transition-colors duration-200">
+        <div class="relative flex flex-col justify-between border border-solid border-[var(--mn-border)]/30 rounded-2xl p-5 bg-[var(--mn-surface)] hover:bg-[var(--mn-surface-strong)] transition-colors duration-200">
           <div>
             <div class="flex items-center gap-2 font-[var(--mn-font-display)] text-base font-bold text-[var(--mn-text)] mb-3">
               <svg class="h-5 w-5 text-[var(--mn-accent-deep)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -127,7 +127,7 @@ const { locale } = Astro.props;
     {/* Footer signature block */}
     <div class="mt-12 flex flex-col items-end border-t border-[var(--mn-border)]/10 pt-8">
       <div class="flex flex-col items-center">
-        <div class="font-[var(--mn-font-hand)] text-4xl font-bold text-[var(--mn-accent-deep)] transform -rotate-3 select-none">
+        <div class="font-[var(--mn-font-hand)] text-4xl font-bold text-[var(--mn-accent-deep)]  select-none">
           — {t(locale, "about.signature")}
         </div>
         <div class="mt-2 font-[var(--mn-font-display)] text-[10px] uppercase tracking-[0.2em] text-[var(--mn-text-muted)]">

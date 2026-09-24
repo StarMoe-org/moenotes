@@ -1,3 +1,4 @@
+import BrandLogo from "@/components/shared/BrandLogo";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import type { AppLocale } from "@/config/locales";
@@ -49,9 +50,10 @@ export default function DesignSystemPage({ locale }: Props) {
     <QuickFilterProvider>
     <div className="space-y-10">
       {/* Page Header */}
-      <header>
-        <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-accent-soft)] px-3 py-1 font-[var(--mn-font-display)] text-xs tracking-wider text-[var(--mn-accent-deep)] shadow-[var(--mn-shadow-stamp-sm)]">
-          DESIGN SYSTEM
+      <header className="mn-system-header">
+        <BrandLogo className="mn-brand-system" />
+        <div className="mb-2 inline-flex items-center gap-1.5 rounded-xl border border-[var(--mn-border)] bg-[var(--mn-accent-soft)] px-3 py-1 font-[var(--mn-font-display)] text-xs tracking-wider text-[var(--mn-accent-deep)] shadow-[var(--mn-shadow-stamp-sm)]">
+          SIRIUS / DESIGN SYSTEM
         </div>
         <h1 className="font-[var(--mn-font-display)] text-4xl tracking-tight text-[var(--mn-text)] sm:text-5xl">
           {t(locale, "designSystem.title")}
@@ -62,17 +64,18 @@ export default function DesignSystemPage({ locale }: Props) {
       </header>
 
       {/* Tab Navigation */}
-      <nav className="sticky top-[var(--mn-header-bottom,5rem)] sm:top-24 z-20 border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp-sm)] rounded-2xl mx-1 sm:mx-3 sm:rounded-full sm:p-2.5 transition-all duration-300">
+      <nav className="mn-system-tabs sticky top-[var(--mn-header-bottom,5rem)] sm:top-24 z-20 border border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp-sm)] rounded-2xl mx-1 sm:mx-3 sm:rounded-xl sm:p-2.5 transition-all duration-300">
         <div className="w-full min-w-0 overflow-x-auto no-scrollbar touch-pan-x flex flex-nowrap items-center gap-2 md:flex-wrap md:overflow-visible px-2 py-0.5">
           {TABS.map((tab) => (
             // Capsule tab → float animation
             <motion.button
               key={tab}
+              aria-pressed={activeTab === tab}
               onClick={() => setActiveTab(tab)}
               {...floatHoverProps}
               {...floatTapProps}
               transition={springTransition}
-              className={`shrink-0 rounded-full border-2 border-[var(--mn-border)] px-4 py-1.5 text-xs font-bold transition-colors sm:text-sm ${
+              className={`shrink-0 rounded-xl border border-[var(--mn-border)] px-4 py-1.5 text-xs font-bold transition-colors sm:text-sm ${
                 activeTab === tab
                   ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)] shadow-[var(--mn-shadow-stamp-sm)]"
                   : "bg-[var(--mn-paper)] text-[var(--mn-text-muted)] hover:shadow-[var(--mn-shadow-stamp-sm)]"
@@ -159,7 +162,7 @@ export default function DesignSystemPage({ locale }: Props) {
 
 function SectionCard({ children }: { children: React.ReactNode }) {
   return (
-    <section className="rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-4 shadow-[var(--mn-shadow-stamp-lg)] sm:p-6 md:p-8">
+    <section className="mn-system-section rounded-3xl border border-[var(--mn-border)] bg-[var(--mn-paper)] p-4 shadow-[var(--mn-shadow-stamp-lg)] sm:p-6 md:p-8">
       {children}
     </section>
   );
@@ -168,7 +171,7 @@ function SectionCard({ children }: { children: React.ReactNode }) {
 function SectionTitle({ title }: { title: string }) {
   return (
     <h2 className="mb-6 flex items-center gap-2 font-[var(--mn-font-display)] text-2xl tracking-tight text-[var(--mn-text)]">
-      <span className="h-8 w-1.5 rounded-full bg-[var(--mn-accent-deep)]" />
+      <span className="h-8 w-1.5 rounded-xl bg-[var(--mn-accent-deep)]" />
       {title}
     </h2>
   );
@@ -186,9 +189,9 @@ function ColorsSection({ locale }: { locale: AppLocale }) {
     { key: "yellow", var: "--mn-yellow", cls: "bg-[var(--mn-yellow)]" },
     { key: "cream-deep", var: "--mn-cream-deep", cls: "bg-[var(--mn-cream-deep)]" },
     { key: "ink-soft", var: "--mn-ink-soft", cls: "bg-[var(--mn-ink-soft)]" },
-    { key: "paper", var: "--mn-paper", cls: "bg-[var(--mn-paper)] border-[1.5px] border-[var(--mn-border)]" },
-    { key: "background", var: "--mn-bg", cls: "bg-[var(--mn-bg)] border-[1.5px] border-[var(--mn-border)]" },
-    { key: "surface", var: "--mn-surface", cls: "bg-[var(--mn-surface)] border-[1.5px] border-[var(--mn-border)]" },
+    { key: "paper", var: "--mn-paper", cls: "bg-[var(--mn-paper)] border border-[var(--mn-border)]" },
+    { key: "background", var: "--mn-bg", cls: "bg-[var(--mn-bg)] border border-[var(--mn-border)]" },
+    { key: "surface", var: "--mn-surface", cls: "bg-[var(--mn-surface)] border border-[var(--mn-border)]" },
     { key: "border", var: "--mn-border", cls: "bg-[var(--mn-border)]" },
     { key: "text", var: "--mn-text", cls: "bg-[var(--mn-text)]" },
     { key: "muted", var: "--mn-text-muted", cls: "bg-[var(--mn-text-muted)]" },
@@ -199,9 +202,9 @@ function ColorsSection({ locale }: { locale: AppLocale }) {
       <SectionTitle title={t(locale, "designSystem.sections.colors")} />
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
         {colors.map((c) => (
-          <div key={c.key} className="flex h-28 flex-col overflow-hidden rounded-2xl border-[1.5px] border-[var(--mn-border)] shadow-[var(--mn-shadow-stamp-sm)]">
+          <div key={c.key} className="flex h-28 flex-col overflow-hidden rounded-2xl border border-[var(--mn-border)] shadow-[var(--mn-shadow-stamp-sm)]">
             <div className={`flex-1 ${c.cls}`} />
-            <div className="border-t-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2">
+            <div className="border-t border-[var(--mn-border)] bg-[var(--mn-paper)] p-2">
               <div className="text-xs font-bold text-[var(--mn-text)]">{t(locale, `designSystem.colors.${c.key}`)}</div>
               <div className="mt-0.5 font-mono text-[10px] text-[var(--mn-text-muted)]">{c.var}</div>
             </div>
@@ -210,10 +213,10 @@ function ColorsSection({ locale }: { locale: AppLocale }) {
       </div>
       {/* Textures */}
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div className="mn-halftone flex h-20 items-center justify-center rounded-2xl border-[1.5px] border-[var(--mn-border)] text-xs font-bold text-[var(--mn-accent-deep)]">halftone</div>
-        <div className="mn-stripes-warm flex h-20 items-center justify-center rounded-2xl border-[1.5px] border-[var(--mn-border)] text-xs font-bold text-[var(--mn-bg)]">stripes-warm</div>
-        <div className="mn-stripes-cream flex h-20 items-center justify-center rounded-2xl border-[1.5px] border-[var(--mn-border)] text-xs font-bold text-[var(--mn-text-muted)]">stripes-cream</div>
-        <div className="mn-staff-bg flex h-20 items-center justify-center rounded-2xl border-[1.5px] border-[var(--mn-border)] text-xs font-bold text-[var(--mn-text-muted)]">staff-bg</div>
+        <div className="mn-texture-stars flex h-20 items-center justify-center rounded-2xl border border-[var(--mn-border)] text-xs font-bold text-[var(--mn-accent-deep)]">{t(locale, "designSystem.sirius.stars")}</div>
+        <div className="mn-texture-nebula flex h-20 items-center justify-center rounded-2xl border border-[var(--mn-border)] text-xs font-bold text-[var(--mn-text)]">{t(locale, "designSystem.sirius.nebula")}</div>
+        <div className="mn-texture-orbit flex h-20 items-center justify-center rounded-2xl border border-[var(--mn-border)] text-xs font-bold text-[var(--mn-text-muted)]">{t(locale, "designSystem.sirius.orbit")}</div>
+        <div className="mn-texture-grid flex h-20 items-center justify-center rounded-2xl border border-[var(--mn-border)] text-xs font-bold text-[var(--mn-text-muted)]">{t(locale, "designSystem.sirius.grid")}</div>
       </div>
     </SectionCard>
   );
@@ -225,8 +228,8 @@ function TypographySection({ locale }: { locale: AppLocale }) {
   const fonts = [
     { key: "display", var: "var(--mn-font-display)", sample: "BANG! DREAM", sizes: ["text-5xl", "text-3xl", "text-xl"] },
     { key: "body", var: "var(--mn-font-body)", sample: "5 つの音、5 つの物語", sizes: ["text-2xl", "text-base", "text-sm"] }, // i18n-allow-hardcoded
-    { key: "hand", var: "var(--mn-font-hand)", sample: "a quote from the heart", sizes: ["text-4xl", "text-2xl", "text-lg"] },
-    { key: "note", var: "var(--mn-font-note)", sample: "notes from our journey", sizes: ["text-3xl", "text-xl", "text-base"] },
+    { key: "hand", var: "var(--mn-font-hand)", sample: "SIRIUS / OUR NOTES", sizes: ["text-4xl", "text-2xl", "text-lg"] },
+    { key: "note", var: "var(--mn-font-note)", sample: "06h 45m / −16° 43′", sizes: ["text-3xl", "text-xl", "text-base"] },
   ];
 
   return (
@@ -234,9 +237,9 @@ function TypographySection({ locale }: { locale: AppLocale }) {
       <SectionTitle title={t(locale, "designSystem.sections.typography")} />
       <div className="space-y-8">
         {fonts.map((font) => (
-          <div key={font.key} className="border-b-2 border-dashed border-[var(--mn-border)] pb-8 last:border-0">
+          <div key={font.key} className="border-b border-[var(--mn-border)] pb-8 last:border-0">
             <div className="mb-3 flex items-center gap-3">
-               <span className="rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-accent-soft)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--mn-accent-deep)]">
+               <span className="rounded-xl border border-[var(--mn-border)] bg-[var(--mn-accent-soft)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--mn-accent-deep)]">
                 {t(locale, `designSystem.typography.${font.key}`)}
               </span>
               <span className="font-mono text-xs text-[var(--mn-text-muted)]">{font.var}</span>
@@ -264,16 +267,16 @@ function ComponentsSection({ locale }: { locale: AppLocale }) {
       <SectionCard>
         <SectionTitle title={t(locale, "designSystem.components.buttons")} />
         <div className="flex flex-wrap items-center gap-4">
-          <button className="mn-stamp-press rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-accent-deep)] px-6 py-3 font-[var(--mn-font-display)] text-sm tracking-wider text-[var(--mn-bg)] shadow-[var(--mn-shadow-stamp)]">
+          <button className="mn-stamp-press rounded-xl border border-[var(--mn-border)] bg-[var(--mn-accent-deep)] px-6 py-3 font-[var(--mn-font-display)] text-sm tracking-wider text-[var(--mn-bg)] shadow-[var(--mn-shadow-stamp)]">
             {t(locale, "designSystem.components.primary")}
           </button>
-          <button className="mn-stamp-press rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-6 py-3 font-[var(--mn-font-display)] text-sm tracking-wider text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]">
+          <button className="mn-stamp-press rounded-xl border border-[var(--mn-border)] bg-[var(--mn-paper)] px-6 py-3 font-[var(--mn-font-display)] text-sm tracking-wider text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]">
             {t(locale, "designSystem.components.outline")}
           </button>
-          <button className="rounded-full px-5 py-3 text-sm font-bold text-[var(--mn-text-muted)] transition hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]">
+          <button className="rounded-xl px-5 py-3 text-sm font-bold text-[var(--mn-text-muted)] transition hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]">
             {t(locale, "designSystem.components.ghost")}
           </button>
-          <span className="mn-stamp mn-stamp-press cursor-pointer rounded-full px-4 py-1.5 text-xs shadow-[var(--mn-shadow-stamp)]">
+          <span className="mn-stamp mn-stamp-press cursor-pointer rounded-xl px-4 py-1.5 text-xs shadow-[var(--mn-shadow-stamp)]">
             {t(locale, "designSystem.components.stamp")}
           </span>
         </div>
@@ -285,11 +288,11 @@ function ComponentsSection({ locale }: { locale: AppLocale }) {
         <div className="max-w-sm space-y-4">
           <div>
             <label htmlFor="std-input" className="mb-1 block text-sm font-bold text-[var(--mn-text)]">Standard Input</label>
-            <input id="std-input" type="text" placeholder="Type something..." className="w-full rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] px-5 py-2.5 text-sm text-[var(--mn-text)] placeholder:text-[var(--mn-text-muted)] focus:border-[var(--mn-accent-deep)] focus:bg-[var(--mn-paper)] focus:outline-none" />
+            <input id="std-input" type="text" placeholder="Type something..." className="w-full rounded-xl border border-[var(--mn-border)] bg-[var(--mn-surface)] px-5 py-2.5 text-sm text-[var(--mn-text)] placeholder:text-[var(--mn-text-muted)] focus:border-[var(--mn-accent-deep)] focus:bg-[var(--mn-paper)] focus:outline-none" />
           </div>
           <div>
             <label htmlFor="err-input" className="mb-1 block text-sm font-bold text-[var(--mn-text)]">Input with Error</label>
-            <input id="err-input" type="text" defaultValue="Invalid" className="w-full rounded-full border-[1.5px] border-[var(--mn-accent-deep)] bg-[var(--mn-surface)] px-5 py-2.5 text-sm text-[var(--mn-accent-deep)] focus:outline-none" />
+            <input id="err-input" type="text" defaultValue="Invalid" className="w-full rounded-xl border border-[var(--mn-accent-deep)] bg-[var(--mn-surface)] px-5 py-2.5 text-sm text-[var(--mn-accent-deep)] focus:outline-none" />
             <p className="mt-1 text-xs font-bold text-[var(--mn-accent-deep)]">Please enter a valid value</p>
           </div>
         </div>
@@ -299,11 +302,11 @@ function ComponentsSection({ locale }: { locale: AppLocale }) {
       <SectionCard>
         <SectionTitle title={t(locale, "designSystem.components.badges")} />
         <div className="flex flex-wrap gap-3">
-          <span className="mn-stamp rounded-full px-4 py-1.5 text-xs">ACCENT</span>
-          <span className="rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-accent-deep)] px-4 py-1.5 text-xs font-bold text-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-sm)]">PINK</span>
-          <span className="rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-cyan)] px-4 py-1.5 text-xs font-bold text-[var(--mn-bg)] shadow-[var(--mn-shadow-stamp-sm)]">CYAN</span>
-          <span className="rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-amber)] px-4 py-1.5 text-xs font-bold text-[var(--mn-bg)] shadow-[var(--mn-shadow-stamp-sm)]">AMBER</span>
-          <span className="rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-paper)] px-4 py-1.5 text-xs font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp-sm)]">OUTLINE</span>
+          <span className="mn-stamp rounded-xl px-4 py-1.5 text-xs">ACCENT</span>
+          <span className="rounded-xl border border-[var(--mn-border)] bg-[var(--mn-pink-soft)] px-4 py-1.5 text-xs font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp-sm)]">PINK</span>
+          <span className="rounded-xl border border-[var(--mn-border)] bg-[var(--mn-cyan)] px-4 py-1.5 text-xs font-bold text-[#202e4c] shadow-[var(--mn-shadow-stamp-sm)]">CYAN</span>
+          <span className="rounded-xl border border-[var(--mn-border)] bg-[var(--mn-amber)] px-4 py-1.5 text-xs font-bold text-[#202e4c] shadow-[var(--mn-shadow-stamp-sm)]">AMBER</span>
+          <span className="rounded-xl border border-[var(--mn-border)] bg-[var(--mn-paper)] px-4 py-1.5 text-xs font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp-sm)]">OUTLINE</span>
         </div>
       </SectionCard>
 
@@ -311,17 +314,27 @@ function ComponentsSection({ locale }: { locale: AppLocale }) {
       <SectionCard>
         <SectionTitle title={t(locale, "designSystem.components.cards")} />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="mn-card relative rounded-3xl p-5">
+          <div className="mn-list-card mn-card relative p-5">
             <p className="font-[var(--mn-font-display)] text-lg">mn-card</p>
-            <p className="mt-1 text-sm text-[var(--mn-text-muted)]">Standard card with stamp shadow</p>
+            <p className="mt-1 text-sm text-[var(--mn-text-muted)]">{t(locale, "designSystem.sirius.card")}</p>
           </div>
-          <div className="mn-sticker relative rounded-3xl p-5">
+          <div className="mn-list-card mn-sticker relative p-5">
             <p className="font-[var(--mn-font-display)] text-lg">mn-sticker</p>
-            <p className="mt-1 text-sm text-[var(--mn-text-muted)]">Sticker variant</p>
+            <p className="mt-1 text-sm text-[var(--mn-text-muted)]">{t(locale, "designSystem.sirius.raised")}</p>
           </div>
           <div className="mn-paper relative rounded-3xl p-5">
             <p className="font-[var(--mn-font-display)] text-lg">mn-paper</p>
-            <p className="mt-1 text-sm text-[var(--mn-text-muted)]">Paper container style</p>
+            <p className="mt-1 text-sm text-[var(--mn-text-muted)]">{t(locale, "designSystem.sirius.surface")}</p>
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard>
+        <SectionTitle title={t(locale, "designSystem.colors.surface")} />
+        <div className="mn-glass-stage">
+          <div className="mn-glass-sample">
+            <p className="text-lg text-[var(--mn-text)]">{t(locale, "designSystem.sirius.raised")}</p>
+            <p className="mt-3 text-sm leading-7 text-[var(--mn-text-muted)]">{t(locale, "designSystem.subtitle")}</p>
           </div>
         </div>
       </SectionCard>
@@ -386,7 +399,7 @@ function ModalsSection({ locale }: { locale: AppLocale }) {
       <button
         onClick={handleDownload}
         disabled={downloadState === "downloading"}
-        className="grid h-8 w-8 place-items-center rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:text-[var(--mn-text)] disabled:opacity-50"
+        className="grid h-8 w-8 place-items-center rounded-xl border border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:text-[var(--mn-text)] disabled:opacity-50"
       >
         {downloadState === "idle" && (
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -399,7 +412,7 @@ function ModalsSection({ locale }: { locale: AppLocale }) {
       <button
         onClick={handleCopy}
         disabled={copyState === "copying"}
-        className="grid h-8 w-8 place-items-center rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:text-[var(--mn-text)] disabled:opacity-50"
+        className="grid h-8 w-8 place-items-center rounded-xl border border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:text-[var(--mn-text)] disabled:opacity-50"
       >
         {copyState === "idle" && (
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -421,14 +434,14 @@ function ModalsSection({ locale }: { locale: AppLocale }) {
             <button
               key={size}
               onClick={() => openModal(size)}
-              className="mn-stamp-press rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-6 py-3 font-[var(--mn-font-display)] text-sm tracking-wider text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]"
+              className="mn-stamp-press rounded-xl border border-[var(--mn-border)] bg-[var(--mn-paper)] px-6 py-3 font-[var(--mn-font-display)] text-sm tracking-wider text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]"
             >
               {t(locale, `designSystem.modals.open${size.charAt(0).toUpperCase() + size.slice(1)}` as const)}
             </button>
           ))}
           <button
             onClick={() => setIsCopyModalOpen(true)}
-            className="mn-stamp-press rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-mint)] px-6 py-3 font-[var(--mn-font-display)] text-sm tracking-wider text-[var(--mn-bg)] shadow-[var(--mn-shadow-stamp)]"
+            className="mn-stamp-press rounded-xl border border-[var(--mn-border)] bg-[var(--mn-mint)] px-6 py-3 font-[var(--mn-font-display)] text-sm tracking-wider text-[var(--mn-bg)] shadow-[var(--mn-shadow-stamp)]"
           >
             {t(locale, "designSystem.modals.copyModal")}
           </button>
@@ -442,7 +455,7 @@ function ModalsSection({ locale }: { locale: AppLocale }) {
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={t(locale, "designSystem.modals.title")} size={modalSize}>
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-[var(--mn-text-muted)]">{t(locale, "designSystem.modals.body")}</p>
-          <div className="rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] p-4">
+          <div className="rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-surface)] p-4">
             <h3 className="mb-2 text-sm font-bold text-[var(--mn-text)]">Features</h3>
             <ul className="space-y-1 text-sm text-[var(--mn-text-muted)]">
               <li>• createPortal — z-index free</li>
@@ -453,7 +466,7 @@ function ModalsSection({ locale }: { locale: AppLocale }) {
               <li>• clean header style</li>
             </ul>
           </div>
-          <span className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-accent-soft)] px-3 py-1 text-xs font-bold text-[var(--mn-accent-deep)]">
+          <span className="inline-flex items-center gap-1 rounded-xl border border-[var(--mn-border)] bg-[var(--mn-accent-soft)] px-3 py-1 text-xs font-bold text-[var(--mn-accent-deep)]">
             {t(locale, "designSystem.modals.currentSize")}: {modalSize}
           </span>
         </div>
@@ -463,8 +476,8 @@ function ModalsSection({ locale }: { locale: AppLocale }) {
       <Modal isOpen={isCopyModalOpen} onClose={() => { setIsCopyModalOpen(false); setCopyState("idle"); setDownloadState("idle"); }} title={t(locale, "designSystem.modals.copyModalTitle")} size="lg" headerActions={copyHeaderActions}>
         <div className="space-y-3">
           <p className="text-sm text-[var(--mn-text-muted)]">Copy Modal variant — copy/save actions in the header via headerActions prop.</p>
-          <div className="flex items-center justify-center rounded-2xl border-2 border-[var(--mn-border)] bg-[var(--mn-surface)] p-8">
-            <div className="flex h-40 w-60 items-center justify-center rounded-2xl border-[1.5px] border-dashed border-[var(--mn-border)] bg-[var(--mn-paper)] text-sm text-[var(--mn-text-muted)]">
+          <div className="flex items-center justify-center rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-surface)] p-8">
+            <div className="flex h-40 w-60 items-center justify-center rounded-2xl border border-dashed border-[var(--mn-border)] bg-[var(--mn-paper)] text-sm text-[var(--mn-text-muted)]">
               Image Placeholder
             </div>
           </div>
@@ -553,7 +566,7 @@ function FiltersSection({
           </BaseFilters>
         </div>
         <div className="w-full min-w-0 space-y-4">
-          <div className="w-full min-w-0 rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] p-4">
+          <div className="w-full min-w-0 rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-surface)] p-4">
             <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--mn-text-muted)]">Current State</h4>
             <div className="space-y-1 font-mono text-xs text-[var(--mn-text-muted)]">
               <div>search: "{search || "(empty)"}"</div>
@@ -564,7 +577,7 @@ function FiltersSection({
               <div>filtered: {filtered} / {total}</div>
             </div>
           </div>
-          <div className="w-full min-w-0 rounded-2xl border-[1.5px] border-dashed border-[var(--mn-border)] bg-[var(--mn-paper)] p-4">
+          <div className="w-full min-w-0 rounded-2xl border border-dashed border-[var(--mn-border)] bg-[var(--mn-paper)] p-4">
             <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--mn-text-muted)]">API</h4>
             <pre className="w-full max-w-full overflow-x-auto text-[10px] text-[var(--mn-text-muted)]">
 {`<BaseFilters searchValue={...} onSearchChange={...}>
@@ -594,7 +607,7 @@ function FilterSelect({ value, options, onChange }: { value: string; options: { 
         <button
           ref={ref as React.Ref<HTMLButtonElement>}
           type="button"
-          className="mn-stamp-press flex w-full min-w-0 items-center justify-between rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-4 py-2.5 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]"
+          className="mn-stamp-press flex w-full min-w-0 items-center justify-between rounded-xl border border-[var(--mn-border)] bg-[var(--mn-paper)] px-4 py-2.5 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]"
           onClick={onClick}
           {...aria}
         >
@@ -607,7 +620,7 @@ function FilterSelect({ value, options, onChange }: { value: string; options: { 
         options.map((opt) => (
           <button
             key={opt.value}
-            className={`w-full rounded-full px-4 py-2 text-left text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${opt.value === value ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
+            className={`w-full rounded-xl px-4 py-2 text-left text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${opt.value === value ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
             onClick={() => { onChange(opt.value); close(); }}
           >
             {opt.label}
@@ -642,7 +655,7 @@ function AnimationsSection({ locale }: { locale: AppLocale }) {
               className="mn-card relative flex h-32 items-center justify-center rounded-2xl p-4"
             >
               <div className="text-center">
-                <div className="text-2xl">🎸</div> {/* emoji-allow */}
+                <svg className="mx-auto h-7 w-7 text-[var(--mn-accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="4"/><ellipse cx="12" cy="12" rx="11" ry="5" transform="rotate(-35 12 12)"/></svg>
                 <div className="mt-1 text-xs font-bold text-[var(--mn-text-muted)]">Card {i + 1}</div>
               </div>
             </motion.div>
@@ -658,8 +671,8 @@ function AnimationsSection({ locale }: { locale: AppLocale }) {
         {/* ── Stamp sub-area: Circular → stamp animation ── */}
         <div className="mb-6">
           <div className="mb-3 flex items-center gap-2">
-            <span className="rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-accent-soft)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--mn-accent-deep)]">Stamp</span>
-            <span className="text-xs text-[var(--mn-text-muted)]">Circular → shadow press effect</span>
+            <span className="rounded-xl border border-[var(--mn-border)] bg-[var(--mn-accent-soft)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--mn-accent-deep)]">{t(locale, "designSystem.components.stamp")}</span>
+            <span className="text-xs text-[var(--mn-text-muted)]">{t(locale, "designSystem.animations.tapDesc")}</span>
           </div>
           <div className="flex flex-wrap items-end gap-6">
             {/* Circular → stamp */}
@@ -668,7 +681,7 @@ function AnimationsSection({ locale }: { locale: AppLocale }) {
                 {...stampHoverProps}
                 {...stampTapProps}
                 transition={springTransition}
-                className="grid h-14 w-14 place-items-center rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-accent-deep)] text-[var(--mn-bg)] shadow-[var(--mn-shadow-stamp)] hover:shadow-[var(--mn-shadow-stamp-sm)]"
+                className="grid h-14 w-14 place-items-center rounded-xl border border-[var(--mn-border)] bg-[var(--mn-accent-deep)] text-[var(--mn-bg)] shadow-[var(--mn-shadow-stamp)] hover:shadow-[var(--mn-shadow-stamp-sm)]"
               >
                 <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
               </motion.button>
@@ -680,7 +693,7 @@ function AnimationsSection({ locale }: { locale: AppLocale }) {
                 {...stampHoverProps}
                 {...stampTapProps}
                 transition={springTransition}
-                className="grid h-14 w-14 place-items-center rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-accent-deep)] text-[var(--mn-bg)] shadow-[var(--mn-shadow-stamp)] hover:shadow-[var(--mn-shadow-stamp-sm)]"
+                className="grid h-14 w-14 place-items-center rounded-xl border border-[var(--mn-border)] bg-[var(--mn-accent-deep)] text-[var(--mn-bg)] shadow-[var(--mn-shadow-stamp)] hover:shadow-[var(--mn-shadow-stamp-sm)]"
               >
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
               </motion.button>
@@ -692,7 +705,7 @@ function AnimationsSection({ locale }: { locale: AppLocale }) {
                 {...stampHoverProps}
                 {...stampTapProps}
                 transition={springTransition}
-                className="rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-amber)] px-8 py-3.5 font-[var(--mn-font-display)] text-sm text-[var(--mn-bg)] shadow-[var(--mn-shadow-stamp)] hover:shadow-[var(--mn-shadow-stamp-sm)]"
+                className="rounded-xl border border-[var(--mn-border)] bg-[var(--mn-amber)] px-8 py-3.5 font-[var(--mn-font-display)] text-sm text-[var(--mn-bg)] shadow-[var(--mn-shadow-stamp)] hover:shadow-[var(--mn-shadow-stamp-sm)]"
               >
                 TAP ME
               </motion.button>
@@ -704,7 +717,7 @@ function AnimationsSection({ locale }: { locale: AppLocale }) {
         {/* ── Float sub-area: Capsule / Pill → float animation ── */}
         <div>
           <div className="mb-3 flex items-center gap-2">
-            <span className="rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-paper)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--mn-text)]">Float</span>
+            <span className="rounded-xl border border-[var(--mn-border)] bg-[var(--mn-paper)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--mn-text)]">Float</span>
             <span className="text-xs text-[var(--mn-text-muted)]">Capsule / Pill → rise up slightly</span>
           </div>
           <div className="flex flex-wrap items-end gap-6">
@@ -719,7 +732,7 @@ function AnimationsSection({ locale }: { locale: AppLocale }) {
                   {...floatHoverProps}
                   {...floatTapProps}
                   transition={springTransition}
-                  className="rounded-full border-[1.5px] border-[var(--mn-border)] px-5 py-2.5 text-xs font-bold shadow-[var(--mn-shadow-stamp-sm)]"
+                  className="rounded-xl border border-[var(--mn-border)] px-5 py-2.5 text-xs font-bold shadow-[var(--mn-shadow-stamp-sm)]"
                   style={{ background: item.bg, color: item.textColor }}
                 >
                   {item.label}
@@ -746,7 +759,7 @@ function AnimationsSection({ locale }: { locale: AppLocale }) {
             <motion.div
               key={i}
               variants={staggerItem}
-              className="flex h-20 items-center justify-center rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] text-xs font-bold text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp-sm)]"
+              className="flex h-20 items-center justify-center rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-surface)] text-xs font-bold text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp-sm)]"
             >
               Item {i + 1}
             </motion.div>
@@ -759,12 +772,12 @@ function AnimationsSection({ locale }: { locale: AppLocale }) {
         <SectionTitle title={t(locale, "designSystem.animations.wobble")} />
         <p className="mb-4 text-sm text-[var(--mn-text-muted)]">{t(locale, "designSystem.animations.wobbleDesc")}</p>
         <div className="flex flex-wrap gap-4">
-          {["🎤", "🎸", "🥁", "🎹", "🎻"].map((emoji, i) => ( // emoji-allow
+          {Array.from({ length: 5 }, (_, i) => (
             <div
               key={i}
-              className="mn-wobble mn-stamp grid h-16 w-16 cursor-pointer place-items-center rounded-full text-2xl"
+              className="mn-glow mn-card grid h-16 w-16 cursor-pointer place-items-center rounded-xl text-2xl"
             >
-              {emoji}
+              <svg className="h-7 w-7 text-[var(--mn-accent-deep)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="m12 2 2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z"/></svg>
             </div>
           ))}
         </div>
@@ -802,7 +815,7 @@ function SelectDemo({ locale }: { locale: AppLocale }) {
             ref={ref as React.Ref<HTMLButtonElement>}
             id="demo-select"
             type="button"
-            className="mn-stamp-press flex w-full min-w-0 items-center justify-between rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] px-5 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]"
+            className="mn-stamp-press flex w-full min-w-0 items-center justify-between rounded-xl border border-[var(--mn-border)] bg-[var(--mn-surface)] px-5 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]"
             onClick={onClick}
             {...aria}
           >
@@ -815,7 +828,7 @@ function SelectDemo({ locale }: { locale: AppLocale }) {
           options.map((opt) => (
             <button
               key={opt.value}
-              className={`w-full rounded-full px-4 py-2 text-left text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${opt.value === value ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
+              className={`w-full rounded-xl px-4 py-2 text-left text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${opt.value === value ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
               onClick={() => { setValue(opt.value); close(); }}
             >
               {opt.label}
@@ -835,7 +848,7 @@ function CheckboxDemo({ defaultChecked = false, accent = false }: { defaultCheck
         type="button"
         role="checkbox"
         aria-checked={checked}
-        className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border-[1.5px] transition ${checked ? (accent ? "border-[var(--mn-accent-deep)] bg-[var(--mn-accent-deep)] text-[var(--mn-bg)]" : "border-[var(--mn-border)] bg-[var(--mn-accent-deep)] text-[var(--mn-bg)]") : "border-[var(--mn-border)] bg-[var(--mn-paper)]"}`}
+        className={`grid h-5 w-5 shrink-0 place-items-center rounded-xl border transition ${checked ? (accent ? "border-[var(--mn-accent-deep)] bg-[var(--mn-accent-deep)] text-[var(--mn-bg)]" : "border-[var(--mn-border)] bg-[var(--mn-accent-deep)] text-[var(--mn-bg)]") : "border-[var(--mn-border)] bg-[var(--mn-paper)]"}`}
         onClick={() => setChecked(!checked)}
       >
         {checked && checkSvg}
