@@ -5,7 +5,7 @@ import { validateMasterTable } from "../src/lib/cards/data";
 
 test("all dynamic routes derive their params instead of using fixed inventories", () => {
   const routes = getAllRoutes().filter(isDynamicRoute);
-  expect(routes).toHaveLength(6);
+  expect(routes).toHaveLength(7);
   for (const route of routes) expect(typeof route.staticParams).toBe("function");
 });
 

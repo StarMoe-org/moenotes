@@ -1,6 +1,6 @@
 import type { AssetRequest } from "@/types/assets";
 import { cachedFetch, type CachedFetchInit } from "@/lib/cache/cached-fetch";
-import { getAssetFallbackUrls } from "@/lib/assets/url";
+import { getAssetUrl } from "@/lib/assets/url";
 
 export interface CachedAssetObjectUrl {
   url: string;
@@ -9,20 +9,11 @@ export interface CachedAssetObjectUrl {
 }
 
 export async function fetchCachedAsset(request: AssetRequest, init?: CachedFetchInit): Promise<Response> {
-  const urls = getAssetFallbackUrls(request);
-  let lastError: unknown = null;
-
-  for (const url of urls) {
-    try {
-      const response = await cachedFetch(url, init);
-      if (response.ok) return response;
-      lastError = new Error(`Asset request failed: ${response.status}`);
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  throw lastError instanceof Error ? lastError : new Error("Asset request failed.");
+  const url = getAssetUrl(request);
+  if (!url) throw new Error(`Asset is not in the release index: ${request.path}`);
+  const response = await cachedFetch(url, init);
+  if (!response.ok) throw new Error(`Asset request failed: ${response.status}`);
+  return response;
 }
 
 export async function createCachedAssetObjectUrl(request: AssetRequest, init?: CachedFetchInit): Promise<CachedAssetObjectUrl> {

@@ -3,6 +3,7 @@ import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import MemberCardItem from "@/components/cards/MemberCardItem";
+import GachaSimulator from "@/components/gacha/GachaSimulator";
 import LimitedChip from "@/components/gacha/LimitedChip";
 import BannerImage from "@/components/shared/BannerImage";
 import { RarityFilter } from "@/components/shared/BaseFilters";
@@ -12,6 +13,7 @@ import SupportCardItem from "@/components/support-cards/SupportCardItem";
 import { getImageAssetUrl } from "@/lib/assets/url";
 import { getRarityIconUrl, type CardRarity } from "@/lib/cards/assets";
 import type { GachaDetailViewModel, GachaPool } from "@/lib/gacha/data";
+import { formatCompactCount } from "@/lib/format/compact-count";
 import { getItemIconUrl } from "@/lib/items/assets";
 import { getRoutePathById } from "@/lib/route/registry";
 import { formatScheduleRange } from "@/lib/schedule";
@@ -86,6 +88,8 @@ export default function GachaDetail({ locale, gacha }: Props) {
             </div>
           </div>
 
+          <GachaSimulator locale={locale} gacha={gacha} />
+
           {/* Narrow screens read the name before the rates; wide screens keep the rates in the sticky column. */}
           {gacha.pools.length > 0 && <div className="lg:hidden"><RatePanel locale={locale} pools={gacha.pools} /></div>}
 
@@ -123,7 +127,7 @@ export default function GachaDetail({ locale, gacha }: Props) {
                       <li key={item.id} className="flex min-w-0 items-center gap-3 rounded-2xl border border-[var(--mn-glass-border)] bg-[var(--mn-surface)] p-2.5">
                         <img className="h-10 w-10 shrink-0 object-contain" src={getItemIconUrl(item.imagePath)} alt="" loading="lazy" />
                         <span className="min-w-0 flex-1 truncate text-sm font-bold text-[var(--mn-text)]">{item.name}</span>
-                        <span className="shrink-0 font-mono text-sm font-black tabular-nums text-[var(--mn-accent-deep)]">{t(locale, "gacha.itemAmount", { count: item.amount.toLocaleString(locale) })}</span>
+                        <span className="shrink-0 font-mono text-sm font-black tabular-nums text-[var(--mn-accent-deep)]" title={item.amount.toLocaleString(locale)}>{t(locale, "gacha.itemAmount", { count: formatCompactCount(item.amount) })}</span>
                       </li>
                     ))}
                   </ul>
@@ -198,7 +202,9 @@ function RatePanel({ locale, pools }: { locale: AppLocale; pools: GachaPool[] })
                 </div>
                 <p className="mt-1.5 text-xs text-[var(--mn-text-muted)]">
                   {t(locale, "gacha.poolSize", { count: pool.count })}
-                  {pool.pickupCount > 0 && ` · ${t(locale, "gacha.poolPickup", { count: pool.pickupCount })}`}
+                  {pool.pickupCount > 0 && ` · ${pool.pickupShare > 0
+                    ? t(locale, "gacha.poolPickupShare", { count: pool.pickupCount, share: `${pool.pickupShare}%` })
+                    : t(locale, "gacha.poolPickup", { count: pool.pickupCount })}`}
                 </p>
               </li>
             );

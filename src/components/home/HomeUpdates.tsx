@@ -5,22 +5,22 @@ import { localizePath } from "@/i18n/routing";
 import MemberCardItem from "@/components/cards/MemberCardItem";
 import SongCard from "@/components/music/SongCard";
 import BannerImage from "@/components/shared/BannerImage";
-import RouteGlyph from "@/components/shared/RouteGlyph";
+import RewardChip from "@/components/shared/RewardChip";
+import { rewardBannerCrop } from "@/components/rewards/RewardsExplorer";
 import ScheduleBadge from "@/components/shared/ScheduleBadge";
 import SectionHeading, { SectionLink } from "@/components/shared/SectionHeading";
 import SupportCardItem from "@/components/support-cards/SupportCardItem";
-import { getImageAssetUrl } from "@/lib/assets/url";
 import type { CardViewModel } from "@/lib/cards/data";
-import type { HomeActivity } from "@/lib/home/data";
+import type { RewardEntrySummary } from "@/lib/rewards/data";
 import type { MusicViewModel } from "@/lib/music/data";
 import { getRoutePathById } from "@/lib/route/registry";
-import { formatScheduleRange, parseMasterDate } from "@/lib/schedule";
+import { parseMasterDate } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
 import type { SupportCardViewModel } from "@/lib/support-cards/data";
 
 interface Props {
   locale: AppLocale;
-  activities: HomeActivity[];
+  rewards: RewardEntrySummary[];
   songs: MusicViewModel[];
   cards: CardViewModel[];
   supportCards: SupportCardViewModel[];
@@ -30,7 +30,7 @@ type CardKind = "member" | "support";
 
 const latestGrid = "grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6";
 
-export default function HomeUpdates({ locale, activities, songs, cards, supportCards }: Props) {
+export default function HomeUpdates({ locale, rewards, songs, cards, supportCards }: Props) {
   const now = useNow();
   const [cardKind, setCardKind] = useState<CardKind>("member");
   const upcoming = t(locale, "schedule.upcoming");
@@ -42,11 +42,13 @@ export default function HomeUpdates({ locale, activities, songs, cards, supportC
 
   return (
     <div className="space-y-10">
-      <section aria-labelledby="home-activities">
-        <SectionHeading id="home-activities" title={t(locale, "home.activities")} />
-        {activities.length > 0 ? (
+      <section aria-labelledby="home-rewards">
+        <SectionHeading id="home-rewards" title={t(locale, "home.activities")}>
+          <SectionLink href={localizePath(getRoutePathById("rewards"), locale)} label={t(locale, "home.viewAll")} />
+        </SectionHeading>
+        {rewards.length > 0 ? (
           <ul className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
-            {activities.map((activity) => <ActivityRow key={activity.id} activity={activity} locale={locale} now={now} />)}
+            {rewards.map((entry) => <RewardRow key={entry.slug} entry={entry} locale={locale} now={now} />)}
           </ul>
         ) : (
           <div className="mn-paper px-6 py-8 text-center">
@@ -94,27 +96,29 @@ export default function HomeUpdates({ locale, activities, songs, cards, supportC
   );
 }
 
-function ActivityRow({ activity, locale, now }: { activity: HomeActivity; locale: AppLocale; now: number | null }) {
-  const kindLabel = t(locale, `home.kinds.${activity.kind}`);
+function RewardRow({ entry, locale, now }: { entry: RewardEntrySummary; locale: AppLocale; now: number | null }) {
   return (
-    <li className="mn-list-card-row flex min-w-0 items-center gap-3 border border-[var(--mn-glass-border)] bg-[var(--mn-paper)] p-3">
-      <div className="w-28 shrink-0 sm:w-36">
-        {activity.imagePath ? (
-          <BannerImage className="mn-list-caption" src={getImageAssetUrl(activity.imagePath)} alt="" fallback={kindLabel} />
-        ) : (
-          <div className="mn-list-caption grid aspect-[7/3] place-items-center bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]">
-            <RouteGlyph icon="calendar" className="h-6 w-6" />
-          </div>
-        )}
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[11px] font-bold text-[var(--mn-accent-deep)]">{kindLabel}</span>
-          <ScheduleBadge locale={locale} startAt={activity.startAt} endAt={activity.endAt} now={now} />
+    <li className="min-w-0">
+      <a
+        href={localizePath(`${getRoutePathById("rewards")}/${entry.slug}`, locale)}
+        className="mn-list-card mn-list-card-row group flex min-w-0 items-center gap-3 border border-[var(--mn-glass-border)] bg-[var(--mn-paper)] p-3"
+      >
+        <div className="w-28 shrink-0 sm:w-36">
+          <BannerImage className="mn-list-caption" src={entry.bannerUrl} alt="" fallback={t(locale, `rewards.kinds.${entry.kind}`)} imageClassName={rewardBannerCrop(entry.kind)} />
         </div>
-        <p className="mt-1.5 line-clamp-2 text-sm font-bold leading-5 text-[var(--mn-text)]">{activity.title}</p>
-        <p className="mt-1 truncate text-xs font-medium tabular-nums text-[var(--mn-text-muted)]">{formatScheduleRange(activity.startAt, activity.endAt, locale)}</p>
-      </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] font-bold text-[var(--mn-accent-deep)]">{t(locale, `rewards.kinds.${entry.kind}`)}</span>
+            <ScheduleBadge locale={locale} startAt={entry.startAt} endAt={entry.endAt} now={now} />
+          </div>
+          <p className="mt-1.5 line-clamp-2 text-sm font-bold leading-5 text-[var(--mn-text)] group-hover:text-[var(--mn-accent-deep)]">{entry.title}</p>
+          {entry.highlights.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {entry.highlights.slice(0, 4).map((reward) => <RewardChip key={`${reward.kind}:${reward.id}`} reward={reward} locale={locale} variant="icon" linked={false} />)}
+            </div>
+          )}
+        </div>
+      </a>
     </li>
   );
 }

@@ -1,18 +1,19 @@
 import { getAssetUrl } from "@/lib/assets/url";
-import { characterIdByAssetName } from "@/config/asset-names";
 import { getReleaseAudioUrl } from "./release-audio";
 
 export type StoryScriptTable = "Episode" | "Sound" | "SoundCueSheet" | "Text" | "Video";
 
+/** Published JSON for a story table, or "" when the release index does not list it. */
 export function getStoryScriptTableUrl(scriptName: string, table: StoryScriptTable): string {
   const cleanName = cleanSegment(scriptName);
   return getAssetUrl({ path: `Adv/Episode/${cleanName}/${cleanName}-${table}.txt` });
 }
 
+// Stage backgrounds and stills are not part of the release export yet; these resolve once the index lists them.
 export function getStoryBackgroundUrl(targetAssetName: string): string | undefined {
   const assetName = lastAssetName(targetAssetName);
   if (!assetName) return undefined;
-  return getAssetUrl({ path: `Adv/Stage/${assetName}/data/${assetName}.png` });
+  return getAssetUrl({ path: `Adv/Stage/${assetName}/data/${assetName}.png` }) || undefined;
 }
 
 export function getStoryStillUrl(targetAssetName: string): string | undefined {
@@ -20,15 +21,15 @@ export function getStoryStillUrl(targetAssetName: string): string | undefined {
   const assetName = lastAssetName(cleanPath);
   if (!cleanPath || !assetName) return undefined;
   const directory = cleanPath.split("/").slice(0, -1).join("/");
-  return getAssetUrl({ path: `Adv/Still/${directory}/data/${assetName}.png` });
+  return getAssetUrl({ path: `Adv/Still/${directory}/data/${assetName}.png` }) || undefined;
 }
 
 export function getStoryBgmUrl(cueSheetName: string): string | undefined {
-  return getAdvSoundUrl("Bgm", cueSheetName);
+  return getReleaseAudioUrl(cleanSegment(cueSheetName));
 }
 
 export function getStorySeUrl(cueSheetName: string): string | undefined {
-  return getAdvSoundUrl("Se", cueSheetName);
+  return getReleaseAudioUrl(cleanSegment(cueSheetName));
 }
 
 export interface StoryVoiceAsset {
@@ -38,88 +39,12 @@ export interface StoryVoiceAsset {
   soundId: string | number;
 }
 
-function adjustVoiceCueName(cueName: string): string {
-  const match = cueName.match(/^(.*)_(\d+)$/);
-  if (!match) return cueName;
-  const prefix = match[1];
-  const digitsStr = match[2];
-  if (!prefix || !digitsStr) return cueName;
-  const val = parseInt(digitsStr, 10);
-  if (isNaN(val)) return cueName;
-  const newVal = Math.max(0, val - 1);
-  const newDigitsStr = String(newVal).padStart(digitsStr.length, "0");
-  return `${prefix}_${newDigitsStr}`;
-}
-
-/** Resolve decoded WAV locations produced by the Our Notes asset exporter. */
+/** Voice lines resolve by their exact cue sheet and cue name in the release audio index. */
 export function getStoryVoiceUrl(asset: StoryVoiceAsset): string | undefined {
   const cueName = cleanSegment(asset.cueName);
   const cueSheetName = cleanSegment(asset.cueSheetName);
   if (!cueName || !cueSheetName) return undefined;
-  const releaseUrl = getReleaseAudioUrl(cueSheetName, cueName);
-  if (releaseUrl) return releaseUrl;
-
-  if (cueSheetName.startsWith("adv_voice_linkstory_")) {
-    const names = cueSheetName
-      .slice("adv_voice_linkstory_".length)
-      .split("_")
-      .filter((part) => part && !/^\d+$/.test(part));
-    const pair = names.slice(0, 2).map((name) => {
-      const id = characterIdByAssetName[name];
-      return id === undefined ? undefined : String(id).padStart(3, "0");
-    });
-    if (pair.length === 2 && pair.every(Boolean)) {
-      const adjustedCueName = adjustVoiceCueName(cueName);
-      return getAssetUrl({
-        path: `Cri/Sound/Adv/Voice/Linkstory/${pair.join("_")}/${cueSheetName}/${adjustedCueName}.wav`,
-      });
-    }
-    // Unknown link-story names must not fall through to a band-story path.
-    return undefined;
-  }
-
-  if (cueSheetName.startsWith("adv_voice_")) {
-    const storyGroup = cueSheetName.replace(/_\d{2}$/, "");
-    const adjustedCueName = adjustVoiceCueName(cueName);
-    return getAssetUrl({
-      path: `Cri/Sound/Adv/Voice/Bandstory/${storyGroup}/${cueSheetName}/${adjustedCueName}.wav`,
-    });
-  }
-
-  if (/^VoiceSystem_\d+$/i.test(cueSheetName)) {
-    const index = getOneBasedSoundIndex(asset.soundId, 10_000);
-    if (index === undefined) return undefined;
-    return getAssetUrl({
-      path: `Cri/Sound/Voice/${cueSheetName}/${cueSheetName}_${String(index).padStart(3, "0")}.wav`,
-    });
-  }
-
-  if (cueSheetName.startsWith("home_")) {
-    const bandName = cueSheetName.split("_")[2];
-    const index = getOneBasedSoundIndex(asset.soundId, 100);
-    if (!bandName || index === undefined) return undefined;
-    return getAssetUrl({
-      path: `Cri/Sound/Spot/${bandName}/${cueSheetName}/${cueSheetName}_${String(index).padStart(3, "0")}.wav`,
-    });
-  }
-
-  return undefined;
-}
-
-function getAdvSoundUrl(kind: "Bgm" | "Se", cueSheetName: string): string | undefined {
-  const cleanName = cleanSegment(cueSheetName);
-  if (!cleanName) return undefined;
-  return getReleaseAudioUrl(cleanName) ?? getAssetUrl({ path: `Cri/Sound/Adv/${kind}/${cleanName}.wav` });
-}
-
-function getOneBasedSoundIndex(soundId: string | number, modulus: number): number | undefined {
-  try {
-    const value = BigInt(soundId);
-    const oneBased = Number(value % BigInt(modulus));
-    return oneBased > 0 ? oneBased - 1 : undefined;
-  } catch {
-    return undefined;
-  }
+  return getReleaseAudioUrl(cueSheetName, cueName);
 }
 
 function cleanSegment(value: string): string {

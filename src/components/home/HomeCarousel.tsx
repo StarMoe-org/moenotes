@@ -19,7 +19,7 @@ const INTERVAL_MS = 6_000;
 
 export function homeLinkHref(link: HomeLink, locale: AppLocale): string {
   const base = getRoutePathById(link.routeId);
-  return localizePath(link.detailId === undefined ? base : `${base}/${link.detailId}`, locale);
+  return localizePath(link.detail === undefined ? base : `${base}/${link.detail}`, locale);
 }
 
 /** Read after mount: the server cannot know the preference, and the first client render must match it. */
@@ -100,7 +100,7 @@ export default function HomeCarousel({ locale, slides }: Props) {
               href={href}
               className="mn-focus mn-stamp-press inline-flex w-fit items-center gap-2 rounded-full border border-[var(--mn-border)] bg-[var(--mn-accent-deep)] px-5 py-2.5 text-sm font-bold text-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]"
             >
-              {t(locale, active.link?.routeId === "gacha" ? "home.viewGacha" : "home.viewMusic")}
+              {t(locale, active.link?.routeId === "gacha" ? "home.viewGacha" : active.link?.routeId === "music" ? "home.viewMusic" : "home.viewDetail")}
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></svg>
             </a>
           )}

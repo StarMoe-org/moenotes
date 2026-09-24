@@ -38,3 +38,22 @@ export async function getMasterdataStoryParams(): Promise<RouteStaticParamConfig
     .sort((a, b) => a - b)
     .map((id) => ({ params: { id: String(id) }, breadcrumbDetail: { label: `ADV ${id}` } }));
 }
+
+/** Season passes, limited mission groups and login bonuses share the rewards detail route. */
+export async function getMasterdataRewardParams(): Promise<RouteStaticParamConfig[]> {
+  const { rewardEntrySlug } = await import("@/lib/rewards/data");
+  const sources = [
+    ["seasonPass", "MasterSeasonPass.json"],
+    ["mission", "MasterLimitedMissionGroup.json"],
+    ["loginBonus", "MasterLoginBonus.json"],
+  ] as const;
+  const params: RouteStaticParamConfig[] = [];
+  for (const [kind, file] of sources) {
+    const table = await getBuildMasterData(file, validateMasterTable<{ id: number }>);
+    for (const id of [...new Set(table._allData.map((row) => row.id))].filter((id) => Number.isSafeInteger(id) && id > 0).sort((a, b) => a - b)) {
+      const slug = rewardEntrySlug(kind, id);
+      params.push({ params: { id: slug }, breadcrumbDetail: { label: slug } });
+    }
+  }
+  return params;
+}

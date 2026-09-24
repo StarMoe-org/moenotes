@@ -1,12 +1,8 @@
 export const assetConfig = {
-  releaseEnabled: true,
+  /** Assets exported from the live client. Object names carry export sequence numbers, so paths resolve through src/lib/assets/generated. */
   releaseSource: "https://storage.bdon.moe/moenotes",
   browserApi: (import.meta.env.PUBLIC_ASSET_BROWSER_API || "https://assets.bdon.moe").replace(/\/+$/, ""),
   browserRegion: "tw",
-  sources: {
-    main: "https://storage.bdon.moe/ournotes-assets",
-    backup: "https://assets-backup.moesekai.dev/ournotes",
-  },
   fonts: {
     googlePreconnect: "https://fonts.googleapis.com",
     googleStaticPreconnect: "https://fonts.gstatic.com",

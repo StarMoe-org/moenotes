@@ -15,6 +15,17 @@ export interface RawGacha {
   isLimited: boolean;
   bannerAssetName: string;
   logoAssetName: string;
+  productId1?: number;
+  productId2?: number;
+  productId3?: number;
+  productId4?: number;
+}
+
+export interface RawGachaProduct {
+  id: number;
+  drawCount: number;
+  ensuredCount: number;
+  ensuredRarity: number;
 }
 
 export interface RawGachaLot {
@@ -31,6 +42,8 @@ export interface RawGachaPrize {
   resourceId: number;
   amount: number;
   pickUpType: number;
+  /** Share of the lot, in percent, that goes to the rate-up prizes as a group (50 → every other draw from this lot). */
+  pickUpFixedRate?: number;
 }
 
 export interface RawGachaView {
@@ -56,6 +69,25 @@ export interface GachaPool {
   rate: number;
   count: number;
   pickupCount: number;
+  /** Percent of this pool's draws that land on rate-up cards, when the data fixes it. */
+  pickupShare: number;
+}
+
+/** One drawable prize with its absolute weight (lot weights are basis points of a single draw). */
+export interface GachaDrawEntry {
+  kind: GachaPoolKind;
+  id: number;
+  amount: number;
+  rarity: number;
+  weight: number;
+  pickup: boolean;
+}
+
+export interface GachaDrawPlan {
+  count: number;
+  /** The last `guaranteeCount` draws come from prizes of at least `guaranteeRarity`. */
+  guaranteeCount: number;
+  guaranteeRarity: number;
 }
 
 export interface GachaItemPrize {
@@ -96,6 +128,8 @@ export interface GachaDetailViewModel extends GachaViewModel {
   items: GachaItemPrize[];
   pickupMemberIds: number[];
   pickupSupportIds: number[];
+  draws: GachaDrawEntry[];
+  drawPlans: { single: GachaDrawPlan; ten: GachaDrawPlan };
 }
 
 const poolKindOrder: Record<GachaPoolKind, number> = { member: 0, support: 1, item: 2 };
@@ -115,11 +149,46 @@ function poolKind(resourceType: number): GachaPoolKind {
   return resourceType === RESOURCE_MEMBER ? "member" : resourceType === RESOURCE_SUPPORT ? "support" : "item";
 }
 
+function pickupShareOf(prizes: RawGachaPrize[]): number {
+  const shares = prizes.filter((prize) => prize.pickUpType === PICKUP_RATE_UP).map((prize) => prize.pickUpFixedRate ?? 0);
+  return Math.min(100, Math.max(0, ...shares, 0));
+}
+
+function drawEntriesForLot(lot: RawGachaLot, prizes: RawGachaPrize[], kind: GachaPoolKind, rarityOf: (prize: RawGachaPrize) => number): GachaDrawEntry[] {
+  const weight = Math.max(0, lot.weight);
+  const pickups = prizes.filter((prize) => prize.pickUpType === PICKUP_RATE_UP);
+  const rest = prizes.filter((prize) => prize.pickUpType !== PICKUP_RATE_UP);
+  // The rate-up group takes its fixed share of the lot, split evenly; the other prizes split the remainder.
+  // Without a share (or without anything else in the lot) every prize is equally likely.
+  const share = pickups.length && rest.length ? pickupShareOf(prizes) / 100 : 0;
+  const evenWeight = prizes.length ? weight / prizes.length : 0;
+  const pickupWeight = share ? (weight * share) / pickups.length : evenWeight;
+  const restWeight = share ? (weight * (1 - share)) / rest.length : evenWeight;
+  return prizes.map((prize) => ({
+    kind,
+    id: prize.resourceId,
+    amount: prize.amount,
+    rarity: rarityOf(prize),
+    weight: prize.pickUpType === PICKUP_RATE_UP ? pickupWeight : restWeight,
+    pickup: prize.pickUpType === PICKUP_RATE_UP,
+  }));
+}
+
+function drawPlan(products: RawGachaProduct[], count: number): GachaDrawPlan {
+  const plans = products.filter((product) => product.drawCount === count).map((product) => ({
+    count,
+    guaranteeCount: product.ensuredRarity > 0 ? Math.min(product.ensuredCount, count) : 0,
+    guaranteeRarity: product.ensuredCount > 0 ? product.ensuredRarity : 0,
+  }));
+  return plans.sort((a, b) => b.guaranteeRarity - a.guaranteeRarity || b.guaranteeCount - a.guaranteeCount)[0] ?? { count, guaranteeCount: 0, guaranteeRarity: 0 };
+}
+
 export function normalizeGachas(
   gachas: RawGacha[],
   lots: RawGachaLot[],
   prizes: RawGachaPrize[],
   views: RawGachaView[],
+  products: RawGachaProduct[],
   cards: CardViewModel[],
   supportCards: SupportCardViewModel[],
   items: ItemViewModel[],
@@ -133,6 +202,7 @@ export function normalizeGachas(
   const lotsByGroup = groupBy(lots, (lot) => lot.lotGroupId);
   const prizesByGroup = groupBy(prizes, (prize) => prize.groupId);
   const viewsByGacha = groupBy(views, (view) => view.gachaId);
+  const productMap = new Map(products.map((product) => [product.id, product]));
 
   return [...gachas]
     .sort((a, b) => b.priority - a.priority || a.id - b.id)
@@ -145,6 +215,7 @@ export function normalizeGachas(
       const pickupMemberIds = new Set<number>();
       const pickupSupportIds = new Set<number>();
       const itemAmounts = new Map<number, number>();
+      const draws: GachaDrawEntry[] = [];
 
       for (const lot of gachaLots) {
         const groupPrizes = prizesByGroup.get(lot.prizeGroupId) ?? [];
@@ -153,7 +224,7 @@ export function normalizeGachas(
         const kind = poolKind(resourceType);
         const rarity = kind === "item" ? 0 : lot.rarityConstraint;
         const key = `${kind}:${rarity}`;
-        const pool = pools.get(key) ?? { kind, rarity, rate: 0, count: 0, pickupCount: 0 };
+        const pool = pools.get(key) ?? { kind, rarity, rate: 0, count: 0, pickupCount: 0, pickupShare: 0 };
         pool.rate += totalWeight ? (lot.weight / totalWeight) * 100 : 0;
         for (const prize of groupPrizes) {
           const isPickup = prize.pickUpType === PICKUP_RATE_UP;
@@ -167,8 +238,14 @@ export function normalizeGachas(
             itemAmounts.set(prize.resourceId, prize.amount);
           }
         }
+        draws.push(...drawEntriesForLot(lot, groupPrizes, kind, (prize) => {
+          if (kind === "member") return cardMap.get(prize.resourceId)?.rarity ?? rarity;
+          if (kind === "support") return supportMap.get(prize.resourceId)?.rarity ?? rarity;
+          return 0;
+        }));
         pool.count += groupPrizes.length;
         pool.pickupCount += groupPrizes.filter((prize) => prize.pickUpType === PICKUP_RATE_UP).length;
+        pool.pickupShare = Math.max(pool.pickupShare, pickupShareOf(groupPrizes));
         pools.set(key, pool);
       }
 
@@ -195,6 +272,7 @@ export function normalizeGachas(
       }
       const bandIds = [...new Set([...pickupMembers, ...pickupSupports].map((card) => card.bandId).filter(Boolean))].sort((a, b) => a - b);
 
+      const gachaProducts = [gacha.productId1, gacha.productId2, gacha.productId3, gacha.productId4].flatMap((id) => (id ? productMap.get(id) ?? [] : []));
       const name = localizeMasterText(textMap.get(gacha.nameTextId), locale) || `#${gacha.id}`;
       const description = localizeMasterText(textMap.get(gacha.descriptionTextId), locale);
       const pickupText = [...pickupMembers, ...pickupSupports].map((card) => card.title).join(" ");
@@ -220,6 +298,9 @@ export function normalizeGachas(
         items: gachaItems,
         pickupMemberIds: [...pickupMemberIds].filter((id) => cardMap.has(id)),
         pickupSupportIds: [...pickupSupportIds].filter((id) => supportMap.has(id)),
+        // Prizes missing from the card/item tables cannot be shown, so they are not drawn either.
+        draws: draws.filter((entry) => entry.weight > 0 && (entry.kind === "member" ? cardMap.has(entry.id) : entry.kind === "support" ? supportMap.has(entry.id) : itemMap.has(entry.id))),
+        drawPlans: { single: drawPlan(gachaProducts, 1), ten: drawPlan(gachaProducts, 10) },
       };
     });
 }

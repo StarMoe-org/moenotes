@@ -1,0 +1,18 @@
+---
+import RewardDetail from "@/components/rewards/RewardDetail";
+import PageLayout from "@/layouts/PageLayout.astro";
+import type { AppLocale } from "@/config/locales";
+import { getBuildRewardEntryDetail } from "@/lib/masterdata/build-data";
+
+interface Props {
+  locale: AppLocale;
+  slug: string;
+}
+
+const { locale, slug } = Astro.props;
+const entry = await getBuildRewardEntryDetail(locale, slug);
+---
+
+<PageLayout locale={locale} titleKey="seo.rewardDetail.title" descriptionKey="seo.rewardDetail.description">
+  <RewardDetail client:load locale={locale} entry={entry} />
+</PageLayout>

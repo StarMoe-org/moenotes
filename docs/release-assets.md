@@ -37,7 +37,19 @@ The verified 2026-09-24 manifest supplies 1,583 image keys, 946 story groups, an
 artwork, JSON tables and M4A responses; one main-story chapter parsed into 115
 lines with 110 release audio links.
 
-Unmapped paths continue to use the legacy bucket. In particular, this manifest
-does not provide the old assembled `Cri/Sound/MusicScore` tracks or a confirmed
-replacement for `Adv/Stage` / `Adv/Still`. Do not infer new paths for these from
-unrelated resources. Backup URLs retain the legacy layout.
+The image scope also covers gacha banners and logos, home and limited-mission
+banners, season pass banners, login bonus sheets, title (`Image/Degree`) art,
+profile backgrounds with their thumbnails, and home spot thumbnails. With these,
+the same manifest yields 1,842 image keys; the earlier keys are unchanged.
+
+The release bucket is the only asset source; the old test-server bucket and its
+backup are no longer referenced. A path the index does not list resolves to no
+URL, and the UI shows its unavailable state instead of guessing an object name.
+
+Known gaps in the 2026-09-24 export: song audio (cue sheets such as
+`A_Abracadabra` and `A_Abracadabra_short`) and ADV `Adv/Stage` / `Adv/Still`
+art. The asset catalog lists the song bundles (e.g.
+`cri_assets_cri_sound_a_abracadabra.bundle`), but they have not been downloaded
+or decoded yet. Songs resolve like every other CRI sound, by cue sheet and cue
+name under `Cri/Sound/<cue sheet>/`, so they appear once a refreshed manifest
+includes them and the index is regenerated.

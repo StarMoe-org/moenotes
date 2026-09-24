@@ -65,23 +65,8 @@ export default function MusicDetail({ locale, initialSong }: Props) {
   const downloadJacket = async () => {
     if (!song) return;
     setDownloadState("downloading");
-    try {
-      const response = await fetch(song.jacketUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      const filename = song.jacketUrl.split("/").pop() || "jacket.png";
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      setDownloadState("success");
-    } catch {
-      window.open(song.jacketUrl, "_blank");
-      setDownloadState("success");
-    }
+    await saveRemoteFile(song.jacketUrl, `${song.jacketAssetName}.png`);
+    setDownloadState("success");
     setTimeout(() => setDownloadState("idle"), 1500);
   };
 
@@ -241,12 +226,9 @@ export default function MusicDetail({ locale, initialSong }: Props) {
             </div>
           </div>
 
-          {/* Audio Player tape widget */}
-          {song.audioUrl && (
-            <div className="mt-6 w-full">
-              <AudioPlayer src={song.audioUrl} title={song.title} />
-            </div>
-          )}
+          <div className="mt-6 w-full">
+            <SongAudioPanel locale={locale} song={song} />
+          </div>
         </aside>
 
         {/* Right Column: Details & Difficulties */}
@@ -395,7 +377,93 @@ function formatDate(value: string, locale: AppLocale): string {
   return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat(locale, { year: "numeric", month: "long", day: "numeric" }).format(date);
 }
 
-function AudioPlayer({ src, title }: { src: string; title: string }) {
+/** Saves a remote file under a readable name; opens it in a new tab when the browser blocks the blob download. */
+async function saveRemoteFile(url: string, filename: string): Promise<void> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const objectUrl = window.URL.createObjectURL(await response.blob());
+    const anchor = document.createElement("a");
+    anchor.href = objectUrl;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    window.URL.revokeObjectURL(objectUrl);
+  } catch {
+    window.open(url, "_blank", "noopener");
+  }
+}
+
+function safeFilename(value: string): string {
+  return value.replace(/[\/:*?"<>|]+/g, "_").trim() || "audio";
+}
+
+function SongAudioPanel({ locale, song }: { locale: AppLocale; song: MusicViewModel }) {
+  const tracks = [
+    song.audioUrl && { kind: "full" as const, url: song.audioUrl },
+    song.previewAudioUrl && { kind: "preview" as const, url: song.previewAudioUrl },
+  ].filter((track): track is { kind: "full" | "preview"; url: string } => Boolean(track));
+  const [active, setActive] = useState(0);
+  const [downloading, setDownloading] = useState<string | null>(null);
+
+  if (tracks.length === 0) {
+    return (
+      <div className="mn-paper p-4 text-sm">
+        <p className="font-bold text-[var(--mn-text)]">{t(locale, "music.audio.unavailableTitle")}</p>
+        <p className="mt-1.5 text-xs leading-6 text-[var(--mn-text-muted)]">{t(locale, "music.audio.unavailableDescription")}</p>
+      </div>
+    );
+  }
+
+  const track = tracks[Math.min(active, tracks.length - 1)]!;
+  const download = async (item: (typeof tracks)[number]) => {
+    setDownloading(item.kind);
+    const extension = item.url.split(".").pop()?.split("?")[0] || "m4a";
+    const suffix = item.kind === "preview" ? "_short" : "";
+    await saveRemoteFile(item.url, `${safeFilename(song.title)}${suffix}.${extension}`);
+    setDownloading(null);
+  };
+
+  return (
+    <div className="space-y-3">
+      {tracks.length > 1 && (
+        <div className="mn-segmented flex w-fit gap-1 rounded-full border border-[var(--mn-glass-border)] bg-[var(--mn-surface-strong)] p-1" role="group" aria-label={t(locale, "music.audio.title")}>
+          {tracks.map((item, index) => (
+            <button
+              key={item.kind}
+              type="button"
+              onClick={() => setActive(index)}
+              aria-pressed={index === active}
+              className={`mn-focus rounded-full px-3 py-1 text-xs font-bold transition ${index === active ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)]"}`}
+            >
+              {t(locale, `music.audio.${item.kind}`)}
+            </button>
+          ))}
+        </div>
+      )}
+      <AudioPlayer locale={locale} src={track.url} title={song.title} label={t(locale, `music.audio.${track.kind}`)} />
+      <div className="flex flex-wrap gap-2">
+        {tracks.map((item) => (
+          <button
+            key={item.kind}
+            type="button"
+            onClick={() => download(item)}
+            disabled={downloading !== null}
+            className="mn-focus mn-stamp-press inline-flex items-center gap-2 rounded-full border border-[var(--mn-border)] bg-[var(--mn-paper)] px-4 py-2 text-xs font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)] disabled:opacity-60"
+          >
+            {downloading === item.kind
+              ? <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="9" strokeWidth="2" className="opacity-30" /><path d="M12 3a9 9 0 019 9" strokeWidth="2" strokeLinecap="round" /></svg>
+              : <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4v11" /><path d="m7 10 5 5 5-5" /><path d="M5 20h14" /></svg>}
+            {t(locale, "music.audio.download", { kind: t(locale, `music.audio.${item.kind}`) })}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AudioPlayer({ locale, src, title, label }: { locale: AppLocale; src: string; title: string; label: string }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -466,7 +534,7 @@ function AudioPlayer({ src, title }: { src: string; title: string }) {
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <span className="text-[10px] font-black uppercase tracking-wider text-[var(--mn-accent-deep)] block opacity-75">
-            Preview Playback
+            {label}
           </span>
           <span className="text-xs font-bold text-[var(--mn-text)] truncate block mt-0.5" title={title}>
             {title}
@@ -477,7 +545,7 @@ function AudioPlayer({ src, title }: { src: string; title: string }) {
           type="button"
           onClick={togglePlay}
           className="mn-focus mn-stamp-press flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--mn-border)] bg-[var(--mn-accent)] text-[var(--mn-bg)] shadow-sm hover:scale-105 transition-all"
-          aria-label={isPlaying ? "Pause preview" : "Play preview"}
+          aria-label={t(locale, isPlaying ? "music.audio.pause" : "music.audio.play")}
         >
           {isPlaying ? (
             <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">
@@ -497,6 +565,7 @@ function AudioPlayer({ src, title }: { src: string; title: string }) {
         </span>
         <input
           type="range"
+          aria-label={t(locale, "music.audio.seek")}
           min={0}
           max={duration || 100}
           value={currentTime}

@@ -6,11 +6,13 @@ interface Props {
   /** Shown in place of the artwork when it is missing or fails to load. */
   fallback: string;
   className?: string;
+  /** Crop control for artwork that is not 7:3, e.g. "object-top" for full-screen sheets. */
+  imageClassName?: string;
   eager?: boolean;
 }
 
 /** In-game banner artwork (7:3), shared by the gacha pages and the home carousel. */
-export default function BannerImage({ src, alt, fallback, className = "", eager = false }: Props) {
+export default function BannerImage({ src, alt, fallback, className = "", imageClassName = "", eager = false }: Props) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const failed = !src || failedSrc === src;
 
@@ -22,7 +24,7 @@ export default function BannerImage({ src, alt, fallback, className = "", eager 
         </div>
       ) : (
         <img
-          className="h-full w-full object-cover"
+          className={`h-full w-full object-cover ${imageClassName}`.trim()}
           src={src}
           alt={alt}
           loading={eager ? "eager" : "lazy"}

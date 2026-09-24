@@ -2,26 +2,15 @@ import { describe, expect, test } from "bun:test";
 import { getStoryVoiceUrl } from "../src/lib/story/assets";
 import { classifyAdv, type RawAdv } from "../src/lib/story/data";
 
-describe("release story asset names", () => {
-  test.each([
-    ["tomori", "anon", "001_002"],
-    ["uika", "sakiko", "006_010"],
-    ["arale", "nonoka", "011_012"],
-    ["arare", "ritsu", "011_013"],
-    ["miyako", "yuno", "014_015"],
-    ["hotaru", "natsume", "016_017"],
-    ["nagi", "mahoro", "018_019"],
-    ["houka", "raika", "020_021"],
-    ["miku", "yomogi", "022_023"],
-    ["chieri", "shizuku", "024_025"],
-  ])("resolves %s / %s to %s", (first, second, directory) => {
-    const sheet = `adv_voice_linkstory_${first}_${second}_1`;
-    expect(getStoryVoiceUrl({ scriptName: "unused", cueSheetName: sheet, cueName: "voice_001", soundId: 1 }))
-      .toEndWith(`/Cri/Sound/Adv/Voice/Linkstory/${directory}/${sheet}/voice_000.wav`);
+describe("release story voices", () => {
+  test("link-story voices resolve by their exported cue sheet and exact cue", () => {
+    const sheet = "adv_voice_linkstory_anon_rana_10471";
+    expect(getStoryVoiceUrl({ scriptName: "unused", cueSheetName: sheet, cueName: `${sheet}_001`, soundId: 1 }))
+      .toEndWith(`/Cri/Sound/${sheet}/${sheet}_001__00000.m4a`);
   });
 
-  test("skips unresolved link-story characters", () => {
-    expect(getStoryVoiceUrl({ scriptName: "unused", cueSheetName: "adv_voice_linkstory_unknown_anon_1", cueName: "voice_001", soundId: 1 }))
+  test("voices missing from the export resolve to nothing rather than a legacy WAV path", () => {
+    expect(getStoryVoiceUrl({ scriptName: "unused", cueSheetName: "adv_voice_linkstory_tomori_anon_1", cueName: "voice_001", soundId: 1 }))
       .toBeUndefined();
   });
 

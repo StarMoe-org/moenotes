@@ -13,7 +13,6 @@ export function resolveReleaseAudioPath(cueSheet: string, cueName?: string): str
 }
 
 export function getReleaseAudioUrl(cueSheet: string, cueName?: string): string | undefined {
-  if (!assetConfig.releaseEnabled) return undefined;
   const path = resolveReleaseAudioPath(cueSheet, cueName);
   return path ? `${assetConfig.releaseSource}/${path}` : undefined;
 }

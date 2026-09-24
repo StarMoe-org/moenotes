@@ -1,5 +1,6 @@
 import type { AppLocale } from "@/config/locales";
 import { getAssetUrl } from "@/lib/assets/url";
+import { getReleaseAudioUrl } from "@/lib/story/release-audio";
 import { localizeMasterText, type MasterTextRow } from "@/lib/masterdata/localize-text";
 
 export interface MasterTable<T> {
@@ -24,6 +25,7 @@ export interface RawMusic {
   hardID: number;
   expertID: number;
   musicSoundID: number;
+  jingleSoundID: number;
 }
 
 export interface RawMusicScore {
@@ -75,7 +77,16 @@ export interface MusicViewModel {
   vocalists: Array<{ id: number; name: string }>;
   searchText: string;
   musicSoundID: number;
+  /** Full track and the short game-menu cut; undefined until the release export includes them. */
   audioUrl?: string | undefined;
+  previewAudioUrl?: string | undefined;
+}
+
+/** MasterSound joined with MasterSoundCueSheet. */
+export interface MusicSoundCue {
+  id: number;
+  cueName: string;
+  cueSheetName: string;
 }
 
 export function validateMasterTable<T>(raw: unknown): MasterTable<T> {
@@ -95,8 +106,9 @@ export function getMusicJacketUrl(jacketAssetName: string): string {
   return getAssetUrl({ path: `Image/Jacket/${jacketAssetName}.png`, type: "raw" });
 }
 
-export function getMusicAudioUrl(cueName: string): string {
-  return getAssetUrl({ path: `Cri/Sound/MusicScore/${cueName}.wav`, type: "raw" });
+/** Songs use the same release audio layout as other CRI sounds: Cri/Sound/<cue sheet>/<cue>. */
+export function getMusicAudioUrl(sound: MusicSoundCue | undefined): string | undefined {
+  return sound ? getReleaseAudioUrl(sound.cueSheetName, sound.cueName) : undefined;
 }
 
 export function normalizeMusic(
@@ -106,8 +118,9 @@ export function normalizeMusic(
   bands: RawBand[],
   texts: RawText[],
   locale: AppLocale,
-  sounds?: Array<{ id: number; cueName: string }>,
+  sounds: MusicSoundCue[] = [],
 ): MusicViewModel[] {
+  const soundMap = new Map(sounds.map((sound) => [sound.id, sound]));
   const textMap = new Map(texts.map((entry) => [entry.id, entry]));
   const characterMap = new Map(characters.map((entry) => [entry.id, entry]));
   const bandMap = new Map(bands.map((entry) => [entry.id, entry]));
@@ -166,8 +179,6 @@ export function normalizeMusic(
       ...vocalists.map((v) => v.name),
     ];
 
-    const soundItem = sounds?.find((s) => s.id === music.musicSoundID);
-    const audioUrl = soundItem ? getMusicAudioUrl(soundItem.cueName) : undefined;
 
     return {
       id: music.id,
@@ -186,7 +197,8 @@ export function normalizeMusic(
       vocalists,
       searchText: searchParts.join(" ").toLowerCase(),
       musicSoundID: music.musicSoundID,
-      audioUrl,
+      audioUrl: getMusicAudioUrl(soundMap.get(music.musicSoundID)),
+      previewAudioUrl: getMusicAudioUrl(soundMap.get(music.jingleSoundID)),
     };
   });
 }

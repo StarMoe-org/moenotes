@@ -129,6 +129,13 @@ body {
 }
 .mn-carousel-progress { animation: mn-carousel-progress 6s linear forwards; }
 
+/* Gacha simulator: results arrive one after another (delay set inline). */
+@keyframes mn-draw-reveal {
+  from { opacity: 0; transform: translateY(6px) scale(.97); }
+  to { opacity: 1; transform: none; }
+}
+.mn-draw-reveal { animation: mn-draw-reveal .26s ease-out both; }
+
 #content {
   min-width: 0;
 }

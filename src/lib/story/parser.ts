@@ -210,6 +210,7 @@ async function fetchStoryTable<T>(scriptName: string, table: StoryScriptTable, f
 
 async function loadStoryTable(scriptName: string, table: StoryScriptTable, fetcher: typeof fetch): Promise<NormalizedTable<unknown>> {
   const url = getStoryScriptTableUrl(scriptName, table);
+  if (!url) throw new Error(`Story table is not in the release export: ${scriptName}-${table}`);
   let lastError: unknown;
 
   for (let attempt = 1; attempt <= 4; attempt += 1) {

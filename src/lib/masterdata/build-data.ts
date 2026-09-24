@@ -67,17 +67,28 @@ import {
   type RawGacha,
   type RawGachaLot,
   type RawGachaPrize,
+  type RawGachaProduct,
   type RawGachaView,
 } from "@/lib/gacha/data";
+import { buildHomeData, type HomeData, type RawHomeBanner } from "@/lib/home/data";
+import { normalizeDegrees, type DegreeViewModel, type RawDegree } from "@/lib/degrees/data";
+import { normalizeBackgrounds, type BackgroundViewModel, type RawBackground } from "@/lib/backgrounds/data";
+import { createRewardResolver, type RawHomeSpot as RawRewardHomeSpot } from "@/lib/rewards/resources";
 import {
-  buildHomeData,
-  type HomeData,
-  type RawEvent,
-  type RawHomeBanner,
+  normalizeRewardEntries,
+  toRewardEntrySummary,
+  type RawLimitedMission,
   type RawLimitedMissionGroup,
   type RawLoginBonus,
+  type RawLoginBonusSlot,
+  type RawRewardRow,
   type RawSeasonPass,
-} from "@/lib/home/data";
+  type RawSeasonPassLevel,
+  type RawSeasonPassLevelReward,
+  type RawSeasonPassMission,
+  type RewardEntryDetail,
+  type RewardEntrySummary,
+} from "@/lib/rewards/data";
 
 interface BuildDataState {
   tables: Map<string, Promise<MasterTable<unknown>>>;
@@ -188,15 +199,18 @@ export function getBuildCharacters(locale: AppLocale): Promise<{ characters: Cha
 
 export function getBuildMusic(locale: AppLocale): Promise<MusicViewModel[]> {
   return memo(`music:${locale}`, async () => {
-    const [music, scores, characters, bands, texts, sounds] = await Promise.all([
+    const [music, scores, characters, bands, texts, sounds, cueSheets] = await Promise.all([
       table<RawMusic>("MasterLiveMusic.json"),
       table<RawMusicScore>("MasterLiveMusicScore.json"),
       table<RawMusicCharacter>("MasterCharacter.json"),
       table<RawMusicBand>("MasterBand.json"),
       table<RawMusicText>("MasterText.json"),
-      table<{ id: number; cueName: string }>("MasterSound.json"),
+      table<{ id: number; cueName: string; soundCueSheetID: number }>("MasterSound.json"),
+      table<{ id: number; cueSheetName: string }>("MasterSoundCueSheet.json"),
     ]);
-    return normalizeMusic(music._allData, scores._allData, characters._allData, bands._allData, texts._allData, locale, sounds._allData);
+    const sheetNames = new Map(cueSheets._allData.map((sheet) => [sheet.id, sheet.cueSheetName]));
+    const soundCues = sounds._allData.map((sound) => ({ id: sound.id, cueName: sound.cueName, cueSheetName: sheetNames.get(sound.soundCueSheetID) ?? "" }));
+    return normalizeMusic(music._allData, scores._allData, characters._allData, bands._allData, texts._allData, locale, soundCues);
   });
 }
 
@@ -212,17 +226,18 @@ export function getBuildItems(locale: AppLocale): Promise<ItemViewModel[]> {
 
 function getBuildGachaDetails(locale: AppLocale): Promise<GachaDetailViewModel[]> {
   return memo(`gacha-details:${locale}`, async () => {
-    const [gachas, lots, prizes, views, cards, supportCards, items, texts] = await Promise.all([
+    const [gachas, lots, prizes, views, products, cards, supportCards, items, texts] = await Promise.all([
       table<RawGacha>("MasterGacha.json"),
       table<RawGachaLot>("MasterGachaLot.json"),
       table<RawGachaPrize>("MasterGachaPrize.json"),
       table<RawGachaView>("MasterGachaView.json"),
+      table<RawGachaProduct>("MasterGachaProduct.json"),
       getBuildCards(locale),
       getBuildSupportCards(locale),
       getBuildItems(locale),
       table<RawText>("MasterText.json"),
     ]);
-    return normalizeGachas(gachas._allData, lots._allData, prizes._allData, views._allData, cards, supportCards, items, texts._allData, locale);
+    return normalizeGachas(gachas._allData, lots._allData, prizes._allData, views._allData, products._allData, cards, supportCards, items, texts._allData, locale);
   });
 }
 
@@ -236,34 +251,102 @@ export async function getBuildGachaDetail(locale: AppLocale, gachaId: number): P
 
 export function getBuildHomeData(locale: AppLocale): Promise<HomeData> {
   return memo(`home:${locale}`, async () => {
-    const [banners, events, missions, loginBonuses, seasonPasses, texts, gachas, music, cards, supportCards] = await Promise.all([
+    const [banners, gachas, rewards, music, cards, supportCards] = await Promise.all([
       table<RawHomeBanner>("MasterHomeBanner.json"),
-      table<RawEvent>("MasterEvent.json"),
-      table<RawLimitedMissionGroup>("MasterLimitedMissionGroup.json"),
-      table<RawLoginBonus>("MasterLoginBonus.json"),
-      table<RawSeasonPass>("MasterSeasonPass.json"),
-      table<RawText>("MasterText.json"),
       getBuildGachas(locale),
+      getBuildRewardEntries(locale),
       getBuildMusic(locale),
       getBuildCards(locale),
       getBuildSupportCards(locale),
     ]);
-    return buildHomeData(
-      {
-        banners: banners._allData,
-        events: events._allData,
-        missions: missions._allData,
-        loginBonuses: loginBonuses._allData,
-        seasonPasses: seasonPasses._allData,
-        texts: texts._allData,
-      },
-      gachas,
-      music,
-      cards,
-      supportCards,
-      locale,
-    );
+    return buildHomeData(banners._allData, gachas, rewards, music, cards, supportCards);
   });
+}
+
+export function getBuildDegrees(locale: AppLocale): Promise<DegreeViewModel[]> {
+  return memo(`degrees:${locale}`, async () => {
+    const [degrees, characters, texts] = await Promise.all([
+      table<RawDegree>("MasterDegree.json"),
+      table<RawCharacter>("MasterCharacter.json"),
+      table<RawText>("MasterText.json"),
+    ]);
+    return normalizeDegrees(degrees._allData, characters._allData, texts._allData, locale);
+  });
+}
+
+export function getBuildBackgrounds(locale: AppLocale): Promise<BackgroundViewModel[]> {
+  return memo(`backgrounds:${locale}`, async () => {
+    const [backgrounds, texts] = await Promise.all([
+      table<RawBackground>("MasterBackground.json"),
+      table<RawText>("MasterText.json"),
+    ]);
+    return normalizeBackgrounds(backgrounds._allData, texts._allData, locale);
+  });
+}
+
+function getBuildRewardEntryDetails(locale: AppLocale): Promise<RewardEntryDetail[]> {
+  return memo(`reward-entries:${locale}`, async () => {
+    const [
+      items, cards, supportCards, music, stamps, degrees, spots, texts,
+      seasonPasses, seasonPassLevels, seasonPassLevelRewards, seasonPassRewards, seasonPassMissions,
+      missionGroups, missions, missionRewards, loginBonuses, loginBonusSlots,
+      exchanges, chapters, episodes, advs, bands, characters,
+    ] = await Promise.all([
+      getBuildItems(locale),
+      getBuildCards(locale),
+      getBuildSupportCards(locale),
+      getBuildMusic(locale),
+      getBuildStamps(locale),
+      getBuildDegrees(locale),
+      table<RawRewardHomeSpot>("MasterHomeSpot.json"),
+      table<RawText>("MasterText.json"),
+      table<RawSeasonPass>("MasterSeasonPass.json"),
+      table<RawSeasonPassLevel>("MasterSeasonPassLevel.json"),
+      table<RawSeasonPassLevelReward>("MasterSeasonPassLevelReward.json"),
+      table<RawRewardRow>("MasterSeasonPassReward.json"),
+      table<RawSeasonPassMission>("MasterSeasonPassMission.json"),
+      table<RawLimitedMissionGroup>("MasterLimitedMissionGroup.json"),
+      table<RawLimitedMission>("MasterLimitedMission.json"),
+      table<RawRewardRow>("MasterMissionReward.json"),
+      table<RawLoginBonus>("MasterLoginBonus.json"),
+      table<RawLoginBonusSlot>("MasterLoginBonusSlot.json"),
+      table<{ id: number; nameTextId: string }>("MasterExchange.json"),
+      table<{ id: number; nameTextId: string }>("MasterStoryChapter.json"),
+      table<{ id: number; episodeNumber: number; advId: number }>("MasterStoryEpisode.json"),
+      table<{ id: number; titleTextId: string }>("MasterAdv.json"),
+      table<RawBand>("MasterBand.json"),
+      table<RawCharacter>("MasterCharacter.json"),
+    ]);
+    const resolve = createRewardResolver({ items, cards, supportCards, music, stamps, degrees, spots: spots._allData, texts: texts._allData }, locale);
+    return normalizeRewardEntries({
+      seasonPasses: seasonPasses._allData,
+      seasonPassLevels: seasonPassLevels._allData,
+      seasonPassLevelRewards: seasonPassLevelRewards._allData,
+      seasonPassRewards: seasonPassRewards._allData,
+      seasonPassMissions: seasonPassMissions._allData,
+      missionGroups: missionGroups._allData,
+      missions: missions._allData,
+      missionRewards: missionRewards._allData,
+      loginBonuses: loginBonuses._allData,
+      loginBonusSlots: loginBonusSlots._allData,
+      exchanges: exchanges._allData,
+      chapters: chapters._allData,
+      episodes: episodes._allData,
+      advs: advs._allData,
+      bands: bands._allData,
+      characters: characters._allData,
+      music: music.map((song) => ({ id: song.id, title: song.title })),
+      texts: texts._allData,
+    }, resolve, locale);
+  });
+}
+
+export function getBuildRewardEntries(locale: AppLocale): Promise<RewardEntrySummary[]> {
+  return memo(`reward-summaries:${locale}`, async () => (await getBuildRewardEntryDetails(locale)).map(toRewardEntrySummary));
+}
+
+export async function getBuildRewardEntryDetail(locale: AppLocale, slug: string): Promise<RewardEntryDetail | null> {
+  return (await getBuildRewardEntryDetails(locale)).find((entry) => entry.slug === slug) ?? null;
 }
 
 export function getBuildStamps(locale: AppLocale): Promise<StampViewModel[]> {

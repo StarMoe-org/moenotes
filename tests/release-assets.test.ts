@@ -1,8 +1,9 @@
 import { expect, test } from "bun:test";
-import { getAssetUrl, getAssetFallbackUrls } from "../src/lib/assets/url";
+import { getAssetUrl } from "../src/lib/assets/url";
 import { resolveReleaseAssetPath } from "../src/lib/assets/release-path";
 import { resolveReleaseAudioPath } from "../src/lib/story/release-audio";
-import { getStoryVoiceUrl, getStoryScriptTableUrl } from "../src/lib/story/assets";
+import { getStoryBackgroundUrl, getStoryBgmUrl, getStoryVoiceUrl, getStoryScriptTableUrl } from "../src/lib/story/assets";
+import { getMusicAudioUrl } from "../src/lib/music/data";
 import { assetConfig } from "../src/config/assets";
 
 test("card textures use their named output rather than a crop or a fixed index", () => {
@@ -30,12 +31,15 @@ test("audio is selected by sheet and exact cue without subtracting a cue index",
   expect(resolveReleaseAudioPath(sheet, "missing")).toBeUndefined();
 });
 
-test("unknown assets stay on legacy storage and backups retain their original layout", () => {
-  const path = "Cri/Sound/MusicScore/A_AveMujica.wav";
-  expect(getAssetUrl({ path })).toBe(`${assetConfig.sources.main}/${path}`);
-  const request = { path: "Character/Image/11/character_face_icon.png" };
-  expect(getAssetFallbackUrls(request)).toEqual([
-    getAssetUrl(request), `${assetConfig.sources.main}/${request.path}`, `${assetConfig.sources.backup}/${request.path}`,
-  ]);
-  expect(getAssetUrl({ ...request, source: "backup" })).toBe(`${assetConfig.sources.backup}/${request.path}`);
+test("assets missing from the release index get no URL instead of a test-server path", () => {
+  expect(getAssetUrl({ path: "Cri/Sound/MusicScore/A_AveMujica.wav" })).toBe("");
+  expect(getStoryScriptTableUrl("unknown", "Text")).toBe("");
+  expect(getStoryBackgroundUrl("adv_bkg_stage_000001")).toBeUndefined();
+  expect(getStoryBgmUrl("sound_bgm_adv_not_exported")).toBeUndefined();
+});
+
+test("songs resolve through the release audio index by cue sheet and cue", () => {
+  expect(getMusicAudioUrl({ id: 1, cueSheetName: "sound_bgm_adv_cafe_time", cueName: "sound_bgm_adv_cafe_time" })).toStartWith(`${assetConfig.releaseSource}/Cri/Sound/sound_bgm_adv_cafe_time/`);
+  expect(getMusicAudioUrl({ id: 2, cueSheetName: "A_Abracadabra", cueName: "A_Abracadabra" })).toBeUndefined();
+  expect(getMusicAudioUrl(undefined)).toBeUndefined();
 });

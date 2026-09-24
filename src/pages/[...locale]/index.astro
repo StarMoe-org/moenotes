@@ -16,6 +16,10 @@ import ComicsPage from "@/components/comics/ComicsPage.astro";
 import ItemsPage from "@/components/items/ItemsPage.astro";
 import GachaPage from "@/components/gacha/GachaPage.astro";
 import GachaDetailPage from "@/components/gacha/GachaDetailPage.astro";
+import RewardsPage from "@/components/rewards/RewardsPage.astro";
+import RewardDetailPage from "@/components/rewards/RewardDetailPage.astro";
+import TitlesPage from "@/components/titles/TitlesPage.astro";
+import BackgroundsPage from "@/components/backgrounds/BackgroundsPage.astro";
 import StoryPage from "@/components/story/StoryPage.astro";
 import StoryDetailPage from "@/components/story/StoryDetailPage.astro";
 import GroupLanding from "@/components/route/GroupLanding.astro";
@@ -75,6 +79,14 @@ const component = match.item.component ?? "page";
     <GachaPage locale={locale} />
   ) : component === "gacha-detail" ? (
     <GachaDetailPage locale={locale} gachaId={Number(match.params.id)} />
+  ) : component === "rewards" ? (
+    <RewardsPage locale={locale} />
+  ) : component === "reward-detail" ? (
+    <RewardDetailPage locale={locale} slug={match.params.id ?? ""} />
+  ) : component === "titles" ? (
+    <TitlesPage locale={locale} />
+  ) : component === "backgrounds" ? (
+    <BackgroundsPage locale={locale} />
   ) : component === "story-main" ? (
     <StoryPage locale={locale} category="main" titleKey={match.item.seo.titleKey} descriptionKey={match.item.seo.descriptionKey} />
   ) : component === "story-friendship" ? (

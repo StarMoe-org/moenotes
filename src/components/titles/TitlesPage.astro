@@ -1,0 +1,19 @@
+---
+import TitlesExplorer from "@/components/titles/TitlesExplorer";
+import PageLayout from "@/layouts/PageLayout.astro";
+import type { AppLocale } from "@/config/locales";
+import { getBuildCharacters, getBuildDegrees } from "@/lib/masterdata/build-data";
+
+interface Props {
+  locale: AppLocale;
+}
+
+const { locale } = Astro.props;
+const [titles, { characters, bands }] = await Promise.all([getBuildDegrees(locale), getBuildCharacters(locale)]);
+const bandOptions: Array<[number, string]> = bands.map((band) => [band.id, band.name]);
+const characterOptions = characters.map((character) => ({ id: character.id, name: character.name, bandId: character.bandId }));
+---
+
+<PageLayout locale={locale} titleKey="seo.titles.title" descriptionKey="seo.titles.description">
+  <TitlesExplorer client:load locale={locale} initialTitles={titles} bands={bandOptions} characters={characterOptions} />
+</PageLayout>

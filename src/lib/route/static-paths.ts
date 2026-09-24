@@ -46,6 +46,7 @@ export async function getStaticLocalizedPaths(): Promise<StaticLocalizedPath[]> 
   let characterMap: Map<number, Record<AppLocale, string>> | null = null;
   let musicMap: Map<number, Record<AppLocale, string>> | null = null;
   let gachaMap: Map<number, Record<AppLocale, string>> | null = null;
+  let rewardMap: Map<string, Record<AppLocale, string>> | null = null;
   let storyMap: Map<number, { title: Record<AppLocale, string>; category: "main" | "friendship" | "other" }> | null = null;
 
   for (const route of getAllRoutes().filter(isDynamicRoute)) {
@@ -232,6 +233,40 @@ export async function getStaticLocalizedPaths(): Promise<StaticLocalizedPath[]> 
           }
 
           const localizedLabel = gachaMap.get(gachaId)?.[locale];
+          if (localizedLabel) {
+            breadcrumbDetail = { label: localizedLabel };
+          }
+        }
+
+        if (route.component === "reward-detail") {
+          if (!rewardMap) {
+            rewardMap = new Map();
+            try {
+              const { rewardEntrySlug } = await import("@/lib/rewards/data");
+              const nameTable = (file: string) => getStaticMasterData(file, { validate: validateMasterTable<{ id: number; nameTextId?: string; nameTextID?: string }> });
+              const [passTable, missionTable, loginTable, textTable] = await Promise.all([
+                nameTable("MasterSeasonPass.json"),
+                nameTable("MasterLimitedMissionGroup.json"),
+                nameTable("MasterLoginBonus.json"),
+                getStaticMasterData("MasterText.json", { validate: validateMasterTable<MasterTextRow> }),
+              ]);
+              const textMap = new Map(textTable._allData.map((entry) => [entry.id, entry]));
+              const sources = [["seasonPass", passTable], ["mission", missionTable], ["loginBonus", loginTable]] as const;
+              for (const [kind, table] of sources) {
+                for (const row of table._allData) {
+                  const labels = {} as Record<AppLocale, string>;
+                  for (const loc of SUPPORTED_LOCALES) {
+                    labels[loc] = localizeMasterText(textMap.get(row.nameTextId ?? row.nameTextID ?? ""), loc) || `#${row.id}`;
+                  }
+                  rewardMap.set(rewardEntrySlug(kind, row.id), labels);
+                }
+              }
+            } catch (err) {
+              console.error("Failed to preload dynamic reward breadcrumbs:", err);
+            }
+          }
+
+          const localizedLabel = rewardMap.get(config.params.id ?? "")?.[locale];
           if (localizedLabel) {
             breadcrumbDetail = { label: localizedLabel };
           }

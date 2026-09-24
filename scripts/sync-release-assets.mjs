@@ -7,7 +7,7 @@ if (!input) throw new Error("Usage: node scripts/sync-release-assets.mjs <manife
 const manifest = JSON.parse(readFileSync(input, "utf8"));
 if (manifest.schema !== "moenotes-assets-object-index/v1") throw new Error("Unsupported asset manifest");
 const images = {}, stories = {}, audio = {};
-const imageScope = /^(Character\/(Image|Skill)\/|Band\/\d+\/band_|MemberCard\/|SupportCard\/|Image\/(Jacket|Comic|Banner)\/|Item\/|Stamp\/|Story\/|Gacha\/(Banner|Logo)\/|SeasonPass\/Banner\/)/;
+const imageScope = /^(Character\/(Image|Skill)\/|Band\/\d+\/band_|MemberCard\/|SupportCard\/|Image\/(Jacket|Comic|Banner|Degree|Background|Spot)\/|thumbnail\/Background\/|Item\/|Stamp\/|Story\/|Gacha\/(Banner|Logo)\/|SeasonPass\/Banner\/|LoginBonus\/Sprite\/)/;
 const safePath = (path) => typeof path === "string" && !path.includes(":") && !path.includes("\\") && !path.startsWith("/") && !path.split("/").includes("..");
 const audioCandidates = new Map();
 for (const entry of [...manifest.objects].sort((a, b) => a.object_key.localeCompare(b.object_key, "en"))) {
