@@ -39,7 +39,7 @@ export const siteConfig: SiteConfig = {
     { label: "pjsk.moe (MoeSekai)", url: "https://pjsk.moe" },
   ],
   community: {
-    discord: { name: "StarMoe", url: "https://discord.gg/de8Nmsana" },
+    discord: { name: "StarMoe", url: "https://discord.gg/gQWBADznx" },
   },
   contact: {
     email: "mail@exmeaning.com",
