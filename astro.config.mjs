@@ -5,6 +5,11 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   trailingSlash: "ignore",
+  // Story pages spend most of their render time waiting on story-table fetches from our own
+  // asset service; rendering several pages at once overlaps that wait.
+  build: {
+    concurrency: 16,
+  },
   integrations: [react()],
   vite: {
     plugins: [tailwindcss()],
