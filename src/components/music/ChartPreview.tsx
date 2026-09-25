@@ -6,7 +6,6 @@ import BrandLogo from "@/components/shared/BrandLogo";
 import { difficultyStyles } from "@/components/music/difficulty-styles";
 import { ReleaseRequestError, fetchReleaseBytes } from "@/lib/assets/release";
 import {
-  CHART_RENDERER_SOURCE_URL,
   CHART_SHEET_THEMES,
   getChartFileUrl,
   getChartImageFileName,
@@ -42,6 +41,7 @@ export default function ChartPreview({ locale, song }: { locale: AppLocale; song
   const [theme, setTheme] = useState<ChartSheetTheme>("white");
   const [sheet, setSheet] = useState<SheetState>({ stage: "idle" });
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [downloadState, setDownloadState] = useState<"idle" | "downloading" | "success">("idle");
   // Only the newest request may publish its result; switching difficulty mid-render supersedes the old one.
   const generationRef = useRef(0);
   const sheetUrlRef = useRef<string | null>(null);
@@ -106,23 +106,61 @@ export default function ChartPreview({ locale, song }: { locale: AppLocale; song
 
   const selectDifficulty = (next: ChartDifficulty) => {
     setDifficulty(next);
+    setDownloadState("idle");
     if (started) void draw(next, theme);
   };
 
   const selectTheme = (next: ChartSheetTheme) => {
     setTheme(next);
+    setDownloadState("idle");
     if (started) void draw(difficulty, next);
   };
 
   const download = () => {
     if (sheet.stage !== "ready") return;
-    const anchor = document.createElement("a");
-    anchor.href = sheet.url;
-    anchor.download = getChartImageFileName(song.title, sheet.difficulty);
-    anchor.click();
+    setDownloadState("downloading");
+    try {
+      const anchor = document.createElement("a");
+      anchor.href = sheet.url;
+      anchor.download = getChartImageFileName(song.title, sheet.difficulty);
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      setDownloadState("success");
+    } catch {
+      setDownloadState("idle");
+    }
+    setTimeout(() => setDownloadState("idle"), 1500);
   };
 
   const difficultyLabel = (value: ChartDifficulty) => t(locale, `music.difficultyLevels.${value}`);
+
+  const previewActions = sheet.stage === "ready" ? (
+    <button
+      type="button"
+      onClick={download}
+      disabled={downloadState === "downloading"}
+      className="grid h-8 w-8 place-items-center rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:text-[var(--mn-text)] disabled:opacity-50"
+      aria-label={t(locale, "music.chartPreview.download")}
+    >
+      {downloadState === "idle" && (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+      )}
+      {downloadState === "downloading" && (
+        <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="12" cy="12" r="9" strokeWidth="2" className="opacity-30" />
+          <path d="M12 3a9 9 0 019 9" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      )}
+      {downloadState === "success" && (
+        <svg className="h-4 w-4 text-[var(--mn-mint)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      )}
+    </button>
+  ) : null;
 
   return (
     <section className="mn-paper overflow-hidden" aria-labelledby="chart-preview-title">
@@ -178,20 +216,18 @@ export default function ChartPreview({ locale, song }: { locale: AppLocale; song
           onOpen={() => setViewerOpen(true)}
         />
 
-        <p className="text-xs font-medium leading-6 text-[var(--mn-text-muted)]">
-          {t(locale, "music.chartPreview.credit")}{" "}
-          <a className="mn-focus rounded font-bold text-[var(--mn-accent-deep)] underline decoration-dotted underline-offset-4" href={CHART_RENDERER_SOURCE_URL} target="_blank" rel="noopener noreferrer">
-            {t(locale, "music.chartPreview.sourceLink")}
-          </a>
-        </p>
       </div>
 
       <Modal
         isOpen={viewerOpen && sheet.stage === "ready"}
-        onClose={() => setViewerOpen(false)}
+        onClose={() => {
+          setViewerOpen(false);
+          setDownloadState("idle");
+        }}
         title={sheet.stage === "ready" ? `${song.title} · ${difficultyLabel(sheet.difficulty)}` : undefined}
         closeLabel={t(locale, "actions.close")}
         size="xl"
+        headerActions={previewActions}
       >
         {sheet.stage === "ready" && (
           <SheetViewer
@@ -254,7 +290,6 @@ function SheetStage({ locale, sheet, alt, onDraw, onOpen }: {
   return (
     <div className={frame}>
       <SheetGlyph />
-      <p className="max-w-md text-sm font-medium leading-7 text-[var(--mn-text-muted)]">{t(locale, "music.chartPreview.idleHint")}</p>
       <button type="button" onClick={onDraw} className={primaryButton}>{t(locale, "music.chartPreview.draw")}</button>
     </div>
   );
@@ -362,14 +397,11 @@ function SheetViewer({ locale, url, width, height, alt }: { locale: AppLocale; u
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs font-medium leading-6 text-[var(--mn-text-muted)]">{t(locale, "music.chartPreview.viewerHint")}</p>
-        <div className="flex items-center gap-2">
-          <button type="button" className={iconButton} onClick={() => zoomAtCentre(0.8)} aria-label={t(locale, "music.chartPreview.zoomOut")}><MinusIcon /></button>
-          <span className="w-12 text-center font-mono text-xs font-bold text-[var(--mn-text)]" aria-live="polite">{Math.round(view.scale * 100)}%</span>
-          <button type="button" className={iconButton} onClick={() => zoomAtCentre(1.25)} aria-label={t(locale, "music.chartPreview.zoomIn")}><PlusIcon /></button>
-          <button type="button" className={`${iconButton} w-auto px-4 text-xs font-bold`} onClick={fit}>{t(locale, "music.chartPreview.fit")}</button>
-        </div>
+      <div className="flex items-center justify-end gap-2">
+        <button type="button" className={iconButton} onClick={() => zoomAtCentre(0.8)} aria-label={t(locale, "music.chartPreview.zoomOut")}><MinusIcon /></button>
+        <span className="w-12 text-center font-mono text-xs font-bold text-[var(--mn-text)]" aria-live="polite">{Math.round(view.scale * 100)}%</span>
+        <button type="button" className={iconButton} onClick={() => zoomAtCentre(1.25)} aria-label={t(locale, "music.chartPreview.zoomIn")}><PlusIcon /></button>
+        <button type="button" className={`${iconButton} w-auto px-4 text-xs font-bold`} onClick={fit}>{t(locale, "music.chartPreview.fit")}</button>
       </div>
       <div
         ref={viewportRef}
