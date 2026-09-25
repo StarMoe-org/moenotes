@@ -26,8 +26,14 @@ export function releaseFileUrl(key: string, fileName: string, locale: AppLocale)
   return `${assetConfig.api}/${segments.join("/")}`;
 }
 
-/** Published JSON (story tables); server errors and rate limits are retried. */
-export async function fetchReleaseJson<T>(url: string, fetcher: typeof fetch): Promise<T> {
+export class ReleaseRequestError extends Error {
+  constructor(readonly status: number, url: string) {
+    super(`Release request failed (HTTP ${status}): ${url}`);
+  }
+}
+
+/** Server errors and rate limits are retried. */
+async function fetchRelease(url: string, fetcher: typeof fetch): Promise<Response> {
   for (let attempt = 1; ; attempt += 1) {
     let response: Response | undefined;
     try {
@@ -35,10 +41,20 @@ export async function fetchReleaseJson<T>(url: string, fetcher: typeof fetch): P
     } catch (error) {
       if (attempt >= 4) throw error;
     }
-    if (response?.ok) return response.json() as Promise<T>;
+    if (response?.ok) return response;
     if (response && ((response.status < 500 && response.status !== 429) || attempt >= 4)) {
-      throw new Error(`Release request failed (HTTP ${response.status}): ${url}`);
+      throw new ReleaseRequestError(response.status, url);
     }
     await new Promise((resolve) => setTimeout(resolve, attempt * 500));
   }
+}
+
+/** Published JSON (story tables). */
+export async function fetchReleaseJson<T>(url: string, fetcher: typeof fetch): Promise<T> {
+  return (await fetchRelease(url, fetcher)).json() as Promise<T>;
+}
+
+/** Published file bytes (music charts, PNG jackets). */
+export async function fetchReleaseBytes(url: string, fetcher: typeof fetch): Promise<Uint8Array<ArrayBuffer>> {
+  return new Uint8Array(await (await fetchRelease(url, fetcher)).arrayBuffer());
 }

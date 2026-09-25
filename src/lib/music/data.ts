@@ -58,6 +58,8 @@ export interface SongDifficultyModel {
   level: number;
   displayLevel: number;
   notesCount: number;
+  /** MasterLiveMusicScore.musicScoreTextFileName, e.g. `0069/0069_03`; names the published chart file. */
+  chartKey: string;
 }
 
 export interface MusicViewModel {
@@ -155,6 +157,7 @@ export function normalizeMusic(
           level: score.musicScoreLevel,
           displayLevel: score.musicScoreDisplayLevel,
           notesCount: score.fullComboCount,
+          chartKey: score.musicScoreTextFileName,
         });
       }
     });

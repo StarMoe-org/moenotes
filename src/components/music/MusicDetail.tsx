@@ -4,6 +4,8 @@ import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import { getRoutePathById } from "@/lib/route/registry";
 import Modal from "@/components/shared/Modal";
+import ChartPreview from "@/components/music/ChartPreview";
+import { difficultyStyles } from "@/components/music/difficulty-styles";
 import {
   type MusicViewModel,
 } from "@/lib/music/data";
@@ -306,13 +308,7 @@ export default function MusicDetail({ locale, initialSong }: Props) {
             </div>
             <div className="p-6 sm:p-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
               {song.difficulties.map((diff) => {
-                const diffLabels = {
-                  easy: { shortLabel: "EZ", cardBg: "bg-cyan-50/10 border-cyan-100 dark:bg-cyan-950/20 dark:border-cyan-900/50", dot: "bg-cyan-500", labelColor: "text-cyan-700 dark:text-cyan-400" },
-                  normal: { shortLabel: "NM", cardBg: "bg-emerald-50/10 border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-900/50", dot: "bg-emerald-500", labelColor: "text-emerald-700 dark:text-emerald-400" },
-                  hard: { shortLabel: "HD", cardBg: "bg-amber-50/10 border-amber-100 dark:bg-amber-950/20 dark:border-amber-900/50", dot: "bg-amber-500", labelColor: "text-amber-700 dark:text-amber-400" },
-                  expert: { shortLabel: "EX", cardBg: "bg-rose-50/10 border-rose-100 dark:bg-rose-950/20 dark:border-rose-900/50", dot: "bg-rose-500", labelColor: "text-rose-700 dark:text-rose-400" },
-                };
-                const config = diffLabels[diff.difficulty];
+                const config = difficultyStyles[diff.difficulty];
 
                 return (
                   <div key={diff.difficulty} className={`p-3 border rounded-2xl flex flex-col items-center justify-between text-center gap-2 ${config.cardBg}`}>
@@ -340,6 +336,8 @@ export default function MusicDetail({ locale, initialSong }: Props) {
           </div>
         </section>
       </div>
+
+      {song.difficulties.length > 0 && <ChartPreview locale={locale} song={song} />}
 
       {/* Jacket Zoom Modal */}
       <Modal

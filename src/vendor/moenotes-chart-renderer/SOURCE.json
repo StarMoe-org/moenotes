@@ -1,0 +1,9 @@
+{
+  "repository": "StarMoe-org/moenotes-chart-renderer",
+  "commit": "5ad547f5f676bfb1a6417d3f83704b626421360f",
+  "toolchain": "emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 6.0.10 (d6c521a7f05449857c76bd99e396895583cf2083)",
+  "build": {
+    "local": true
+  },
+  "wasmSha256": "d45629baf7dccc230594dbcd830d4c0b6e44d05deb59a8877f73b8a2f3921a07"
+}

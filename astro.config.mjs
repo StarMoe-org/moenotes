@@ -13,6 +13,11 @@ export default defineConfig({
   integrations: [react()],
   vite: {
     plugins: [tailwindcss()],
+    // The chart renderer worker (src/lib/music/chart-render.worker.ts) is an ES module worker: its Emscripten
+    // glue is ESM and locates the .wasm via import.meta.url, which Vite emits as a hashed asset.
+    worker: {
+      format: "es",
+    },
     resolve: {
       alias: {
         "@": fileURLToPath(new URL("./src", import.meta.url)),
