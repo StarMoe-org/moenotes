@@ -27,6 +27,9 @@ body {
     radial-gradient(circle at 17px 31px, var(--mn-dot-ink) 1px, transparent 1.6px),
     radial-gradient(circle at 71px 83px, var(--mn-dot-ink) .7px, transparent 1.4px);
   background-size: 100% 100%, 100% 100%, 137px 173px, 211px 257px;
+  /* A stacking context, so a fixed layer at a negative z-index (the story reader's scene backdrop) paints over the
+     body background and under the page. */
+  isolation: isolate;
 }
 
 ::selection {

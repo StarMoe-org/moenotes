@@ -28,8 +28,15 @@ ETag; see the service's `docs/API.md` (Path routes).
 - **Audio**: `Cri/Sound/<cue sheet>/<cue>.m4a` by exact cue name; the cue number is not
   adjusted. BGM and SE sheets publish one cue named after the sheet. Full songs
   (`Fwk.Sound.SplitAcbData`) and previews (`*_short`) resolve the same way.
-- **Backgrounds and stills**: `Adv/Stage/<name>/data/<name>` and
-  `Adv/Still/<dir>/data/<name>` are exported; the story UI does not render them yet.
+- **Story scenes**: the reader shows backgrounds (`Adv/Stage/<name>/data/<name>`), stills
+  (`Adv/Still/<dir>/data/<name>`), clips and phone chats between the lines. Clips are
+  `Cri/Video/<asset>/<name>.mp4` (the script's `-Video` table names the asset; the same
+  file in every language); their subtitles are the script's command-28 rows, timed by the
+  durations of the blocking rows between them (the sums match the MP4 lengths to about a
+  second) and attached to the player as a WebVTT track. Chat avatars
+  are `Adv/Chat/Icon/<icon>/<icon>.webp` from `MasterAdvChat`. Solid black/white stages
+  (217, 218, 333) are treated as scene breaks. Anime-still captions come from
+  `MasterBiliAnimeStillSubTitle` (optional; skipped for Japanese).
 
 Because URLs are built rather than looked up, the site cannot tell in advance whether a
 file exists. A missing file fails to load (images fall back where the component handles
@@ -41,4 +48,8 @@ In `astro dev`, build data is memoized on `globalThis` and survives hot reloads;
 the dev server after changing how asset URLs are built.
 
 Known gaps (2026-09-25): `MemberCard/30/member_character` and one ACB sheet have no
-export; member-card USM movies are not exported.
+export; member-card USM movies are not exported. The CDN in front of the service does not cache
+responses of 400 and above, so a path requested before its export resolves once the export
+is published (it previously cached 404s for a year). 21 yumemita
+chapter-1 stills (`adv_still_anime_000194`–`000299`, `adv_still_charaillust_000028`) are
+referenced by scripts but absent from the catalog; the reader hides them.

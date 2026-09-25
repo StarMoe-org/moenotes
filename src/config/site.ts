@@ -12,6 +12,9 @@ export interface SiteConfig {
     xhtml: string;
   };
   sisterSites: Array<{ label: string; url: string }>;
+  community: {
+    discord: { name: string; url: string };
+  };
   contact: {
     email: string;
     feedbackUrl: string;
@@ -28,16 +31,20 @@ export const siteConfig: SiteConfig = {
   author: "StarMoe",
   developerUrl: "https://star.moe",
   ogImage: "/og-default.png",
+  repository: "https://github.com/StarMoe-org/moenotes",
   xmlNamespaces: {
     xhtml: "http://www.w3.org/1999/xhtml",
   },
   sisterSites: [
     { label: "pjsk.moe (MoeSekai)", url: "https://pjsk.moe" },
   ],
+  community: {
+    discord: { name: "StarMoe", url: "https://discord.gg/de8Nmsana" },
+  },
   contact: {
     email: "mail@exmeaning.com",
-    feedbackUrl: "https://github.com/moe-sekai/moenotes/issues",
-    bugReportUrl: "https://github.com/moe-sekai/moenotes/issues",
+    feedbackUrl: "https://github.com/StarMoe-org/moenotes/issues",
+    bugReportUrl: "https://github.com/StarMoe-org/moenotes/issues",
   },
 };
 

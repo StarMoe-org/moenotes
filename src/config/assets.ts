@@ -1,7 +1,7 @@
 export const assetConfig = {
   /**
-   * moenotes-assets service: published files (/files/{id}), export manifests (/exports/{id}) and the bundle browser API.
-   * It has no path-based routes; file IDs come from src/lib/assets/generated (scripts/sync-release-assets.mjs).
+   * moenotes-assets service: published files by asset path (/{language}/{key}/{label}.{ext}, see
+   * src/lib/assets/release.ts and docs/release-assets.md) and the bundle browser API.
    */
   api: (import.meta.env.PUBLIC_ASSET_API || "https://assets.bdon.moe").replace(/\/+$/, ""),
   region: "tw",

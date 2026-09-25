@@ -9,6 +9,8 @@ import {
 import { localizeMasterText } from "@/lib/masterdata/localize-text";
 
 export type StoryCategory = "main" | "friendship" | "live-result" | "home" | "tutorial";
+/** A chapter's main episodes, its per-character another episodes and its extra episodes each number from 1. */
+export type StoryEpisodeKind = "main" | "another" | "extra";
 export type HomeStoryKind = "tap-talk" | "spot-intro";
 
 export interface RawStoryChapter {
@@ -106,6 +108,22 @@ export interface RawCharacterFriendship {
   storyBanner: string;
 }
 
+/** Phone-chat window and sender settings; story chat rows refer to them by targetChatID. */
+export interface RawAdvChat {
+  id: number;
+  chatIconAssetName: string;
+  chatWindowAssetName: string;
+}
+
+/** Translation of the text drawn in an anime still, shown while the still is up (episode row indices). */
+export interface RawAnimeStillSubtitle {
+  id: number;
+  episodeAssetName: string;
+  episodeIndexOpen: number;
+  episodeIndexClose: number;
+  textID: string;
+}
+
 export interface RawStoryCharacter {
   id: number;
   bandID: number;
@@ -160,6 +178,7 @@ export interface StoryViewModel {
   title: string;
   description: string;
   episodeNumber: number | null;
+  episodeKind: StoryEpisodeKind | null;
   chapterId: number | null;
   chapterName: string;
   chapterDescription: string;
@@ -205,7 +224,11 @@ export function normalizeStories(data: StoryMasterData, locale: AppLocale): Stor
     if (!adv) continue;
     referencedAdvIds.add(adv.id);
     const chapter = chapterMap.get(episode.chapterId);
-    const ids = chapter?.mainCharacterIds ?? (episode.characterId ? [episode.characterId] : []);
+    const episodeKind: StoryEpisodeKind = episode.isAnotherEpisode ? "another" : episode.isExtraEpisode ? "extra" : "main";
+    // An another episode follows one character.
+    const ids = episodeKind === "another" && episode.characterId
+      ? [episode.characterId]
+      : chapter?.mainCharacterIds ?? (episode.characterId ? [episode.characterId] : []);
     stories.push(buildStory({
       sourceId: episode.id,
       category: "main",
@@ -213,6 +236,7 @@ export function normalizeStories(data: StoryMasterData, locale: AppLocale): Stor
       title: resolveText(adv.titleTextId),
       description: resolveText(episode.descriptionTextId),
       episodeNumber: episode.episodeNumber,
+      episodeKind,
       chapterId: episode.chapterId,
       chapterName: chapter ? resolveText(chapter.nameTextId) : "",
       chapterDescription: chapter ? resolveText(chapter.descriptionTextId) : "",
@@ -241,7 +265,8 @@ export function normalizeStories(data: StoryMasterData, locale: AppLocale): Stor
       banner: episode.banner,
       image: episode.image,
       thumbnail: episode.thumbnail,
-      sortOrder: 100_000_000 + episode.chapterId * 10_000 + episode.episodeNumber,
+      // Main episodes, then another episodes, then extra episodes.
+      sortOrder: 100_000_000 + episode.chapterId * 10_000 + EPISODE_KIND_ORDER[episodeKind] * 1_000 + episode.episodeNumber,
     }));
   }
 
@@ -373,6 +398,29 @@ export function normalizeStories(data: StoryMasterData, locale: AppLocale): Stor
   return stories.sort((a, b) => a.sortOrder - b.sortOrder || a.advId - b.advId);
 }
 
+const EPISODE_KIND_ORDER: Readonly<Record<StoryEpisodeKind, number>> = { main: 0, another: 1, extra: 2 };
+
+/** The previous or next story of a detail page, in its category's reading order. */
+export interface StoryNeighbor {
+  advId: number;
+  title: string;
+  episodeKind: StoryEpisodeKind | null;
+  episodeNumber: number | null;
+  groupTitle: string;
+}
+
+export function storyNeighbors(stories: StoryViewModel[], advId: number): { previous: StoryNeighbor | null; next: StoryNeighbor | null } {
+  const current = stories.find((story) => story.advId === advId);
+  if (!current) return { previous: null, next: null };
+  const seen = new Set<number>();
+  const ordered = stories.filter((story) => story.category === current.category && !seen.has(story.advId) && seen.add(story.advId));
+  const index = ordered.findIndex((story) => story.advId === advId);
+  const neighbor = (story: StoryViewModel | undefined): StoryNeighbor | null => story
+    ? { advId: story.advId, title: story.title, episodeKind: story.episodeKind, episodeNumber: story.episodeNumber, groupTitle: story.groupTitle }
+    : null;
+  return { previous: neighbor(ordered[index - 1]), next: neighbor(ordered[index + 1]) };
+}
+
 export function classifyAdv(adv: RawAdv): StoryCategory | null {
   const asset = adv.advEpisodeAsset.toLowerCase();
   if (asset.startsWith("adv_script_tutorial_")) return "tutorial";
@@ -393,6 +441,7 @@ interface BuildStoryInput {
   title: string;
   description?: string;
   episodeNumber?: number;
+  episodeKind?: StoryEpisodeKind;
   chapterId?: number;
   chapterName?: string;
   chapterDescription?: string;
@@ -432,6 +481,7 @@ function buildStory(input: BuildStoryInput): StoryViewModel {
     title: input.title,
     description: input.description ?? "",
     episodeNumber: input.episodeNumber ?? null,
+    episodeKind: input.episodeKind ?? null,
     chapterId: input.chapterId ?? null,
     chapterName: input.chapterName ?? "",
     chapterDescription: input.chapterDescription ?? "",

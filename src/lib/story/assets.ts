@@ -33,6 +33,19 @@ export function getStoryStillUrl(targetAssetName: string): string | undefined {
   return getAssetUrl({ path: `Adv/Still/${directory}/data/${assetName}.png` }) || undefined;
 }
 
+/** A story clip, published as `Cri/Video/<asset>/<name>.mp4`; every language gets the same file. */
+export function getStoryVideoUrl(assetName: string, locale: AppLocale): string | undefined {
+  const cleanPath = cleanAssetPath(assetName);
+  const name = lastAssetName(cleanPath);
+  return cleanPath && name ? releaseFileUrl(`Cri/Video/${cleanPath}`, `${name}.mp4`, locale) : undefined;
+}
+
+/** Avatar a phone-chat message shows, by its MasterAdvChat icon asset. */
+export function getStoryChatIconUrl(iconAssetName: string): string | undefined {
+  const name = lastAssetName(iconAssetName);
+  return name ? getAssetUrl({ path: `Adv/Chat/Icon/${name}.png` }) || undefined : undefined;
+}
+
 // BGM and SE sheets publish one cue named after the sheet.
 export function getStoryBgmUrl(cueSheetName: string, locale: AppLocale): string | undefined {
   return getCueUrl(cueSheetName, cueSheetName, locale);

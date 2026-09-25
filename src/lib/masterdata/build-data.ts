@@ -44,10 +44,13 @@ import {
 import { normalizeItems, type ItemViewModel, type RawItem } from "@/lib/items/data";
 import { normalizeStamps, type RawStamp, type StampViewModel } from "@/lib/stamps/data";
 import { normalizeComics, type ComicViewModel, type RawComic } from "@/lib/comics/data";
-import { localizeMasterText } from "@/lib/masterdata/localize-text";
+import { localizeMasterText, masterTextFieldOrder } from "@/lib/masterdata/localize-text";
 import {
   normalizeStories,
+  storyNeighbors,
   type RawAdv,
+  type RawAdvChat,
+  type RawAnimeStillSubtitle,
   type RawCharacterFriendship,
   type RawHomeSpot,
   type RawStoryChapter,
@@ -56,9 +59,11 @@ import {
   type RawStoryFriendshipEpisode,
   type RawStoryHomeSpotTapTalkEpisode,
   type RawStoryLiveResultEpisode,
+  type StoryNeighbor,
   type StoryViewModel,
 } from "@/lib/story/data";
-import { fetchAndParseStory, type ParsedStoryScript } from "@/lib/story/parser";
+import { fetchAndParseStory, type ParsedStoryScript, type StoryScriptLookups } from "@/lib/story/parser";
+import { plainRichText } from "@/lib/story/rich-text";
 import {
   normalizeGachas,
   toGachaSummary,
@@ -124,6 +129,10 @@ export interface StoryDetailData {
   script: ParsedStoryScript | null;
   characters: RawStoryCharacter[];
   texts: RawText[];
+  /** The story list entry (episode numbering, chapter, artwork); null for an ADV no story list refers to. */
+  story: StoryViewModel | null;
+  previous: StoryNeighbor | null;
+  next: StoryNeighbor | null;
 }
 
 export interface StoryReaderLookup {
@@ -517,11 +526,42 @@ export function getBuildStoryDetail(locale: AppLocale, advId: number): Promise<S
       table<RawStoryCharacter>("MasterCharacter.json"),
     ]);
     const adv = advs._allData.find((entry) => entry.id === advId);
-    if (!adv) return { title: `ADV ${advId}`, script: null, characters: [], texts: [] };
+    if (!adv) return { title: `ADV ${advId}`, script: null, characters: [], texts: [], story: null, previous: null, next: null };
     const title = localizeMasterText(texts._allData.find((entry) => entry.id === adv.titleTextId), locale) || `ADV ${advId}`;
     const characterTextIds = new Set(characters._allData.flatMap((entry) => [entry.nameTextID, entry.shortNameTextID]));
     const characterTexts = texts._allData.filter((entry) => characterTextIds.has(entry.id));
-    const script = await fetchAndParseStory(adv.advEpisodeAsset, { locale });
-    return { title, script, characters: characters._allData, texts: characterTexts };
+    const [script, stories] = await Promise.all([
+      getBuildStoryScriptLookups(locale).then((lookups) => fetchAndParseStory(adv.advEpisodeAsset, { locale, lookups })),
+      getBuildStories(locale),
+    ]);
+    return {
+      title,
+      script,
+      characters: characters._allData,
+      texts: characterTexts,
+      story: stories.find((entry) => entry.advId === advId) ?? null,
+      ...storyNeighbors(stories, advId),
+    };
+  });
+}
+
+/** Chat avatars/sides and anime-still captions for story scripts. The caption table only exists in newer data, so it is optional. */
+function getBuildStoryScriptLookups(locale: AppLocale): Promise<StoryScriptLookups> {
+  return memo(`story-script-lookups:${locale}`, async () => {
+    const [chats, subtitles, texts] = await Promise.all([
+      table<RawAdvChat>("MasterAdvChat.json"),
+      table<RawAnimeStillSubtitle>("MasterBiliAnimeStillSubTitle.json").catch(() => ({ _allData: [] as RawAnimeStillSubtitle[] })),
+      table<RawText>("MasterText.json"),
+    ]);
+    const textMap = new Map(texts._allData.map((entry) => [entry.id, entry]));
+    // Captions translate the Japanese drawn in the still, so Japanese readers do not need them.
+    const captioned = masterTextFieldOrder(locale)[0] !== "japanese";
+    return {
+      chatIcons: Object.fromEntries(chats._allData.filter((chat) => chat.chatIconAssetName).map((chat) => [String(chat.id), chat.chatIconAssetName])),
+      stillCaptions: !captioned ? [] : subtitles._allData.flatMap((subtitle) => {
+        const text = plainRichText(localizeMasterText(textMap.get(subtitle.textID), locale)).trim();
+        return text ? [{ assetName: subtitle.episodeAssetName, open: subtitle.episodeIndexOpen, close: subtitle.episodeIndexClose, text }] : [];
+      }),
+    };
   });
 }
