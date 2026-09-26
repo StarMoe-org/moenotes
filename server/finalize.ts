@@ -36,6 +36,8 @@ export interface FinalizeResult {
 }
 
 export async function finalizeSite(site: string, previous?: { site: string; manifest: SiteManifest }): Promise<FinalizeResult> {
+  // Astro renders from server chunks in <outDir>/.prerender and deletes them afterwards; never publish them.
+  await rm(join(site, ".prerender"), { recursive: true, force: true });
   // Listed up front: the loop adds variants to the same tree.
   const files: string[] = [];
   for await (const file of new Bun.Glob("**/*").scan({ cwd: site, onlyFiles: true, dot: true })) files.push(file.replaceAll("\\", "/"));

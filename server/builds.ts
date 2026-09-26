@@ -1,5 +1,5 @@
 import { mkdir, readdir, rename, rm } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import type { ServerConfig } from "./config";
 import type { SiteRoots } from "./static";
 import type { DataVersion } from "./upstream";
@@ -40,6 +40,13 @@ export function log(message: string): void {
 
 export function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+/** The Astro CLI entry of the installed package (run directly: the build does not run from the project root). */
+export async function astroCli(appDir: string): Promise<string> {
+  const cli = join(dirname(Bun.resolveSync("astro/package.json", appDir)), "bin", "astro.mjs");
+  if (!await Bun.file(cli).exists()) throw new Error(`Astro CLI not found at ${cli}`);
+  return cli;
 }
 
 /** An unreadable state file means no live build (the next check rebuilds), not a crash loop. */
@@ -101,9 +108,12 @@ export class BuildStore {
 
     try {
       await mkdir(staging, { recursive: true });
-      await this.run("astro build", [process.execPath, "--bun", "run", "astro", "build", "--outDir", site], logFile, {
-        MOENOTES_FETCH_CACHE_DIR: this.config.fetchCacheDir,
-        ASTRO_TELEMETRY_DISABLED: "1",
+      // Astro keeps its intermediate output in <cwd>/.astro when outDir lies outside the working directory
+      // and then renames it into outDir, which fails across filesystems (image vs. volume). Running it from
+      // the staging directory, with the project as --root, keeps both on the volume.
+      await this.run("astro build", [process.execPath, "--bun", await astroCli(this.config.appDir), "build", "--root", this.config.appDir, "--outDir", site], logFile, {
+        cwd: staging,
+        env: { MOENOTES_FETCH_CACHE_DIR: this.config.fetchCacheDir, ASTRO_TELEMETRY_DISABLED: "1" },
       });
       const finalize = [process.execPath, join(this.config.appDir, "server", "finalize.ts"), site, join(staging, "files.json")];
       if (this.current) finalize.push(this.siteDir(this.current.id), join(this.buildDir(this.current.id), "files.json"));
@@ -171,11 +181,16 @@ export class BuildStore {
     this.roots = { current: this.current ? this.siteDir(this.current.id) : null, previous };
   }
 
-  private async run(step: string, command: string[], logFile: Bun.FileSink, env: Record<string, string> = {}): Promise<void> {
+  private async run(
+    step: string,
+    command: string[],
+    logFile: Bun.FileSink,
+    options: { cwd?: string; env?: Record<string, string> } = {},
+  ): Promise<void> {
     logFile.write(`\n$ ${command.join(" ")}\n`);
     const child = Bun.spawn(command, {
-      cwd: this.config.appDir,
-      env: { ...process.env, NO_COLOR: "1", ...env },
+      cwd: options.cwd ?? this.config.appDir,
+      env: { ...process.env, NO_COLOR: "1", ...options.env },
       stdout: "pipe",
       stderr: "pipe",
     });

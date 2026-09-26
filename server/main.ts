@@ -9,7 +9,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { BuildStore, errorMessage, log } from "./builds";
+import { BuildStore, astroCli, errorMessage, log } from "./builds";
 import { config } from "./config";
 import { finalizeSite } from "./finalize";
 import { serveStatic, type SiteRoots } from "./static";
@@ -143,7 +143,7 @@ async function selfCheck(): Promise<void> {
   const check = (condition: boolean, message: string) => {
     if (!condition) throw new Error(`self-check failed: ${message}`);
   };
-  Bun.resolveSync("astro/package.json", config.appDir);
+  await astroCli(config.appDir);
   log(`self-check: source revision ${await sourceRevision(config.appDir)}`);
 
   const dir = await mkdtemp(join(tmpdir(), "moenotes-self-check-"));
@@ -159,10 +159,12 @@ async function selfCheck(): Promise<void> {
     const current = join(dir, "current");
     await writeSite(previous);
     await Bun.write(join(previous, "_astro", "old.js"), "console.log(0);");
+    await Bun.write(join(previous, ".prerender", "entry.mjs"), "export {};");
     await writeSite(current);
 
     const first = await finalizeSite(previous);
     check(first.compressed === 3, `expected 3 compressed files, got ${first.compressed}`);
+    check(!await Bun.file(join(previous, ".prerender", "entry.mjs")).exists(), "finalize should drop .prerender/");
     const second = await finalizeSite(current, { site: previous, manifest: first.manifest });
     check(second.linked === 4 && second.compressed === 0, `expected 4 linked files, got ${second.linked} linked / ${second.compressed} compressed`);
 

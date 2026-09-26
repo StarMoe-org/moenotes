@@ -41,7 +41,10 @@ build's, a build is due. It waits while the export has not caught up with Master
 than the release's `master_version`, for at most `MOENOTES_SYNC_WAIT_SECONDS`.
 
 A failed build is retried after 10 minutes, doubling up to 3 hours; a new release or image retries at once.
-The build runs `astro build` (no `astro check`) with the same environment as the server.
+The build runs `astro build` (no `astro check`) with the same environment as the server. It runs from the
+staging directory with `--root` pointing at the image's project: with an `--outDir` outside its working
+directory Astro keeps intermediate output in `<cwd>/.astro/` and renames it into the output, which fails with
+`EXDEV` when the volume is a different filesystem than the image.
 
 ## Environment
 

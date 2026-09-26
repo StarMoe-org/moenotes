@@ -69,17 +69,6 @@ Run i18n key alignment, route registry, and architecture checks:
 bun run lint
 ```
 
-## Deployment
-
-The image (`Dockerfile`) holds only the Bun runtime and the sources; the site is built inside the container. On start it serves the last finished build from the `/data` volume right away, then watches the asset service's `versions/current_version.json` and rebuilds in the background when a release is published or the image brings new code, swapping the result in atomically. A failed build never replaces the live one. Build-time requests to the asset and metadata services can use in-cluster (k3s) addresses via `MOENOTES_ASSET_INTERNAL` / `MOENOTES_MASTERDATA_INTERNAL`; links in pages keep the public URLs.
-
-```bash
-docker build -t moenotes .
-docker run -p 8080:80 -v moenotes-data:/data moenotes
-```
-
-See [docs/deployment.md](./docs/deployment.md) for the environment, caching and operations.
-
 ## A Note on Astro
 
 We originally picked Astro for its static-first approach and Islands architecture. However, for a game database viewer with lots of interactive features and heavy client-side state, developing with it is honestly quite inconvenient (lol). Next.js would probably have been a lot more convenient for something like this.
