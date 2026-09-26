@@ -11,6 +11,8 @@ export interface CharacterFilterProps extends CommonFilterProps {
   onToggle?: (characterId: number) => void;
   onReset?: () => void;
   hideWhenEmpty?: boolean;
+  /** The leading ALL button (default true); a single-choice picker made of several groups leaves it out. */
+  showAll?: boolean;
 }
 
 export function CharacterFilter({
@@ -22,6 +24,7 @@ export function CharacterFilter({
   onReset,
   allLabel = "ALL",
   hideWhenEmpty = true,
+  showAll = true,
   className,
 }: CharacterFilterProps) {
   if (hideWhenEmpty && characters.length === 0) {
@@ -46,9 +49,11 @@ export function CharacterFilter({
 
   const content = (
     <div className={`flex flex-wrap gap-2 ${className ?? ""}`}>
-      <FilterButton active={selectedCharacters.length === 0} onClick={handleReset}>
-        {allLabel}
-      </FilterButton>
+      {showAll && (
+        <FilterButton active={selectedCharacters.length === 0} onClick={handleReset}>
+          {allLabel}
+        </FilterButton>
+      )}
       {characters.map((char) => (
         <FilterButton
           key={char.id}

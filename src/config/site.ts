@@ -14,6 +14,7 @@ export interface SiteConfig {
   sisterSites: Array<{ label: string; url: string }>;
   community: {
     discord: { name: string; url: string };
+    qq: { name: string; number: string; url: string };
   };
   contact: {
     email: string;
@@ -47,6 +48,7 @@ export const siteConfig: SiteConfig = {
   ],
   community: {
     discord: { name: "StarMoe", url: "https://discord.gg/6JQMVQ2Mku" },
+    qq: { name: "Moenotes", number: "754989697", url: "https://qm.qq.com/q/tIoZSO7vl6" },
   },
   contact: {
     email: "mail@exmeaning.com",

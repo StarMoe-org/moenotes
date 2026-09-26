@@ -59,7 +59,7 @@ directory Astro keeps intermediate output in `<cwd>/.astro/` and renames it into
 | `MOENOTES_BUILD_TIMEOUT_SECONDS` | `3600` | A build step running longer is stopped and counts as failed |
 | `MOENOTES_KEEP_BUILDS` | `4` | Builds kept on disk (see [Disk](#disk)) |
 | `MOENOTES_VERSION_URL` | _(asset service)_`/versions/current_version.json` | Override of the release manifest URL |
-| `PUBLIC_ASSET_API`, `PUBLIC_CHART_SITE` | public origins | Public URLs written into pages (`src/config/assets.ts`) |
+| `PUBLIC_ASSET_API`, `PUBLIC_CHART_SITE`, `PUBLIC_CUBISM_CORE` | public origins | Public URLs written into pages (`src/config/assets.ts`; the Live2D viewer loads Cubism Core from the last one, see live2d-viewer.md) |
 
 ### In-cluster origins
 

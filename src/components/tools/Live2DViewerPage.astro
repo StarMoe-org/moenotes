@@ -1,0 +1,20 @@
+---
+import Live2DViewer from "@/components/tools/Live2DViewer";
+import PageLayout from "@/layouts/PageLayout.astro";
+import type { AppLocale } from "@/config/locales";
+import { getBuildCharacters } from "@/lib/masterdata/build-data";
+
+interface Props {
+  locale: AppLocale;
+}
+
+const { locale } = Astro.props;
+const { characters, bands } = await getBuildCharacters(locale);
+// The model list itself is read at runtime (models.json of the model site), so new costumes need no rebuild.
+const pickerCharacters = characters.map((character) => ({ id: character.id, name: character.name, bandId: character.bandId }));
+const pickerBands = [...bands].sort((a, b) => a.id - b.id).map((band) => ({ id: band.id, name: band.name }));
+---
+
+<PageLayout locale={locale} titleKey="seo.live2dViewer.title" descriptionKey="seo.live2dViewer.description">
+  <Live2DViewer client:load locale={locale} characters={pickerCharacters} bands={pickerBands} />
+</PageLayout>

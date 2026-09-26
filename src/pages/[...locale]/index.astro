@@ -2,6 +2,7 @@
 import DesignSystemPage from "@/components/design-system/DesignSystemPage.astro";
 import AssetViewerPage from "@/components/tools/AssetViewerPage.astro";
 import ChartPreview3DPage from "@/components/tools/ChartPreview3DPage.astro";
+import Live2DViewerPage from "@/components/tools/Live2DViewerPage.astro";
 import CardsPage from "@/components/cards/CardsPage.astro";
 import CardDetailPage from "@/components/cards/CardDetailPage.astro";
 import SupportCardsPage from "@/components/support-cards/SupportCardsPage.astro";
@@ -106,6 +107,8 @@ const component = match.item.component ?? "page";
     <AssetViewerPage locale={locale} />
   ) : component === "chart-preview" ? (
     <ChartPreview3DPage locale={locale} />
+  ) : component === "live2d-viewer" ? (
+    <Live2DViewerPage locale={locale} />
   ) : (
     <PageLayout locale={locale} titleKey={match.item.seo.titleKey} descriptionKey={match.item.seo.descriptionKey}>
       {match.isGroupLanding ? (

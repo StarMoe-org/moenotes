@@ -16,6 +16,11 @@ export const assetConfig = {
    * moenotes-assets at /chart-site/; see docs/chart-preview.md.
    */
   chartSite: (import.meta.env.PUBLIC_CHART_SITE || "https://assets.bdon.moe/chart-site").replace(/\/+$/, ""),
+  /**
+   * Live2D Cubism Core for Web, which the Live2D viewer loads before a model (ournotes-player does not bundle it; Live2D's
+   * own license applies). Override with `PUBLIC_CUBISM_CORE` to serve a copy; see docs/live2d-viewer.md.
+   */
+  cubismCore: import.meta.env.PUBLIC_CUBISM_CORE || "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js",
   region: "tw",
   fonts: {
     googlePreconnect: "https://fonts.googleapis.com",

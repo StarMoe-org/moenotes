@@ -22,6 +22,7 @@ const allowedFetchFiles = new Set([
   "src/components/stamps/StampsExplorer.tsx",
   "src/components/support-cards/SupportCardDetail.tsx",
   "src/lib/assets/browser-client.ts",
+  "src/lib/live2d/client.ts",
 ]);
 
 const allowedDomainFiles = new Set([
