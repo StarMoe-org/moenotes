@@ -57,11 +57,23 @@ export async function getBuildMasterData<T>(
   return validate(await request);
 }
 
+/**
+ * current_version.json only carries per-region hashes, while /master serves the merged tables,
+ * so the cache token joins every region's hash: any region update invalidates it.
+ */
+function resolveDataVersion(raw: Partial<VersionManifest>): string | undefined {
+  if (raw.dataVersion || raw.version) return raw.dataVersion || raw.version;
+  const regions = Object.entries(raw.regions ?? {})
+    .filter(([, region]) => region?.version)
+    .sort(([a], [b]) => a.localeCompare(b));
+  return regions.length ? regions.map(([name, region]) => `${name}:${region.version}`).join(",") : undefined;
+}
+
 async function fetchBuildManifest(): Promise<VersionManifest> {
   const localDir = localSourceDir();
   if (localDir) {
     const raw = await readLocalJson(localDir, masterdataConfig.versionPath).catch(() => ({})) as Partial<VersionManifest>;
-    return { ...raw, dataVersion: raw.dataVersion || raw.version || "local", isFallback: false } as VersionManifest;
+    return { ...raw, dataVersion: resolveDataVersion(raw) || "local", isFallback: false } as VersionManifest;
   }
 
   const errors: string[] = [];
@@ -69,7 +81,7 @@ async function fetchBuildManifest(): Promise<VersionManifest> {
   for (const base of sourceBases()) {
     try {
       const raw = await fetchJsonWithRetry(`${base}${masterdataConfig.versionPath}`, { cache: "no-store" }) as Partial<VersionManifest>;
-      const dataVersion = raw.dataVersion || raw.version;
+      const dataVersion = resolveDataVersion(raw);
       if (!dataVersion) throw new Error("missing data version");
       return { ...raw, dataVersion, isFallback: false };
     } catch (error) {

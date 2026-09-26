@@ -210,6 +210,7 @@ function SidebarNav({ locale, pathname, activePath, groups, onNavigate }: { loca
         >
           <NavIcon icon="home" active={pathname === "/"} />
           <span>{t(locale, "nav.home")}</span>
+          {pathname === "/" && <ActiveStar />}
         </a>
         <div className="mx-3 border-t border-dashed border-[var(--mn-border)] opacity-20" />
         {groups.map((group, idx) => (
@@ -271,6 +272,7 @@ function NavGroup({ group, locale, pathname, activePath, collapsed, onToggle, on
         >
           <NavIcon icon={group.nav && group.nav.icon ? group.nav.icon : "sparkles"} routeId={group.id} active={groupActive} />
           <span className="truncate">{t(locale, group.labelKey)}</span>
+          {isHeaderActive && <ActiveStar />}
         </a>
         {hasChildren && (
           <button
@@ -306,6 +308,7 @@ function NavGroup({ group, locale, pathname, activePath, collapsed, onToggle, on
                 >
                   <NavIcon icon={item.nav && item.nav.icon ? item.nav.icon : "sparkles"} routeId={item.id} active={active} small />
                   <span className="truncate">{t(locale, item.labelKey)}</span>
+                  {active && <ActiveStar />}
                 </a>
               </Fragment>
             );
@@ -318,6 +321,11 @@ function NavGroup({ group, locale, pathname, activePath, collapsed, onToggle, on
 
 function NavIcon({ icon, routeId, active = false, small = false }: { icon: RouteIcon; routeId?: string; active?: boolean; small?: boolean }) {
   return <span className={`${small ? "h-6 w-6" : "h-8 w-8"} flex shrink-0 items-center justify-center rounded-xl ${active ? "bg-[var(--mn-paper)] text-[var(--mn-accent-deep)] shadow-[var(--mn-shadow-stamp-sm)]" : "bg-[color-mix(in_oklab,var(--mn-cream-deep)_70%,transparent)] text-[var(--mn-text-muted)]"}`}><RouteGlyph icon={icon} routeId={routeId} className={small ? "h-3.5 w-3.5" : "h-4.5 w-4.5"} /></span>;
+}
+
+/** Marks the current page. An SVG, not a clip-path star: some Android GPUs stopped painting the list around a clip-path inside the scrolling nav. */
+function ActiveStar() {
+  return <svg className="ml-auto h-3 w-3 shrink-0 text-[var(--mn-accent-deep)]" viewBox="0 0 12 12" aria-hidden="true"><path fill="currentColor" d="M6 0 7.44 4.56 12 6 7.44 7.44 6 12 4.56 7.44 0 6 4.56 4.56z" /></svg>;
 }
 
 function SidebarDoodle() {

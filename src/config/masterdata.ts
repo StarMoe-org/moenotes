@@ -3,6 +3,6 @@ export const masterdataConfig = {
     official: "https://metadata.bdon.moe",
     mirror: "https://metadata.bdon.moe",
   },
-  versionPath: "/version/latest.json",
+  versionPath: "/current_version.json",
   masterPath: "/master",
 } as const;
