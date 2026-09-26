@@ -565,6 +565,8 @@ export const enUS = {
       parsing: "Listening to the girls' voices and whispers…",
       autoplay: "Autoplay",
       narration: "Narration",
+      speakerMasked: "??? ({name})",
+      speakerHidden: "({name})",
       playing: "VOICING PLAYBACK",
       paused: "PLAYBACK PAUSED",
       line: "Dialogue Line {current} / {total}",

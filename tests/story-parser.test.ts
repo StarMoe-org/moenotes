@@ -171,4 +171,21 @@ describe("story parser", () => {
       [2, "", false],
     ]);
   });
+
+  test("dialogue target status 1 masks the speaker (？？？) and 2 hides the name; other commands are untouched", () => {
+    const script = parse([
+      { command: 2, targetName: "taki", targetTextIDs: ["adv_taki"], advTextID: "t1", targetStatus: 1 },
+      { command: 2, targetName: "sakiko", targetTextIDs: ["adv_sakiko"], advTextID: "t2", targetStatus: 2 },
+      { command: 2, targetName: "tomori", targetTextIDs: ["adv_tomori"], advTextID: "t3" },
+      { command: 20, advTextID: "t4", targetStatus: 1 },
+    ], [text("adv_taki", "立希"), text("adv_sakiko", "祥子"), text("adv_tomori", "燈"), text("t1", "――燈！"), text("t2", "初華へ"), text("t3", "うん"), text("t4", "翌朝")]);
+
+    expect(script.lines.map((line) => [line.speaker, line.speakerStatus])).toEqual([
+      ["立希", 1],
+      ["祥子", 2],
+      ["燈", undefined],
+      // A time/place card is not a dialogue, so its status is dropped.
+      ["", undefined],
+    ]);
+  });
 });
