@@ -11,5 +11,5 @@
     "exactOptionalPropertyTypes": true
   },
   "include": [".astro/types.d.ts", "src/**/*", "scripts/**/*"],
-  "exclude": ["dist", "node_modules"]
+  "exclude": ["dist", "node_modules", "src/vendor/**/*.mjs"]
 }

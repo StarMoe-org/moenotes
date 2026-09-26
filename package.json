@@ -18,7 +18,8 @@
     "lint:text": "node scripts/scan-hardcoded-ui-text.mjs",
     "lint:emoji": "node scripts/scan-emoji.mjs",
     "fonts:nowar": "python scripts/subset-nowar-font.py",
-    "fonts:inspect": "python scripts/subset-nowar-font.py --inspect"
+    "fonts:inspect": "python scripts/subset-nowar-font.py --inspect",
+    "sync:chart-renderer": "node scripts/sync-chart-renderer.mjs"
   },
   "dependencies": {
     "@astrojs/react": "7.0.0",
