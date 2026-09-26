@@ -4,6 +4,11 @@ export const assetConfig = {
    * src/lib/assets/release.ts and docs/release-assets.md) and the bundle browser API.
    */
   api: (import.meta.env.PUBLIC_ASSET_API || "https://assets.bdon.moe").replace(/\/+$/, ""),
+  /**
+   * ournotes-player chart site (charts/<musicId>_<difficulty>.json + assets/<sha256>.<ext>), published by
+   * moenotes-assets at /chart-site/; see docs/chart-preview.md.
+   */
+  chartSite: (import.meta.env.PUBLIC_CHART_SITE || "https://assets.bdon.moe/chart-site").replace(/\/+$/, ""),
   region: "tw",
   fonts: {
     googlePreconnect: "https://fonts.googleapis.com",

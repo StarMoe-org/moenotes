@@ -113,7 +113,7 @@ export const enUS = {
   nav: {
     home: "Home",
     groups: { database: "Database", story: "Story", tools: "Tools", community: "About" },
-    items: { characters: "Characters", cards: "Cards", supportCards: "Support Cards", music: "Music", gacha: "Gacha", rewards: "Missions & Rewards", titles: "Titles", backgrounds: "Backgrounds", stamps: "Stickers", comics: "Comics", items: "Items", mainStory: "Main Story", eventStory: "Event Story", friendshipStory: "Bond Stories", otherStory: "Other Stories", liveResultStory: "Post-live Talks", homeStory: "Home Stories", tutorialStory: "Tutorial Stories", assetViewer: "Asset Viewer", designSystem: "Design System" },
+    items: { characters: "Characters", cards: "Cards", supportCards: "Support Cards", music: "Music", gacha: "Gacha", rewards: "Missions & Rewards", titles: "Titles", backgrounds: "Backgrounds", stamps: "Stickers", comics: "Comics", items: "Items", mainStory: "Main Story", eventStory: "Event Story", friendshipStory: "Bond Stories", otherStory: "Other Stories", liveResultStory: "Post-live Talks", homeStory: "Home Stories", tutorialStory: "Tutorial Stories", assetViewer: "Asset Viewer", designSystem: "Design System", chartPreview: "Chart Previewer" },
   },
   shell: {
     openSidebar: "Open sidebar",
@@ -388,6 +388,23 @@ export const enUS = {
     emptyDescription: "No scenes align with this view. Reset filters to wander through all memorable streets and stages.",
     reset: "Show all backgrounds",
   },
+  chartPreview: {
+    stageLabel: "3D chart view",
+    difficulty: "Difficulty",
+    chooseSong: "Choose a song",
+    changeSong: "Change song",
+    preparing: "Setting up the stage…",
+    emptyTitle: "Pick a song to light up the stage",
+    emptyDescription: "Open the song picker, filter the list and choose a difficulty, and the game's auto play is recreated here in 3D.",
+    fullscreen: "Fullscreen",
+    exitFullscreen: "Exit fullscreen",
+    loadErrorTitle: "The stage could not light up",
+    loadErrorDescription: "The chart data did not arrive. The network may be down or the chart site temporarily unavailable. Please try again later.",
+    missingDescription: "This chart has no 3D data yet. Try another song or difficulty.",
+    retry: "Reload",
+    unsupportedTitle: "This browser cannot render 3D charts",
+    unsupportedDescription: "The chart previewer needs WebGL2 and WebAudio. Please use a recent desktop or mobile browser.",
+  },
   music: {
     audio: {
       title: "Song audio",
@@ -423,6 +440,9 @@ export const enUS = {
       expert: "EXPERT",
     },
     notesCount: "Notes: {count}",
+    chartPreview: "3D preview",
+    chartPreviewLabel: "Preview the {difficulty} chart in 3D",
+    picker: { title: "Choose a song", hint: "Click a difficulty to pick that chart, or the cover to keep the current difficulty.", pickSong: "Choose {title}", pickDifficulty: "Choose {title} {difficulty}", listLabel: "Song list" },
     composer: "Composer",
     lyricist: "Lyricist",
     arranger: "Arranger",
@@ -640,6 +660,7 @@ export const enUS = {
       title: "Our Notes Database Compass",
       description: "Hold up a starlight compass polished with care. Within this gentle ocean of musical notes, wander freely among all the cherished moments that have been lovingly collected and arranged.",
     },
+    chartPreview: { title: "Our Notes 3D Chart Previewer", description: "Pick a song and difficulty to watch its Our Notes chart rendered in 3D right in your browser: lanes, notes and hit effects auto-played in sync with the music, with pause, seek and speed controls." },
     assetViewer: {
       title: "Our Notes Game Asset Workshop",
       description: "Step through the heavy wooden door into the backstage workshop. Amid silent easels and dusty worktables, explore unfading brushstrokes and original devotion that built this stage.",

@@ -25,6 +25,7 @@
     "@tailwindcss/vite": "^4.1.18",
     "astro": "7.3.5",
     "framer-motion": "^12.40.0",
+    "ournotes-player": "github:StarMoe-org/ournotes-player#0b06ef25b303bae19848f2cf32f8f7b175be7573",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "tailwindcss": "^4.1.18"

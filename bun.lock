@@ -9,6 +9,7 @@
         "@tailwindcss/vite": "^4.1.18",
         "astro": "7.3.5",
         "framer-motion": "^12.40.0",
+        "ournotes-player": "github:StarMoe-org/ournotes-player#0b06ef25b303bae19848f2cf32f8f7b175be7573",
         "react": "^19.2.3",
         "react-dom": "^19.2.3",
         "tailwindcss": "^4.1.18",
@@ -593,6 +594,8 @@
     "oniguruma-parser": ["oniguruma-parser@0.12.2", "https://registry.npmmirror.com/oniguruma-parser/-/oniguruma-parser-0.12.2.tgz", {}, "sha512-6HVa5oIrgMC6aA6WF6XyyqbhRPJrKR02L20+2+zpDtO5QAzGHAUGw5TKQvwi5vctNnRHkJYmjAhRVQF2EKdTQw=="],
 
     "oniguruma-to-es": ["oniguruma-to-es@4.3.6", "https://registry.npmmirror.com/oniguruma-to-es/-/oniguruma-to-es-4.3.6.tgz", { "dependencies": { "oniguruma-parser": "^0.12.2", "regex": "^6.1.0", "regex-recursion": "^6.0.2" } }, "sha512-csuQ9x3Yr0cEIs/Zgx/OEt9iBw9vqIunAPQkx19R/fiMq2oGVTgcMqO/V3Ybqefr1TBvosI6jU539ksaBULJyA=="],
+
+    "ournotes-player": ["ournotes-player@github:StarMoe-org/ournotes-player#0b06ef2", {}, "StarMoe-org-ournotes-player-0b06ef2", "sha512-fKPNIzhu7M4zJzgSrA0mj702xn+Mv/j68itX21jbEfLmuaRWfEq6seZ1Fai2CvM07FFMTYajDH70Il9nP0qS7A=="],
 
     "p-limit": ["p-limit@7.3.0", "https://registry.npmmirror.com/p-limit/-/p-limit-7.3.0.tgz", { "dependencies": { "yocto-queue": "^1.2.1" } }, "sha512-7cIXg/Z0M5WZRblrsOla88S4wAK+zOQQWeBYfV3qJuJXMr+LnbYjaadrFaS0JILfEDPVqHyKnZ1Z/1d6J9VVUw=="],
 

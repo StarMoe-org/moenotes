@@ -113,7 +113,7 @@ export const koKR = {
   nav: {
     home: "홈",
     groups: { database: "데이터베이스", story: "스토리", tools: "도구", community: "소개" },
-    items: { characters: "캐릭터", cards: "카드", supportCards: "서포트 카드", music: "음악", gacha: "뽑기", rewards: "미션·보상", titles: "칭호", backgrounds: "배경", stamps: "스티커", comics: "만화", items: "아이템", mainStory: "메인 스토리", eventStory: "이벤트 스토리", friendshipStory: "인연 스토리", otherStory: "기타 스토리", liveResultStory: "라이브 종료 대화", homeStory: "홈 스토리", tutorialStory: "튜토리얼 스토리", assetViewer: "에셋 뷰어", designSystem: "디자인 시스템" },
+    items: { characters: "캐릭터", cards: "카드", supportCards: "서포트 카드", music: "음악", gacha: "뽑기", rewards: "미션·보상", titles: "칭호", backgrounds: "배경", stamps: "스티커", comics: "만화", items: "아이템", mainStory: "메인 스토리", eventStory: "이벤트 스토리", friendshipStory: "인연 스토리", otherStory: "기타 스토리", liveResultStory: "라이브 종료 대화", homeStory: "홈 스토리", tutorialStory: "튜토리얼 스토리", assetViewer: "에셋 뷰어", designSystem: "디자인 시스템", chartPreview: "채보 미리보기" },
   },
   shell: {
     openSidebar: "사이드바 열기",
@@ -388,6 +388,23 @@ export const koKR = {
     emptyDescription: "조건에 맞는 풍경을 찾지 못했습니다. 필터를 초기화해 소녀들이 걸어온 모든 배경을 둘러보세요.",
     reset: "모든 배경 보기",
   },
+  chartPreview: {
+    stageLabel: "3D 채보 화면",
+    difficulty: "난이도",
+    chooseSong: "곡 선택",
+    changeSong: "곡 변경",
+    preparing: "무대를 준비하는 중…",
+    emptyTitle: "곡을 골라 무대를 밝혀 보세요",
+    emptyDescription: "곡 선택기에서 곡을 찾아 난이도를 고르면 게임의 자동 연주를 이곳에 3D로 재현합니다.",
+    fullscreen: "전체 화면",
+    exitFullscreen: "전체 화면 종료",
+    loadErrorTitle: "무대를 밝히지 못했습니다",
+    loadErrorDescription: "채보 데이터를 받지 못했습니다. 네트워크가 끊겼거나 채보 사이트를 일시적으로 사용할 수 없을 수 있습니다. 잠시 후 다시 시도해 주세요.",
+    missingDescription: "이 채보의 3D 데이터는 아직 수록되지 않았습니다. 다른 곡이나 난이도를 선택해 보세요.",
+    retry: "다시 불러오기",
+    unsupportedTitle: "이 브라우저에서는 3D 채보를 표시할 수 없습니다",
+    unsupportedDescription: "채보 미리보기에는 WebGL2와 WebAudio가 필요합니다. 최신 데스크톱 또는 모바일 브라우저를 이용해 주세요.",
+  },
   music: {
     audio: {
       title: "곡 음원",
@@ -423,6 +440,9 @@ export const koKR = {
       expert: "EXPERT",
     },
     notesCount: "노트: {count}",
+    chartPreview: "3D 미리보기",
+    chartPreviewLabel: "{difficulty} 채보 3D 미리보기",
+    picker: { title: "곡 선택", hint: "난이도를 누르면 해당 채보를 선택하고, 커버를 누르면 현재 난이도로 선택합니다.", pickSong: "{title} 선택", pickDifficulty: "{title} {difficulty} 선택", listLabel: "곡 목록" },
     composer: "작곡",
     lyricist: "작사",
     arranger: "편곡",
@@ -640,6 +660,7 @@ export const koKR = {
       title: "Our Notes 데이터베이스 나침반",
       description: "정성스레 닦아낸 별빛 나침반을 손에 쥐어봅니다. 다정하고 너른 음표의 바다를, 소중히 모아 정돈한 모든 시간의 보물들을 마주하며 자유롭게 유영해 보세요.",
     },
+    chartPreview: { title: "Our Notes 3D 채보 미리보기", description: "곡과 난이도를 고르면 Our Notes의 라이브 화면을 브라우저에서 3D로 재현합니다. 레인, 노트, 타격 이펙트가 음악에 맞춰 자동 연주되며 일시정지, 탐색, 속도 조절도 가능합니다." },
     assetViewer: {
       title: "Our Notes 에셋 아틀리에",
       description: "무대 뒤편 제작 아틀리에의 묵직한 문을 밀어봅니다. 고요히 먼지 내려앉은 이젤과 작업대 사이, 지금도 바래지 않은 원화의 붓질과 첫 마음을 찾아 떠납니다.",

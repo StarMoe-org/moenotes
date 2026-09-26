@@ -409,6 +409,21 @@ export const routeRegistry = [
         keywords: ["asset", "viewer", "s3", "files"],
       },
       {
+        id: "chart-preview",
+        path: "/tools/chart-preview",
+        labelKey: "nav.items.chartPreview",
+        component: "chart-preview",
+        seo: {
+          titleKey: "seo.chartPreview.title",
+          descriptionKey: "seo.chartPreview.description",
+          keywords: ["Our Notes chart preview", "BanG Dream chart viewer", "3D chart player", "rhythm game chart", "auto play preview"],
+          sitemap: { priority: 0.5, changefreq: "weekly" },
+        },
+        nav: { order: 20, icon: "music" },
+        searchable: true,
+        keywords: ["chart", "score", "preview", "3d", "player"],
+      },
+      {
         id: "design-system",
         path: "/tools/design-system",
         labelKey: "nav.items.designSystem",

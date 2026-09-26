@@ -5,6 +5,7 @@ import ListCardBadge from "@/components/shared/ListCardBadge";
 import { getBandSmallIconUrl, getCardTypeIconUrl, type CardType } from "@/lib/cards/assets";
 import type { MusicViewModel } from "@/lib/music/data";
 import { getRoutePathById } from "@/lib/route/registry";
+import { DIFFICULTY_CHIP_CLASSES, DIFFICULTY_SHORT_LABELS, MUSIC_DIFFICULTIES } from "@/lib/music/difficulty";
 
 interface Props {
   song: MusicViewModel;
@@ -13,22 +14,6 @@ interface Props {
   /** Short overlay label on the jacket, e.g. an upcoming release. */
   badge?: string;
 }
-
-const difficultyKeys = ["easy", "normal", "hard", "expert"] as const;
-
-const diffColors = {
-  easy: "bg-cyan-100 text-cyan-800 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-400 dark:border-cyan-900/50",
-  normal: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/50",
-  hard: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900/50",
-  expert: "bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900/50",
-};
-
-const shortDiffLabels: Record<(typeof difficultyKeys)[number], string> = {
-  easy: "EZ",
-  normal: "NM",
-  hard: "HD",
-  expert: "EX",
-};
 
 export default function SongCard({ song, locale, onClick, badge }: Props) {
   return (
@@ -76,16 +61,16 @@ export default function SongCard({ song, locale, onClick, badge }: Props) {
 
         {/* Difficulties Display */}
         <div className="flex items-center gap-1">
-          {difficultyKeys.map((diffKey) => {
+          {MUSIC_DIFFICULTIES.map((diffKey) => {
             const diff = song.difficulties.find((d) => d.difficulty === diffKey);
             if (!diff) return null;
 
             return (
               <div
                 key={diffKey}
-                className={`flex-1 text-center py-0.5 rounded text-[8px] font-black border uppercase tracking-tighter ${diffColors[diffKey]}`}
+                className={`flex-1 text-center py-0.5 rounded text-[8px] font-black border uppercase tracking-tighter ${DIFFICULTY_CHIP_CLASSES[diffKey]}`}
               >
-                <span className="block opacity-60 text-[6px] leading-none mb-0.5">{shortDiffLabels[diffKey]}</span>
+                <span className="block opacity-60 text-[6px] leading-none mb-0.5">{DIFFICULTY_SHORT_LABELS[diffKey]}</span>
                 <span className="font-mono text-[10px]">{diff.displayLevel}</span>
               </div>
             );

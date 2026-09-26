@@ -1,6 +1,7 @@
 ---
 import DesignSystemPage from "@/components/design-system/DesignSystemPage.astro";
 import AssetViewerPage from "@/components/tools/AssetViewerPage.astro";
+import ChartPreviewPage from "@/components/tools/ChartPreviewPage.astro";
 import CardsPage from "@/components/cards/CardsPage.astro";
 import CardDetailPage from "@/components/cards/CardDetailPage.astro";
 import SupportCardsPage from "@/components/support-cards/SupportCardsPage.astro";
@@ -103,6 +104,8 @@ const component = match.item.component ?? "page";
     <DesignSystemPage locale={locale} />
   ) : component === "asset-viewer" ? (
     <AssetViewerPage locale={locale} />
+  ) : component === "chart-preview" ? (
+    <ChartPreviewPage locale={locale} />
   ) : (
     <PageLayout locale={locale} titleKey={match.item.seo.titleKey} descriptionKey={match.item.seo.descriptionKey}>
       {match.isGroupLanding ? (
