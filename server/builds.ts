@@ -1,5 +1,5 @@
-import { mkdir, readdir, rename, rm } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { link, mkdir, readdir, rename, rm, symlink } from "node:fs/promises";
+import { basename, dirname, join } from "node:path";
 import type { ServerConfig } from "./config";
 import type { SiteRoots } from "./static";
 import type { DataVersion } from "./upstream";
@@ -12,6 +12,7 @@ import type { DataVersion } from "./upstream";
  *   builds/<id>/files.json   size + SHA-256 per file, for the next build's finalize step
  *   builds/.staging-<id>/    a build in progress; removed on failure and at startup
  *   logs/<id>.log            full Astro / finalize output of each attempt
+ *   logs/latest.log          link to the newest attempt's log
  *   cache/fetch/             revalidated upstream responses (src/lib/build/fetch.ts)
  *
  * Ids start with a UTC timestamp, so they sort by age.
@@ -24,6 +25,8 @@ export interface BuildRecord {
   data: string;
   builtAt: string;
   durationMs: number;
+  /** Pages Astro rendered; absent from records written before builds counted them. */
+  pages?: number;
 }
 
 interface State {
@@ -31,8 +34,16 @@ interface State {
 }
 
 const STAGING_PREFIX = ".staging-";
-/** Astro prints one line per generated page (`12:00:00   ├─ /story/1/index.html (+2ms)`); the log keeps them. */
-const PAGE_LINE = /[├└]─ \//;
+const LATEST_LOG = "latest.log";
+const ASTRO_STEP = "astro build";
+/**
+ * Astro prints a marker as it starts each page (`12:00:00   ├─ /story/1/index.html (+2ms)`); with build
+ * concurrency several share a line. The log keeps them; the console gets a progress line instead.
+ */
+const PAGE_MARKER = /[├└]─ \//g;
+/** The render time Astro appends to a page marker (`(+2ms)`, `(+1.20s)`); under concurrency it can land on a line of its own. */
+const RENDER_TIME = /^ \(\+[\d.ms ]+\)/;
+const PROGRESS_INTERVAL_MS = 30_000;
 
 export function log(message: string): void {
   console.log(`${new Date().toISOString()} [moenotes] ${message}`);
@@ -40,6 +51,47 @@ export function log(message: string): void {
 
 export function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+/** `45s`, `4m10s`, `1h02m`. */
+function duration(ms: number): string {
+  const seconds = Math.max(0, Math.round(ms / 1000));
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m${String(seconds % 60).padStart(2, "0")}s`;
+  return `${Math.floor(minutes / 60)}h${String(minutes % 60).padStart(2, "0")}m`;
+}
+
+/** A running build as the periodic console line and the status endpoint report it. */
+class BuildProgress {
+  step = "";
+  pages = 0;
+  private readonly startedAt = Date.now();
+  private firstPageAt = 0;
+
+  /** `expectedPages` is the live build's count: an estimate, since a release can add or drop pages. */
+  constructor(readonly id: string, readonly expectedPages: number | null) {}
+
+  addPages(count: number): void {
+    if (count && !this.pages) this.firstPageAt = Date.now();
+    this.pages += count;
+  }
+
+  describe(now = Date.now()): string {
+    const elapsed = `${duration(now - this.startedAt)} elapsed`;
+    if (this.step !== ASTRO_STEP) return `${this.step}, ${elapsed}`;
+    if (!this.pages) return `${ASTRO_STEP}, no page rendered yet, ${elapsed}`;
+    if (!this.expectedPages) return `${ASTRO_STEP}, ${this.pages} pages, ${elapsed}`;
+    const share = this.pages / this.expectedPages;
+    // Capped: a release that adds pages runs past the estimate.
+    const parts = [`${ASTRO_STEP}, ${this.pages}/~${this.expectedPages} pages (${Math.min(99, Math.floor(share * 100))}%)`, elapsed];
+    if (share < 1) parts.push(`rendering done in ~${duration((now - this.firstPageAt) * (1 / share - 1))}`);
+    return parts.join(", ");
+  }
+
+  toJSON() {
+    return { id: this.id, step: this.step, pages: this.pages, expectedPages: this.expectedPages };
+  }
 }
 
 /** The Astro CLI entry of the installed package (run directly: the build does not run from the project root). */
@@ -64,6 +116,7 @@ async function readState(path: string): Promise<State> {
 export class BuildStore {
   current: BuildRecord | null = null;
   roots: SiteRoots = { current: null, previous: [] };
+  progress: BuildProgress | null = null;
   private activeProcess: Bun.Subprocess | null = null;
 
   constructor(private readonly config: ServerConfig) {}
@@ -104,14 +157,21 @@ export class BuildStore {
     const site = join(staging, "site");
     const logPath = join(this.config.logsDir, `${id}.log`);
     const logFile = Bun.file(logPath).writer();
-    log(`build ${id} started (${data.label}, revision ${revision}); log: ${logPath}`);
+    const progress = new BuildProgress(id, await this.expectedPages().catch(() => null));
+    const expected = progress.expectedPages ? `, ~${progress.expectedPages} pages expected` : "";
+    log(`build ${id} started (${data.label}, revision ${revision}${expected}); log: ${logPath}`);
+    logFile.write(`build ${id} (${data.label}, revision ${revision}) started ${new Date(startedAt).toISOString()}\n`);
+    await logFile.flush();
+    await this.linkLatestLog(logPath).catch((error: unknown) => log(`could not update ${LATEST_LOG}: ${errorMessage(error)}`));
+    this.progress = progress;
+    const ticker = setInterval(() => log(`build ${id}: ${progress.describe()}`), PROGRESS_INTERVAL_MS);
 
     try {
       await mkdir(staging, { recursive: true });
       // Astro keeps its intermediate output in <cwd>/.astro when outDir lies outside the working directory
       // and then renames it into outDir, which fails across filesystems (image vs. volume). Running it from
       // the staging directory, with the project as --root, keeps both on the volume.
-      await this.run("astro build", [process.execPath, "--bun", await astroCli(this.config.appDir), "build", "--root", this.config.appDir, "--outDir", site], logFile, {
+      await this.run(ASTRO_STEP, [process.execPath, "--bun", await astroCli(this.config.appDir), "build", "--root", this.config.appDir, "--outDir", site], logFile, {
         cwd: staging,
         env: { MOENOTES_FETCH_CACHE_DIR: this.config.fetchCacheDir, ASTRO_TELEMETRY_DISABLED: "1" },
       });
@@ -123,10 +183,12 @@ export class BuildStore {
       await rm(staging, { recursive: true, force: true });
       throw new Error(`${errorMessage(error)} (log: ${logPath})`);
     } finally {
+      clearInterval(ticker);
+      this.progress = null;
       await logFile.end();
     }
 
-    return { id, key, revision, data: data.label, builtAt: new Date().toISOString(), durationMs: Date.now() - startedAt };
+    return { id, key, revision, data: data.label, builtAt: new Date().toISOString(), durationMs: Date.now() - startedAt, pages: progress.pages };
   }
 
   /** Makes a finished build live: state.json first, then the roots new requests read. */
@@ -152,13 +214,31 @@ export class BuildStore {
         await rm(this.buildDir(id), { recursive: true, force: true });
       }
     }
-    const logs = (await readdir(this.config.logsDir)).filter((name) => name.endsWith(".log")).sort().reverse();
+    const logs = (await readdir(this.config.logsDir)).filter((name) => name.endsWith(".log") && name !== LATEST_LOG).sort().reverse();
     for (const name of logs.slice(this.config.keepLogs)) await rm(join(this.config.logsDir, name), { force: true });
     await this.refreshRoots();
   }
 
   stopActiveProcess(): void {
     this.activeProcess?.kill("SIGTERM");
+  }
+
+  /** Pages a build should render: the live build's count, or its sitemap entries when its record has none. */
+  private async expectedPages(): Promise<number | null> {
+    if (!this.current) return null;
+    if (this.current.pages) return this.current.pages;
+    const sitemap = Bun.file(join(this.siteDir(this.current.id), "sitemap.xml"));
+    if (!await sitemap.exists()) return null;
+    return (await sitemap.text()).split("<loc>").length - 1 || null;
+  }
+
+  /** Points logs/latest.log at a new attempt's log (a hard link where symlinks are not allowed, as on Windows). */
+  private async linkLatestLog(logPath: string): Promise<void> {
+    const latest = join(this.config.logsDir, LATEST_LOG);
+    const temporary = `${latest}.tmp`;
+    await rm(temporary, { force: true });
+    await symlink(basename(logPath), temporary).catch(() => link(logPath, temporary));
+    await rename(temporary, latest);
   }
 
   private async reduceToAstro(id: string): Promise<void> {
@@ -188,6 +268,7 @@ export class BuildStore {
     options: { cwd?: string; env?: Record<string, string> } = {},
   ): Promise<void> {
     logFile.write(`\n$ ${command.join(" ")}\n`);
+    if (this.progress) this.progress.step = step;
     const child = Bun.spawn(command, {
       cwd: options.cwd ?? this.config.appDir,
       env: { ...process.env, NO_COLOR: "1", ...options.env },
@@ -206,7 +287,9 @@ export class BuildStore {
       let buffered = "";
       const emit = (line: string) => {
         logFile.write(`${line}\n`);
-        if (!PAGE_LINE.test(line)) console.log(`  ${line}`);
+        const pages = line.match(PAGE_MARKER)?.length ?? 0;
+        if (pages) this.progress?.addPages(pages);
+        else if (!RENDER_TIME.test(line)) console.log(`  ${line}`);
       };
       for await (const chunk of stream) {
         buffered += decoder.decode(chunk, { stream: true });

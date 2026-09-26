@@ -100,7 +100,7 @@ client accepts it.
 | --- | --- |
 | `/healthz` | 200 while the process runs (liveness; use this for platform health checks) |
 | `/readyz` | 200 once a build is live, 503 before |
-| `/_moenotes/status` | JSON: live build, source revision, build in progress, wait reason, last failure, last check |
+| `/_moenotes/status` | JSON: live build, source revision, build in progress (step, `pages` rendered, `expectedPages`), wait reason, last failure, last check |
 
 Before the first build completes every site path answers 503 with `Retry-After: 60`.
 
@@ -112,6 +112,7 @@ Before the first build completes every site path answers 503 with `Retry-After: 
 /data/builds/<id>/files.json   size + SHA-256 per file for the next finalize
 /data/builds/.staging-<id>/    build in progress (removed on failure and at startup)
 /data/logs/<id>.log            full output of the last 10 attempts
+/data/logs/latest.log          link to the newest attempt's log (running or finished)
 /data/cache/fetch/             upstream response cache
 ```
 
@@ -124,4 +125,11 @@ older builds reduced to their `_astro/` directory. A build in progress needs roo
 - **Force a rebuild** without new data or code: set `current.key` in `/data/state.json` to `""` and restart.
   The live build keeps serving until the new one is ready.
 - **Logs**: the container prints the server's decisions and Astro's output without the per-page lines;
-  `/data/logs/<id>.log` has everything.
+  `/data/logs/<id>.log` has everything, and `/data/logs/latest.log` always names the newest attempt
+  (`tail -F /data/logs/latest.log` follows the next build too).
+- **Progress**: while a build runs the container prints a line every 30 s, e.g.
+  `build 20260926T080000Z-ab12cd34: astro build, 5230/~15773 pages (33%), 4m10s elapsed, rendering done in ~8m`.
+  The expected total is the live build's page count (its sitemap entries for a build recorded before pages
+  were counted), so it is an estimate: a release that adds pages runs past it, and the percentage stops at
+  99 until Astro finishes. Without a live build only the count is shown. `/_moenotes/status` reports the
+  same numbers under `building`.

@@ -72,7 +72,7 @@ function status() {
     ready: Boolean(store.current),
     revision,
     current: store.current,
-    building: scheduler.building,
+    building: scheduler.building && { ...scheduler.building, ...store.progress?.toJSON() },
     waiting: scheduler.waiting && { reason: scheduler.waiting.reason, since: new Date(scheduler.waiting.since).toISOString() },
     failure: scheduler.failure && { ...scheduler.failure, retryAt: new Date(scheduler.failure.retryAt).toISOString() },
     lastCheck: scheduler.lastCheck,
@@ -124,7 +124,7 @@ async function runBuild(key: string, data: DataVersion): Promise<void> {
     const record = await store.build(key, revision, data);
     await store.activate(record);
     scheduler.failure = null;
-    log(`build ${record.id} is live after ${Math.round(record.durationMs / 1000)}s`);
+    log(`build ${record.id} is live after ${Math.round(record.durationMs / 1000)}s (${record.pages} pages)`);
   } catch (error) {
     if (stopping) return;
     const attempts = scheduler.failure?.key === key ? scheduler.failure.attempts + 1 : 1;
