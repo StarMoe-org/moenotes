@@ -419,6 +419,7 @@ export const jaJP = {
     credit: "emptysekai by StarMoe",
     stageLabel: "3D 譜面画面",
     difficulty: "難易度",
+    controlsHint: "ノーツの速度は操作バーの − / + か [ / ] キーで調整できます（Shift を押しながらで ±1）。そのほかのライブ設定は「設定」から。選んだ設定はこのブラウザに保存されます。",
     chooseSong: "楽曲を選ぶ",
     changeSong: "楽曲を変更",
     preparing: "ステージを準備しています…",

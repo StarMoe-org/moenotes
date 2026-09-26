@@ -425,6 +425,7 @@ export const zhCN = {
     credit: "emptysekai by StarMoe",
     stageLabel: "3D 谱面画面",
     difficulty: "难度",
+    controlsHint: "音符速度可用控制栏的 − / + 或按键 [ / ] 调整（按住 Shift 每次 ±1）。「设置」里还有游戏的其他 Live 选项，你的选择会保存在此浏览器中。",
     chooseSong: "选择歌曲",
     changeSong: "更换歌曲",
     preparing: "正在搭建舞台…",

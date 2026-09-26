@@ -392,6 +392,7 @@ export const koKR = {
     credit: "emptysekai by StarMoe",
     stageLabel: "3D 채보 화면",
     difficulty: "난이도",
+    controlsHint: "노트 속도는 컨트롤 바의 − / + 또는 [ / ] 키로 조절합니다(Shift를 누르면 ±1). 그 밖의 라이브 설정은 '설정'에서 바꿀 수 있고, 선택한 설정은 이 브라우저에 저장됩니다.",
     chooseSong: "곡 선택",
     changeSong: "곡 변경",
     preparing: "무대를 준비하는 중…",

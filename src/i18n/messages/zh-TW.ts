@@ -425,6 +425,7 @@ export const zhTW = {
     credit: "emptysekai by StarMoe",
     stageLabel: "3D 譜面畫面",
     difficulty: "難度",
+    controlsHint: "音符速度可用控制列的 − / + 或按鍵 [ / ] 調整（按住 Shift 每次 ±1）。「設定」中還有遊戲的其他 Live 選項，你的選擇會保存在此瀏覽器中。",
     chooseSong: "選擇歌曲",
     changeSong: "更換歌曲",
     preparing: "正在搭建舞台…",

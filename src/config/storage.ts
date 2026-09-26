@@ -7,4 +7,5 @@ export const storageKeys = {
   browserNoticeDismissed: "moenotes:browser-notice-dismissed",
   scrollPrefix: "moenotes:scroll:",
   assetCacheBypass: "moenotes:asset-cache-bypass",
+  chartLiveSettings: "moenotes:chart-live-settings",
 } as const;

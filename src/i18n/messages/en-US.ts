@@ -392,6 +392,7 @@ export const enUS = {
     credit: "emptysekai by StarMoe",
     stageLabel: "3D chart view",
     difficulty: "Difficulty",
+    controlsHint: "Note speed: − / + in the control bar, or the [ / ] keys (Shift for ±1). “Settings” holds the rest of the game's Live options, and your choices are remembered in this browser.",
     chooseSong: "Choose a song",
     changeSong: "Change song",
     preparing: "Setting up the stage…",

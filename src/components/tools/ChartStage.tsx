@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import type { ChartPlayer } from "ournotes-player";
+import type { ChartPlayer, LiveSettingsInput } from "ournotes-player";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
+import { loadLiveSettings, offeredLiveSettings, saveLiveSettings } from "@/lib/music/chart-live-settings";
 import BrandLogo from "@/components/shared/BrandLogo";
 
 type StageStatus =
@@ -17,14 +18,23 @@ interface ChartStageProps {
   manifestUrl: string;
 }
 
+/** Playback speed and the music / sound effect switches, carried from one chart to the next. */
+interface ViewerState {
+  speed: number;
+  music: boolean;
+  se: boolean;
+}
+
 /** The 3D chart player (ournotes-player) with the Moenotes signature; the frame is what goes fullscreen. */
 export default function ChartStage({ locale, manifestUrl }: ChartStageProps) {
   const frameRef = useRef<HTMLDivElement>(null);
   const hostRef = useRef<HTMLDivElement>(null);
+  const viewerRef = useRef<ViewerState>({ speed: 1, music: true, se: true });
   const [status, setStatus] = useState<StageStatus>({ kind: "booting" });
   const [attempt, setAttempt] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
   const [canFullscreen, setCanFullscreen] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -35,21 +45,38 @@ export default function ChartStage({ locale, manifestUrl }: ChartStageProps) {
     }
     const controller = new AbortController();
     let player: ChartPlayer | null = null;
+    let panelWatch: MutationObserver | null = null;
     const fail = (error: unknown) => {
       if (!controller.signal.aborted) setStatus(describeFailure(error));
     };
     setStatus({ kind: "booting" });
+    setPanelOpen(false);
     // The player (WebGL2 + WebAudio) only runs in the browser and is split into its own chunk.
     import("ournotes-player")
-      .then(({ ChartPlayer }) => {
+      .then(async ({ ChartPlayer, LiveSettingsError }) => {
         if (controller.signal.aborted) return null;
         setStatus({ kind: "loading" });
-        return ChartPlayer.create(host, {
+        const create = (settings: LiveSettingsInput | null) => ChartPlayer.create(host, {
           src: manifestUrl,
           autoplay: true,
           signal: controller.signal,
           pixelRatio: Math.min(window.devicePixelRatio || 1, 2),
+          lang: locale,
+          settings,
+          ...viewerRef.current,
         });
+        const saved = loadLiveSettings();
+        try {
+          return await create(saved);
+        } catch (error) {
+          if (!(error instanceof LiveSettingsError) || controller.signal.aborted) throw error;
+          // A saved choice this chart's data lacks: load it with the defaults (the assets come from the HTTP cache),
+          // then apply the saved options it offers.
+          const created = await create(null);
+          const offered = offeredLiveSettings(created, saved);
+          if (Object.keys(offered).length) void created.setSettings(offered).catch(() => undefined);
+          return created;
+        }
       })
       .then((created) => {
         if (!created) return;
@@ -59,14 +86,25 @@ export default function ChartStage({ locale, manifestUrl }: ChartStageProps) {
         }
         player = created;
         created.addEventListener("error", (event) => fail(event.detail.error));
+        created.addEventListener("settingschange", (event) => saveLiveSettings(created, event.detail.changed));
+        // The settings panel covers the stage's right side, fullscreen button included: follow its open state.
+        const settingsButton = created.root.shadowRoot?.querySelector('[aria-haspopup="dialog"]');
+        if (settingsButton) {
+          panelWatch = new MutationObserver(() => setPanelOpen(settingsButton.getAttribute("aria-expanded") === "true"));
+          panelWatch.observe(settingsButton, { attributes: true, attributeFilter: ["aria-expanded"] });
+        }
         setStatus({ kind: "ready" });
         created.root.focus({ preventScroll: true });
       }, fail);
     return () => {
       controller.abort();
-      if (player) void player.dispose();
+      panelWatch?.disconnect();
+      if (player) {
+        viewerRef.current = { speed: player.speed, music: player.music, se: player.se };
+        void player.dispose();
+      }
     };
-  }, [manifestUrl, attempt]);
+  }, [manifestUrl, attempt, locale]);
 
   useEffect(() => {
     setCanFullscreen(Boolean(document.fullscreenEnabled));
@@ -95,7 +133,7 @@ export default function ChartStage({ locale, manifestUrl }: ChartStageProps) {
         <div ref={hostRef} className="absolute inset-0" />
         <StageSignature />
 
-        {canFullscreen && status.kind === "ready" && (
+        {canFullscreen && status.kind === "ready" && !panelOpen && (
           <button
             type="button"
             onClick={toggleFullscreen}
