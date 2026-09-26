@@ -388,7 +388,7 @@ export const enUS = {
     emptyDescription: "No scenes align with this view. Reset filters to wander through all memorable streets and stages.",
     reset: "Show all backgrounds",
   },
-  chartPreview: {
+  chartPreview3d: {
     stageLabel: "3D chart view",
     difficulty: "Difficulty",
     chooseSong: "Choose a song",
@@ -440,8 +440,8 @@ export const enUS = {
       expert: "EXPERT",
     },
     notesCount: "Notes: {count}",
-    chartPreview: "3D preview",
-    chartPreviewLabel: "Preview the {difficulty} chart in 3D",
+    preview3d: "3D preview",
+    preview3dLabel: "Preview the {difficulty} chart in 3D",
     picker: { title: "Choose a song", hint: "Click a difficulty to pick that chart, or the cover to keep the current difficulty.", pickSong: "Choose {title}", pickDifficulty: "Choose {title} {difficulty}", listLabel: "Song list" },
     composer: "Composer",
     lyricist: "Lyricist",

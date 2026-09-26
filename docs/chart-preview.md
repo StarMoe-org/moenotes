@@ -4,6 +4,10 @@
 (WebGL2 + WebAudio, auto play). The song detail page links each difficulty to it as
 `/tools/chart-preview?music=<musicId>&difficulty=<easy|normal|hard|expert>`.
 
+It is separate from the 2D chart sheet of the song detail page (`src/components/music/ChartPreview.tsx`,
+[chart-renderer.md](chart-renderer.md)): the 3D previewer's components are `src/components/tools/ChartPreview3D*`
+and `ChartStage.tsx`, its copy `chartPreview3d.*` and `music.preview3d*` (the 2D sheet uses `music.chartPreview.*`).
+
 ## Data
 
 The player does not read our release assets: besides the score it needs the live scene, note skins, effects,

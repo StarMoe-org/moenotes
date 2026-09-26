@@ -1,5 +1,5 @@
 ---
-import ChartPreview from "@/components/tools/ChartPreview";
+import ChartPreview3D from "@/components/tools/ChartPreview3D";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
 import { getBuildMusic } from "@/lib/masterdata/build-data";
@@ -13,5 +13,5 @@ const songs = await getBuildMusic(locale);
 ---
 
 <PageLayout locale={locale} titleKey="seo.chartPreview.title" descriptionKey="seo.chartPreview.description">
-  <ChartPreview client:load locale={locale} songs={songs} />
+  <ChartPreview3D client:load locale={locale} songs={songs} />
 </PageLayout>

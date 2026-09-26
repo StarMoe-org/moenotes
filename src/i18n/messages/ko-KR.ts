@@ -388,7 +388,7 @@ export const koKR = {
     emptyDescription: "조건에 맞는 풍경을 찾지 못했습니다. 필터를 초기화해 소녀들이 걸어온 모든 배경을 둘러보세요.",
     reset: "모든 배경 보기",
   },
-  chartPreview: {
+  chartPreview3d: {
     stageLabel: "3D 채보 화면",
     difficulty: "난이도",
     chooseSong: "곡 선택",
@@ -440,8 +440,8 @@ export const koKR = {
       expert: "EXPERT",
     },
     notesCount: "노트: {count}",
-    chartPreview: "3D 미리보기",
-    chartPreviewLabel: "{difficulty} 채보 3D 미리보기",
+    preview3d: "3D 미리보기",
+    preview3dLabel: "{difficulty} 채보 3D 미리보기",
     picker: { title: "곡 선택", hint: "난이도를 누르면 해당 채보를 선택하고, 커버를 누르면 현재 난이도로 선택합니다.", pickSong: "{title} 선택", pickDifficulty: "{title} {difficulty} 선택", listLabel: "곡 목록" },
     composer: "작곡",
     lyricist: "작사",

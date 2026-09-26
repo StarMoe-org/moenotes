@@ -15,7 +15,7 @@ interface Props {
   songs: MusicViewModel[];
 }
 
-export default function ChartPreview({ locale, songs }: Props) {
+export default function ChartPreview3D({ locale, songs }: Props) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [preferred, setPreferred] = useState<MusicDifficulty>("expert");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -100,7 +100,7 @@ function ChartHeader({ locale, song, difficulty, onDifficulty, onChangeSong }: {
       </a>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <div role="radiogroup" aria-label={t(locale, "chartPreview.difficulty")} className="grid grid-cols-4 gap-1.5">
+        <div role="radiogroup" aria-label={t(locale, "chartPreview3d.difficulty")} className="grid grid-cols-4 gap-1.5">
           {MUSIC_DIFFICULTIES.map((key) => {
             const entry = song.difficulties.find((item) => item.difficulty === key);
             const checked = key === difficulty;
@@ -128,7 +128,7 @@ function ChartHeader({ locale, song, difficulty, onDifficulty, onChangeSong }: {
           className="mn-focus mn-stamp-press inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-4 py-2.5 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)] transition hover:border-[var(--mn-accent)] hover:text-[var(--mn-accent-deep)]"
         >
           <MusicGlyph className="h-4 w-4" />
-          {t(locale, "chartPreview.changeSong")}
+          {t(locale, "chartPreview3d.changeSong")}
         </button>
       </div>
     </div>
@@ -141,15 +141,15 @@ function StageEmpty({ locale, onChooseSong }: { locale: AppLocale; onChooseSong:
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,color-mix(in_oklab,var(--mn-accent)_35%,transparent),transparent_65%)]" aria-hidden="true" />
       <StageSignature />
       <div className="relative">
-        <h2 className="font-[var(--mn-font-display)] text-xl text-white sm:text-2xl">{t(locale, "chartPreview.emptyTitle")}</h2>
-        <p className="mx-auto mt-2 max-w-md text-xs font-medium leading-6 text-white/70 sm:text-sm">{t(locale, "chartPreview.emptyDescription")}</p>
+        <h2 className="font-[var(--mn-font-display)] text-xl text-white sm:text-2xl">{t(locale, "chartPreview3d.emptyTitle")}</h2>
+        <p className="mx-auto mt-2 max-w-md text-xs font-medium leading-6 text-white/70 sm:text-sm">{t(locale, "chartPreview3d.emptyDescription")}</p>
         <button
           type="button"
           onClick={onChooseSong}
           className="mn-focus mn-stamp-press mt-5 inline-flex items-center gap-2 rounded-full bg-[var(--mn-accent)] px-6 py-3 text-sm font-bold text-white shadow-[var(--mn-shadow-stamp)] hover:bg-[var(--mn-accent-deep)]"
         >
           <MusicGlyph className="h-4 w-4" />
-          {t(locale, "chartPreview.chooseSong")}
+          {t(locale, "chartPreview3d.chooseSong")}
         </button>
       </div>
     </div>

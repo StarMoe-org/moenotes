@@ -325,11 +325,11 @@ export default function MusicDetail({ locale, initialSong }: Props) {
                     </div>
                     <a
                       href={getChartPreviewHref(locale, { musicId: song.id, difficulty: diff.difficulty })}
-                      aria-label={t(locale, "music.chartPreviewLabel", { difficulty: t(locale, `music.difficultyLevels.${diff.difficulty}`) })}
+                      aria-label={t(locale, "music.preview3dLabel", { difficulty: t(locale, `music.difficultyLevels.${diff.difficulty}`) })}
                       className="mn-focus mn-stamp-press mt-1 inline-flex items-center gap-1 rounded-full border border-[var(--mn-border)] bg-[var(--mn-paper)] px-2.5 py-1 text-[10px] font-bold text-[var(--mn-text)] transition hover:border-[var(--mn-accent)] hover:text-[var(--mn-accent-deep)]"
                     >
                       <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" /></svg>
-                      {t(locale, "music.chartPreview")}
+                      {t(locale, "music.preview3d")}
                     </a>
                   </div>
                 );

@@ -415,7 +415,7 @@ export const jaJP = {
     emptyDescription: "条件に一致する情景は見つかりませんでした。条件をリセットして、少女たちが歩んだすべての景色を見渡してみましょう。",
     reset: "すべての背景を表示",
   },
-  chartPreview: {
+  chartPreview3d: {
     stageLabel: "3D 譜面画面",
     difficulty: "難易度",
     chooseSong: "楽曲を選ぶ",
@@ -467,8 +467,8 @@ export const jaJP = {
       expert: "EXPERT",
     },
     notesCount: "ノーツ数 {count}",
-    chartPreview: "3D プレビュー",
-    chartPreviewLabel: "{difficulty} 譜面を 3D プレビュー",
+    preview3d: "3D プレビュー",
+    preview3dLabel: "{difficulty} 譜面を 3D プレビュー",
     picker: { title: "楽曲を選ぶ", hint: "難易度をクリックするとその譜面を選択し、ジャケットをクリックすると現在の難易度のまま選択します。", pickSong: "「{title}」を選択", pickDifficulty: "「{title}」{difficulty} を選択", listLabel: "楽曲リスト" },
     composer: "作曲",
     lyricist: "作詞",

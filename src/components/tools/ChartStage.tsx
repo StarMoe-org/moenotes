@@ -86,7 +86,7 @@ export default function ChartStage({ locale, manifestUrl }: ChartStageProps) {
     <div
       ref={frameRef}
       role="region"
-      aria-label={t(locale, "chartPreview.stageLabel")}
+      aria-label={t(locale, "chartPreview3d.stageLabel")}
       className={fullscreen
         ? "flex items-center justify-center bg-black"
         : "overflow-hidden rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-black shadow-[var(--mn-shadow-stamp)]"}
@@ -99,8 +99,8 @@ export default function ChartStage({ locale, manifestUrl }: ChartStageProps) {
           <button
             type="button"
             onClick={toggleFullscreen}
-            aria-label={t(locale, fullscreen ? "chartPreview.exitFullscreen" : "chartPreview.fullscreen")}
-            title={t(locale, fullscreen ? "chartPreview.exitFullscreen" : "chartPreview.fullscreen")}
+            aria-label={t(locale, fullscreen ? "chartPreview3d.exitFullscreen" : "chartPreview3d.fullscreen")}
+            title={t(locale, fullscreen ? "chartPreview3d.exitFullscreen" : "chartPreview3d.fullscreen")}
             className="mn-focus absolute right-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-full bg-black/45 text-white/85 backdrop-blur-sm transition hover:bg-black/70 hover:text-white"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -113,19 +113,19 @@ export default function ChartStage({ locale, manifestUrl }: ChartStageProps) {
 
         {status.kind === "booting" && (
           <StageMessage>
-            <p className="text-sm font-bold text-white/80">{t(locale, "chartPreview.preparing")}</p>
+            <p className="text-sm font-bold text-white/80">{t(locale, "chartPreview3d.preparing")}</p>
           </StageMessage>
         )}
 
         {(status.kind === "error" || status.kind === "unsupported") && (
           <StageMessage dim>
             <h3 className="font-[var(--mn-font-display)] text-lg text-white sm:text-xl">
-              {t(locale, status.kind === "unsupported" ? "chartPreview.unsupportedTitle" : "chartPreview.loadErrorTitle")}
+              {t(locale, status.kind === "unsupported" ? "chartPreview3d.unsupportedTitle" : "chartPreview3d.loadErrorTitle")}
             </h3>
             <p className="mt-2 max-w-md text-xs font-medium leading-6 text-white/75 sm:text-sm">
               {t(locale, status.kind === "unsupported"
-                ? "chartPreview.unsupportedDescription"
-                : status.missing ? "chartPreview.missingDescription" : "chartPreview.loadErrorDescription")}
+                ? "chartPreview3d.unsupportedDescription"
+                : status.missing ? "chartPreview3d.missingDescription" : "chartPreview3d.loadErrorDescription")}
             </p>
             {status.kind === "error" && (
               <>
@@ -135,7 +135,7 @@ export default function ChartStage({ locale, manifestUrl }: ChartStageProps) {
                   onClick={() => setAttempt((value) => value + 1)}
                   className="mn-focus mn-stamp-press mt-4 rounded-full border border-white/30 bg-white/10 px-5 py-2 text-sm font-bold text-white hover:bg-white/20"
                 >
-                  {t(locale, "chartPreview.retry")}
+                  {t(locale, "chartPreview3d.retry")}
                 </button>
               </>
             )}

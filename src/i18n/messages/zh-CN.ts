@@ -421,7 +421,7 @@ export const zhCN = {
     emptyDescription: "这片空域未映照出相称的画幅。重置筛选，去漫步更多写满回忆的舞台与街角吧。",
     reset: "查看全部背景",
   },
-  chartPreview: {
+  chartPreview3d: {
     stageLabel: "3D 谱面画面",
     difficulty: "难度",
     chooseSong: "选择歌曲",
@@ -473,8 +473,8 @@ export const zhCN = {
       expert: "EXPERT",
     },
     notesCount: "物量 {count}",
-    chartPreview: "3D 预览",
-    chartPreviewLabel: "3D 预览 {difficulty} 谱面",
+    preview3d: "3D 预览",
+    preview3dLabel: "3D 预览 {difficulty} 谱面",
     picker: { title: "选择歌曲", hint: "点击难度即可选定该谱面，点击封面则沿用当前难度。", pickSong: "选择《{title}》", pickDifficulty: "选择《{title}》{difficulty}", listLabel: "乐曲清单" },
     composer: "作曲",
     lyricist: "作词",
