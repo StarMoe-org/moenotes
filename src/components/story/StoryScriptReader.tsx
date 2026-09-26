@@ -700,6 +700,17 @@ function RichText({ line }: { line: StoryLine }) {
   })}</>;
 }
 
+/**
+ * A dialogue line's speaker label: the game masks some speakers (？？？ before an identity is revealed) and
+ * hides others (a letter or broadcast with no name), so the real name is annotated in parentheses.
+ */
+function speakerLabel(line: StoryLine, locale: AppLocale): string {
+  if (!line.speaker) return "";
+  if (line.speakerStatus === 1) return t(locale, "story.ui.speakerMasked", { name: line.speaker });
+  if (line.speakerStatus === 2) return t(locale, "story.ui.speakerHidden", { name: line.speaker });
+  return line.speaker;
+}
+
 function LineCard({ index, line, characterId, isActive, isPlaying, locale, onToggle }: LineViewProps) {
   return <article
     id={`story-line-${index}`}
@@ -716,7 +727,7 @@ function LineCard({ index, line, characterId, isActive, isPlaying, locale, onTog
           <img src={getCharacterFaceIconUrl(characterId)} alt={line.speaker} className={`h-6 w-6 rounded-full border bg-[var(--mn-cream-deep)] object-cover transition-all ${isActive ? "border-[var(--mn-accent)] scale-110" : "border-[var(--mn-border)]"}`} />
         )}
         <strong className={`text-sm transition-colors duration-300 ${isActive ? "text-[var(--mn-accent)] font-black" : "text-[var(--mn-text-muted)] font-bold"}`}>
-          {line.speaker || t(locale, "story.ui.narration")}
+          {speakerLabel(line, locale) || t(locale, "story.ui.narration")}
         </strong>
       </div>
       {line.voiceUrls[0] && (

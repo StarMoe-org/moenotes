@@ -592,6 +592,8 @@ export const jaJP = {
       parsing: "少女たちの心の声とささやきに耳を傾けています…",
       autoplay: "自動再生",
       narration: "ナレーション",
+      speakerMasked: "？？？（{name}）",
+      speakerHidden: "（{name}）",
       playing: "自動再生中",
       paused: "一時停止中",
       line: "{current} / {total} 行目",
