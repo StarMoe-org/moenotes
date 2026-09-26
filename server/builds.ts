@@ -1,3 +1,4 @@
+import { createWriteStream } from "node:fs";
 import { link, mkdir, readdir, rename, rm, symlink } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import type { ServerConfig } from "./config";
@@ -8,7 +9,7 @@ import type { DataVersion } from "./upstream";
  * Builds on the data volume:
  *
  *   state.json               the live build
- *   builds/<id>/site/        Astro output plus precompressed variants (web root)
+ *   builds/<id>/site/        Astro output (web root); precompressed variants are added once it is live
  *   builds/<id>/files.json   size + SHA-256 per file, for the next build's finalize step
  *   builds/.staging-<id>/    a build in progress; removed on failure and at startup
  *   logs/<id>.log            full Astro / finalize output of each attempt
@@ -36,6 +37,8 @@ interface State {
 const STAGING_PREFIX = ".staging-";
 const LATEST_LOG = "latest.log";
 const ASTRO_STEP = "astro build";
+const FINALIZE_STEP = "finalize";
+const COMPRESSION_WAIT_STEP = "waiting for the live build's compression";
 /**
  * Astro prints a marker as it starts each page (`12:00:00   ├─ /story/1/index.html (+2ms)`); with build
  * concurrency several share a line. The log keeps them; the console gets a progress line instead.
@@ -113,11 +116,20 @@ async function readState(path: string): Promise<State> {
   }
 }
 
+/** Where a step's output goes: the build's log, reopened for appending by the background compression. */
+interface LogSink {
+  write(text: string): unknown;
+}
+
 export class BuildStore {
   current: BuildRecord | null = null;
   roots: SiteRoots = { current: null, previous: [] };
   progress: BuildProgress | null = null;
-  private activeProcess: Bun.Subprocess | null = null;
+  compressing: { id: string; startedAt: string } | null = null;
+  /** Settles once the live build's variants are written; never rejects. */
+  private compression: Promise<void> = Promise.resolve();
+  private readonly processes = new Set<Bun.Subprocess>();
+  private stopping = false;
 
   constructor(private readonly config: ServerConfig) {}
 
@@ -142,12 +154,13 @@ export class BuildStore {
     await this.refreshRoots();
   }
 
-  /** Leftovers of interrupted builds and old builds; run in the background after startup. */
+  /** Leftovers of interrupted builds, old builds and an interrupted compression; run in the background after startup. */
   async cleanUp(): Promise<void> {
     for (const name of await readdir(this.config.buildsDir)) {
       if (name.startsWith(STAGING_PREFIX)) await rm(join(this.config.buildsDir, name), { recursive: true, force: true });
     }
     await this.prune();
+    this.startCompression();
   }
 
   async build(key: string, revision: string, data: DataVersion): Promise<BuildRecord> {
@@ -168,6 +181,7 @@ export class BuildStore {
 
     try {
       await mkdir(staging, { recursive: true });
+      progress.step = ASTRO_STEP;
       // Astro keeps its intermediate output in <cwd>/.astro when outDir lies outside the working directory
       // and then renames it into outDir, which fails across filesystems (image vs. volume). Running it from
       // the staging directory, with the project as --root, keeps both on the volume.
@@ -175,9 +189,13 @@ export class BuildStore {
         cwd: staging,
         env: { MOENOTES_FETCH_CACHE_DIR: this.config.fetchCacheDir, ASTRO_TELEMETRY_DISABLED: "1" },
       });
-      const finalize = [process.execPath, join(this.config.appDir, "server", "finalize.ts"), site, join(staging, "files.json")];
+      // Unchanged files are linked together with the live build's variants, so those must be complete.
+      if (this.compressing) progress.step = COMPRESSION_WAIT_STEP;
+      await this.compression;
+      const finalize = [process.execPath, this.finalizeScript(), "link", site, join(staging, "files.json")];
       if (this.current) finalize.push(this.siteDir(this.current.id), join(this.buildDir(this.current.id), "files.json"));
-      await this.run("finalize", finalize, logFile);
+      progress.step = FINALIZE_STEP;
+      await this.run(FINALIZE_STEP, finalize, logFile);
       await rename(staging, this.buildDir(id));
     } catch (error) {
       await rm(staging, { recursive: true, force: true });
@@ -191,13 +209,17 @@ export class BuildStore {
     return { id, key, revision, data: data.label, builtAt: new Date().toISOString(), durationMs: Date.now() - startedAt, pages: progress.pages };
   }
 
-  /** Makes a finished build live: state.json first, then the roots new requests read. */
+  /**
+   * Makes a finished build live: state.json first, then the roots new requests read. Its files go out as they
+   * are until the background compression has added their variants.
+   */
   async activate(record: BuildRecord): Promise<void> {
     const temporary = `${this.config.statePath}.tmp`;
     await Bun.write(temporary, `${JSON.stringify({ current: record } satisfies State, null, 2)}\n`);
     await rename(temporary, this.config.statePath);
     this.current = record;
     await this.refreshRoots();
+    this.startCompression();
   }
 
   /**
@@ -219,8 +241,34 @@ export class BuildStore {
     await this.refreshRoots();
   }
 
-  stopActiveProcess(): void {
-    this.activeProcess?.kill("SIGTERM");
+  /** Stops the build and the compression; an interrupted compression resumes at the next start. */
+  stopProcesses(): void {
+    this.stopping = true;
+    for (const child of this.processes) child.kill("SIGTERM");
+  }
+
+  /** Adds the live build's missing variants in a separate, lower-priority process. */
+  private startCompression(): void {
+    const id = this.current?.id;
+    if (id) this.compression = this.compression.then(() => this.compress(id));
+  }
+
+  private async compress(id: string): Promise<void> {
+    const logPath = join(this.config.logsDir, `${id}.log`);
+    const logFile = createWriteStream(logPath, { flags: "a" });
+    this.compressing = { id, startedAt: new Date().toISOString() };
+    try {
+      await this.run("compress", [process.execPath, this.finalizeScript(), "compress", this.siteDir(id)], logFile);
+    } catch (error) {
+      if (!this.stopping) log(`compressing build ${id} failed; it resumes at the next start or build: ${errorMessage(error)} (log: ${logPath})`);
+    } finally {
+      this.compressing = null;
+      await new Promise<void>((resolve) => logFile.end(resolve));
+    }
+  }
+
+  private finalizeScript(): string {
+    return join(this.config.appDir, "server", "finalize.ts");
   }
 
   /** Pages a build should render: the live build's count, or its sitemap entries when its record has none. */
@@ -264,18 +312,17 @@ export class BuildStore {
   private async run(
     step: string,
     command: string[],
-    logFile: Bun.FileSink,
+    logFile: LogSink,
     options: { cwd?: string; env?: Record<string, string> } = {},
   ): Promise<void> {
     logFile.write(`\n$ ${command.join(" ")}\n`);
-    if (this.progress) this.progress.step = step;
     const child = Bun.spawn(command, {
       cwd: options.cwd ?? this.config.appDir,
       env: { ...process.env, NO_COLOR: "1", ...options.env },
       stdout: "pipe",
       stderr: "pipe",
     });
-    this.activeProcess = child;
+    this.processes.add(child);
     const timeout = setTimeout(() => {
       log(`${step} exceeded ${this.config.buildTimeoutMs / 1000}s; stopping it`);
       child.kill("SIGTERM");
@@ -305,7 +352,7 @@ export class BuildStore {
       if (exitCode !== 0) throw new Error(`${step} exited with ${child.signalCode ?? exitCode}`);
     } finally {
       clearTimeout(timeout);
-      this.activeProcess = null;
+      this.processes.delete(child);
     }
   }
 }

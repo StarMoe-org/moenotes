@@ -82,10 +82,15 @@ Astro renders every page on every build; what carries over between versions is t
   ETag and revalidate them on the next build, so tables that did not change since the previous version
   answer 304 instead of transferring again. The cache key leaves out the `v` cache-busting parameter. The
   build log ends with `[build-fetch] N unchanged (304), M downloaded`. Deleting the directory is always safe.
-- **Output.** `server/finalize.ts` compares each output file with the live build (size and SHA-256 from
+- **Output.** `server/finalize.ts link` compares each output file with the live build (size and SHA-256 from
   `files.json`). Identical files are hard-linked to the live build's copy together with its compressed
-  variants; only changed files take new disk space and are compressed (brotli quality 9 and gzip level 9,
-  roughly 70 and 120 MB/s). Linked files keep their mtime, and with it their ETag.
+  variants, so only changed files take new disk space. Linked files keep their mtime, and with it their ETag.
+- **Compression.** A build goes live without waiting for compression. `server/finalize.ts compress` then adds
+  brotli (quality 9) and gzip (level 9) variants to every compressible file that lacks them, roughly 70 and
+  120 MB/s, in a separate lower-priority process. Until a file's variants exist it is sent uncompressed (a
+  CDN in front can compress it on the way). A code change touches every page, so the whole 2.4 GB is
+  compressed again (a few minutes); a data update only compresses the pages it changed. The next build waits
+  for the compression before linking, and a compression cut off by a restart resumes at the next start.
 
 ## Serving
 
@@ -94,13 +99,13 @@ Astro renders every page on every build; what carries over between versions is t
 `Cache-Control: public, max-age=31536000, immutable`; files missing from the live build are looked up in the
 earlier builds kept on disk, so a page loaded just before a swap still finds its scripts. Everything else is
 `no-cache` with an ETag. Compressible files are sent as their precompressed `.br` / `.gz` variant when the
-client accepts it.
+client accepts it and the variant has been written (see [Caching across builds](#caching-across-builds)).
 
 | Endpoint | Answer |
 | --- | --- |
 | `/healthz` | 200 while the process runs (liveness; use this for platform health checks) |
 | `/readyz` | 200 once a build is live, 503 before |
-| `/_moenotes/status` | JSON: live build, source revision, build in progress (step, `pages` rendered, `expectedPages`), wait reason, last failure, last check |
+| `/_moenotes/status` | JSON: live build, source revision, build in progress (step, `pages` rendered, `expectedPages`), background compression (`compressing`: build id and start), wait reason, last failure, last check |
 
 Before the first build completes every site path answers 503 with `Retry-After: 60`.
 
@@ -108,7 +113,7 @@ Before the first build completes every site path answers 503 with `Retry-After: 
 
 ```text
 /data/state.json               live build record
-/data/builds/<id>/site/        web root: Astro output + .br/.gz variants
+/data/builds/<id>/site/        web root: Astro output + .br/.gz variants (added once live)
 /data/builds/<id>/files.json   size + SHA-256 per file for the next finalize
 /data/builds/.staging-<id>/    build in progress (removed on failure and at startup)
 /data/logs/<id>.log            full output of the last 10 attempts
@@ -125,11 +130,14 @@ older builds reduced to their `_astro/` directory. A build in progress needs roo
 - **Force a rebuild** without new data or code: set `current.key` in `/data/state.json` to `""` and restart.
   The live build keeps serving until the new one is ready.
 - **Logs**: the container prints the server's decisions and Astro's output without the per-page lines;
-  `/data/logs/<id>.log` has everything, and `/data/logs/latest.log` always names the newest attempt
-  (`tail -F /data/logs/latest.log` follows the next build too).
+  `/data/logs/<id>.log` has everything, with the background compression appended after the build, and
+  `/data/logs/latest.log` always names the newest attempt (`tail -F /data/logs/latest.log` follows the next
+  build too).
 - **Progress**: while a build runs the container prints a line every 30 s, e.g.
   `build 20260926T080000Z-ab12cd34: astro build, 5230/~15773 pages (33%), 4m10s elapsed, rendering done in ~8m`.
   The expected total is the live build's page count (its sitemap entries for a build recorded before pages
   were counted), so it is an estimate: a release that adds pages runs past it, and the percentage stops at
   99 until Astro finishes. Without a live build only the count is shown. `/_moenotes/status` reports the
-  same numbers under `building`.
+  same numbers under `building`. After Astro the step reads `finalize` (linking against the live build), or
+  `waiting for the live build's compression` while the previous build is still being compressed; the
+  compression itself shows under `compressing`.

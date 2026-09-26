@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { BuildStore, astroCli, errorMessage, log } from "./builds";
 import { config } from "./config";
-import { finalizeSite } from "./finalize";
+import { compressSite, linkSite } from "./finalize";
 import { serveStatic, type SiteRoots } from "./static";
 import { assetExportLag, buildKey, describeData, fetchJson, sourceRevision, type AssetManifest, type DataVersion } from "./upstream";
 
@@ -60,7 +60,7 @@ for (const signal of ["SIGTERM", "SIGINT"] as const) {
     if (stopping) return;
     stopping = true;
     log(`${signal}: shutting down`);
-    store.stopActiveProcess();
+    store.stopProcesses();
     void server.stop(true).finally(() => process.exit(0));
   });
 }
@@ -73,6 +73,7 @@ function status() {
     revision,
     current: store.current,
     building: scheduler.building && { ...scheduler.building, ...store.progress?.toJSON() },
+    compressing: store.compressing,
     waiting: scheduler.waiting && { reason: scheduler.waiting.reason, since: new Date(scheduler.waiting.since).toISOString() },
     failure: scheduler.failure && { ...scheduler.failure, retryAt: new Date(scheduler.failure.retryAt).toISOString() },
     lastCheck: scheduler.lastCheck,
@@ -124,7 +125,7 @@ async function runBuild(key: string, data: DataVersion): Promise<void> {
     const record = await store.build(key, revision, data);
     await store.activate(record);
     scheduler.failure = null;
-    log(`build ${record.id} is live after ${Math.round(record.durationMs / 1000)}s (${record.pages} pages)`);
+    log(`build ${record.id} is live after ${Math.round(record.durationMs / 1000)}s (${record.pages} pages); compressing it in the background`);
   } catch (error) {
     if (stopping) return;
     const attempts = scheduler.failure?.key === key ? scheduler.failure.attempts + 1 : 1;
@@ -162,16 +163,30 @@ async function selfCheck(): Promise<void> {
     await Bun.write(join(previous, ".prerender", "entry.mjs"), "export {};");
     await writeSite(current);
 
-    const first = await finalizeSite(previous);
-    check(first.compressed === 3, `expected 3 compressed files, got ${first.compressed}`);
+    const first = await linkSite(previous);
+    check(first.linked === 0 && first.files === 5, `expected 5 files and nothing linked, got ${first.files} / ${first.linked} linked`);
     check(!await Bun.file(join(previous, ".prerender", "entry.mjs")).exists(), "finalize should drop .prerender/");
-    const second = await finalizeSite(current, { site: previous, manifest: first.manifest });
-    check(second.linked === 4 && second.compressed === 0, `expected 4 linked files, got ${second.linked} linked / ${second.compressed} compressed`);
 
-    const roots: SiteRoots = { current, previous: [previous] };
+    let roots: SiteRoots = { current: previous, previous: [] };
     const get = (path: string, headers: Record<string, string> = {}, method = "GET") =>
       serveStatic(new Request(`http://self-check${path}`, { headers, method }), roots);
 
+    // Live before its compression: served as is until the variants exist.
+    const uncompressed = await get("/", { "accept-encoding": "gzip, br" });
+    check(uncompressed.status === 200 && !uncompressed.headers.has("content-encoding"), "a build without variants should be served as is");
+    await Bun.write(join(previous, "index.html.br.tmp-1"), "partial");
+    const compressed = await compressSite(previous);
+    check(compressed.compressed === 3, `expected 3 compressed files, got ${compressed.compressed}`);
+    check(!await Bun.file(join(previous, "index.html.br.tmp-1")).exists(), "compress should drop an interrupted run's temporary files");
+    check((await compressSite(previous)).compressed === 0, "a second compression should find nothing to do");
+    await rm(join(previous, "index.html.gz"));
+    check((await compressSite(previous)).compressed === 1, "compress should complete a file an interrupted run left with one variant");
+
+    const second = await linkSite(current, { site: previous, manifest: first.manifest });
+    check(second.linked === 4, `expected 4 linked files, got ${second.linked}`);
+    check((await compressSite(current)).compressed === 0, "linked files should come with the live build's variants");
+
+    roots = { current, previous: [previous] };
     const home = await get("/", { "accept-encoding": "gzip, br" });
     check(home.status === 200 && home.headers.get("content-encoding") === "br", "GET / should serve the brotli variant");
     const etag = home.headers.get("etag") ?? "";
