@@ -4,6 +4,9 @@ import { isMusicDifficulty, type MusicDifficulty } from "@/lib/music/difficulty"
 /** Music attributes (MasterLiveMusic `_musicType`), labelled by `cards.attributes.<n>`. */
 export const MUSIC_TYPES: readonly number[] = [1, 2, 3, 4, 5];
 
+/** Band filter value for songs outside every MasterBand row (no `bandIDs`, e.g. the CRYCHIC song). */
+export const MUSIC_OTHER_BAND = 0;
+
 export interface MusicFilterState {
   query: string;
   types: number[];
@@ -39,7 +42,7 @@ export function filterMusic(songs: readonly MusicViewModel[], filters: MusicFilt
   const filtersCharts = difficulties.length > 0 || minLevel !== null || maxLevel !== null;
   return songs.filter((song) => {
     if (filters.types.length > 0 && !filters.types.includes(song.musicType)) return false;
-    if (filters.bands.length > 0 && !filters.bands.includes(song.bandId)) return false;
+    if (filters.bands.length > 0 && !filters.bands.includes(musicBandKey(song))) return false;
     // One chart has to satisfy both the difficulty and the level range.
     if (filtersCharts && !song.difficulties.some((chart) =>
       (difficulties.length === 0 || difficulties.includes(chart.difficulty))
@@ -57,6 +60,15 @@ export function musicBandOptions(songs: readonly MusicViewModel[]): Array<[numbe
     if (song.bandId && song.bandName) values.set(song.bandId, song.bandName);
   });
   return [...values.entries()].sort(([a], [b]) => a - b);
+}
+
+/** Whether any song falls under the band filter's "other" option. */
+export function hasOtherBandMusic(songs: readonly MusicViewModel[]): boolean {
+  return songs.some((song) => musicBandKey(song) === MUSIC_OTHER_BAND);
+}
+
+function musicBandKey(song: MusicViewModel): number {
+  return song.bandId && song.bandName ? song.bandId : MUSIC_OTHER_BAND;
 }
 
 /** Lowest and highest chart level across every difficulty, the level slider's ends. */

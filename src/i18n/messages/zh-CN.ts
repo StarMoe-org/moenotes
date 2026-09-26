@@ -456,6 +456,7 @@ export const zhCN = {
     searchPlaceholder: "搜索歌名、词曲、乐队或歌手...",
     filterTitle: "筛选音乐",
     filters: {
+      bandOther: "其它",
       difficulty: "难度",
       level: "等级",
       levelMin: "最低等级",

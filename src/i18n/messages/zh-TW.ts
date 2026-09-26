@@ -456,6 +456,7 @@ export const zhTW = {
     searchPlaceholder: "搜索歌名、詞曲、樂隊或歌手...",
     filterTitle: "篩選音樂",
     filters: {
+      bandOther: "其他",
       difficulty: "難度",
       level: "等級",
       levelMin: "最低等級",

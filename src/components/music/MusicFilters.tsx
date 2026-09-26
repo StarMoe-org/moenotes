@@ -9,9 +9,11 @@ import type { MusicViewModel } from "@/lib/music/data";
 import { DIFFICULTY_SHORT_LABELS, MUSIC_DIFFICULTIES } from "@/lib/music/difficulty";
 import {
   EMPTY_MUSIC_FILTERS,
+  MUSIC_OTHER_BAND,
   MUSIC_TYPES,
   filterMusic,
   hasMusicFilters,
+  hasOtherBandMusic,
   musicBandOptions,
   musicLevelBounds,
   type MusicFilterState,
@@ -24,6 +26,7 @@ export function useMusicFilters(songs: readonly MusicViewModel[], locale: AppLoc
   const { onChange: setSort } = sort;
 
   const bands = useMemo(() => musicBandOptions(songs), [songs]);
+  const hasOtherBand = useMemo(() => hasOtherBandMusic(songs), [songs]);
   const levelBounds = useMemo(() => musicLevelBounds(songs), [songs]);
   const filtered = useMemo(() => filterMusic(songs, filters), [songs, filters]);
   const sorted = useMemo(() => sortEntries(filtered, sort.value, locale), [filtered, sort.value, locale]);
@@ -34,7 +37,7 @@ export function useMusicFilters(songs: readonly MusicViewModel[], locale: AppLoc
     setFilters(EMPTY_MUSIC_FILTERS);
   }, [setSort]);
 
-  return { songs, filters, setFilters, sort, bands, levelBounds, filtered, sorted, hasActiveFilters, reset };
+  return { songs, filters, setFilters, sort, bands, hasOtherBand, levelBounds, filtered, sorted, hasActiveFilters, reset };
 }
 
 export type MusicFiltersController = ReturnType<typeof useMusicFilters>;
@@ -48,7 +51,7 @@ interface MusicFiltersProps {
 }
 
 export default function MusicFilters({ locale, controller, variant = "plain", onReset }: MusicFiltersProps) {
-  const { songs, filters, setFilters, sort, bands, levelBounds, filtered, hasActiveFilters, reset } = controller;
+  const { songs, filters, setFilters, sort, bands, hasOtherBand, levelBounds, filtered, hasActiveFilters, reset } = controller;
   return (
     <BaseFilters
       sort={sort}
@@ -78,6 +81,7 @@ export default function MusicFilters({ locale, controller, variant = "plain", on
         bands={bands}
         selectedBands={filters.bands}
         onChange={(selected) => setFilters((current) => ({ ...current, bands: selected }))}
+        extraOption={hasOtherBand ? { id: MUSIC_OTHER_BAND, label: t(locale, "music.filters.bandOther") } : undefined}
       />
 
       <FilterSection title={t(locale, "music.filters.difficulty")}>

@@ -423,6 +423,7 @@ export const enUS = {
     searchPlaceholder: "Search titles, authors, bands, or singers...",
     filterTitle: "Filter Music",
     filters: {
+      bandOther: "Other",
       difficulty: "Difficulty",
       level: "Level",
       levelMin: "Minimum level",

@@ -423,6 +423,7 @@ export const koKR = {
     searchPlaceholder: "타이틀, 작곡가, 밴드, 보컬 검색...",
     filterTitle: "음악 필터",
     filters: {
+      bandOther: "기타",
       difficulty: "난이도",
       level: "레벨",
       levelMin: "최저 레벨",

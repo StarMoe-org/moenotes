@@ -450,6 +450,7 @@ export const jaJP = {
     searchPlaceholder: "曲名、作詞、作曲、バンド、ボーカルで検索...",
     filterTitle: "楽曲絞り込み",
     filters: {
+      bandOther: "その他",
       difficulty: "難易度",
       level: "レベル",
       levelMin: "最低レベル",

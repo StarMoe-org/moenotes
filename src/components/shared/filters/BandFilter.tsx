@@ -13,6 +13,8 @@ export interface BandFilterProps extends CommonFilterProps {
   onReset?: () => void;
   getBandName?: (bandId: number) => string;
   getIconUrl?: (bandId: number) => string;
+  /** Text button after the band icons, toggled like a band, e.g. "Other" for entries outside every band. */
+  extraOption?: { id: number; label: string } | undefined;
 }
 
 export function BandFilter({
@@ -24,6 +26,7 @@ export function BandFilter({
   onReset,
   getBandName,
   getIconUrl,
+  extraOption,
   allLabel = "ALL",
   className,
 }: BandFilterProps) {
@@ -88,6 +91,14 @@ export function BandFilter({
           </span>
         </FilterButton>
       ))}
+      {extraOption && (
+        <FilterButton
+          active={selectedBands.includes(extraOption.id)}
+          onClick={() => handleToggle(extraOption.id)}
+        >
+          {extraOption.label}
+        </FilterButton>
+      )}
     </div>
   );
 
