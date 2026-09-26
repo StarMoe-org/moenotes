@@ -5,10 +5,11 @@ import { localizePath } from "@/i18n/routing";
 import { getRoutePathById } from "@/lib/route/registry";
 import { getChartPreviewHref } from "@/lib/music/chart-preview";
 import Modal from "@/components/shared/Modal";
-import ChartPreview from "@/components/music/ChartPreview";
+import ChartSheetDialog from "@/components/music/ChartSheetDialog";
 import { difficultyStyles } from "@/components/music/difficulty-styles";
 import {
   type MusicViewModel,
+  type SongDifficultyModel,
 } from "@/lib/music/data";
 import {
   getCardTypeIconUrl,
@@ -38,6 +39,8 @@ export default function MusicDetail({ locale, initialSong }: Props) {
   const [jacketModalOpen, setJacketModalOpen] = useState(false);
   const [copyState, setCopyState] = useState<"idle" | "copying" | "success" | "error">("idle");
   const [downloadState, setDownloadState] = useState<"idle" | "downloading" | "success">("idle");
+  // The difficulty whose 2D chart sheet is open (null: none).
+  const [sheetDifficulty, setSheetDifficulty] = useState<SongDifficultyModel["difficulty"] | null>(null);
 
   const song = data.song;
 
@@ -310,6 +313,8 @@ export default function MusicDetail({ locale, initialSong }: Props) {
             <div className="p-6 sm:p-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
               {song.difficulties.map((diff) => {
                 const config = difficultyStyles[diff.difficulty];
+                const level = t(locale, `music.difficultyLevels.${diff.difficulty}`);
+                const previewButton = "mn-focus mn-stamp-press inline-flex items-center gap-1 rounded-full border border-[var(--mn-border)] bg-[var(--mn-paper)] px-2.5 py-1 text-[10px] font-bold text-[var(--mn-text)] transition hover:border-[var(--mn-accent)] hover:text-[var(--mn-accent-deep)]";
 
                 return (
                   <div key={diff.difficulty} className={`p-3 border rounded-2xl flex flex-col items-center justify-between text-center gap-2 ${config.cardBg}`}>
@@ -323,14 +328,27 @@ export default function MusicDetail({ locale, initialSong }: Props) {
                     <div className="text-[10px] font-semibold text-[var(--mn-text-muted)] leading-none">
                       {t(locale, "music.notesCount", { count: diff.notesCount })}
                     </div>
-                    <a
-                      href={getChartPreviewHref(locale, { musicId: song.id, difficulty: diff.difficulty })}
-                      aria-label={t(locale, "music.preview3dLabel", { difficulty: t(locale, `music.difficultyLevels.${diff.difficulty}`) })}
-                      className="mn-focus mn-stamp-press mt-1 inline-flex items-center gap-1 rounded-full border border-[var(--mn-border)] bg-[var(--mn-paper)] px-2.5 py-1 text-[10px] font-bold text-[var(--mn-text)] transition hover:border-[var(--mn-accent)] hover:text-[var(--mn-accent-deep)]"
-                    >
-                      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" /></svg>
-                      {t(locale, "music.preview3d")}
-                    </a>
+                    <div className="mt-1 flex flex-wrap justify-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setSheetDifficulty(diff.difficulty)}
+                        aria-label={t(locale, "music.preview2dLabel", { difficulty: level })}
+                        className={previewButton}
+                      >
+                        <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <rect x="4" y="3" width="16" height="18" rx="2" /><path d="M10 3v18M4 12h16" />
+                        </svg>
+                        {t(locale, "music.preview2d")}
+                      </button>
+                      <a
+                        href={getChartPreviewHref(locale, { musicId: song.id, difficulty: diff.difficulty })}
+                        aria-label={t(locale, "music.preview3dLabel", { difficulty: level })}
+                        className={previewButton}
+                      >
+                        <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" /></svg>
+                        {t(locale, "music.preview3d")}
+                      </a>
+                    </div>
                   </div>
                 );
               })}
@@ -346,7 +364,9 @@ export default function MusicDetail({ locale, initialSong }: Props) {
         </section>
       </div>
 
-      {song.difficulties.length > 0 && <ChartPreview locale={locale} song={song} />}
+      {song.difficulties.length > 0 && (
+        <ChartSheetDialog locale={locale} song={song} difficulty={sheetDifficulty} onClose={() => setSheetDifficulty(null)} />
+      )}
 
       {/* Jacket Zoom Modal */}
       <Modal

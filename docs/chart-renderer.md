@@ -6,9 +6,10 @@ renderer compiled to WebAssembly (`wasm32-unknown-emscripten`).
 
 ## How it runs
 
-- `src/components/music/ChartPreview.tsx`: difficulty/theme pickers, inline overview, Modal viewer
-  (drag, wheel/pinch, double-click, keyboard zoom) and PNG download. Nothing loads until the reader
-  presses **Draw chart**; after that, changing difficulty or theme redraws.
+- `src/components/music/ChartSheetDialog.tsx`: the sheet of one difficulty in a dialog, opened by the **2D
+  preview** button of a difficulty on the song detail page. It draws on opening (a sheet already drawn is shown
+  again); inside, difficulty and theme pickers redraw, the viewer pans and zooms (drag, wheel/pinch, double-click,
+  keyboard) and the header button downloads the PNG.
 - `src/lib/music/chart-renderer.ts` starts one module worker per page on first use;
   `chart-render.worker.ts` instantiates the SDK once and transfers each PNG back.
 - The page fetches the chart (`Live/MusicScore/<chartKey>/<score>.json`) and the jacket's **PNG**

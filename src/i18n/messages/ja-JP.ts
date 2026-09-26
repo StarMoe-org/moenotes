@@ -416,6 +416,7 @@ export const jaJP = {
     reset: "すべての背景を表示",
   },
   chartPreview3d: {
+    credit: "emptysekai by StarMoe",
     stageLabel: "3D 譜面画面",
     difficulty: "難易度",
     chooseSong: "楽曲を選ぶ",
@@ -467,6 +468,8 @@ export const jaJP = {
       expert: "EXPERT",
     },
     notesCount: "ノーツ数 {count}",
+    preview2d: "2D プレビュー",
+    preview2dLabel: "{difficulty} 譜面を 2D プレビュー",
     preview3d: "3D プレビュー",
     preview3dLabel: "{difficulty} 譜面を 3D プレビュー",
     picker: { title: "楽曲を選ぶ", hint: "難易度をクリックするとその譜面を選択し、ジャケットをクリックすると現在の難易度のまま選択します。", pickSong: "「{title}」を選択", pickDifficulty: "「{title}」{difficulty} を選択", listLabel: "楽曲リスト" },

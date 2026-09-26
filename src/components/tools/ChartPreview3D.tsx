@@ -51,6 +51,7 @@ export default function ChartPreview3D({ locale, songs }: Props) {
       ) : (
         <StageEmpty locale={locale} onChooseSong={openDialog} />
       )}
+      <p className="-mt-2 px-1 text-right text-[11px] font-semibold tracking-wide text-[var(--mn-text-muted)]">{t(locale, "chartPreview3d.credit")}</p>
 
       <MusicSelectDialog
         locale={locale}

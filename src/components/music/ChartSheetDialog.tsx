@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type Poin
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import Modal from "@/components/shared/Modal";
-import BrandLogo from "@/components/shared/BrandLogo";
 import { difficultyStyles } from "@/components/music/difficulty-styles";
 import { ReleaseRequestError, fetchReleaseBytes } from "@/lib/assets/release";
 import {
@@ -23,7 +22,7 @@ type FailureKind = "missing" | "failed" | "unsupported";
 type SheetState =
   | { stage: "idle" }
   | { stage: "fetching" | "rendering" }
-  | { stage: "ready"; url: string; width: number; height: number; difficulty: ChartDifficulty }
+  | { stage: "ready"; url: string; width: number; height: number; difficulty: ChartDifficulty; theme: ChartSheetTheme }
   | { stage: "failed"; kind: FailureKind };
 
 interface Viewport { scale: number; x: number; y: number }
@@ -32,19 +31,31 @@ const MIN_ZOOM = 0.05;
 const MAX_ZOOM = 4;
 const PAN_STEP = 48;
 
+interface ChartSheetDialogProps {
+  locale: AppLocale;
+  song: MusicViewModel;
+  /** The difficulty to show; null keeps the dialog closed. */
+  difficulty: ChartDifficulty | null;
+  onClose: () => void;
+}
+
 /**
- * Draws one difficulty's chart with the upstream moenotes-chart-renderer WASM module (in a module worker)
- * and shows the PNG sheet: an inline overview, and a Modal viewer for panning and zooming.
+ * One difficulty's 2D chart sheet in a dialog: drawn with the upstream moenotes-chart-renderer WASM module (in a module
+ * worker) as soon as it opens, then shown in a pan/zoom viewer. Difficulty and sheet colour can be switched inside;
+ * a sheet already drawn is shown again without redrawing.
  */
-export default function ChartPreview({ locale, song }: { locale: AppLocale; song: MusicViewModel }) {
-  const [difficulty, setDifficulty] = useState<ChartDifficulty>(song.difficulties.at(-1)?.difficulty ?? "expert");
+export default function ChartSheetDialog({ locale, song, difficulty: requested, onClose }: ChartSheetDialogProps) {
+  const [difficulty, setDifficulty] = useState<ChartDifficulty>(requested ?? song.difficulties.at(-1)?.difficulty ?? "expert");
   const [theme, setTheme] = useState<ChartSheetTheme>("white");
   const [sheet, setSheet] = useState<SheetState>({ stage: "idle" });
-  const [viewerOpen, setViewerOpen] = useState(false);
   const [downloadState, setDownloadState] = useState<"idle" | "downloading" | "success">("idle");
   // Only the newest request may publish its result; switching difficulty mid-render supersedes the old one.
   const generationRef = useRef(0);
   const sheetUrlRef = useRef<string | null>(null);
+  // The sheet the newest request draws (or drew), as `${difficulty}:${theme}`, and whether it failed.
+  const drawnRef = useRef<{ key: string; failed: boolean } | null>(null);
+  const themeRef = useRef(theme);
+  themeRef.current = theme;
 
   // The sheet follows the site theme until the reader picks one.
   useEffect(() => {
@@ -58,7 +69,9 @@ export default function ChartPreview({ locale, song }: { locale: AppLocale; song
   const draw = useCallback(async (nextDifficulty: ChartDifficulty, nextTheme: ChartSheetTheme) => {
     const chart = song.difficulties.find((entry) => entry.difficulty === nextDifficulty);
     if (!chart) return;
+    drawnRef.current = { key: `${nextDifficulty}:${nextTheme}`, failed: false };
     if (!isChartRendererSupported()) {
+      drawnRef.current.failed = true;
       setSheet({ stage: "failed", kind: "unsupported" });
       return;
     }
@@ -93,27 +106,37 @@ export default function ChartPreview({ locale, song }: { locale: AppLocale; song
       if (sheetUrlRef.current) URL.revokeObjectURL(sheetUrlRef.current);
       const url = URL.createObjectURL(new Blob([result.png as Uint8Array<ArrayBuffer>], { type: "image/png" }));
       sheetUrlRef.current = url;
-      setSheet({ stage: "ready", url, width: result.width, height: result.height, difficulty: nextDifficulty });
+      setSheet({ stage: "ready", url, width: result.width, height: result.height, difficulty: nextDifficulty, theme: nextTheme });
     } catch (error) {
       if (!isCurrent()) return;
       console.error("Chart preview failed:", error);
+      if (drawnRef.current) drawnRef.current.failed = true;
       setSheet({ stage: "failed", kind: error instanceof ReleaseRequestError && error.status === 404 ? "missing" : "failed" });
     }
   }, [locale, song]);
 
-  const started = sheet.stage !== "idle";
+  // Opening on a difficulty draws it, unless that sheet is already drawn or being drawn.
+  useEffect(() => {
+    if (requested === null) return;
+    setDifficulty(requested);
+    setDownloadState("idle");
+    const drawn = drawnRef.current;
+    if (drawn && drawn.key === `${requested}:${themeRef.current}` && !drawn.failed) return;
+    void draw(requested, themeRef.current);
+  }, [requested, draw]);
+
   const busy = sheet.stage === "fetching" || sheet.stage === "rendering";
 
   const selectDifficulty = (next: ChartDifficulty) => {
     setDifficulty(next);
     setDownloadState("idle");
-    if (started) void draw(next, theme);
+    void draw(next, theme);
   };
 
   const selectTheme = (next: ChartSheetTheme) => {
     setTheme(next);
     setDownloadState("idle");
-    if (started) void draw(difficulty, next);
+    void draw(difficulty, next);
   };
 
   const download = () => {
@@ -142,138 +165,76 @@ export default function ChartPreview({ locale, song }: { locale: AppLocale; song
       disabled={downloadState === "downloading"}
       className="grid h-8 w-8 place-items-center rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:text-[var(--mn-text)] disabled:opacity-50"
       aria-label={t(locale, "music.chartPreview.download")}
+      title={t(locale, "music.chartPreview.download")}
     >
-      {downloadState === "idle" && (
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-        </svg>
-      )}
-      {downloadState === "downloading" && (
-        <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <circle cx="12" cy="12" r="9" strokeWidth="2" className="opacity-30" />
-          <path d="M12 3a9 9 0 019 9" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      )}
+      {downloadState === "idle" && <DownloadIcon />}
+      {downloadState === "downloading" && <Spinner />}
       {downloadState === "success" && (
-        <svg className="h-4 w-4 text-[var(--mn-mint)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+        <svg className="h-4 w-4 text-[var(--mn-mint)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
         </svg>
       )}
     </button>
   ) : null;
 
-  return (
-    <section className="mn-paper overflow-hidden" aria-labelledby="chart-preview-title">
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_6%,transparent)] to-transparent px-6 py-3 sm:px-8">
-        <h3 id="chart-preview-title" className="font-[var(--mn-font-display)] text-xl text-[var(--mn-text)] sm:text-2xl">
-          {t(locale, "music.chartPreview.title")}
-        </h3>
-        <BrandLogo className="mn-brand-chart" />
-      </div>
+  const shown = sheet.stage === "ready" && sheet.difficulty === difficulty && sheet.theme === theme ? sheet : null;
 
-      <div className="space-y-5 p-6 sm:p-8">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
-            <Segmented
-              label={t(locale, "music.chartPreview.difficultyLabel")}
-              value={difficulty}
-              disabled={busy}
-              onChange={(key) => selectDifficulty(key as ChartDifficulty)}
-              options={song.difficulties.map((entry) => ({
-                key: entry.difficulty,
-                label: `${difficultyStyles[entry.difficulty].shortLabel} ${entry.displayLevel}`,
-                title: `${difficultyLabel(entry.difficulty)} ${entry.displayLevel}`,
-                dot: difficultyStyles[entry.difficulty].dot,
-              }))}
-            />
-            <Segmented
-              label={t(locale, "music.chartPreview.themeLabel")}
-              value={theme}
-              disabled={busy}
-              onChange={(key) => selectTheme(key as ChartSheetTheme)}
-              options={CHART_SHEET_THEMES.map((key) => ({ key, label: t(locale, `music.chartPreview.themes.${key}`) }))}
-            />
-          </div>
-          {sheet.stage === "ready" && (
-            <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => setViewerOpen(true)} className={secondaryButton}>
-                <ExpandIcon />
-                {t(locale, "music.chartPreview.openViewer")}
-              </button>
-              <button type="button" onClick={download} className={secondaryButton}>
-                <DownloadIcon />
-                {t(locale, "music.chartPreview.download")}
-              </button>
-            </div>
-          )}
+  return (
+    <Modal
+      isOpen={requested !== null}
+      onClose={() => {
+        setDownloadState("idle");
+        onClose();
+      }}
+      title={`${t(locale, "music.chartPreview.title")} · ${song.title}`}
+      closeLabel={t(locale, "actions.close")}
+      size="xl"
+      headerActions={previewActions}
+    >
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
+          <Segmented
+            label={t(locale, "music.chartPreview.difficultyLabel")}
+            value={difficulty}
+            disabled={busy}
+            onChange={(key) => selectDifficulty(key as ChartDifficulty)}
+            options={song.difficulties.map((entry) => ({
+              key: entry.difficulty,
+              label: `${difficultyStyles[entry.difficulty].shortLabel} ${entry.displayLevel}`,
+              title: `${difficultyLabel(entry.difficulty)} ${entry.displayLevel}`,
+              dot: difficultyStyles[entry.difficulty].dot,
+            }))}
+          />
+          <Segmented
+            label={t(locale, "music.chartPreview.themeLabel")}
+            value={theme}
+            disabled={busy}
+            onChange={(key) => selectTheme(key as ChartSheetTheme)}
+            options={CHART_SHEET_THEMES.map((key) => ({ key, label: t(locale, `music.chartPreview.themes.${key}`) }))}
+          />
         </div>
 
-        <SheetStage
-          locale={locale}
-          sheet={sheet}
-          alt={sheet.stage === "ready" ? t(locale, "music.chartPreview.imageAlt", { title: song.title, difficulty: difficultyLabel(sheet.difficulty) }) : ""}
-          onDraw={() => void draw(difficulty, theme)}
-          onOpen={() => setViewerOpen(true)}
-        />
-
-      </div>
-
-      <Modal
-        isOpen={viewerOpen && sheet.stage === "ready"}
-        onClose={() => {
-          setViewerOpen(false);
-          setDownloadState("idle");
-        }}
-        title={sheet.stage === "ready" ? `${song.title} · ${difficultyLabel(sheet.difficulty)}` : undefined}
-        closeLabel={t(locale, "actions.close")}
-        size="xl"
-        headerActions={previewActions}
-      >
-        {sheet.stage === "ready" && (
+        {shown ? (
           <SheetViewer
             locale={locale}
-            url={sheet.url}
-            width={sheet.width}
-            height={sheet.height}
-            alt={t(locale, "music.chartPreview.imageAlt", { title: song.title, difficulty: difficultyLabel(sheet.difficulty) })}
+            url={shown.url}
+            width={shown.width}
+            height={shown.height}
+            alt={t(locale, "music.chartPreview.imageAlt", { title: song.title, difficulty: difficultyLabel(shown.difficulty) })}
           />
+        ) : (
+          <SheetStatus locale={locale} sheet={sheet} onRetry={() => void draw(difficulty, theme)} />
         )}
-      </Modal>
-    </section>
+      </div>
+    </Modal>
   );
 }
 
-const secondaryButton = "mn-focus mn-stamp-press inline-flex min-h-10 items-center gap-2 rounded-full border border-[var(--mn-border)] bg-[var(--mn-paper)] px-4 py-2 text-xs font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]";
 const primaryButton = "mn-focus mn-stamp-press inline-flex min-h-10 items-center gap-2 rounded-full border border-[var(--mn-border)] bg-[var(--mn-accent-deep)] px-6 py-2.5 text-sm font-bold text-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]";
 
-/** Every state keeps the same frame, so the panel does not jump between placeholder, progress and sheet. */
-function SheetStage({ locale, sheet, alt, onDraw, onOpen }: {
-  locale: AppLocale;
-  sheet: SheetState;
-  alt: string;
-  onDraw: () => void;
-  onOpen: () => void;
-}) {
-  // Text states may grow past the aspect ratio on narrow screens; only the image is clipped and height-capped.
-  const frame = "relative flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-cream-deep)] p-6 text-center sm:aspect-[16/9]";
-
-  if (sheet.stage === "ready") {
-    return (
-      <button type="button" onClick={onOpen} className={`${frame} mn-focus group max-h-[70vh] cursor-zoom-in overflow-hidden p-2 sm:p-3`} aria-label={t(locale, "music.chartPreview.openViewer")}>
-        <img className="h-full w-full object-contain" src={sheet.url} width={sheet.width} height={sheet.height} alt={alt} />
-      </button>
-    );
-  }
-
-  if (sheet.stage === "fetching" || sheet.stage === "rendering") {
-    return (
-      <div className={frame} role="status" aria-live="polite">
-        <Spinner className="h-7 w-7 text-[var(--mn-accent-deep)]" />
-        <p className="text-sm font-bold text-[var(--mn-text)]">{t(locale, `music.chartPreview.${sheet.stage}`)}</p>
-        <p className="max-w-md text-xs font-medium leading-6 text-[var(--mn-text-muted)]">{t(locale, `music.chartPreview.${sheet.stage}Hint`)}</p>
-      </div>
-    );
-  }
+/** Progress and failure, in the frame the viewer takes once the sheet is drawn. */
+function SheetStatus({ locale, sheet, onRetry }: { locale: AppLocale; sheet: SheetState; onRetry: () => void }) {
+  const frame = "flex h-[60vh] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-cream-deep)] p-6 text-center";
 
   if (sheet.stage === "failed") {
     return (
@@ -281,16 +242,18 @@ function SheetStage({ locale, sheet, alt, onDraw, onOpen }: {
         <h4 className="font-[var(--mn-font-display)] text-lg text-[var(--mn-text)]">{t(locale, `music.chartPreview.${sheet.kind}Title`)}</h4>
         <p className="max-w-md text-sm font-medium leading-7 text-[var(--mn-text-muted)]">{t(locale, `music.chartPreview.${sheet.kind}Description`)}</p>
         {sheet.kind !== "unsupported" && (
-          <button type="button" onClick={onDraw} className={primaryButton}>{t(locale, "music.chartPreview.retry")}</button>
+          <button type="button" onClick={onRetry} className={primaryButton}>{t(locale, "music.chartPreview.retry")}</button>
         )}
       </div>
     );
   }
 
+  const stage = sheet.stage === "rendering" ? "rendering" : "fetching";
   return (
-    <div className={frame}>
-      <SheetGlyph />
-      <button type="button" onClick={onDraw} className={primaryButton}>{t(locale, "music.chartPreview.draw")}</button>
+    <div className={frame} role="status" aria-live="polite">
+      <Spinner className="h-7 w-7 text-[var(--mn-accent-deep)]" />
+      <p className="text-sm font-bold text-[var(--mn-text)]">{t(locale, `music.chartPreview.${stage}`)}</p>
+      <p className="max-w-md text-xs font-medium leading-6 text-[var(--mn-text-muted)]">{t(locale, `music.chartPreview.${stage}Hint`)}</p>
     </div>
   );
 }
@@ -417,7 +380,7 @@ function SheetViewer({ locale, url, width, height, alt }: { locale: AppLocale; u
           const point = localPoint(event.clientX, event.clientY);
           zoomAt(point.x, point.y, 2);
         }}
-        className="mn-focus relative h-[70vh] w-full cursor-grab touch-none select-none overflow-hidden rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-cream-deep)] active:cursor-grabbing"
+        className="mn-focus relative h-[60vh] w-full cursor-grab touch-none select-none overflow-hidden rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-cream-deep)] active:cursor-grabbing"
       >
         <img
           className="pointer-events-none absolute left-0 top-0 max-w-none origin-top-left"
@@ -481,14 +444,6 @@ function DownloadIcon() {
   );
 }
 
-function ExpandIcon() {
-  return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M15 3h6v6" /><path d="M9 21H3v-6" /><path d="m21 3-7 7" /><path d="m3 21 7-7" />
-    </svg>
-  );
-}
-
 function PlusIcon() {
   return (
     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
@@ -501,15 +456,6 @@ function MinusIcon() {
   return (
     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
       <path d="M5 12h14" />
-    </svg>
-  );
-}
-
-function SheetGlyph() {
-  return (
-    <svg className="h-10 w-10 text-[var(--mn-text-muted)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="3" y="4" width="18" height="16" rx="2" />
-      <path d="M9 4v16M15 4v16M3 9h18M3 15h18" />
     </svg>
   );
 }

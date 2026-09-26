@@ -422,6 +422,7 @@ export const zhTW = {
     reset: "查看全部背景",
   },
   chartPreview3d: {
+    credit: "emptysekai by StarMoe",
     stageLabel: "3D 譜面畫面",
     difficulty: "難度",
     chooseSong: "選擇歌曲",
@@ -473,6 +474,8 @@ export const zhTW = {
       expert: "EXPERT",
     },
     notesCount: "物量 {count}",
+    preview2d: "2D 預覽",
+    preview2dLabel: "2D 預覽 {difficulty} 譜面",
     preview3d: "3D 預覽",
     preview3dLabel: "3D 預覽 {difficulty} 譜面",
     picker: { title: "選擇歌曲", hint: "點擊難度即可選定該譜面，點擊封面則沿用目前難度。", pickSong: "選擇《{title}》", pickDifficulty: "選擇《{title}》{difficulty}", listLabel: "樂曲清單" },

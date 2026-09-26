@@ -389,6 +389,7 @@ export const enUS = {
     reset: "Show all backgrounds",
   },
   chartPreview3d: {
+    credit: "emptysekai by StarMoe",
     stageLabel: "3D chart view",
     difficulty: "Difficulty",
     chooseSong: "Choose a song",
@@ -440,6 +441,8 @@ export const enUS = {
       expert: "EXPERT",
     },
     notesCount: "Notes: {count}",
+    preview2d: "2D preview",
+    preview2dLabel: "Preview the {difficulty} chart in 2D",
     preview3d: "3D preview",
     preview3dLabel: "Preview the {difficulty} chart in 3D",
     picker: { title: "Choose a song", hint: "Click a difficulty to pick that chart, or the cover to keep the current difficulty.", pickSong: "Choose {title}", pickDifficulty: "Choose {title} {difficulty}", listLabel: "Song list" },

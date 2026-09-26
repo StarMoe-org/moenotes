@@ -1,12 +1,13 @@
 # Chart preview (3D)
 
 `/tools/chart-preview` plays a chart with [ournotes-player](https://github.com/StarMoe-org/ournotes-player)
-(WebGL2 + WebAudio, auto play). The song detail page links each difficulty to it as
+(WebGL2 + WebAudio, auto play); the credit `chartPreview3d.credit` sits under the stage. Each difficulty on the song
+detail page offers **2D preview** (the chart sheet dialog, `src/components/music/ChartSheetDialog.tsx`,
+[chart-renderer.md](chart-renderer.md)) and **3D preview**, a link to
 `/tools/chart-preview?music=<musicId>&difficulty=<easy|normal|hard|expert>`.
 
-It is separate from the 2D chart sheet of the song detail page (`src/components/music/ChartPreview.tsx`,
-[chart-renderer.md](chart-renderer.md)): the 3D previewer's components are `src/components/tools/ChartPreview3D*`
-and `ChartStage.tsx`, its copy `chartPreview3d.*` and `music.preview3d*` (the 2D sheet uses `music.chartPreview.*`).
+The 3D previewer's components are `src/components/tools/ChartPreview3D*` and `ChartStage.tsx`, its copy
+`chartPreview3d.*` and `music.preview2d*` / `music.preview3d*` (the 2D sheet's own copy is `music.chartPreview.*`).
 
 ## Data
 
