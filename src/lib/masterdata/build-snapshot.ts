@@ -1,4 +1,5 @@
 import { masterdataConfig } from "@/config/masterdata";
+import { buildFetch } from "@/lib/build/fetch";
 import type { VersionManifest } from "@/types/masterdata";
 
 interface BuildSnapshotState {
@@ -117,7 +118,7 @@ async function fetchJsonWithRetry(url: string, init?: RequestInit): Promise<unkn
   for (let attempt = 1; attempt <= 4; attempt += 1) {
     try {
       return await withRequestSlot(async () => {
-        const response = await fetch(url, init);
+        const response = await buildFetch(url, init);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return await response.json() as unknown;
       });

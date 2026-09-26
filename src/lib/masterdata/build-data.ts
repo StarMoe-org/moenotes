@@ -1,4 +1,5 @@
 import type { AppLocale } from "@/config/locales";
+import { buildFetch } from "@/lib/build/fetch";
 import { getBuildMasterData } from "@/lib/masterdata/build-snapshot";
 import {
   normalizeCards,
@@ -531,7 +532,7 @@ export function getBuildStoryDetail(locale: AppLocale, advId: number): Promise<S
     const characterTextIds = new Set(characters._allData.flatMap((entry) => [entry.nameTextID, entry.shortNameTextID]));
     const characterTexts = texts._allData.filter((entry) => characterTextIds.has(entry.id));
     const [script, stories] = await Promise.all([
-      getBuildStoryScriptLookups(locale).then((lookups) => fetchAndParseStory(adv.advEpisodeAsset, { locale, lookups })),
+      getBuildStoryScriptLookups(locale).then((lookups) => fetchAndParseStory(adv.advEpisodeAsset, { locale, lookups, fetcher: buildFetch })),
       getBuildStories(locale),
     ]);
     return {

@@ -69,6 +69,17 @@ bun run preview
 bun run lint
 ```
 
+## 部署
+
+镜像（`Dockerfile`）只包含 Bun 运行时和源码，站点在容器内构建：容器启动后立即用 `/data` 卷里上一次成功的构建对外服务，同时监测 assets 服务的 `versions/current_version.json`，发布新版本或镜像代码变化时在后台重新构建并原子切换；构建失败不会替换线上版本。构建期对 assets / masterdata 的请求可通过 `MOENOTES_ASSET_INTERNAL` / `MOENOTES_MASTERDATA_INTERNAL` 走 k3s 内网地址，页面中的链接仍是公网地址。
+
+```bash
+docker build -t moenotes .
+docker run -p 8080:80 -v moenotes-data:/data moenotes
+```
+
+环境变量、缓存与运维说明见 [docs/deployment.md](./docs/deployment.md)。
+
 ## 关于 Astro 的一点吐槽
 
 当初选型看中了 Astro 的静态优先与 Islands 架构，但面对游戏资料站这样重交互、重客户端状态的场景，实际开发起来真的挺不方便的（笑）。还是NEXT开发这种东西方便一点。

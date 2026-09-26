@@ -1,9 +1,16 @@
+import { buildEnvOrigin } from "./build-env";
+
 export const assetConfig = {
   /**
    * moenotes-assets service: published files by asset path (/{language}/{key}/{label}.{ext}, see
    * src/lib/assets/release.ts and docs/release-assets.md) and the bundle browser API.
    */
   api: (import.meta.env.PUBLIC_ASSET_API || "https://assets.bdon.moe").replace(/\/+$/, ""),
+  /**
+   * Build-time origin of the same service, e.g. its k3s Service address (`MOENOTES_ASSET_INTERNAL`). The build
+   * and the deploy server fetch through it; pages still link to `api`. See docs/deployment.md.
+   */
+  internal: buildEnvOrigin("MOENOTES_ASSET_INTERNAL"),
   /**
    * ournotes-player chart site (charts/<musicId>_<difficulty>.json + assets/<sha256>.<ext>), published by
    * moenotes-assets at /chart-site/; see docs/chart-preview.md.
