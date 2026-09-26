@@ -189,7 +189,7 @@ function SidebarNav({ locale, pathname, activePath, groups, onNavigate }: { loca
 
   return (
     <nav ref={scrollRef} className="mn-orbit-nav h-full overflow-y-auto p-3.5" aria-label="Primary">
-      <div className="relative mb-3 overflow-hidden rounded-[1.35rem] border border-[color-mix(in_oklab,var(--mn-border)_18%,transparent)] bg-[var(--mn-cream-deep)] px-4 py-3.5">
+      <div className="mn-nav-layer relative mb-3 overflow-hidden rounded-[1.35rem] border border-[color-mix(in_oklab,var(--mn-border)_18%,transparent)] bg-[var(--mn-cream-deep)] px-4 py-3.5">
         <SidebarDoodle />
         <div className="relative">
           <BrandLogo className="mn-brand-sidebar" />
@@ -202,7 +202,7 @@ function SidebarNav({ locale, pathname, activePath, groups, onNavigate }: { loca
           href={localizePath("/", locale)}
           aria-current={pathname === "/" ? "page" : undefined}
           onClick={onNavigate}
-          className={`group flex items-center gap-3 rounded-2xl border px-3 py-2.5 text-[14px] font-black transition-colors ${
+          className={`mn-nav-layer group flex items-center gap-3 rounded-2xl border px-3 py-2.5 text-[14px] font-black transition-colors ${
             pathname === "/"
               ? "border-[color-mix(in_oklab,var(--mn-accent)_35%,transparent)] bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]"
               : "border-transparent text-[var(--mn-text)] hover:border-[color-mix(in_oklab,var(--mn-border)_12%,transparent)] hover:bg-[var(--mn-cream-deep)]"
@@ -323,7 +323,7 @@ function NavIcon({ icon, routeId, active = false, small = false }: { icon: Route
   return <span className={`${small ? "h-6 w-6" : "h-8 w-8"} flex shrink-0 items-center justify-center rounded-xl ${active ? "bg-[var(--mn-paper)] text-[var(--mn-accent-deep)] shadow-[var(--mn-shadow-stamp-sm)]" : "bg-[color-mix(in_oklab,var(--mn-cream-deep)_70%,transparent)] text-[var(--mn-text-muted)]"}`}><RouteGlyph icon={icon} routeId={routeId} className={small ? "h-3.5 w-3.5" : "h-4.5 w-4.5"} /></span>;
 }
 
-/** Marks the current page. An SVG, not a clip-path star: some Android GPUs stopped painting the list around a clip-path inside the scrolling nav. */
+/** Marks the current page. */
 function ActiveStar() {
   return <svg className="ml-auto h-3 w-3 shrink-0 text-[var(--mn-accent-deep)]" viewBox="0 0 12 12" aria-hidden="true"><path fill="currentColor" d="M6 0 7.44 4.56 12 6 7.44 7.44 6 12 4.56 7.44 0 6 4.56 4.56z" /></svg>;
 }

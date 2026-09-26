@@ -314,6 +314,10 @@ html[data-theme="dark"] .mn-brand .mn-brand-starlight, .mn-brand.mn-brand-light 
   border-color: transparent; box-shadow: inset 3px 0 0 var(--mn-orbit-edge);
 }
 .mn-orbit-nav a[aria-current="page"] > span:first-child { color: var(--mn-orbit-light); background: color-mix(in srgb, var(--mn-glass) 55%, transparent); box-shadow: none; }
+/* The sidebar's logo card and Home link get their own GPU layers: on some Android phones (seen on Chrome 127)
+   they went unpainted in the nav's shared layer, showing only while a press transformed them. */
+.mn-nav-layer { transform: translateZ(0); }
+a.mn-nav-layer:active { transform: translate3d(1px, 1px, 0); }
 .mn-system-header, .mn-system-section, .mn-glass, .mn-paper,
 .mn-overlay-panel, .mn-popover-panel, .mn-glass-sample {
   border-radius: 3px 24px 3px 24px;
