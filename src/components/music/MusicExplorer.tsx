@@ -61,6 +61,7 @@ export default function MusicExplorer({ locale, initialSongs }: Props) {
     music.sort.value,
     filters,
     music.bands,
+    music.levelBounds,
     music.hasActiveFilters,
     music.filtered.length,
     music.songs.length,

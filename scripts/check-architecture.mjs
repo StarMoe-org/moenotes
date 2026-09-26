@@ -8,6 +8,7 @@ const srcDir = resolve(root, "src");
 const allowedStorageFiles = new Set([
   "src/lib/storage/safe-storage.ts",
   "src/lib/settings/apply-theme.ts",
+  "src/lib/browser/browser-notice.ts",
 ]);
 
 const allowedFetchFiles = new Set([

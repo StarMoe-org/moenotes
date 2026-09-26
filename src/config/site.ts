@@ -20,6 +20,13 @@ export interface SiteConfig {
     feedbackUrl: string;
     bugReportUrl: string;
   };
+  /** Download links in the notice for in-app browsers and outdated engines; `recommendedBrowsers()` picks them per locale. */
+  recommendedBrowsers: {
+    chrome: { name: string; url: string };
+    edge: { name: string; url: string };
+    /** Chromium-based and in mainland Android app stores; the site redirects to its zh or en page. */
+    lemur: { name: string; url: string };
+  };
 }
 
 export const siteConfig: SiteConfig = {
@@ -45,6 +52,11 @@ export const siteConfig: SiteConfig = {
     email: "mail@exmeaning.com",
     feedbackUrl: "https://github.com/StarMoe-org/moenotes/issues",
     bugReportUrl: "https://github.com/StarMoe-org/moenotes/issues",
+  },
+  recommendedBrowsers: {
+    chrome: { name: "Chrome", url: "https://www.google.com/chrome/" },
+    edge: { name: "Edge", url: "https://www.microsoft.com/edge/download" },
+    lemur: { name: "Lemur", url: "https://www.lemurbrowser.com/" },
   },
 };
 

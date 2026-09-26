@@ -31,6 +31,8 @@ export interface BaseFiltersProps {
 
 export interface FilterSectionProps {
   title: string;
+  /** Shown at the end of the title row, e.g. the current value. */
+  aside?: ReactNode;
   children: ReactNode;
 }
 
@@ -42,12 +44,15 @@ export interface FilterToggleProps {
 
 // ── FilterSection ──────────────────────────────────────────────────────────────
 
-export function FilterSection({ title, children }: FilterSectionProps) {
+export function FilterSection({ title, aside, children }: FilterSectionProps) {
   return (
     <div>
-      <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-[var(--mn-text-muted)]">
-        {title}
-      </span>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <span className="block text-xs font-bold uppercase tracking-wider text-[var(--mn-text-muted)]">
+          {title}
+        </span>
+        {aside}
+      </div>
       {children}
     </div>
   );

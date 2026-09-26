@@ -27,9 +27,9 @@ describe("music filters", () => {
   const songs = [song(1, 2, 1, "haruhikage mygo"), song(2, 1, 3, "shiori"), song(3, 2, 3, "mayoiuta mygo")];
 
   test("search, attribute and band combine", () => {
-    expect(filterMusic(songs, { query: " MyGO ", types: [], bands: [] }).map((entry) => entry.id)).toEqual([1, 3]);
-    expect(filterMusic(songs, { query: "mygo", types: [3], bands: [] }).map((entry) => entry.id)).toEqual([3]);
-    expect(filterMusic(songs, { query: "", types: [], bands: [1] }).map((entry) => entry.id)).toEqual([2]);
+    expect(filterMusic(songs, { ...EMPTY_MUSIC_FILTERS, query: " MyGO ", types: [], bands: [] }).map((entry) => entry.id)).toEqual([1, 3]);
+    expect(filterMusic(songs, { ...EMPTY_MUSIC_FILTERS, query: "mygo", types: [3], bands: [] }).map((entry) => entry.id)).toEqual([3]);
+    expect(filterMusic(songs, { ...EMPTY_MUSIC_FILTERS, query: "", types: [], bands: [1] }).map((entry) => entry.id)).toEqual([2]);
   });
 
   test("band options are unique and in id order", () => {
@@ -37,7 +37,7 @@ describe("music filters", () => {
   });
 
   test("remembered state round-trips and tolerates bad input", () => {
-    const state = { query: "a", types: [1], bands: [2] };
+    const state = { ...EMPTY_MUSIC_FILTERS, query: "a", types: [1], bands: [2] };
     expect(parseMusicFilters(serializeMusicFilters(state))).toEqual(state);
     expect(parseMusicFilters("{not json")).toEqual(EMPTY_MUSIC_FILTERS);
     expect(parseMusicFilters(undefined)).toEqual(EMPTY_MUSIC_FILTERS);
