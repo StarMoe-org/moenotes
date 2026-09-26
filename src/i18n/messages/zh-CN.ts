@@ -598,6 +598,8 @@ export const zhCN = {
       parsing: "正在聆听少女们的心声与私语…",
       autoplay: "自动播放",
       narration: "旁白",
+      speakerMasked: "？？？（{name}）",
+      speakerHidden: "（{name}）",
       playing: "自动播放中",
       paused: "播放已暂停",
       line: "第 {current} / {total} 句",

@@ -565,6 +565,8 @@ export const koKR = {
       parsing: "소녀들의 마음의 소리와 귓속말에 귀 기울이는 중…",
       autoplay: "자동 재생",
       narration: "나레이션",
+      speakerMasked: "???({name})",
+      speakerHidden: "({name})",
       playing: "자동 재생 중",
       paused: "일시정지됨",
       line: "대사 {current} / {total}",

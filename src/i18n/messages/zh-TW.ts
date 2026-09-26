@@ -598,6 +598,8 @@ export const zhTW = {
       parsing: "正在聆聽少女們的心聲與私語…",
       autoplay: "自動播放",
       narration: "旁白",
+      speakerMasked: "？？？（{name}）",
+      speakerHidden: "（{name}）",
       playing: "自動播放中",
       paused: "播放已暫停",
       line: "第 {current} / {total} 句",

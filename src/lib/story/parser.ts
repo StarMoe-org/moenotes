@@ -45,6 +45,8 @@ export interface StoryLine {
   cue?: { start: number; end: number };
   /** Set on phone-chat messages. */
   chat?: StoryChatMessage;
+  /** How the game presents a dialogue speaker's name: 1 masks it (？？？), 2 hides it entirely; absent is normal. */
+  speakerStatus?: number;
 }
 
 export interface StoryChatMessage {
@@ -118,6 +120,8 @@ interface EpisodeRow {
   index?: number;
   command?: number;
   targetName?: string;
+  /** Dialogue speaker presentation: 1 masks the name (？？？), 2 hides it; 0/absent shows it. */
+  targetStatus?: number;
   targetAssetName?: string;
   targetTextIDs?: string[];
   targetChatID?: number;
@@ -419,6 +423,7 @@ export function parseStoryTables(
       text,
       voiceUrls,
       ...(runs ? { rich: runs } : {}),
+      ...(row.command === Command.dialogue && row.targetStatus ? { speakerStatus: row.targetStatus } : {}),
       ...(videoId !== undefined ? { videoId } : {}),
       ...(cue ? { cue } : {}),
       ...(chat ? { chat } : {}),
