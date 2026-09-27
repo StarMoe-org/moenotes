@@ -17,6 +17,11 @@ export function assetLanguage(locale: AppLocale): string {
   return assetLanguageByField[masterTextFieldOrder(locale)[0]!];
 }
 
+/** Every asset-server language code in the locale's text fallback order (the order localizeMasterText reads). */
+export function assetLanguageOrder(locale: AppLocale): string[] {
+  return masterTextFieldOrder(locale).map((field) => assetLanguageByField[field]);
+}
+
 /**
  * Published file by asset path: `/{language}/{key}/{label}.{ext}`. The service maps the path onto the newest
  * export of the key, so new exports appear without rebuilding the site; unexported paths answer 404.

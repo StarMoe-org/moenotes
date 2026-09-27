@@ -17,10 +17,23 @@ export const assetConfig = {
    */
   chartSite: (import.meta.env.PUBLIC_CHART_SITE || "https://assets.bdon.moe/chart-site").replace(/\/+$/, ""),
   /**
+   * The story site (stories.json + stories/<advId>.json + models/ + assets/), built by the story-site workflow of
+   * StarMoe-org/nnnotes into the storage bucket; see docs/story-player.md.
+   */
+  storySite: (import.meta.env.PUBLIC_STORY_SITE || "https://storage.bdon.moe/moenotes").replace(/\/+$/, ""),
+  /**
    * Live2D Cubism Core for Web, which the Live2D viewer loads before a model (ournotes-player does not bundle it; Live2D's
    * own license applies). Override with `PUBLIC_CUBISM_CORE` to serve a copy; see docs/live2d-viewer.md.
    */
   cubismCore: import.meta.env.PUBLIC_CUBISM_CORE || "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js",
+  /**
+   * Optional files of the story player, which ournotes-player does not bundle either (each under its maker's license):
+   * the CRI Core of Live2D's MotionSync plugin (`live2dcubismmotionsynccore.min.js`, the voices' lip sync on models with
+   * a MotionSync controller) and a Spine 4.2 spine-core build defining the global `spine` (the characters of home spot
+   * talks). Unset, stories play without them; see docs/story-player.md.
+   */
+  motionSyncCore: import.meta.env.PUBLIC_CUBISM_MOTIONSYNC_CORE || "",
+  spineRuntime: import.meta.env.PUBLIC_SPINE_RUNTIME || "",
   region: "tw",
   fonts: {
     googlePreconnect: "https://fonts.googleapis.com",

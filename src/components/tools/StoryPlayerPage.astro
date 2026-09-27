@@ -1,0 +1,30 @@
+---
+import StoryPlayerTool from "@/components/tools/StoryPlayerTool";
+import PageLayout from "@/layouts/PageLayout.astro";
+import type { AppLocale } from "@/config/locales";
+import { getBuildStories } from "@/lib/masterdata/build-data";
+import { storyEpisodeLabel } from "@/lib/story/labels";
+import type { StoryPickerStory } from "@/lib/story/player-data";
+
+interface Props {
+  locale: AppLocale;
+}
+
+const { locale } = Astro.props;
+// Names and groups come from the build's story data; which episodes can be played is read at runtime (stories.json of
+// the story site), so newly published stories need no rebuild.
+const stories: StoryPickerStory[] = (await getBuildStories(locale)).map((story) => ({
+  advId: story.advId,
+  category: story.category,
+  title: story.title,
+  groupId: story.groupId,
+  groupTitle: story.groupTitle || story.bandName,
+  episodeLabel: storyEpisodeLabel(locale, story),
+  bandId: story.bandId,
+  searchText: story.searchText,
+}));
+---
+
+<PageLayout locale={locale} titleKey="seo.storyPlayer.title" descriptionKey="seo.storyPlayer.description">
+  <StoryPlayerTool client:load locale={locale} stories={stories} />
+</PageLayout>

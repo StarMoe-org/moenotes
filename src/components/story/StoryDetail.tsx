@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
@@ -8,6 +8,8 @@ import type { RawStoryCharacter, StoryNeighbor, StoryViewModel } from "@/lib/sto
 import { storyEpisodeLabel } from "@/lib/story/labels";
 import type { RawText } from "@/lib/cards/data";
 import StoryScriptReader from "@/components/story/StoryScriptReader";
+import { hasSiteStory } from "@/lib/story/player-client";
+import { getStoryPlayerHref } from "@/lib/story/player-data";
 
 /** Main episodes have an illustration; bond stories only a banner. Banners carry lettering, so they follow the locale. */
 function storyArtworkUrl(story: StoryViewModel | null, locale: AppLocale): string {
@@ -15,6 +17,26 @@ function storyArtworkUrl(story: StoryViewModel | null, locale: AppLocale): strin
   if (story.category === "main" && story.assets.image) return getAssetUrl({ path: `Story/Image/Episode/${story.assets.image}.png`, type: "raw", locale });
   if (story.assets.banner) return getAssetUrl({ path: `Story/Banner/Episode/${story.assets.banner}.png`, type: "raw", locale });
   return "";
+}
+
+/** The story player's link, once the story site is known to have the episode (a HEAD of its manifest). */
+function PlayerLink({ locale, advId }: { locale: AppLocale; advId: number }) {
+  const [available, setAvailable] = useState(false);
+  useEffect(() => {
+    const controller = new AbortController();
+    void hasSiteStory(advId, controller.signal).then((found) => {
+      if (!controller.signal.aborted) setAvailable(found);
+    });
+    return () => controller.abort();
+  }, [advId]);
+  if (!available) return null;
+  return <a
+    href={getStoryPlayerHref(locale, advId)}
+    className="mn-focus mn-stamp-press mt-4 inline-flex w-fit items-center gap-2 rounded-full bg-[var(--mn-accent)] px-5 py-2 text-sm font-bold text-white shadow-[var(--mn-shadow-stamp)] hover:bg-[var(--mn-accent-deep)]"
+  >
+    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l10-6.5z" /></svg>
+    {t(locale, "storyPlayer.openInPlayer")}
+  </a>;
 }
 
 export default function StoryDetail({ locale, advId, initialTitle, initialScript, initialCharacters, initialTexts, story, previous, next }: {
@@ -48,6 +70,7 @@ export default function StoryDetail({ locale, advId, initialTitle, initialScript
         <h1 className="mt-2 text-2xl font-black text-[var(--mn-text)]">{initialTitle}</h1>
         {story?.description && <p className="mt-3 whitespace-pre-line text-sm leading-6 text-[var(--mn-text-muted)]">{story.description}</p>}
         {eyebrow && <p className="mt-3 text-[11px] font-bold text-[var(--mn-text-muted)]">ADV {advId}</p>}
+        <PlayerLink locale={locale} advId={advId} />
       </div>
     </div>
     {controls && <div className="border-t border-[var(--mn-border)] px-6 py-4">{controls}</div>}

@@ -23,6 +23,7 @@ const allowedFetchFiles = new Set([
   "src/components/support-cards/SupportCardDetail.tsx",
   "src/lib/assets/browser-client.ts",
   "src/lib/live2d/client.ts",
+  "src/lib/story/player-client.ts",
 ]);
 
 const allowedDomainFiles = new Set([

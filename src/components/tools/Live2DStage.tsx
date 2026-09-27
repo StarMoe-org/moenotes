@@ -303,10 +303,10 @@ function useLive2DGestures(hostRef: RefObject<HTMLDivElement | null>, enabled: b
 }
 
 /** Watermark over the stage; it stays on the model in fullscreen. */
-export function StageSignature() {
+export function StageSignature({ light = false }: { light?: boolean }) {
   return (
     <div className="pointer-events-none absolute left-3 top-2 z-10 w-20 select-none opacity-85 sm:left-4 sm:top-3 sm:w-28">
-      <BrandLogo />
+      <BrandLogo light={light} />
     </div>
   );
 }

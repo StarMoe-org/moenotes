@@ -60,6 +60,8 @@ directory Astro keeps intermediate output in `<cwd>/.astro/` and renames it into
 | `MOENOTES_KEEP_BUILDS` | `4` | Builds kept on disk (see [Disk](#disk)) |
 | `MOENOTES_VERSION_URL` | _(asset service)_`/versions/current_version.json` | Override of the release manifest URL |
 | `PUBLIC_ASSET_API`, `PUBLIC_CHART_SITE`, `PUBLIC_CUBISM_CORE` | public origins | Public URLs written into pages (`src/config/assets.ts`; the Live2D viewer loads Cubism Core from the last one, see live2d-viewer.md) |
+| `PUBLIC_STORY_SITE` | public origin | The story site the story player reads (default `https://storage.bdon.moe/moenotes`; story-player.md) |
+| `PUBLIC_CUBISM_MOTIONSYNC_CORE`, `PUBLIC_SPINE_RUNTIME` | optional URLs | Optional scripts of the story player: Live2D's MotionSync Core (voice lip sync) and a Spine 4.2 spine-core build (home spot talks); unset, stories play without them (story-player.md) |
 
 ### In-cluster origins
 

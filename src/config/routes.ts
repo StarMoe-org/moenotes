@@ -424,6 +424,21 @@ export const routeRegistry = [
         keywords: ["live2d", "model", "costume", "motion", "expression"],
       },
       {
+        id: "story-player",
+        path: "/tools/story-player",
+        labelKey: "nav.items.storyPlayer",
+        component: "story-player",
+        seo: {
+          titleKey: "seo.storyPlayer.title",
+          descriptionKey: "seo.storyPlayer.description",
+          keywords: ["Our Notes story player", "BanG Dream Live2D story", "story viewer", "voiced story playback", "ADV player"],
+          sitemap: { priority: 0.5, changefreq: "weekly" },
+        },
+        nav: { order: 25, icon: "book" },
+        searchable: true,
+        keywords: ["story", "live2d", "adv", "player", "voice"],
+      },
+      {
         id: "asset-viewer",
         path: "/tools/asset-viewer",
         labelKey: "nav.items.assetViewer",
