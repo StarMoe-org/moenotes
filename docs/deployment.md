@@ -52,6 +52,7 @@ directory Astro keeps intermediate output in `<cwd>/.astro/` and renames it into
 | --- | --- | --- |
 | `MOENOTES_ASSET_INTERNAL` | _(unset)_ | In-cluster origin of the asset service, e.g. its k3s Service address |
 | `MOENOTES_MASTERDATA_INTERNAL` | _(unset)_ | In-cluster origin of the metadata service |
+| `MOENOTES_API_INTERNAL` | _(unset)_ | Origin of starmoe-api, with its scheme: in-cluster, or public `https://` when it runs on another server. `/api/*` is forwarded there. It answers 404 while the variable is unset or invalid; an invalid value is logged at startup ([account.md](account.md)) |
 | `MOENOTES_DATA_DIR` | `/data` | Volume for builds, logs, state and caches |
 | `PORT` / `HOST` | `80` / `0.0.0.0` | Listen address |
 | `MOENOTES_POLL_SECONDS` | `60` | Release manifest poll interval |
@@ -108,6 +109,7 @@ client accepts it and the variant has been written (see [Caching across builds](
 | `/healthz` | 200 while the process runs (liveness; use this for platform health checks) |
 | `/readyz` | 200 once a build is live, 503 before |
 | `/_moenotes/status` | JSON: live build, source revision, build in progress (step, `pages` rendered, `expectedPages`), background compression (`compressing`: build id and start), wait reason, last failure, last check |
+| `/api/*` | Forwarded to starmoe-api (`server/api-proxy.ts`), also before the first build; 404 without `MOENOTES_API_INTERNAL`, 502 when the API does not answer |
 
 Before the first build completes every site path answers 503 with `Retry-After: 60`.
 

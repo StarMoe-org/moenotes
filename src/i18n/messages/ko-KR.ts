@@ -127,6 +127,26 @@ export const koKR = {
     noCommandResults: "결과가 없습니다",
     shortcuts: "단축키",
   },
+  account: {
+    signIn: "로그인",
+    signOut: "로그아웃",
+    menu: "계정 메뉴",
+    passport: "StarMoe 패스포트",
+    title: "내 계정",
+    description: "Moenotes에서 쓰는 StarMoe 패스포트입니다.",
+    manage: "내 계정",
+    loading: "계정을 불러오는 중…",
+    unavailable: "지금은 계정 서비스를 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.",
+    signedOutHint: "StarMoe 패스포트로 로그인하면 프로필을 설정할 수 있습니다.",
+    changeAvatar: "프로필 사진 변경",
+    avatarHint: "Moenotes에서 나를 나타낼 캐릭터를 골라 주세요.",
+    avatarDefault: "패스포트 프로필 사진 사용",
+    saving: "저장 중…",
+    saveFailed: "저장하지 못했습니다. 다시 시도해 주세요.",
+    comingSoonTitle: "Our Notes 덱 편성 · 계정 데이터 연동",
+    comingSoonBadge: "개발 중",
+    comingSoonBody: "덱 편성과 Our Notes 계정 데이터 연동 기능은 현재 개발 중입니다. 기대해 주세요!",
+  },
   settings: {
     title: "설정",
     language: "언어 / Language",
@@ -868,6 +888,10 @@ export const koKR = {
     about: {
       title: "Moenotes 소개",
       description: "별빛 노트에 첫 글자를 새겨 넣었던 첫 페이지를 열어봅니다. StarMoe가 왜 사랑과 기억을 싣는 방주를 짓고 싶었는지, 그 순수하고 진솔한 마음에 귀 기울여보세요.",
+    },
+    account: {
+      title: "내 계정",
+      description: "Moenotes에서 쓰는 StarMoe 패스포트. 나를 나타낼 캐릭터를 프로필 사진으로 골라 보세요.",
     },
     designSystem: {
       title: "디자인 시스템",

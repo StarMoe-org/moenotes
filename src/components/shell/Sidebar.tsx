@@ -1,6 +1,7 @@
 import BrandLogo from "@/components/shared/BrandLogo";
 import RouteGlyph from "@/components/shared/RouteGlyph";
 import { useEffect, useMemo, useRef, useState, Fragment, type KeyboardEvent, type ReactNode } from "react";
+import SidebarAccount from "@/components/shell/SidebarAccount";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { AppLocale } from "@/config/locales";
 import { localizePath, stripLocaleFromPathname, normalizePathname } from "@/i18n/routing";
@@ -79,7 +80,7 @@ export default function Sidebar({ locale, pathname, activePath }: SidebarProps) 
         aria-hidden={!desktopOpen}
         style={{ left: "calc(max(1.0rem, (100vw - var(--mn-layout-max-width, 120rem)) / 2 + 1.0rem))" }}
       >
-        <SidebarFrame>
+        <SidebarFrame footer={<SidebarAccount locale={locale} pathname={pathname} />}>
           <SidebarNav locale={locale} pathname={pathname} activePath={activePath} groups={groups} />
         </SidebarFrame>
       </aside>
@@ -98,7 +99,7 @@ export default function Sidebar({ locale, pathname, activePath }: SidebarProps) 
             />
             <motion.aside
               ref={mobilePanelRef}
-              className="mn-overlay-panel absolute left-4 w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]"
+              className="mn-overlay-panel absolute left-4 flex w-[min(20rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]"
               tabIndex={-1}
               aria-label={t(locale, "shell.openSidebar")}
               onKeyDown={handleMobileKeyDown}
@@ -112,6 +113,7 @@ export default function Sidebar({ locale, pathname, activePath }: SidebarProps) 
               transition={{ duration: reducedMotion ? 0.16 : 0.26, ease: [0.22, 1, 0.36, 1] }}
             >
               <SidebarNav locale={locale} pathname={pathname} activePath={activePath} groups={groups} onNavigate={closeMobile} />
+              <SidebarAccount locale={locale} pathname={pathname} />
             </motion.aside>
           </div>
         )}
@@ -120,8 +122,13 @@ export default function Sidebar({ locale, pathname, activePath }: SidebarProps) 
   );
 }
 
-function SidebarFrame({ children }: { children: ReactNode }) {
-  return <div className="mn-sidebar-frame h-full overflow-hidden rounded-[1.75rem] border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]">{children}</div>;
+function SidebarFrame({ children, footer }: { children: ReactNode; footer?: ReactNode }) {
+  return (
+    <div className="mn-sidebar-frame flex h-full flex-col overflow-hidden rounded-[1.75rem] border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]">
+      {children}
+      {footer}
+    </div>
+  );
 }
 
 function SidebarNav({ locale, pathname, activePath, groups, onNavigate }: { locale: AppLocale; pathname: string; activePath?: string | undefined; groups: AppRoute[]; onNavigate?: () => void }) {
@@ -188,7 +195,7 @@ function SidebarNav({ locale, pathname, activePath, groups, onNavigate }: { loca
   };
 
   return (
-    <nav ref={scrollRef} className="mn-orbit-nav h-full overflow-y-auto p-3.5" aria-label="Primary">
+    <nav ref={scrollRef} className="mn-orbit-nav min-h-0 flex-1 overflow-y-auto p-3.5" aria-label="Primary">
       <div className="mn-nav-layer relative mb-3 overflow-hidden rounded-[1.35rem] border border-[color-mix(in_oklab,var(--mn-border)_18%,transparent)] bg-[var(--mn-cream-deep)] px-4 py-3.5">
         <SidebarDoodle />
         <div className="relative">

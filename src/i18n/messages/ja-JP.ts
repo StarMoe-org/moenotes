@@ -156,6 +156,26 @@ export const jaJP = {
     noCommandResults: "結果がありません",
     shortcuts: "ショートカット",
   },
+  account: {
+    signIn: "ログイン",
+    signOut: "ログアウト",
+    menu: "アカウントメニュー",
+    passport: "StarMoe パスポート",
+    title: "マイアカウント",
+    description: "Moenotes での StarMoe パスポート。",
+    manage: "マイアカウント",
+    loading: "アカウントを読み込み中…",
+    unavailable: "現在アカウント機能を利用できません。しばらくしてからお試しください。",
+    signedOutHint: "StarMoe パスポートでログインすると、プロフィールを設定できます。",
+    changeAvatar: "アイコンを変更",
+    avatarHint: "Moenotes であなたを表すキャラクターを選んでください。",
+    avatarDefault: "パスポートのアイコンを使う",
+    saving: "保存中…",
+    saveFailed: "保存できませんでした。もう一度お試しください。",
+    comingSoonTitle: "Our Notes 編成 · アカウントデータ連携",
+    comingSoonBadge: "開発中",
+    comingSoonBody: "編成機能と Our Notes のアカウントデータ連携は現在開発中です。お楽しみに！",
+  },
   settings: {
     title: "設定",
     language: "言語 / Language",
@@ -897,6 +917,10 @@ export const jaJP = {
     about: {
       title: "Moenotes について",
       description: "星光の手帳に最初の一文字が記された扉頁を開いて。なぜ StarMoe が愛と記憶を運ぶ舟を創りたかったのか、その最初の純粋な想いに耳を傾けてみてください。",
+    },
+    account: {
+      title: "マイアカウント",
+      description: "Moenotes での StarMoe パスポート。あなたを表すキャラクターをアイコンに選べます。",
     },
     designSystem: {
       title: "デザインシステム",

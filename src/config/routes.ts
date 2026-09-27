@@ -486,4 +486,19 @@ export const routeRegistry = [
     keywords: ["about", "StarMoe", "star.moe"],
     children: [],
   },
+  {
+    // Per-user page: the content is fetched from the account API in the browser, so there is nothing to index.
+    id: "account",
+    path: "/account",
+    labelKey: "account.title",
+    component: "account",
+    seo: {
+      titleKey: "seo.account.title",
+      descriptionKey: "seo.account.description",
+      indexable: false,
+    },
+    nav: false,
+    searchable: false,
+    keywords: ["account", "profile", "avatar", "StarMoe Passport"],
+  },
 ] as const satisfies readonly AppRoute[];

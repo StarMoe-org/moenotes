@@ -13,6 +13,13 @@ export default defineConfig({
   integrations: [react()],
   vite: {
     plugins: [tailwindcss()],
+    // `astro dev` forwards the account API like the deploy server does (docs/account.md). Without starmoe-api
+    // running the requests fail and the header simply shows no account button.
+    server: {
+      proxy: {
+        "/api": process.env.MOENOTES_API_DEV ?? "http://localhost:8787",
+      },
+    },
     // The chart renderer worker (src/lib/music/chart-render.worker.ts) is an ES module worker: its Emscripten
     // glue is ESM and locates the .wasm via import.meta.url, which Vite emits as a hashed asset.
     worker: {

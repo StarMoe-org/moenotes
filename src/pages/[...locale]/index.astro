@@ -11,6 +11,7 @@ import SupportCardDetailPage from "@/components/support-cards/SupportCardDetailP
 import CharactersPage from "@/components/characters/CharactersPage.astro";
 import CharacterDetailPage from "@/components/characters/CharacterDetailPage.astro";
 import AboutPage from "@/components/about/AboutPage.astro";
+import AccountPage from "@/components/account/AccountPage.astro";
 import HomePage from "@/components/home/HomePage.astro";
 import MusicPage from "@/components/music/MusicPage.astro";
 import MusicDetailPage from "@/components/music/MusicDetailPage.astro";
@@ -112,6 +113,8 @@ const component = match.item.component ?? "page";
     <Live2DViewerPage locale={locale} />
   ) : component === "story-player" ? (
     <StoryPlayerPage locale={locale} />
+  ) : component === "account" ? (
+    <AccountPage locale={locale} />
   ) : (
     <PageLayout locale={locale} titleKey={match.item.seo.titleKey} descriptionKey={match.item.seo.descriptionKey}>
       {match.isGroupLanding ? (

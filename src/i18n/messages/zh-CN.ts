@@ -156,6 +156,26 @@ export const zhCN = {
     noCommandResults: "没有找到结果",
     shortcuts: "快捷键",
   },
+  account: {
+    signIn: "登录",
+    signOut: "退出登录",
+    menu: "账号菜单",
+    passport: "StarMoe 通行证",
+    title: "我的账号",
+    description: "你在 Moenotes 的 StarMoe 通行证。",
+    manage: "我的账号",
+    loading: "正在读取账号…",
+    unavailable: "账号服务暂时不可用，请稍后再试。",
+    signedOutHint: "用 StarMoe 通行证登录后，就可以设置你的资料了。",
+    changeAvatar: "更换头像",
+    avatarHint: "选一位角色，作为你在 Moenotes 的头像。",
+    avatarDefault: "使用通行证头像",
+    saving: "正在保存…",
+    saveFailed: "保存失败，请再试一次。",
+    comingSoonTitle: "Our Notes 组卡 · 账号数据绑定",
+    comingSoonBadge: "开发中",
+    comingSoonBody: "组卡与绑定 Our Notes 账号数据的功能正在开发中，敬请期待！",
+  },
   settings: {
     title: "设置",
     language: "语言 / Language",
@@ -903,6 +923,10 @@ export const zhCN = {
     about: {
       title: "关于 Moenotes",
       description: "翻开这本星光手帐最初落笔的扉页。倾听 StarMoe 团队为何想要造一艘乘载爱与记忆的方舟，珍藏那份最初的真挚感动。",
+    },
+    account: {
+      title: "我的账号",
+      description: "你在 Moenotes 的 StarMoe 通行证：选一位角色作为你的头像。",
     },
     designSystem: {
       title: "设计系统",

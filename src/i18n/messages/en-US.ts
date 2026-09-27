@@ -127,6 +127,26 @@ export const enUS = {
     noCommandResults: "No results found",
     shortcuts: "Shortcuts",
   },
+  account: {
+    signIn: "Sign in",
+    signOut: "Sign out",
+    menu: "Account menu",
+    passport: "StarMoe Passport",
+    title: "My account",
+    description: "Your StarMoe Passport on Moenotes.",
+    manage: "My account",
+    loading: "Loading your account…",
+    unavailable: "Accounts are unavailable right now. Please try again later.",
+    signedOutHint: "Sign in with your StarMoe Passport to set up your profile.",
+    changeAvatar: "Change avatar",
+    avatarHint: "Pick a character to stand for you on Moenotes.",
+    avatarDefault: "Use my passport picture",
+    saving: "Saving…",
+    saveFailed: "Could not save. Please try again.",
+    comingSoonTitle: "Our Notes decks · Game account data",
+    comingSoonBadge: "In development",
+    comingSoonBody: "Deck building and linking your Our Notes account data are in development. Stay tuned!",
+  },
   settings: {
     title: "Settings",
     language: "语言 / Language",
@@ -868,6 +888,10 @@ export const enUS = {
     about: {
       title: "About Moenotes",
       description: "Open the very first page penned in this starlight notebook. Hear why the StarMoe team built this quiet vessel of affection and memory, preserving the authentic warmth of our beginnings.",
+    },
+    account: {
+      title: "My account",
+      description: "Your StarMoe Passport on Moenotes: pick the character who stands for you.",
     },
     designSystem: {
       title: "Design System",

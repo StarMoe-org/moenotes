@@ -1,0 +1,17 @@
+---
+import PageLayout from "@/layouts/PageLayout.astro";
+import AccountPanel from "@/components/account/AccountPanel";
+import type { AppLocale } from "@/config/locales";
+import { getAvatarBands } from "@/lib/account/avatar-options";
+
+interface Props {
+  locale: AppLocale;
+}
+
+const { locale } = Astro.props;
+const bands = await getAvatarBands(locale);
+---
+
+<PageLayout locale={locale} titleKey="account.title" descriptionKey="account.description">
+  <AccountPanel client:load locale={locale} bands={bands} />
+</PageLayout>

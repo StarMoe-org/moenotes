@@ -9,6 +9,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { isApiPath, parseApiOrigin, proxyApi } from "./api-proxy";
 import { BuildStore, astroCli, errorMessage, log } from "./builds";
 import { config } from "./config";
 import { compressSite, linkSite } from "./finalize";
@@ -46,6 +47,8 @@ const server = Bun.serve({
     if (pathname === "/healthz") return new Response("ok\n");
     if (pathname === "/readyz") return new Response(store.current ? "ready\n" : "no build yet\n", { status: store.current ? 200 : 503 });
     if (pathname === "/_moenotes/status") return Response.json(status(), { headers: { "cache-control": "no-store" } });
+    // The account API works before the first build too: it does not depend on the site output.
+    if (isApiPath(pathname)) return proxyApi(request, config.apiInternal.origin);
     return serveStatic(request, store.roots);
   },
   error(error) {
@@ -54,6 +57,11 @@ const server = Bun.serve({
   },
 });
 log(`listening on ${server.url}; ${store.current ? `serving ${store.current.id} (${store.current.data})` : "no build yet"}`);
+if (config.apiInternal.invalid) {
+  log("MOENOTES_API_INTERNAL is not an absolute http(s) URL (e.g. https://api.star.moe); /api/* is disabled");
+} else if (config.apiInternal.origin) {
+  log(`forwarding /api/* to ${config.apiInternal.origin}`);
+}
 
 for (const signal of ["SIGTERM", "SIGINT"] as const) {
   process.on(signal, () => {
@@ -199,6 +207,36 @@ async function selfCheck(): Promise<void> {
     check(script.headers.get("cache-control")?.includes("immutable") === true, "/_astro/ should be immutable");
     check((await get("/_astro/old.js")).status === 200, "/_astro/ should fall back to earlier builds");
     check((await serveStatic(new Request("http://self-check/"), { current: null, previous: [] })).status === 503, "no build should answer 503");
+
+    // /api relay: status, redirect, every Set-Cookie and the request body pass through.
+    check((await proxyApi(new Request("http://self-check/api/me"), undefined)).status === 404, "/api without MOENOTES_API_INTERNAL should answer 404");
+    check(parseApiOrigin("https://api.star.moe/").origin === "https://api.star.moe", "an https origin should be accepted");
+    check(parseApiOrigin("http://starmoe-api.moenotes.svc.cluster.local:8080").origin === "http://starmoe-api.moenotes.svc.cluster.local:8080", "an in-cluster origin should be accepted");
+    for (const bad of ["passport.bdon.moe", "ftp://api.star.moe", "/api"]) {
+      const parsed = parseApiOrigin(bad);
+      check(parsed.invalid && parsed.origin === undefined, `"${bad}" should be refused as MOENOTES_API_INTERNAL`);
+    }
+    const upstream = Bun.serve({
+      hostname: "127.0.0.1",
+      port: 0,
+      async fetch(request) {
+        const headers = new Headers({ location: "/after", "x-echo": `${request.headers.get("cookie")}|${await request.text()}` });
+        headers.append("set-cookie", "a=1; Path=/");
+        headers.append("set-cookie", "b=2; Path=/");
+        return new Response(null, { status: 303, headers });
+      },
+    });
+    try {
+      const relayed = await proxyApi(
+        new Request("http://self-check/api/auth/logout?x=1", { method: "POST", headers: { cookie: "s=1" }, body: "hello" }),
+        upstream.url.origin,
+      );
+      check(relayed.status === 303 && relayed.headers.get("location") === "/after", "the proxy should pass redirects through");
+      check(relayed.headers.getSetCookie().length === 2, "the proxy should keep every Set-Cookie");
+      check(relayed.headers.get("x-echo") === "s=1|hello", "the proxy should forward cookies and the body");
+    } finally {
+      await upstream.stop(true);
+    }
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

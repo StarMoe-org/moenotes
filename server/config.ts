@@ -1,6 +1,7 @@
 import { join, resolve } from "node:path";
 import { assetConfig } from "../src/config/assets";
 import { masterdataConfig } from "../src/config/masterdata";
+import { parseApiOrigin } from "./api-proxy";
 
 function env(name: string): string | undefined {
   return process.env[name]?.trim() || undefined;
@@ -34,6 +35,11 @@ export const config = {
   assetVersionUrl: env("MOENOTES_VERSION_URL") ?? `${assetConfig.api}/versions/current_version.json`,
   /** Only read to confirm the export has caught up with MasterData before a build starts. */
   masterdataVersionUrl: `${Object.values(masterdataConfig.sources)[0]}${masterdataConfig.versionPath}`,
+  /**
+   * Origin of starmoe-api, in-cluster or public (docs/account.md). `/api/*` answers 404 while it is unset or
+   * invalid; main.ts logs the invalid case.
+   */
+  apiInternal: parseApiOrigin(env("MOENOTES_API_INTERNAL")),
   pollMs: positiveNumber("MOENOTES_POLL_SECONDS", 60) * 1000,
   /** How long a build waits for the asset export to catch up with MasterData before it runs anyway. */
   syncWaitMs: positiveNumber("MOENOTES_SYNC_WAIT_SECONDS", 2 * 60 * 60) * 1000,
