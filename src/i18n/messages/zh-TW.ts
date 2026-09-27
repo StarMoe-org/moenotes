@@ -482,6 +482,8 @@ export const zhTW = {
     next: "下一話",
     readText: "閱讀文字",
     noMotionSync: "本站未提供語音口型同步（Live2D MotionSync）：使用它的角色說話時嘴部不會動。",
+    motionSyncLicense: "語音口型同步使用 Live2D Cubism MotionSync Core © Live2D Inc.，本站依照 Live2D 的授權協議原樣提供。它不屬於本站的開源程式碼；授權協議不允許將其複製作其他用途或進行逆向工程。",
+    motionSyncLicenseLink: "Live2D 專有軟體授權協議",
     noMatches: "沒有符合篩選條件的劇情。",
     notice: "劇情由瀏覽器依遊戲本身的資料播放，所見效果不代表遊戲的最終品質。一話需要下載數十至數百 MB，使用行動網路時請留意流量。",
     listLoading: "正在載入劇情列表…",
@@ -532,7 +534,7 @@ export const zhTW = {
         fullscreen: { name: "全螢幕", description: "讓劇情畫面佔滿螢幕" },
       },
     },
-    credit: "Live2D Cubism Core © Live2D Inc. · emptysekai by StarMoe",
+    credit: "Live2D Cubism Core / MotionSync Core © Live2D Inc. · emptysekai by StarMoe",
   },
   live2d: {
     stageLabel: "Live2D 舞台",

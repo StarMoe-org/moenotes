@@ -476,6 +476,8 @@ export const jaJP = {
     next: "次の話",
     readText: "テキストを読む",
     noMotionSync: "このサイトではボイスのリップシンク（Live2D MotionSync）を利用できません。これを使うキャラクターは話している間も口が動きません。",
+    motionSyncLicense: "ボイスのリップシンクには Live2D Cubism MotionSync Core © Live2D Inc. を使用しており、本サイトは Live2D の使用許諾契約に従って改変せずに提供しています。本サイトのオープンソースコードには含まれません。他の用途への複製やリバースエンジニアリングは契約で認められていません。",
+    motionSyncLicenseLink: "Live2D プロプライエタリソフトウェア使用許諾契約",
     noMatches: "条件に合うストーリーはありません。",
     notice: "ストーリーはゲーム自身のデータをもとにブラウザで再生しており、表示はゲームの最終的な品質を示すものではありません。1 話で数十〜数百 MB を読み込むため、モバイル回線ではデータ量にご注意ください。",
     listLoading: "ストーリー一覧を読み込んでいます…",
@@ -526,7 +528,7 @@ export const jaJP = {
         fullscreen: { name: "全画面", description: "ストーリー画面を画面いっぱいに表示します" },
       },
     },
-    credit: "Live2D Cubism Core © Live2D Inc. · emptysekai by StarMoe",
+    credit: "Live2D Cubism Core / MotionSync Core © Live2D Inc. · emptysekai by StarMoe",
   },
   live2d: {
     stageLabel: "Live2D ステージ",
