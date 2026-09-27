@@ -2,9 +2,19 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import type { StoryPlayer } from "ournotes-player/story";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
+import {
+  exitElementFullscreen,
+  FULLSCREEN_CHANGE_EVENTS,
+  getFullscreenElement,
+  isElementFullscreenAvailable,
+  lockLandscape,
+  requestElementFullscreen,
+} from "@/lib/browser/fullscreen";
 import { loadStoryRuntimes, type StoryRuntimes } from "@/lib/story/player-client";
 import { formatMegabytes, getStoryManifestUrl, type StoryLanguage } from "@/lib/story/player-data";
+import { loadStoryVolumes, storyPlayerVolumes } from "@/lib/story/player-settings";
 import { StageSignature } from "@/components/tools/Live2DStage";
+import StoryControls from "@/components/tools/StoryControls";
 
 type StageStatus =
   | { kind: "booting" }
@@ -20,26 +30,34 @@ interface StoryStageProps {
   manifest: string;
   /** The language the story starts in; later changes go through the player (`setLanguage`), not a reload. */
   language: StoryLanguage;
-  /** The language of the player's control bar. */
-  controlsLanguage: StoryLanguage;
   title: string;
+  /** An Overlay episode (playbackMode 1): the game's simple player, without auto and fast-forward. */
+  simple: boolean;
+  /** The next episode's title, offered when the story ends. */
+  nextEpisode: string | null;
+  onNextEpisode: () => void;
   /** Called once the story is ready, with its player and the optional scripts the page has. */
   onReady?: (player: StoryPlayer, runtimes: StoryRuntimes) => void;
 }
 
 /**
- * The story player (ournotes-player's StoryPlayer with its own control bar) with the Moenotes signature; the frame goes
- * fullscreen. Remount it per story: a new manifest is a new player.
+ * The story player (ournotes-player's StoryPlayer without its own control bar) with Moenotes' controls over it and the
+ * signature; the frame goes fullscreen. Remount it per story: a new manifest is a new player.
  */
-export default function StoryStage({ locale, manifest, language, controlsLanguage, title, onReady }: StoryStageProps) {
-  const frameRef = useRef<HTMLDivElement>(null);
+export default function StoryStage({ locale, manifest, language, title, simple, nextEpisode, onNextEpisode, onReady }: StoryStageProps) {
+  const frameRef = useRef<HTMLDivElement | null>(null);
   const hostRef = useRef<HTMLDivElement>(null);
+  const [frame, setFrame] = useState<HTMLDivElement | null>(null);
   const [status, setStatus] = useState<StageStatus>({ kind: "booting" });
+  const [player, setPlayer] = useState<StoryPlayer | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
   const [canFullscreen, setCanFullscreen] = useState(false);
-  // The control bar's height (it wraps onto a second row on narrow stages), so that the story screen stays 13:6.
-  const [barHeight, setBarHeight] = useState(44);
+
+  const attachFrame = useCallback((node: HTMLDivElement | null) => {
+    frameRef.current = node;
+    setFrame(node);
+  }, []);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -49,9 +67,8 @@ export default function StoryStage({ locale, manifest, language, controlsLanguag
       return;
     }
     const controller = new AbortController();
-    let player: StoryPlayer | null = null;
-    let barObserver: ResizeObserver | null = null;
-    // A language switch loads again with progress events, under the player's own status line: not the stage's.
+    let created: StoryPlayer | null = null;
+    // A language switch loads again with progress events: the stage's loading screen is for the first load only.
     let loaded = false;
     setStatus({ kind: "booting" });
     (async () => {
@@ -62,10 +79,11 @@ export default function StoryStage({ locale, manifest, language, controlsLanguag
       if (controller.signal.aborted) return;
       setStatus({ kind: "loading", loaded: 0, total: 0 });
       try {
-        player = await StoryPlayer.create(host, {
+        created = await StoryPlayer.create(host, {
           src: getStoryManifestUrl(manifest),
           lang: language,
-          uiLang: controlsLanguage,
+          controls: false,
+          volumes: storyPlayerVolumes(loadStoryVolumes()),
           signal: controller.signal,
           pixelRatio: Math.min(window.devicePixelRatio || 1, 2),
           on: {
@@ -82,76 +100,75 @@ export default function StoryStage({ locale, manifest, language, controlsLanguag
         return;
       }
       if (controller.signal.aborted) {
-        void player.dispose();
+        void created.dispose();
         return;
       }
-      player.addEventListener("error", (event) => {
+      created.addEventListener("error", (event) => {
         if (!controller.signal.aborted) setStatus({ kind: "error", detail: event.detail.error instanceof Error ? event.detail.error.message : String(event.detail.error) });
       });
       loaded = true;
-      const bar = player.root.shadowRoot?.querySelector<HTMLElement>(".bar");
-      if (bar) {
-        barObserver = new ResizeObserver(() => setBarHeight(bar.offsetHeight || 44));
-        barObserver.observe(bar);
-      }
+      setPlayer(created);
       setStatus({ kind: "ready" });
-      onReady?.(player, runtimes);
+      onReady?.(created, runtimes);
     })().catch((error: unknown) => {
       if (!controller.signal.aborted) setStatus({ kind: "error", detail: error instanceof Error ? error.message : String(error) });
     });
     return () => {
       controller.abort();
-      barObserver?.disconnect();
-      if (player) void player.dispose();
+      setPlayer(null);
+      if (created) void created.dispose();
       host.replaceChildren();
     };
     // The language only matters for the first load (later changes are the player's); onReady may be a fresh closure.
   }, [manifest, attempt]);
 
   useEffect(() => {
-    setCanFullscreen(Boolean(document.fullscreenEnabled));
-    const onChange = () => setFullscreen(document.fullscreenElement === frameRef.current);
-    document.addEventListener("fullscreenchange", onChange);
-    return () => document.removeEventListener("fullscreenchange", onChange);
+    setCanFullscreen(isElementFullscreenAvailable());
+    const onChange = () => {
+      const on = getFullscreenElement() === frameRef.current;
+      if (on) lockLandscape();
+      setFullscreen(on);
+    };
+    for (const type of FULLSCREEN_CHANGE_EVENTS) document.addEventListener(type, onChange);
+    return () => {
+      for (const type of FULLSCREEN_CHANGE_EVENTS) document.removeEventListener(type, onChange);
+    };
   }, []);
 
   const toggleFullscreen = useCallback(() => {
-    const frame = frameRef.current;
-    if (!frame) return;
-    if (document.fullscreenElement) void document.exitFullscreen();
-    else void frame.requestFullscreen().catch(() => undefined);
+    const element = frameRef.current;
+    if (!element) return;
+    if (getFullscreenElement()) exitElementFullscreen();
+    else void requestElementFullscreen(element).catch(() => undefined);
   }, []);
 
   return (
     <div
-      ref={frameRef}
+      ref={attachFrame}
       role="region"
       data-state={status.kind}
       aria-label={t(locale, "storyPlayer.stageLabel")}
-      className={`overflow-hidden bg-black [container-type:inline-size] ${fullscreen ? "" : "rounded-2xl border-[1.5px] border-[var(--mn-border)] shadow-[var(--mn-shadow-stamp)]"}`}
+      className={`overflow-hidden bg-black [container-type:inline-size] [-webkit-tap-highlight-color:transparent] ${fullscreen ? "" : "rounded-2xl border-[1.5px] border-[var(--mn-border)] shadow-[var(--mn-shadow-stamp)]"}`}
     >
-      {/* The story screen is 13:6 (the game's ADV viewport) above the player's control bar. */}
+      {/* The story screen is 13:6 (the game's ADV viewport); the controls lie over its bottom and hide while it plays. */}
       <div
-        className={`relative ${fullscreen ? "h-screen w-screen" : "w-full"}`}
-        style={fullscreen ? undefined : { height: `min(calc(100cqw * 6 / 13 + ${barHeight}px), 85vh)` }}
+        className={`relative select-none ${fullscreen ? "h-screen w-screen" : "w-full"}`}
+        style={fullscreen ? undefined : { height: "min(calc(100cqw * 6 / 13), 85vh)" }}
       >
         <div ref={hostRef} className="absolute inset-0" />
         <StageSignature light />
 
-        {canFullscreen && status.kind === "ready" && (
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            aria-label={t(locale, fullscreen ? "storyPlayer.exitFullscreen" : "storyPlayer.fullscreen")}
-            title={t(locale, fullscreen ? "storyPlayer.exitFullscreen" : "storyPlayer.fullscreen")}
-            className="mn-focus absolute right-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-full bg-black/45 text-white/85 backdrop-blur-sm transition hover:bg-black/70 hover:text-white"
-          >
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              {fullscreen
-                ? <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
-                : <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />}
-            </svg>
-          </button>
+        {player && frame && status.kind === "ready" && (
+          <StoryControls
+            locale={locale}
+            player={player}
+            surface={frame}
+            simple={simple}
+            fullscreen={fullscreen}
+            onFullscreen={canFullscreen ? toggleFullscreen : null}
+            nextEpisode={nextEpisode}
+            onNextEpisode={onNextEpisode}
+          />
         )}
 
         {status.kind === "booting" && (
@@ -197,7 +214,7 @@ export default function StoryStage({ locale, manifest, language, controlsLanguag
 }
 
 function StageMessage({ children }: { children: ReactNode }) {
-  return <div className="absolute inset-0 z-10 grid place-items-center bg-black/85 px-6 text-center"><div>{children}</div></div>;
+  return <div className="absolute inset-0 z-30 grid place-items-center overflow-y-auto bg-black/85 px-6 py-4 text-center"><div>{children}</div></div>;
 }
 
 function supportsWebGL2(): boolean {

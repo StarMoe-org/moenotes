@@ -11,16 +11,25 @@ interface Props {
 }
 
 const { locale } = Astro.props;
-// Names and groups come from the build's story data; which episodes can be played is read at runtime (stories.json of
-// the story site), so newly published stories need no rebuild.
+// Names, groups and artwork come from the build's story data; which episodes can be played is read at runtime
+// (stories.json of the story site), so newly published stories need no rebuild.
 const stories: StoryPickerStory[] = (await getBuildStories(locale)).map((story) => ({
   advId: story.advId,
   category: story.category,
   title: story.title,
   groupId: story.groupId,
   groupTitle: story.groupTitle || story.bandName,
+  groupSubtitle: story.category === "main" ? story.bandName : "",
+  groupImage: story.category === "main" && (story.chapterBanner || story.chapterImage)
+    ? `Story/${story.chapterBanner ? "Banner" : "Image"}/Chapter/${story.chapterBanner || story.chapterImage}`
+    : "",
   episodeLabel: storyEpisodeLabel(locale, story),
-  bandId: story.bandId,
+  episodeKind: story.episodeKind,
+  episodeNote: story.episodeKind === "another" ? story.characterNames[0] ?? "" : "",
+  // The banners of the story pages: main and bond episodes have one (a bond story may use its pair's).
+  image: (story.category === "main" || story.category === "friendship") && (story.assets.banner || story.assets.image)
+    ? `Story/Banner/${story.assets.banner ? "Episode" : "Chapter"}/${story.assets.banner || story.assets.image}`
+    : "",
   searchText: story.searchText,
 }));
 ---

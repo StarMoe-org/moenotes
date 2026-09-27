@@ -8,4 +8,5 @@ export const storageKeys = {
   scrollPrefix: "moenotes:scroll:",
   assetCacheBypass: "moenotes:asset-cache-bypass",
   chartLiveSettings: "moenotes:chart-live-settings",
+  storyPlayerVolumes: "moenotes:story-player-volumes",
 } as const;

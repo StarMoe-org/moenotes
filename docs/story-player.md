@@ -3,10 +3,13 @@
 `/tools/story-player` plays the game's story episodes (ADV) with [ournotes-player](https://github.com/StarMoe-org/ournotes-player)'s
 story player (`ournotes-player/story`): the stage, Live2D characters, camera and effects, the talk window, music, sound
 effects and voices, as the game's story screen shows them. `?story=<advId>` opens one episode (the address follows the
-episode shown). Story pages (`/story/:id`) link to it ("Live2D 播放") when the story site has the episode.
+episode shown). Story pages (`/story/:id`) and the other talks' reader dialog link to it ("Live2D 播放") when the story
+site has the episode.
 
-Components: `src/components/tools/StoryPlayer*` and `StoryStage.tsx`; data and helpers in `src/lib/story/player-data.ts`
-(pure) and `src/lib/story/player-client.ts` (network, page scripts); copy `storyPlayer.*`.
+Components: `src/components/tools/StoryPlayer*`, `StoryStage.tsx`, `StoryControls.tsx`, `StoryPickerDialog.tsx` and
+`story-icons.tsx`; the story pages' link is `src/components/story/StoryPlayerLink.tsx`. Data and helpers in
+`src/lib/story/player-data.ts` (pure), `player-settings.ts` (volumes, speeds) and `player-client.ts` (network, page
+scripts); copy `storyPlayer.*`.
 
 ## Data
 
@@ -23,28 +26,36 @@ The episodes come from the **story site** in the storage bucket (`assetConfig.st
 
 The site is kept up to date by the `story-site` workflow of StarMoe-org/nnnotes (its `.github/STORY_SITE.md`):
 moenotes-masterdata-sync dispatches it when new master data is served, and it builds and uploads the stories the
-bucket lacks. The bucket's CORS allows `https://bdon.moe`; a preview on another origin needs that origin added there.
+bucket lacks. The bucket's CORS allows `https://bdon.moe` (and `http://localhost:4321` for the dev server); a preview on another
+origin needs that origin added there.
 The player version (`ournotes-player` in package.json) must read what that workflow writes (`STORY_PLAYER_REF` there).
 
-- The list shows the build's story data (`getBuildStories`: names, groups and episode numbers, localized at build time)
-  for the episodes `stories.json` lists, in the story pages' order; episodes the build does not know yet are listed
-  last by the site's own titles.
+- The picker lists the build's story data (`getBuildStories`: names, groups, episode numbers and banners, localized at
+  build time) for the episodes `stories.json` lists, in the story pages' order and in their three lists: main story by
+  chapter (with its banner; main, another and extra episodes as separate runs), bond stories by pair, and the other
+  talks by type. Episodes the build does not know yet are listed last under the other talks by the site's own titles.
 - A `?story=` the index does not list is opened from its manifest (its `story` block is the index entry): a site build
   publishes each manifest as it lands and rewrites `stories.json` at its end. The story page's link checks the manifest
   the same way (a `HEAD`), so it never leads to a missing story.
 - The story starts in the first of the locale's text languages that the episode has (masterdata's order,
-  `assetLanguageOrder`); the control bar's labels follow the locale. Switching the language in the panel goes through
+  `assetLanguageOrder`); the controls' labels follow the locale. Switching the language in the header goes through
   the player (`setLanguage`: it loads that language's files and restarts at the current line), not a reload.
 
 ## Layout
 
-- The stage is the player's own root (canvas and control bar in its shadow root). Its box is 13:6 (the game's ADV
-  viewport) plus the control bar's measured height, so the story screen needs no letterbox bands; the frame goes
-  fullscreen. The signature is the light logo SVG (the story screen is dark).
-- The panel beside the stage (under it on narrow containers, `@4xl`) shows the episode, its size in the chosen language,
-  the languages, the previous / next episode, the link to the story page, and the controls' keys.
-- The quick filter narrows the list by type (main, bond, post-live, home, tutorial) and text (title, group, characters,
-  ADV id).
+- The header shows the episode's banner, group and title (a link to its story page), its size in the chosen language,
+  the previous / next episode, the language (a dropdown), the help dialog (ⓘ) and the picker (a dialog: the three
+  lists, a search over all of them, the current episode marked).
+- The stage is the player's own root without its control bar (`controls: false`), 13:6 (the game's ADV viewport);
+  the frame goes fullscreen. The signature is the light logo SVG (the story screen is dark).
+- `StoryControls` lies over the stage's bottom: play / pause, next line, auto, fast-forward (×1 → ×1.5 → ×1.7 → ×2),
+  skip (with its confirmation, which holds the playback), the line bar (a seek restarts at that line) and a video bar
+  while a movie or clip plays, settings and fullscreen, all as SVG icons. It hides while the story plays and the
+  pointer rests (touch screens bring it back with the button at the top right). The settings panel holds the music,
+  sound effect, voice and video volumes with their mute switches (kept in this browser) and the fast-forward speed.
+  A tap on the story screen is the next line; keys: Space / Enter next line, A auto, F fast-forward, K play / pause.
+  An Overlay episode (home spot and post-live talks) has no auto and no fast-forward, as in the game.
+- The end of an episode offers to play it again or to go on to the next one.
 - An episode that needs what the player does not reproduce yet is refused before loading (`StoryCommandError`); the stage
   says so and names the part, instead of showing it wrongly.
 
@@ -59,12 +70,14 @@ before the first story (`loadStoryRuntimes`):
 | CRI Core of Live2D's MotionSync plugin (`live2dcubismmotionsynccore.min.js`) | `PUBLIC_CUBISM_MOTIONSYNC_CORE` (unset by default) | voice lip sync of models with a MotionSync controller | those mouths stay still while speaking (the others use the story data's CRI Lips analysis) |
 | Spine 4.2 spine-core build defining `spine` | `PUBLIC_SPINE_RUNTIME` (unset by default) | the characters of home spot talks | the spot is drawn without them; the talk plays |
 
-The panel says which optional part is missing. Serving either optional script is a licensing decision of the deployment.
+The help dialog says when voice lip sync is missing. Serving either optional script is a licensing decision of the
+deployment.
 
 ## Checking a change
 
-The bucket answers CORS for `https://bdon.moe` only, so a dev server reads a local copy of a few stories
-(`PUBLIC_STORY_SITE=http://127.0.0.1:8787 bun run dev`, serving an `nnnotes web` site directory with CORS) and opens
-`/tools/story-player?story=<advId>`. After bumping the
+The bucket answers CORS for `https://bdon.moe` and the dev server's `http://localhost:4321`, so `bun run dev` plays the
+bucket's stories; another origin reads a local copy of a few stories (`PUBLIC_STORY_SITE=http://127.0.0.1:8787`,
+serving an `nnnotes web` site directory with CORS). Open `/tools/story-player?story=<advId>`. After bumping the
 `ournotes-player` dependency, check that a story loads and plays, that a language switch keeps the stage, and that the
-stage's box still matches the control bar.
+controls still drive it (`StoryControls` uses the player's public API: play, pause, next, setAuto, setSpeed, skip,
+seekToLine, seekVideo, setVolume, and the session's `setDialogOpen` for the skip confirmation).

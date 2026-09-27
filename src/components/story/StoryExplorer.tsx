@@ -6,6 +6,7 @@ import BaseFilters, { FilterButton, FilterSection } from "@/components/shared/Ba
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import Modal from "@/components/shared/Modal";
 import StoryScriptReader from "@/components/story/StoryScriptReader";
+import StoryPlayerLink from "@/components/story/StoryPlayerLink";
 import { getAssetUrl } from "@/lib/assets/url";
 import { fetchAndParseStory, type ParsedStoryScript } from "@/lib/story/parser";
 import type { RawStoryCharacter, StoryCategory, StoryViewModel } from "@/lib/story/data";
@@ -217,7 +218,14 @@ function StoryReader({ story, locale, characters, texts, onClose }: { story: Sto
     return () => { alive = false; };
   }, [story, locale]);
 
-  return <Modal isOpen={Boolean(story)} onClose={onClose} title={story?.title} closeLabel={t(locale, "story.ui.close")} size="xl">
+  return <Modal
+    isOpen={Boolean(story)}
+    onClose={onClose}
+    title={story?.title}
+    closeLabel={t(locale, "story.ui.close")}
+    size="xl"
+    headerActions={story ? <StoryPlayerLink key={story.advId} locale={locale} advId={story.advId} variant="compact" /> : undefined}
+  >
     {failed ? <State text={t(locale, "story.ui.scriptUnavailable")} /> : !script || !story ? <State text={t(locale, "story.ui.parsing")} /> : (
       // Keyed by story, so playback state resets and audio stops when another story opens or the modal closes.
       <StoryScriptReader key={story.id} locale={locale} script={script} characters={characters} texts={texts} layer="modal" />

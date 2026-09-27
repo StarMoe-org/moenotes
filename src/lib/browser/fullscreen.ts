@@ -16,6 +16,12 @@ export function getFullscreenElement(): Element | null {
   return doc.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
 }
 
+/** Whether the browser offers element fullscreen (not iPhone Safari). */
+export function isElementFullscreenAvailable(): boolean {
+  const doc = document as FullscreenDocument;
+  return Boolean(doc.fullscreenEnabled || doc.webkitFullscreenEnabled);
+}
+
 /** Puts `element` in fullscreen; rejects where the browser offers no element fullscreen or refuses it. */
 export function requestElementFullscreen(element: HTMLElement): Promise<void> {
   const doc = document as FullscreenDocument;

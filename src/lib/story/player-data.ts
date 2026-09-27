@@ -3,7 +3,7 @@ import type { AppLocale } from "@/config/locales";
 import { getRoutePathById } from "@/lib/route/registry";
 import { localizePath } from "@/i18n/routing";
 import { assetLanguageOrder } from "@/lib/assets/release";
-import type { StoryCategory } from "@/lib/story/data";
+import type { StoryCategory, StoryEpisodeKind } from "@/lib/story/data";
 
 /** The story player's data: the story site's index entries and the episodes the page knows from the build. */
 
@@ -29,6 +29,14 @@ export interface StorySiteEntry {
   size?: { common: number; languages: Partial<Record<string, number>> };
 }
 
+/** The story pages' three lists: main story, bond stories and the other talks (post-live, home spot, tutorial). */
+export type StorySection = "main" | "friendship" | "other";
+export const STORY_SECTIONS: readonly StorySection[] = ["main", "friendship", "other"];
+
+export function storySection(category: StoryCategory | "other"): StorySection {
+  return category === "main" || category === "friendship" ? category : "other";
+}
+
 /** An episode as the picker lists it: the build's story data (localized at build time) of an advId. */
 export interface StoryPickerStory {
   advId: number;
@@ -37,10 +45,59 @@ export interface StoryPickerStory {
   /** The group the episode belongs to (a chapter, a character's bond, a spot) and its name. */
   groupId: string;
   groupTitle: string;
+  /** The band of a chapter; empty for the other groups. */
+  groupSubtitle: string;
+  /** A chapter's banner (asset path without extension); empty for the other groups. */
+  groupImage: string;
   /** "EPISODE 3" and the like; empty when the episode has no number. */
   episodeLabel: string;
-  bandId: number;
+  episodeKind: StoryEpisodeKind | null;
+  /** The character an another episode follows; empty otherwise. */
+  episodeNote: string;
+  /** The episode's banner (asset path without extension, text-bearing: per locale); empty when it has none. */
+  image: string;
   searchText: string;
+}
+
+/** An episode the story site has, with what the picker, the search and the header show. */
+export interface StoryPlayerEntry extends Omit<StoryPickerStory, "category"> {
+  site: StorySiteEntry;
+  /** "other": an episode the build does not know (published after it), listed by the site's own titles. */
+  category: StoryCategory | "other";
+  section: StorySection;
+}
+
+/**
+ * The site's episodes in the story pages' order (the build's episodes it has), then the ones the build does not know
+ * yet in advId order, grouped under `otherGroupTitle`.
+ */
+export function buildStoryPlayerEntries(
+  stories: readonly StoryPickerStory[],
+  siteEntries: readonly StorySiteEntry[],
+  locale: AppLocale,
+  otherGroupTitle: string,
+): StoryPlayerEntry[] {
+  const byAdv = new Map(siteEntries.map((entry) => [entry.advId, entry]));
+  const listed = new Set<number>();
+  const known: StoryPlayerEntry[] = [];
+  for (const story of stories) {
+    const site = byAdv.get(story.advId);
+    if (!site || listed.has(story.advId)) continue;
+    listed.add(story.advId);
+    const title = story.title || storySiteTitle(site, locale);
+    known.push({ ...story, site, title, section: storySection(story.category), searchText: `${story.searchText} ${title} ${story.advId}`.toLocaleLowerCase() });
+  }
+  const unknown = siteEntries
+    .filter((entry) => !listed.has(entry.advId))
+    .sort((a, b) => a.advId - b.advId)
+    .map((site): StoryPlayerEntry => {
+      const title = storySiteTitle(site, locale);
+      return {
+        advId: site.advId, site, category: "other", section: "other", title, groupId: "site", groupTitle: otherGroupTitle, groupSubtitle: "",
+        groupImage: "", episodeLabel: "", episodeKind: null, episodeNote: "", image: "", searchText: `${title} ${site.advId}`.toLocaleLowerCase(),
+      };
+    });
+  return [...known, ...unknown];
 }
 
 export function getStoriesIndexUrl(): string {
@@ -64,11 +121,6 @@ export function parseStoryPlayerSearch(search: string): number | null {
 
 function isStoryLanguage(value: string): value is StoryLanguage {
   return (STORY_LANGUAGES as readonly string[]).includes(value);
-}
-
-/** The labels' language of the player's control bar: the locale's first text language. */
-export function storyControlsLanguage(locale: AppLocale): StoryLanguage {
-  return assetLanguageOrder(locale).find(isStoryLanguage) ?? "en";
 }
 
 /** The language a story starts in: the first of the locale's text languages the story has (masterdata's order). */
