@@ -26,12 +26,12 @@ shaders and sounds. It reads a static **chart site** published by moenotes-asset
 definition, jacket), so new songs need no new base. The service serves assets immutable and manifests for 60 s; its
 `cors_origins` must allow this site's origin.
 
-Build the base with the same player commit as the `ournotes-player` dependency in `package.json`.
+Build the base with the same player version as the `ournotes-player` dependency in `package.json`.
 A chart is about 40–45 MB, mostly shared stage, note and effect files, so a second chart downloads much less.
 
 ## Frontend
 
-- `ournotes-player` is a git dependency pinned to a commit and imported dynamically by
+- `ournotes-player` is the npm package at an exact version and imported dynamically by
   `src/components/tools/ChartStage.tsx`, so it only loads on the preview page. moenotes is AGPL-3.0, like the player.
 - The stage frame carries the Moenotes signature and is what goes fullscreen, so the signature stays on the picture.
 - Songs are chosen in `MusicSelectDialog` (`src/components/music/`), a generic song + difficulty picker: a modal with
