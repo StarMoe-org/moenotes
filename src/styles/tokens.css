@@ -48,6 +48,13 @@
   /* ── Decorative (theme-aware) ── */
   --mn-dot-ink: rgba(39, 62, 112, 0.06);
 
+  /* ── Cache categories (settings' Data tab): one fixed hue each, a validated categorical order ── */
+  --mn-cache-live2d: #2a78d6;
+  --mn-cache-images: #eb6834;
+  --mn-cache-audio: #1baf7a;
+  --mn-cache-chart: #eda100;
+  --mn-cache-data: #e87ba4;
+
   /* ── Shadows ── */
   --mn-shadow: 0 4px 20px -2px rgba(39, 62, 112, 0.05), 0 2px 6px -1px rgba(39, 62, 112, 0.03);
   --mn-shadow-stamp: 0 4px 12px -2px rgba(39, 62, 112, 0.06), 0 2px 4px -1px rgba(39, 62, 112, 0.04);

@@ -5,7 +5,7 @@ import { t } from "@/i18n";
 import BaseFilters, { CharacterFilter, FilterButton, FilterSection, FilterToggle, toggleArrayItem } from "@/components/shared/BaseFilters";
 import { closeFilterDrawer, openFilterDrawer, useQuickFilter } from "@/lib/filter/use-quick-filter";
 import { fetchLive2DModels } from "@/lib/live2d/client";
-import { getLive2DViewerHref, parseLive2DModel, parseLive2DViewerSearch, type Live2DModel } from "@/lib/live2d/models";
+import { getLive2DViewerHref, parseLive2DViewerSearch, type Live2DModel } from "@/lib/live2d/models";
 import Live2DStage, { StageSignature } from "@/components/tools/Live2DStage";
 
 export interface Live2DCharacter {
@@ -54,7 +54,7 @@ export default function Live2DViewer({ locale, characters, bands }: Props) {
     const controller = new AbortController();
     setList({ kind: "loading" });
     fetchLive2DModels(controller.signal).then(
-      (entries) => setList({ kind: "ready", models: entries.map(parseLive2DModel) }),
+      (models) => setList({ kind: "ready", models }),
       (error: unknown) => {
         if (!controller.signal.aborted) setList({ kind: "error", detail: error instanceof Error ? error.message : String(error) });
       },
@@ -263,7 +263,7 @@ function ModelView({ locale, entry, costumes, onCostume, onChooseCharacter }: {
 
   return (
     <>
-      <Live2DStage locale={locale} modelId={model.id} onReady={setPlayer} />
+      <Live2DStage locale={locale} manifestUrl={model.manifestUrl} onReady={setPlayer} />
       <aside className="mn-paper space-y-4 p-4 @4xl:max-h-[80vh] @4xl:overflow-y-auto" aria-label={t(locale, "live2d.controls")}>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">

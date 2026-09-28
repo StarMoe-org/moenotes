@@ -25,6 +25,11 @@ browser ── bdon.moe ── server/main.ts ── static build
   initial when there is none or it fails to load) with a sign-out menu. Without the API (a static preview, `astro
   dev` without starmoe-api, or the API is down) `/api/me` fails and the button stays hidden, so the site deploys
   independently of the API.
+- **Security settings.** Password, email, two-step verification, linked accounts and signed-in devices belong to
+  the passport, not to one site, so the account page only links to Logto's prebuilt Account Center
+  (`passportAccountUrl` in `src/config/account.ts`). Password and email open in the same tab and come back to the
+  account page after the passport's own success page; the security hub opens in a new tab. The Account Center's
+  field permissions and theme are set up in the `starmoe-passport` repository's README.
 
 ## Deployment
 

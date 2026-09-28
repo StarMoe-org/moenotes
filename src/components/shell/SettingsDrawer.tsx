@@ -27,14 +27,6 @@ interface SettingsDrawerProps {
 type SettingsTab = "general" | "data";
 const SETTINGS_TABS: readonly SettingsTab[] = ["general", "data"];
 
-/** Message keys of the Data tab's rows: the players by their tools' names, the release asset cache by its own. */
-const CACHE_CATEGORY_LABELS: Record<CacheCategory, string> = {
-  story: "nav.items.storyPlayer",
-  live2d: "nav.items.live2dViewer",
-  chart: "nav.items.chartPreview",
-  assets: "settings.data.assets",
-};
-
 const chevronDown = (
   <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
 );
@@ -140,11 +132,13 @@ function GeneralSettings({ locale, pathname }: SettingsDrawerProps) {
   );
 }
 
-/** What the browser keeps for the site (the player files, the release asset cache), each part clearable. */
+/** What the browser keeps for the site, by what the files are, each kind clearable. */
 function DataSettings({ locale }: { locale: AppLocale }) {
   const [available] = useState(isBrowserCacheAvailable);
   const [overview, setOverview] = useState<CacheOverview | null>(null);
   const [busy, setBusy] = useState<CacheCategory | "all" | null>(null);
+  // The category under the pointer, on the bar or in the list: its segment and its row stand out together.
+  const [active, setActive] = useState<CacheCategory | null>(null);
 
   const refresh = useCallback(() => getCacheOverview().then(setOverview), []);
 
@@ -173,35 +167,33 @@ function DataSettings({ locale }: { locale: AppLocale }) {
           <p className="text-xs leading-5 text-[var(--mn-text-muted)]">{t(locale, "settings.data.calculating")}</p>
         ) : (
           <>
-            <p className="text-xs leading-5 text-[var(--mn-text-muted)]">
-              {t(locale, "settings.data.cacheDescription", { limit: formatBytes(overview.playerBudget) })}
-            </p>
-
-            <div className="mt-4 rounded-xl border border-[var(--mn-border)] bg-[var(--mn-surface-strong)] p-4">
+            <div className="rounded-xl border border-[var(--mn-border)] bg-[var(--mn-surface-strong)] p-4">
               <div className="flex items-baseline justify-between gap-3">
                 <span className="text-xs font-bold text-[var(--mn-text-muted)]">{t(locale, "settings.data.total")}</span>
                 <span className="font-mono text-[11px] text-[var(--mn-text-muted)]">{files(overview.total.entries)}</span>
               </div>
               <p className="mt-1 font-[var(--mn-font-display)] text-2xl text-[var(--mn-text)]">{formatBytes(overview.total.bytes)}</p>
-              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--mn-cream-deep)]">
-                <div
-                  className="h-full rounded-full bg-[var(--mn-accent)] transition-[width]"
-                  style={{ width: `${Math.min(100, (overview.players.bytes / Math.max(1, overview.playerBudget)) * 100)}%` }}
-                />
-              </div>
-              <p className="mt-1.5 font-mono text-[10px] text-[var(--mn-text-muted)]">
-                {t(locale, "settings.data.playerUsage", { used: formatBytes(overview.players.bytes), limit: formatBytes(overview.playerBudget) })}
-              </p>
+              <CacheBreakdown locale={locale} overview={overview} active={active} onActive={setActive} />
             </div>
 
             <ul className="mt-3 divide-y divide-[var(--mn-border)] overflow-hidden rounded-xl border border-[var(--mn-border)] bg-[var(--mn-surface)]">
               {CACHE_CATEGORIES.map((category) => {
                 const usage = overview.categories[category];
                 return (
-                  <li key={category} className="flex items-center gap-3 px-4 py-3">
+                  <li
+                    key={category}
+                    onMouseEnter={() => setActive(category)}
+                    onMouseLeave={() => setActive(null)}
+                    className={`flex items-center gap-3 px-4 py-3 transition-colors ${active === category ? "bg-[color-mix(in_srgb,var(--mn-accent)_12%,transparent)]" : ""}`}
+                  >
+                    <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: categoryColor(category) }} />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold text-[var(--mn-text)]">{t(locale, CACHE_CATEGORY_LABELS[category])}</p>
-                      <p className="font-mono text-[11px] text-[var(--mn-text-muted)]">{formatBytes(usage.bytes)} · {files(usage.entries)}</p>
+                      <p className="truncate text-sm font-bold text-[var(--mn-text)]">{t(locale, `settings.data.categories.${category}`)}</p>
+                      <p className="truncate text-[11px] leading-4 text-[var(--mn-text-muted)]">{t(locale, `settings.data.categoryHints.${category}`)}</p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="font-mono text-xs font-bold text-[var(--mn-text)]">{formatBytes(usage.bytes)}</p>
+                      <p className="font-mono text-[10px] text-[var(--mn-text-muted)]">{files(usage.entries)}</p>
                     </div>
                     <button
                       type="button"
@@ -229,11 +221,46 @@ function DataSettings({ locale }: { locale: AppLocale }) {
           >
             {t(locale, busy === "all" ? "settings.data.clearing" : "settings.data.clearAll")}
           </button>
-          <p className="mt-2 text-xs leading-5 text-[var(--mn-text-muted)]">{t(locale, "settings.data.clearNote")}</p>
         </div>
       )}
     </div>
   );
+}
+
+/**
+ * The total split by category: one segment per category that keeps anything, in the list's order and colors, 2px apart.
+ * The list below names every category with its size, so the bar itself is left out of the accessibility tree.
+ */
+function CacheBreakdown({ locale, overview, active, onActive }: {
+  locale: AppLocale;
+  overview: CacheOverview;
+  active: CacheCategory | null;
+  onActive: (category: CacheCategory | null) => void;
+}) {
+  const total = overview.total.bytes;
+  const parts = CACHE_CATEGORIES.filter((category) => overview.categories[category].bytes > 0);
+  if (total === 0 || parts.length === 0) return <div aria-hidden="true" className="mt-3 h-2.5 rounded-[4px] bg-[var(--mn-cream-deep)]" />;
+  const percent = new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 1 });
+  return (
+    <div aria-hidden="true" className="mt-3 flex h-2.5 gap-[2px]" onMouseLeave={() => onActive(null)}>
+      {parts.map((category, index) => {
+        const bytes = overview.categories[category].bytes;
+        return (
+          <span
+            key={category}
+            title={`${t(locale, `settings.data.categories.${category}`)} · ${formatBytes(bytes)} · ${percent.format(bytes / total)}`}
+            onMouseEnter={() => onActive(category)}
+            className={`h-full min-w-[3px] transition-opacity ${index === 0 ? "rounded-l-[4px]" : ""} ${index === parts.length - 1 ? "rounded-r-[4px]" : ""}`}
+            style={{ flex: `${bytes} 1 0px`, background: categoryColor(category), opacity: active && active !== category ? 0.35 : 1 }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function categoryColor(category: CacheCategory): string {
+  return `var(--mn-cache-${category})`;
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {

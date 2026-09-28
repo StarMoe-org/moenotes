@@ -4,8 +4,8 @@ import { localizePath } from "@/i18n/routing";
 import { getRoutePathById } from "@/lib/route/registry";
 
 /**
- * Live2D models of the ournotes-player site that moenotes-assets publishes next to the charts (its docs/MODEL_SITE.md):
- * `models.json` lists them, `models/<id>.json` is what the player loads.
+ * A Live2D model of an ournotes-player site: the model site moenotes-assets publishes next to the charts (its
+ * docs/MODEL_SITE.md) or the story site. `models.json` lists them, `models/<id>.json` is what the player loads.
  */
 export interface Live2DModelEntry {
   id: string;
@@ -21,6 +21,8 @@ export type CostumePart = { token: string } | { text: string };
 
 export interface Live2DModel {
   id: string;
+  /** The manifest the player loads (`models/<id>.json` of the site the model is read from). */
+  manifestUrl: string;
   bytes: number;
   /** MasterCharacter id: the manifest's `character`, else the number of its `<NNN>_adv` / `<NNN>_live` group. */
   characterId: number | null;
@@ -43,13 +45,32 @@ export const COSTUME_TOKENS = [
 const KNOWN = new Set<string>(COSTUME_TOKENS);
 const GRADES: Record<string, string> = { "1st": "grade1", "2nd": "grade2", "3rd": "grade3" };
 
-export function getLive2DModelsIndexUrl(): string {
-  return `${assetConfig.chartSite}/models.json`;
+/** `models.json` of a player site: the model site by default, or the story site. */
+export function getLive2DModelsIndexUrl(site: string = assetConfig.chartSite): string {
+  return `${site}/models.json`;
 }
 
-/** Manifest of one model (`models/<id>.json`), the player's `src`. */
-export function getLive2DModelManifestUrl(id: string): string {
-  return `${assetConfig.chartSite}/models/${encodeURIComponent(id)}.json`;
+/** Manifest of one model (`models/<id>.json`) on a player site, the player's `src`. */
+export function getLive2DModelManifestUrl(id: string, site: string = assetConfig.chartSite): string {
+  return `${site}/models/${encodeURIComponent(id)}.json`;
+}
+
+/**
+ * The viewer's models: those of the model site, each read from the story site instead when that site publishes it too,
+ * then any model only the story site has. The story player loads its models from the story site, so the viewer then
+ * loads the same files and both share the browser's cache of them (the two sites build a model into different files);
+ * the story site's are also several times smaller (encoded moc3 and JSON, smaller PNGs).
+ */
+export function mergeLive2DModelIndexes(modelSite: readonly Live2DModelEntry[], storySite: readonly Live2DModelEntry[]): Live2DModel[] {
+  const onStorySite = new Set(storySite.map((entry) => entry.id));
+  const models = modelSite.map((entry) => parseLive2DModel(entry, onStorySite.has(entry.id) ? assetConfig.storySite : assetConfig.chartSite));
+  const listed = new Set(modelSite.map((entry) => entry.id));
+  for (const entry of storySite) {
+    if (listed.has(entry.id)) continue;
+    listed.add(entry.id);
+    models.push(parseLive2DModel(entry, assetConfig.storySite));
+  }
+  return models;
 }
 
 /** The Live2D viewer page, optionally opened on one model (`?model=<id>`). */
@@ -66,9 +87,9 @@ export function parseLive2DViewerSearch(search: string): string | null {
 /**
  * A models.json entry as the picker shows it. Ids are `[adv_]live2d_<name>_<NNN>_<costume>` for the 25 characters (NNN
  * is the MasterCharacter id, as is the group `<NNN>_adv` / `<NNN>_live`) and `adv_live2d_sub_<name>_<costume>` for side
- * characters (group `sub_<name>`).
+ * characters (group `sub_<name>`). `site`: the player site the model is read from (the model site by default).
  */
-export function parseLive2DModel(entry: Live2DModelEntry): Live2DModel {
+export function parseLive2DModel(entry: Live2DModelEntry, site: string = assetConfig.chartSite): Live2DModel {
   const group = entry.group ?? "";
   const numbered = /^(\d{3})_(adv|live)$/.exec(group);
   const side = group.startsWith("sub_") ? group.slice(4) : null;
@@ -93,6 +114,7 @@ export function parseLive2DModel(entry: Live2DModelEntry): Live2DModel {
   }
   return {
     id: entry.id,
+    manifestUrl: getLive2DModelManifestUrl(entry.id, site),
     bytes: typeof entry.bytes === "number" ? entry.bytes : 0,
     characterId,
     kind: side !== null ? "side" : numbered?.[2] === "live" ? "live" : "story",

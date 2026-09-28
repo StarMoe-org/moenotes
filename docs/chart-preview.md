@@ -29,7 +29,7 @@ definition, jacket), so new songs need no new base. The service serves assets im
 Build the base with the same player version as the `ournotes-player` dependency in `package.json`.
 A chart is about 40–45 MB, mostly shared stage, note and effect files, so a second chart downloads much less.
 The `assets/` files are kept in the browser once downloaded (the player file cache, `src/lib/cache/player-files.ts`,
-shared with the Live2D viewer and the story player): opening a chart again fetches only its manifest, and another
+shared with the Live2D viewer and the story player; [browser-cache.md](browser-cache.md)): opening a chart again fetches only its manifest, and another
 difficulty of the song only the files it does not share. ChartPlayer's own loader takes no fetch function, so the stage
 loads the store (`loadChartAssets`, `src/lib/music/chart-preview-client.ts`) and gives the player `assets`.
 

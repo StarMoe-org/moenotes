@@ -4,7 +4,9 @@
 <script>
   import { pruneAssetCache } from "@/lib/cache/asset-cache";
   import { installFetchCache } from "@/lib/cache/cached-fetch";
+  import { registerImageCacheWorker } from "@/lib/cache/service-worker";
 
   installFetchCache();
   void pruneAssetCache();
+  registerImageCacheWorker();
 </script>

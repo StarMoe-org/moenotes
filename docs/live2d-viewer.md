@@ -9,16 +9,23 @@ Components: `src/components/tools/Live2DViewer*` and `Live2DStage.tsx`; data and
 
 ## Data
 
-The models come from the **model site** moenotes-assets publishes next to the chart site (its `docs/MODEL_SITE.md`):
+The models come from two ournotes-player sites of the same layout: the **model site** moenotes-assets publishes next
+to the chart site (its `docs/MODEL_SITE.md`) and the **story site** the story player reads ([story-player.md](story-player.md)):
 
 ```text
 {chartSite}/models.json                  model index (id, group, character, sizes), read at runtime
 {chartSite}/models/<id>.json             model manifest the player loads
 {chartSite}/assets/<sha256>.<ext>        content-addressed files, shared with the charts
+{storySite}/models.json, models/, assets/   the same for the story models (the ADV models the stories use)
 ```
 
-`models.json` is fetched in the browser (`src/lib/live2d/client.ts`), so a new costume appears without rebuilding the
-site. Model ids are `[adv_]live2d_<name>_<NNN>_<costume>` for the 25 characters (`NNN` and the group `<NNN>_adv` /
+Both `models.json` are fetched in the browser (`fetchLive2DModels`, `src/lib/live2d/client.ts`), so a new costume
+appears without rebuilding the site. The list is the model site's; a model the story site has too is read from the story
+site (`mergeLive2DModelIndexes`, `Live2DModel.manifestUrl`). The two sites build a model into different files (the story
+site encodes moc3 and JSON as gzip and writes smaller PNGs), so this way the viewer loads the files the story player
+loads, and a model seen in a story is already in the browser's cache, and the other way round; the story site's files
+are also several times smaller. Models only the model site has (live models, a few others) come from it. A site whose
+index cannot be read only takes its models out. Model ids are `[adv_]live2d_<name>_<NNN>_<costume>` for the 25 characters (`NNN` and the group `<NNN>_adv` /
 `<NNN>_live` are the MasterCharacter id) and `adv_live2d_sub_<name>_<costume>` for side characters (group `sub_<name>`).
 The master data has no costume names, so a costume is shown in words from the id (`school_winter_hs_1st` →
 制服 · 冬 · 高中 · 一年级); `live2d.costume.*` names every word in use, other words are shown as the id spells them.
@@ -27,7 +34,7 @@ Live models' low quality copies (`_low`) are hidden unless the filter asks for t
 A model's `assets/` files are kept in the browser once downloaded: the viewer gives `AssetStore.fromManifest` the fetch
 function of the player file cache (`src/lib/cache/player-files.ts`, IndexedDB, least recently used out first past
 `cacheConfig.playerFiles.maxBytes` or half the site's quota), so opening a model again fetches only its manifest. The
-settings' Data tab shows what is kept and clears it.
+settings' Data tab shows what is kept and clears it ([browser-cache.md](browser-cache.md)).
 
 ## Layout
 

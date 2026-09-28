@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import AccountAvatar from "@/components/account/AccountAvatar";
 import Modal from "@/components/shared/Modal";
-import { accountLoginUrl } from "@/config/account";
+import { accountLoginUrl, passportAccountUrl } from "@/config/account";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
@@ -75,6 +75,8 @@ export default function AccountPanel({ locale, bands }: Props) {
         </button>
       </div>
 
+      <PassportSecurity locale={locale} />
+
       <div className={panel}>
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-sm font-black text-[var(--mn-text)]">{t(locale, "account.comingSoonTitle")}</h2>
@@ -97,6 +99,50 @@ export default function AccountPanel({ locale, bands }: Props) {
           setPickerOpen(false);
         }}
       />
+    </div>
+  );
+}
+
+const securityTasks = [
+  { page: "password", title: "account.password", hint: "account.passwordHint" },
+  { page: "email", title: "account.email", hint: "account.emailHint" },
+] as const;
+
+/**
+ * Security settings belong to the passport and apply on every StarMoe site, so this only links to its Account
+ * Center. The single tasks come back here when done; the security hub opens in a new tab since it has no way back.
+ */
+function PassportSecurity({ locale }: { locale: AppLocale }) {
+  // Only rendered once signed in, which happens in the browser.
+  const returnTo = new URL(localizePath(getRoutePathById("account"), locale), window.location.origin).href;
+  const row = "flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0";
+
+  return (
+    <div className={panel}>
+      <h2 className="text-sm font-black text-[var(--mn-text)]">{t(locale, "account.securityTitle")}</h2>
+      <p className="mt-1 text-xs text-[var(--mn-text-muted)]">{t(locale, "account.securityHint")}</p>
+      <div className="mt-4 divide-y divide-dashed divide-[var(--mn-border)]/60">
+        {securityTasks.map((task) => (
+          <div key={task.page} className={row}>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-[var(--mn-text)]">{t(locale, task.title)}</p>
+              <p className="text-xs text-[var(--mn-text-muted)]">{t(locale, task.hint)}</p>
+            </div>
+            <a href={passportAccountUrl(task.page, locale, returnTo)} className={stampButton}>
+              {t(locale, "account.change")}
+            </a>
+          </div>
+        ))}
+        <div className={row}>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold text-[var(--mn-text)]">{t(locale, "account.securityCenter")}</p>
+            <p className="text-xs text-[var(--mn-text-muted)]">{t(locale, "account.securityCenterHint")}</p>
+          </div>
+          <a href={passportAccountUrl("security", locale, returnTo)} target="_blank" rel="noopener" className={stampButton}>
+            {t(locale, "account.open")}
+          </a>
+        </div>
+      </div>
     </div>
   );
 }

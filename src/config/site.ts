@@ -6,6 +6,8 @@ export interface SiteConfig {
   baseUrl: string;
   author: string;
   developerUrl: string;
+  /** StarMoe Passport (the shared Logto instance); its Account Center lives under `/account`. */
+  passportUrl: string;
   ogImage: string;
   repository?: string;
   xmlNamespaces: {
@@ -38,6 +40,7 @@ export const siteConfig: SiteConfig = {
   baseUrl: "https://bdon.moe",
   author: "StarMoe",
   developerUrl: "https://star.moe",
+  passportUrl: "https://passport.star.moe",
   ogImage: "/og-default.png",
   repository: "https://github.com/StarMoe-org/moenotes",
   xmlNamespaces: {

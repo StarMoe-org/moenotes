@@ -17,13 +17,14 @@ type StageStatus =
 
 interface Live2DStageProps {
   locale: AppLocale;
-  modelId: string;
+  /** The model's manifest (`Live2DModel.manifestUrl`). */
+  manifestUrl: string;
   /** Called once the model is up, with the player of that model. */
   onReady?: (player: ModelPlayer) => void;
 }
 
 /** The Live2D model viewer (ournotes-player's model player) with the Moenotes signature; the frame goes fullscreen. */
-export default function Live2DStage({ locale, modelId, onReady }: Live2DStageProps) {
+export default function Live2DStage({ locale, manifestUrl, onReady }: Live2DStageProps) {
   const frameRef = useRef<HTMLDivElement>(null);
   const hostRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<StageStatus>({ kind: "booting" });
@@ -51,7 +52,7 @@ export default function Live2DStage({ locale, modelId, onReady }: Live2DStagePro
       .then(() => {
         if (controller.signal.aborted) return null;
         setStatus({ kind: "loading", loaded: 0, total: 0 });
-        return loadLive2DModelAssets(modelId, controller.signal, (loaded, total) => {
+        return loadLive2DModelAssets(manifestUrl, controller.signal, (loaded, total) => {
           if (!controller.signal.aborted) setStatus({ kind: "loading", loaded, total });
         });
       })
@@ -79,8 +80,8 @@ export default function Live2DStage({ locale, modelId, onReady }: Live2DStagePro
       applyView.current = null;
       if (player) void player.dispose();
     };
-    // onReady may be a fresh closure each render; the model id (and a retry) is what reloads the stage.
-  }, [modelId, attempt]);
+    // onReady may be a fresh closure each render; the model (and a retry) is what reloads the stage.
+  }, [manifestUrl, attempt]);
 
   useEffect(() => applyView.current?.(view), [view]);
   useLive2DGestures(hostRef, status.kind === "ready", setView);

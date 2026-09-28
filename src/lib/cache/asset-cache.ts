@@ -100,6 +100,31 @@ export async function clearAssetCache(): Promise<void> {
   }
 }
 
+/** Key, content type and size of every kept response. */
+export async function listAssetCacheEntries(): Promise<Array<Pick<AssetCacheEntry, "key" | "contentType" | "size">>> {
+  if (!isAssetCacheAvailable()) return [];
+
+  try {
+    return (await getAllAssetEntries()).map(({ key, contentType, size }) => ({ key, contentType, size }));
+  } catch {
+    return [];
+  }
+}
+
+export async function deleteAssetCacheEntries(keys: readonly string[]): Promise<void> {
+  if (!isAssetCacheAvailable() || keys.length === 0) return;
+
+  try {
+    const db = await openCacheDb();
+    const transaction = db.transaction(STORE_ASSETS, "readwrite");
+    const store = transaction.objectStore(STORE_ASSETS);
+    for (const key of keys) store.delete(key);
+    await waitForTransaction(transaction);
+  } catch {
+    // Ignore cache cleanup failures.
+  }
+}
+
 export async function getAssetCacheStats(): Promise<AssetCacheStats> {
   if (!isAssetCacheAvailable()) return { entries: 0, bytes: 0 };
 

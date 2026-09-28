@@ -5,6 +5,7 @@ import {
   getLive2DModelManifestUrl,
   getLive2DModelsIndexUrl,
   getLive2DViewerHref,
+  mergeLive2DModelIndexes,
   parseLive2DModel,
   parseLive2DViewerSearch,
 } from "../src/lib/live2d/models";
@@ -18,6 +19,20 @@ describe("Live2D model site addresses", () => {
   test("the index and manifests live next to the charts", () => {
     expect(getLive2DModelsIndexUrl()).toBe(`${assetConfig.chartSite}/models.json`);
     expect(getLive2DModelManifestUrl("adv_live2d_rana_003_casual_spring_01")).toBe(`${assetConfig.chartSite}/models/adv_live2d_rana_003_casual_spring_01.json`);
+  });
+
+  test("a model the story site publishes too is read from there, as the story player reads it", () => {
+    const entry = (id: string, group: string) => ({ id, manifest: `models/${id}.json`, group });
+    const models = mergeLive2DModelIndexes(
+      [entry("adv_live2d_anon_002_casual_spring_01", "002_adv"), entry("live2d_tomori_001_live_01", "001_live")],
+      [entry("adv_live2d_sub_mana_casual", "sub_mana"), entry("adv_live2d_anon_002_casual_spring_01", "002_adv")],
+    );
+    expect(models.map(({ id, manifestUrl }) => [id, manifestUrl])).toEqual([
+      ["adv_live2d_anon_002_casual_spring_01", `${assetConfig.storySite}/models/adv_live2d_anon_002_casual_spring_01.json`],
+      ["live2d_tomori_001_live_01", `${assetConfig.chartSite}/models/live2d_tomori_001_live_01.json`],
+      ["adv_live2d_sub_mana_casual", `${assetConfig.storySite}/models/adv_live2d_sub_mana_casual.json`],
+    ]);
+    expect(models[2]).toMatchObject({ kind: "side", sideName: "mana" });
   });
 
   test("the viewer link carries the model and is localized", () => {
