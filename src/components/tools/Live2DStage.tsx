@@ -5,6 +5,7 @@ import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { loadCubismCore, loadLive2DModelAssets } from "@/lib/live2d/client";
 import { IDENTITY_VIEW, MAX_ZOOM, attachLive2DView, clampView, toNdc, zoomAbout, type Live2DView } from "@/lib/live2d/view";
+import { formatBytes } from "@/lib/format/bytes";
 import BrandLogo from "@/components/shared/BrandLogo";
 
 type StageStatus =
@@ -326,10 +327,4 @@ function supportsLive2D(): boolean {
   } catch {
     return false;
   }
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${bytes} B`;
 }

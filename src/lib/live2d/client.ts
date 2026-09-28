@@ -1,7 +1,11 @@
 import type { AssetStore } from "ournotes-player/live2d";
+import { createPlayerFileFetch } from "@/lib/cache/player-files";
 import { getLive2DModelManifestUrl, getLive2DModelsIndexUrl, type Live2DModelEntry } from "@/lib/live2d/models";
 
 /** Network side of the Live2D viewer: the published model index, a model's files and Live2D Cubism Core. */
+
+/** A model's files come from the browser's player file cache once downloaded (they are content-addressed). */
+const modelFileFetch = createPlayerFileFetch("live2d");
 
 /** `models.json` of the published site; no models when the site has none yet (404). */
 export async function fetchLive2DModels(signal: AbortSignal): Promise<Live2DModelEntry[]> {
@@ -17,7 +21,7 @@ export async function fetchLive2DModels(signal: AbortSignal): Promise<Live2DMode
 /** One model's files (its manifest and every asset it lists), with byte progress. */
 export async function loadLive2DModelAssets(id: string, signal: AbortSignal, onProgress: (loaded: number, total: number) => void): Promise<AssetStore> {
   const { AssetStore } = await import("ournotes-player/live2d");
-  return AssetStore.fromManifest(getLive2DModelManifestUrl(id), { signal, onProgress });
+  return AssetStore.fromManifest(getLive2DModelManifestUrl(id), { signal, onProgress, fetch: modelFileFetch });
 }
 
 let core: Promise<void> | null = null;

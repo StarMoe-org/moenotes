@@ -159,7 +159,8 @@ async function storeCacheableAssetResponse(cacheKey: string, url: string, respon
   }
 }
 
-function getNativeFetch(): typeof globalThis.fetch {
+/** The browser's own fetch, from before installFetchCache wrapped it. */
+export function getNativeFetch(): typeof globalThis.fetch {
   if (nativeFetchRef) return nativeFetchRef;
   nativeFetchRef = globalThis.fetch.bind(globalThis);
   return nativeFetchRef;
@@ -173,7 +174,8 @@ function createRequest(input: CachedFetchInput, init?: CachedFetchInit): Request
   }
 }
 
-function isAssetCacheBypassed(): boolean {
+/** The developer switch (`storageKeys.assetCacheBypass` set to "true") that sends every request to the network. */
+export function isAssetCacheBypassed(): boolean {
   return safeGetLocalStorage(storageKeys.assetCacheBypass) === "true";
 }
 

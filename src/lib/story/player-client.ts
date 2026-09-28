@@ -1,8 +1,15 @@
 import { assetConfig } from "@/config/assets";
+import { createPlayerFileFetch } from "@/lib/cache/player-files";
 import { loadCubismCore } from "@/lib/live2d/client";
 import { getStoriesIndexUrl, getStoryManifestUrl, type StorySiteEntry } from "@/lib/story/player-data";
 
 /** Network side of the story player: the published story index, one story's presence and the page-side scripts. */
+
+/**
+ * The story player's fetch function: a story's files (its models' too) come from the browser's player file cache once
+ * downloaded, so replaying an episode or switching its language downloads nothing again.
+ */
+export const storyPlayerFetch = createPlayerFileFetch("story");
 
 /** `stories.json` of the published site; no stories when the site has none yet (404). */
 export async function fetchStorySite(signal: AbortSignal): Promise<StorySiteEntry[]> {

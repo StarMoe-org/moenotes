@@ -10,7 +10,7 @@ import {
   lockLandscape,
   requestElementFullscreen,
 } from "@/lib/browser/fullscreen";
-import { loadStoryRuntimes, type StoryRuntimes } from "@/lib/story/player-client";
+import { loadStoryRuntimes, storyPlayerFetch, type StoryRuntimes } from "@/lib/story/player-client";
 import { formatMegabytes, getStoryManifestUrl, type StoryLanguage } from "@/lib/story/player-data";
 import { loadStoryVolumes, storyPlayerVolumes } from "@/lib/story/player-settings";
 import { StageSignature } from "@/components/tools/Live2DStage";
@@ -84,6 +84,7 @@ export default function StoryStage({ locale, manifest, language, title, simple, 
           lang: language,
           controls: false,
           volumes: storyPlayerVolumes(loadStoryVolumes()),
+          fetch: storyPlayerFetch,
           signal: controller.signal,
           pixelRatio: Math.min(window.devicePixelRatio || 1, 2),
           on: {

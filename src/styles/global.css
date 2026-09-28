@@ -308,11 +308,14 @@ html[data-theme="dark"] .mn-brand .mn-brand-starlight, .mn-brand.mn-brand-light 
 #header-card { border-radius: 3px 22px 3px 22px; border-bottom: 2px solid var(--mn-accent); }
 .mn-sidebar-frame { border-radius: 3px 22px 3px 22px; }
 .mn-orbit-nav { background-image: linear-gradient(174deg, transparent 110px, color-mix(in srgb, var(--mn-accent) 22%, transparent) 111px, transparent 112px); }
-.mn-orbit-nav a { position: relative; border-radius: 3px 12px 3px 12px; }
-.mn-orbit-nav a[aria-current="page"] {
+.mn-orbit-nav a { position: relative; }
+.mn-orbit-nav a, .mn-orbit-nav .mn-nav-row { border-radius: 3px 12px 3px 12px; }
+.mn-orbit-nav a[aria-current="page"], .mn-orbit-nav .mn-nav-row[data-current] {
   color: var(--mn-orbit-light); background: var(--mn-orbit-night);
   border-color: transparent; box-shadow: inset 3px 0 0 var(--mn-orbit-edge);
 }
+/* A group header's link sits inside its row (next to the collapse chevron); the row carries the highlight so the two never stack. */
+.mn-orbit-nav .mn-nav-row > a[aria-current="page"] { background: none; box-shadow: none; }
 .mn-orbit-nav a[aria-current="page"] > span:first-child { color: var(--mn-orbit-light); background: color-mix(in srgb, var(--mn-glass) 55%, transparent); box-shadow: none; }
 /* The sidebar's logo card and Home link get their own GPU layers: on some Android phones (seen on Chrome 127)
    they went unpainted in the nav's shared layer, showing only while a press transformed them. */

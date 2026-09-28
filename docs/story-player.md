@@ -40,6 +40,9 @@ The player version (`ournotes-player` in package.json) must read what that workf
 - The story starts in the first of the locale's text languages that the episode has (masterdata's order,
   `assetLanguageOrder`); the controls' labels follow the locale. Switching the language in the header goes through
   the player (`setLanguage`: it loads that language's files and restarts at the current line), not a reload.
+- A story's `assets/` files, its models' included, are kept in the browser once downloaded (`storyPlayerFetch`: the
+  player file cache of `src/lib/cache/player-files.ts` the Live2D viewer uses too), so replaying an episode or switching
+  its language fetches only the manifests again. The settings' Data tab shows what is kept and clears it.
 
 ## Layout
 

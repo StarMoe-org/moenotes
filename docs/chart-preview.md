@@ -28,11 +28,16 @@ definition, jacket), so new songs need no new base. The service serves assets im
 
 Build the base with the same player version as the `ournotes-player` dependency in `package.json`.
 A chart is about 40–45 MB, mostly shared stage, note and effect files, so a second chart downloads much less.
+The `assets/` files are kept in the browser once downloaded (the player file cache, `src/lib/cache/player-files.ts`,
+shared with the Live2D viewer and the story player): opening a chart again fetches only its manifest, and another
+difficulty of the song only the files it does not share. ChartPlayer's own loader takes no fetch function, so the stage
+loads the store (`loadChartAssets`, `src/lib/music/chart-preview-client.ts`) and gives the player `assets`.
 
 ## Frontend
 
 - `ournotes-player` is the npm package at an exact version and imported dynamically by
-  `src/components/tools/ChartStage.tsx`, so it only loads on the preview page. moenotes is AGPL-3.0, like the player.
+  `src/components/tools/ChartStage.tsx` and `src/lib/music/chart-preview-client.ts`, so it only loads on the preview
+  page. moenotes is AGPL-3.0, like the player.
 - The stage frame carries the Moenotes signature and is what goes fullscreen, so the signature stays on the picture.
 - Songs are chosen in `MusicSelectDialog` (`src/components/music/`), a generic song + difficulty picker: a modal with
   the music list's full filters (`useMusicFilters` / `MusicFilters`, shared with the music list) and every song.

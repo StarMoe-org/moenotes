@@ -9,14 +9,17 @@ import {
   lockLandscape,
   requestElementFullscreen,
 } from "@/lib/browser/fullscreen";
+import { formatBytes } from "@/lib/format/bytes";
 import { loadLiveSettings, offeredLiveSettings, saveLiveSettings } from "@/lib/music/chart-live-settings";
+import { loadChartAssets } from "@/lib/music/chart-preview-client";
 import { usePageLock } from "@/lib/overlay/page-lock";
 import BrandLogo from "@/components/shared/BrandLogo";
 import { customizeControls, type StageControls } from "@/components/tools/chart-player-controls";
 
 type StageStatus =
   | { kind: "booting" }
-  | { kind: "loading" }
+  | { kind: "loading"; loaded: number; total: number }
+  | { kind: "starting" }
   | { kind: "ready" }
   | { kind: "unsupported" }
   | { kind: "error"; missing: boolean; detail: string };
@@ -93,13 +96,18 @@ export default function ChartStage({ locale, manifestUrl }: ChartStageProps) {
       if (!controller.signal.aborted) setStatus(describeFailure(error));
     };
     setStatus({ kind: "booting" });
-    // The player (WebGL2 + WebAudio) only runs in the browser and is split into its own chunk.
-    import("ournotes-player")
-      .then(async ({ ChartPlayer, LiveSettingsError }) => {
+    // The chart's files (through the browser's file cache), then the player over them. The player (WebGL2 + WebAudio)
+    // only runs in the browser and is split into its own chunk.
+    loadChartAssets(manifestUrl, controller.signal, (loaded, total) => {
+      if (!controller.signal.aborted) setStatus({ kind: "loading", loaded, total });
+    })
+      .then(async (assets) => {
         if (controller.signal.aborted) return null;
-        setStatus({ kind: "loading" });
+        const { ChartPlayer, LiveSettingsError } = await import("ournotes-player");
+        if (controller.signal.aborted) return null;
+        setStatus({ kind: "starting" });
         const create = (settings: LiveSettingsInput | null) => ChartPlayer.create(host, {
-          src: manifestUrl,
+          assets,
           autoplay: true,
           signal: controller.signal,
           pixelRatio: Math.min(window.devicePixelRatio || 1, 2),
@@ -112,8 +120,8 @@ export default function ChartStage({ locale, manifestUrl }: ChartStageProps) {
           return await create(saved);
         } catch (error) {
           if (!(error instanceof LiveSettingsError) || controller.signal.aborted) throw error;
-          // A saved choice this chart's data lacks: load it with the defaults (the assets come from the HTTP cache),
-          // then apply the saved options it offers.
+          // A saved choice this chart's data lacks: start it with the defaults (over the files already loaded), then
+          // apply the saved options it offers.
           const created = await create(null);
           const offered = offeredLiveSettings(created, saved);
           if (Object.keys(offered).length) void created.setSettings(offered).catch(() => undefined);
@@ -265,6 +273,20 @@ export default function ChartStage({ locale, manifestUrl }: ChartStageProps) {
           {status.kind === "booting" && (
             <StageMessage>
               <p className="text-sm font-bold text-white/80">{t(locale, "chartPreview3d.preparing")}</p>
+            </StageMessage>
+          )}
+
+          {status.kind === "loading" && (
+            <StageMessage>
+              <p className="text-sm font-bold text-white/80">{t(locale, "chartPreview3d.loading")}</p>
+              {status.total > 0 && (
+                <>
+                  <div className="mt-3 h-1.5 w-48 overflow-hidden rounded-full bg-white/20">
+                    <div className="h-full rounded-full bg-[var(--mn-accent)] transition-[width]" style={{ width: `${Math.min(100, Math.round((status.loaded / status.total) * 100))}%` }} />
+                  </div>
+                  <p className="mt-2 font-mono text-[10px] text-white/60">{formatBytes(status.loaded)} / {formatBytes(status.total)}</p>
+                </>
+              )}
             </StageMessage>
           )}
 

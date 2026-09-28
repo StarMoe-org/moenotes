@@ -36,7 +36,7 @@ html[data-theme="dark"] { --mn-overlay-scrim: rgba(2, 6, 18, .72); --mn-overlay-
 }
 .mn-segmented { border: 1px solid var(--mn-border); border-radius: 12px; padding: 4px; box-shadow: none; }
 .mn-segmented button { border-radius: 8px; }
-.mn-segmented button[aria-pressed="true"] { background: var(--mn-accent-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mn-accent) 30%, transparent); }
+.mn-segmented button:is([aria-pressed="true"], [aria-selected="true"]) { background: var(--mn-accent-soft); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mn-accent) 30%, transparent); }
 .mn-command-option { border-radius: 10px; border-width: 1px; }
 .mn-command-option[aria-selected="true"] { background: var(--mn-accent-soft); border-color: color-mix(in srgb, var(--mn-accent) 45%, transparent); box-shadow: none; }
 .mn-filter-chip { border-radius: 8px; border-width: 1px; box-shadow: none; }

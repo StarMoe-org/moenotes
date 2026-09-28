@@ -265,10 +265,11 @@ function NavGroup({ group, locale, pathname, activePath, collapsed, onToggle, on
   return (
     <div className="space-y-1.5">
       <div
-        className={`flex items-center justify-between rounded-2xl border py-1 pl-2.5 pr-1 transition-colors ${
+        data-current={isHeaderActive ? "page" : undefined}
+        className={`mn-nav-row flex items-center justify-between rounded-2xl border border-transparent py-1 pl-2.5 pr-1 transition-colors ${
           isHeaderActive
-            ? "border-[color-mix(in_oklab,var(--mn-accent)_35%,transparent)] bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]"
-            : "border-transparent text-[var(--mn-text)] hover:border-[color-mix(in_oklab,var(--mn-border)_12%,transparent)] hover:bg-[var(--mn-cream-deep)]"
+            ? ""
+            : "text-[var(--mn-text)] hover:border-[color-mix(in_oklab,var(--mn-border)_12%,transparent)] hover:bg-[var(--mn-cream-deep)]"
         }`}
       >
         <a

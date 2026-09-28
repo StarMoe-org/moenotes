@@ -24,6 +24,11 @@ The master data has no costume names, so a costume is shown in words from the id
 制服 · 冬 · 高中 · 一年级); `live2d.costume.*` names every word in use, other words are shown as the id spells them.
 Live models' low quality copies (`_low`) are hidden unless the filter asks for them.
 
+A model's `assets/` files are kept in the browser once downloaded: the viewer gives `AssetStore.fromManifest` the fetch
+function of the player file cache (`src/lib/cache/player-files.ts`, IndexedDB, least recently used out first past
+`cacheConfig.playerFiles.maxBytes` or half the site's quota), so opening a model again fetches only its manifest. The
+settings' Data tab shows what is kept and clears it.
+
 ## Layout
 
 - The quick filter (`BaseFilters`) finds a character: one `CharacterFilter` per band (single choice, `showAll={false}`),
