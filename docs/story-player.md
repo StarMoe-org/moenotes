@@ -67,11 +67,15 @@ before the first story (`loadStoryRuntimes`):
 | Script | Config | Needed for | Without it |
 |---|---|---|---|
 | Live2D Cubism Core for Web | `PUBLIC_CUBISM_CORE` (Live2D's distribution by default; shared with the Live2D viewer) | every story | the story does not load |
-| CRI Core of Live2D's MotionSync plugin (`live2dcubismmotionsynccore.min.js`) | `PUBLIC_CUBISM_MOTIONSYNC_CORE` (unset by default) | voice lip sync of models with a MotionSync controller | those mouths stay still while speaking (the others use the story data's CRI Lips analysis) |
+| CRI Core of Live2D's MotionSync plugin (`live2dcubismmotionsynccore.min.js`, 5.0.4) | `PUBLIC_CUBISM_MOTIONSYNC_CORE` (default: the copy in the storage bucket, `vendor/cubism-motionsync-core-5.0.4/`) | voice lip sync of models with a MotionSync controller (most story models) | those mouths stay still while speaking (the others use the story data's CRI Lips analysis) |
 | Spine 4.2 spine-core build defining `spine` | `PUBLIC_SPINE_RUNTIME` (unset by default) | the characters of home spot talks | the spot is drawn without them; the talk plays |
 
-The help dialog says when voice lip sync is missing. Serving either optional script is a licensing decision of the
-deployment.
+The MotionSync Core is Redistributable Code of the Live2D Proprietary Software License Agreement, which bdon.moe
+accepted: the bucket serves Live2D's file as is (sha256 `60e2a8ba9b422a0f8a3d7e066739352e9b903cc1011339984ad922e80a3cd19a`,
+from the Cubism SDK for Web MotionSync Plugin; the player accepts Core 5.0.4 only) under a versioned path with a
+year-long cache. It is not committed to this repository. The help dialog credits it and links the agreement, or says
+that voice lip sync is missing when the script does not load. Another deployment serving it must accept Live2D's
+agreement itself. Serving the Spine runtime is a licensing decision of the deployment.
 
 ## Checking a change
 

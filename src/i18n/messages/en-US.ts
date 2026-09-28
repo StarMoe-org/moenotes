@@ -447,6 +447,8 @@ export const enUS = {
     next: "Next",
     readText: "Read the text",
     noMotionSync: "Voice lip sync (Live2D MotionSync) is not available on this site: characters that use it keep their mouths still while they speak.",
+    motionSyncLicense: "Voice lip sync uses Live2D Cubism MotionSync Core © Live2D Inc., which this site serves unmodified under Live2D's license. It is not part of this site's open source code; the license does not allow copying it for other uses or reverse engineering it.",
+    motionSyncLicenseLink: "Live2D Proprietary Software License Agreement",
     noMatches: "No stories match the filter.",
     notice: "Stories are played in your browser from the game's own data; what you see does not represent the game's final quality. An episode downloads tens to hundreds of MB, so mind your data on mobile networks.",
     listLoading: "Loading the story list…",
@@ -497,7 +499,7 @@ export const enUS = {
         fullscreen: { name: "Fullscreen", description: "Fills the screen with the story" },
       },
     },
-    credit: "Live2D Cubism Core © Live2D Inc. · emptysekai by StarMoe",
+    credit: "Live2D Cubism Core / MotionSync Core © Live2D Inc. · emptysekai by StarMoe",
   },
   live2d: {
     stageLabel: "Live2D stage",

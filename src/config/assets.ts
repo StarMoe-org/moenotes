@@ -27,12 +27,18 @@ export const assetConfig = {
    */
   cubismCore: import.meta.env.PUBLIC_CUBISM_CORE || "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js",
   /**
-   * Optional files of the story player, which ournotes-player does not bundle either (each under its maker's license):
-   * the CRI Core of Live2D's MotionSync plugin (`live2dcubismmotionsynccore.min.js`, the voices' lip sync on models with
-   * a MotionSync controller) and a Spine 4.2 spine-core build defining the global `spine` (the characters of home spot
-   * talks). Unset, stories play without them; see docs/story-player.md.
+   * Files of the story player which ournotes-player does not bundle either (each under its maker's license).
+   * The CRI Core of Live2D's MotionSync plugin (`live2dcubismmotionsynccore.min.js` 5.0.4, the voices' lip sync on
+   * models with a MotionSync controller) is Redistributable Code of the Live2D Proprietary Software License Agreement,
+   * served as is from the storage bucket; `PUBLIC_CUBISM_MOTIONSYNC_CORE` points it elsewhere. A Spine 4.2 spine-core
+   * build defining the global `spine` (the characters of home spot talks) is optional; unset, stories play without it.
+   * See docs/story-player.md.
    */
-  motionSyncCore: import.meta.env.PUBLIC_CUBISM_MOTIONSYNC_CORE || "",
+  motionSyncCore:
+    import.meta.env.PUBLIC_CUBISM_MOTIONSYNC_CORE
+    || "https://storage.bdon.moe/moenotes/vendor/cubism-motionsync-core-5.0.4/live2dcubismmotionsynccore.min.js",
+  /** The license the MotionSync Core comes under, linked from the story player's help dialog. */
+  motionSyncLicense: "https://www.live2d.com/eula/live2d-proprietary-software-license-agreement_en.html",
   spineRuntime: import.meta.env.PUBLIC_SPINE_RUNTIME || "",
   region: "tw",
   fonts: {

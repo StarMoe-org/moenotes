@@ -447,6 +447,8 @@ export const koKR = {
     next: "다음 화",
     readText: "텍스트 읽기",
     noMotionSync: "이 사이트에서는 보이스 립싱크(Live2D MotionSync)를 사용할 수 없어, 이를 쓰는 캐릭터는 말하는 동안 입이 움직이지 않습니다.",
+    motionSyncLicense: "보이스 립싱크에는 Live2D Cubism MotionSync Core © Live2D Inc.를 사용하며, 이 사이트는 Live2D의 라이선스 계약에 따라 수정 없이 제공합니다. 이 사이트의 오픈 소스 코드에는 포함되지 않으며, 라이선스는 다른 용도로의 복제나 리버스 엔지니어링을 허용하지 않습니다.",
+    motionSyncLicenseLink: "Live2D 독점 소프트웨어 라이선스 계약",
     noMatches: "필터에 맞는 스토리가 없습니다.",
     notice: "스토리는 게임 자체의 데이터로 브라우저에서 재생되며, 보이는 모습이 게임의 최종 품질을 나타내지는 않습니다. 한 화에 수십~수백 MB를 내려받으므로 모바일 네트워크에서는 데이터 사용량에 주의해 주세요.",
     listLoading: "스토리 목록을 불러오는 중…",
@@ -497,7 +499,7 @@ export const koKR = {
         fullscreen: { name: "전체 화면", description: "스토리 화면을 화면 가득 표시합니다" },
       },
     },
-    credit: "Live2D Cubism Core © Live2D Inc. · emptysekai by StarMoe",
+    credit: "Live2D Cubism Core / MotionSync Core © Live2D Inc. · emptysekai by StarMoe",
   },
   live2d: {
     stageLabel: "Live2D 무대",

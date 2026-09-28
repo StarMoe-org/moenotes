@@ -482,6 +482,8 @@ export const zhCN = {
     next: "下一话",
     readText: "阅读文本",
     noMotionSync: "本站未提供语音口型同步（Live2D MotionSync）：使用它的角色说话时嘴部不会动。",
+    motionSyncLicense: "语音口型同步使用 Live2D Cubism MotionSync Core © Live2D Inc.，本站依照 Live2D 的许可协议原样提供。它不属于本站的开源代码；许可协议不允许将其复制作其他用途或进行逆向工程。",
+    motionSyncLicenseLink: "Live2D 专有软件许可协议",
     noMatches: "没有符合筛选条件的剧情。",
     notice: "剧情由浏览器根据游戏自身的数据播放，所见效果不代表游戏的最终品质。一话需要下载数十至数百 MB，使用移动网络时请留意流量。",
     listLoading: "正在加载剧情列表…",
@@ -532,7 +534,7 @@ export const zhCN = {
         fullscreen: { name: "全屏", description: "让剧情画面铺满屏幕" },
       },
     },
-    credit: "Live2D Cubism Core © Live2D Inc. · emptysekai by StarMoe",
+    credit: "Live2D Cubism Core / MotionSync Core © Live2D Inc. · emptysekai by StarMoe",
   },
   live2d: {
     stageLabel: "Live2D 舞台",

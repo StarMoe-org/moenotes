@@ -348,7 +348,7 @@ function LanguageSelect({ locale, languages, value, busy, onChange }: {
   );
 }
 
-/** How to use the player and what it is (and that this site has no voice lip sync when it has none). */
+/** How to use the player and what it is: the MotionSync Core's license, or that this site has no voice lip sync. */
 function StoryInfoDialog({ locale, open, onClose, runtimes }: { locale: AppLocale; open: boolean; onClose: () => void; runtimes: StoryRuntimes | null }) {
   // Before a story has loaded the page scripts, the deployment's configuration tells.
   const motionSync = runtimes ? runtimes.motionSync : Boolean(assetConfig.motionSyncCore);
@@ -406,7 +406,16 @@ function StoryInfoDialog({ locale, open, onClose, runtimes }: { locale: AppLocal
         <section className="space-y-2">
           <h3 className="text-xs font-black uppercase tracking-wider text-[var(--mn-text)]">{t(locale, "storyPlayer.info.about")}</h3>
           <p>{t(locale, "storyPlayer.notice")}</p>
-          {!motionSync && <Note>{t(locale, "storyPlayer.noMotionSync")}</Note>}
+          {motionSync ? (
+            <Note>
+              {t(locale, "storyPlayer.motionSyncLicense")}{" "}
+              <a href={assetConfig.motionSyncLicense} target="_blank" rel="noreferrer" className="font-bold text-[var(--mn-accent-deep)] underline underline-offset-2">
+                {t(locale, "storyPlayer.motionSyncLicenseLink")}
+              </a>
+            </Note>
+          ) : (
+            <Note>{t(locale, "storyPlayer.noMotionSync")}</Note>
+          )}
         </section>
       </div>
     </Modal>
