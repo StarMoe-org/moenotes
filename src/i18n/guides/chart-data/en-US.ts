@@ -4,6 +4,7 @@ import type { ChartDataGuide } from "./index";
 export const enUS: ChartDataGuide = {
   title: "Definitions, derivations and conditions",
   lead: "The figures on this page are sourced from the game client's decompiled code: ournotes-deck simulates every chart's whole live (once with Gekisou on, once off) after the score logic read from it, and the results are music-data.json's deck statistics. "
+    + "The simulation is our own program, rewritten after the decompiled code; it does not run the game's code in an emulator. The game's own functions are used only to check the rewrite piece by piece (see Scope of the checks below). "
     + "We aim for them to be correct but cannot guarantee it: our reading of the decompiled code, the model's simplifications and the data version can all be wrong. Where this page disagrees with other sites, tools or real plays, the mistake is most likely ours; trust them. "
     + "Below: each quantity's definition, derivation and conditions; the mechanisms the model leaves out have their own section.",
   sections: [
@@ -133,7 +134,9 @@ export const enUS: ChartDataGuide = {
         ["Snap skills", "Shuffled with their member; mostly conditional (the member's band, life, judgement counts), so deck-specific and left out here. A score up whose condition holds all live multiplies base by (1 + y)."],
         ["Probability skills (condition 4011)", "With an activation chance p independent of the rest, the expected contribution is that of the value p · x, which can be entered as the skill value; the spread is larger than shown."],
         ["Real play time", "When the results start and how long loading takes depend on the device and the network; the overhead c stands for them, and dominance holds for every c ≥ 0."],
-        ["Scope of the checks", "deck's rules are checked against the decompiled client code (the game's own functions run in an emulator and their outputs compared), not yet against real play results live by live. "
+        ["Scope of the checks", "The figures on this page do not come from running the game's code: ournotes-deck is our simulation, rewritten after the decompiled code, and it computes every chart's whole live. "
+          + "The game's own functions only check the rewrite piece by piece: the client's relevant functions (scoring, skill execute and finish, the Gekisou combo and others) run alone in an ARM64 emulator and are compared case by case with the rewrite; the parts checked so far show no difference. "
+          + "Parts not checked may be wrong; no whole live has been run with the game's code, and none has been checked against real play results yet. "
           + "Judgement window skills (4000–4003, 13001) are not in the whole-live simulation yet, and a few Gekisou conditions only have synthetic tests; the page uses the plain score-up skill only and is affected by neither. A game update or hotfix patch may also change these rules."],
       ],
     },
