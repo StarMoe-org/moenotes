@@ -20,9 +20,9 @@ import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import { storyEpisodeLabel } from "@/lib/story/labels";
 
-export type StorySection = "main" | "friendship" | "other";
+export type StorySection = "main" | "event" | "friendship" | "other";
 
-function storyCategoryKey(category: StoryCategory | "other"): string {
+export function storyCategoryKey(category: StoryCategory | "other"): string {
   if (category === "live-result") return "story.categories.liveResult";
   return `story.categories.${category}`;
 }
@@ -40,11 +40,12 @@ export default function StoryExplorer({ locale, servers, initialCategory, initia
   const texts = initialTexts;
 
   const inSection = (story: StoryViewModel) => initialCategory === "other" ? ["live-result", "home", "tutorial"].includes(story.category) : story.category === initialCategory;
+  const hasFilters = initialCategory !== "main";
   const filtered = useMemo(() => stories.filter((story) => inSection(story) && (initialCategory !== "other" || otherCategories.length === 0 || otherCategories.includes(story.category)) && (!query.trim() || story.searchText.includes(query.trim().toLocaleLowerCase()))), [stories, initialCategory, otherCategories, query]);
   const sortedStories = useMemo(() => sortEntries(filtered, sort.value, locale), [filtered, sort.value, locale]);
   const reset = () => { sort.onChange("default"); setQuery(""); setOtherCategories([]); };
   const categoryTotal = stories.filter(inSection).length;
-  const quickFilterContent = initialCategory === "main" ? null : (
+  const quickFilterContent = hasFilters ? (
     <BaseFilters
       sort={sort}
       variant="plain"
@@ -87,12 +88,12 @@ export default function StoryExplorer({ locale, servers, initialCategory, initia
         <div />
       )}
     </BaseFilters>
-  );
+  ) : null;
 
   useQuickFilter(
     t(locale, storyCategoryKey(initialCategory)),
     quickFilterContent,
-    [initialCategory, query, otherCategories, filtered.length, categoryTotal, locale, sort.value]
+    [initialCategory, query, otherCategories, filtered.length, categoryTotal, locale, sort.value],
   );
 
   if (initialCategory === "main") {
@@ -177,7 +178,7 @@ function MainStoryGroups({ stories, locale, sort }: { stories: StoryViewModel[];
 
 function StoryCard({ story, locale, onOpen }: { story: StoryViewModel; locale: AppLocale; onOpen: () => void }) {
   const assetUrl = useAssetUrl();
-  const hasCover = story.category === "main" || story.category === "friendship";
+  const hasCover = story.category !== "live-result" && story.category !== "home" && story.category !== "tutorial";
   const image = hasCover ? (story.assets.banner || story.assets.image) : "";
   const imageUrl = image ? assetUrl(getAssetUrl({ path: `Story/Banner/${story.assets.banner ? "Episode" : "Chapter"}/${image}.png`, type: "raw", locale })) : "";
 
@@ -207,7 +208,7 @@ function StoryCard({ story, locale, onOpen }: { story: StoryViewModel; locale: A
       </p>
     </div>
   </>;
-  return story.category === "main" || story.category === "friendship"
+  return hasCover
     ? <a href={localizePath(`/story/${story.advId}`, locale)} className={className} data-list-item-id={story.id}>{content}</a>
     : <button type="button" onClick={onOpen} className={className} data-list-item-id={story.id}>{content}</button>;
 }

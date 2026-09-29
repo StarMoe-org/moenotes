@@ -4,7 +4,7 @@ English | [简体中文](./README.md)
 
 MoeNotes is a static database and asset viewer for the *BanG Dream!* project *Our Notes*, developed by the [StarMoe](https://github.com/StarMoe-org) team.
 
-Built as a static site, it provides browsing, filtering, and inspection of game data including characters, cards, events, story scenarios, and music beatmaps.
+Built as a static site, it provides browsing, filtering, and inspection of game data including characters, cards, events, story scenarios, and music beatmaps. If you want to explore the game metadata or track update dynamics, visit [moenotes-masterdata](https://github.com/StarMoe-org/moenotes-masterdata).
 
 ## Features
 

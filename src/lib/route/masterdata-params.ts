@@ -4,7 +4,7 @@ import { validateMasterTable } from "@/lib/cards/data";
 import type { RouteStaticParamConfig } from "@/types/route";
 import { DEFAULT_LOCALE } from "@/config/locales";
 
-type DetailKind = "cards" | "support-cards" | "characters" | "music" | "gacha";
+type DetailKind = "cards" | "support-cards" | "characters" | "music" | "gacha" | "events";
 interface DetailRow { id: number; rarity?: number; cardType?: number }
 const tables: Record<DetailKind, string> = {
   cards: "MasterMemberCard.json",
@@ -12,6 +12,7 @@ const tables: Record<DetailKind, string> = {
   characters: "MasterCharacter.json",
   music: "MasterLiveMusic.json",
   gacha: "MasterGacha.json",
+  events: "MasterEvent.json",
 };
 
 export function detailParamsFromRows(kind: DetailKind, rows: DetailRow[]): RouteStaticParamConfig[] {

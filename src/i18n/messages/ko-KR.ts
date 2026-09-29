@@ -113,7 +113,7 @@ export const koKR = {
   nav: {
     home: "홈",
     groups: { database: "데이터베이스", events: "이벤트", story: "스토리", tools: "도구", community: "소개" },
-    items: { characters: "캐릭터", cards: "카드", supportCards: "서포트 카드", music: "음악", gacha: "뽑기", rewards: "미션·보상", titles: "칭호", backgrounds: "배경", stamps: "스티커", comics: "만화", items: "아이템", mainStory: "메인 스토리", eventStory: "이벤트 스토리", friendshipStory: "인연 스토리", otherStory: "기타 스토리", liveResultStory: "라이브 종료 대화", homeStory: "홈 스토리", tutorialStory: "튜토리얼 스토리", assetViewer: "에셋 뷰어", designSystem: "디자인 시스템", chartPreview: "채보 미리보기", live2dViewer: "Live2D 뷰어", storyPlayer: "스토리 플레이어", news: "공지사항", musicRanking: "곡 랭킹" },
+    items: { characters: "캐릭터", cards: "카드", supportCards: "서포트 카드", music: "음악", eventList: "이벤트 목록", gacha: "뽑기", rewards: "미션·보상", titles: "칭호", backgrounds: "배경", stamps: "스티커", comics: "만화", items: "아이템", mainStory: "메인 스토리", eventStory: "이벤트 스토리", friendshipStory: "인연 스토리", otherStory: "기타 스토리", liveResultStory: "라이브 종료 대화", homeStory: "홈 스토리", tutorialStory: "튜토리얼 스토리", assetViewer: "에셋 뷰어", designSystem: "디자인 시스템", chartPreview: "채보 미리보기", live2dViewer: "Live2D 뷰어", storyPlayer: "스토리 플레이어", news: "공지사항", musicRanking: "곡 랭킹" },
   },
   shell: {
     openSidebar: "사이드바 열기",
@@ -419,6 +419,53 @@ export const koKR = {
     },
     diaryTitle: "다이어리",
     growth: { limitBreak: "상한 해제", skillLevelHint: "스킬 레벨은 상한 해제 횟수에 따라 오릅니다." },
+  },
+  events: {
+    filterTitle: "이벤트 필터",
+    searchPlaceholder: "이벤트, 캐릭터, 곡 검색...",
+    status: "상태",
+    band: "보너스 밴드",
+    openDetail: "이벤트 보기: {name}",
+    emptyTitle: "조건에 맞는 이벤트가 없습니다",
+    emptyDescription: "현재 필터에 맞는 이벤트가 없습니다. 필터를 해제하고 진행 중인 이벤트와 지난 이벤트를 모두 둘러보세요.",
+    reset: "전체 보기",
+    noneOnServer: "{server}에서는 아직 이벤트가 열리지 않았습니다.",
+    showServer: "{server} 보기",
+    period: "개최 기간",
+    displayUntil: "이벤트 화면 공개 종료",
+    eventId: "이벤트 ID",
+    eventItem: "이벤트 아이템",
+    song: "이벤트 곡",
+    rankings: "랭킹",
+    rankingKinds: { score: "스코어 랭킹", music: "곡 랭킹", totalMusic: "곡 종합 랭킹" },
+    rankingOff: "없음",
+    cards: "이벤트 카드",
+    bonus: "이벤트 보너스",
+    bonusRank: "랭크 {rank}",
+    bonusRankLabel: "카드 랭크",
+    bonusNote: "랭크는 멤버 카드의 각성 횟수, 서포트 카드의 상한 해제 횟수입니다. 여러 조건을 충족하면 각 보너스 수치가 합산됩니다.",
+    bonusCardKinds: { member: "멤버 카드", support: "서포트 카드" },
+    bonusTarget: "조건",
+    bonusParameter: "능력치",
+    bonusEventItem: "이벤트 아이템",
+    bonusValue: "+{value}%",
+    bonusTargets: { attribute: "{name} 속성", tag: "태그 #{id}", any: "모든 카드" },
+    story: "이벤트 스토리",
+    storyUnlock: "{count} pt에 해금",
+    pointRewards: "이벤트 포인트 보상",
+    points: "{count} pt",
+    loopReward: "{from} pt 이후 {every} pt마다 획득",
+    liveRewards: "라이브 보상",
+    liveNote: "라이브 1회에 스코어 랭크별로 얻는 포인트와 아이템입니다.",
+    liveKinds: { live: "라이브", challenge: "챌린지 라이브" },
+    scoreRank: "스코어 랭크",
+    livePoints: "pt",
+    liveItems: "아이템",
+    probability: "{rate}% 확률",
+    bannerAlt: "{name} 배너",
+    backToList: "이벤트 목록으로",
+    notFoundTitle: "이벤트를 찾을 수 없습니다",
+    notFoundDescription: "이 이벤트는 이미 막을 내렸거나 아직 막이 오르지 않았습니다. 이벤트 목록에서 다른 무대를 찾아보세요.",
   },
   gacha: {
     searchPlaceholder: "뽑기 이름, 픽업 캐릭터, 카드 이름으로 검색...",
@@ -880,6 +927,7 @@ export const koKR = {
   story: {
     categories: {
       main: "메인 스토리",
+      event: "이벤트 스토리",
       friendship: "인연 스토리",
       liveResult: "라이브 종료 대화",
       home: "홈 스토리",
@@ -937,6 +985,7 @@ export const koKR = {
     notOnServer: "{server}에는 아직 없어 {source} 기준으로 표시합니다",
     schedules: "서버별 일정",
     timesIn: "시간은 {zone} 기준입니다",
+    localTimesIn: "시간은 모두 현지 시간({zone}) 기준입니다",
     label: "게임 서버",
     short: {
       tw: "번체",
@@ -990,7 +1039,7 @@ export const koKR = {
   seo: {
     events: {
       title: "게임 이벤트",
-      description: "BanG Dream! Our Notes 각 서버의 공지사항, 뽑기, 미션과 보상, 그리고 앞으로 열릴 게임 이벤트입니다.",
+      description: "BanG Dream! Our Notes 각 서버의 게임 이벤트, 공지사항, 뽑기, 미션과 보상입니다.",
     },
     musicRanking: {
       title: "곡 랭킹",
@@ -1055,6 +1104,14 @@ export const koKR = {
     gacha: {
       title: "Our Notes 멤버 모집 노트",
       description: "스포트라이트가 켜지던 순간의 떨리는 설렘을 다시 한번. 수많은 별이 빛나는 밤하늘 아래 소원을 띄우고, 당신만의 빛이 손바닥 위에 사뿐히 내려앉기를 기다려보세요.",
+    },
+    eventList: {
+      title: "이벤트 목록",
+      description: "BanG Dream! Our Notes 게임 이벤트 목록: 개최 기간, 보너스 멤버와 속성, 이벤트 카드, 이벤트 스토리, 포인트 보상과 라이브 보상을 서버별로 확인하세요.",
+    },
+    eventDetail: {
+      title: "이벤트 상세",
+      description: "이벤트의 개최 기간, 이벤트 보너스, 이벤트 카드와 곡, 스토리 해금 포인트, 포인트 보상과 라이브 보상. 여정의 약속 하나하나가 이곳에 적혀 있습니다.",
     },
     gachaDetail: {
       title: "모집 상세",

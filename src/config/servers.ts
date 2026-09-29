@@ -41,6 +41,26 @@ export const GAME_SERVER_PROFILES: Readonly<Record<GameServer, GameServerProfile
  */
 export const PRIMARY_SERVER: GameServer = "tw";
 
+/**
+ * Countries of the servers' flag icons (public/flags, see `flagIconSrc`): where each server's community reads the
+ * game, not where its publisher is. The Traditional Chinese server serves readers in several regions, so it takes
+ * the Hong Kong flag rather than any single one of them.
+ */
+export const GAME_SERVER_FLAGS: Readonly<Record<GameServer, string>> = {
+  tw: "hk",
+  jp: "jp",
+  kr: "kr",
+  en: "us",
+};
+
+/** Path of the primary server's flag icon. Other servers add their own, kebab-cased (see flagIconSrc). */
+export const PRIMARY_FLAG_ICON = `flags/${GAME_SERVER_FLAGS[PRIMARY_SERVER]}.svg`;
+
+/** Path of a server's round flag icon, under public/flags (Astro serves public/ at the site root). */
+export function flagIconSrc(server: GameServer): string {
+  return `/flags/${GAME_SERVER_FLAGS[server]}.svg`;
+}
+
 export function isGameServer(value: unknown): value is GameServer {
   return typeof value === "string" && (GAME_SERVERS as readonly string[]).includes(value);
 }

@@ -17,6 +17,7 @@ import type { RewardEntryKind, RewardEntrySummary } from "@/lib/rewards/data";
 import { getRoutePathById } from "@/lib/route/registry";
 import { formatScheduleRange, scheduleStatus, type ScheduleStatus } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
+import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 
 interface Props {
@@ -36,6 +37,7 @@ export function rewardBannerCrop(kind: RewardEntryKind): string {
 export default function RewardsExplorer({ locale, servers, initialEntries }: Props) {
   const memory = useListPageMemory("rewards");
   const now = useNow();
+  const timeZone = useDisplayTimeZone();
   const { server, pickServer, items: entries } = useServerList(locale, servers, initialEntries);
   const [query, setQuery] = useState("");
   const sort = useListSort("rewards", locale, "date");
@@ -157,7 +159,7 @@ export default function RewardsExplorer({ locale, servers, initialEntries }: Pro
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4 5xl:grid-cols-5">
-            {sortedEntries.map((entry) => <RewardEntryCard key={entry.slug} entry={entry} locale={locale} now={now} onClick={saveCurrentState} />)}
+            {sortedEntries.map((entry) => <RewardEntryCard key={entry.slug} entry={entry} locale={locale} now={now} timeZone={timeZone} onClick={saveCurrentState} />)}
           </div>
         )}
       </section>
@@ -165,8 +167,8 @@ export default function RewardsExplorer({ locale, servers, initialEntries }: Pro
   );
 }
 
-function RewardEntryCard({ entry, locale, now, onClick }: { entry: RewardEntrySummary; locale: AppLocale; now: number | null; onClick: () => void }) {
-  const schedule = formatScheduleRange(entry.startAt, entry.endAt, locale) || t(locale, "rewards.alwaysOpen");
+function RewardEntryCard({ entry, locale, now, timeZone, onClick }: { entry: RewardEntrySummary; locale: AppLocale; now: number | null; timeZone: string | null; onClick: () => void }) {
+  const schedule = formatScheduleRange(entry.startAt, entry.endAt, locale, timeZone) || t(locale, "rewards.alwaysOpen");
   return (
     <a
       href={localizePath(`${getRoutePathById("rewards")}/${entry.slug}`, locale)}

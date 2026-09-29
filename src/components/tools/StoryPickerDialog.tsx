@@ -39,7 +39,7 @@ export default function StoryPickerDialog({ locale, entries, open, onClose, curr
   const needle = query.trim().toLocaleLowerCase();
   const matches = useMemo(() => (needle ? entries.filter((entry) => entry.searchText.includes(needle)) : entries), [entries, needle]);
   const counts = useMemo(() => {
-    const result: Record<StorySection, number> = { main: 0, friendship: 0, other: 0 };
+    const result: Record<StorySection, number> = { main: 0, event: 0, friendship: 0, other: 0 };
     for (const entry of matches) result[entry.section] += 1;
     return result;
   }, [matches]);

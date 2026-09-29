@@ -1,0 +1,20 @@
+---
+import EventDetail from "@/components/events/EventDetail";
+import PageLayout from "@/layouts/PageLayout.astro";
+import type { AppLocale } from "@/config/locales";
+import { getBuildEventDetail } from "@/lib/masterdata/build-data";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
+
+interface Props {
+  locale: AppLocale;
+  eventId: number;
+}
+
+const { locale, eventId } = Astro.props;
+const event = await getBuildEventDetail(locale, eventId);
+const servers = await getBuildServers();
+---
+
+<PageLayout locale={locale} titleKey="seo.eventDetail.title" descriptionKey="seo.eventDetail.description">
+  <EventDetail client:load servers={servers} locale={locale} event={event} />
+</PageLayout>

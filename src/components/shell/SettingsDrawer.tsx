@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useState, type CSSProperties, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
-import { LOCALE_FLAGS, LOCALE_LABELS, SUPPORTED_LOCALES } from "@/config/locales";
+import { LOCALE_LABELS, SUPPORTED_LOCALES, flagIconSrc } from "@/config/locales";
+import { flagIconSrc as serverFlagIconSrc } from "@/config/servers";
 import { switchLocalePath } from "@/i18n/routing";
 import { t } from "@/i18n";
 import {
@@ -75,6 +76,10 @@ function GeneralSettings({ locale, pathname }: SettingsDrawerProps) {
   const update = (patch: Partial<AppSettings>) => {
     updateSettings(patch);
   };
+  // The flag of the server the choice stands for: `auto` follows the site language, so it shows that one's.
+  const serverFlag = (value: AppSettings["gameServer"]) => (
+    <img src={serverFlagIconSrc(value === "auto" ? defaultGameServer(locale) : value)} alt="" aria-hidden="true" loading="lazy" decoding="async" className="h-5 w-5 shrink-0 rounded-full" />
+  );
   const serverLabel = (value: AppSettings["gameServer"]) =>
     value === "auto"
       ? t(locale, "settings.gameServerAuto", { server: t(locale, `gameServer.names.${defaultGameServer(locale)}`) })
@@ -94,9 +99,7 @@ function GeneralSettings({ locale, pathname }: SettingsDrawerProps) {
               {...aria}
             >
               <span className="flex min-w-0 items-center gap-2">
-                <span className="text-base leading-none" aria-hidden="true">
-                  {LOCALE_FLAGS[locale] /* emoji-allow */}
-                </span>
+                <img src={flagIconSrc(locale)} alt="" aria-hidden="true" className="h-5 w-5 shrink-0 rounded-full" />
                 <span className="truncate">{LOCALE_LABELS[locale]}</span>
               </span>
               {chevronDown}
@@ -112,9 +115,7 @@ function GeneralSettings({ locale, pathname }: SettingsDrawerProps) {
                   className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${item === locale ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
                   onClick={closePopover}
                 >
-                  <span className="text-base leading-none" aria-hidden="true">
-                    {LOCALE_FLAGS[item] /* emoji-allow */}
-                  </span>
+                  <img src={flagIconSrc(item)} alt="" aria-hidden="true" loading="lazy" className="h-5 w-5 shrink-0 rounded-full" />
                   <span>{LOCALE_LABELS[item]}</span>
                 </a>
               ))}
@@ -146,7 +147,10 @@ function GeneralSettings({ locale, pathname }: SettingsDrawerProps) {
               onClick={onClick}
               {...aria}
             >
-              <span className="truncate">{serverLabel(settings.gameServer)}</span>
+              <span className="flex min-w-0 items-center gap-2">
+                {serverFlag(settings.gameServer)}
+                <span className="truncate">{serverLabel(settings.gameServer)}</span>
+              </span>
               {chevronDown}
             </button>
           )}
@@ -164,7 +168,10 @@ function GeneralSettings({ locale, pathname }: SettingsDrawerProps) {
                     closePopover();
                   }}
                 >
-                  {serverLabel(item)}
+                  <span className="flex min-w-0 items-center gap-2">
+                    {serverFlag(item)}
+                    <span>{serverLabel(item)}</span>
+                  </span>
                 </button>
               ))}
             </>
@@ -348,3 +355,4 @@ function Segmented({
     </div>
   );
 }
+

@@ -3,6 +3,7 @@ import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import ServerScope from "@/components/shared/ServerScope";
 import ServerSchedules from "@/components/shared/ServerSchedules";
+import TimesNote from "@/components/shared/TimesNote";
 import { moveReleaseUrls } from "@/lib/assets/release";
 import { entityServer, valueForServer, type ServerFacetedValue } from "@/lib/servers/facets";
 import { useAssetUrl, useContentServer } from "@/lib/servers/use-content-server";
@@ -22,8 +23,9 @@ import type { GachaDetailViewModel, GachaPool } from "@/lib/gacha/data";
 import { formatCompactCount } from "@/lib/format/compact-count";
 import { getItemIconUrl } from "@/lib/items/assets";
 import { getRoutePathById } from "@/lib/route/registry";
-import { formatScheduleRange, masterUtcLabel } from "@/lib/schedule";
+import { formatScheduleRange } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
+import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { getSupportRarityIconUrl, type SupportCardRarity } from "@/lib/support-cards/assets";
 
 interface Props {
@@ -57,13 +59,14 @@ export default function GachaDetail({ locale, gacha: faceted, servers }: Props) 
 function GachaDetailView({ locale, gacha, schedules }: { locale: AppLocale; gacha: GachaDetailViewModel | null; schedules: ReactNode }) {
   const assetUrl = useAssetUrl();
   const now = useNow();
+  const timeZone = useDisplayTimeZone();
   const [openPool, setOpenPool] = useState<PoolKind | null>(null);
   const pickupMembers = useMemo(() => new Set(gacha?.pickupMemberIds), [gacha]);
   const pickupSupports = useMemo(() => new Set(gacha?.pickupSupportIds), [gacha]);
 
   if (!gacha) return <NotFound locale={locale} />;
 
-  const schedule = formatScheduleRange(gacha.startAt, gacha.endAt, locale) || t(locale, "gacha.alwaysOpen");
+  const schedule = formatScheduleRange(gacha.startAt, gacha.endAt, locale, timeZone) || t(locale, "gacha.alwaysOpen");
   const pickupBadge = t(locale, "gacha.pickup");
   const pickupCards = [
     ...gacha.memberCards.filter((card) => pickupMembers.has(card.id)).map((card) => <MemberCardItem key={`m${card.id}`} card={card} locale={locale} badge={pickupBadge} />),
@@ -103,7 +106,7 @@ function GachaDetailView({ locale, gacha, schedules }: { locale: AppLocale; gach
                 <DetailRow label={t(locale, "gacha.period")} value={<span className="tabular-nums">{schedule}</span>} />
                 <DetailRow label={t(locale, "gacha.gachaId")} value={`#${gacha.id}`} />
               </div>
-              <p className="mt-3 text-xs text-[var(--mn-text-muted)]">{t(locale, "gameServer.timesIn", { zone: masterUtcLabel(gacha.startAt || gacha.endAt) })}</p>
+              <TimesNote locale={locale} value={gacha.startAt || gacha.endAt} timeZone={timeZone} className="mt-3 text-xs text-[var(--mn-text-muted)]" />
               {schedules}
             </div>
           </div>

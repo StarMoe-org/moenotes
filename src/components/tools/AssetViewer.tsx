@@ -11,6 +11,7 @@ import { AssetBrowserError, assetBrowserUrl, defaultCatalog, fetchAssetBrowser }
 import { getAssetBrowserPreview } from "@/lib/assets/preview";
 import { serverOfAssetRegion } from "@/lib/assets/release";
 import { PRIMARY_SERVER, type GameServer } from "@/config/servers";
+import ServerFlag from "@/components/shared/ServerFlag";
 import type { AssetCatalog, AssetRegion, BundleBrowsePage, BundleContent, BundleScanStatus } from "@/types/asset-browser";
 
 interface Props { locale: AppLocale }
@@ -184,19 +185,24 @@ function ToolButton({ icon, label, onClick, disabled = false, active = false }: 
   );
 }
 
-function ScopeSelect({ title, value, options, onChange }: { title: string; value: string; options: { value: string; label: string }[]; onChange: (value: string) => void }) {
+function ScopeSelect({ title, value, options, onChange }: { title: string; value: string; options: { value: string; label: string; flag?: GameServer }[]; onChange: (value: string) => void }) {
+  const selected = options.find((option) => option.value === value);
   return (
     <FilterSection title={title}>
       <Popover matchTriggerWidth trigger={({ ref, onClick, ...aria }) => (
         <button ref={ref} type="button" onClick={onClick} {...aria} disabled={!options.length} aria-label={`${title}: ${options.find((option) => option.value === value)?.label ?? ""}`} className="mn-focus mn-stamp-press flex w-full items-center justify-between gap-2 rounded-xl border border-[var(--mn-border)] bg-[var(--mn-paper)] px-3 py-2.5 text-left text-sm font-bold disabled:opacity-50">
-          <span className="min-w-0 truncate">{options.find((option) => option.value === value)?.label ?? "—"}</span>
+          <span className="flex min-w-0 items-center gap-2">
+            {selected?.flag && <ServerFlag server={selected.flag} className="h-4 w-4" />}
+            <span className="min-w-0 truncate">{selected?.label ?? "—"}</span>
+          </span>
           <Icon name="chevronDown" className="h-4 w-4 shrink-0 text-[var(--mn-text-muted)]" />
         </button>
       )}>
         {({ close }) => (
           <div className="space-y-1" role="group" aria-label={title}>
             {options.map((option) => (
-              <button key={option.value} type="button" aria-pressed={option.value === value} className={`mn-focus block w-full rounded-lg px-3 py-2 text-left text-sm ${option.value === value ? "bg-[var(--mn-accent-soft)] font-bold text-[var(--mn-accent-deep)]" : "hover:bg-[var(--mn-surface)]"}`} onClick={() => { onChange(option.value); close(); }}>
+              <button key={option.value} type="button" aria-pressed={option.value === value} className={`mn-focus flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm ${option.value === value ? "bg-[var(--mn-accent-soft)] font-bold text-[var(--mn-accent-deep)]" : "hover:bg-[var(--mn-surface)]"}`} onClick={() => { onChange(option.value); close(); }}>
+                {option.flag && <ServerFlag server={option.flag} className="h-4 w-4" />}
                 {option.label}
               </button>
             ))}
@@ -422,7 +428,7 @@ export default function AssetViewer({ locale }: Props) {
     >
       {(regions.data?.length ?? 0) > 1 && <ScopeSelect title={t(locale, "gameServer.label")} value={region?.id ?? ""} options={(regions.data ?? []).map((item) => {
         const server = serverOfAssetRegion(item.id);
-        return { value: item.id, label: server ? t(locale, `gameServer.names.${server}`) : item.id };
+        return { value: item.id, label: server ? t(locale, `gameServer.names.${server}`) : item.id, ...(server ? { flag: server } : {}) };
       })} onChange={(value) => changeScope({ region: value, language: "", snapshot: "" })} />}
       <ScopeSelect title={t(locale, "assetBrowser.language")} value={language} options={languages.map((value) => ({ value, label: languageNames.of(value) ?? value }))} onChange={(value) => changeScope({ region: region?.id ?? "", language: value, snapshot: "" })} />
       <ScopeSelect title={t(locale, "assetBrowser.snapshot")} value={snapshot} options={(catalogs.data ?? []).map((item) => ({ value: item.snapshot, label: `${item.version} · ${new Date(item.created * 1000).toLocaleString(locale)}${item.current ? ` · ${t(locale, "assetBrowser.current")}` : ""}` }))} onChange={(value) => changeScope({ region: region?.id ?? "", language, snapshot: value })} />

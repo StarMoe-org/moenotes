@@ -1,0 +1,20 @@
+---
+import EventsExplorer from "@/components/events/EventsExplorer";
+import PageLayout from "@/layouts/PageLayout.astro";
+import type { AppLocale } from "@/config/locales";
+import { getBuildCharacters, getBuildEvents } from "@/lib/masterdata/build-data";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
+
+interface Props {
+  locale: AppLocale;
+}
+
+const { locale } = Astro.props;
+const [events, { bands }] = await Promise.all([getBuildEvents(locale), getBuildCharacters(locale)]);
+const bandOptions: Array<[number, string]> = bands.map((band) => [band.id, band.name]);
+const servers = await getBuildServers();
+---
+
+<PageLayout locale={locale} titleKey="seo.eventList.title" descriptionKey="seo.eventList.description">
+  <EventsExplorer client:load servers={servers} locale={locale} initialEvents={events} bands={bandOptions} />
+</PageLayout>

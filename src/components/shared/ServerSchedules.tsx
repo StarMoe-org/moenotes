@@ -2,7 +2,9 @@ import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import { t } from "@/i18n";
 import { valueForServer, type ServerFacetedValue } from "@/lib/servers/facets";
-import { formatScheduleRange, masterUtcLabel, parseMasterDate } from "@/lib/schedule";
+import { displayUtcLabel, formatScheduleRange, parseMasterDate } from "@/lib/schedule";
+import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
+import ServerFlag from "@/components/shared/ServerFlag";
 
 interface Scheduled {
   startAt: string;
@@ -19,8 +21,9 @@ interface Props<T extends Scheduled> {
   alwaysLabel: string;
 }
 
-/** Each server's window of a scheduled entity, in that server's time; nothing when the servers agree. */
+/** Each server's window of a scheduled entity, in the reader's time (the server's in the static HTML); nothing when the servers agree. */
 export default function ServerSchedules<T extends Scheduled>({ locale, faceted, servers, alwaysLabel }: Props<T>) {
+  const timeZone = useDisplayTimeZone();
   const windows = faceted.servers
     .filter((server) => servers.includes(server))
     .map((server) => ({ server, ...pick(valueForServer(faceted, server)) }));
@@ -32,9 +35,13 @@ export default function ServerSchedules<T extends Scheduled>({ locale, faceted, 
       <ul className="mt-2 space-y-1 text-sm">
         {windows.map(({ server, startAt, endAt }) => (
           <li key={server} className="flex flex-wrap items-baseline gap-x-2">
-            <span className="w-16 shrink-0 text-xs font-bold text-[var(--mn-accent-deep)]">{t(locale, `gameServer.short.${server}`)}</span>
-            <span className="tabular-nums text-[var(--mn-text)]">{formatScheduleRange(startAt, endAt, locale) || alwaysLabel}</span>
-            <span className="text-[11px] text-[var(--mn-text-muted)]">{masterUtcLabel(startAt || endAt)}</span>
+            {/* The flag alone marks the server; the name is in the title and for screen readers. */}
+            <span className="flex shrink-0 items-center self-center" title={t(locale, `gameServer.names.${server}`)}>
+              <ServerFlag server={server} />
+              <span className="sr-only">{t(locale, `gameServer.names.${server}`)}</span>
+            </span>
+            <span className="tabular-nums text-[var(--mn-text)]">{formatScheduleRange(startAt, endAt, locale, timeZone) || alwaysLabel}</span>
+            <span className="text-[11px] text-[var(--mn-text-muted)]">{displayUtcLabel(startAt || endAt, timeZone)}</span>
           </li>
         ))}
       </ul>

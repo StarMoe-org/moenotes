@@ -17,7 +17,7 @@ import StoryPlayerLink from "@/components/story/StoryPlayerLink";
 /** Main episodes have an illustration; bond stories only a banner. Banners carry lettering, so they follow the locale. */
 function storyArtworkUrl(story: StoryViewModel | null, locale: AppLocale): string {
   if (!story) return "";
-  if (story.category === "main" && story.assets.image) return getAssetUrl({ path: `Story/Image/Episode/${story.assets.image}.png`, type: "raw", locale });
+  if ((story.category === "main" || story.category === "event") && story.assets.image) return getAssetUrl({ path: `Story/Image/Episode/${story.assets.image}.png`, type: "raw", locale });
   if (story.assets.banner) return getAssetUrl({ path: `Story/Banner/Episode/${story.assets.banner}.png`, type: "raw", locale });
   return "";
 }
@@ -53,6 +53,7 @@ export default function StoryDetail({ servers, advServers, story, ...props }: St
 function StoryDetailView({ locale, advId, initialTitle, initialScript, initialCharacters, initialTexts, story, previous, next }: Omit<StoryDetailProps, "story"> & { story: StoryViewModel | null }) {
   const [artworkFailed, setArtworkFailed] = useState(false);
   const artworkUrl = useAssetUrl()(storyArtworkUrl(story, locale));
+  const isChapter = story?.category === "main" || story?.category === "event";
   const episodeLabel = story ? storyEpisodeLabel(locale, story) : "";
   const eyebrow = [story?.groupTitle || story?.bandName, episodeLabel].filter(Boolean).join(" · ");
 
@@ -63,7 +64,7 @@ function StoryDetailView({ locale, advId, initialTitle, initialScript, initialCh
           src={artworkUrl}
           alt=""
           onError={() => setArtworkFailed(true)}
-          className={`w-full shrink-0 border-b-[1.5px] border-[var(--mn-border)] bg-[var(--mn-cream-deep)] object-cover sm:w-72 sm:border-b-0 sm:border-r-[1.5px] ${story?.category === "main" ? "aspect-[4/3]" : "aspect-[49/16] sm:aspect-auto"}`}
+          className={`w-full shrink-0 border-b-[1.5px] border-[var(--mn-border)] bg-[var(--mn-cream-deep)] object-cover sm:w-72 sm:border-b-0 sm:border-r-[1.5px] ${isChapter ? "aspect-[4/3]" : "aspect-[49/16] sm:aspect-auto"}`}
         />
       )}
       <div className="flex min-w-0 flex-1 flex-col justify-center p-6">

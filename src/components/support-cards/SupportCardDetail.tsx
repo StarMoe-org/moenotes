@@ -7,6 +7,7 @@ import { entityServer, valueForServer, type ServerFacetedValue } from "@/lib/ser
 import { useAssetUrl, useContentServer } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
 import { formatMasterDay } from "@/lib/schedule";
+import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { localizePath } from "@/i18n/routing";
 import { getRoutePathById } from "@/lib/route/registry";
 import Modal from "@/components/shared/Modal";
@@ -89,6 +90,7 @@ export default function SupportCardDetail({ locale, initialData, servers }: Prop
 
 function SupportCardDetailView({ locale, data }: { locale: AppLocale; data: DetailData }) {
   const assetUrl = useAssetUrl();
+  const timeZone = useDisplayTimeZone();
   const loading = false;
   const error = false;
   const [, setReloadKey] = useState(0);
@@ -414,7 +416,7 @@ function SupportCardDetailView({ locale, data }: { locale: AppLocale; data: Deta
                         </div>
                         <div className="flex justify-between border-b border-[var(--mn-border)]/20 pb-1">
                           <span>Release</span>
-                          <span className="text-[var(--mn-text)]">{formatMasterDay(card.startAt, locale)}</span>
+                          <span className="text-[var(--mn-text)]">{formatMasterDay(card.startAt, locale, timeZone)}</span>
                         </div>
                         <div className="flex justify-between border-b border-[var(--mn-border)]/20 pb-1">
                           <span>Card ID</span>
@@ -509,7 +511,7 @@ function SupportCardDetailView({ locale, data }: { locale: AppLocale; data: Deta
                     </span>
                   }
                 />
-                <DetailRow label={t(locale, "cards.detailReleasedAt")} value={formatMasterDay(card.startAt, locale)} />
+                <DetailRow label={t(locale, "cards.detailReleasedAt")} value={formatMasterDay(card.startAt, locale, timeZone)} />
                 <DetailRow label={t(locale, "cards.detailCardId")} value={`#${card.id}`} />
                 <DetailRow label={t(locale, "cards.detailAssetId")} value={`#${card.assetId}`} />
 

@@ -8,7 +8,7 @@ import {
 } from "@/lib/cards/data";
 import { localizeMasterText } from "@/lib/masterdata/localize-text";
 
-export type StoryCategory = "main" | "friendship" | "live-result" | "home" | "tutorial";
+export type StoryCategory = "main" | "event" | "friendship" | "live-result" | "home" | "tutorial";
 /** A chapter's main episodes, its per-character another episodes and its extra episodes each number from 1. */
 export type StoryEpisodeKind = "main" | "another" | "extra";
 export type HomeStoryKind = "tap-talk" | "spot-intro";
@@ -145,6 +145,8 @@ export interface StoryMasterData {
   characters: RawStoryCharacter[];
   bands: RawBand[];
   texts: RawText[];
+  /** Event story chapters (MasterEvent._storyChapterId) and the event they belong to; other chapters are main story. */
+  eventChapters?: Array<{ chapterId: number; eventId: number }>;
 }
 
 export interface StoryUnlockCondition {
@@ -172,6 +174,8 @@ export interface StoryViewModel {
   id: string;
   sourceId: number;
   category: StoryCategory;
+  /** The event the episode's chapter belongs to; null for every other story. */
+  eventId: number | null;
   homeKind: HomeStoryKind | null;
   advId: number;
   playbackMode: number;
@@ -216,6 +220,7 @@ export function normalizeStories(data: StoryMasterData, locale: AppLocale): Stor
   const resolveText = (id: string) => localizeMasterText(textMap.get(id), locale) || id;
   const characterNames = (ids: number[]) => ids.map((id) => resolveText(characterMap.get(id)?.nameTextID ?? ""));
   const bandName = (id: number) => resolveText(bandMap.get(id)?.nameTextID ?? "");
+  const eventChapterMap = new Map((data.eventChapters ?? []).map((entry) => [entry.chapterId, entry.eventId]));
   const stories: StoryViewModel[] = [];
   const referencedAdvIds = new Set<number>();
 
@@ -229,9 +234,11 @@ export function normalizeStories(data: StoryMasterData, locale: AppLocale): Stor
     const ids = episodeKind === "another" && episode.characterId
       ? [episode.characterId]
       : chapter?.mainCharacterIds ?? (episode.characterId ? [episode.characterId] : []);
+    const eventId = eventChapterMap.get(episode.chapterId) ?? null;
     stories.push(buildStory({
       sourceId: episode.id,
-      category: "main",
+      category: eventId === null ? "main" : "event",
+      eventId,
       adv,
       title: resolveText(adv.titleTextId),
       description: resolveText(episode.descriptionTextId),
@@ -413,7 +420,8 @@ export function storyNeighbors(stories: StoryViewModel[], advId: number): { prev
   const current = stories.find((story) => story.advId === advId);
   if (!current) return { previous: null, next: null };
   const seen = new Set<number>();
-  const ordered = stories.filter((story) => story.category === current.category && !seen.has(story.advId) && seen.add(story.advId));
+  // An event's episodes follow one another; the main story follows the whole run of chapters.
+  const ordered = stories.filter((story) => story.category === current.category && (current.category !== "event" || story.eventId === current.eventId) && !seen.has(story.advId) && seen.add(story.advId));
   const index = ordered.findIndex((story) => story.advId === advId);
   const neighbor = (story: StoryViewModel | undefined): StoryNeighbor | null => story
     ? { advId: story.advId, title: story.title, episodeKind: story.episodeKind, episodeNumber: story.episodeNumber, groupTitle: story.groupTitle }
@@ -436,6 +444,8 @@ export { localizeMasterText } from "@/lib/masterdata/localize-text";
 interface BuildStoryInput {
   sourceId: number;
   category: StoryCategory;
+  /** Set for an event story episode. */
+  eventId?: number | null;
   homeKind?: HomeStoryKind;
   adv: RawAdv;
   title: string;
@@ -475,6 +485,7 @@ function buildStory(input: BuildStoryInput): StoryViewModel {
     id: `${input.category}:${input.homeKind ?? "episode"}:${input.sourceId}`,
     sourceId: input.sourceId,
     category: input.category,
+    eventId: input.eventId ?? null,
     homeKind: input.homeKind ?? null,
     advId: input.adv.id,
     playbackMode: input.adv.playbackMode,

@@ -84,7 +84,7 @@ import {
 import { buildHomeData, type HomeData, type RawHomeBanner } from "@/lib/home/data";
 import { normalizeDegrees, type DegreeViewModel, type RawDegree } from "@/lib/degrees/data";
 import { normalizeBackgrounds, type BackgroundViewModel, type RawBackground } from "@/lib/backgrounds/data";
-import { createRewardResolver, type RawHomeSpot as RawRewardHomeSpot } from "@/lib/rewards/resources";
+import { createRewardResolver, type RawHomeSpot as RawRewardHomeSpot, type RewardResolver } from "@/lib/rewards/resources";
 import {
   normalizeRewardEntries,
   toRewardEntrySummary,
@@ -100,6 +100,19 @@ import {
   type RewardEntryDetail,
   type RewardEntrySummary,
 } from "@/lib/rewards/data";
+import {
+  normalizeEvents,
+  toEventSummary,
+  type EventDetailViewModel,
+  type EventViewModel,
+  type RawEvent,
+  type RawEventAchievementLoopReward,
+  type RawEventAchievementReward,
+  type RawEventEffect,
+  type RawEventPickUpCard,
+  type RawLiveEventPoint,
+  type RawLiveEventReward,
+} from "@/lib/events/data";
 
 /*
  * Build-time view models of the merged catalog (docs/servers.md). Every `…On(server, locale)` selector computes one
@@ -415,14 +428,10 @@ export function getBuildBackgrounds(locale: AppLocale): Promise<ServerFaceted<Ba
   return mergedList(`backgrounds:${locale}`, (server) => backgroundsOn(server, locale), (background) => background.id);
 }
 
-function rewardEntryDetailsOn(server: GameServer, locale: AppLocale): Promise<RewardEntryDetail[]> {
-  return memo(`reward-entries:${server}:${locale}`, async () => {
-    const [
-      items, cards, supportCards, music, stamps, degrees, spots, textTable,
-      seasonPasses, seasonPassLevels, seasonPassLevelRewards, seasonPassRewards, seasonPassMissions,
-      missionGroups, missions, missionRewards, loginBonuses, loginBonusSlots,
-      exchanges, chapters, episodes, advs, bands, characters,
-    ] = await Promise.all([
+/** Names and artwork of the resources a server's rewards hand out (MasterData resourceType / resourceId). */
+function rewardResolverOn(server: GameServer, locale: AppLocale): Promise<RewardResolver> {
+  return memo(`reward-resolver:${server}:${locale}`, async () => {
+    const [items, cards, supportCards, music, stamps, degrees, spots, textTable] = await Promise.all([
       itemsOn(server, locale),
       cardsOn(server, locale),
       supportCardsOn(server, locale),
@@ -430,6 +439,22 @@ function rewardEntryDetailsOn(server: GameServer, locale: AppLocale): Promise<Re
       stampsOn(server, locale),
       degreesOn(server, locale),
       table<RawRewardHomeSpot>("MasterHomeSpot.json", server),
+      texts(server),
+    ]);
+    return createRewardResolver({ items, cards, supportCards, music, stamps, degrees, spots: spots._allData, texts: textTable._allData }, locale);
+  });
+}
+
+function rewardEntryDetailsOn(server: GameServer, locale: AppLocale): Promise<RewardEntryDetail[]> {
+  return memo(`reward-entries:${server}:${locale}`, async () => {
+    const [
+      resolve, music, textTable,
+      seasonPasses, seasonPassLevels, seasonPassLevelRewards, seasonPassRewards, seasonPassMissions,
+      missionGroups, missions, missionRewards, loginBonuses, loginBonusSlots,
+      exchanges, chapters, episodes, advs, bands, characters,
+    ] = await Promise.all([
+      rewardResolverOn(server, locale),
+      musicOn(server, locale),
       texts(server),
       table<RawSeasonPass>("MasterSeasonPass.json", server),
       table<RawSeasonPassLevel>("MasterSeasonPassLevel.json", server),
@@ -448,7 +473,6 @@ function rewardEntryDetailsOn(server: GameServer, locale: AppLocale): Promise<Re
       table<RawBand>("MasterBand.json", server),
       table<RawCharacter>("MasterCharacter.json", server),
     ]);
-    const resolve = createRewardResolver({ items, cards, supportCards, music, stamps, degrees, spots: spots._allData, texts: textTable._allData }, locale);
     return normalizeRewardEntries({
       seasonPasses: seasonPasses._allData,
       seasonPassLevels: seasonPassLevels._allData,
@@ -482,6 +506,61 @@ export function getBuildRewardEntries(locale: AppLocale): Promise<ServerFaceted<
 
 export function getBuildRewardEntryDetail(locale: AppLocale, slug: string): Promise<ServerFacetedValue<RewardEntryDetail> | null> {
   return mergedValue(`reward-entry:${locale}:${slug}`, async (server) => (await rewardEntryDetailsOn(server, locale)).find((entry) => entry.slug === slug) ?? null);
+}
+
+function eventDetailsOn(server: GameServer, locale: AppLocale): Promise<EventDetailViewModel[]> {
+  return memo(`event-details:${server}:${locale}`, async () => {
+    const [
+      events, effects, pickUpCards, achievementRewards, loopRewards, livePoints, liveRewards, challengePoints, challengeRewards, rewards,
+      characters, bands, textTable, resolve, cards, supportCards, music, stories,
+    ] = await Promise.all([
+      table<RawEvent>("MasterEvent.json", server),
+      table<RawEventEffect>("MasterEventEffect.json", server),
+      table<RawEventPickUpCard>("MasterEventPickUpCard.json", server),
+      table<RawEventAchievementReward>("MasterEventAchievementReward.json", server),
+      table<RawEventAchievementLoopReward>("MasterEventAchievementLoopReward.json", server),
+      table<RawLiveEventPoint>("MasterLiveEventPoint.json", server),
+      table<RawLiveEventReward>("MasterLiveEventReward.json", server),
+      table<RawLiveEventPoint>("MasterChallengeLiveEventPoint.json", server),
+      table<RawLiveEventReward>("MasterChallengeLiveEventReward.json", server),
+      table<RawRewardRow>("MasterReward.json", server),
+      table<RawCharacter>("MasterCharacter.json", server),
+      table<RawBand>("MasterBand.json", server),
+      texts(server),
+      rewardResolverOn(server, locale),
+      cardsOn(server, locale),
+      supportCardsOn(server, locale),
+      musicOn(server, locale),
+      storiesOn(server, locale),
+    ]);
+    return normalizeEvents({
+      events: events._allData,
+      effects: effects._allData,
+      pickUpCards: pickUpCards._allData,
+      achievementRewards: achievementRewards._allData,
+      loopRewards: loopRewards._allData,
+      livePoints: livePoints._allData,
+      liveRewards: liveRewards._allData,
+      challengePoints: challengePoints._allData,
+      challengeRewards: challengeRewards._allData,
+      rewards: rewards._allData,
+      characters: characters._allData,
+      bands: bands._allData,
+      texts: textTable._allData,
+    }, { cards, supportCards, music, stories }, resolve, locale);
+  });
+}
+
+function eventsOn(server: GameServer, locale: AppLocale): Promise<EventViewModel[]> {
+  return memo(`events:${server}:${locale}`, async () => (await eventDetailsOn(server, locale)).map(toEventSummary));
+}
+
+export function getBuildEvents(locale: AppLocale): Promise<ServerFaceted<EventViewModel>[]> {
+  return mergedList(`events:${locale}`, (server) => eventsOn(server, locale), (event) => event.id);
+}
+
+export function getBuildEventDetail(locale: AppLocale, eventId: number): Promise<ServerFacetedValue<EventDetailViewModel> | null> {
+  return mergedValue(`event-detail:${locale}:${eventId}`, async (server) => (await eventDetailsOn(server, locale)).find((event) => event.id === eventId) ?? null);
 }
 
 function stampsOn(server: GameServer, locale: AppLocale): Promise<StampViewModel[]> {
@@ -531,7 +610,7 @@ export function getBuildBandNames(locale: AppLocale): Promise<Array<[number, str
 
 function storiesOn(server: GameServer, locale: AppLocale): Promise<StoryViewModel[]> {
   return memo(`stories:${server}:${locale}`, async () => {
-    const [chapters, episodes, friendshipEpisodes, homeTapEpisodes, liveResultEpisodes, advs, homeSpots, friendships, characters, bands, textTable] = await Promise.all([
+    const [chapters, episodes, friendshipEpisodes, homeTapEpisodes, liveResultEpisodes, advs, homeSpots, friendships, characters, bands, textTable, events] = await Promise.all([
       table<RawStoryChapter>("MasterStoryChapter.json", server),
       table<RawStoryEpisode>("MasterStoryEpisode.json", server),
       table<RawStoryFriendshipEpisode>("MasterStoryFriendshipEpisode.json", server),
@@ -543,8 +622,10 @@ function storiesOn(server: GameServer, locale: AppLocale): Promise<StoryViewMode
       table<RawStoryCharacter>("MasterCharacter.json", server),
       table<RawBand>("MasterBand.json", server),
       texts(server),
+      table<RawEvent>("MasterEvent.json", server),
     ]);
     return normalizeStories({
+      eventChapters: events._allData.map((event) => ({ chapterId: event.storyChapterId, eventId: event.id })).filter((entry) => entry.chapterId > 0),
       chapters: chapters._allData,
       episodes: episodes._allData,
       friendshipEpisodes: friendshipEpisodes._allData,

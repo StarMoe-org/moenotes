@@ -3,6 +3,7 @@ import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import ServerScope from "@/components/shared/ServerScope";
 import ServerSchedules from "@/components/shared/ServerSchedules";
+import TimesNote from "@/components/shared/TimesNote";
 import { moveReleaseUrls } from "@/lib/assets/release";
 import { entityServer, valueForServer, type ServerFacetedValue } from "@/lib/servers/facets";
 import { useContentServer } from "@/lib/servers/use-content-server";
@@ -14,8 +15,9 @@ import ScheduleBadge from "@/components/shared/ScheduleBadge";
 import { rewardBannerCrop } from "@/components/rewards/RewardsExplorer";
 import type { LoginBonusDetail, MissionGroupDetail, MissionViewModel, RewardEntryDetail, SeasonPassDetail } from "@/lib/rewards/data";
 import { getRoutePathById } from "@/lib/route/registry";
-import { formatScheduleRange, masterUtcLabel } from "@/lib/schedule";
+import { formatScheduleRange } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
+import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 
 interface Props {
   locale: AppLocale;
@@ -39,9 +41,10 @@ export default function RewardDetail({ locale, entry: faceted, servers }: Props)
 
 function RewardDetailView({ locale, entry, schedules }: { locale: AppLocale; entry: RewardEntryDetail | null; schedules: ReactNode }) {
   const now = useNow();
+  const timeZone = useDisplayTimeZone();
   if (!entry) return <NotFound locale={locale} />;
 
-  const schedule = formatScheduleRange(entry.startAt, entry.endAt, locale) || t(locale, "rewards.alwaysOpen");
+  const schedule = formatScheduleRange(entry.startAt, entry.endAt, locale, timeZone) || t(locale, "rewards.alwaysOpen");
   const facts: Array<[string, ReactNode]> = [
     [t(locale, "rewards.kind"), t(locale, `rewards.kinds.${entry.kind}`)],
     [t(locale, "rewards.period"), <span className="tabular-nums">{schedule}</span>],
@@ -69,7 +72,7 @@ function RewardDetailView({ locale, entry, schedules }: { locale: AppLocale; ent
                 </div>
               ))}
             </div>
-            <p className="px-6 pb-5 text-xs text-[var(--mn-text-muted)]">{t(locale, "gameServer.timesIn", { zone: masterUtcLabel(entry.startAt || entry.endAt) })}</p>
+            <TimesNote locale={locale} value={entry.startAt || entry.endAt} timeZone={timeZone} className="px-6 pb-5 text-xs text-[var(--mn-text-muted)]" />
             <div className="px-6 pb-5 empty:hidden">{schedules}</div>
           </div>
         </aside>

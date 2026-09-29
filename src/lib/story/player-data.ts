@@ -30,11 +30,11 @@ export interface StorySiteEntry {
 }
 
 /** The story pages' three lists: main story, bond stories and the other talks (post-live, home spot, tutorial). */
-export type StorySection = "main" | "friendship" | "other";
-export const STORY_SECTIONS: readonly StorySection[] = ["main", "friendship", "other"];
+export type StorySection = "main" | "event" | "friendship" | "other";
+export const STORY_SECTIONS: readonly StorySection[] = ["main", "event", "friendship", "other"];
 
 export function storySection(category: StoryCategory | "other"): StorySection {
-  return category === "main" || category === "friendship" ? category : "other";
+  return category === "main" || category === "event" || category === "friendship" ? category : "other";
 }
 
 /** An episode as the picker lists it: the build's story data (localized at build time) of an advId. */

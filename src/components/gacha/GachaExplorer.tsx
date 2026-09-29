@@ -19,6 +19,7 @@ import type { GachaPickupCharacter, GachaViewModel } from "@/lib/gacha/data";
 import { getRoutePathById } from "@/lib/route/registry";
 import { formatScheduleRange, scheduleStatus, type ScheduleStatus } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
+import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 
 interface Props {
@@ -33,6 +34,7 @@ const statuses: ScheduleStatus[] = ["ongoing", "upcoming", "permanent", "ended"]
 export default function GachaExplorer({ locale, servers, initialGachas, bands }: Props) {
   const memory = useListPageMemory("gacha");
   const now = useNow();
+  const timeZone = useDisplayTimeZone();
   const { server, pickServer, items: gachas } = useServerList(locale, servers, initialGachas);
   const [query, setQuery] = useState("");
   // Most pools have no start date, so only id and name orderings are meaningful.
@@ -156,7 +158,7 @@ export default function GachaExplorer({ locale, servers, initialGachas, bands }:
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4 5xl:grid-cols-5">
             {sortedGachas.map((gacha) => (
-              <GachaCard key={gacha.id} gacha={gacha} locale={locale} now={now} onClick={saveCurrentState} />
+              <GachaCard key={gacha.id} gacha={gacha} locale={locale} now={now} timeZone={timeZone} onClick={saveCurrentState} />
             ))}
           </div>
         )}
@@ -165,8 +167,8 @@ export default function GachaExplorer({ locale, servers, initialGachas, bands }:
   );
 }
 
-function GachaCard({ gacha, locale, now, onClick }: { gacha: GachaViewModel; locale: AppLocale; now: number | null; onClick: () => void }) {
-  const schedule = formatScheduleRange(gacha.startAt, gacha.endAt, locale) || t(locale, "gacha.alwaysOpen");
+function GachaCard({ gacha, locale, now, timeZone, onClick }: { gacha: GachaViewModel; locale: AppLocale; now: number | null; timeZone: string | null; onClick: () => void }) {
+  const schedule = formatScheduleRange(gacha.startAt, gacha.endAt, locale, timeZone) || t(locale, "gacha.alwaysOpen");
   const counts = [
     gacha.memberCount > 0 && t(locale, "gacha.counts.member", { count: gacha.memberCount }),
     gacha.supportCount > 0 && t(locale, "gacha.counts.support", { count: gacha.supportCount }),

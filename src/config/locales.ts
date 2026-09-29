@@ -66,21 +66,25 @@ export const LOCALE_LABELS: Record<AppLocale, string> = {
   "ru-RU": "Русский",
 };
 
-/** Display flags for the language switcher. zh-TW intentionally uses the China flag. */
+/**
+ * Country code of each locale's flag (the round icons under public/flags, see `flagIconSrc`). The country stands for
+ * the language, not a claim about its speakers: zh-TW is Traditional Chinese, which several regions write, so it
+ * takes the Hong Kong flag rather than any single one of them.
+ */
 export const LOCALE_FLAGS: Record<AppLocale, string> = {
-  "zh-CN": "🇨🇳",
-  "zh-TW": "🇨🇳",
-  "ja-JP": "🇯🇵",
-  "en-US": "🇺🇸",
-  "ko-KR": "🇰🇷",
-  "th-TH": "🇹🇭",
-  "id-ID": "🇮🇩",
-  "vi-VN": "🇻🇳",
-  "es-ES": "🇪🇸",
-  "pt-BR": "🇧🇷",
-  "fr-FR": "🇫🇷",
-  "de-DE": "🇩🇪",
-  "ru-RU": "🇷🇺",
+  "zh-CN": "cn",
+  "zh-TW": "hk",
+  "ja-JP": "jp",
+  "en-US": "us",
+  "ko-KR": "kr",
+  "th-TH": "th",
+  "id-ID": "id",
+  "vi-VN": "vn",
+  "es-ES": "es",
+  "pt-BR": "br",
+  "fr-FR": "fr",
+  "de-DE": "de",
+  "ru-RU": "ru",
 };
 
 export const HTML_LANG: Record<AppLocale, string> = {
@@ -117,4 +121,9 @@ export const OG_LOCALE: Record<AppLocale, string> = {
 
 export function isAppLocale(value: string | undefined | null): value is AppLocale {
   return SUPPORTED_LOCALES.includes(value as AppLocale);
+}
+
+/** Path of a locale's round flag icon, under public/flags (Astro serves public/ at the site root). */
+export function flagIconSrc(locale: AppLocale): string {
+  return `/flags/${LOCALE_FLAGS[locale]}.svg`;
 }

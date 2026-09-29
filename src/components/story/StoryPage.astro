@@ -12,7 +12,8 @@ const allStories = await getBuildStories(locale);
 const stories = allStories.filter((story) => category === "other"
   ? ["live-result", "home", "tutorial"].includes(story.category)
   : story.category === category);
-const readerLookup = category === "other"
+// The other lists read their scripts in the browser (they are not shown in full); the chapter lists can.
+const readerLookup = category === "main" || category === "event"
   ? await getBuildStoryReaderLookup()
   : { characters: [], texts: [] };
 const servers = await getBuildServers();

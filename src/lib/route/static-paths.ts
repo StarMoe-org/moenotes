@@ -5,6 +5,7 @@ import type { PageMetadata } from "@/lib/seo/metadata";
 import {
   getBuildCards,
   getBuildCharacters,
+  getBuildEvents,
   getBuildGachas,
   getBuildMusic,
   getBuildRewardEntries,
@@ -57,7 +58,7 @@ const byId = <T>(entries: readonly T[], id: (entry: T) => string | number, detai
     return value ? [[String(id(entry)), value] as const] : [];
   }));
 
-const storyCategoryRoutes: Record<string, string> = { main: "main-story", friendship: "friendship-story" };
+const storyCategoryRoutes: Record<string, string> = { main: "main-story", event: "event-story", friendship: "friendship-story" };
 
 const detailLabelLoaders: Record<string, (locale: AppLocale) => Promise<Map<string, BreadcrumbDetail>>> = {
   "card-detail": async (locale) => byId(await getBuildCards(locale), (card) => card.id, (card) => label(`${card.characterName} - ${card.title}`)),
@@ -66,6 +67,11 @@ const detailLabelLoaders: Record<string, (locale: AppLocale) => Promise<Map<stri
   "song-detail": async (locale) => byId(await getBuildMusic(locale), (song) => song.id, (song) => label(song.title)),
   "gacha-detail": async (locale) => byId(await getBuildGachas(locale), (gacha) => gacha.id, (gacha) => label(gacha.name || `#${gacha.id}`)),
   "reward-detail": async (locale) => byId(await getBuildRewardEntries(locale), (entry) => entry.slug, (entry) => label(entry.title || `#${entry.id}`)),
+  "event-detail": async (locale) => {
+    // `/events/:id` is not under the list's path, so name the list as the ancestor the navigation marks.
+    const ancestors = [findRouteById("events"), findRouteById("event-list")].filter(Boolean) as AppRoute[];
+    return byId(await getBuildEvents(locale), (event) => event.id, (event) => ({ label: event.name, ancestors }));
+  },
   "story-detail": async (locale) => {
     const storyRoute = findRouteById("story");
     // An ADV in several lists takes its first one's title and category.

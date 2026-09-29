@@ -5,6 +5,7 @@ import { siteConfig } from "@/config/site";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import NewsCategoryBadge from "@/components/news/NewsCategoryBadge";
+import ServerFlag from "@/components/shared/ServerFlag";
 import { announcementSrcdoc, markAnnouncementSeen, newsCategory, type Announcement } from "@/lib/game-api/announcements";
 import { GameApiError, fetchAnnouncement, fetchAnnouncementRevisions } from "@/lib/game-api/client";
 import { formatServerSchedule, formatServerTimeInZone, isGameServer, parseGameSeconds } from "@/lib/game-api/server";
@@ -146,7 +147,8 @@ export default function NewsDetail({ locale }: Props) {
       <header className="mn-paper space-y-3 p-5 sm:p-6">
         <div className="flex flex-wrap items-center gap-2">
           <NewsCategoryBadge locale={locale} category={newsCategory(announcement.category)} />
-          <span className="rounded-full border border-[var(--mn-border)] px-2.5 py-0.5 text-[10px] font-black text-[var(--mn-text-muted)]">
+          <span className="flex items-center gap-1.5 rounded-full border border-[var(--mn-border)] px-2.5 py-0.5 text-[10px] font-black text-[var(--mn-text-muted)]">
+            <ServerFlag server={target.server} className="h-3.5 w-3.5" />
             {t(locale, `gameServer.names.${target.server}`)}
           </span>
           {!listed && <span className="rounded-full border border-dashed border-[var(--mn-border)] bg-[var(--mn-cream-deep)] px-2.5 py-0.5 text-[10px] font-black text-[var(--mn-text-muted)]">{t(locale, "news.withdrawn")}</span>}

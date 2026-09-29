@@ -7,6 +7,7 @@ import { entityServer, forServer, type ServerFaceted } from "@/lib/servers/facet
 import { useAssetUrl, useContentServer } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
 import { formatMasterDay } from "@/lib/schedule";
+import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { localizePath } from "@/i18n/routing";
 import { getRoutePathById } from "@/lib/route/registry";
 import { getChartPreviewHref } from "@/lib/music/chart-preview";
@@ -51,6 +52,7 @@ export default function MusicDetail({ locale, initialSong, servers }: Props) {
 
 function MusicDetailView({ locale, song: initial }: { locale: AppLocale; song: MusicViewModel | null }) {
   const assetUrl = useAssetUrl();
+  const timeZone = useDisplayTimeZone();
   const data: DetailData = { song: initial };
   const loading = false;
   const error = false;
@@ -234,7 +236,7 @@ function MusicDetailView({ locale, song: initial }: { locale: AppLocale; song: M
                         </div>
                         <div className="flex justify-between border-b border-[var(--mn-border)]/20 pb-1">
                           <span>Release</span>
-                          <span className="text-[var(--mn-text)]">{formatMasterDay(song.startAt, locale)}</span>
+                          <span className="text-[var(--mn-text)]">{formatMasterDay(song.startAt, locale, timeZone)}</span>
                         </div>
                         <div className="flex justify-between border-b border-[var(--mn-border)]/20 pb-1">
                           <span>Song ID</span>
@@ -316,7 +318,7 @@ function MusicDetailView({ locale, song: initial }: { locale: AppLocale; song: M
                     </div>
                   } />
                 )}
-                <DetailRow label={t(locale, "music.releaseDate")} value={formatMasterDay(song.startAt, locale)} />
+                <DetailRow label={t(locale, "music.releaseDate")} value={formatMasterDay(song.startAt, locale, timeZone)} />
                 <DetailRow label={t(locale, "music.songId")} value={`#${song.id}`} />
                 <DetailRow label={t(locale, "music.jacketAsset")} value={song.jacketAssetName} />
               </div>

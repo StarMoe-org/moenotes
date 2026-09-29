@@ -177,6 +177,10 @@ export function rewardEntrySlug(kind: RewardEntryKind, id: number): string {
 const DAILY_MISSION_CATEGORY = 1;
 // MasterLiveScoreRank.liveScoreRank 2–7, matching the D–SS rank icons.
 const scoreRankLabels: Record<number, string> = { 2: "D", 3: "C", 4: "B", 5: "A", 6: "S", 7: "SS" };
+
+export function scoreRankLabel(scoreRank: number): string {
+  return scoreRankLabels[scoreRank] ?? "";
+}
 const difficultyTextIds = ["ui_difficulty_easy", "ui_difficulty_normal", "ui_difficulty_hard", "ui_difficulty_expert"];
 const highlightOrder: Record<RewardKind, number> = { member: 0, support: 1, music: 2, degree: 3, stamp: 4, spot: 5, item: 6, other: 7 };
 
@@ -231,7 +235,7 @@ export function normalizeRewardEntries(data: RewardsMasterData, resolve: RewardR
       CharacterId: characters.get(mission.characterId) ?? "",
       MusicId: music.get(mission.musicId) ?? "",
       MusicDifficulty: text(difficultyTextIds[mission.musicDifficulty]),
-      ScoreRank: scoreRankLabels[mission.scoreRank] ?? "",
+      ScoreRank: scoreRankLabel(mission.scoreRank),
       CardType: mission.cardType ? t(locale, `cards.attributes.${mission.cardType}`) : "",
     };
     // Unknown placeholders (e.g. {MissionCategory}) drop out; the sentence still reads naturally.

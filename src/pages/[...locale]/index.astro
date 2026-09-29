@@ -26,6 +26,8 @@ import GachaPage from "@/components/gacha/GachaPage.astro";
 import GachaDetailPage from "@/components/gacha/GachaDetailPage.astro";
 import RewardsPage from "@/components/rewards/RewardsPage.astro";
 import RewardDetailPage from "@/components/rewards/RewardDetailPage.astro";
+import EventsPage from "@/components/events/EventsPage.astro";
+import EventDetailPage from "@/components/events/EventDetailPage.astro";
 import TitlesPage from "@/components/titles/TitlesPage.astro";
 import BackgroundsPage from "@/components/backgrounds/BackgroundsPage.astro";
 import StoryPage from "@/components/story/StoryPage.astro";
@@ -91,12 +93,18 @@ const component = match.item.component ?? "page";
     <RewardsPage locale={locale} />
   ) : component === "reward-detail" ? (
     <RewardDetailPage locale={locale} slug={match.params.id ?? ""} />
+  ) : component === "event-list" ? (
+    <EventsPage locale={locale} />
+  ) : component === "event-detail" ? (
+    <EventDetailPage locale={locale} eventId={Number(match.params.id)} />
   ) : component === "titles" ? (
     <TitlesPage locale={locale} />
   ) : component === "backgrounds" ? (
     <BackgroundsPage locale={locale} />
   ) : component === "story-main" ? (
     <StoryPage locale={locale} category="main" titleKey={match.item.seo.titleKey} descriptionKey={match.item.seo.descriptionKey} />
+  ) : component === "story-event" ? (
+    <StoryPage locale={locale} category="event" titleKey={match.item.seo.titleKey} descriptionKey={match.item.seo.descriptionKey} />
   ) : component === "story-friendship" ? (
     <StoryPage locale={locale} category="friendship" titleKey={match.item.seo.titleKey} descriptionKey={match.item.seo.descriptionKey} />
   ) : component === "story-other" ? (

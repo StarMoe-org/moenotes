@@ -13,6 +13,7 @@ import type { HomeLink, HomeSlide } from "@/lib/home/data";
 import { getRoutePathById } from "@/lib/route/registry";
 import { formatScheduleRange, scheduleStatus } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
+import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 
 interface Props {
   locale: AppLocale;
@@ -53,6 +54,7 @@ export default function HomeCarousel({ locale, home, servers }: Props) {
 
 function Carousel({ locale, slides }: { locale: AppLocale; slides: HomeSlide[] }) {
   const now = useNow();
+  const timeZone = useDisplayTimeZone();
   const reduceMotion = usePrefersReducedMotion();
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -80,7 +82,7 @@ function Carousel({ locale, slides }: { locale: AppLocale; slides: HomeSlide[] }
   const move = (step: number) => setIndex((activeIndex + step + count) % count);
   const kindLabel = t(locale, `home.kinds.${active.kind}`);
   const title = active.title || kindLabel;
-  const schedule = formatScheduleRange(active.startAt, active.endAt, locale);
+  const schedule = formatScheduleRange(active.startAt, active.endAt, locale, timeZone);
   const href = active.link ? homeLinkHref(active.link, locale) : null;
   const banner = <BannerImage eager className="mn-list-caption border border-[var(--mn-glass-border)]" src={getImageAssetUrl(active.imagePath, locale)} alt={title} fallback={title} />;
 
