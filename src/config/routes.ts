@@ -458,6 +458,22 @@ export const routeRegistry = [
         keywords: ["chart", "score", "preview", "3d", "player"],
       },
       {
+        // Chart rankings, figures and their guide over nnnotes' music-data.json, loaded in the browser.
+        id: "chart-data",
+        path: "/tools/chart-data",
+        labelKey: "nav.items.chartData",
+        component: "chart-data",
+        seo: {
+          titleKey: "seo.chartData.title",
+          descriptionKey: "seo.chartData.description",
+          keywords: ["Our Notes chart data", "Our Notes chart efficiency", "BanG Dream score efficiency ranking", "event score rank power", "chart density and BPM", "skill order expectation"],
+          sitemap: { priority: 0.6, changefreq: "weekly" },
+        },
+        nav: { order: 12, icon: "music" },
+        searchable: true,
+        keywords: ["chart data", "efficiency", "ranking", "score", "event", "density", "bpm"],
+      },
+      {
         // rankd's copy of each song's high-score ranking, fetched in the browser (`?music=` picks the song).
         id: "music-ranking",
         path: "/tools/music-ranking",
