@@ -101,7 +101,20 @@ export default function StoryExplorer({ locale, servers, initialCategory, initia
     if (error) return <State text={t(locale, "story.ui.loadMainError")} action={() => setReload((v) => v + 1)} />;
     return (
       <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
-        <MainStoryGroups stories={stories.filter(inSection)} locale={locale} sort="default" />
+        <ChapterGroups stories={stories.filter(inSection)} locale={locale} sort="default" />
+      </ServerScope>
+    );
+  }
+
+  // Event stories are chapters too: listed by chapter, the filters and sort applying to the chapters.
+  if (initialCategory === "event") {
+    return (
+      <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
+        <section className="min-w-0" aria-live="polite">
+          {filtered.length === 0
+            ? <State text={t(locale, "story.ui.empty")} action={reset} />
+            : <ChapterGroups stories={filtered} locale={locale} sort={sort.value} />}
+        </section>
       </ServerScope>
     );
   }
@@ -128,12 +141,13 @@ export default function StoryExplorer({ locale, servers, initialCategory, initia
   );
 }
 
-function MainStoryGroups({ stories, locale, sort }: { stories: StoryViewModel[]; locale: AppLocale; sort: ListSort }) {
+/** Episodes grouped by chapter; `sort` orders the chapters, episodes keep their in-game order. */
+function ChapterGroups({ stories, locale, sort }: { stories: StoryViewModel[]; locale: AppLocale; sort: ListSort }) {
   const assetUrl = useAssetUrl();
   const chapters = [...new Map(stories.map((story) => [story.chapterId, story])).values()]
     .sort((a, b) => (a.chapterId ?? 0) - (b.chapterId ?? 0));
 
-  return <div className="space-y-8">{sortEntries(chapters.map((chapter) => ({ ...chapter, title: chapter.chapterName })), sort, locale).map((chapter) => {
+  return <div className="space-y-8">{sortEntries(chapters.map((chapter) => ({ ...chapter, id: chapter.chapterId ?? 0, title: chapter.chapterName })), sort, locale).map((chapter) => {
     // Main, another and extra episodes each number from 1, so they are listed as separate runs.
     const episodes = stories.filter((story) => story.chapterId === chapter.chapterId).sort((a, b) => a.sortOrder - b.sortOrder);
     const runs = (["main", "another", "extra"] as const)
@@ -158,8 +172,9 @@ function MainStoryGroups({ stories, locale, sort }: { stories: StoryViewModel[];
       <div className="space-y-5 border-t-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] p-4 sm:p-6">
         {runs.map((run) => <div key={run.kind}>
           {run.kind !== "main" && <h3 className="mb-3 text-xs font-black uppercase tracking-wider text-[var(--mn-text-muted)]">{t(locale, run.kind === "another" ? "story.ui.anotherStories" : "story.ui.extraStories")}</h3>}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {sortEntries(run.episodes, sort, locale).map((episode) => <a key={episode.id} href={localizePath(`/story/${episode.advId}`, locale)} className="mn-list-card mn-list-card-row group flex items-center gap-4 rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)] p-3 shadow-[var(--mn-shadow-stamp-sm)] transition hover:-translate-y-0.5 hover:shadow-[var(--mn-shadow-stamp)]">
+          {/* Columns as wide as a banner and a title need, however narrow the content column is. */}
+          <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,17rem),1fr))]">
+            {run.episodes.map((episode) => <a key={episode.id} href={localizePath(`/story/${episode.advId}`, locale)} className="mn-list-card mn-list-card-row group flex min-w-0 items-center gap-4 rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)] p-3 shadow-[var(--mn-shadow-stamp-sm)] transition hover:-translate-y-0.5 hover:shadow-[var(--mn-shadow-stamp)]">
               <img src={assetUrl(getAssetUrl({ path: `Story/Banner/Episode/${episode.assets.banner}.png`, type: "raw", locale }))} alt="" className="h-16 w-28 shrink-0 rounded-xl object-cover" loading="lazy" />
               <div className="min-w-0">
                 <p className="text-[11px] font-black text-[var(--mn-accent)]">

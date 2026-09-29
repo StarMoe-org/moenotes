@@ -68,7 +68,7 @@ export default function StoryPickerDialog({ locale, entries, open, onClose, curr
     <Modal isOpen={open} onClose={onClose} title={t(locale, "storyPlayer.chooseStory")} closeLabel={t(locale, "actions.close")} size="xl">
       <div className="space-y-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center">
-          <div role="tablist" aria-label={t(locale, "storyPlayer.sections")} className="grid shrink-0 grid-cols-3 gap-1 rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] p-1">
+          <div role="tablist" aria-label={t(locale, "storyPlayer.sections")} className="flex min-w-0 shrink-0 gap-1 overflow-x-auto rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] p-1 [scrollbar-width:none]">
             {STORY_SECTIONS.map((key) => (
               <button
                 key={key}
@@ -76,7 +76,7 @@ export default function StoryPickerDialog({ locale, entries, open, onClose, curr
                 role="tab"
                 aria-selected={section === key}
                 onClick={() => setSection(key)}
-                className={`mn-focus inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black transition sm:px-4 sm:text-sm ${
+                className={`mn-focus inline-flex flex-1 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1.5 text-xs font-black transition sm:px-4 sm:text-sm ${
                   section === key ? "bg-[var(--mn-accent)] text-white shadow-[var(--mn-shadow-stamp-sm)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"
                 }`}
               >
@@ -169,7 +169,7 @@ function groupEntries(entries: readonly StoryPlayerEntry[]): Group[] {
 function EpisodeGroup({ locale, group, currentId, onPick }: { locale: AppLocale; group: Group; currentId: number | null; onPick: (advId: number) => void }) {
   const title = group.title || categoryLabel(locale, group.entries[0]?.category ?? "other");
   // A chapter's main, another and extra episodes each number from 1: listed as separate runs, as on the story pages.
-  const runs = group.section === "main"
+  const runs = group.section === "main" || group.section === "event"
     ? (["main", "another", "extra"] as const)
       .map((kind) => ({ kind, entries: group.entries.filter((entry) => (entry.episodeKind ?? "main") === kind) }))
       .filter((run) => run.entries.length > 0)
@@ -193,7 +193,7 @@ function EpisodeGroup({ locale, group, currentId, onPick }: { locale: AppLocale;
                 {t(locale, run.kind === "another" ? "story.ui.anotherStories" : "story.ui.extraStories")}
               </h4>
             )}
-            <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(min(100%,15rem),1fr))]">
               {run.entries.map((entry) => (
                 <li key={entry.advId}>
                   <EpisodeOption locale={locale} entry={entry} current={entry.advId === currentId} onPick={() => onPick(entry.advId)} />

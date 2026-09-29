@@ -20,6 +20,8 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
+  /* A wide child never scrolls the page sideways; clip (not hidden) keeps position: sticky working. */
+  overflow-x: clip;
   background-color: var(--mn-bg);
   background-image:
     radial-gradient(ellipse at 85% 5%, color-mix(in srgb, var(--mn-pink) 25%, transparent), transparent 48%),
