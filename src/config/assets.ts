@@ -22,10 +22,11 @@ export const assetConfig = {
    */
   storySite: (import.meta.env.PUBLIC_STORY_SITE || "https://storage.bdon.moe/moenotes").replace(/\/+$/, ""),
   /**
-   * The chart data tool's music-data.json (nnnotes `music-data`, with the ournotes-deck statistics). The site serves
-   * it from public/data/, so a new file ships with the next build; `PUBLIC_CHART_DATA` points the tool elsewhere.
+   * The music data site the chart data tool reads at runtime: `{musicDataSite}/music-data.json` (nnnotes `music-data`,
+   * with the ournotes-deck statistics), published into the storage bucket by StarMoe-org/nnnotes workflows like the
+   * story site. A new file needs no rebuild of this site.
    */
-  chartData: import.meta.env.PUBLIC_CHART_DATA || "/data/music-data.json",
+  musicDataSite: (import.meta.env.PUBLIC_MUSIC_DATA_SITE || "https://storage.bdon.moe/moenotes/music-data").replace(/\/+$/, ""),
   /**
    * Live2D Cubism Core for Web, which the Live2D viewer loads before a model (ournotes-player does not bundle it; Live2D's
    * own license applies). Override with `PUBLIC_CUBISM_CORE` to serve a copy; see docs/live2d-viewer.md.

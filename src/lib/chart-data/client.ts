@@ -11,9 +11,9 @@ export class MusicDataError extends Error {
   }
 }
 
-/** The chart data file (`assetConfig.chartData`), checked for its format. */
+/** The music data site's `music-data.json` (`assetConfig.musicDataSite`), checked for its format. */
 export async function fetchMusicData(signal?: AbortSignal): Promise<MusicData> {
-  const response = await fetch(assetConfig.chartData, { signal: signal ?? null, credentials: "omit", headers: { Accept: "application/json" } });
+  const response = await fetch(`${assetConfig.musicDataSite}/music-data.json`, { signal: signal ?? null, credentials: "omit", headers: { Accept: "application/json" } });
   if (!response.ok) throw new MusicDataError(`music-data.json: HTTP ${response.status}`);
   const data = (await response.json()) as MusicData;
   if (!data || typeof data !== "object" || !Array.isArray(data.songs)) throw new MusicDataError("music-data.json: no songs");
