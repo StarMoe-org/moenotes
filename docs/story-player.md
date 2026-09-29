@@ -13,8 +13,13 @@ scripts); copy `storyPlayer.*`.
 
 ## Data
 
-The episodes come from the **story site** in the storage bucket (`assetConfig.storySite`, `PUBLIC_STORY_SITE`, default
-`https://storage.bdon.moe/moenotes`), the layout `nnnotes web` writes (the format is ournotes-player's
+The episodes come from the **story sites** in the storage bucket, one per game region: the international site
+(`assetConfig.storySite`, `PUBLIC_STORY_SITE`, default `https://storage.bdon.moe/moenotes`; TW/HK/MO, every text
+language) and the JP site (`assetConfig.storySiteJp`, `PUBLIC_STORY_SITE_JP`, default
+`https://storage.bdon.moe/moenotes/jp`; Japanese only, JP-only episodes such as the event stories). They are separate
+sites because JP Live2D model ids overlap the international ones. The player reads both indexes and lists them as one
+(`mergeStorySiteEntries`): an episode on both plays from the international site; an unreadable site leaves only its
+stories out. Each site is the layout `nnnotes web` writes (the format is ournotes-player's
 `docs/story-data-format.md`, manifests `ournotes.story-manifest/2`):
 
 ```text

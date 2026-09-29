@@ -22,6 +22,12 @@ export const assetConfig = {
    */
   storySite: (import.meta.env.PUBLIC_STORY_SITE || "https://storage.bdon.moe/moenotes").replace(/\/+$/, ""),
   /**
+   * The JP story site, built separately (JP Live2D model ids overlap the international ones): `jp/` of the same bucket.
+   * The story player lists both; an episode both have plays from `storySite`. Set `PUBLIC_STORY_SITE_JP` to the
+   * `storySite` root to list one site only.
+   */
+  storySiteJp: (import.meta.env.PUBLIC_STORY_SITE_JP || "https://storage.bdon.moe/moenotes/jp").replace(/\/+$/, ""),
+  /**
    * Live2D Cubism Core for Web, which the Live2D viewer loads before a model (ournotes-player does not bundle it; Live2D's
    * own license applies). Override with `PUBLIC_CUBISM_CORE` to serve a copy; see docs/live2d-viewer.md.
    */

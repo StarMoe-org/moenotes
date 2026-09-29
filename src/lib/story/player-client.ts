@@ -1,7 +1,7 @@
 import { assetConfig } from "@/config/assets";
 import { createPlayerFileFetch } from "@/lib/cache/player-files";
 import { loadCubismCore } from "@/lib/live2d/client";
-import { getStoriesIndexUrl, getStoryManifestUrl, type StorySiteEntry } from "@/lib/story/player-data";
+import { getStoriesIndexUrl, getStoryManifestUrl, getStorySiteRoots, mergeStorySiteEntries, type StorySiteEntry } from "@/lib/story/player-data";
 
 /** Network side of the story player: the published story index, one story's presence and the page-side scripts. */
 
@@ -11,43 +11,64 @@ import { getStoriesIndexUrl, getStoryManifestUrl, type StorySiteEntry } from "@/
  */
 export const storyPlayerFetch = createPlayerFileFetch("story");
 
-/** `stories.json` of the published site; no stories when the site has none yet (404). */
-export async function fetchStorySite(signal: AbortSignal): Promise<StorySiteEntry[]> {
-  const response = await fetch(getStoriesIndexUrl(), { signal, credentials: "omit", headers: { Accept: "application/json" } });
+/** `stories.json` of one site, its entries marked with the site; no stories when the site has none yet (404). */
+async function fetchSiteIndex(root: string, signal: AbortSignal): Promise<StorySiteEntry[]> {
+  const response = await fetch(getStoriesIndexUrl(root), { signal, credentials: "omit", headers: { Accept: "application/json" } });
   if (response.status === 404) return [];
-  if (!response.ok) throw new Error(`stories.json: HTTP ${response.status}`);
+  if (!response.ok) throw new Error(`${root}/stories.json: HTTP ${response.status}`);
   const index = (await response.json()) as { stories?: unknown };
   return Array.isArray(index.stories)
-    ? index.stories.filter((entry): entry is StorySiteEntry => typeof entry === "object" && entry !== null
-      && typeof (entry as StorySiteEntry).advId === "number" && typeof (entry as StorySiteEntry).manifest === "string")
+    ? index.stories
+      .filter((entry): entry is Omit<StorySiteEntry, "root"> => typeof entry === "object" && entry !== null
+        && typeof (entry as StorySiteEntry).advId === "number" && typeof (entry as StorySiteEntry).manifest === "string")
+      .map((entry) => ({ ...entry, root }))
     : [];
 }
 
 /**
- * One story's entry read from its manifest (whose `story` block is the index entry), for a story the index does not
- * list yet: a build publishes each manifest as it lands and rewrites stories.json at its end. null when there is none.
+ * The stories of every story site (getStorySiteRoots), an episode on several from the first. A site that cannot be
+ * read leaves only its stories out; the list fails only when no site can be read.
+ */
+export async function fetchStorySite(signal: AbortSignal): Promise<StorySiteEntry[]> {
+  const results = await Promise.allSettled(getStorySiteRoots().map((root) => fetchSiteIndex(root, signal)));
+  const sites = results.flatMap((result) => (result.status === "fulfilled" ? [result.value] : []));
+  if (sites.length === 0) throw results.find((result): result is PromiseRejectedResult => result.status === "rejected")?.reason;
+  for (const result of results) if (result.status === "rejected") console.warn("[story-player] a story site could not be read:", result.reason);
+  return mergeStorySiteEntries(sites);
+}
+
+/**
+ * One story's entry read from its manifest (whose `story` block is the index entry), for a story the indexes do not
+ * list yet: a build publishes each manifest as it lands and rewrites stories.json at its end. The first site that has
+ * it; null when none does.
  */
 export async function fetchSiteStory(advId: number, signal: AbortSignal): Promise<StorySiteEntry | null> {
   const manifest = `stories/${advId}.json`;
-  const response = await fetch(getStoryManifestUrl(manifest), { signal, credentials: "omit", headers: { Accept: "application/json" } });
-  if (!response.ok) return null;
-  const body = (await response.json()) as { audio?: boolean; story?: Partial<StorySiteEntry> };
-  const story = body.story;
-  if (!story || story.advId !== advId || !Array.isArray(story.languages)) return null;
-  return {
-    id: String(advId), advId, manifest, titles: story.titles ?? {}, languages: story.languages, language: story.language ?? story.languages[0] ?? "ja",
-    playbackMode: story.playbackMode ?? 0, audio: body.audio ?? true,
-  };
+  for (const root of getStorySiteRoots()) {
+    const response = await fetch(getStoryManifestUrl(root, manifest), { signal, credentials: "omit", headers: { Accept: "application/json" } }).catch(() => null);
+    if (!response?.ok) continue;
+    const body = (await response.json()) as { audio?: boolean; story?: Partial<StorySiteEntry> };
+    const story = body.story;
+    if (!story || story.advId !== advId || !Array.isArray(story.languages)) continue;
+    return {
+      id: String(advId), advId, root, manifest, titles: story.titles ?? {}, languages: story.languages,
+      language: story.language ?? story.languages[0] ?? "ja", playbackMode: story.playbackMode ?? 0, audio: body.audio ?? true,
+    };
+  }
+  return null;
 }
 
-/** Whether the story site has the episode (a HEAD of its manifest, so a story page need not read the whole index). */
+/** Whether a story site has the episode (a HEAD of its manifest, so a story page need not read the whole indexes). */
 export async function hasSiteStory(advId: number, signal: AbortSignal): Promise<boolean> {
-  try {
-    const response = await fetch(getStoryManifestUrl(`stories/${advId}.json`), { method: "HEAD", signal, credentials: "omit" });
-    return response.ok;
-  } catch {
-    return false;
-  }
+  const found = await Promise.all(getStorySiteRoots().map(async (root) => {
+    try {
+      const response = await fetch(getStoryManifestUrl(root, `stories/${advId}.json`), { method: "HEAD", signal, credentials: "omit" });
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }));
+  return found.includes(true);
 }
 
 /** What the page could load besides Cubism Core: missing optional scripts only take their part out of the story. */

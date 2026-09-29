@@ -11,7 +11,7 @@ import {
   requestElementFullscreen,
 } from "@/lib/browser/fullscreen";
 import { loadStoryRuntimes, storyPlayerFetch, type StoryRuntimes } from "@/lib/story/player-client";
-import { formatMegabytes, getStoryManifestUrl, type StoryLanguage } from "@/lib/story/player-data";
+import { formatMegabytes, type StoryLanguage } from "@/lib/story/player-data";
 import { loadStoryVolumes, storyPlayerVolumes } from "@/lib/story/player-settings";
 import { StageSignature } from "@/components/tools/Live2DStage";
 import StoryControls from "@/components/tools/StoryControls";
@@ -26,7 +26,7 @@ type StageStatus =
 
 interface StoryStageProps {
   locale: AppLocale;
-  /** The manifest path of the story site's index (`stories/<advId>.json`). */
+  /** The story's manifest URL (its site's `stories/<advId>.json`). */
   manifest: string;
   /** The language the story starts in; later changes go through the player (`setLanguage`), not a reload. */
   language: StoryLanguage;
@@ -80,7 +80,7 @@ export default function StoryStage({ locale, manifest, language, title, simple, 
       setStatus({ kind: "loading", loaded: 0, total: 0 });
       try {
         created = await StoryPlayer.create(host, {
-          src: getStoryManifestUrl(manifest),
+          src: manifest,
           lang: language,
           controls: false,
           volumes: storyPlayerVolumes(loadStoryVolumes()),

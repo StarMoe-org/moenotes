@@ -11,6 +11,7 @@ import { fetchSiteStory, fetchStorySite, type StoryRuntimes } from "@/lib/story/
 import {
   buildStoryPlayerEntries,
   formatMegabytes,
+  getStoryManifestUrl,
   getStoryPlayerHref,
   parseStoryPlayerSearch,
   STORY_LANGUAGES,
@@ -200,7 +201,7 @@ function StoryView({ locale, entry, language, onLanguage, previous, next, onChoo
       <StoryStage
         key={startLanguage}
         locale={locale}
-        manifest={entry.site.manifest}
+        manifest={getStoryManifestUrl(entry.site.root, entry.site.manifest)}
         language={startLanguage}
         title={entry.title}
         simple={entry.site.playbackMode === 1}
