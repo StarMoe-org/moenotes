@@ -22,6 +22,11 @@ export const assetConfig = {
    */
   storySite: (import.meta.env.PUBLIC_STORY_SITE || "https://storage.bdon.moe/moenotes").replace(/\/+$/, ""),
   /**
+   * The chart data tool's music-data.json (nnnotes `music-data`, with the ournotes-deck statistics). The site serves
+   * it from public/data/, so a new file ships with the next build; `PUBLIC_CHART_DATA` points the tool elsewhere.
+   */
+  chartData: import.meta.env.PUBLIC_CHART_DATA || "/data/music-data.json",
+  /**
    * Live2D Cubism Core for Web, which the Live2D viewer loads before a model (ournotes-player does not bundle it; Live2D's
    * own license applies). Override with `PUBLIC_CUBISM_CORE` to serve a copy; see docs/live2d-viewer.md.
    */
