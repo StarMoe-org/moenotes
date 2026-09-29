@@ -14,6 +14,7 @@ import {
 } from "@/lib/music/chart";
 import { isChartRendererSupported, renderChartSheet } from "@/lib/music/chart-renderer";
 import type { MusicViewModel, SongDifficultyModel } from "@/lib/music/data";
+import { useAssetUrl } from "@/lib/servers/use-content-server";
 import type { RenderRequest } from "@/vendor/moenotes-chart-renderer/renderer.mjs";
 
 type ChartDifficulty = SongDifficultyModel["difficulty"];
@@ -45,6 +46,8 @@ interface ChartSheetDialogProps {
  * a sheet already drawn is shown again without redrawing.
  */
 export default function ChartSheetDialog({ locale, song, difficulty: requested, onClose }: ChartSheetDialogProps) {
+  // The chart and jacket come from the catalog of the page's server (a JP-only song has them only there).
+  const assetUrl = useAssetUrl();
   const [difficulty, setDifficulty] = useState<ChartDifficulty>(requested ?? song.difficulties.at(-1)?.difficulty ?? "expert");
   const [theme, setTheme] = useState<ChartSheetTheme>("white");
   const [sheet, setSheet] = useState<SheetState>({ stage: "idle" });
@@ -80,9 +83,9 @@ export default function ChartSheetDialog({ locale, song, difficulty: requested, 
     setSheet({ stage: "fetching" });
     try {
       const [chartBytes, cover] = await Promise.all([
-        fetchReleaseBytes(getChartFileUrl(chart.chartKey), fetch),
+        fetchReleaseBytes(assetUrl(getChartFileUrl(chart.chartKey)), fetch),
         // The jacket is decoration; a sheet without it is still useful.
-        fetchReleaseBytes(getChartJacketUrl(song.jacketAssetName), fetch).catch(() => null),
+        fetchReleaseBytes(assetUrl(getChartJacketUrl(song.jacketAssetName)), fetch).catch(() => null),
       ]);
       if (!isCurrent()) return;
       const request: RenderRequest = {
@@ -113,7 +116,12 @@ export default function ChartSheetDialog({ locale, song, difficulty: requested, 
       if (drawnRef.current) drawnRef.current.failed = true;
       setSheet({ stage: "failed", kind: error instanceof ReleaseRequestError && error.status === 404 ? "missing" : "failed" });
     }
-  }, [locale, song]);
+  }, [locale, song, assetUrl]);
+
+  // Another song, server or locale makes the drawn sheet stale.
+  useEffect(() => {
+    drawnRef.current = null;
+  }, [draw]);
 
   // Opening on a difficulty draws it, unless that sheet is already drawn or being drawn.
   useEffect(() => {

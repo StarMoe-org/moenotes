@@ -7,6 +7,7 @@ import type { GachaDetailViewModel, GachaDrawEntry, GachaDrawPlan } from "@/lib/
 import { drawGacha } from "@/lib/gacha/simulate";
 import { formatCompactCount } from "@/lib/format/compact-count";
 import { getItemIconUrl } from "@/lib/items/assets";
+import { useAssetUrl } from "@/lib/servers/use-content-server";
 import { getSupportCardThumbnailUrl, getSupportRarityIconUrl, type SupportCardRarity } from "@/lib/support-cards/assets";
 
 interface Props {
@@ -31,6 +32,7 @@ export default function GachaSimulator({ locale, gacha }: Props) {
   const supports = useMemo(() => new Map(gacha.supportCards.map((card) => [card.id, card])), [gacha]);
   const items = useMemo(() => new Map(gacha.items.map((item) => [item.id, item])), [gacha]);
   const pickupBadge = t(locale, "gacha.pickup");
+  const assetUrl = useAssetUrl();
 
   if (gacha.draws.length === 0) return null;
 
@@ -109,14 +111,14 @@ export default function GachaSimulator({ locale, gacha }: Props) {
                     <MemberCardArtwork assetId={card.assetId} characterId={card.characterId} rarity={card.rarity} cardType={card.cardType} alt="" attributeLabel={t(locale, `cards.attributes.${card.cardType}`)} fallbackLabel={card.characterName} />
                   ) : support ? (
                     <div className="relative aspect-[3/4]">
-                      <img className="h-full w-full object-cover" src={getSupportCardThumbnailUrl(support.assetId)} alt="" loading="lazy" />
+                      <img className="h-full w-full object-cover" src={assetUrl(getSupportCardThumbnailUrl(support.assetId))} alt="" loading="lazy" />
                       <span className="absolute inset-x-0 bottom-0 flex justify-center bg-gradient-to-t from-black/45 to-transparent pb-1 pt-4">
                         {supportIcon ? <img className="h-4 w-auto" src={supportIcon} alt="" /> : <span className="text-[10px] font-black text-white">{t(locale, `cards.rarities.${support.rarity}`)}</span>}
                       </span>
                     </div>
                   ) : (
                     <div className="grid aspect-[3/4] place-items-center p-2">
-                      <img className="max-h-[60%] w-auto object-contain" src={item ? getItemIconUrl(item.imagePath, locale) : ""} alt="" loading="lazy" />
+                      <img className="max-h-[60%] w-auto object-contain" src={item ? assetUrl(getItemIconUrl(item.imagePath, locale)) : ""} alt="" loading="lazy" />
                       <span className="font-mono text-[11px] font-bold text-[var(--mn-accent-deep)]">{t(locale, "gacha.itemAmount", { count: formatCompactCount(entry.amount) })}</span>
                     </div>
                   )}

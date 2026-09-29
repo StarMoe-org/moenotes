@@ -1,22 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
 import type { AppLocale } from "@/config/locales";
+import { PRIMARY_SERVER } from "@/config/servers";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
+import { moveReleaseUrls } from "@/lib/assets/release";
 import { replaceUrl } from "@/lib/browser/history";
 import { getBandSmallIconUrl } from "@/lib/cards/assets";
 import type { MusicViewModel } from "@/lib/music/data";
 import { DIFFICULTY_CHIP_CLASSES, MUSIC_DIFFICULTIES, type MusicDifficulty } from "@/lib/music/difficulty";
 import { getChartManifestUrl, getChartPreviewHref, parseChartPreviewSearch } from "@/lib/music/chart-preview";
 import { getRoutePathById } from "@/lib/route/registry";
+import { entityServer, type ServerFaceted } from "@/lib/servers/facets";
 import MusicSelectDialog from "@/components/music/MusicSelectDialog";
 import ChartStage, { StageSignature } from "@/components/tools/ChartStage";
 
 interface Props {
   locale: AppLocale;
-  songs: MusicViewModel[];
+  /** Every server's songs; a song the primary server lacks shows its own server's files. */
+  songs: ServerFaceted<MusicViewModel>[];
 }
 
-export default function ChartPreview3D({ locale, songs }: Props) {
+export default function ChartPreview3D({ locale, songs: allSongs }: Props) {
+  const songs = useMemo(() => allSongs.map((song) => moveReleaseUrls(song, entityServer(song, PRIMARY_SERVER))), [allSongs]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [preferred, setPreferred] = useState<MusicDifficulty>("expert");
   const [dialogOpen, setDialogOpen] = useState(false);
