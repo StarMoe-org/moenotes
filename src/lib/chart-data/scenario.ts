@@ -1,124 +1,159 @@
-import type { ChartDeck, DeckRange, DeckSeed, DeckSeedRange, MusicData } from "./types";
+import type { DeckRange, DeckSeed, MusicData } from "./types";
 
 /**
- * Where a live is played, which decides what the deck statistics mean. This module is the one place that turns a
- * chart's deck statistics into the per-seed no-skill score and skill weights a scenario scores with; everything
- * downstream (ranking.ts `chartFigures`) only averages what it returns.
+ * Play scenarios: where and how a live is played, which decides what a chart's deck statistics give. A port of
+ * ournotes-player's chart data page (examples/songs/ranking.js `scenarioSeed`) with the same semantics; this module is
+ * the one place that turns a seed's measurements into the no-skill score and skill weights a scenario scores with.
  *
- * - `free`: Free Live (and Challenge Live), solo with Gekisou off: no Gekisou ranges, no Just, no rank bonus. Read
- *   from `deck.offSeeds` (measured with Gekisou off, the same shape as `seeds` without range fields); a chart with
- *   more than three fevers is still playable here.
- * - `battle`: Gekisou Live (up to five players), Gekisou on, rank `ranks[i]` (1..5) in range i. Rank 1 in every
- *   range is `deck.seeds` as measured; other ranks follow linearly from it (see `rankedSeed`), which needs
- *   `seeds[].rangeWeights` and `ranges[].rankBonusPercents`.
+ * - `battle`: Gekisou Live (up to five players, Gekisou on) with a rank r_i in 1..5 per Gekisou range. The
+ *   seeds are its rank-1 simulations, and the other ranks follow from them linearly (the rank bonus
+ *   trunc(rangeScore · p / 100) is added at the range's end and changes nothing else):
  *
- * A scenario the file has no statistics for yields no seeds, and the page leaves its figures out.
+ *     base_r = (score − Σ_i rankBonus_i + Σ_i trunc(rangeScore_i · p_i(r_i) / 100)) / power
+ *     w_r[k] = w[k] + Σ_i (p_i(r_i) − p_i(1)) / 100 · rangeWeights[k][i]
+ *
+ * - `free`: Free Live (solo, Gekisou off), its own simulation (`offSeeds`); a chart with more than three fevers plays
+ *   here too.
+ *
+ * Two accuracy approximations, without combo breaks: a Great share q scales every score by 1 − 0.2 q; a Just rate j
+ * (battle only) interpolates between the all-Just seeds and the all-Perfect run of the Just ranges (`scorePerfect`,
+ * `rangeScorePerfect`), with the rank bonuses recomputed on the interpolated range scores and the skill weights inside
+ * a range scaled by the same ratio.
  */
-export type ScenarioId = "free" | "battle";
+export type ScenarioId = "battle" | "free";
 
 export interface Scenario {
   id: ScenarioId;
-  /** Gekisou Live rank per range index (1 = first); missing entries count as 1. Ignored by `free`. */
+  /** The rank in range i (1..5); a bad or missing value is rank 1. Ignored by `free`. */
   ranks: readonly number[];
+  /** Great share over every note, 0..1 (default 0). */
+  great?: number;
+  /** Just rate inside the Just mission ranges, 0..1 (default 1, as measured); the rest are Perfect. Battle only. */
+  just?: number;
 }
 
-export const SCENARIOS: readonly ScenarioId[] = ["free", "battle"];
-/** Gekisou Live seats up to five players. */
-export const BATTLE_RANKS = [1, 2, 3, 4, 5] as const;
-/** The Gekisou ranges of a playable chart (the game keeps three). */
-export const RANGE_COUNT = 3;
-export const BEST_RANKS: readonly number[] = [1, 1, 1];
-/** The deck statistics as measured: Gekisou Live, rank 1 in every range. */
-export const BEST_BATTLE: Scenario = { id: "battle", ranks: BEST_RANKS };
-export const FREE: Scenario = { id: "free", ranks: BEST_RANKS };
+export const SCENARIOS: readonly ScenarioId[] = ["battle", "free"];
+/** A Great scores this share of a Perfect (MasterLiveJudgementParameter: 80 and 100). */
+export const GREAT_SCORE = 0.8;
+/** Gekisou Live seats up to 5 players; a chart has 3 Gekisou ranges (more fevers are unplayable with Gekisou on). */
+export const RANK_MAX = 5;
+export const RANGES = 3;
+/** The Just mission (music-data.json `gekisouMissions`, deck `ranges[i].mission`): Just judgements are on only there. */
+const JUST_MISSION = 3;
+export const BEST_RANKS: readonly number[] = Object.freeze([1, 1, 1]);
+/** The deck statistics as measured: Gekisou Live, rank 1 in every range, every Just, no Great. */
+export const BEST_BATTLE: Scenario = Object.freeze({ id: "battle", ranks: BEST_RANKS, just: 1, great: 0 });
+export const FREE: Scenario = Object.freeze({ id: "free", ranks: BEST_RANKS, just: 1, great: 0 });
 
-/** Rank of range `i` under a scenario, clamped to 1..5. */
-export function rangeRank(scenario: Scenario, i: number): number {
-  const r = Math.round(Number(scenario.ranks[i] ?? 1));
-  return Number.isFinite(r) ? Math.min(5, Math.max(1, r)) : 1;
+const finite = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
+const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+
+/** The score factor of a Great share q (0..1) over every note: 1 − 0.2 q. */
+export function greatFactor(q: number | undefined): number {
+  return 1 - (1 - GREAT_SCORE) * (finite(q) ? clamp01(q) : 0);
 }
 
-const bestRanks = (scenario: Scenario, ranges: number) => [...Array(ranges).keys()].every((i) => rangeRank(scenario, i) === 1);
+/** A rank 1..5; anything else is rank 1. */
+export function clampRank(r: unknown): number {
+  return Number.isInteger(r) && (r as number) >= 1 && (r as number) <= RANK_MAX ? (r as number) : 1;
+}
+
+/** "r" or "r1,r2,r3" (the query's rk) as three ranks; a bad or missing value is rank 1. */
+export function parseRanks(text: string | null | undefined): number[] {
+  const v = String(text ?? "").split(",").slice(0, RANGES).map((x) => clampRank(Number(x)));
+  return v.length === 1 ? Array<number>(RANGES).fill(v[0] as number) : [...v, ...Array<number>(RANGES - v.length).fill(1)];
+}
+
+/** The query form of three ranks: "" for all rank 1, "r" for one rank everywhere, else "r1,r2,r3". */
+export function formatRanks(ranks: readonly unknown[] | null | undefined): string {
+  const r = [...Array(RANGES).keys()].map((i) => clampRank((ranks ?? [])[i]));
+  if (r.every((x) => x === r[0])) return r[0] === 1 ? "" : String(r[0]);
+  return r.join(",");
+}
 
 /**
- * The seed measurements a scenario scores a chart with, or null when the file has none for it: `free` reads
- * `offSeeds`, `battle` reads `seeds` (not for an unplayable chart), re-ranked when a range is not at rank 1.
+ * Range i's rank bonus percent at rank r (deck `ranges[i]`: rankBonusPercents for ranks 1..5, rankBonusPercent for
+ * rank 1); null when the data has no such rank.
  */
-export function scenarioSeeds(deck: ChartDeck | null | undefined, scenario: Scenario): readonly DeckSeed[] | null {
-  if (!deck) return null;
-  if (scenario.id === "free") return Array.isArray(deck.offSeeds) ? deck.offSeeds : null;
-  if (deck.unplayable || !Array.isArray(deck.seeds)) return null;
-  const ranges = deck.ranges ?? [];
-  if (bestRanks(scenario, ranges.length)) return deck.seeds;
-  const out: DeckSeed[] = [];
-  for (const seed of deck.seeds) {
-    const ranked = rankedSeed(seed, ranges, scenario);
-    if (!ranked) return null;
-    out.push(ranked);
-  }
-  return out;
+export function rankPercent(range: DeckRange | undefined, r: number): number | null {
+  const list = range?.rankBonusPercents;
+  if (Array.isArray(list) && finite(list[r - 1])) return list[r - 1] as number;
+  return r === 1 && range && finite(range.rankBonusPercent) ? range.rankBonusPercent : null;
 }
 
-/**
- * One seed's measurement at other ranks. The rank bonus of range i is trunc(rangeScore_i · p_i(r_i) / 100), added
- * at the range's end without touching the notes' factors, so with q = p_i(r_i), q₁ = p_i(1):
- *
- *   score_r    = score − Σ_i rankBonus_i + Σ_i trunc(rangeScore_i · q / 100)
- *   w_r[κ][k]  = weights[κ][k] + Σ_i (q − q₁) / 100 · rangeWeights[κ][k][i]
- *
- * (`rangeWeights[κ][k][i]`: what a factor-1 effect of kind κ at position k adds inside range i, per unit of power.)
- * The score is exact per seed; the weights are within the floors. null without the fields it needs.
- */
-export function rankedSeed(seed: DeckSeed, ranges: readonly DeckRange[], scenario: Scenario): DeckSeed | null {
-  const seedRanges: readonly DeckSeedRange[] = seed.ranges ?? [];
-  const rangeWeights = seed.rangeWeights;
-  if (!rangeWeights || seedRanges.length !== ranges.length) return null;
-  const deltas: number[] = [];
-  let score = seed.score;
-  for (let i = 0; i < ranges.length; i += 1) {
-    const pct = ranges[i]?.rankBonusPercents;
-    const measured = seedRanges[i];
-    const q = pct?.[rangeRank(scenario, i) - 1];
-    const q1 = pct?.[0] ?? ranges[i]?.rankBonusPercent;
-    if (typeof q !== "number" || typeof q1 !== "number" || !measured
-      || typeof measured.rangeScore !== "number" || typeof measured.rankBonus !== "number") return null;
-    score += Math.trunc((measured.rangeScore * q) / 100) - measured.rankBonus;
-    deltas.push((q - q1) / 100);
-  }
-  const weights = seed.weights.map((row, kind) => {
-    if (!Array.isArray(row)) return row;
-    const gains = rangeWeights[kind];
-    if (!Array.isArray(gains)) return undefined;
-    return row.map((w, k) => deltas.reduce((sum, d, i) => sum + d * (gains[k]?.[i] ?? 0), w));
-  });
-  return { ...seed, score, weights };
-}
-
-/** Which scenarios the file has statistics for: Gekisou-off seeds, and what other ranks need. */
+/** Which scenarios and settings the file has the statistics for. */
 export interface ScenarioSupport {
-  free: boolean;
+  /** Gekisou Live at rank 1 (the seeds). */
   battle: boolean;
+  /** Free Live (`offSeeds`). */
+  free: boolean;
+  /** Ranks other than 1 (`rankBonusPercents` and `rangeWeights`). */
   ranks: boolean;
+  /** A Just rate below 100 % (`scorePerfect`, with `rangeWeights` for the skill weights). */
+  just: boolean;
 }
 
 export function scenarioSupport(data: MusicData | null | undefined): ScenarioSupport {
-  const decks = (data?.songs ?? []).flatMap((song) => (song.charts ?? []).map((chart) => chart.deck).filter((deck): deck is ChartDeck => !!deck));
-  return {
-    free: decks.some((deck) => Array.isArray(deck.offSeeds) && deck.offSeeds.length > 0),
-    battle: decks.some((deck) => !deck.unplayable && Array.isArray(deck.seeds) && deck.seeds.length > 0),
-    ranks: decks.some((deck) => (deck.ranges ?? []).some((range) => Array.isArray(range.rankBonusPercents))
-      && (deck.seeds ?? []).some((seed) => Array.isArray(seed.rangeWeights))),
-  };
+  const has: ScenarioSupport = { battle: false, free: false, ranks: false, just: false };
+  for (const song of data?.songs ?? []) {
+    for (const chart of song.charts ?? []) {
+      const d = chart.deck;
+      if (!d) continue;
+      const seeds = d.seeds ?? [];
+      if (!d.unplayable && seeds.length) has.battle = true;
+      if ((d.offSeeds ?? []).length) has.free = true;
+      if ((d.ranges ?? []).length && (d.ranges ?? []).every((r) => Array.isArray(r.rankBonusPercents) && r.rankBonusPercents.length >= RANK_MAX)
+        && seeds.some((s) => s.rangeWeights)) has.ranks = true;
+      if (seeds.some((s) => finite(s.scorePerfect) && s.rangeWeights)) has.just = true;
+    }
+  }
+  return has;
 }
 
-/** The scenario the page opens with: Free Live when the file has it, else the Gekisou Live best case. */
-export function defaultScenario(support: ScenarioSupport): Scenario {
-  return support.free || !support.battle ? FREE : BEST_BATTLE;
+/** One seed's no-skill score (points at the measurement power) and position weights of one kind in a scenario. */
+export interface SeedFigures {
+  score: number;
+  weights: number[];
 }
 
-/** A requested scenario limited to what the file supports: other ranks need their fields, Free Live its seeds. */
-export function supportedScenario(requested: Scenario, support: ScenarioSupport): Scenario {
-  if (requested.id === "free") return support.free ? FREE : defaultScenario(support);
-  if (!support.ranks) return BEST_BATTLE;
-  return { id: "battle", ranks: [...Array(RANGE_COUNT).keys()].map((i) => rangeRank(requested, i)) };
+/**
+ * One seed's figures for `kind` in a scenario (`ranges`: the chart's deck ranges); null when the seed lacks a field
+ * the scenario needs. Battle at rank 1 everywhere with j = 1 is the seed itself; free is an `offSeeds` entry as it is.
+ * `scorePerfect` holds the rank-1 bonuses of its ranges, like `score`; a range without the Just mission scores the
+ * same on the Perfect play.
+ */
+export function scenarioSeed(seed: DeckSeed | null | undefined, ranges: readonly DeckRange[], kind: number, scenario: Scenario | null | undefined): SeedFigures | null {
+  const sc = { ...BEST_BATTLE, ...(scenario ?? {}) };
+  const w0 = seed?.weights?.[kind];
+  if (!seed || !Array.isArray(w0) || !finite(seed.score)) return null;
+  const g = greatFactor(sc.great);
+  const plain = (): SeedFigures => ({ score: seed.score * g, weights: w0.map((v) => (v ?? 0) * g) });
+  if (sc.id === "free") return plain();
+  const rs = seed.ranges ?? [];
+  const ranks = rs.map((_, i) => clampRank((sc.ranks ?? [])[i]));
+  const j = finite(sc.just) ? clamp01(sc.just) : 1;
+  const partial = j < 1;
+  if (!partial && ranks.every((r) => r === 1)) return plain();
+  const rw = seed.rangeWeights?.[kind];
+  if (!Array.isArray(rw)) return null;
+  const p1 = rs.map((_, i) => rankPercent(ranges[i], 1));
+  const pr = rs.map((_, i) => rankPercent(ranges[i], ranks[i] as number));
+  if ([...p1, ...pr].some((p) => p === null) || rs.some((x) => !finite(x.rangeScore) || !finite(x.rankBonus))) return null;
+  // the all-Perfect range score: a range without Just judgements scores the same either way
+  const perfect = rs.map((x, i) => (finite(x.rangeScorePerfect) ? x.rangeScorePerfect
+    : ranges[i] && ranges[i]!.mission !== JUST_MISSION ? x.rangeScore as number : null));
+  if (partial && (!finite(seed.scorePerfect) || perfect.some((v) => v === null))) return null;
+  const P1 = p1 as number[], PR = pr as number[];
+  const lerp = (p: number, just: number) => (partial ? p + j * (just - p) : just);
+  // the score without the rank bonuses, all Just and all Perfect (scorePerfect holds the rank-1 bonuses of its ranges)
+  const rest = seed.score - rs.reduce((a, x) => a + (x.rankBonus as number), 0);
+  const restP = partial ? (seed.scorePerfect as number) - perfect.reduce<number>((a, v, i) => a + Math.trunc(((v as number) * (P1[i] as number)) / 100), 0) : rest;
+  const rangeJ = rs.map((x, i) => lerp(perfect[i] as number, x.rangeScore as number));
+  const score = lerp(restP, rest) + rangeJ.reduce((a, v, i) => a + Math.trunc((v * (PR[i] as number)) / 100), 0);
+  const weights = w0.map((v, k) => (v ?? 0) + rs.reduce((a, x, i) => {
+    const d = rw[k]?.[i] ?? 0;
+    const ratio = (x.rangeScore as number) > 0 ? (rangeJ[i] as number) / (x.rangeScore as number) : 1;   // the Just rate's, on the range's part
+    return a + (((PR[i] as number) - (P1[i] as number)) / 100) * d + (ratio - 1) * (1 + (PR[i] as number) / 100) * d;
+  }, 0));
+  return { score: score * g, weights: weights.map((v) => v * g) };
 }

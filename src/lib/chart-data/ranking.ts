@@ -27,7 +27,7 @@
 // corners xbar in {0, X_MAX}, c in {0, infinity} decide it: S_a >= S_b and S_a / L_a >= S_b / L_b at both ends.
 // The deck power must be the same on both charts: song type and tag bonuses change a deck's power per song.
 
-import { BEST_BATTLE, scenarioSeeds, type Scenario } from "./scenario";
+import { scenarioSeed, type Scenario } from "./scenario";
 import type { ChartDeck, DataScoreRank, DataText, MusicData } from "./types";
 
 export const DIFFICULTIES = ["easy", "normal", "hard", "expert"] as const;
@@ -59,27 +59,36 @@ export interface ChartFigures {
   weights: number[];
 }
 
-// A chart's figures from its deck statistics (`chart.deck`) under a scenario: `base` and `weights[k]` (performance
-// position k's, of kind `kind`) as means over the seeds, `baseRange` the seeds' [min, max] base, `seeds` their number.
-// null without statistics for the scenario (an unplayable chart has none with Gekisou on) or without the kind.
+// A chart's figures from its deck statistics (`chart.deck`) in a scenario (scenario.ts; default: battle, rank 1, all
+// Just, no Great): `base` and `weights[k]` (performance position k's, of kind `kind`) as means over the seeds
+// (`offSeeds` in free), `baseRange` the seeds' [min, max] base, `seeds` their number. null without statistics, for a
+// chart unplayable with Gekisou on (battle), without the kind or without the scenario's fields.
 export function chartFigures(
   deck: ChartDeck | null | undefined,
   kind: number | null | undefined,
   power = POWER,
-  scenario: Scenario = BEST_BATTLE,
+  scenario: Scenario | null = null,
 ): ChartFigures | null {
-  const seeds = scenarioSeeds(deck, scenario) ?? [];
+  const free = scenario?.id === "free";
+  const seeds = (deck && (free ? deck.offSeeds : !deck.unplayable && deck.seeds)) || [];
   if (!deck || !seeds.length || kind === null || kind === undefined) return null;
-  if (!seeds.every((s) => Array.isArray(s.weights && s.weights[kind]))) return null;
-  const bases = seeds.map((s) => s.score / power);
-  const n = deck.positions ?? (seeds[0]!.weights[kind] as readonly number[]).length;
+  const figs = seeds.map((s) => scenarioSeed(s, deck.ranges ?? [], kind, scenario));
+  if (figs.some((f) => !f)) return null;
+  const done = figs as NonNullable<typeof figs[number]>[];
+  const bases = done.map((f) => f.score / power);
+  const n = deck.positions ?? done[0]!.weights.length;
   return {
     base: mean(bases),
     baseRange: [Math.min(...bases), Math.max(...bases)],
     seeds: seeds.length,
     skip: deck.skip ?? null,
-    weights: [...Array(n).keys()].map((k) => mean(seeds.map((s) => (s.weights[kind] as readonly number[])[k] ?? 0))),
+    weights: [...Array(n).keys()].map((k) => mean(done.map((f) => f.weights[k] ?? 0))),
   };
+}
+
+// ournotes-deck's measurement power of music-data.json.
+export function modelPower(data: MusicData | null | undefined): number {
+  return data?.deck?.model?.power || POWER;
 }
 
 export interface FigureRow extends ChartFigures {
@@ -100,11 +109,11 @@ export interface FigureRow extends ChartFigures {
   chartMs: number | null;
 }
 
-// One row per chart of music-data.json with deck figures (see chartFigures), with the song's facts; `weights[k]` is
-// performance position k's.
-export function joinCharts(data: MusicData | null | undefined, scenario: Scenario = BEST_BATTLE): FigureRow[] {
+// One row per chart of music-data.json with deck figures in a scenario (see chartFigures), with the song's facts;
+// `weights[k]` is performance position k's.
+export function joinCharts(data: MusicData | null | undefined, scenario: Scenario | null = null): FigureRow[] {
   const kind = plainKind(data);
-  const power = data?.deck?.model?.power || POWER;
+  const power = modelPower(data);
   const out: FigureRow[] = [];
   for (const song of data?.songs ?? []) {
     for (const chart of song.charts ?? []) {
@@ -305,6 +314,10 @@ export function formatLength(ms: unknown): string {
 // song choice only needs the chance of each rank and the play time; a table value is recovered from one result as
 // points * 10000 / ((10000 + bonus) * boostRate).
 //
+// Free Live rates a player's score against the song's `requiredScore`. Gekisou Live rates the room: the sum of the
+// scores of its n players against trunc(sqrt(5 / n) * battleRequiredScore * n). With every player scoring the same,
+// one player needs trunc(sqrt(5 / n) * R_battle * n) / n, about sqrt(5 / n) * R_battle (`room` = n below; 0 for solo).
+//
 // Event dominance (expected score): a beats b when L_a <= L_b and, for every rank r with thresholds R_a, R_b > 0,
 //   S_a(xbar) / R_a(r) >= S_b(xbar) / R_b(r)   for all 0 <= xbar <= X_MAX
 // (linear in xbar: both ends decide), strictly somewhere: a deck reaches every rank on a at a power no higher than on
@@ -315,23 +328,32 @@ export type ScoreRank = typeof SCORE_RANKS[number];
 
 type RankedRow = RateRow & { scoreRanks: readonly DataScoreRank[] };
 
-// The required score of a rank on a row's song; null when the song has no such rank.
-export function rankThreshold(row: { scoreRanks: readonly DataScoreRank[] }, rank: string): number | null {
+// One player's share of a Gekisou Live room threshold R_battle among n players who all score the same.
+export function roomThreshold(R: number, n: number): number {
+  return Math.trunc(Math.sqrt(5 / n) * R * n) / n;
+}
+
+// The score one player needs for a rank on a row's song: solo (`room` 0) the song's requiredScore, in a Gekisou Live
+// room of `room` players scoring the same its roomThreshold; null when the song has no such rank.
+export function rankThreshold(row: { scoreRanks: readonly DataScoreRank[] }, rank: string, room = 0): number | null {
   const hit = (row.scoreRanks || []).filter((r) => r.rank === rank).pop();
-  return hit && Number.isFinite(hit.requiredScore) ? hit.requiredScore : null;
+  if (!hit) return null;
+  if (!room) return Number.isFinite(hit.requiredScore) ? hit.requiredScore : null;
+  const R = hit.battleRequiredScore;
+  return typeof R === "number" && Number.isFinite(R) ? roomThreshold(R, room) : null;
 }
 
 // The power at which the expected score reaches a rank's threshold; 0 for a rank needing no score, null without
-// the rank or the chart's figures. `factor` scales the score (judgement accuracy).
-export function requiredPower(row: RankedRow, skills: Iterable<unknown>, rank: string, factor = 1): number | null {
-  const R = rankThreshold(row, rank);
+// the rank or the chart's figures. `factor` scales the score (the page folds its accuracy into the figures).
+export function requiredPower(row: RankedRow, skills: Iterable<unknown>, rank: string, factor = 1, room = 0): number | null {
+  const R = rankThreshold(row, rank, room);
   if (R === null || !row.weights) return null;
   return R <= 0 ? 0 : R / (scoreRate(row, skills) * factor);
 }
 
 // The chance over the random skill order that a deck of `power` reaches at least `rank` on the chart.
-export function reachChance(row: RankedRow, skills: Iterable<unknown>, power: number, rank: string, factor = 1): number | null {
-  const R = rankThreshold(row, rank);
+export function reachChance(row: RankedRow, skills: Iterable<unknown>, power: number, rank: string, factor = 1, room = 0): number | null {
+  const R = rankThreshold(row, rank, room);
   if (R === null || !row.weights) return null;
   if (R <= 0) return 1;
   const rates = orderRates(row, skills);
@@ -339,13 +361,13 @@ export function reachChance(row: RankedRow, skills: Iterable<unknown>, power: nu
 }
 
 // Whether `a` beats `b` for events (see above), strictly somewhere.
-export function eventDominates(a: RankedRow & LengthRow, b: RankedRow & LengthRow, source: LengthSource | string, xMax = X_MAX): boolean {
+export function eventDominates(a: RankedRow & LengthRow, b: RankedRow & LengthRow, source: LengthSource | string, xMax = X_MAX, room = 0): boolean {
   const La = lengthMs(a, source);
   const Lb = lengthMs(b, source);
   if (La === null || Lb === null || La > Lb + EPS || !a.weights || !b.weights) return false;
   let any = La < Lb - EPS;
   for (const rank of SCORE_RANKS) {
-    const Ra = rankThreshold(a, rank), Rb = rankThreshold(b, rank);
+    const Ra = rankThreshold(a, rank, room), Rb = rankThreshold(b, rank, room);
     if (Rb === null) continue;                               // b never gets the rank
     if (Ra === null) return false;
     if (Rb <= 0) { if (Ra > 0) return false; continue; }     // b always gets it
@@ -361,10 +383,10 @@ export function eventDominates(a: RankedRow & LengthRow, b: RankedRow & LengthRo
 }
 
 // For each row the indexes of the rows that beat it for events.
-export function eventDominance(rows: ReadonlyArray<RankedRow & LengthRow>, source: LengthSource | string, xMax = X_MAX): number[][] {
+export function eventDominance(rows: ReadonlyArray<RankedRow & LengthRow>, source: LengthSource | string, xMax = X_MAX, room = 0): number[][] {
   return rows.map((b) => {
     const by: number[] = [];
-    rows.forEach((a, i) => { if (a !== b && eventDominates(a, b, source, xMax)) by.push(i); });
+    rows.forEach((a, i) => { if (a !== b && eventDominates(a, b, source, xMax, room)) by.push(i); });
     return by;
   });
 }

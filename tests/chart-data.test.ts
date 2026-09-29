@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { chartRows, histogram, matches, noteKinds, sortBy, ticks } from "../src/lib/chart-data/catalog";
-import { parseChartDataQuery, serializeChartDataQuery, type QueryContext } from "../src/lib/chart-data/query";
+import { parseChartDataQuery, playScenario, roomSize, serializeChartDataQuery, type QueryContext } from "../src/lib/chart-data/query";
 import {
   chartFigures,
   dominates,
@@ -13,23 +13,26 @@ import {
   plainKind,
   quantile,
   rank,
+  rankThreshold,
   reachChance,
   requiredPower,
+  roomThreshold,
   scoreRate,
   weightSum,
 } from "../src/lib/chart-data/ranking";
 import {
   BEST_BATTLE,
   FREE,
-  defaultScenario,
-  rankedSeed,
-  scenarioSeeds,
+  formatRanks,
+  greatFactor,
+  parseRanks,
+  rankPercent,
+  scenarioSeed,
   scenarioSupport,
-  supportedScenario,
   type Scenario,
 } from "../src/lib/chart-data/scenario";
 import { localizeDataText } from "../src/lib/chart-data/text";
-import type { ChartDeck, DataSong, DeckSeed, MusicData } from "../src/lib/chart-data/types";
+import type { ChartDeck, DataSong, DeckRange, DeckSeed, MusicData } from "../src/lib/chart-data/types";
 
 const POWER = 300000;
 const KINDS = [
@@ -52,7 +55,7 @@ function song(id: number, charts: DataSong["charts"], extra: Partial<DataSong> =
     bandIds: [1],
     musicType: 1,
     bgm: { length: { lengthMs: 100000, durationMs: 100000 } },
-    scoreRanks: [{ rank: "D", requiredScore: 0 }, { rank: "S", requiredScore: 6000000 }, { rank: "SS", requiredScore: 9000000 }],
+    scoreRanks: [{ rank: "D", requiredScore: 0, battleRequiredScore: 0 }, { rank: "S", requiredScore: 6000000, battleRequiredScore: 4000000 }, { rank: "SS", requiredScore: 9000000, battleRequiredScore: 6000000 }],
     charts,
     ...extra,
   };
@@ -163,6 +166,16 @@ describe("expected score over the skill order", () => {
     expect(eventDominates(r, b, "bgm")).toBe(true);
     expect(eventDominates(b, r, "bgm")).toBe(false);
   });
+  test("a Gekisou Live room rates the summed score", () => {
+    expect(roomThreshold(6000000, 5)).toBe(6000000);
+    expect(roomThreshold(6000000, 1)).toBe(Math.trunc(Math.sqrt(5) * 6000000));
+    expect(roomThreshold(6000000, 2)).toBe(Math.trunc(Math.sqrt(2.5) * 6000000 * 2) / 2);
+    const r = { ...row, scoreRanks: data.songs![0]!.scoreRanks! };
+    expect(rankThreshold(r, "SS")).toBe(9000000);
+    expect(rankThreshold(r, "SS", 5)).toBe(6000000);
+    expect(rankThreshold({ scoreRanks: [{ rank: "SS", requiredScore: 1 }] }, "SS", 5)).toBeNull();
+    expect(requiredPower(r, [1, 1, 1, 1, 1], "SS", 1, 5)).toBeCloseTo(6000000 / 7, 6);
+  });
   test("lengths print as m:ss.s", () => {
     expect(formatLength(99989)).toBe("1:40.0");
     expect(formatLength(59950)).toBe("1:00.0");
@@ -172,49 +185,75 @@ describe("expected score over the skill order", () => {
 });
 
 describe("scenarios", () => {
-  const ranges = [
-    { index: 0, mission: 1, rankBonusPercent: 250, rankBonusPercents: [250, 190, 160, 100, 100] },
-    { index: 1, mission: 1, rankBonusPercent: 250, rankBonusPercents: [250, 190, 160, 100, 100] },
-    { index: 2, mission: 1, rankBonusPercent: 250, rankBonusPercents: [250, 190, 160, 100, 100] },
+  const pct = [250, 190, 160, 100, 100];
+  // range 0 is a Just range, 1 a combo range, 2 a luck range
+  const ranges: DeckRange[] = [
+    { index: 0, mission: 3, rankBonusPercent: 250, rankBonusPercents: pct },
+    { index: 1, mission: 1, rankBonusPercent: 250, rankBonusPercents: pct },
+    { index: 2, mission: 2, rankBonusPercent: 250, rankBonusPercents: pct },
   ];
   const measured: DeckSeed = {
     seed: 0,
     score: 1000000,
-    ranges: [{ rangeScore: 100001, rankBonus: 250002 }, { rangeScore: 50000, rankBonus: 125000 }, { rangeScore: 0, rankBonus: 0 }],
+    scorePerfect: 800000,
+    ranges: [{ rangeScore: 100001, rankBonus: 250002, rangeScorePerfect: 60000 }, { rangeScore: 50000, rankBonus: 125000 }, { rangeScore: 0, rankBonus: 0 }],
     weights: [[1, 2, 3, 4, 5], [0.5, 0.5, 0.5, 0.5, 0.5]],
     rangeWeights: [
       [[0.1, 0, 0], [0, 0.2, 0], [0, 0, 0], [0, 0, 0.4], [0, 0, 0]],
-      [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
+      null,
     ],
   };
-  const battle = (ranks: number[]): Scenario => ({ id: "battle", ranks });
-  test("rank 1 everywhere is the measurement itself", () => {
-    const d = deck([measured], { ranges });
-    expect(scenarioSeeds(d, battle([1, 1, 1]))).toBe(d.seeds!);
+  const battle = (ranks: number[], extra: Partial<Scenario> = {}): Scenario => ({ id: "battle", ranks, ...extra });
+  test("rank 1 everywhere, every Just, is the measurement itself", () => {
+    expect(scenarioSeed(measured, ranges, 0, BEST_BATTLE)).toEqual({ score: 1000000, weights: [1, 2, 3, 4, 5] });
+    expect(scenarioSeed(measured, ranges, 1, null)).toEqual({ score: 1000000, weights: [0.5, 0.5, 0.5, 0.5, 0.5] });
   });
   test("other ranks follow linearly from the range scores and weights", () => {
-    const s = rankedSeed(measured, ranges, battle([5, 2, 1]))!;
-    expect(s.score).toBe(1000000 - 250002 + 100001 - 125000 + 95000);
-    const w = s.weights[0]!;
-    expect(w[0]).toBeCloseTo(1 - 1.5 * 0.1, 12);
-    expect(w[1]).toBeCloseTo(2 - 0.6 * 0.2, 12);
-    expect(w[3]).toBe(4);
-    expect(s.weights[1]).toEqual([0.5, 0.5, 0.5, 0.5, 0.5]);
+    expect(rankPercent(ranges[0], 5)).toBe(100);
+    expect(rankPercent({ rankBonusPercent: 250 }, 1)).toBe(250);
+    expect(rankPercent({ rankBonusPercent: 250 }, 2)).toBeNull();
+    const s = scenarioSeed(measured, ranges, 0, battle([5, 2, 1]))!;
+    expect(s.score).toBe(1000000 - 375002 + 100001 + 95000);
+    expect(s.weights[0]).toBeCloseTo(1 - 1.5 * 0.1, 12);
+    expect(s.weights[1]).toBeCloseTo(2 - 0.6 * 0.2, 12);
+    expect(s.weights[3]).toBe(4);
+    // a kind whose range weights are null (it reads the confirmed rank) has no figures at other ranks
+    expect(scenarioSeed(measured, ranges, 1, battle([5, 2, 1]))).toBeNull();
+    expect(scenarioSeed({ ...measured, rangeWeights: null }, ranges, 0, battle([2, 1, 1]))).toBeNull();
   });
-  test("ranks without the fields have no figures", () => {
-    const plain = deck([seed(POWER, W)], { ranges: ranges.map(({ rankBonusPercents: _, ...r }) => r) });
-    expect(scenarioSeeds(plain, battle([2, 1, 1]))).toBeNull();
-    expect(scenarioSeeds(plain, battle([1, 1, 1]))).toEqual(plain.seeds!);
+  test("the Just rate interpolates to the all-Perfect play and re-ranks its range scores", () => {
+    const s = scenarioSeed(measured, ranges, 0, battle([1, 1, 1], { just: 0.5 }))!;
+    const rest = 525000 + 0.5 * (624998 - 525000);                    // no rank bonuses: Perfect play, Just play
+    const range0 = 60000 + 0.5 * (100001 - 60000);
+    expect(s.score).toBe(rest + Math.trunc(range0 * 2.5) + 125000);
+    expect(s.weights[0]).toBeCloseTo(1 + (range0 / 100001 - 1) * 3.5 * 0.1, 12);
+    expect(s.weights[1]).toBe(2);                                       // range 1 has no Just: the same either way
+    expect(scenarioSeed(measured, ranges, 0, battle([1, 1, 1], { just: 0 }))!.score).toBe(800000);
+    const noPerfect = { ...measured, ranges: [{ rangeScore: 100001, rankBonus: 250002 }, ...measured.ranges!.slice(1)] };
+    expect(scenarioSeed(noPerfect, ranges, 0, battle([1, 1, 1], { just: 0.5 }))).toBeNull();
+    expect(scenarioSeed({ ...measured, scorePerfect: undefined }, ranges, 0, battle([1, 1, 1], { just: 0.5 }))).toBeNull();
   });
-  test("the page opens on Free Live when the file has it", () => {
-    const support = scenarioSupport(data);
-    expect(support).toEqual({ free: true, battle: true, ranks: false });
-    expect(defaultScenario(support)).toEqual(FREE);
-    const noFree = { free: false, battle: true, ranks: false };
-    expect(defaultScenario(noFree)).toEqual(BEST_BATTLE);
-    expect(supportedScenario(FREE, noFree)).toEqual(BEST_BATTLE);
-    expect(supportedScenario(battle([3, 1, 1]), noFree)).toEqual(BEST_BATTLE);
-    expect(supportedScenario(battle([3, 9, 0]), { ...noFree, ranks: true })).toEqual(battle([3, 5, 1]));
+  test("the Great share scales score and weights; Free Live reads its own seed", () => {
+    expect(greatFactor(0.5)).toBeCloseTo(0.9, 12);
+    expect(greatFactor(undefined)).toBe(1);
+    const s = scenarioSeed(measured, ranges, 0, battle([1, 1, 1], { great: 1 }))!;
+    expect(s.score).toBeCloseTo(800000, 6);
+    expect(s.weights[4]).toBeCloseTo(4, 12);
+    expect(scenarioSeed(seed(1000, [1, null as unknown as number, 3]), [], 0, FREE)).toEqual({ score: 1000, weights: [1, 0, 3] });
+  });
+  test("support follows the fields", () => {
+    expect(scenarioSupport(data)).toEqual({ battle: true, free: true, ranks: false, just: false });
+    const full: MusicData = { songs: [song(9, [chart(91, "expert", deck([measured], { ranges }))])] };
+    expect(scenarioSupport(full)).toEqual({ battle: true, free: false, ranks: true, just: true });
+  });
+  test("ranks in the query", () => {
+    expect(parseRanks("3")).toEqual([3, 3, 3]);
+    expect(parseRanks("2,1")).toEqual([2, 1, 1]);
+    expect(parseRanks("9,x,5")).toEqual([1, 1, 5]);
+    expect(parseRanks(null)).toEqual([1, 1, 1]);
+    expect(formatRanks([1, 1, 1])).toBe("");
+    expect(formatRanks([3, 3, 3])).toBe("3");
+    expect(formatRanks([2, 1, 5])).toBe("2,1,5");
   });
 });
 
@@ -248,32 +287,52 @@ describe("catalog helpers", () => {
 });
 
 describe("query", () => {
-  const ctx: QueryContext = { hasStats: true, defaultScenario: FREE };
+  const ctx: QueryContext = { hasStats: true, support: { free: true, ranks: true, just: true } };
   test("defaults leave an empty query", () => {
     const state = parseChartDataQuery("", ctx);
     expect(state.view).toBe("rank");
     expect(state.rankBy).toBe("efficiency");
     expect(state.diffs).toEqual(["expert"]);
     expect(state.skills).toEqual([100, 100, 100, 100, 100]);
-    expect(state.scenario).toEqual(FREE);
+    expect([state.mode, state.ranks, state.great, state.just, state.room]).toEqual(["battle", [1, 1, 1], 0, 100, 5]);
+    expect(playScenario(state)).toEqual(BEST_BATTLE);
+    expect(roomSize(state)).toBe(5);
     expect(serializeChartDataQuery(state, ctx)).toBe("");
   });
   test("a query round-trips", () => {
-    const query = "v=charts&band=2&d=hard%2Cexpert&q=ave&r=event&sc=battle&br=2%2C1%2C5&len=chart&oh=45&x=150%2C120%2C0%2C0%2C0&p=800000&tr=S&gr=20&jk=off&ax=bpm&ay=rate&c=10000103&frontier";
+    const query = "v=charts&band=2&d=hard%2Cexpert&q=ave&r=event&len=chart&oh=45&x=150%2C120%2C0%2C0%2C0&p=800000&tr=S&rk=2%2C1%2C5&gr=20&jr=80&n=3&jk=off&ax=bpm&ay=rate&c=10000103&frontier";
     const state = parseChartDataQuery(query, ctx);
-    expect(state.scenario).toEqual({ id: "battle", ranks: [2, 1, 5] });
+    expect(playScenario(state)).toEqual({ id: "battle", ranks: [2, 1, 5], great: 0.2, just: 0.8 });
+    expect(state.room).toBe(3);
     expect(state.frontier).toBe(true);
     expect(state.chart).toBe(10000103);
     expect(serializeChartDataQuery(state, ctx)).toBe(query);
   });
+  test("one rank stands for every range; Free Live is gk=free and rates solo", () => {
+    const state = parseChartDataQuery("rk=3", ctx);
+    expect(state.ranks).toEqual([3, 3, 3]);
+    expect(serializeChartDataQuery(state, ctx)).toBe("rk=3");
+    const free = parseChartDataQuery("gk=free&gr=10&jr=50", ctx);
+    expect(free.mode).toBe("free");
+    expect(roomSize(free)).toBe(0);
+    expect(serializeChartDataQuery(free, ctx)).toBe("gk=free&gr=10&jr=50");
+  });
+  test("what the file cannot show falls back", () => {
+    const none: QueryContext = { hasStats: true, support: { free: false, ranks: false, just: false } };
+    const state = parseChartDataQuery("gk=free&rk=3&jr=50", none);
+    expect([state.mode, state.ranks, state.just]).toEqual(["battle", [1, 1, 1], 100]);
+  });
   test("values are clamped and rankings without statistics fall back", () => {
-    const state = parseChartDataQuery("r=efficiency&oh=9999&x=50,-1,abc&gr=300&tr=X&v=nope", { hasStats: false, defaultScenario: BEST_BATTLE });
+    const state = parseChartDataQuery("r=efficiency&oh=9999&x=50,-1,abc&gr=300&jr=-5&n=9&tr=X&v=nope", { hasStats: false, support: { free: true, ranks: true, just: true } });
     expect(state.rankBy).toBe("speed");
     expect(state.overhead).toBe(600);
     expect(state.skills).toEqual([50, 0, 0, 0, 0]);
     expect(state.great).toBe(100);
+    expect(state.just).toBe(0);
+    expect(state.room).toBe(5);
     expect(state.target).toBe("SS");
     expect(state.view).toBe("rank");
     expect(state.ay).toBe("density");
+    expect(parseChartDataQuery("n=-2", ctx).room).toBe(1);
   });
 });

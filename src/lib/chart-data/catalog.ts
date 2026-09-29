@@ -2,7 +2,7 @@
 // facts the page lists, ranks and plots. A port of ournotes-player's chart data page (examples/songs/catalog.js).
 
 import { DIFFICULTIES, joinCharts, type FigureRow } from "./ranking";
-import { BEST_BATTLE, type Scenario } from "./scenario";
+import type { Scenario } from "./scenario";
 import type { ChartDeck, DataChart, DataScoreRank, DataSong, DataText, MusicData } from "./types";
 
 export { DIFFICULTIES };
@@ -62,10 +62,10 @@ export interface ChartRow {
   weights: number[] | null;
 }
 
-// One row per chart of music-data.json, in song order then difficulty order, with the deck figures of the scenario
-// (ranking.ts chartFigures) when the chart has them; `stats` is the chart's own deck statistics (null in a file made
-// without the deck model).
-export function chartRows(data: MusicData | null | undefined, scenario: Scenario = BEST_BATTLE): ChartRow[] {
+// One row per chart of music-data.json, in song order then difficulty order, with the deck figures in a scenario
+// (ranking.ts chartFigures; default: Gekisou Live at rank 1) when the chart has them; `stats` is the chart's own deck
+// statistics (null in a file made without the deck model). The page rebuilds the rows when the scenario changes.
+export function chartRows(data: MusicData | null | undefined, scenario: Scenario | null = null): ChartRow[] {
   const eff = new Map<number, FigureRow>(joinCharts(data, scenario).map((r) => [r.scoreId, r]));
   const out: ChartRow[] = [];
   for (const song of data?.songs ?? []) {

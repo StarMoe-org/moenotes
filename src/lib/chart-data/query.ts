@@ -1,14 +1,17 @@
 import { DIFFICULTIES, SCORE_RANKS, type Difficulty, type LengthSource, type ScoreRank } from "./ranking";
-import { BEST_RANKS, RANGE_COUNT, SCENARIOS, rangeRank, type Scenario } from "./scenario";
+import { BEST_RANKS, RANK_MAX, formatRanks, parseRanks, type Scenario, type ScenarioId, type ScenarioSupport } from "./scenario";
 
 /**
  * The chart data tool's choices live in the query, as on ournotes-player's chart data page (the page's language is
  * the site locale, its theme the site setting):
  *   ?v=rank|charts|guide &band=<id> &d=<difficulty>[,...] &q=<search>
  *   &r=efficiency|event|speed|level|notes|long|short|skip &sp=density|bpmMax|bpm   (ranking, speed measure)
- *   &sc=free|battle &br=<rank>,<rank>,<rank>                                       (scenario, Gekisou Live ranks)
  *   &len=bgm|chart &oh=<seconds> &x=<percent>[,...] &frontier                      (efficiency)
- *   &p=<power> &tr=<rank> &gr=<Great percent>                                      (event: rank chance)
+ *   &gk=free &rk=<r>[,<r>,<r>]                        (play scenario: Free Live, else Gekisou Live with a rank 1-5
+ *                                                      per range; default Gekisou Live at rank 1 everywhere)
+ *   &gr=<Great percent> &jr=<Just percent>            (accuracy: Great share, default 0; Just rate in Just ranges,
+ *                                                      default 100)
+ *   &p=<power> &tr=<rank> &n=<players>                (event: rank chance; Gekisou Live room size, default 5)
  *   &jk=off                                                                        (no jackets)
  *   &ax=<figure> &ay=<figure>                                                      (scatter axes)
  *   &c=<scoreId>                                                                   (the chart detail open)
@@ -36,7 +39,6 @@ export interface ChartDataState {
   search: string;
   rankBy: RankBy;
   speedBy: SpeedBy;
-  scenario: Scenario;
   len: LengthSource;
   /** Seconds. */
   overhead: number;
@@ -45,36 +47,50 @@ export interface ChartDataState {
   frontier: boolean;
   power: number;
   target: ScoreRank;
-  /** Percent of Great judgements. */
+  /** The play scenario (see `playScenario`): Gekisou Live at `ranks`, or Free Live. */
+  mode: ScenarioId;
+  /** Gekisou Live rank per range, 1..5. */
+  ranks: number[];
+  /** Percent of Great judgements over every note. */
   great: number;
+  /** Percent of Just judgements inside the Just mission ranges (Gekisou Live). */
+  just: number;
+  /** Gekisou Live room size for the score ranks, 1..5. */
+  room: number;
   jackets: boolean;
   ax: Axis;
   ay: Axis;
   chart: number | null;
 }
 
-/** What the defaults depend on: whether the file has deck statistics, and the scenario it opens with. */
+/** What the defaults depend on: whether the file has deck statistics, and which scenarios it can show. */
 export interface QueryContext {
   hasStats: boolean;
-  defaultScenario: Scenario;
+  support: Pick<ScenarioSupport, "free" | "ranks" | "just">;
 }
 
 const oneOf = <T extends string>(values: readonly T[], value: string | null): value is T => value !== null && (values as readonly string[]).includes(value);
-
 const defaultRank = (ctx: QueryContext): RankBy => (ctx.hasStats ? "efficiency" : "speed");
 const defaultY = (ctx: QueryContext): Axis => (ctx.hasStats ? "perMinute" : "density");
-const ranksText = (ranks: readonly number[]) => [...Array(RANGE_COUNT).keys()].map((i) => rangeRank({ id: "battle", ranks }, i)).join(",");
+const pct = (v: string | null, def: number) => (v === null || !Number.isFinite(Number(v)) ? def : Math.min(100, Math.max(0, Math.round(Number(v)))));
+
+/** The scenario the figures are computed for: the state's scenario with its accuracy. */
+export function playScenario(state: Pick<ChartDataState, "mode" | "ranks" | "great" | "just">): Scenario {
+  return { id: state.mode, ranks: state.ranks, just: state.just / 100, great: state.great / 100 };
+}
+
+/** The Gekisou Live room size the score ranks use: 0 (solo thresholds) in Free Live. */
+export function roomSize(state: Pick<ChartDataState, "mode" | "room">): number {
+  return state.mode === "battle" ? state.room : 0;
+}
 
 export function parseChartDataQuery(search: string, ctx: QueryContext): ChartDataState {
   const q = new URLSearchParams(search);
+  const has = ctx.support;
   const skills = (q.get("x") || DEFAULT_SKILLS).split(",").map(Number).filter((x) => Number.isFinite(x) && x >= 0).slice(0, SKILL_SLOTS);
   while (skills.length < SKILL_SLOTS) skills.push(0);
   let rankBy: RankBy = oneOf(RANKS, q.get("r")) ? q.get("r") as RankBy : defaultRank(ctx);
   if (!ctx.hasStats && EFF_RANKS.has(rankBy)) rankBy = "speed";
-  const sc = q.get("sc");
-  const scenario: Scenario = oneOf(SCENARIOS, sc)
-    ? { id: sc, ranks: sc === "battle" && q.get("br") ? (q.get("br") as string).split(",").map(Number) : BEST_RANKS }
-    : ctx.defaultScenario;
   const ax = q.get("ax"), ay = q.get("ay"), view = q.get("v"), speed = q.get("sp"), target = q.get("tr");
   return {
     view: oneOf(VIEWS, view) ? view : "rank",
@@ -83,14 +99,17 @@ export function parseChartDataQuery(search: string, ctx: QueryContext): ChartDat
     search: q.get("q") || "",
     rankBy,
     speedBy: oneOf(SPEEDS, speed) ? speed : "density",
-    scenario: { id: scenario.id, ranks: [...Array(RANGE_COUNT).keys()].map((i) => rangeRank(scenario, i)) },
     len: q.get("len") === "chart" ? "chart" : "bgm",
     overhead: Math.min(600, Math.max(0, Number(q.get("oh") ?? 30) || 0)),
     skills,
     frontier: q.has("frontier"),
     power: Math.max(0, Math.round(Number(q.get("p")) || 0)),
     target: oneOf(SCORE_RANKS, target) ? target : "SS",
-    great: Math.min(100, Math.max(0, Number(q.get("gr")) || 0)),
+    mode: q.get("gk") === "free" && has.free ? "free" : "battle",
+    ranks: has.ranks ? parseRanks(q.get("rk")) : [...BEST_RANKS],
+    great: pct(q.get("gr"), 0),
+    just: has.just ? pct(q.get("jr"), 100) : 100,
+    room: Math.min(RANK_MAX, Math.max(1, Math.round(Number(q.get("n")) || 5))),
     jackets: q.get("jk") !== "off",
     ax: oneOf(AXES, ax) ? ax : "displayLevel",
     ay: oneOf(AXES, ay) ? ay : defaultY(ctx),
@@ -110,14 +129,16 @@ export function serializeChartDataQuery(state: ChartDataState, ctx: QueryContext
   put("q", state.search, "");
   put("r", state.rankBy, defaultRank(ctx));
   put("sp", state.speedBy, "density");
-  put("sc", state.scenario.id, ctx.defaultScenario.id);
-  if (state.scenario.id === "battle") put("br", ranksText(state.scenario.ranks), ranksText(BEST_RANKS));
   put("len", state.len, "bgm");
   put("oh", state.overhead, 30);
   put("x", state.skills.join(","), DEFAULT_SKILLS);
   put("p", state.power, 0);
   put("tr", state.target, "SS");
+  put("gk", state.mode, "battle");
+  put("rk", formatRanks(state.ranks), "");
   put("gr", state.great, 0);
+  put("jr", state.just, 100);
+  put("n", state.room, 5);
   put("jk", state.jackets ? null : "off", null);
   put("ax", state.ax, "displayLevel");
   put("ay", state.ay, defaultY(ctx));

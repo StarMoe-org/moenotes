@@ -33,9 +33,9 @@ export interface DeckRange {
   mission?: number;
   startMs?: number;
   endMs?: number;
-  /** The solo (rank 1) bonus percentage of the song's mission pattern. */
+  /** The rank 1 bonus percentage (`rankBonusPercents[0]`). */
   rankBonusPercent?: number;
-  /** Proposed: the bonus percentage by rank (index 0 = rank 1 .. 4 = rank 5). */
+  /** The rank bonus percentages of ranks 1..5 of the song's mission pattern (MasterLiveGekisouRankingScoreBonus). */
   rankBonusPercents?: readonly number[];
 }
 
@@ -43,6 +43,8 @@ export interface DeckRange {
 export interface DeckSeedRange {
   rangeScore?: number;
   rankBonus?: number;
+  /** `rangeScore` on the Perfect play (every Just judged Perfect). */
+  rangeScorePerfect?: number;
   maxCombo?: number;
   justCount?: number;
   lotResults?: readonly number[];
@@ -50,14 +52,23 @@ export interface DeckSeedRange {
 
 export interface DeckSeed {
   seed?: number;
-  /** The no-skill score at the measurement power. */
+  /** The no-skill score at the measurement power (with Gekisou on, the rank 1 bonuses included). */
   score: number;
-  /** `weights[kind][position]`: the score a factor-1 effect of the kind at the position adds, per unit of power. */
-  weights: ReadonlyArray<readonly number[] | undefined>;
+  /** `score` on the Perfect play (every Just judged Perfect; rank 1 bonuses included). */
+  scorePerfect?: number;
+  /**
+   * `weights[kind][position]`: the score a factor-1 effect of the kind at the position adds, per unit of power; a kind
+   * null in `offSeeds` when its conditions read the Gekisou state.
+   */
+  weights: ReadonlyArray<readonly (number | null)[] | null | undefined>;
   ranges?: readonly DeckSeedRange[];
-  /** Proposed: `rangeWeights[kind][position][range]`, the part of the weight scored inside each range, per unit of power. */
-  rangeWeights?: ReadonlyArray<ReadonlyArray<readonly number[]> | undefined>;
+  /**
+   * `rangeWeights[kind][position][range]`: the range points per unit of deck power and of factor; null for overlapping
+   * ranges, a kind null when its conditions read the confirmed rank.
+   */
+  rangeWeights?: ReadonlyArray<ReadonlyArray<readonly (number | null)[] | null> | null | undefined> | null;
   check?: unknown;
+  rankCheck?: unknown;
 }
 
 export interface ChartDeck {
@@ -69,7 +80,7 @@ export interface ChartDeck {
   ranges?: readonly DeckRange[];
   justNotes?: number;
   seeds?: readonly DeckSeed[];
-  /** Proposed: the same measurement with Gekisou off (free lives), without range fields. */
+  /** Gekisou off (Free Live, Challenge Live): one seed, without range fields. */
   offSeeds?: readonly DeckSeed[];
   unplayable?: string | null;
 }
