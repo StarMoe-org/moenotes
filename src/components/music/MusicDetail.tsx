@@ -1,6 +1,12 @@
-import { useEffect, useState, useRef, type ReactNode } from "react";
+import { useEffect, useMemo, useState, useRef, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
+import ServerScope from "@/components/shared/ServerScope";
+import { moveReleaseUrls } from "@/lib/assets/release";
+import { entityServer, forServer, type ServerFaceted } from "@/lib/servers/facets";
+import { useAssetUrl, useContentServer } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
+import { formatMasterDay } from "@/lib/schedule";
 import { localizePath } from "@/i18n/routing";
 import { getRoutePathById } from "@/lib/route/registry";
 import { getChartPreviewHref } from "@/lib/music/chart-preview";
@@ -24,15 +30,28 @@ import { getMusicRankingHref } from "@/lib/game-api/links";
 interface Props {
   locale: AppLocale;
   songId: number;
-  initialSong: MusicViewModel | null;
+  initialSong: ServerFaceted<MusicViewModel> | null;
+  servers: GameServer[];
 }
 
 interface DetailData {
   song: MusicViewModel | null;
 }
 
-export default function MusicDetail({ locale, initialSong }: Props) {
-  const [data] = useState<DetailData>({ song: initialSong });
+/** The song as the page's server has it (docs/servers.md). */
+export default function MusicDetail({ locale, initialSong, servers }: Props) {
+  const [server, pickServer] = useContentServer(locale, servers);
+  const song = useMemo(() => initialSong && moveReleaseUrls(forServer(initialSong, server), entityServer(initialSong, server)), [initialSong, server]);
+  return (
+    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer} entityServers={initialSong?.servers ?? []}>
+      <MusicDetailView locale={locale} song={song} />
+    </ServerScope>
+  );
+}
+
+function MusicDetailView({ locale, song: initial }: { locale: AppLocale; song: MusicViewModel | null }) {
+  const assetUrl = useAssetUrl();
+  const data: DetailData = { song: initial };
   const loading = false;
   const error = false;
   const [, setReloadKey] = useState(0);
@@ -215,7 +234,7 @@ export default function MusicDetail({ locale, initialSong }: Props) {
                         </div>
                         <div className="flex justify-between border-b border-[var(--mn-border)]/20 pb-1">
                           <span>Release</span>
-                          <span className="text-[var(--mn-text)]">{formatDate(song.startAt, locale)}</span>
+                          <span className="text-[var(--mn-text)]">{formatMasterDay(song.startAt, locale)}</span>
                         </div>
                         <div className="flex justify-between border-b border-[var(--mn-border)]/20 pb-1">
                           <span>Song ID</span>
@@ -249,14 +268,14 @@ export default function MusicDetail({ locale, initialSong }: Props) {
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <img
                       className="h-6 w-auto object-contain block dark:hidden"
-                      src={getBandLogoUrl(song.bandId, locale)}
+                      src={assetUrl(getBandLogoUrl(song.bandId, locale))}
                       alt=""
                       aria-hidden="true"
                       onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                     />
                     <img
                       className="h-6 w-auto object-contain hidden dark:block"
-                      src={getBandLogoWhiteUrl(song.bandId, locale)}
+                      src={assetUrl(getBandLogoWhiteUrl(song.bandId, locale))}
                       alt=""
                       aria-hidden="true"
                       onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
@@ -265,7 +284,7 @@ export default function MusicDetail({ locale, initialSong }: Props) {
                   </div>
                   <h2 className="mt-1 font-[var(--mn-font-display)] text-3xl leading-tight text-[var(--mn-text)] sm:text-4xl">{song.title}</h2>
                 </div>
-                <img className="h-8 w-8 shrink-0" src={getCardTypeIconUrl(song.musicType as CardType)} alt="" aria-hidden="true" />
+                <img className="h-8 w-8 shrink-0" src={assetUrl(getCardTypeIconUrl(song.musicType as CardType))} alt="" aria-hidden="true" />
               </div>
             </div>
 
@@ -277,7 +296,7 @@ export default function MusicDetail({ locale, initialSong }: Props) {
                 <DetailRow label={t(locale, "music.arranger")} value={song.arranger} />
                 <DetailRow label={t(locale, "cards.detailBand")} value={
                   <span className="inline-flex items-center gap-1.5">
-                    <img className="h-5 w-auto object-contain" src={getBandSmallIconUrl(song.bandId)} alt="" aria-hidden="true" />
+                    <img className="h-5 w-auto object-contain" src={assetUrl(getBandSmallIconUrl(song.bandId))} alt="" aria-hidden="true" />
                     {song.bandName}
                   </span>
                 } />
@@ -290,14 +309,14 @@ export default function MusicDetail({ locale, initialSong }: Props) {
                           href={localizePath(`/characters/${voc.id}`, locale)}
                           className="mn-focus mn-stamp-press inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-[var(--mn-border)] bg-[var(--mn-cream-deep)] hover:bg-[var(--mn-accent)] hover:text-white transition-all text-xs font-bold text-[var(--mn-text)] shadow-sm"
                         >
-                          <img className="h-4.5 w-4.5 rounded-full object-cover bg-white" src={getCharacterFaceIconUrl(voc.id)} alt="" />
+                          <img className="h-4.5 w-4.5 rounded-full object-cover bg-white" src={assetUrl(getCharacterFaceIconUrl(voc.id))} alt="" />
                           <span>{voc.name}</span>
                         </a>
                       ))}
                     </div>
                   } />
                 )}
-                <DetailRow label={t(locale, "music.releaseDate")} value={formatDate(song.startAt, locale)} />
+                <DetailRow label={t(locale, "music.releaseDate")} value={formatMasterDay(song.startAt, locale)} />
                 <DetailRow label={t(locale, "music.songId")} value={`#${song.id}`} />
                 <DetailRow label={t(locale, "music.jacketAsset")} value={song.jacketAssetName} />
               </div>
@@ -407,11 +426,6 @@ function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   );
 }
 
-function formatDate(value: string, locale: AppLocale): string {
-  const normalized = value.replaceAll("/", "-").replace(" ", "T");
-  const date = new Date(normalized);
-  return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat(locale, { year: "numeric", month: "long", day: "numeric" }).format(date);
-}
 
 /** Saves a remote file under a readable name; opens it in a new tab when the browser blocks the blob download. */
 async function saveRemoteFile(url: string, filename: string): Promise<void> {

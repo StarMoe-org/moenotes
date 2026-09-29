@@ -2,6 +2,10 @@ import { useListSort } from "@/lib/filter/use-list-sort";
 import { sortEntries } from "@/lib/filter/list-sort";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
+import ServerScope from "@/components/shared/ServerScope";
+import type { ServerFaceted } from "@/lib/servers/facets";
+import { serverOnlyLabel, useServerList } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
 import BaseFilters, {
   RarityFilter,
@@ -24,15 +28,16 @@ import {
 
 interface Props {
   locale: AppLocale;
-  initialSupportCards: SupportCardViewModel[];
+  initialSupportCards: ServerFaceted<SupportCardViewModel>[];
+  servers: GameServer[];
 }
 
 const rarities: SupportCardRarity[] = [10, 4, 3, 2];
 const cardTypes: SupportCardType[] = [1, 2, 3, 4, 5];
 
-export default function SupportCardsExplorer({ locale, initialSupportCards }: Props) {
+export default function SupportCardsExplorer({ locale, servers, initialSupportCards }: Props) {
   const memory = useListPageMemory("support-cards");
-  const [cards] = useState<SupportCardViewModel[]>(initialSupportCards);
+  const { server, pickServer, items: cards } = useServerList(locale, servers, initialSupportCards);
   const [query, setQuery] = useState("");
   const sort = useListSort("support-cards", locale, "date rarity");
   const [selectedRarities, setSelectedRarities] = useState<number[]>([]);
@@ -227,17 +232,19 @@ export default function SupportCardsExplorer({ locale, initialSupportCards }: Pr
   ]);
 
   return (
-    <section className="min-w-0" aria-live="polite">
-      {filteredCards.length === 0 ? (
-        <EmptyState locale={locale} onReset={resetFilters} />
-      ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4xl:grid-cols-7 5xl:grid-cols-8">
-          {sortedEntries.map((card) => (
-            <SupportCardItem key={card.id} card={card} locale={locale} onClick={saveCurrentState} />
-          ))}
-        </div>
-      )}
-    </section>
+    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
+      <section className="min-w-0" aria-live="polite">
+        {filteredCards.length === 0 ? (
+          <EmptyState locale={locale} onReset={resetFilters} />
+        ) : (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4xl:grid-cols-7 5xl:grid-cols-8">
+            {sortedEntries.map((card) => (
+              <SupportCardItem key={card.id} card={card} locale={locale} onClick={saveCurrentState} badge={serverOnlyLabel(locale, card, servers)} />
+            ))}
+          </div>
+        )}
+      </section>
+    </ServerScope>
   );
 }
 

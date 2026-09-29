@@ -1,11 +1,10 @@
-import { GAME_SERVERS, GAME_SERVER_TIME_ZONES, type GameServer } from "@/config/game-api";
+import { GAME_SERVER_TIME_ZONES, type GameServer } from "@/config/game-api";
+import { isGameServer } from "@/config/servers";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import type { GameServerSetting } from "@/types/settings";
 
-export function isGameServer(value: unknown): value is GameServer {
-  return typeof value === "string" && (GAME_SERVERS as readonly string[]).includes(value);
-}
+export { isGameServer };
 
 /** The server a reader most likely plays on: the Chinese site languages read the TW server, the rest EN. */
 export function defaultGameServer(locale: AppLocale): GameServer {

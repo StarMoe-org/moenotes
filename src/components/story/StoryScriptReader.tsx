@@ -6,6 +6,8 @@ import type { ParsedStoryScript, StoryLine, StoryVideo } from "@/lib/story/parse
 import type { RawStoryCharacter } from "@/lib/story/data";
 import type { RawText } from "@/lib/cards/data";
 import { getCharacterFaceIconUrl } from "@/lib/cards/assets";
+import { moveReleaseUrls } from "@/lib/assets/release";
+import { useAssetUrl, useContentServerScope } from "@/lib/servers/use-content-server";
 import { localizeMasterText } from "@/lib/masterdata/localize-text";
 import { safeGetLocalStorage, safeSetLocalStorage } from "@/lib/storage/safe-storage";
 
@@ -121,7 +123,7 @@ function cueLineAt(lines: StoryLine[], clipLines: number[], time: number): numbe
   });
 }
 
-export default function StoryScriptReader({ locale, script, characters, texts, layer, renderHeader }: {
+export default function StoryScriptReader({ locale, script: neutralScript, characters, texts, layer, renderHeader }: {
   locale: AppLocale;
   script: ParsedStoryScript;
   characters: RawStoryCharacter[];
@@ -131,6 +133,9 @@ export default function StoryScriptReader({ locale, script, characters, texts, l
   /** Renders above the script; receives the reader's controls (autoplay only while it is not running), or null when there are none. */
   renderHeader?: (controls: ReactNode) => ReactNode;
 }) {
+  // The parser writes server-neutral file URLs; the script plays the surrounding server's files.
+  const { server } = useContentServerScope();
+  const script = useMemo(() => moveReleaseUrls(neutralScript, server), [neutralScript, server]);
   const [activeLineIndex, setActiveLineIndex] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isAutoplayMode, setIsAutoplayMode] = useState(false);
@@ -712,6 +717,7 @@ function speakerLabel(line: StoryLine, locale: AppLocale): string {
 }
 
 function LineCard({ index, line, characterId, isActive, isPlaying, locale, onToggle }: LineViewProps) {
+  const assetUrl = useAssetUrl();
   return <article
     id={`story-line-${index}`}
     onClick={onToggle}
@@ -724,7 +730,7 @@ function LineCard({ index, line, characterId, isActive, isPlaying, locale, onTog
     <div className="mb-1.5 flex items-center justify-between gap-3">
       <div className="flex items-center gap-2">
         {characterId && (
-          <img src={getCharacterFaceIconUrl(characterId)} alt={line.speaker} className={`h-6 w-6 rounded-full border bg-[var(--mn-cream-deep)] object-cover transition-all ${isActive ? "border-[var(--mn-accent)] scale-110" : "border-[var(--mn-border)]"}`} />
+          <img src={assetUrl(getCharacterFaceIconUrl(characterId))} alt={line.speaker} className={`h-6 w-6 rounded-full border bg-[var(--mn-cream-deep)] object-cover transition-all ${isActive ? "border-[var(--mn-accent)] scale-110" : "border-[var(--mn-border)]"}`} />
         )}
         <strong className={`text-sm transition-colors duration-300 ${isActive ? "text-[var(--mn-accent)] font-black" : "text-[var(--mn-text-muted)] font-bold"}`}>
           {speakerLabel(line, locale) || t(locale, "story.ui.narration")}
@@ -943,13 +949,14 @@ function ClipBlock({ video, lineIndices, lineProps, locale, events }: {
 }
 
 function ClipLine({ index, line, characterId, isActive, onScreen, onToggle }: LineViewProps & { onScreen: boolean }) {
+  const assetUrl = useAssetUrl();
   return <li
     id={`story-line-${index}`}
     onClick={onToggle}
     className={`flex cursor-pointer items-start gap-3 px-4 py-2.5 transition-colors duration-300 ${isActive || onScreen ? "bg-[color-mix(in_oklab,var(--mn-accent)_8%,transparent)]" : "hover:bg-[color-mix(in_oklab,var(--mn-accent)_3%,transparent)]"}`}
   >
     {characterId
-      ? <img src={getCharacterFaceIconUrl(characterId)} alt="" className="mt-0.5 h-6 w-6 shrink-0 rounded-full border border-[var(--mn-border)] bg-[var(--mn-cream-deep)] object-cover" />
+      ? <img src={assetUrl(getCharacterFaceIconUrl(characterId))} alt="" className="mt-0.5 h-6 w-6 shrink-0 rounded-full border border-[var(--mn-border)] bg-[var(--mn-cream-deep)] object-cover" />
       : <span className="h-6 w-6 shrink-0" aria-hidden="true" />}
     <p className="min-w-0 text-sm leading-6">
       {line.speaker && <strong className={`mr-2 font-black ${isActive ? "text-[var(--mn-accent)]" : "text-[var(--mn-text-muted)]"}`}>{line.speaker}</strong>}
@@ -972,7 +979,8 @@ function ChatBlock({ title, locale, children }: { title: string; locale: AppLoca
 
 function ChatBubble({ index, line, characterId, isActive, onToggle }: LineViewProps) {
   const outgoing = line.chat?.outgoing ?? false;
-  const avatar = line.chat?.iconUrl ?? (characterId ? getCharacterFaceIconUrl(characterId) : undefined);
+  const assetUrl = useAssetUrl();
+  const avatar = assetUrl(line.chat?.iconUrl ?? (characterId ? getCharacterFaceIconUrl(characterId) : undefined)) || undefined;
   return <li id={`story-line-${index}`} onClick={onToggle} className={`flex cursor-pointer items-end gap-2 ${outgoing ? "flex-row-reverse" : ""}`}>
     <ChatAvatar url={avatar} name={line.speaker} />
     <div className={`flex min-w-0 max-w-[80%] flex-col ${outgoing ? "items-end" : "items-start"}`}>

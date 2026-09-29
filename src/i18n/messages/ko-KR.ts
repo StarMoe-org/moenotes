@@ -933,6 +933,10 @@ export const koKR = {
   },
   gameServer: {
     inZone: "{time} ({zone})",
+    onlyOn: "{servers} 전용",
+    notOnServer: "{server}에는 아직 없어 {source} 기준으로 표시합니다",
+    schedules: "서버별 일정",
+    timesIn: "시간은 {zone} 기준입니다",
     label: "게임 서버",
     short: {
       tw: "번체",

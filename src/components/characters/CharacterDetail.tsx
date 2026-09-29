@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
+import ServerScope from "@/components/shared/ServerScope";
+import { moveReleaseUrls } from "@/lib/assets/release";
+import { entityServer, valueForServer, type ServerFacetedValue } from "@/lib/servers/facets";
+import { useAssetUrl, useContentServer } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import { getRoutePathById } from "@/lib/route/registry";
@@ -24,7 +29,8 @@ import {
 interface Props {
   locale: AppLocale;
   characterId: number;
-  initialData: DetailData;
+  initialData: ServerFacetedValue<DetailData>;
+  servers: GameServer[];
 }
 
 interface DetailData {
@@ -56,8 +62,19 @@ function estimateTabWidth(label: string): number {
   return width;
 }
 
-export default function CharacterDetail({ locale, initialData }: Props) {
-  const [data] = useState<DetailData>(initialData);
+/** The character as the page's server has it (docs/servers.md). */
+export default function CharacterDetail({ locale, initialData, servers }: Props) {
+  const [server, pickServer] = useContentServer(locale, servers);
+  const data = useMemo(() => moveReleaseUrls(valueForServer(initialData, server), entityServer(initialData, server)), [initialData, server]);
+  return (
+    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer} entityServers={initialData.servers}>
+      <CharacterDetailView locale={locale} data={data} />
+    </ServerScope>
+  );
+}
+
+function CharacterDetailView({ locale, data }: { locale: AppLocale; data: DetailData }) {
+  const assetUrl = useAssetUrl();
   const loading = false;
   const error = false;
   const [, setReloadKey] = useState(0);
@@ -83,12 +100,12 @@ export default function CharacterDetail({ locale, initialData }: Props) {
   const assets = useMemo<AssetPreview[]>(() => {
     if (!character) return [];
     return [
-      { id: "sprite", label: t(locale, "characters.assets.sprite"), description: t(locale, "characters.assets.spriteDesc"), url: getCharacterSpriteUrl(character.id), transparent: true },
-      { id: "thumbnail", label: t(locale, "characters.assets.thumbnail"), description: t(locale, "characters.assets.thumbnailDesc"), url: getCharacterThumbnailUrl(character.id) },
-      { id: "face", label: t(locale, "characters.assets.face"), description: t(locale, "characters.assets.faceDesc"), url: getCharacterFaceIconUrl(character.id), transparent: true, compact: true },
-      { id: "board", label: t(locale, "characters.assets.board"), description: t(locale, "characters.assets.boardDesc"), url: getCharacterBoardIconUrl(character.id), transparent: true, compact: true },
+      { id: "sprite", label: t(locale, "characters.assets.sprite"), description: t(locale, "characters.assets.spriteDesc"), url: assetUrl(getCharacterSpriteUrl(character.id)), transparent: true },
+      { id: "thumbnail", label: t(locale, "characters.assets.thumbnail"), description: t(locale, "characters.assets.thumbnailDesc"), url: assetUrl(getCharacterThumbnailUrl(character.id)) },
+      { id: "face", label: t(locale, "characters.assets.face"), description: t(locale, "characters.assets.faceDesc"), url: assetUrl(getCharacterFaceIconUrl(character.id)), transparent: true, compact: true },
+      { id: "board", label: t(locale, "characters.assets.board"), description: t(locale, "characters.assets.boardDesc"), url: assetUrl(getCharacterBoardIconUrl(character.id)), transparent: true, compact: true },
     ];
-  }, [character, locale]);
+  }, [character, locale, assetUrl]);
 
   const containerWidth = useMemo(() => {
     const v = Math.min(1920, viewportWidth);
@@ -394,14 +411,14 @@ export default function CharacterDetail({ locale, initialData }: Props) {
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <img
                       className="h-6 w-auto object-contain block dark:hidden"
-                      src={getBandLogoUrl(character.bandId, locale)}
+                      src={assetUrl(getBandLogoUrl(character.bandId, locale))}
                       alt=""
                       aria-hidden="true"
                       onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                     />
                     <img
                       className="h-6 w-auto object-contain hidden dark:block"
-                      src={getBandLogoWhiteUrl(character.bandId, locale)}
+                      src={assetUrl(getBandLogoWhiteUrl(character.bandId, locale))}
                       alt=""
                       aria-hidden="true"
                       onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
@@ -504,18 +521,18 @@ export default function CharacterDetail({ locale, initialData }: Props) {
                             </div>
                           </div>
                           <div className="mt-auto pt-2 flex items-center justify-between gap-2 border-t border-solid border-[var(--mn-text-muted)]/40">
-                            <img className="h-5 w-auto max-w-14 object-contain" src={getRarityIconUrl(card.rarity)} alt={t(locale, `cards.rarities.${card.rarity}`)} />
+                            <img className="h-5 w-auto max-w-14 object-contain" src={assetUrl(getRarityIconUrl(card.rarity))} alt={t(locale, `cards.rarities.${card.rarity}`)} />
                             <div className="flex items-center min-w-0">
                               <img
                                 className="h-4 w-auto max-w-[70px] object-contain block dark:hidden"
-                                src={getBandLogoUrl(card.bandId, locale)}
+                                src={assetUrl(getBandLogoUrl(card.bandId, locale))}
                                 alt=""
                                 aria-hidden="true"
                                 onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                               />
                               <img
                                 className="h-4 w-auto max-w-[70px] object-contain hidden dark:block"
-                                src={getBandLogoWhiteUrl(card.bandId, locale)}
+                                src={assetUrl(getBandLogoWhiteUrl(card.bandId, locale))}
                                 alt=""
                                 aria-hidden="true"
                                 onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}

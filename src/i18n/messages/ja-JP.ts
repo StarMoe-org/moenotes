@@ -963,6 +963,10 @@ export const jaJP = {
   },
   gameServer: {
     inZone: "{time}（{zone}）",
+    onlyOn: "{servers}のみ",
+    notOnServer: "{server}では未実装のため、{source}の内容を表示しています",
+    schedules: "サーバー別の期間",
+    timesIn: "時刻は {zone} 表記です",
     label: "サーバー",
     short: {
       tw: "繁体字",

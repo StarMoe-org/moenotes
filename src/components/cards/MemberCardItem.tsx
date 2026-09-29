@@ -13,7 +13,7 @@ interface Props {
   locale: AppLocale;
   onClick?: () => void;
   /** Short overlay label such as "PICK UP". */
-  badge?: string;
+  badge?: string | undefined;
 }
 
 export default function MemberCardItem({ card, locale, onClick, badge }: Props) {

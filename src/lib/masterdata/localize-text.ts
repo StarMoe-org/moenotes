@@ -27,10 +27,14 @@ export function masterTextFieldOrder(locale: AppLocale): MasterTextField[] {
   return ["english", "japanese", "simplifiedChinese", "traditionalChinese", "korean"];
 }
 
-function isUsable(value: string | undefined, id: string | undefined): value is string {
+/** Whether a cell holds copy: blank cells and untranslated text keys (or the row's own id) do not. */
+export function isUsableMasterText(value: string | undefined, id: string | undefined): value is string {
   if (!value?.trim()) return false;
   return value !== id && !UNTRANSLATED_KEY.test(value);
 }
+
+/** Every language column of a MasterText row. */
+export const MASTER_TEXT_FIELDS: readonly MasterTextField[] = ["japanese", "english", "simplifiedChinese", "traditionalChinese", "korean"];
 
 /**
  * Resolve masterdata text for a UI locale.
@@ -42,7 +46,7 @@ export function localizeMasterText(entry: LocalizableMasterText | undefined, loc
   const id = entry.id === undefined ? undefined : String(entry.id);
   for (const field of masterTextFieldOrder(locale)) {
     const value = entry[field];
-    if (isUsable(value, id)) return value;
+    if (isUsableMasterText(value, id)) return value;
   }
   return "";
 }

@@ -1,5 +1,9 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useMemo, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
+import ServerScope from "@/components/shared/ServerScope";
+import { listForServer, type ServerFaceted } from "@/lib/servers/facets";
+import { useAssetUrl, useContentServer, useServerAssetUrl } from "@/lib/servers/use-content-server";
 import { localizePath } from "@/i18n/routing";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 import {
@@ -11,9 +15,10 @@ import { type CharacterViewModel } from "@/lib/characters/data";
 interface Props {
   locale: AppLocale;
   initialCharacters: {
-    characters: CharacterViewModel[];
-    bands: BandModel[];
+    characters: ServerFaceted<CharacterViewModel>[];
+    bands: ServerFaceted<BandModel>[];
   };
+  servers: GameServer[];
 }
 
 interface BandModel {
@@ -23,9 +28,14 @@ interface BandModel {
   color: string;
 }
 
-export default function CharactersExplorer({ locale, initialCharacters }: Props) {
+export default function CharactersExplorer({ locale, servers, initialCharacters }: Props) {
   const memory = useListPageMemory("characters");
-  const [data] = useState<{ characters: CharacterViewModel[]; bands: BandModel[] }>(initialCharacters);
+  const [server, pickServer] = useContentServer(locale, servers);
+  const assetUrl = useServerAssetUrl(server);
+  const data = useMemo(() => ({
+    characters: listForServer(initialCharacters.characters, server),
+    bands: listForServer(initialCharacters.bands, server),
+  }), [initialCharacters, server]);
 
   useEffect(() => {
     if (!memory.state?.scrollY) return;
@@ -45,43 +55,46 @@ export default function CharactersExplorer({ locale, initialCharacters }: Props)
   }, [memory]);
 
   return (
-    <div className="space-y-12">
-      {data.bands.map((band) => {
-        const bandChars = data.characters.filter((char) => char.bandId === band.id);
-        if (bandChars.length === 0) return null;
+    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
+      <div className="space-y-12">
+        {data.bands.map((band) => {
+          const bandChars = data.characters.filter((char) => char.bandId === band.id);
+          if (bandChars.length === 0) return null;
 
-        return (
-          <section key={band.id} className="mn-paper p-6 sm:p-8" aria-labelledby={`band-title-${band.id}`}>
-            {/* Band Header (PJSK Style info box) */}
-            <div className="flex items-start gap-4 border-b-[1.5px] border-dashed border-[var(--mn-border)]/30 pb-5 mb-6">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-sm)]">
-                <img className="h-9 w-auto object-contain" src={getBandSmallIconUrl(band.id)} alt="" aria-hidden="true" />
+          return (
+            <section key={band.id} className="mn-paper p-6 sm:p-8" aria-labelledby={`band-title-${band.id}`}>
+              {/* Band Header (PJSK Style info box) */}
+              <div className="flex items-start gap-4 border-b-[1.5px] border-dashed border-[var(--mn-border)]/30 pb-5 mb-6">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-sm)]">
+                  <img className="h-9 w-auto object-contain" src={assetUrl(getBandSmallIconUrl(band.id))} alt="" aria-hidden="true" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 id={`band-title-${band.id}`} className="font-[var(--mn-font-display)] text-xl text-[var(--mn-text)] flex items-center gap-2">
+                    {band.name}
+                    <span className="h-2.5 w-2.5 rounded-full border border-[var(--mn-border)]/50" style={{ backgroundColor: band.color }} />
+                  </h2>
+                  <p className="mt-1.5 text-xs font-semibold leading-relaxed text-[var(--mn-text-muted)] max-w-5xl">
+                    {band.description}
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0 flex-1">
-                <h2 id={`band-title-${band.id}`} className="font-[var(--mn-font-display)] text-xl text-[var(--mn-text)] flex items-center gap-2">
-                  {band.name}
-                  <span className="h-2.5 w-2.5 rounded-full border border-[var(--mn-border)]/50" style={{ backgroundColor: band.color }} />
-                </h2>
-                <p className="mt-1.5 text-xs font-semibold leading-relaxed text-[var(--mn-text-muted)] max-w-5xl">
-                  {band.description}
-                </p>
-              </div>
-            </div>
 
-            {/* Character Cards Horizontal/Grid Row */}
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5 xl:grid-cols-5">
-              {bandChars.map((char) => (
-                <CharacterCard key={char.id} char={char} locale={locale} onClick={saveCurrentState} />
-              ))}
-            </div>
-          </section>
-        );
-      })}
-    </div>
+              {/* Character Cards Horizontal/Grid Row */}
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5 xl:grid-cols-5">
+                {bandChars.map((char) => (
+                  <CharacterCard key={char.id} char={char} locale={locale} onClick={saveCurrentState} />
+                ))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+    </ServerScope>
   );
 }
 
 function CharacterCard({ char, locale, onClick }: { char: CharacterViewModel; locale: AppLocale; onClick: () => void }) {
+  const assetUrl = useAssetUrl();
   return (
     <a
       href={localizePath(`/characters/${char.id}`, locale)}
@@ -103,7 +116,7 @@ function CharacterCard({ char, locale, onClick }: { char: CharacterViewModel; lo
       <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
         <img
           className="h-full w-full object-cover object-top select-none transition-transform duration-300 group-hover:scale-105"
-          src={getCharacterThumbnailUrl(char.id)}
+          src={assetUrl(getCharacterThumbnailUrl(char.id))}
           alt=""
           aria-hidden="true"
           loading="lazy"

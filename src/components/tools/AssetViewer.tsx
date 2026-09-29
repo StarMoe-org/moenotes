@@ -9,6 +9,8 @@ import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import { useAssetBrowserQuery } from "@/components/tools/use-asset-browser-query";
 import { AssetBrowserError, assetBrowserUrl, defaultCatalog, fetchAssetBrowser } from "@/lib/assets/browser-client";
 import { getAssetBrowserPreview } from "@/lib/assets/preview";
+import { serverOfAssetRegion } from "@/lib/assets/release";
+import { PRIMARY_SERVER, type GameServer } from "@/config/servers";
 import type { AssetCatalog, AssetRegion, BundleBrowsePage, BundleContent, BundleScanStatus } from "@/types/asset-browser";
 
 interface Props { locale: AppLocale }
@@ -243,12 +245,14 @@ function fileIcon(file: BundleContent): IconName {
 
 export default function AssetViewer({ locale }: Props) {
   const regions = useAssetBrowserQuery<AssetRegion[]>(assetBrowserUrl("regions"));
-  const [scope, setScope] = useState({ language: "", snapshot: "" });
-  const region = regions.data?.find((item) => item.id === assetConfig.region);
+  const [scope, setScope] = useState({ region: "", language: "", snapshot: "" });
+  // The chosen region, else the service's default one.
+  const region = regions.data?.find((item) => item.id === scope.region) ?? regions.data?.find((item) => item.id === assetConfig.region) ?? regions.data?.[0];
+  const regionServer = serverOfAssetRegion(region?.id) ?? PRIMARY_SERVER;
   const languages = region ? [...new Set([region.default_locale, ...region.locales])] : [];
   const language = region && languages.includes(scope.language) ? scope.language : region?.default_locale ?? "";
   const languageNames = useMemo(() => new Intl.DisplayNames([locale], { type: "language" }), [locale]);
-  const catalogs = useAssetBrowserQuery<AssetCatalog[]>(region ? assetBrowserUrl("catalogs", { region: assetConfig.region, locale: language }) : null);
+  const catalogs = useAssetBrowserQuery<AssetCatalog[]>(region ? assetBrowserUrl("catalogs", { region: region.id, locale: language }) : null);
   const catalog = catalogs.data?.find((item) => item.snapshot === scope.snapshot) ?? defaultCatalog(catalogs.data ?? []);
   const snapshot = catalog?.snapshot ?? "";
 
@@ -416,8 +420,12 @@ export default function AssetViewer({ locale }: Props) {
       resetLabel={t(locale, "filter.reset")}
       expandLabel={t(locale, "filter.expand")}
     >
-      <ScopeSelect title={t(locale, "assetBrowser.language")} value={language} options={languages.map((value) => ({ value, label: languageNames.of(value) ?? value }))} onChange={(value) => changeScope({ language: value, snapshot: "" })} />
-      <ScopeSelect title={t(locale, "assetBrowser.snapshot")} value={snapshot} options={(catalogs.data ?? []).map((item) => ({ value: item.snapshot, label: `${item.version} · ${new Date(item.created * 1000).toLocaleString(locale)}${item.current ? ` · ${t(locale, "assetBrowser.current")}` : ""}` }))} onChange={(value) => changeScope({ language, snapshot: value })} />
+      {(regions.data?.length ?? 0) > 1 && <ScopeSelect title={t(locale, "gameServer.label")} value={region?.id ?? ""} options={(regions.data ?? []).map((item) => {
+        const server = serverOfAssetRegion(item.id);
+        return { value: item.id, label: server ? t(locale, `gameServer.names.${server}`) : item.id };
+      })} onChange={(value) => changeScope({ region: value, language: "", snapshot: "" })} />}
+      <ScopeSelect title={t(locale, "assetBrowser.language")} value={language} options={languages.map((value) => ({ value, label: languageNames.of(value) ?? value }))} onChange={(value) => changeScope({ region: region?.id ?? "", language: value, snapshot: "" })} />
+      <ScopeSelect title={t(locale, "assetBrowser.snapshot")} value={snapshot} options={(catalogs.data ?? []).map((item) => ({ value: item.snapshot, label: `${item.version} · ${new Date(item.created * 1000).toLocaleString(locale)}${item.current ? ` · ${t(locale, "assetBrowser.current")}` : ""}` }))} onChange={(value) => changeScope({ region: region?.id ?? "", language, snapshot: value })} />
     </BaseFilters>
   );
   useQuickFilter(t(locale, "assetBrowser.filterTitle"), filterContent, [locale, query, sort, region, language, catalog, regions.data, catalogs.data, navigation]);
@@ -626,7 +634,7 @@ export default function AssetViewer({ locale }: Props) {
                     {filteredFiles.map((file, index) => {
                       const ext = getFileExtension(file.path).toUpperCase();
                       const category = getFileCategory(file.path);
-                      const preview = getAssetBrowserPreview(file.path, locale);
+                      const preview = getAssetBrowserPreview(file.path, locale, regionServer);
                       const fileName = query ? file.path : (file.path.split("/").pop() || file.path);
 
                       return (
@@ -694,7 +702,7 @@ export default function AssetViewer({ locale }: Props) {
                   {filteredFiles.map((file, index) => {
                     const ext = getFileExtension(file.path).toUpperCase();
                     const category = getFileCategory(file.path);
-                    const preview = getAssetBrowserPreview(file.path, locale);
+                    const preview = getAssetBrowserPreview(file.path, locale, regionServer);
                     const fileName = file.path.split("/").pop() || file.path;
 
                     return (
@@ -750,6 +758,7 @@ export default function AssetViewer({ locale }: Props) {
       <ContentDetails
         isOpen={showModal}
         locale={locale}
+        server={regionServer}
         file={selectedFile}
         onClose={() => setShowModal(false)}
       />
@@ -841,9 +850,10 @@ function ContentDetails({
   locale,
   file,
   onClose,
-}: Props & { isOpen: boolean; file: BundleContent | null; onClose: () => void }) {
+  server,
+}: Props & { isOpen: boolean; file: BundleContent | null; onClose: () => void; server: GameServer }) {
   const [copyPathState, setCopyPathState] = useState(false);
-  const preview = file ? getAssetBrowserPreview(file.path, locale) : null;
+  const preview = file ? getAssetBrowserPreview(file.path, locale, server) : null;
 
   const copyPath = async () => {
     if (!file) return;

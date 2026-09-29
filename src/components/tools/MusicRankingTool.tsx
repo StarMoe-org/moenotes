@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import type { AppLocale } from "@/config/locales";
+import { PRIMARY_SERVER } from "@/config/servers";
+import { moveReleaseUrls } from "@/lib/assets/release";
+import { entityServer, type ServerFaceted } from "@/lib/servers/facets";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import MusicRanking from "@/components/music/MusicRanking";
@@ -13,12 +16,14 @@ import { getRoutePathById } from "@/lib/route/registry";
 
 interface Props {
   locale: AppLocale;
-  songs: MusicViewModel[];
+  /** Every server's songs; a song the primary server lacks shows its own server's files. */
+  songs: ServerFaceted<MusicViewModel>[];
   deckCards: DeckCardLookup;
 }
 
 /** A song's high-score ranking on each game server; `?music=` picks the song so the view can be shared. */
-export default function MusicRankingTool({ locale, songs, deckCards }: Props) {
+export default function MusicRankingTool({ locale, songs: allSongs, deckCards }: Props) {
+  const songs = useMemo(() => allSongs.map((song) => moveReleaseUrls(song, entityServer(song, PRIMARY_SERVER))), [allSongs]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [restored, setRestored] = useState(false);

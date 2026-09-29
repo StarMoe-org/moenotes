@@ -3,6 +3,7 @@ import ItemsExplorer from "@/components/items/ItemsExplorer";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
 import { getBuildItems } from "@/lib/masterdata/build-data";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
 
 interface Props {
   locale: AppLocale;
@@ -10,8 +11,9 @@ interface Props {
 
 const { locale } = Astro.props;
 const items = await getBuildItems(locale);
+const servers = await getBuildServers();
 ---
 
 <PageLayout locale={locale} titleKey="seo.items.title" descriptionKey="seo.items.description">
-  <ItemsExplorer client:load locale={locale} initialItems={items} />
+  <ItemsExplorer client:load servers={servers} locale={locale} initialItems={items} />
 </PageLayout>

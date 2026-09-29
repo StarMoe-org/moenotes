@@ -3,6 +3,7 @@ import MusicExplorer from "@/components/music/MusicExplorer";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
 import { getBuildMusic } from "@/lib/masterdata/build-data";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
 
 interface Props {
   locale: AppLocale;
@@ -10,8 +11,9 @@ interface Props {
 
 const { locale } = Astro.props;
 const songs = await getBuildMusic(locale);
+const servers = await getBuildServers();
 ---
 
 <PageLayout locale={locale} titleKey="seo.music.title" descriptionKey="seo.music.description">
-  <MusicExplorer client:load locale={locale} initialSongs={songs} />
+  <MusicExplorer client:load servers={servers} locale={locale} initialSongs={songs} />
 </PageLayout>

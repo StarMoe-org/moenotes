@@ -9,6 +9,6 @@ export type GameServerSetting = "auto" | GameServer;
 export interface AppSettings {
   locale: AppLocale;
   colorScheme: ColorScheme;
-  /** The server music rankings and announcements open on. */
+  /** The server content pages, music rankings and announcements show (docs/servers.md). */
   gameServer: GameServerSetting;
 }

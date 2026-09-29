@@ -1,3 +1,5 @@
+import { parseMasterDate } from "@/lib/schedule";
+
 export const listSortKeys = ["default", "idAsc", "idDesc", "nameAsc", "nameDesc", "dateDesc", "dateAsc", "rarityDesc", "rarityAsc"] as const;
 export type ListSort = typeof listSortKeys[number];
 export interface SortableEntry { id: number | string; name?: string; title?: string; startAt?: string; rarity?: number }
@@ -8,7 +10,8 @@ export function sortEntries<T extends SortableEntry>(items: readonly T[], sort: 
   const value = (item: T): number | string | undefined => {
     if (sort.startsWith("name")) return item.title || item.name || undefined;
     if (sort.startsWith("rarity")) return item.rarity;
-    if (sort.startsWith("date")) { const date = Date.parse(item.startAt || ""); return Number.isFinite(date) ? date : undefined; }
+    // MasterData time, with the offset a server's tables may carry; other date strings as the browser reads them.
+    if (sort.startsWith("date")) { const date = parseMasterDate(item.startAt) ?? Date.parse(item.startAt || ""); return Number.isFinite(date) ? date : undefined; }
     return item.id;
   };
   return [...items].sort((a, b) => {

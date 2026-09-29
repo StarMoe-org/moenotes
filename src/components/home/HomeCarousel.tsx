@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
+import ServerScope from "@/components/shared/ServerScope";
+import { valueForServer, type ServerFacetedValue } from "@/lib/servers/facets";
+import { useContentServer } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import BannerImage from "@/components/shared/BannerImage";
@@ -12,7 +16,8 @@ import { useNow } from "@/lib/schedule/use-now";
 
 interface Props {
   locale: AppLocale;
-  slides: HomeSlide[];
+  home: ServerFacetedValue<{ slides: HomeSlide[] }>;
+  servers: GameServer[];
 }
 
 const INTERVAL_MS = 6_000;
@@ -35,7 +40,18 @@ function usePrefersReducedMotion(): boolean {
   return reduced;
 }
 
-export default function HomeCarousel({ locale, slides }: Props) {
+/** The banners of the page's server, below the server switch of the home page. */
+export default function HomeCarousel({ locale, home, servers }: Props) {
+  const [server, pickServer] = useContentServer(locale, servers);
+  const { slides } = valueForServer(home, server);
+  return (
+    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
+      <Carousel key={server} locale={locale} slides={slides} />
+    </ServerScope>
+  );
+}
+
+function Carousel({ locale, slides }: { locale: AppLocale; slides: HomeSlide[] }) {
   const now = useNow();
   const reduceMotion = usePrefersReducedMotion();
   const [index, setIndex] = useState(0);

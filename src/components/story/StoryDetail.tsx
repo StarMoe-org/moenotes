@@ -1,5 +1,9 @@
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
+import ServerScope from "@/components/shared/ServerScope";
+import { forServer, type ServerFaceted } from "@/lib/servers/facets";
+import { useAssetUrl, useContentServer } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import { getAssetUrl } from "@/lib/assets/url";
@@ -18,19 +22,37 @@ function storyArtworkUrl(story: StoryViewModel | null, locale: AppLocale): strin
   return "";
 }
 
-export default function StoryDetail({ locale, advId, initialTitle, initialScript, initialCharacters, initialTexts, story, previous, next }: {
+interface StoryDetailProps {
   locale: AppLocale;
   advId: number;
   initialTitle: string;
+  /** The script of the first server with the ADV; it plays the page server's files (docs/servers.md). */
   initialScript: ParsedStoryScript | null;
   initialCharacters: RawStoryCharacter[];
   initialTexts: RawText[];
-  story: StoryViewModel | null;
+  story: ServerFaceted<StoryViewModel> | null;
   previous: StoryNeighbor | null;
   next: StoryNeighbor | null;
+}
+
+export default function StoryDetail({ servers, advServers, story, ...props }: StoryDetailProps & {
+  /** The build's servers. */
+  servers: GameServer[];
+  /** Servers whose MasterData has the ADV. */
+  advServers: GameServer[];
 }) {
+  const [server, pickServer] = useContentServer(props.locale, servers);
+  const shown = useMemo(() => story && forServer(story, server), [story, server]);
+  return (
+    <ServerScope locale={props.locale} servers={servers} server={server} onChange={pickServer} entityServers={advServers}>
+      <StoryDetailView {...props} story={shown} />
+    </ServerScope>
+  );
+}
+
+function StoryDetailView({ locale, advId, initialTitle, initialScript, initialCharacters, initialTexts, story, previous, next }: Omit<StoryDetailProps, "story"> & { story: StoryViewModel | null }) {
   const [artworkFailed, setArtworkFailed] = useState(false);
-  const artworkUrl = storyArtworkUrl(story, locale);
+  const artworkUrl = useAssetUrl()(storyArtworkUrl(story, locale));
   const episodeLabel = story ? storyEpisodeLabel(locale, story) : "";
   const eyebrow = [story?.groupTitle || story?.bandName, episodeLabel].filter(Boolean).join(" · ");
 

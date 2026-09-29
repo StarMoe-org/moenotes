@@ -5,6 +5,7 @@ import { localizePath } from "@/i18n/routing";
 import { formatCompactCount } from "@/lib/format/compact-count";
 import type { RewardViewModel } from "@/lib/rewards/resources";
 import { getRoutePathById } from "@/lib/route/registry";
+import { useAssetUrl } from "@/lib/servers/use-content-server";
 
 interface Props {
   reward: RewardViewModel;
@@ -30,10 +31,11 @@ const coverKinds = new Set(["member", "support", "music", "spot"]);
 
 function RewardIcon({ reward, size }: { reward: RewardViewModel; size: string }) {
   const [failed, setFailed] = useState(false);
+  const assetUrl = useAssetUrl();
   return (
     <span className={`relative grid shrink-0 place-items-center overflow-hidden rounded-xl border border-[var(--mn-glass-border)] bg-[var(--mn-surface)] ${size}`}>
       {reward.imageUrl && !failed ? (
-        <img className={`h-full w-full ${coverKinds.has(reward.kind) ? "object-cover" : "object-contain p-0.5"}`} src={reward.imageUrl} alt="" loading="lazy" onError={() => setFailed(true)} />
+        <img className={`h-full w-full ${coverKinds.has(reward.kind) ? "object-cover" : "object-contain p-0.5"}`} src={assetUrl(reward.imageUrl)} alt="" loading="lazy" onError={() => setFailed(true)} />
       ) : (
         <span className="text-[10px] font-bold text-[var(--mn-text-muted)]">#{reward.id}</span>
       )}

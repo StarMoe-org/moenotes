@@ -3,6 +3,7 @@ import BackgroundsExplorer from "@/components/backgrounds/BackgroundsExplorer";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
 import { getBuildBackgrounds } from "@/lib/masterdata/build-data";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
 
 interface Props {
   locale: AppLocale;
@@ -10,8 +11,9 @@ interface Props {
 
 const { locale } = Astro.props;
 const backgrounds = await getBuildBackgrounds(locale);
+const servers = await getBuildServers();
 ---
 
 <PageLayout locale={locale} titleKey="seo.backgrounds.title" descriptionKey="seo.backgrounds.description">
-  <BackgroundsExplorer client:load locale={locale} initialBackgrounds={backgrounds} />
+  <BackgroundsExplorer client:load servers={servers} locale={locale} initialBackgrounds={backgrounds} />
 </PageLayout>

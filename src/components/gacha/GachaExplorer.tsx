@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
+import ServerScope from "@/components/shared/ServerScope";
+import type { ServerFaceted } from "@/lib/servers/facets";
+import { useAssetUrl, useServerList } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import BaseFilters, { BandFilter, FilterButton, FilterSection, toggleArrayItem } from "@/components/shared/BaseFilters";
@@ -19,16 +23,17 @@ import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 
 interface Props {
   locale: AppLocale;
-  initialGachas: GachaViewModel[];
+  initialGachas: ServerFaceted<GachaViewModel>[];
+  servers: GameServer[];
   bands: Array<[number, string]>;
 }
 
 const statuses: ScheduleStatus[] = ["ongoing", "upcoming", "permanent", "ended"];
 
-export default function GachaExplorer({ locale, initialGachas, bands }: Props) {
+export default function GachaExplorer({ locale, servers, initialGachas, bands }: Props) {
   const memory = useListPageMemory("gacha");
   const now = useNow();
-  const [gachas] = useState<GachaViewModel[]>(initialGachas);
+  const { server, pickServer, items: gachas } = useServerList(locale, servers, initialGachas);
   const [query, setQuery] = useState("");
   // Most pools have no start date, so only id and name orderings are meaningful.
   const sort = useListSort("gacha", locale);
@@ -144,17 +149,19 @@ export default function GachaExplorer({ locale, initialGachas, bands }: Props) {
   ]);
 
   return (
-    <section className="min-w-0" aria-live="polite">
-      {filteredGachas.length === 0 ? (
-        <EmptyState locale={locale} onReset={resetFilters} />
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4 5xl:grid-cols-5">
-          {sortedGachas.map((gacha) => (
-            <GachaCard key={gacha.id} gacha={gacha} locale={locale} now={now} onClick={saveCurrentState} />
-          ))}
-        </div>
-      )}
-    </section>
+    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
+      <section className="min-w-0" aria-live="polite">
+        {filteredGachas.length === 0 ? (
+          <EmptyState locale={locale} onReset={resetFilters} />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4 5xl:grid-cols-5">
+            {sortedGachas.map((gacha) => (
+              <GachaCard key={gacha.id} gacha={gacha} locale={locale} now={now} onClick={saveCurrentState} />
+            ))}
+          </div>
+        )}
+      </section>
+    </ServerScope>
   );
 }
 
@@ -198,6 +205,7 @@ function GachaCard({ gacha, locale, now, onClick }: { gacha: GachaViewModel; loc
 }
 
 function PickupFaces({ characters, label }: { characters: GachaPickupCharacter[]; label: string }) {
+  const assetUrl = useAssetUrl();
   const shown = characters.slice(0, 8);
   return (
     <span className="flex min-w-0 items-center gap-2">
@@ -207,7 +215,7 @@ function PickupFaces({ characters, label }: { characters: GachaPickupCharacter[]
           <img
             key={character.id}
             className="-ml-1.5 h-7 w-7 rounded-full border-2 border-[var(--mn-paper)] bg-[var(--mn-cream-deep)] object-cover first:ml-0"
-            src={getCharacterFaceIconUrl(character.id)}
+            src={assetUrl(getCharacterFaceIconUrl(character.id))}
             alt={character.name}
             loading="lazy"
           />

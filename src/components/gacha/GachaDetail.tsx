@@ -1,5 +1,11 @@
 import { useMemo, useState, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
+import ServerScope from "@/components/shared/ServerScope";
+import ServerSchedules from "@/components/shared/ServerSchedules";
+import { moveReleaseUrls } from "@/lib/assets/release";
+import { entityServer, valueForServer, type ServerFacetedValue } from "@/lib/servers/facets";
+import { useAssetUrl, useContentServer } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import MemberCardItem from "@/components/cards/MemberCardItem";
@@ -16,13 +22,14 @@ import type { GachaDetailViewModel, GachaPool } from "@/lib/gacha/data";
 import { formatCompactCount } from "@/lib/format/compact-count";
 import { getItemIconUrl } from "@/lib/items/assets";
 import { getRoutePathById } from "@/lib/route/registry";
-import { formatScheduleRange } from "@/lib/schedule";
+import { formatScheduleRange, masterUtcLabel } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
 import { getSupportRarityIconUrl, type SupportCardRarity } from "@/lib/support-cards/assets";
 
 interface Props {
   locale: AppLocale;
-  gacha: GachaDetailViewModel | null;
+  gacha: ServerFacetedValue<GachaDetailViewModel> | null;
+  servers: GameServer[];
 }
 
 type PoolKind = "member" | "support";
@@ -36,7 +43,19 @@ function rarityIcon(kind: GachaPool["kind"], rarity: number): string {
   return "";
 }
 
-export default function GachaDetail({ locale, gacha }: Props) {
+/** The gacha as the page's server has it (docs/servers.md). */
+export default function GachaDetail({ locale, gacha: faceted, servers }: Props) {
+  const [server, pickServer] = useContentServer(locale, servers);
+  const gacha = useMemo(() => faceted && moveReleaseUrls(valueForServer(faceted, server), entityServer(faceted, server)), [faceted, server]);
+  return (
+    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer} entityServers={faceted?.servers ?? []}>
+      <GachaDetailView locale={locale} gacha={gacha} schedules={faceted && <ServerSchedules locale={locale} faceted={faceted} servers={servers} alwaysLabel={t(locale, "gacha.alwaysOpen")} />} />
+    </ServerScope>
+  );
+}
+
+function GachaDetailView({ locale, gacha, schedules }: { locale: AppLocale; gacha: GachaDetailViewModel | null; schedules: ReactNode }) {
+  const assetUrl = useAssetUrl();
   const now = useNow();
   const [openPool, setOpenPool] = useState<PoolKind | null>(null);
   const pickupMembers = useMemo(() => new Set(gacha?.pickupMemberIds), [gacha]);
@@ -60,7 +79,7 @@ export default function GachaDetail({ locale, gacha }: Props) {
             <BannerImage
               eager
               className="rounded-xl border border-[var(--mn-glass-border)]"
-              src={getImageAssetUrl(gacha.bannerPath, locale)}
+              src={assetUrl(getImageAssetUrl(gacha.bannerPath, locale))}
               alt={t(locale, "gacha.bannerAlt", { name: gacha.name })}
               fallback={gacha.name}
             />
@@ -84,7 +103,8 @@ export default function GachaDetail({ locale, gacha }: Props) {
                 <DetailRow label={t(locale, "gacha.period")} value={<span className="tabular-nums">{schedule}</span>} />
                 <DetailRow label={t(locale, "gacha.gachaId")} value={`#${gacha.id}`} />
               </div>
-              <p className="mt-3 text-xs text-[var(--mn-text-muted)]">{t(locale, "gacha.timezone")}</p>
+              <p className="mt-3 text-xs text-[var(--mn-text-muted)]">{t(locale, "gameServer.timesIn", { zone: masterUtcLabel(gacha.startAt || gacha.endAt) })}</p>
+              {schedules}
             </div>
           </div>
 
@@ -125,7 +145,7 @@ export default function GachaDetail({ locale, gacha }: Props) {
                   <ul className="mt-3 grid gap-2 sm:grid-cols-2">
                     {gacha.items.map((item) => (
                       <li key={item.id} className="flex min-w-0 items-center gap-3 rounded-2xl border border-[var(--mn-glass-border)] bg-[var(--mn-surface)] p-2.5">
-                        <img className="h-10 w-10 shrink-0 object-contain" src={getItemIconUrl(item.imagePath, locale)} alt="" loading="lazy" />
+                        <img className="h-10 w-10 shrink-0 object-contain" src={assetUrl(getItemIconUrl(item.imagePath, locale))} alt="" loading="lazy" />
                         <span className="min-w-0 flex-1 truncate text-sm font-bold text-[var(--mn-text)]">{item.name}</span>
                         <span className="shrink-0 font-mono text-sm font-black tabular-nums text-[var(--mn-accent-deep)]" title={item.amount.toLocaleString(locale)}>{t(locale, "gacha.itemAmount", { count: formatCompactCount(item.amount) })}</span>
                       </li>

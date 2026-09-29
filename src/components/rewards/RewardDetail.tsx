@@ -1,5 +1,11 @@
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
+import ServerScope from "@/components/shared/ServerScope";
+import ServerSchedules from "@/components/shared/ServerSchedules";
+import { moveReleaseUrls } from "@/lib/assets/release";
+import { entityServer, valueForServer, type ServerFacetedValue } from "@/lib/servers/facets";
+import { useContentServer } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import BannerImage from "@/components/shared/BannerImage";
@@ -8,18 +14,30 @@ import ScheduleBadge from "@/components/shared/ScheduleBadge";
 import { rewardBannerCrop } from "@/components/rewards/RewardsExplorer";
 import type { LoginBonusDetail, MissionGroupDetail, MissionViewModel, RewardEntryDetail, SeasonPassDetail } from "@/lib/rewards/data";
 import { getRoutePathById } from "@/lib/route/registry";
-import { formatScheduleRange } from "@/lib/schedule";
+import { formatScheduleRange, masterUtcLabel } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
 
 interface Props {
   locale: AppLocale;
-  entry: RewardEntryDetail | null;
+  entry: ServerFacetedValue<RewardEntryDetail> | null;
+  servers: GameServer[];
 }
 
 const panelHeader = "flex flex-wrap items-center justify-between gap-3 border-b border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_6%,transparent)] to-transparent px-6 py-4 sm:px-8";
 const panelTitle = "font-[var(--mn-font-display)] text-xl text-[var(--mn-text)] sm:text-2xl";
 
-export default function RewardDetail({ locale, entry }: Props) {
+/** The entry as the page's server has it (docs/servers.md). */
+export default function RewardDetail({ locale, entry: faceted, servers }: Props) {
+  const [server, pickServer] = useContentServer(locale, servers);
+  const entry = useMemo(() => faceted && moveReleaseUrls(valueForServer(faceted, server), entityServer(faceted, server)), [faceted, server]);
+  return (
+    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer} entityServers={faceted?.servers ?? []}>
+      <RewardDetailView locale={locale} entry={entry} schedules={faceted && <ServerSchedules locale={locale} faceted={faceted} servers={servers} alwaysLabel={t(locale, "rewards.alwaysOpen")} />} />
+    </ServerScope>
+  );
+}
+
+function RewardDetailView({ locale, entry, schedules }: { locale: AppLocale; entry: RewardEntryDetail | null; schedules: ReactNode }) {
   const now = useNow();
   if (!entry) return <NotFound locale={locale} />;
 
@@ -51,7 +69,8 @@ export default function RewardDetail({ locale, entry }: Props) {
                 </div>
               ))}
             </div>
-            <p className="px-6 pb-5 text-xs text-[var(--mn-text-muted)]">{t(locale, "gacha.timezone")}</p>
+            <p className="px-6 pb-5 text-xs text-[var(--mn-text-muted)]">{t(locale, "gameServer.timesIn", { zone: masterUtcLabel(entry.startAt || entry.endAt) })}</p>
+            <div className="px-6 pb-5 empty:hidden">{schedules}</div>
           </div>
         </aside>
 

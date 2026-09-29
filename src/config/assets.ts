@@ -2,7 +2,7 @@ import { buildEnvOrigin } from "./build-env";
 
 export const assetConfig = {
   /**
-   * moenotes-assets service: published files by asset path (/{language}/{key}/{label}.{ext}, see
+   * moenotes-assets service: published files by asset path (/{region}/{language}/{key}/{label}.{ext}, see
    * src/lib/assets/release.ts and docs/release-assets.md) and the bundle browser API.
    */
   api: (import.meta.env.PUBLIC_ASSET_API || "https://assets.bdon.moe").replace(/\/+$/, ""),
@@ -40,6 +40,10 @@ export const assetConfig = {
   /** The license the MotionSync Core comes under, linked from the story player's help dialog. */
   motionSyncLicense: "https://www.live2d.com/eula/live2d-proprietary-software-license-agreement_en.html",
   spineRuntime: import.meta.env.PUBLIC_SPINE_RUNTIME || "",
+  /**
+   * The asset service's default region (its `region` setting), whose files are also served without the region
+   * segment. It is the primary server's region (src/config/servers.ts); other servers' files carry `/{region}`.
+   */
   region: "tw",
   fonts: {
     googlePreconnect: "https://fonts.googleapis.com",

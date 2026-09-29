@@ -6,13 +6,15 @@ interface Props {
   locale: AppLocale;
   value: GameServer | null;
   onChange: (server: GameServer) => void;
+  /** The servers to offer (every server by default). */
+  servers?: readonly GameServer[];
 }
 
 /** Picks the game server; `value` is null until the browser has read the stored choice. */
-export default function GameServerSwitch({ locale, value, onChange }: Props) {
+export default function GameServerSwitch({ locale, value, onChange, servers = GAME_SERVERS }: Props) {
   return (
     <div className="mn-segmented flex w-fit gap-1 rounded-full border border-[var(--mn-glass-border)] bg-[var(--mn-surface-strong)] p-1" role="group" aria-label={t(locale, "gameServer.label")}>
-      {GAME_SERVERS.map((server) => (
+      {servers.map((server) => (
         <button
           key={server}
           type="button"

@@ -6,16 +6,18 @@ import { getBandSmallIconUrl, getCardTypeIconUrl, type CardType } from "@/lib/ca
 import type { MusicViewModel } from "@/lib/music/data";
 import { getRoutePathById } from "@/lib/route/registry";
 import { DIFFICULTY_CHIP_CLASSES, DIFFICULTY_SHORT_LABELS, MUSIC_DIFFICULTIES } from "@/lib/music/difficulty";
+import { useAssetUrl } from "@/lib/servers/use-content-server";
 
 interface Props {
   song: MusicViewModel;
   locale: AppLocale;
   onClick?: () => void;
   /** Short overlay label on the jacket, e.g. an upcoming release. */
-  badge?: string;
+  badge?: string | undefined;
 }
 
 export default function SongCard({ song, locale, onClick, badge }: Props) {
+  const assetUrl = useAssetUrl();
   return (
     <a
       href={localizePath(`${getRoutePathById("music")}/${song.id}`, locale)}
@@ -26,14 +28,14 @@ export default function SongCard({ song, locale, onClick, badge }: Props) {
       <div className="relative aspect-square w-full shrink-0 border-b-[1.5px] border-[var(--mn-border)] bg-[var(--mn-cream-deep)] overflow-hidden">
         <img
           className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-          src={song.jacketUrl}
+          src={assetUrl(song.jacketUrl)}
           alt={song.title}
           loading="lazy"
         />
         {/* Band Icon Overlaid (Top Left) */}
         <img
           className="absolute top-2 left-2 z-10 h-6 w-auto object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]"
-          src={getBandSmallIconUrl(song.bandId)}
+          src={assetUrl(getBandSmallIconUrl(song.bandId))}
           alt={song.bandName}
           title={song.bandName}
           onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}

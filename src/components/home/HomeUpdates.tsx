@@ -1,5 +1,10 @@
 import { useState } from "react";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
+import ServerScope from "@/components/shared/ServerScope";
+import type { HomeData } from "@/lib/home/data";
+import { valueForServer, type ServerFacetedValue } from "@/lib/servers/facets";
+import { useContentServer } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import MemberCardItem from "@/components/cards/MemberCardItem";
@@ -20,6 +25,12 @@ import type { SupportCardViewModel } from "@/lib/support-cards/data";
 
 interface Props {
   locale: AppLocale;
+  home: ServerFacetedValue<Pick<HomeData, "rewards" | "latestMusic" | "latestCards" | "latestSupportCards">>;
+  servers: GameServer[];
+}
+
+interface UpdatesProps {
+  locale: AppLocale;
   rewards: RewardEntrySummary[];
   songs: MusicViewModel[];
   cards: CardViewModel[];
@@ -30,7 +41,18 @@ type CardKind = "member" | "support";
 
 const latestGrid = "grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6";
 
-export default function HomeUpdates({ locale, rewards, songs, cards, supportCards }: Props) {
+/** The latest releases of the page's server; the carousel holds the server switch. */
+export default function HomeUpdates({ locale, home, servers }: Props) {
+  const [server, pickServer] = useContentServer(locale, servers);
+  const { rewards, latestMusic, latestCards, latestSupportCards } = valueForServer(home, server);
+  return (
+    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer} hideSwitch>
+      <Updates locale={locale} rewards={rewards} songs={latestMusic} cards={latestCards} supportCards={latestSupportCards} />
+    </ServerScope>
+  );
+}
+
+function Updates({ locale, rewards, songs, cards, supportCards }: UpdatesProps) {
   const now = useNow();
   const [cardKind, setCardKind] = useState<CardKind>("member");
   const upcoming = t(locale, "schedule.upcoming");

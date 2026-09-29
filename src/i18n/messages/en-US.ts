@@ -933,6 +933,10 @@ export const enUS = {
   },
   gameServer: {
     inZone: "{time} ({zone})",
+    onlyOn: "{servers} only",
+    notOnServer: "Not yet on the {server}; shown as on the {source}.",
+    schedules: "Schedule by server",
+    timesIn: "Times are {zone}",
     label: "Game server",
     short: {
       tw: "TW",

@@ -969,6 +969,10 @@ export const zhTW = {
   },
   gameServer: {
     inZone: "{time}（{zone}）",
+    onlyOn: "僅{servers}",
+    notOnServer: "{server}尚未推出，以下為{source}的內容",
+    schedules: "各伺服器時間",
+    timesIn: "時間皆為 {zone}",
     label: "遊戲伺服器",
     short: {
       tw: "繁中服",

@@ -3,6 +3,7 @@ import StampsExplorer from "@/components/stamps/StampsExplorer";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
 import { getBuildBandNames, getBuildStamps } from "@/lib/masterdata/build-data";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
 
 interface Props {
   locale: AppLocale;
@@ -10,8 +11,9 @@ interface Props {
 
 const { locale } = Astro.props;
 const [stamps, bandNames] = await Promise.all([getBuildStamps(locale), getBuildBandNames(locale)]);
+const servers = await getBuildServers();
 ---
 
 <PageLayout locale={locale} titleKey="seo.stamps.title" descriptionKey="seo.stamps.description">
-  <StampsExplorer client:load locale={locale} initialStamps={stamps} initialBandNames={bandNames} />
+  <StampsExplorer client:load servers={servers} locale={locale} initialStamps={stamps} initialBandNames={bandNames} />
 </PageLayout>

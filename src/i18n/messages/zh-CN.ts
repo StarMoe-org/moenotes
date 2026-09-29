@@ -969,6 +969,10 @@ export const zhCN = {
   },
   gameServer: {
     inZone: "{time}（{zone}）",
+    onlyOn: "仅{servers}",
+    notOnServer: "{server}尚未推出，以下为{source}的内容",
+    schedules: "各区服时间",
+    timesIn: "时间均为 {zone}",
     label: "游戏区服",
     short: {
       tw: "繁中服",

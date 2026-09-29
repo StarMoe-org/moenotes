@@ -1,6 +1,10 @@
 import type { AppLocale } from "@/config/locales";
+import { GAME_SERVER_PROFILES, PRIMARY_SERVER, type GameServer } from "@/config/servers";
+import { serverReleaseFetcher } from "@/lib/assets/release";
 import { buildFetch } from "@/lib/build/fetch";
-import { getBuildMasterData } from "@/lib/masterdata/build-snapshot";
+import { getBuildMasterData, getBuildTableKey } from "@/lib/masterdata/build-snapshot";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
+import { mergeServerLists, mergeServerValues, type ServerFaceted, type ServerFacetedValue } from "@/lib/servers/facets";
 import {
   normalizeCards,
   validateMasterTable,
@@ -41,12 +45,11 @@ import {
   type RawCharacter as RawMusicCharacter,
   type RawMusic,
   type RawMusicScore,
-  type RawText as RawMusicText,
 } from "@/lib/music/data";
 import { normalizeItems, type ItemViewModel, type RawItem } from "@/lib/items/data";
 import { normalizeStamps, type RawStamp, type StampViewModel } from "@/lib/stamps/data";
 import { normalizeComics, type ComicViewModel, type RawComic } from "@/lib/comics/data";
-import { localizeMasterText, masterTextFieldOrder } from "@/lib/masterdata/localize-text";
+import { MASTER_TEXT_FIELDS, isUsableMasterText, localizeMasterText, masterTextFieldOrder } from "@/lib/masterdata/localize-text";
 import {
   normalizeStories,
   storyNeighbors,
@@ -66,6 +69,7 @@ import {
 } from "@/lib/story/data";
 import { fetchAndParseStory, type ParsedStoryScript, type StoryScriptLookups } from "@/lib/story/parser";
 import { plainRichText } from "@/lib/story/rich-text";
+import { MASTER_UTC_OFFSET, isUntaggedMasterDate } from "@/lib/schedule";
 import {
   normalizeGachas,
   toGachaSummary,
@@ -96,6 +100,13 @@ import {
   type RewardEntryDetail,
   type RewardEntrySummary,
 } from "@/lib/rewards/data";
+
+/*
+ * Build-time view models of the merged catalog (docs/servers.md). Every `…On(server, locale)` selector computes one
+ * server's view from its own MasterData; the exported `getBuild…` selectors merge the build's servers by id, so an
+ * entity carries the servers that have it and what differs between them (ServerFaceted). A merged entity is a
+ * superset of the plain view model, so pages that do not tell servers apart keep working with the base fields.
+ */
 
 interface BuildDataState {
   tables: Map<string, Promise<MasterTable<unknown>>>;
@@ -132,9 +143,13 @@ export interface StoryDetailData {
   characters: RawStoryCharacter[];
   texts: RawText[];
   /** The story list entry (episode numbering, chapter, artwork); null for an ADV no story list refers to. */
-  story: StoryViewModel | null;
+  story: ServerFaceted<StoryViewModel> | null;
   previous: StoryNeighbor | null;
   next: StoryNeighbor | null;
+  /** Servers whose MasterData has the ADV. */
+  servers: GameServer[];
+  /** The server the script was read from (and whose files it plays): the first of `servers`. */
+  server: GameServer;
 }
 
 export interface StoryReaderLookup {
@@ -142,17 +157,34 @@ export interface StoryReaderLookup {
   texts: RawText[];
 }
 
-const buildDataKey = Symbol.for("moenotes.masterdata.build-data");
+// Versioned: a dev server keeps this state across reloads, and the merged selectors reuse the earlier keys.
+const buildDataKey = Symbol.for("moenotes.masterdata.build-data.v2");
 const globalState = globalThis as typeof globalThis & { [buildDataKey]?: BuildDataState };
 const state = globalState[buildDataKey] ??= { tables: new Map(), selectors: new Map() };
 
-function table<T>(path: string): Promise<MasterTable<T>> {
-  let request = state.tables.get(path);
+/**
+ * A server's table, shared with every server serving the same bytes in the same time zone. Timestamps of a server
+ * whose MasterData is not timed in UTC+8 get its offset appended, so parseMasterDate reads them right everywhere.
+ */
+async function table<T>(path: string, server: GameServer): Promise<MasterTable<T>> {
+  const offset = GAME_SERVER_PROFILES[server].masterdataUtcOffset;
+  const tagged = offset !== MASTER_UTC_OFFSET && path !== "MasterText.json";
+  const key = `${await getBuildTableKey(server, path)}${tagged ? `@${offset}` : ""}`;
+  let request = state.tables.get(key);
   if (!request) {
-    request = getBuildMasterData(path, validateMasterTable<unknown>);
-    state.tables.set(path, request);
+    request = getBuildMasterData(path, validateMasterTable<unknown>, server).then((loaded) => tagged ? tagMasterDates(loaded, offset) : loaded);
+    state.tables.set(key, request);
   }
   return request as Promise<MasterTable<T>>;
+}
+
+function tagMasterDates(loaded: MasterTable<unknown>, offset: string): MasterTable<unknown> {
+  return {
+    _allData: loaded._allData.map((row) => {
+      if (!row || typeof row !== "object" || Array.isArray(row)) return row;
+      return Object.fromEntries(Object.entries(row).map(([field, value]) => [field, typeof value === "string" && isUntaggedMasterDate(value) ? `${value.trim()}${offset}` : value]));
+    }),
+  };
 }
 
 function memo<T>(key: string, load: () => Promise<T>): Promise<T> {
@@ -164,40 +196,93 @@ function memo<T>(key: string, load: () => Promise<T>): Promise<T> {
   return request as Promise<T>;
 }
 
-export function getBuildCards(locale: AppLocale): Promise<CardViewModel[]> {
-  return memo(`cards:${locale}`, async () => {
-    const [cards, characters, bands, texts] = await Promise.all([
-      table<RawMemberCard>("MasterMemberCard.json"),
-      table<RawCharacter>("MasterCharacter.json"),
-      table<RawBand>("MasterBand.json"),
-      table<RawText>("MasterText.json"),
-    ]);
-    return normalizeCards(cards._allData, characters._allData, bands._allData, texts._allData, locale);
+async function eachServer<T>(load: (server: GameServer) => Promise<T>): Promise<Array<readonly [GameServer, T]>> {
+  const servers = await getBuildServers();
+  return Promise.all(servers.map(async (server) => [server, await load(server)] as const));
+}
+
+function mergedList<T>(key: string, load: (server: GameServer) => Promise<T[]>, idOf: (item: T) => string | number): Promise<ServerFaceted<T>[]> {
+  return memo(key, async () => mergeServerLists(await eachServer(load), idOf));
+}
+
+function mergedValue<T>(key: string, load: (server: GameServer) => Promise<T | null>): Promise<ServerFacetedValue<T> | null> {
+  return memo(key, async () => mergeServerValues(await eachServer(load)));
+}
+
+/**
+ * A server's MasterText, with each cell it leaves without copy taken from the other servers' row of the same id (the
+ * JP tables carry Japanese only, the international ones miss some Japanese), and CRLF line ends as LF. The servers'
+ * views of the entities they share therefore agree, and JP-only entities read in Japanese.
+ */
+function texts(server: GameServer): Promise<MasterTable<RawText>> {
+  return memo(`texts:${server}`, async () => {
+    const servers = await getBuildServers();
+    const [own, ...donors] = await Promise.all([server, ...servers.filter((other) => other !== server)].map((source) => table<RawText>("MasterText.json", source)));
+    const donorRows = donors.map((donor) => new Map(donor._allData.map((row) => [row.id, row])));
+    return {
+      _allData: own!._allData.map((row) => {
+        const filled = { ...row };
+        for (const field of MASTER_TEXT_FIELDS) {
+          let value = filled[field];
+          if (!isUsableMasterText(value, row.id)) {
+            for (const rows of donorRows) {
+              const candidate = rows.get(row.id)?.[field];
+              if (isUsableMasterText(candidate, row.id)) {
+                value = candidate;
+                break;
+              }
+            }
+          }
+          if (typeof value === "string") filled[field] = value.replace(/\r\n?/g, "\n");
+        }
+        return filled;
+      }),
+    };
   });
 }
 
-export function getBuildSupportCards(locale: AppLocale): Promise<SupportCardViewModel[]> {
-  return memo(`support-cards:${locale}`, async () => {
-    const [cards, characters, bands, texts] = await Promise.all([
-      table<RawSupportCard>("MasterSupportCard.json"),
-      table<RawCharacter>("MasterCharacter.json"),
-      table<RawBand>("MasterBand.json"),
-      table<RawText>("MasterText.json"),
+function cardsOn(server: GameServer, locale: AppLocale): Promise<CardViewModel[]> {
+  return memo(`cards:${server}:${locale}`, async () => {
+    const [cards, characters, bands, textTable] = await Promise.all([
+      table<RawMemberCard>("MasterMemberCard.json", server),
+      table<RawCharacter>("MasterCharacter.json", server),
+      table<RawBand>("MasterBand.json", server),
+      texts(server),
     ]);
-    return normalizeSupportCards(cards._allData, characters._allData, bands._allData, texts._allData, locale);
+    return normalizeCards(cards._allData, characters._allData, bands._allData, textTable._allData, locale);
   });
 }
 
-export function getBuildCharacters(locale: AppLocale): Promise<{ characters: CharacterViewModel[]; bands: CharacterBandModel[] }> {
-  return memo(`characters:${locale}`, async () => {
-    const [characters, bands, texts] = await Promise.all([
-      table<RawCharacterDetail>("MasterCharacter.json"),
-      table<RawBand & { descriptionTextID?: string; descriptionTextId?: string }>("MasterBand.json"),
-      table<RawText>("MasterText.json"),
+export function getBuildCards(locale: AppLocale): Promise<ServerFaceted<CardViewModel>[]> {
+  return mergedList(`cards:${locale}`, (server) => cardsOn(server, locale), (card) => card.id);
+}
+
+function supportCardsOn(server: GameServer, locale: AppLocale): Promise<SupportCardViewModel[]> {
+  return memo(`support-cards:${server}:${locale}`, async () => {
+    const [cards, characters, bands, textTable] = await Promise.all([
+      table<RawSupportCard>("MasterSupportCard.json", server),
+      table<RawCharacter>("MasterCharacter.json", server),
+      table<RawBand>("MasterBand.json", server),
+      texts(server),
     ]);
-    const normalized = normalizeCharacters(characters._allData, bands._allData, texts._allData, locale)
+    return normalizeSupportCards(cards._allData, characters._allData, bands._allData, textTable._allData, locale);
+  });
+}
+
+export function getBuildSupportCards(locale: AppLocale): Promise<ServerFaceted<SupportCardViewModel>[]> {
+  return mergedList(`support-cards:${locale}`, (server) => supportCardsOn(server, locale), (card) => card.id);
+}
+
+function charactersOn(server: GameServer, locale: AppLocale): Promise<{ characters: CharacterViewModel[]; bands: CharacterBandModel[] }> {
+  return memo(`characters:${server}:${locale}`, async () => {
+    const [characters, bands, textTable] = await Promise.all([
+      table<RawCharacterDetail>("MasterCharacter.json", server),
+      table<RawBand & { descriptionTextID?: string; descriptionTextId?: string }>("MasterBand.json", server),
+      texts(server),
+    ]);
+    const normalized = normalizeCharacters(characters._allData, bands._allData, textTable._allData, locale)
       .sort((a, b) => a.displayOrder - b.displayOrder);
-    const textMap = new Map(texts._allData.map((entry) => [entry.id, entry]));
+    const textMap = new Map(textTable._allData.map((entry) => [entry.id, entry]));
     const resolvedBands = bands._allData.map((band) => ({
       id: band.id,
       name: localizeMasterText(textMap.get(band.nameTextID), locale) || band.nameTextID,
@@ -208,127 +293,162 @@ export function getBuildCharacters(locale: AppLocale): Promise<{ characters: Cha
   });
 }
 
-export function getBuildMusic(locale: AppLocale): Promise<MusicViewModel[]> {
-  return memo(`music:${locale}`, async () => {
-    const [music, scores, characters, bands, texts, sounds, cueSheets] = await Promise.all([
-      table<RawMusic>("MasterLiveMusic.json"),
-      table<RawMusicScore>("MasterLiveMusicScore.json"),
-      table<RawMusicCharacter>("MasterCharacter.json"),
-      table<RawMusicBand>("MasterBand.json"),
-      table<RawMusicText>("MasterText.json"),
-      table<{ id: number; cueName: string; soundCueSheetID: number }>("MasterSound.json"),
-      table<{ id: number; cueSheetName: string }>("MasterSoundCueSheet.json"),
+export function getBuildCharacters(locale: AppLocale): Promise<{ characters: ServerFaceted<CharacterViewModel>[]; bands: ServerFaceted<CharacterBandModel>[] }> {
+  return memo(`characters:${locale}`, async () => {
+    const perServer = await eachServer((server) => charactersOn(server, locale));
+    return {
+      characters: mergeServerLists(perServer.map(([server, data]) => [server, data.characters] as const), (character) => character.id),
+      bands: mergeServerLists(perServer.map(([server, data]) => [server, data.bands] as const), (band) => band.id),
+    };
+  });
+}
+
+function musicOn(server: GameServer, locale: AppLocale): Promise<MusicViewModel[]> {
+  return memo(`music:${server}:${locale}`, async () => {
+    const [music, scores, characters, bands, textTable, sounds, cueSheets] = await Promise.all([
+      table<RawMusic>("MasterLiveMusic.json", server),
+      table<RawMusicScore>("MasterLiveMusicScore.json", server),
+      table<RawMusicCharacter>("MasterCharacter.json", server),
+      table<RawMusicBand>("MasterBand.json", server),
+      texts(server),
+      table<{ id: number; cueName: string; soundCueSheetID: number }>("MasterSound.json", server),
+      table<{ id: number; cueSheetName: string }>("MasterSoundCueSheet.json", server),
     ]);
     const sheetNames = new Map(cueSheets._allData.map((sheet) => [sheet.id, sheet.cueSheetName]));
     const soundCues = sounds._allData.map((sound) => ({ id: sound.id, cueName: sound.cueName, cueSheetName: sheetNames.get(sound.soundCueSheetID) ?? "" }));
-    return normalizeMusic(music._allData, scores._allData, characters._allData, bands._allData, texts._allData, locale, soundCues);
+    return normalizeMusic(music._allData, scores._allData, characters._allData, bands._allData, textTable._allData, locale, soundCues);
   });
 }
 
-export function getBuildItems(locale: AppLocale): Promise<ItemViewModel[]> {
-  return memo(`items:${locale}`, async () => {
-    const [items, texts] = await Promise.all([
-      table<RawItem>("MasterItem.json"),
-      table<RawText>("MasterText.json"),
+export function getBuildMusic(locale: AppLocale): Promise<ServerFaceted<MusicViewModel>[]> {
+  return mergedList(`music:${locale}`, (server) => musicOn(server, locale), (song) => song.id);
+}
+
+function itemsOn(server: GameServer, locale: AppLocale): Promise<ItemViewModel[]> {
+  return memo(`items:${server}:${locale}`, async () => {
+    const [items, textTable] = await Promise.all([
+      table<RawItem>("MasterItem.json", server),
+      texts(server),
     ]);
-    return normalizeItems(items._allData, texts._allData, locale);
+    return normalizeItems(items._allData, textTable._allData, locale);
   });
 }
 
-function getBuildGachaDetails(locale: AppLocale): Promise<GachaDetailViewModel[]> {
-  return memo(`gacha-details:${locale}`, async () => {
-    const [gachas, lots, prizes, views, products, cards, supportCards, items, texts] = await Promise.all([
-      table<RawGacha>("MasterGacha.json"),
-      table<RawGachaLot>("MasterGachaLot.json"),
-      table<RawGachaPrize>("MasterGachaPrize.json"),
-      table<RawGachaView>("MasterGachaView.json"),
-      table<RawGachaProduct>("MasterGachaProduct.json"),
-      getBuildCards(locale),
-      getBuildSupportCards(locale),
-      getBuildItems(locale),
-      table<RawText>("MasterText.json"),
+export function getBuildItems(locale: AppLocale): Promise<ServerFaceted<ItemViewModel>[]> {
+  return mergedList(`items:${locale}`, (server) => itemsOn(server, locale), (item) => item.id);
+}
+
+function gachaDetailsOn(server: GameServer, locale: AppLocale): Promise<GachaDetailViewModel[]> {
+  return memo(`gacha-details:${server}:${locale}`, async () => {
+    const [gachas, lots, prizes, views, products, cards, supportCards, items, textTable] = await Promise.all([
+      table<RawGacha>("MasterGacha.json", server),
+      table<RawGachaLot>("MasterGachaLot.json", server),
+      table<RawGachaPrize>("MasterGachaPrize.json", server),
+      table<RawGachaView>("MasterGachaView.json", server),
+      table<RawGachaProduct>("MasterGachaProduct.json", server),
+      cardsOn(server, locale),
+      supportCardsOn(server, locale),
+      itemsOn(server, locale),
+      texts(server),
     ]);
-    return normalizeGachas(gachas._allData, lots._allData, prizes._allData, views._allData, products._allData, cards, supportCards, items, texts._allData, locale);
+    return normalizeGachas(gachas._allData, lots._allData, prizes._allData, views._allData, products._allData, cards, supportCards, items, textTable._allData, locale);
   });
 }
 
-export function getBuildGachas(locale: AppLocale): Promise<GachaViewModel[]> {
-  return memo(`gachas:${locale}`, async () => (await getBuildGachaDetails(locale)).map(toGachaSummary));
+function gachasOn(server: GameServer, locale: AppLocale): Promise<GachaViewModel[]> {
+  return memo(`gachas:${server}:${locale}`, async () => (await gachaDetailsOn(server, locale)).map(toGachaSummary));
 }
 
-export async function getBuildGachaDetail(locale: AppLocale, gachaId: number): Promise<GachaDetailViewModel | null> {
-  return (await getBuildGachaDetails(locale)).find((gacha) => gacha.id === gachaId) ?? null;
+export function getBuildGachas(locale: AppLocale): Promise<ServerFaceted<GachaViewModel>[]> {
+  return mergedList(`gachas:${locale}`, (server) => gachasOn(server, locale), (gacha) => gacha.id);
 }
 
-export function getBuildHomeData(locale: AppLocale): Promise<HomeData> {
-  return memo(`home:${locale}`, async () => {
+export function getBuildGachaDetail(locale: AppLocale, gachaId: number): Promise<ServerFacetedValue<GachaDetailViewModel> | null> {
+  return mergedValue(`gacha-detail:${locale}:${gachaId}`, async (server) => (await gachaDetailsOn(server, locale)).find((gacha) => gacha.id === gachaId) ?? null);
+}
+
+function homeOn(server: GameServer, locale: AppLocale): Promise<HomeData> {
+  return memo(`home:${server}:${locale}`, async () => {
     const [banners, gachas, rewards, music, cards, supportCards] = await Promise.all([
-      table<RawHomeBanner>("MasterHomeBanner.json"),
-      getBuildGachas(locale),
-      getBuildRewardEntries(locale),
-      getBuildMusic(locale),
-      getBuildCards(locale),
-      getBuildSupportCards(locale),
+      table<RawHomeBanner>("MasterHomeBanner.json", server),
+      gachasOn(server, locale),
+      rewardEntriesOn(server, locale),
+      musicOn(server, locale),
+      cardsOn(server, locale),
+      supportCardsOn(server, locale),
     ]);
     return buildHomeData(banners._allData, gachas, rewards, music, cards, supportCards);
   });
 }
 
-export function getBuildDegrees(locale: AppLocale): Promise<DegreeViewModel[]> {
-  return memo(`degrees:${locale}`, async () => {
-    const [degrees, characters, texts] = await Promise.all([
-      table<RawDegree>("MasterDegree.json"),
-      table<RawCharacter>("MasterCharacter.json"),
-      table<RawText>("MasterText.json"),
+/** Every build server has a home page; the primary server's supplies the base. */
+export async function getBuildHomeData(locale: AppLocale): Promise<ServerFacetedValue<HomeData>> {
+  return (await mergedValue(`home:${locale}`, (server) => homeOn(server, locale)))!;
+}
+
+function degreesOn(server: GameServer, locale: AppLocale): Promise<DegreeViewModel[]> {
+  return memo(`degrees:${server}:${locale}`, async () => {
+    const [degrees, characters, textTable] = await Promise.all([
+      table<RawDegree>("MasterDegree.json", server),
+      table<RawCharacter>("MasterCharacter.json", server),
+      texts(server),
     ]);
-    return normalizeDegrees(degrees._allData, characters._allData, texts._allData, locale);
+    return normalizeDegrees(degrees._allData, characters._allData, textTable._allData, locale);
   });
 }
 
-export function getBuildBackgrounds(locale: AppLocale): Promise<BackgroundViewModel[]> {
-  return memo(`backgrounds:${locale}`, async () => {
-    const [backgrounds, texts] = await Promise.all([
-      table<RawBackground>("MasterBackground.json"),
-      table<RawText>("MasterText.json"),
+export function getBuildDegrees(locale: AppLocale): Promise<ServerFaceted<DegreeViewModel>[]> {
+  return mergedList(`degrees:${locale}`, (server) => degreesOn(server, locale), (degree) => degree.id);
+}
+
+function backgroundsOn(server: GameServer, locale: AppLocale): Promise<BackgroundViewModel[]> {
+  return memo(`backgrounds:${server}:${locale}`, async () => {
+    const [backgrounds, textTable] = await Promise.all([
+      table<RawBackground>("MasterBackground.json", server),
+      texts(server),
     ]);
-    return normalizeBackgrounds(backgrounds._allData, texts._allData, locale);
+    return normalizeBackgrounds(backgrounds._allData, textTable._allData, locale);
   });
 }
 
-function getBuildRewardEntryDetails(locale: AppLocale): Promise<RewardEntryDetail[]> {
-  return memo(`reward-entries:${locale}`, async () => {
+export function getBuildBackgrounds(locale: AppLocale): Promise<ServerFaceted<BackgroundViewModel>[]> {
+  return mergedList(`backgrounds:${locale}`, (server) => backgroundsOn(server, locale), (background) => background.id);
+}
+
+function rewardEntryDetailsOn(server: GameServer, locale: AppLocale): Promise<RewardEntryDetail[]> {
+  return memo(`reward-entries:${server}:${locale}`, async () => {
     const [
-      items, cards, supportCards, music, stamps, degrees, spots, texts,
+      items, cards, supportCards, music, stamps, degrees, spots, textTable,
       seasonPasses, seasonPassLevels, seasonPassLevelRewards, seasonPassRewards, seasonPassMissions,
       missionGroups, missions, missionRewards, loginBonuses, loginBonusSlots,
       exchanges, chapters, episodes, advs, bands, characters,
     ] = await Promise.all([
-      getBuildItems(locale),
-      getBuildCards(locale),
-      getBuildSupportCards(locale),
-      getBuildMusic(locale),
-      getBuildStamps(locale),
-      getBuildDegrees(locale),
-      table<RawRewardHomeSpot>("MasterHomeSpot.json"),
-      table<RawText>("MasterText.json"),
-      table<RawSeasonPass>("MasterSeasonPass.json"),
-      table<RawSeasonPassLevel>("MasterSeasonPassLevel.json"),
-      table<RawSeasonPassLevelReward>("MasterSeasonPassLevelReward.json"),
-      table<RawRewardRow>("MasterSeasonPassReward.json"),
-      table<RawSeasonPassMission>("MasterSeasonPassMission.json"),
-      table<RawLimitedMissionGroup>("MasterLimitedMissionGroup.json"),
-      table<RawLimitedMission>("MasterLimitedMission.json"),
-      table<RawRewardRow>("MasterMissionReward.json"),
-      table<RawLoginBonus>("MasterLoginBonus.json"),
-      table<RawLoginBonusSlot>("MasterLoginBonusSlot.json"),
-      table<{ id: number; nameTextId: string }>("MasterExchange.json"),
-      table<{ id: number; nameTextId: string }>("MasterStoryChapter.json"),
-      table<{ id: number; episodeNumber: number; advId: number }>("MasterStoryEpisode.json"),
-      table<{ id: number; titleTextId: string }>("MasterAdv.json"),
-      table<RawBand>("MasterBand.json"),
-      table<RawCharacter>("MasterCharacter.json"),
+      itemsOn(server, locale),
+      cardsOn(server, locale),
+      supportCardsOn(server, locale),
+      musicOn(server, locale),
+      stampsOn(server, locale),
+      degreesOn(server, locale),
+      table<RawRewardHomeSpot>("MasterHomeSpot.json", server),
+      texts(server),
+      table<RawSeasonPass>("MasterSeasonPass.json", server),
+      table<RawSeasonPassLevel>("MasterSeasonPassLevel.json", server),
+      table<RawSeasonPassLevelReward>("MasterSeasonPassLevelReward.json", server),
+      table<RawRewardRow>("MasterSeasonPassReward.json", server),
+      table<RawSeasonPassMission>("MasterSeasonPassMission.json", server),
+      table<RawLimitedMissionGroup>("MasterLimitedMissionGroup.json", server),
+      table<RawLimitedMission>("MasterLimitedMission.json", server),
+      table<RawRewardRow>("MasterMissionReward.json", server),
+      table<RawLoginBonus>("MasterLoginBonus.json", server),
+      table<RawLoginBonusSlot>("MasterLoginBonusSlot.json", server),
+      table<{ id: number; nameTextId: string }>("MasterExchange.json", server),
+      table<{ id: number; nameTextId: string }>("MasterStoryChapter.json", server),
+      table<{ id: number; episodeNumber: number; advId: number }>("MasterStoryEpisode.json", server),
+      table<{ id: number; titleTextId: string }>("MasterAdv.json", server),
+      table<RawBand>("MasterBand.json", server),
+      table<RawCharacter>("MasterCharacter.json", server),
     ]);
-    const resolve = createRewardResolver({ items, cards, supportCards, music, stamps, degrees, spots: spots._allData, texts: texts._allData }, locale);
+    const resolve = createRewardResolver({ items, cards, supportCards, music, stamps, degrees, spots: spots._allData, texts: textTable._allData }, locale);
     return normalizeRewardEntries({
       seasonPasses: seasonPasses._allData,
       seasonPassLevels: seasonPassLevels._allData,
@@ -347,69 +467,82 @@ function getBuildRewardEntryDetails(locale: AppLocale): Promise<RewardEntryDetai
       bands: bands._allData,
       characters: characters._allData,
       music: music.map((song) => ({ id: song.id, title: song.title })),
-      texts: texts._allData,
+      texts: textTable._allData,
     }, resolve, locale);
   });
 }
 
-export function getBuildRewardEntries(locale: AppLocale): Promise<RewardEntrySummary[]> {
-  return memo(`reward-summaries:${locale}`, async () => (await getBuildRewardEntryDetails(locale)).map(toRewardEntrySummary));
+function rewardEntriesOn(server: GameServer, locale: AppLocale): Promise<RewardEntrySummary[]> {
+  return memo(`reward-summaries:${server}:${locale}`, async () => (await rewardEntryDetailsOn(server, locale)).map(toRewardEntrySummary));
 }
 
-export async function getBuildRewardEntryDetail(locale: AppLocale, slug: string): Promise<RewardEntryDetail | null> {
-  return (await getBuildRewardEntryDetails(locale)).find((entry) => entry.slug === slug) ?? null;
+export function getBuildRewardEntries(locale: AppLocale): Promise<ServerFaceted<RewardEntrySummary>[]> {
+  return mergedList(`reward-summaries:${locale}`, (server) => rewardEntriesOn(server, locale), (entry) => entry.slug);
 }
 
-export function getBuildStamps(locale: AppLocale): Promise<StampViewModel[]> {
-  return memo(`stamps:${locale}`, async () => {
-    const [stamps, characters, texts] = await Promise.all([
-      table<RawStamp>("MasterStamp.json"),
-      table<RawCharacter>("MasterCharacter.json"),
-      table<RawText>("MasterText.json"),
+export function getBuildRewardEntryDetail(locale: AppLocale, slug: string): Promise<ServerFacetedValue<RewardEntryDetail> | null> {
+  return mergedValue(`reward-entry:${locale}:${slug}`, async (server) => (await rewardEntryDetailsOn(server, locale)).find((entry) => entry.slug === slug) ?? null);
+}
+
+function stampsOn(server: GameServer, locale: AppLocale): Promise<StampViewModel[]> {
+  return memo(`stamps:${server}:${locale}`, async () => {
+    const [stamps, characters, textTable] = await Promise.all([
+      table<RawStamp>("MasterStamp.json", server),
+      table<RawCharacter>("MasterCharacter.json", server),
+      texts(server),
     ]);
-    return normalizeStamps(stamps._allData, characters._allData, texts._allData, locale);
+    return normalizeStamps(stamps._allData, characters._allData, textTable._allData, locale);
   });
 }
 
-export function getBuildComics(locale: AppLocale): Promise<ComicViewModel[]> {
-  return memo(`comics:${locale}`, async () => {
-    const [comics, characters, texts] = await Promise.all([
-      table<RawComic>("MasterLoadingComics.json"),
-      table<RawCharacter>("MasterCharacter.json"),
-      table<RawText>("MasterText.json"),
+export function getBuildStamps(locale: AppLocale): Promise<ServerFaceted<StampViewModel>[]> {
+  return mergedList(`stamps:${locale}`, (server) => stampsOn(server, locale), (stamp) => stamp.id);
+}
+
+function comicsOn(server: GameServer, locale: AppLocale): Promise<ComicViewModel[]> {
+  return memo(`comics:${server}:${locale}`, async () => {
+    const [comics, characters, textTable] = await Promise.all([
+      table<RawComic>("MasterLoadingComics.json", server),
+      table<RawCharacter>("MasterCharacter.json", server),
+      texts(server),
     ]);
-    return normalizeComics(comics._allData, characters._allData, texts._allData, locale);
+    return normalizeComics(comics._allData, characters._allData, textTable._allData, locale);
   });
 }
 
+export function getBuildComics(locale: AppLocale): Promise<ServerFaceted<ComicViewModel>[]> {
+  return mergedList(`comics:${locale}`, (server) => comicsOn(server, locale), (comic) => comic.id);
+}
+
+/** Band names of every server (the base name where they differ). */
 export function getBuildBandNames(locale: AppLocale): Promise<Array<[number, string]>> {
   return memo(`band-names:${locale}`, async () => {
-    const [bands, texts] = await Promise.all([
-      table<RawBand>("MasterBand.json"),
-      table<RawText>("MasterText.json"),
-    ]);
-    const textMap = new Map(texts._allData.map((entry) => [entry.id, entry]));
-    return bands._allData.map((band) => [
-      band.id,
-      localizeMasterText(textMap.get(band.nameTextID), locale) || `Band ${band.id}`,
-    ]);
+    const perServer = await eachServer(async (server) => {
+      const [bands, textTable] = await Promise.all([
+        table<RawBand>("MasterBand.json", server),
+        texts(server),
+      ]);
+      const textMap = new Map(textTable._allData.map((entry) => [entry.id, entry]));
+      return bands._allData.map((band) => ({ id: band.id, name: localizeMasterText(textMap.get(band.nameTextID), locale) || `Band ${band.id}` }));
+    });
+    return mergeServerLists(perServer, (band) => band.id).map((band): [number, string] => [band.id, band.name]);
   });
 }
 
-export function getBuildStories(locale: AppLocale): Promise<StoryViewModel[]> {
-  return memo(`stories:${locale}`, async () => {
-    const [chapters, episodes, friendshipEpisodes, homeTapEpisodes, liveResultEpisodes, advs, homeSpots, friendships, characters, bands, texts] = await Promise.all([
-      table<RawStoryChapter>("MasterStoryChapter.json"),
-      table<RawStoryEpisode>("MasterStoryEpisode.json"),
-      table<RawStoryFriendshipEpisode>("MasterStoryFriendshipEpisode.json"),
-      table<RawStoryHomeSpotTapTalkEpisode>("MasterStoryHomeSpotTapTalkEpisode.json"),
-      table<RawStoryLiveResultEpisode>("MasterStoryLiveResultEpisode.json"),
-      table<RawAdv>("MasterAdv.json"),
-      table<RawHomeSpot>("MasterHomeSpot.json"),
-      table<RawCharacterFriendship>("MasterCharacterFriendship.json"),
-      table<RawStoryCharacter>("MasterCharacter.json"),
-      table<RawBand>("MasterBand.json"),
-      table<RawText>("MasterText.json"),
+function storiesOn(server: GameServer, locale: AppLocale): Promise<StoryViewModel[]> {
+  return memo(`stories:${server}:${locale}`, async () => {
+    const [chapters, episodes, friendshipEpisodes, homeTapEpisodes, liveResultEpisodes, advs, homeSpots, friendships, characters, bands, textTable] = await Promise.all([
+      table<RawStoryChapter>("MasterStoryChapter.json", server),
+      table<RawStoryEpisode>("MasterStoryEpisode.json", server),
+      table<RawStoryFriendshipEpisode>("MasterStoryFriendshipEpisode.json", server),
+      table<RawStoryHomeSpotTapTalkEpisode>("MasterStoryHomeSpotTapTalkEpisode.json", server),
+      table<RawStoryLiveResultEpisode>("MasterStoryLiveResultEpisode.json", server),
+      table<RawAdv>("MasterAdv.json", server),
+      table<RawHomeSpot>("MasterHomeSpot.json", server),
+      table<RawCharacterFriendship>("MasterCharacterFriendship.json", server),
+      table<RawStoryCharacter>("MasterCharacter.json", server),
+      table<RawBand>("MasterBand.json", server),
+      texts(server),
     ]);
     return normalizeStories({
       chapters: chapters._allData,
@@ -422,114 +555,130 @@ export function getBuildStories(locale: AppLocale): Promise<StoryViewModel[]> {
       friendships: friendships._allData,
       characters: characters._allData,
       bands: bands._allData,
-      texts: texts._allData,
+      texts: textTable._allData,
     }, locale);
   });
 }
 
+export function getBuildStories(locale: AppLocale): Promise<ServerFaceted<StoryViewModel>[]> {
+  return mergedList(`stories:${locale}`, (server) => storiesOn(server, locale), (story) => story.id);
+}
+
+/** Character names for the story readers; every server has the same characters. */
 export function getBuildStoryReaderLookup(): Promise<StoryReaderLookup> {
   return memo("story-reader-lookup", async () => {
-    const [characters, texts] = await Promise.all([
-      table<RawStoryCharacter>("MasterCharacter.json"),
-      table<RawText>("MasterText.json"),
+    const [characters, textTable] = await Promise.all([
+      table<RawStoryCharacter>("MasterCharacter.json", PRIMARY_SERVER),
+      texts(PRIMARY_SERVER),
     ]);
     const characterTextIds = new Set(characters._allData.flatMap((entry) => [entry.nameTextID, entry.shortNameTextID]));
     return {
       characters: characters._allData,
-      texts: texts._allData.filter((entry) => characterTextIds.has(entry.id)),
+      texts: textTable._allData.filter((entry) => characterTextIds.has(entry.id)),
     };
   });
 }
 
-export function getBuildCardDetail(locale: AppLocale, cardId: number): Promise<CardDetailData> {
-  return memo(`card-detail:${locale}:${cardId}`, async () => {
-    const [cards, rawCards, levels, levelLimits, awakes, ranks, liveSkills, liveEffects, leaderSkills, leaderEffects, gekisouSkills, gekisouEffects, icons, conditionSets, conditions, cumulativeConditions, texts] = await Promise.all([
-      getBuildCards(locale),
-      table<RawMemberCard>("MasterMemberCard.json"),
-      table<RawCardLevel>("MasterMemberCardLevel.json"),
-      table<RawMemberCardLevelLimit>("MasterMemberCardLevelLimit.json"),
-      table<RawMemberCardAwake>("MasterMemberCardAwake.json"),
-      table<RawMemberCardRank>("MasterMemberCardRank.json"),
-      table<RawSkillDefinition>("MasterLiveSkill.json"),
-      table<RawSkillEffect>("MasterLiveSkillEffect.json"),
-      table<RawSkillDefinition>("MasterLeaderSkill.json"),
-      table<RawSkillEffect>("MasterLeaderSkillEffect.json"),
-      table<RawSkillDefinition>("MasterGekisouSkill.json"),
-      table<RawSkillEffect>("MasterGekisouSkillEffect.json"),
-      table<RawSkillIcon>("MasterSkillIcon.json"),
-      table<RawSkillConditionSet>("MasterSkillConditionSet.json"),
-      table<RawSkillCondition>("MasterSkillCondition.json"),
-      table<RawSkillCumulativeCondition>("MasterSkillCumulativeCondition.json"),
-      table<RawText>("MasterText.json"),
+const EMPTY_CARD_DETAIL: CardDetailData = { card: null, skills: [], growth: { levelCurve: [], awakeSteps: [], rankSteps: [] } };
+
+function cardDetailOn(server: GameServer, locale: AppLocale, cardId: number): Promise<CardDetailData | null> {
+  return memo(`card-detail:${server}:${locale}:${cardId}`, async () => {
+    const [cards, rawCards, levels, levelLimits, awakes, ranks, liveSkills, liveEffects, leaderSkills, leaderEffects, gekisouSkills, gekisouEffects, icons, conditionSets, conditions, cumulativeConditions, textTable] = await Promise.all([
+      cardsOn(server, locale),
+      table<RawMemberCard>("MasterMemberCard.json", server),
+      table<RawCardLevel>("MasterMemberCardLevel.json", server),
+      table<RawMemberCardLevelLimit>("MasterMemberCardLevelLimit.json", server),
+      table<RawMemberCardAwake>("MasterMemberCardAwake.json", server),
+      table<RawMemberCardRank>("MasterMemberCardRank.json", server),
+      table<RawSkillDefinition>("MasterLiveSkill.json", server),
+      table<RawSkillEffect>("MasterLiveSkillEffect.json", server),
+      table<RawSkillDefinition>("MasterLeaderSkill.json", server),
+      table<RawSkillEffect>("MasterLeaderSkillEffect.json", server),
+      table<RawSkillDefinition>("MasterGekisouSkill.json", server),
+      table<RawSkillEffect>("MasterGekisouSkillEffect.json", server),
+      table<RawSkillIcon>("MasterSkillIcon.json", server),
+      table<RawSkillConditionSet>("MasterSkillConditionSet.json", server),
+      table<RawSkillCondition>("MasterSkillCondition.json", server),
+      table<RawSkillCumulativeCondition>("MasterSkillCumulativeCondition.json", server),
+      texts(server),
     ]);
     const card = cards.find((entry) => entry.id === cardId) ?? null;
     const rawCard = rawCards._allData.find((entry) => entry.id === cardId);
-    if (!card || !rawCard) return { card: null, skills: [], growth: { levelCurve: [], awakeSteps: [], rankSteps: [] } };
+    if (!card || !rawCard) return null;
     const growth = buildMemberCardGrowth(rawCard, levels._allData, levelLimits._allData, awakes._allData, ranks._allData);
     const skills = [
-      normalizeSkill("leader", card.leaderSkillId, leaderSkills._allData, leaderEffects._allData, icons._allData, texts._allData, locale, conditionSets._allData, conditions._allData, cumulativeConditions._allData),
-      normalizeSkill("live", card.liveSkillId, liveSkills._allData, liveEffects._allData, icons._allData, texts._allData, locale, conditionSets._allData, conditions._allData, cumulativeConditions._allData),
-      normalizeSkill("gekisou", card.gekisouSkillId, gekisouSkills._allData, gekisouEffects._allData, icons._allData, texts._allData, locale, conditionSets._allData, conditions._allData, cumulativeConditions._allData),
+      normalizeSkill("leader", card.leaderSkillId, leaderSkills._allData, leaderEffects._allData, icons._allData, textTable._allData, locale, conditionSets._allData, conditions._allData, cumulativeConditions._allData),
+      normalizeSkill("live", card.liveSkillId, liveSkills._allData, liveEffects._allData, icons._allData, textTable._allData, locale, conditionSets._allData, conditions._allData, cumulativeConditions._allData),
+      normalizeSkill("gekisou", card.gekisouSkillId, gekisouSkills._allData, gekisouEffects._allData, icons._allData, textTable._allData, locale, conditionSets._allData, conditions._allData, cumulativeConditions._allData),
     ].filter((entry): entry is SkillViewModel => entry !== null);
     return { card, skills, growth };
   });
 }
 
-export function getBuildSupportCardDetail(locale: AppLocale, cardId: number): Promise<SupportCardDetailData> {
-  return memo(`support-card-detail:${locale}:${cardId}`, async () => {
-    const [cards, rawCards, levels, ranks, supportSkills, supportEffects, gekisouSkills, gekisouEffects, icons, conditionSets, conditions, cumulativeConditions, texts, characters] = await Promise.all([
-      getBuildSupportCards(locale),
-      table<RawSupportCard>("MasterSupportCard.json"),
-      table<RawCardLevel>("MasterSupportCardLevel.json"),
-      table<RawSupportCardRank>("MasterSupportCardRank.json"),
-      table<RawSkillDefinition>("MasterSupportSkill.json"),
-      table<RawSupportSkillEffect>("MasterSupportSkillEffect.json"),
-      table<RawSkillDefinition>("MasterGekisouSupportSkill.json"),
-      table<RawSupportSkillEffect>("MasterGekisouSupportSkillEffect.json"),
-      table<RawSkillIcon>("MasterSkillIcon.json"),
-      table<RawSkillConditionSet>("MasterSkillConditionSet.json"),
-      table<RawSkillCondition>("MasterSkillCondition.json"),
-      table<RawSkillCumulativeCondition>("MasterSkillCumulativeCondition.json"),
-      table<RawText>("MasterText.json"),
-      table<RawCharacter>("MasterCharacter.json"),
+/** The card as every server has it; `servers` is empty when none has it. */
+export async function getBuildCardDetail(locale: AppLocale, cardId: number): Promise<ServerFacetedValue<CardDetailData>> {
+  return await mergedValue(`card-detail:${locale}:${cardId}`, (server) => cardDetailOn(server, locale, cardId)) ?? { value: EMPTY_CARD_DETAIL, servers: [] };
+}
+
+const EMPTY_SUPPORT_CARD_DETAIL: SupportCardDetailData = { card: null, skills: [], growth: { levelCurve: [], rankSteps: [] } };
+
+function supportCardDetailOn(server: GameServer, locale: AppLocale, cardId: number): Promise<SupportCardDetailData | null> {
+  return memo(`support-card-detail:${server}:${locale}:${cardId}`, async () => {
+    const [cards, rawCards, levels, ranks, supportSkills, supportEffects, gekisouSkills, gekisouEffects, icons, conditionSets, conditions, cumulativeConditions, textTable, characters] = await Promise.all([
+      supportCardsOn(server, locale),
+      table<RawSupportCard>("MasterSupportCard.json", server),
+      table<RawCardLevel>("MasterSupportCardLevel.json", server),
+      table<RawSupportCardRank>("MasterSupportCardRank.json", server),
+      table<RawSkillDefinition>("MasterSupportSkill.json", server),
+      table<RawSupportSkillEffect>("MasterSupportSkillEffect.json", server),
+      table<RawSkillDefinition>("MasterGekisouSupportSkill.json", server),
+      table<RawSupportSkillEffect>("MasterGekisouSupportSkillEffect.json", server),
+      table<RawSkillIcon>("MasterSkillIcon.json", server),
+      table<RawSkillConditionSet>("MasterSkillConditionSet.json", server),
+      table<RawSkillCondition>("MasterSkillCondition.json", server),
+      table<RawSkillCumulativeCondition>("MasterSkillCumulativeCondition.json", server),
+      texts(server),
+      table<RawCharacter>("MasterCharacter.json", server),
     ]);
     const card = cards.find((entry) => entry.id === cardId) ?? null;
     const rawCard = rawCards._allData.find((entry) => entry.id === cardId);
-    if (!card || !rawCard) return { card: null, skills: [], growth: { levelCurve: [], rankSteps: [] } };
+    if (!card || !rawCard) return null;
     const growth = buildSupportCardGrowth(rawCard, levels._allData, ranks._allData);
     const characterMap = new Map(characters._allData.map((entry) => [entry.id, entry]));
     const skills = [
-      normalizeSupportSkill("support", card.supportSkillId01, supportSkills._allData, supportEffects._allData, icons._allData, texts._allData, locale, conditionSets._allData, conditions._allData, cumulativeConditions._allData, characterMap),
-      normalizeSupportSkill("gekisou-support", card.gekisouSupportSkillId01, gekisouSkills._allData, gekisouEffects._allData, icons._allData, texts._allData, locale, conditionSets._allData, conditions._allData, cumulativeConditions._allData, characterMap),
+      normalizeSupportSkill("support", card.supportSkillId01, supportSkills._allData, supportEffects._allData, icons._allData, textTable._allData, locale, conditionSets._allData, conditions._allData, cumulativeConditions._allData, characterMap),
+      normalizeSupportSkill("gekisou-support", card.gekisouSupportSkillId01, gekisouSkills._allData, gekisouEffects._allData, icons._allData, textTable._allData, locale, conditionSets._allData, conditions._allData, cumulativeConditions._allData, characterMap),
     ].filter((entry): entry is SkillViewModel => entry !== null);
     return { card, skills, growth };
   });
 }
 
-export function getBuildCharacterDetail(locale: AppLocale, characterId: number): Promise<CharacterDetailData> {
-  return memo(`character-detail:${locale}:${characterId}`, async () => {
-    const [{ characters }, cards] = await Promise.all([getBuildCharacters(locale), getBuildCards(locale)]);
-    return {
-      character: characters.find((entry) => entry.id === characterId) ?? null,
-      cards: cards.filter((entry) => entry.characterId === characterId),
-    };
-  });
+export async function getBuildSupportCardDetail(locale: AppLocale, cardId: number): Promise<ServerFacetedValue<SupportCardDetailData>> {
+  return await mergedValue(`support-card-detail:${locale}:${cardId}`, (server) => supportCardDetailOn(server, locale, cardId)) ?? { value: EMPTY_SUPPORT_CARD_DETAIL, servers: [] };
 }
 
-export async function getBuildMusicDetail(locale: AppLocale, songId: number): Promise<MusicViewModel | null> {
+export async function getBuildCharacterDetail(locale: AppLocale, characterId: number): Promise<ServerFacetedValue<CharacterDetailData>> {
+  const merged = await mergedValue(`character-detail:${locale}:${characterId}`, async (server): Promise<CharacterDetailData | null> => {
+    const [{ characters }, cards] = await Promise.all([charactersOn(server, locale), cardsOn(server, locale)]);
+    const character = characters.find((entry) => entry.id === characterId);
+    return character ? { character, cards: cards.filter((entry) => entry.characterId === characterId) } : null;
+  });
+  return merged ?? { value: { character: null, cards: [] }, servers: [] };
+}
+
+export async function getBuildMusicDetail(locale: AppLocale, songId: number): Promise<ServerFaceted<MusicViewModel> | null> {
   return (await getBuildMusic(locale)).find((entry) => entry.id === songId) ?? null;
 }
 
-/** The cards a music ranking's decks can name, in the compact form the ranking block ships with. */
-export function getBuildDeckCardLookup(locale: AppLocale): Promise<DeckCardLookup> {
-  return memo(`deck-cards:${locale}`, async () => {
+function deckCardLookupOn(server: GameServer, locale: AppLocale): Promise<DeckCardLookup> {
+  return memo(`deck-cards:${server}:${locale}`, async () => {
     const [cards, supportCards, rawCards, rawSupportCards, memberLevels, supportLevels] = await Promise.all([
-      getBuildCards(locale),
-      getBuildSupportCards(locale),
-      table<RawMemberCard>("MasterMemberCard.json"),
-      table<RawSupportCard>("MasterSupportCard.json"),
-      table<RawCardLevel & { exp: number }>("MasterMemberCardLevel.json"),
-      table<RawCardLevel & { exp: number }>("MasterSupportCardLevel.json"),
+      cardsOn(server, locale),
+      supportCardsOn(server, locale),
+      table<RawMemberCard>("MasterMemberCard.json", server),
+      table<RawSupportCard>("MasterSupportCard.json", server),
+      table<RawCardLevel & { exp: number }>("MasterMemberCardLevel.json", server),
+      table<RawCardLevel & { exp: number }>("MasterSupportCardLevel.json", server),
     ]);
     const memberGroups = new Map(rawCards._allData.map((card) => [card.id, card.memberCardLevelGroup]));
     const supportGroups = new Map(rawSupportCards._allData.map((card) => [card.id, card.supportCardLevelGroup]));
@@ -547,20 +696,47 @@ export function getBuildDeckCardLookup(locale: AppLocale): Promise<DeckCardLooku
   });
 }
 
+/**
+ * The cards a music ranking's decks can name, in the compact form the ranking block ships with: every server's cards,
+ * the earlier server's entry where two have the same id.
+ */
+export function getBuildDeckCardLookup(locale: AppLocale): Promise<DeckCardLookup> {
+  return memo(`deck-cards:${locale}`, async () => {
+    const lookups = (await eachServer((server) => deckCardLookupOn(server, locale))).map(([, lookup]) => lookup).reverse();
+    return {
+      member: Object.assign({}, ...lookups.map((lookup) => lookup.member)),
+      support: Object.assign({}, ...lookups.map((lookup) => lookup.support)),
+      levelExp: {
+        member: Object.assign({}, ...lookups.map((lookup) => lookup.levelExp.member)),
+        support: Object.assign({}, ...lookups.map((lookup) => lookup.levelExp.support)),
+      },
+    } satisfies DeckCardLookup;
+  });
+}
+
+/**
+ * A story reader page. Scripts are large, so the page carries one: the first server's with the ADV, read from that
+ * server's asset catalog; its files play from there too.
+ */
 export function getBuildStoryDetail(locale: AppLocale, advId: number): Promise<StoryDetailData> {
   return memo(`story-detail:${locale}:${advId}`, async () => {
-    const [advs, texts, characters] = await Promise.all([
-      table<RawAdv>("MasterAdv.json"),
-      table<RawText>("MasterText.json"),
-      table<RawStoryCharacter>("MasterCharacter.json"),
+    const servers = await getBuildServers();
+    const advTables = await Promise.all(servers.map((server) => table<RawAdv>("MasterAdv.json", server)));
+    const available = servers.filter((_, index) => advTables[index]!._allData.some((entry) => entry.id === advId));
+    const server = available[0] ?? PRIMARY_SERVER;
+    const [advs, textTable, characters] = await Promise.all([
+      table<RawAdv>("MasterAdv.json", server),
+      texts(server),
+      table<RawStoryCharacter>("MasterCharacter.json", server),
     ]);
     const adv = advs._allData.find((entry) => entry.id === advId);
-    if (!adv) return { title: `ADV ${advId}`, script: null, characters: [], texts: [], story: null, previous: null, next: null };
-    const title = localizeMasterText(texts._allData.find((entry) => entry.id === adv.titleTextId), locale) || `ADV ${advId}`;
+    if (!adv) return { title: `ADV ${advId}`, script: null, characters: [], texts: [], story: null, previous: null, next: null, servers: [], server };
+    const title = localizeMasterText(textTable._allData.find((entry) => entry.id === adv.titleTextId), locale) || `ADV ${advId}`;
     const characterTextIds = new Set(characters._allData.flatMap((entry) => [entry.nameTextID, entry.shortNameTextID]));
-    const characterTexts = texts._allData.filter((entry) => characterTextIds.has(entry.id));
+    const characterTexts = textTable._allData.filter((entry) => characterTextIds.has(entry.id));
+    const fetcher = serverReleaseFetcher(server, buildFetch as typeof fetch);
     const [script, stories] = await Promise.all([
-      getBuildStoryScriptLookups(locale).then((lookups) => fetchAndParseStory(adv.advEpisodeAsset, { locale, lookups, fetcher: buildFetch })),
+      getBuildStoryScriptLookups(server, locale).then((lookups) => fetchAndParseStory(adv.advEpisodeAsset, { locale, lookups, fetcher })),
       getBuildStories(locale),
     ]);
     return {
@@ -570,19 +746,21 @@ export function getBuildStoryDetail(locale: AppLocale, advId: number): Promise<S
       texts: characterTexts,
       story: stories.find((entry) => entry.advId === advId) ?? null,
       ...storyNeighbors(stories, advId),
+      servers: available,
+      server,
     };
   });
 }
 
 /** Chat avatars/sides and anime-still captions for story scripts. The caption table only exists in newer data, so it is optional. */
-function getBuildStoryScriptLookups(locale: AppLocale): Promise<StoryScriptLookups> {
-  return memo(`story-script-lookups:${locale}`, async () => {
-    const [chats, subtitles, texts] = await Promise.all([
-      table<RawAdvChat>("MasterAdvChat.json"),
-      table<RawAnimeStillSubtitle>("MasterBiliAnimeStillSubTitle.json").catch(() => ({ _allData: [] as RawAnimeStillSubtitle[] })),
-      table<RawText>("MasterText.json"),
+function getBuildStoryScriptLookups(server: GameServer, locale: AppLocale): Promise<StoryScriptLookups> {
+  return memo(`story-script-lookups:${server}:${locale}`, async () => {
+    const [chats, subtitles, textTable] = await Promise.all([
+      table<RawAdvChat>("MasterAdvChat.json", server),
+      table<RawAnimeStillSubtitle>("MasterBiliAnimeStillSubTitle.json", server).catch(() => ({ _allData: [] as RawAnimeStillSubtitle[] })),
+      texts(server),
     ]);
-    const textMap = new Map(texts._allData.map((entry) => [entry.id, entry]));
+    const textMap = new Map(textTable._allData.map((entry) => [entry.id, entry]));
     // Captions translate the Japanese drawn in the still, so Japanese readers do not need them.
     const captioned = masterTextFieldOrder(locale)[0] !== "japanese";
     return {
