@@ -27,7 +27,7 @@
 // corners xbar in {0, X_MAX}, c in {0, infinity} decide it: S_a >= S_b and S_a / L_a >= S_b / L_b at both ends.
 // The deck power must be the same on both charts: song type and tag bonuses change a deck's power per song.
 
-import { scenarioSeed, type Scenario } from "./scenario";
+import { scenarioSeed, scenarioSeeds, type Scenario } from "./scenario";
 import type { ChartDeck, DataScoreRank, DataText, MusicData } from "./types";
 
 export const DIFFICULTIES = ["easy", "normal", "hard", "expert"] as const;
@@ -60,8 +60,8 @@ export interface ChartFigures {
 }
 
 // A chart's figures from its deck statistics (`chart.deck`) in a scenario (scenario.ts; default: battle, rank 1, all
-// Just, no Great): `base` and `weights[k]` (performance position k's, of kind `kind`) as means over the seeds
-// (`offSeeds` in free), `baseRange` the seeds' [min, max] base, `seeds` their number. null without statistics, for a
+// Just, no Great): `base` and `weights[k]` (performance position k's, of kind `kind`) as means over the scenario's
+// seeds (scenarioSeeds: `offSeeds` in free), `baseRange` the seeds' [min, max] base, `seeds` their number. null without statistics, for a
 // chart unplayable with Gekisou on (battle), without the kind or without the scenario's fields.
 export function chartFigures(
   deck: ChartDeck | null | undefined,
@@ -69,9 +69,8 @@ export function chartFigures(
   power = POWER,
   scenario: Scenario | null = null,
 ): ChartFigures | null {
-  const free = scenario?.id === "free";
-  const seeds = (deck && (free ? deck.offSeeds : !deck.unplayable && deck.seeds)) || [];
-  if (!deck || !seeds.length || kind === null || kind === undefined) return null;
+  const seeds = scenarioSeeds(deck, scenario);
+  if (!deck || !seeds || kind === null || kind === undefined) return null;
   const figs = seeds.map((s) => scenarioSeed(s, deck.ranges ?? [], kind, scenario));
   if (figs.some((f) => !f)) return null;
   const done = figs as NonNullable<typeof figs[number]>[];
@@ -160,6 +159,9 @@ export function lengthMs(row: LengthRow, source: LengthSource | string): number 
   const v = source === "chart" ? row.chartMs ?? row.bgmMs : row.bgmMs ?? row.chartMs;
   return typeof v === "number" && v > 0 ? v : null;
 }
+
+// Master integer effect value to the game factor (float32 then truncate); NOT user-entered percentages.
+export const masterSkillFactor = (value: number): number => Math.trunc(Math.fround(Math.fround(value / 10000) * 100000)) / 100000;
 
 // Skill values (fractions: 1 = +100 %) as numbers; missing, negative or non-numeric values count as 0.
 export function skillValues(skills: Iterable<unknown> | null | undefined): number[] {

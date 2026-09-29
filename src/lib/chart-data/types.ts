@@ -45,8 +45,13 @@ export interface DeckSeedRange {
   rankBonus?: number;
   /** `rangeScore` on the Perfect play (every Just judged Perfect). */
   rangeScorePerfect?: number;
+  /** The range's largest Gekisou combo: what a combo mission range ranks the room by. */
   maxCombo?: number;
+  /** The range's Just count: what a Just mission range ranks the room by. */
   justCount?: number;
+  /** The range's luck points (TotalBonusPoint): what a luck mission range ranks the room by; missing in older files. */
+  luckPoints?: number;
+  /** Lot results: Miss, Hit, Super Hit, Critical. */
   lotResults?: readonly number[];
 }
 
@@ -83,6 +88,125 @@ export interface ChartDeck {
   /** Gekisou off (Free Live, Challenge Live): one seed, without range fields. */
   offSeeds?: readonly DeckSeed[];
   unplayable?: string | null;
+  /**
+   * The chart's aptitude for every Gekisou skill (each taken alone); null when the chart cannot play with Gekisou on,
+   * has no Gekisou range or the master has no Gekisou skills; missing in files made before it.
+   */
+  gekisouAptitude?: ChartAptitude | null;
+}
+
+/** A mean over seeds and its standard error (sample standard deviation / √n); se 0 for a seed-independent figure. */
+export type MeanSe = readonly [number, number];
+
+/** A chart factor of a Gekisou range: what the chart and a no-skill run give, to read the aptitude by. */
+export interface RangeFactors {
+  /** Judged notes in the range's score frames (after the Start frame, up to the End frame). */
+  judgedNotes?: number;
+  /** Of them judged Just (0 outside Just mission ranges). */
+  justNotes?: number;
+  /** Judged Perfect in a Just mission range: judgement types without a Just row (0 outside Just ranges). */
+  perfectNotes?: number;
+  /** Judged after the End frame up to the Complete frame: moved by the range's skills, not in its range score. */
+  tailNotes?: number;
+  /** The combo when the range starts. */
+  comboAtStart?: number;
+  /** The range's lotteries without skills over `deck.seeds` ([0, 0] outside luck ranges). */
+  lotteries?: MeanSe;
+}
+
+/** One range of an aptitude variant: the gains in the range, every one a [mean, se]. */
+export interface VariantRange {
+  rangeScore?: MeanSe;
+  /** At rank 1. */
+  rankBonus?: MeanSe;
+  rangeScorePerfect?: MeanSe;
+  maxCombo?: MeanSe;
+  justCount?: MeanSe;
+  luckPoints?: MeanSe;
+}
+
+/**
+ * One Gekisou skill shape taken alone on the chart: the gains (with it minus without, same seeds and play, points at
+ * the measurement power), every one a [mean, se].
+ */
+export interface AptitudeVariant {
+  /** `deck.gekisouAptitude.shapes[].id` of the file. */
+  shape: number;
+  /** A support skill's band condition held (true) or not (false) for its member; null without one. */
+  bandMatch?: boolean | null;
+  /** The gains do not depend on the seed (one seed reported, se 0). */
+  deterministic?: boolean;
+  seeds?: number;
+  /** The standard error met the seed rule's target. */
+  seTargetMet?: boolean;
+  /** The seeds of the cross terms (`weights`, `rangeWeights`). */
+  crossSeeds?: number;
+  /** Rank 1, the Just play, rank bonuses included. */
+  score?: MeanSe;
+  /** Rank 1, the Perfect play (every Just judged Perfect). */
+  scorePerfect?: MeanSe;
+  /** The gain outside the ranges: score − Σ_j (rangeScore_j + rankBonus_j). */
+  tail?: MeanSe;
+  tailPerfect?: MeanSe;
+  /** Judgement conversions (13005 and the like). */
+  converted?: MeanSe;
+  ranges?: readonly VariantRange[];
+  /** The plain kind's weight change per performance position (`deck.seeds[i].weights[plainKind][k]`'s unit). */
+  weights?: readonly MeanSe[] | null;
+  /** The plain kind's range weight change `[position][range]`; null where the ranks do not follow the linear formula. */
+  rangeWeights?: ReadonlyArray<readonly MeanSe[]> | null;
+  check?: unknown;
+}
+
+export interface ChartAptitude {
+  /** One per deck range. */
+  factors?: readonly RangeFactors[];
+  variants?: readonly AptitudeVariant[];
+}
+
+/** A (skill, level) of a shape. */
+export interface ShapeSkill {
+  id: number;
+  level: number;
+  /** Condition 5000's target members; null without a band condition. */
+  memberTargetIds?: readonly number[] | null;
+  /** Their bands. */
+  bandIds?: readonly number[] | null;
+}
+
+/** A class of Gekisou skills whose score-relevant effect parameters are the same. */
+export interface AptitudeShape {
+  id: number;
+  /** "member" (a member card's Gekisou skill) or "support" (a snap's Gekisou support skill). */
+  source?: string;
+  /** 1 combo, 2 luck, 3 Just, 4 every mission. */
+  mission?: number;
+  bandCondition?: boolean;
+  effects?: readonly unknown[];
+  skills?: readonly ShapeSkill[];
+}
+
+/** The file's aptitude header (`deck.gekisouAptitude`). */
+export interface FileAptitude {
+  plainKind?: number | null;
+  host?: string;
+  seedRule?: { deterministicTest?: number; batches?: readonly number[]; relative?: number; baseline?: number; crossSeeds?: number } | null;
+  shapes?: readonly AptitudeShape[];
+}
+
+/** A Gekisou skill or support skill of `gekisouCatalog`. */
+export interface CatalogSkill {
+  id: number;
+  mission?: number;
+  maxLevel?: number;
+  name?: DataText | null;
+  description?: DataText | null;
+}
+
+/** The Gekisou skill names (top-level `gekisouCatalog`). */
+export interface GekisouCatalog {
+  skills?: readonly CatalogSkill[];
+  supportSkills?: readonly CatalogSkill[];
 }
 
 export interface DataChart {
@@ -145,6 +269,7 @@ export interface MusicData {
   provenance?: DataProvenance;
   languages?: readonly string[];
   bands?: readonly DataBand[];
-  deck?: { model?: { power?: number } | null; kinds?: readonly DeckKind[] } | null;
+  deck?: { model?: { power?: number } | null; kinds?: readonly DeckKind[]; gekisouAptitude?: FileAptitude | null } | null;
+  gekisouCatalog?: GekisouCatalog | null;
   songs?: readonly DataSong[];
 }

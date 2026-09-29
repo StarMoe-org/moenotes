@@ -308,6 +308,8 @@ html[data-theme="dark"] .mn-cd {
 .mn-cd-rk { display: inline-block; min-width: 32px; padding: 0 8px; border-radius: 4px; text-align: center; font-weight: 600; font-size: 12px; border: 1px solid var(--mn-border); color: var(--mn-ink-soft); }
 .mn-cd-rk.rk-SS { color: var(--mn-orbit-light); background: var(--mn-orbit-night); border-color: var(--mn-orbit-edge); }
 .mn-cd-rk.rk-S { color: var(--mn-accent-deep); background: var(--mn-accent-soft); border-color: color-mix(in srgb, var(--mn-accent) 40%, transparent); }
+.mn-cd-measures :is(th, td):nth-child(2) { text-align: left; }
+.mn-cd-measures td.hi { font-weight: 600; color: var(--mn-text); }
 
 .mn-cd-boot { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; min-height: 40vh; color: var(--mn-text-muted); }
 .mn-cd-boot.error { flex-direction: column; color: var(--mn-rose); }
@@ -365,3 +367,10 @@ html[data-theme="dark"] .mn-cd {
   .mn-cd-hero { flex-direction: column; align-items: flex-start; margin: -18px -18px 0; padding: 18px 16px 16px; }
   .mn-cd-jk.xl { width: 88px; height: 88px; }
 }
+
+.mn-cd-aptitude > tbody > tr > td { vertical-align: top; }
+.mn-cd-aptitude > tbody > tr > td:first-child { min-width: 180px; }
+.mn-cd-aptitude small { display: block; color: var(--mn-text-muted); font-size: 11px; }
+.mn-cd-aptitude details { text-align: left; min-width: 100px; }
+.mn-cd-aptitude details[open] { min-width: 360px; }
+.mn-cd-aptitude summary { cursor: pointer; }

@@ -119,11 +119,12 @@ export function ScenarioPanel({ ctx, rooms = false, missions = null }: { ctx: Ch
 }
 
 /** The efficiency settings: length, overhead, skills; for the event ranking the target and power; the frontier filter. */
-export default function SettingsPanel({ ctx, event = false, frontier = false }: { ctx: ChartDataContext; event?: boolean; frontier?: boolean }) {
+export default function SettingsPanel({ ctx, event = false, frontier = false, aptitude = false }: { ctx: ChartDataContext; event?: boolean; frontier?: boolean; aptitude?: boolean }) {
   const { tr, state, update } = ctx;
   const setSkill = (i: number, v: number) => update({ skills: state.skills.map((x, j) => (j === i ? v : x)) });
   return (
     <div className="mn-cd-panel">
+      {!aptitude ? <>
       <div className="mn-cd-field">
         <span>{tr("length")}</span>
         <Seg label={tr("length")} value={state.len} onPick={(len) => update({ len })} options={[{ value: "bgm", label: tr("bgm") }, { value: "chart", label: tr("chart") }]} />
@@ -133,6 +134,7 @@ export default function SettingsPanel({ ctx, event = false, frontier = false }: 
         <input type="range" min={0} max={180} step={5} value={state.overhead} aria-label={tr("overhead")} onChange={(e) => update({ overhead: Number(e.target.value) })} />
         <output>{tr("seconds", { n: state.overhead })}</output>
       </label>
+      </> : null}
       <div className="mn-cd-field">
         <span>{tr("skills")}</span>
         <div className="mn-cd-skills">
@@ -145,15 +147,15 @@ export default function SettingsPanel({ ctx, event = false, frontier = false }: 
           ))}
         </div>
       </div>
-      {event ? (
+      {event || aptitude ? (
         <>
-          <div className="mn-cd-field">
+          {event ? <div className="mn-cd-field">
             <span>{tr("target")}</span>
             <Seg label={tr("target")} value={state.target} onPick={(target) => update({ target })} options={TARGETS.map((r) => ({ value: r, label: r }))} />
-          </div>
+          </div> : null}
           <label className="mn-cd-field">
             <span>{tr("power")}</span>
-            <NumberInput className="power" value={state.power} step={1000} placeholder={tr("powerHint")} label={tr("power")} onValue={(v) => update({ power: Math.round(v) })} />
+            <NumberInput className="power" value={state.power} step={1000} placeholder={aptitude ? "" : tr("powerHint")} label={tr("power")} onValue={(v) => update({ power: Math.round(v) })} />
           </label>
         </>
       ) : null}

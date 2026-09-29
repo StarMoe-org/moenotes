@@ -2,6 +2,7 @@
 import ChartDataTool from "@/components/chart-data/ChartDataTool";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
+import { t } from "@/i18n";
 import { getChartDataGuide } from "@/i18n/guides/chart-data";
 
 interface Props {
@@ -15,5 +16,7 @@ const guide = getChartDataGuide(locale);
 ---
 
 <PageLayout locale={locale} titleKey="seo.chartData.title" descriptionKey="seo.chartData.description">
+  <span slot="title-badge" class="rounded-full border border-[var(--mn-border)] px-2 py-0.5 text-xs text-[var(--mn-text-muted)]" title={t(locale, "chartData.betaHint")}>{t(locale, "chartData.beta")}</span>
+  <p class="text-sm text-[var(--mn-text-muted)]">{t(locale, "chartData.betaHint")}</p>
   <ChartDataTool client:load locale={locale} guide={guide} />
 </PageLayout>

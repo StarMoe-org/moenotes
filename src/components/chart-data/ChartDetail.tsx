@@ -1,7 +1,9 @@
 import { NOTE_KINDS, type ChartRow } from "@/lib/chart-data/catalog";
+import { MEASURES, rangeMeasures, type MeasureStat } from "@/lib/chart-data/gekisou";
 import { roomSize } from "@/lib/chart-data/query";
 import { SCORE_RANKS, chartFigures, formatLength, modelPower, orderRates, plainKind, quantile, rankThreshold, reachChance, requiredPower, scoreRate, weightSum } from "@/lib/chart-data/ranking";
 import { FREE } from "@/lib/chart-data/scenario";
+import AptitudeDetail from "./AptitudeDetail";
 import { MISSIONS, ScenarioPanel } from "./SettingsPanel";
 import { Heading, Icon, Jacket, fmt, fmtInt, diffShort, SongLink, type ChartDataContext } from "./shared";
 
@@ -107,6 +109,51 @@ function Weights({ row }: { row: Figured }) {
   );
 }
 
+// a measure as its seed mean, with the seeds' min–max when they differ; null when a seed lacks it
+const measureText = (m: MeasureStat | null) => (m
+  ? `${Number.isInteger(m.mean) ? fmtInt(m.mean) : fmt(m.mean, 1)}${m.min === m.max ? "" : ` (${fmtInt(m.min)}–${fmtInt(m.max)})`}`
+  : null);
+
+// Gekisou Live's rank measures per range (seed means without Gekisou skills), the one each range ranks by in bold
+function Measures({ ctx, row }: { ctx: ChartDataContext; row: ChartRow }) {
+  const { tr } = ctx;
+  const list = rangeMeasures(row.stats);
+  if (!list.some((m) => MEASURES.some((k) => m.values[k]))) return null;
+  const missions = row.song.gekisouMissions ?? [];
+  return (
+    <section>
+      <Heading level={3} title={tr("detail.measures")} />
+      <div className="mn-cd-table-scroll">
+        <table className="mn-cd-ranks mn-cd-measures">
+          <thead>
+            <tr>
+              <th>{tr("detail.measureRange")}</th>
+              <th>{tr("detail.measureCompared")}</th>
+              {MEASURES.map((k) => <th key={k}>{tr(`detail.measure.${k}`)}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {list.map((m) => {
+              const code = MISSIONS[m.mission ?? missions[m.index] ?? 0];
+              return (
+                <tr key={m.index}>
+                  <td>{code ? tr("scenario.rangeMission", { n: m.index + 1, mission: tr(`missions.${code}`) }) : tr("scenario.range", { n: m.index + 1 })}</td>
+                  <td>{m.measure ? tr(`detail.measure.${m.measure}`) : "–"}</td>
+                  {MEASURES.map((k) => {
+                    const text = measureText(m.values[k]);
+                    return <td key={k} className={k === m.measure ? "num hi" : "num dim"} title={text === null ? tr("scenario.pending") : undefined}>{text ?? "–"}</td>;
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className="mn-cd-hint">{tr("detail.measuresHint")}</p>
+    </section>
+  );
+}
+
 // the song's score ranks: threshold, the power the expected score needs, and the chance at the power entered
 function RanksTable({ ctx, row }: { ctx: ChartDataContext; row: Figured }) {
   const { tr, state, skills } = ctx;
@@ -148,7 +195,7 @@ function RanksTable({ ctx, row }: { ctx: ChartDataContext; row: Figured }) {
   );
 }
 
-/** The chart detail: hero with the song's difficulties and links, the figures, the timeline and the weights. */
+/** The chart detail: hero with the song's difficulties and links, the figures, the range rank measures, the timeline and the weights. */
 export default function ChartDetail({ ctx, row }: { ctx: ChartDataContext; row: ChartRow }) {
   const { tr, state } = ctx;
   const siblings = ctx.rows.filter((x) => x.musicId === row.musicId);
@@ -227,6 +274,8 @@ export default function ChartDetail({ ctx, row }: { ctx: ChartDataContext; row: 
           ) : null}
           {!figured && !(battle && row.unplayable) && row.stats ? <Tile label={tr("detail.noFigures")} value="–" sub={tr("scenario.pending")} /> : null}
         </div>
+        {battle ? <Measures ctx={ctx} row={row} /> : null}
+        <AptitudeDetail ctx={ctx} row={row} />
         <Heading level={3} title={tr("detail.timeline")} />
         <div className="mn-cd-tl-scroll"><Timeline ctx={ctx} row={row} /></div>
         <div className="mn-cd-grid2">

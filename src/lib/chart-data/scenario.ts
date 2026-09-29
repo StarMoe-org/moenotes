@@ -1,4 +1,4 @@
-import type { DeckRange, DeckSeed, MusicData } from "./types";
+import type { ChartDeck, DeckRange, DeckSeed, MusicData } from "./types";
 
 /**
  * Play scenarios: where and how a live is played, which decides what a chart's deck statistics give. A port of
@@ -108,6 +108,16 @@ export function scenarioSupport(data: MusicData | null | undefined): ScenarioSup
     }
   }
   return has;
+}
+
+/**
+ * The seeds a chart's figures come from in a scenario, the one place that picks them: Free Live's `offSeeds`, Gekisou
+ * Live's `seeds`; null without statistics or for a chart unplayable with Gekisou on (Gekisou Live).
+ */
+export function scenarioSeeds(deck: ChartDeck | null | undefined, scenario: Scenario | null | undefined): readonly DeckSeed[] | null {
+  if (!deck) return null;
+  const seeds = scenario?.id === "free" ? deck.offSeeds : deck.unplayable ? undefined : deck.seeds;
+  return seeds && seeds.length ? seeds : null;
 }
 
 /** One seed's no-skill score (points at the measurement power) and position weights of one kind in a scenario. */

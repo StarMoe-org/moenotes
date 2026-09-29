@@ -15,6 +15,7 @@ const { locale, titleKey, descriptionKey } = Astro.props;
   <div class="mn-page-heading-title">
     <svg class="mn-page-heading-star" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m12 2 2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z" stroke="currentColor" stroke-width="1.2"/></svg>
     <h1>{t(locale, titleKey)}</h1>
+    <slot name="title-badge" />
     <span class="mn-page-heading-track" aria-hidden="true"></span>
   </div>
   <p>{t(locale, descriptionKey)}</p>

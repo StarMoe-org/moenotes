@@ -1,3 +1,6 @@
+import { masterSkillFactor } from "../src/lib/chart-data/ranking";
+import { aptitudeFigures, aptitudeRate, aptitudeSe, aptitudeShapes, chartVariants, chartAptitude, chartFactors, rangeMeasures, MEASURES, MISSION_MEASURE, gekisouSkill, shapeSkills, shapeBands, zeroGain } from "../src/lib/chart-data/gekisou";
+import type { AptitudeVariant } from "../src/lib/chart-data/types";
 import { describe, expect, test } from "bun:test";
 import { chartRows, histogram, matches, noteKinds, sortBy, ticks } from "../src/lib/chart-data/catalog";
 import { parseChartDataQuery, playScenario, roomSize, serializeChartDataQuery, type QueryContext } from "../src/lib/chart-data/query";
@@ -335,4 +338,129 @@ describe("query", () => {
     expect(state.ay).toBe("density");
     expect(parseChartDataQuery("n=-2", ctx).room).toBe(1);
   });
+});
+
+// Single-skill aptitude is separate from the baseline figures and from any formation search.
+describe("Gekisou skill aptitude", () => {
+  const ranges = [{ mission: 1, rankBonusPercents: [250, 190, 160, 100, 100] }, { mission: 3, rankBonusPercents: [250, 190, 160, 100, 100] }];
+  const variant: AptitudeVariant = {
+    shape: 1, bandMatch: null, deterministic: true, seeds: 1, crossSeeds: 1, seTargetMet: true,
+    score: [1100, 5], scorePerfect: [750, 3], tail: [50, 1], tailPerfect: [50, 1], converted: [0, 0],
+    ranges: [
+      { rangeScore: [100, 1], rangeScorePerfect: [100, 1], rankBonus: [250, 2], maxCombo: [8, 0], justCount: [0, 0], luckPoints: [0, 0] },
+      { rangeScore: [200, 2], rangeScorePerfect: [100, 1], rankBonus: [500, 3], maxCombo: [0, 0], justCount: [6, 0], luckPoints: [0, 0] },
+    ],
+    weights: [[0.1, 0.001], [0.2, 0.002]], rangeWeights: [[[0.01, 0], [0.02, 0]], [[0.03, 0], [0.04, 0]]],
+  };
+  test("all Just and rank 1 uses the measured total and plain-skill cross weights", () => {
+    const f = aptitudeFigures(variant, ranges, 1000)!;
+    expect(f.base).toBe(1.1);
+    expect(f.weights).toEqual([0.1, 0.2]);
+    expect(aptitudeRate(f, [1, 0])).toBeCloseTo(1.25, 12);
+    expect(aptitudeRate(f, [0, 1])).toBeCloseTo(1.25, 12);
+    expect(aptitudeSe(f, [0, 0])).toBe(0.005);
+    expect(aptitudeSe(f, [1, 0])).toBeNull();
+  });
+  test("rank changes use tail plus range gains and shift only measured cross terms", () => {
+    const f = aptitudeFigures(variant, ranges, 1000, { ...BEST_BATTLE, ranks: [5, 2] })!;
+    expect(f.base).toBeCloseTo((50 + 100 * 2 + 200 * 2.9) / 1000, 12);
+    expect(f.weights![0]).toBeCloseTo(0.1 - 1.5 * 0.01 - 0.6 * 0.02, 12);
+    expect(f.baseSe).toBeNull();
+    const missing = aptitudeFigures({ ...variant, rangeWeights: null }, ranges, 1000, { ...BEST_BATTLE, ranks: [5, 2] })!;
+    expect(missing.crossAtRank1).toBe(true);
+    expect(missing.weights).toEqual([0.1, 0.2]);
+    expect(aptitudeFigures(variant, [{ mission: 1 }, { mission: 3 }], 1000, { ...BEST_BATTLE, ranks: [5, 2] })).toBeNull();
+  });
+  test("partial Just never invents Perfect cross weights or transformed SE", () => {
+    const f = aptitudeFigures(variant, ranges, 1000, { ...BEST_BATTLE, just: 0.5 })!;
+    expect(f.base).toBe(0.925);
+    expect(f.missingPerfectCross).toBe(true);
+    expect(f.weights).toBeNull();
+    expect(f.baseSe).toBeNull();
+    expect(aptitudeRate(f, [1, 1])).toBeNull();
+    expect(aptitudeRate(f, [0, 0])).toBe(0.925);
+    const ranked = aptitudeFigures(variant, ranges, 1000, { ...BEST_BATTLE, ranks: [5, 2], just: 0.5 })!;
+    expect(ranked.base).toBeCloseTo((50 + 200 + 150 * 2.9) / 1000, 12);
+    expect(aptitudeFigures({ ...variant, scorePerfect: undefined }, ranges, 1000, { ...BEST_BATTLE, just: 0 })).toBeNull();
+  });
+  test("Great scales gains but not known SE; Free Live has no aptitude", () => {
+    const f = aptitudeFigures(variant, ranges, 1000, { ...BEST_BATTLE, great: 0.5 })!;
+    expect(f.base).toBeCloseTo(0.99, 12);
+    expect(f.weights![0]).toBeCloseTo(0.09, 12);
+    expect(f.baseSe).toBeNull();
+    expect(aptitudeFigures(variant, ranges, 1000, FREE)).toBeNull();
+    expect(aptitudeRate(null, [1])).toBeNull();
+  });
+  test("missing cross terms are not zero; genuine zero gains identify metric-only skills", () => {
+    const f = aptitudeFigures({ ...variant, weights: null }, ranges, 1000)!;
+    expect(aptitudeRate(f, [0, 0])).toBe(1.1);
+    expect(aptitudeRate(f, [0.1, 0])).toBeNull();
+    expect(zeroGain(variant)).toBeNull();
+    expect(zeroGain({ ...variant, score: [0, 0], weights: null })).toBe("measures");
+    expect(zeroGain({ ...variant, score: [0, 0], weights: [[0, 0]], ranges: [] })).toBe("none");
+    expect(zeroGain({ ...variant, score: [0, 1], weights: null })).toBeNull();
+  });
+  test("aptitude is ignored by baseline rankings and defaults", () => {
+    const baseline = deck([seed(1000, [1, 2])], { ranges });
+    const apt = { ...baseline, gekisouAptitude: { factors: [], variants: [variant] }, gekisou: { seeds: [seed(999999, [5, 6])] } };
+    expect(chartFigures(apt, 0)).toEqual(chartFigures(baseline, 0));
+    expect(chartVariants(baseline)).toEqual([]);
+    expect(chartVariants(apt)).toEqual([variant]);
+    expect(chartVariants({ ...apt, unplayable: "fevers" })).toEqual([]);
+    expect(chartAptitude(data, baseline, BEST_BATTLE)).toBeNull();
+    expect(chartFactors(baseline)).toBeNull();
+    expect(chartFactors(apt)).toEqual([]);
+  });
+  test("range measures match missions; old files and incomplete samples do not invent zeroes", () => {
+    const d = deck([
+      seed(1000, W, { ranges: [{ maxCombo: 10, justCount: 0, luckPoints: 0 }, { maxCombo: 4, justCount: 6, luckPoints: 100 }] }),
+      seed(1000, W, { ranges: [{ maxCombo: 12, justCount: 0, luckPoints: 0 }, { maxCombo: 4, justCount: 8 }] }),
+    ], { ranges });
+    expect(MEASURES).toEqual(["maxCombo", "justCount", "luckPoints"]);
+    expect(MISSION_MEASURE).toEqual({ 1: "maxCombo", 2: "luckPoints", 3: "justCount" });
+    const m = rangeMeasures(d);
+    expect(m[0]!.values.maxCombo).toEqual({ mean: 11, min: 10, max: 12 });
+    expect(m[0]!.values.luckPoints).toEqual({ mean: 0, min: 0, max: 0 });
+    expect(m[1]!.values.luckPoints).toBeNull();
+    expect(m[1]!.measure).toBe("justCount");
+    expect(rangeMeasures({ ranges: [{ mission: 99 }] })[0]!.measure).toBeNull();
+    expect(rangeMeasures(null)).toEqual([]);
+    expect(rangeMeasures({ ...d, unplayable: "fevers" })).toEqual([]);
+  });
+  test("catalog names use site locale fallback and shapes deduplicate skill levels", () => {
+    const named: MusicData = { bands: [{ id: 1, name: { ja: "Band" } }], gekisouCatalog: {
+      skills: [{ id: 7, name: { ja: "連撃", en: "Combo" }, mission: 1, maxLevel: 5 }],
+      supportSkills: [{ id: 7, name: { "zh-Hans": "支援" } }],
+    } };
+    expect(gekisouSkill(named, "skills", 7, "en-US")).toEqual({ id: 7, name: "Combo", mission: 1, maxLevel: 5 });
+    expect(gekisouSkill(named, "skills", 7, "ko-KR").name).toBe("Combo");
+    expect(gekisouSkill(null, "skills", 99, "zh-CN")).toEqual({ id: 99, name: "#99", mission: null, maxLevel: null });
+    const shape = { id: 1, source: "support", skills: [{ id: 7, level: 5, bandIds: [2, 1] }, { id: 7, level: 5, bandIds: [1] }] };
+    expect(shapeSkills(named, shape, "zh-CN")).toHaveLength(1);
+    expect(shapeSkills(named, shape, "zh-CN")[0]!.name).toBe("支援");
+    expect(shapeBands(named, shape, "zh-CN")).toEqual(["Band", "#2"]);
+    expect(aptitudeShapes(null).size).toBe(0);
+  });
+});
+
+test("master factor uses float32 truncation, unlike user percentages", () => {
+ expect(masterSkillFactor(13000)).toBe(1.29999);
+ expect(masterSkillFactor(10000)).toBe(1);
+ expect(130 / 100).toBe(1.3);
+});
+
+test("aptitude header gates cross terms without hiding missing data", () => {
+  const v: AptitudeVariant = { shape: 0, score: [100, 0], scorePerfect: [50, 0], weights: [[1, 0]], ranges: [] };
+  const d: ChartDeck = { gekisouAptitude: { factors: [], variants: [v] } };
+  expect(chartAptitude({}, d, BEST_BATTLE)).toBeNull();
+  const named: MusicData = { deck: { kinds: KINDS, gekisouAptitude: { plainKind: 0, shapes: [{ id: 0, source: "member" }] } } };
+  const f = chartAptitude(named, d, BEST_BATTLE)!;
+  expect(f[0]!.source).toBe("member");
+  expect(f[0]!.delta!.weights).toEqual([1]);
+  const mismatch: MusicData = { deck: { ...named.deck, gekisouAptitude: { plainKind: 1 } } };
+  const m = chartAptitude(mismatch, d, BEST_BATTLE)![0]!;
+  expect(m.delta!.weights).toBeNull();
+  expect(aptitudeRate(m.delta, [1])).toBeNull();
+  expect(aptitudeRate(m.delta, [0])).toBeCloseTo(100 / 300000, 12);
+  expect(chartAptitude(named, { ...d, unplayable: "fevers" }, BEST_BATTLE)).toBeNull();
 });
