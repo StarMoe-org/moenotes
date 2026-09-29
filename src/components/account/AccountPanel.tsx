@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import AccountAvatar from "@/components/account/AccountAvatar";
+import GameAccounts from "@/components/account/GameAccounts";
 import Modal from "@/components/shared/Modal";
 import { accountLoginUrl, passportAccountUrl } from "@/config/account";
 import type { AppLocale } from "@/config/locales";
@@ -7,6 +8,7 @@ import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import { type AccountAvatar as AvatarChoice, type AccountUser, saveAvatar } from "@/lib/account/client";
 import { accountAvatarUrl } from "@/lib/account/avatar-url";
+import type { ProfileCardInfo } from "@/lib/account/profile-cards";
 import { useAccount } from "@/lib/account/use-account";
 import { getCharacterFaceIconUrl } from "@/lib/cards/assets";
 import { getRoutePathById } from "@/lib/route/registry";
@@ -22,13 +24,15 @@ export interface AvatarBand {
 interface Props {
   locale: AppLocale;
   bands: AvatarBand[];
+  /** Build time data from profile-cards.ts. */
+  cards: ProfileCardInfo[];
 }
 
 const panel = "rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-5 shadow-[var(--mn-shadow-stamp)] sm:p-6";
 const stampButton =
   "mn-focus mn-stamp-press inline-flex h-10 items-center rounded-xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-4 text-sm font-black text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)] hover:bg-[var(--mn-cream-deep)]";
 
-export default function AccountPanel({ locale, bands }: Props) {
+export default function AccountPanel({ locale, bands, cards }: Props) {
   const account = useAccount();
   // The panel keeps its own copy: it is the only place that changes the profile.
   const [user, setUser] = useState<AccountUser | null>(null);
@@ -74,6 +78,8 @@ export default function AccountPanel({ locale, bands }: Props) {
           {t(locale, "account.changeAvatar")}
         </button>
       </div>
+
+      <GameAccounts locale={locale} panel={panel} stampButton={stampButton} cards={cards} />
 
       <PassportSecurity locale={locale} />
 

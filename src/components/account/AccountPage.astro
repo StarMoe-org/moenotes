@@ -3,15 +3,16 @@ import PageLayout from "@/layouts/PageLayout.astro";
 import AccountPanel from "@/components/account/AccountPanel";
 import type { AppLocale } from "@/config/locales";
 import { getAvatarBands } from "@/lib/account/avatar-options";
+import { getProfileCards } from "@/lib/account/profile-cards";
 
 interface Props {
   locale: AppLocale;
 }
 
 const { locale } = Astro.props;
-const bands = await getAvatarBands(locale);
+const [bands, cards] = await Promise.all([getAvatarBands(locale), getProfileCards(locale)]);
 ---
 
 <PageLayout locale={locale} titleKey="account.title" descriptionKey="account.description">
-  <AccountPanel client:load locale={locale} bands={bands} />
+  <AccountPanel client:load locale={locale} bands={bands} cards={cards} />
 </PageLayout>

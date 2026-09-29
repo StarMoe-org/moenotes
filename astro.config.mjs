@@ -2,6 +2,25 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "astro/config";
 import react from "@astrojs/react";
 import tailwindcss from "@tailwindcss/vite";
+import { playerShellPath } from "./src/config/players.ts";
+
+/**
+ * `astro dev` serves player pages (/u/{server}/{profileId}) from the locale's /u shell, as the deploy server does
+ * (server/static.ts): a static build has no page per player.
+ */
+function playerPages() {
+  return {
+    name: "moenotes-player-pages",
+    configureServer(server) {
+      server.middlewares.use((request, _response, next) => {
+        const url = new URL(request.url ?? "/", "http://dev");
+        const shell = playerShellPath(url.pathname);
+        if (shell) request.url = shell + url.search;
+        next();
+      });
+    },
+  };
+}
 
 export default defineConfig({
   trailingSlash: "ignore",
@@ -12,7 +31,7 @@ export default defineConfig({
   },
   integrations: [react()],
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [tailwindcss(), playerPages()],
     // `astro dev` forwards the account API like the deploy server does (docs/account.md). Without starmoe-api
     // running the requests fail and the header simply shows no account button.
     server: {

@@ -501,4 +501,21 @@ export const routeRegistry = [
     searchable: false,
     keywords: ["account", "profile", "avatar", "StarMoe Passport"],
   },
+  {
+    // Public player pages, /u/{server}/{profileId}: one shell per locale that every player shares, served for
+    // those paths by the deploy server and the dev server. Keep the path equal to PLAYER_PAGE_PATH
+    // (src/config/players.ts); the route lint reads this file as text, so it stays a literal here.
+    id: "player",
+    path: "/u",
+    labelKey: "player.title",
+    component: "player",
+    seo: {
+      titleKey: "seo.player.title",
+      descriptionKey: "seo.player.description",
+      indexable: false,
+    },
+    nav: false,
+    searchable: false,
+    keywords: ["player", "profile"],
+  },
 ] as const satisfies readonly AppRoute[];

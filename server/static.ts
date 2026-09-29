@@ -1,5 +1,6 @@
 import { stat } from "node:fs/promises";
 import { extname, join, posix } from "node:path";
+import { playerShellPath } from "../src/config/players";
 import { COMPRESSIBLE_EXTENSIONS, ENCODINGS } from "./finalize";
 
 /** Where requests are served from; replaced as a whole when a build goes live. */
@@ -19,7 +20,9 @@ const IMMUTABLE = "public, max-age=31536000, immutable";
 const REVALIDATE = "no-cache";
 
 /**
- * The Astro output as a static site: `{path}`, `{path}/index.html`, `{path}.html`, then `/404.html`.
+ * The Astro output as a static site: `{path}`, `{path}/index.html`, `{path}.html`, then `/404.html`. Player pages
+ * (`/u/{server}/{profileId}` under a locale prefix) have no file of their own: every player gets the locale's `/u/`
+ * shell, which reads the player from its URL.
  *
  * `/_astro/` files are content-hashed, so they are cached for a year and, when missing from the live build,
  * looked up in earlier builds: a page loaded just before a swap still finds its scripts afterwards.
@@ -39,7 +42,7 @@ export async function serveStatic(request: Request, roots: SiteRoots): Promise<R
   if (pathname === null) return new Response("Bad Request\n", { status: 400 });
 
   const immutable = pathname.startsWith("/_astro/");
-  let file = await findFile(roots.current, pathname);
+  let file = await findFile(roots.current, playerShellPath(pathname) ?? pathname);
   if (!file && immutable) {
     for (const root of roots.previous) {
       file = await fileInfo(join(root, pathname));

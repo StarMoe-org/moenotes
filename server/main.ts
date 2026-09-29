@@ -13,6 +13,8 @@ import { isApiPath, parseApiOrigin, proxyApi } from "./api-proxy";
 import { BuildStore, astroCli, errorMessage, log } from "./builds";
 import { config } from "./config";
 import { compressSite, linkSite } from "./finalize";
+import { playerShellPath } from "../src/config/players";
+import { servePlayerPage } from "./player-meta";
 import { serveStatic, type SiteRoots } from "./static";
 import { assetExportLag, buildKey, describeData, fetchJson, sourceRevision, type AssetManifest, type DataVersion } from "./upstream";
 
@@ -49,6 +51,7 @@ const server = Bun.serve({
     if (pathname === "/_moenotes/status") return Response.json(status(), { headers: { "cache-control": "no-store" } });
     // The account API works before the first build too: it does not depend on the site output.
     if (isApiPath(pathname)) return proxyApi(request, config.apiInternal.origin);
+    if (playerShellPath(pathname)) return servePlayerPage(request, store.roots, config.apiInternal.origin);
     return serveStatic(request, store.roots);
   },
   error(error) {
@@ -161,6 +164,8 @@ async function selfCheck(): Promise<void> {
     const writeSite = async (site: string) => {
       await Bun.write(join(site, "index.html"), page);
       await Bun.write(join(site, "music", "1", "index.html"), page);
+      await Bun.write(join(site, "u", "index.html"), page);
+      await Bun.write(join(site, "ja", "u", "index.html"), page);
       await Bun.write(join(site, "404.html"), "<!doctype html><title>404</title>");
       await Bun.write(join(site, "_astro", "app.js"), "console.log(1);".repeat(200));
     };
@@ -172,7 +177,7 @@ async function selfCheck(): Promise<void> {
     await writeSite(current);
 
     const first = await linkSite(previous);
-    check(first.linked === 0 && first.files === 5, `expected 5 files and nothing linked, got ${first.files} / ${first.linked} linked`);
+    check(first.linked === 0 && first.files === 7, `expected 7 files and nothing linked, got ${first.files} / ${first.linked} linked`);
     check(!await Bun.file(join(previous, ".prerender", "entry.mjs")).exists(), "finalize should drop .prerender/");
 
     let roots: SiteRoots = { current: previous, previous: [] };
@@ -184,14 +189,14 @@ async function selfCheck(): Promise<void> {
     check(uncompressed.status === 200 && !uncompressed.headers.has("content-encoding"), "a build without variants should be served as is");
     await Bun.write(join(previous, "index.html.br.tmp-1"), "partial");
     const compressed = await compressSite(previous);
-    check(compressed.compressed === 3, `expected 3 compressed files, got ${compressed.compressed}`);
+    check(compressed.compressed === 5, `expected 5 compressed files, got ${compressed.compressed}`);
     check(!await Bun.file(join(previous, "index.html.br.tmp-1")).exists(), "compress should drop an interrupted run's temporary files");
     check((await compressSite(previous)).compressed === 0, "a second compression should find nothing to do");
     await rm(join(previous, "index.html.gz"));
     check((await compressSite(previous)).compressed === 1, "compress should complete a file an interrupted run left with one variant");
 
     const second = await linkSite(current, { site: previous, manifest: first.manifest });
-    check(second.linked === 4, `expected 4 linked files, got ${second.linked}`);
+    check(second.linked === 6, `expected 6 linked files, got ${second.linked}`);
     check((await compressSite(current)).compressed === 0, "linked files should come with the live build's variants");
 
     roots = { current, previous: [previous] };
@@ -202,6 +207,10 @@ async function selfCheck(): Promise<void> {
     check((await get("/music/1")).status === 200, "GET /music/1 should serve music/1/index.html");
     check((await get("/music/1", {}, "HEAD")).status === 200, "HEAD should be served");
     check((await get("/missing")).status === 404, "unknown paths should answer 404");
+    check((await get("/u/tw/21139118822")).status === 200, "a player page should serve the /u/ shell");
+    check((await get("/ja/u/jp/59336778464/")).status === 200, "a localized player page should serve that locale's shell");
+    check((await get("/u/tw/31139118822")).status === 404, "an ID that cannot be on the server is not a player page");
+    check((await get("/xx/u/tw/21139118822")).status === 404, "an unknown locale prefix is not a player page");
     check((await get("/%2e%2e/%2e%2e/etc/hostname")).status === 404, "paths must stay inside the site");
     const script = await get("/_astro/app.js");
     check(script.headers.get("cache-control")?.includes("immutable") === true, "/_astro/ should be immutable");

@@ -1,3 +1,4 @@
+import type { GameServer } from "@/config/players";
 import { siteConfig } from "@/config/site";
 
 /**
@@ -11,7 +12,15 @@ export const accountApi = {
   logout: "/api/auth/logout",
   me: "/api/me",
   avatar: "/api/me/avatar",
+  gameAccounts: "/api/me/game-accounts",
+  /** Public profiles: `/api/players/{server}/{profileId}`. */
+  players: "/api/players",
 } as const;
+
+/** One game account: DELETE removes it; `/code` and `/verify` (POST) below it refresh its code and verify it. */
+export function gameAccountPath(server: GameServer, profileId: string): string {
+  return `${accountApi.gameAccounts}/${server}/${encodeURIComponent(profileId)}`;
+}
 
 /** Starts a StarMoe Passport sign-in that comes back to `returnTo`; the sign-in page follows `locale`. */
 export function accountLoginUrl(locale: string, returnTo: string): string {
@@ -30,4 +39,13 @@ export type PassportAccountPage = "password" | "email" | "security";
  */
 export function passportAccountUrl(page: PassportAccountPage, locale: string, returnTo: string): string {
   return `${siteConfig.passportUrl}/account/${page}?${new URLSearchParams({ redirect: returnTo, show_success: "true", ui_locales: locale })}`;
+}
+
+/**
+ * One profile card image of a player, served by starmoe-api: the public one, or (`own`) one of the signed-in user's
+ * verified accounts, which works while the page is private too.
+ */
+export function playerCardPath(server: GameServer, profileId: string, index: number, own: boolean): string {
+  const base = own ? gameAccountPath(server, profileId) : `${accountApi.players}/${server}/${encodeURIComponent(profileId)}`;
+  return `${base}/cards/${index}`;
 }

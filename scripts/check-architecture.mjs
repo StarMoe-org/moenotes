@@ -25,6 +25,7 @@ const allowedFetchFiles = new Set([
   "src/lib/live2d/client.ts",
   "src/lib/story/player-client.ts",
   "src/lib/account/client.ts",
+  "src/lib/account/game-accounts.ts",
 ]);
 
 const allowedDomainFiles = new Set([
@@ -37,6 +38,7 @@ const allowedDomainFiles = new Set([
 const allowedInternalRouteFiles = new Set([
   "src/config/routes.ts",
   "src/config/account.ts",
+  "src/config/players.ts",
   "src/config/locales.ts",
   "src/config/assets.ts",
   "src/config/masterdata.ts",

@@ -31,6 +31,29 @@ browser ── bdon.moe ── server/main.ts ── static build
   account page after the passport's own success page; the security hub opens in a new tab. The Account Center's
   field permissions and theme are set up in the `starmoe-passport` repository's README.
 
+- **Game accounts.** `src/components/account/GameAccounts.tsx` on the account page binds Our Notes accounts
+  through starmoe-api (`/api/me/game-accounts`, client in `src/lib/account/game-accounts.ts`; its README,
+  "Game accounts"). The user picks a server (`GAME_SERVERS` in `src/config/account.ts`: `tw` = HMT, `jp`, `en`,
+  `kr`) and a player ID, gets a one-time code, puts it in their in-game name and presses Verify; starmoe-api reads
+  the public profile through the game gateway to see it. Once bound they can rename back. `isGameProfileId`
+  mirrors the API's ID check so obvious typos never leave the page. Accounts are unverified (with a code the user
+  can swap for a new one) or verified; a verified account opens its profile.
+- **Player profiles.** starmoe-api stores each verified account's gateway answers as a JSON file and serves it as
+  is (its README, "Player profiles"); `src/lib/account/player-profile.ts` reads it (int64 values arrive as strings).
+  `PlayerProfileCard.tsx` shows it; the favorite card comes from a build-time card index (`profile-cards.ts`)
+  passed to the page. The holder can refresh it and make it public.
+- **Public player pages.** `/u/{server}/{profileId}` (under a locale prefix too) shows a public profile. A static
+  build has no page per player, so the route `/u` builds one shell per locale and `PlayerPageView.tsx` reads the
+  player from the URL. `src/config/players.ts` holds the path rules; it uses relative imports only, because
+  `server/static.ts` (deploy) and `astro.config.mjs` (dev) import it to serve that shell for every player path.
+  Unknown, unverified and private accounts all show the same "not found".
+- **Link previews.** Crawlers don't run scripts, so `server/player-meta.ts` writes the player's name and level into
+  the shell's `<title>`, description and `og:*`/`twitter:*` tags, read from `/api/players/…` (1.5 s timeout, 5 minute
+  cache, 30 seconds for misses). Any failure serves the plain shell. `og:image` stays the site default.
+- **Share image.** `src/lib/account/share-image.ts` draws a 1080 × 1440 PNG on a canvas in the browser: the favorite
+  card's full art (3:4, from the asset host, which allows CORS), the logo, name, level, favorites and, for a public
+  profile, its address. `ShareImageButton.tsx` offers download, copy and the system share sheet.
+
 ## Deployment
 
 Set `MOENOTES_API_INTERNAL` on the site service to starmoe-api's origin, including the scheme:

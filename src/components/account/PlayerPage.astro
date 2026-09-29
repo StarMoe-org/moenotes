@@ -1,0 +1,18 @@
+---
+import PageLayout from "@/layouts/PageLayout.astro";
+import PlayerPageView from "@/components/account/PlayerPageView";
+import type { AppLocale } from "@/config/locales";
+import { getProfileCards } from "@/lib/account/profile-cards";
+
+interface Props {
+  locale: AppLocale;
+}
+
+// One shell for every player: the player comes from the URL, and their profile from the account API.
+const { locale } = Astro.props;
+const cards = await getProfileCards(locale);
+---
+
+<PageLayout locale={locale} titleKey="player.title" descriptionKey="player.description">
+  <PlayerPageView client:load locale={locale} cards={cards} />
+</PageLayout>
