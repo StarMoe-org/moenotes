@@ -39,6 +39,11 @@ export function getSupportRarityIconUrl(rarity: SupportCardRarity): string {
   return name ? `/assets/SP_CardRarityIcon_${name}.png` : "";
 }
 
+/** The support card limit break (`rank`) icon: rank n lights n of the flower's five petals. */
+export function getSupportCardRankIconUrl(rank: number): string {
+  return `/assets/SupportCardRank${Math.min(Math.max(Math.round(rank), 0), 5)}.png`;
+}
+
 export function getSupportCardTypeIconUrl(cardType: SupportCardType): string {
   return `/assets/CardType-${cardTypeColors[cardType]}.png`;
 }

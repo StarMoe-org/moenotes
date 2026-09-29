@@ -4,6 +4,7 @@ import AssetViewerPage from "@/components/tools/AssetViewerPage.astro";
 import ChartPreview3DPage from "@/components/tools/ChartPreview3DPage.astro";
 import Live2DViewerPage from "@/components/tools/Live2DViewerPage.astro";
 import StoryPlayerPage from "@/components/tools/StoryPlayerPage.astro";
+import MusicRankingPage from "@/components/tools/MusicRankingPage.astro";
 import CardsPage from "@/components/cards/CardsPage.astro";
 import CardDetailPage from "@/components/cards/CardDetailPage.astro";
 import SupportCardsPage from "@/components/support-cards/SupportCardsPage.astro";
@@ -13,6 +14,8 @@ import CharacterDetailPage from "@/components/characters/CharacterDetailPage.ast
 import AboutPage from "@/components/about/AboutPage.astro";
 import AccountPage from "@/components/account/AccountPage.astro";
 import PlayerPage from "@/components/account/PlayerPage.astro";
+import NewsPage from "@/components/news/NewsPage.astro";
+import NewsDetailPage from "@/components/news/NewsDetailPage.astro";
 import HomePage from "@/components/home/HomePage.astro";
 import MusicPage from "@/components/music/MusicPage.astro";
 import MusicDetailPage from "@/components/music/MusicDetailPage.astro";
@@ -114,10 +117,16 @@ const component = match.item.component ?? "page";
     <Live2DViewerPage locale={locale} />
   ) : component === "story-player" ? (
     <StoryPlayerPage locale={locale} />
+  ) : component === "music-ranking" ? (
+    <MusicRankingPage locale={locale} />
   ) : component === "account" ? (
     <AccountPage locale={locale} />
   ) : component === "player" ? (
     <PlayerPage locale={locale} />
+  ) : component === "news" ? (
+    <NewsPage locale={locale} />
+  ) : component === "news-detail" ? (
+    <NewsDetailPage locale={locale} />
   ) : (
     <PageLayout locale={locale} titleKey={match.item.seo.titleKey} descriptionKey={match.item.seo.descriptionKey}>
       {match.isGroupLanding ? (

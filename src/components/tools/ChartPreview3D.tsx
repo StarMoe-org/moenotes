@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
+import { replaceUrl } from "@/lib/browser/history";
 import { getBandSmallIconUrl } from "@/lib/cards/assets";
 import type { MusicViewModel } from "@/lib/music/data";
 import { DIFFICULTY_CHIP_CLASSES, MUSIC_DIFFICULTIES, type MusicDifficulty } from "@/lib/music/difficulty";
@@ -169,16 +170,4 @@ function MusicGlyph({ className }: { className: string }) {
 function resolveDifficulty(song: MusicViewModel, preferred: MusicDifficulty): MusicDifficulty | null {
   if (song.difficulties.some((entry) => entry.difficulty === preferred)) return preferred;
   return song.difficulties.at(-1)?.difficulty ?? null;
-}
-
-/**
- * Replaces the address of the current history entry. A closing modal leaves its own entry with `history.back()`,
- * which lands after this runs; the address is then written once that navigation is done.
- */
-function replaceUrl(href: string) {
-  const apply = () => {
-    if (`${window.location.pathname}${window.location.search}` !== href) window.history.replaceState(window.history.state, "", href);
-  };
-  if (window.history.state?.modal) window.addEventListener("popstate", apply, { once: true });
-  else apply();
 }

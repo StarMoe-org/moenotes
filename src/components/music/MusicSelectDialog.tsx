@@ -28,6 +28,8 @@ interface MusicSelectDialogProps {
   title?: string;
   /** Session key of the remembered sort order. */
   sortPage?: string;
+  /** Pick songs only, for views that have no difficulty (the song ranking): no difficulty buttons. */
+  songOnly?: boolean;
 }
 
 /** Song picker dialog: the music list's full filters and every song, picked together with a difficulty. */
@@ -40,6 +42,7 @@ export default function MusicSelectDialog({
   current = null,
   title,
   sortPage = "music-select",
+  songOnly = false,
 }: MusicSelectDialogProps) {
   // Lives outside the modal body, so the filters survive closing and reopening.
   const music = useMusicFilters(songs, locale, sortPage);
@@ -68,7 +71,7 @@ export default function MusicSelectDialog({
         </div>
 
         <div className="min-w-0 space-y-3">
-          <p className="px-1 text-xs font-medium text-[var(--mn-text-muted)]">{t(locale, "music.picker.hint")}</p>
+          <p className="px-1 text-xs font-medium text-[var(--mn-text-muted)]">{t(locale, songOnly ? "music.picker.songHint" : "music.picker.hint")}</p>
           {music.sorted.length === 0 ? (
             <div className="mn-paper p-8 text-center">
               <p className="font-[var(--mn-font-display)] text-lg text-[var(--mn-text)]">{t(locale, "music.emptyTitle")}</p>
@@ -89,6 +92,7 @@ export default function MusicSelectDialog({
                   song={song}
                   current={song.id === currentId ? current?.difficulty ?? null : null}
                   preferred={current?.difficulty ?? "expert"}
+                  songOnly={songOnly}
                   onPick={(difficulty) => pick(song, difficulty)}
                 />
               ))}
@@ -100,12 +104,13 @@ export default function MusicSelectDialog({
   );
 }
 
-function SongOption({ locale, song, current, preferred, onPick }: {
+function SongOption({ locale, song, current, preferred, songOnly, onPick }: {
   locale: AppLocale;
   song: MusicViewModel;
   /** The chosen difficulty when this is the chosen song. */
   current: MusicDifficulty | null;
   preferred: MusicDifficulty;
+  songOnly: boolean;
   onPick: (difficulty: MusicDifficulty) => void;
 }) {
   const coverDifficulty = song.difficulties.some((entry) => entry.difficulty === preferred)
@@ -145,7 +150,7 @@ function SongOption({ locale, song, current, preferred, onPick }: {
         </span>
       </button>
 
-      <div className="grid grid-cols-4 gap-1 px-2.5 pb-2.5">
+      {!songOnly && <div className="grid grid-cols-4 gap-1 px-2.5 pb-2.5">
         {MUSIC_DIFFICULTIES.map((key) => {
           const entry = song.difficulties.find((item) => item.difficulty === key);
           if (!entry) return <span key={key} aria-hidden="true" />;
@@ -167,7 +172,7 @@ function SongOption({ locale, song, current, preferred, onPick }: {
             </button>
           );
         })}
-      </div>
+      </div>}
     </li>
   );
 }

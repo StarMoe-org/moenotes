@@ -9,4 +9,5 @@ export const storageKeys = {
   assetCacheBypass: "moenotes:asset-cache-bypass",
   chartLiveSettings: "moenotes:chart-live-settings",
   storyPlayerVolumes: "moenotes:story-player-volumes",
+  newsSeen: "moenotes:news-seen",
 } as const;

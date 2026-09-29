@@ -91,6 +91,11 @@ export function getRarityIconUrl(rarity: CardRarity): string {
   return `/assets/RarityIcon_${rarityNames[rarity]}.png`;
 }
 
+/** The awaken (`cardRank`) icon: rank n lights n of the star's five segments. */
+export function getCardRankIconUrl(rank: number): string {
+  return `/assets/CardRank${Math.min(Math.max(Math.round(rank), 0), 5)}.png`;
+}
+
 export function getCardTypeIconUrl(cardType: CardType): string {
   return `/assets/CardType-${cardTypeColors[cardType]}.png`;
 }

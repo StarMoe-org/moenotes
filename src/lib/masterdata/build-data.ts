@@ -29,6 +29,7 @@ import {
   type RawMemberCardLevelLimit,
   type RawMemberCardRank,
 } from "@/lib/cards/growth";
+import type { DeckCardLookup } from "@/lib/game-api/music-ranking";
 import { buildSupportCardGrowth, type RawSupportCardRank, type SupportCardGrowth } from "@/lib/support-cards/growth";
 import { normalizeCharacters, type CharacterViewModel, type RawCharacter as RawCharacterDetail } from "@/lib/characters/data";
 import { normalizeSupportCards, type RawSupportCard, type SupportCardViewModel } from "@/lib/support-cards/data";
@@ -517,6 +518,33 @@ export function getBuildCharacterDetail(locale: AppLocale, characterId: number):
 
 export async function getBuildMusicDetail(locale: AppLocale, songId: number): Promise<MusicViewModel | null> {
   return (await getBuildMusic(locale)).find((entry) => entry.id === songId) ?? null;
+}
+
+/** The cards a music ranking's decks can name, in the compact form the ranking block ships with. */
+export function getBuildDeckCardLookup(locale: AppLocale): Promise<DeckCardLookup> {
+  return memo(`deck-cards:${locale}`, async () => {
+    const [cards, supportCards, rawCards, rawSupportCards, memberLevels, supportLevels] = await Promise.all([
+      getBuildCards(locale),
+      getBuildSupportCards(locale),
+      table<RawMemberCard>("MasterMemberCard.json"),
+      table<RawSupportCard>("MasterSupportCard.json"),
+      table<RawCardLevel & { exp: number }>("MasterMemberCardLevel.json"),
+      table<RawCardLevel & { exp: number }>("MasterSupportCardLevel.json"),
+    ]);
+    const memberGroups = new Map(rawCards._allData.map((card) => [card.id, card.memberCardLevelGroup]));
+    const supportGroups = new Map(rawSupportCards._allData.map((card) => [card.id, card.supportCardLevelGroup]));
+    // Total exp per level of each group, index `level - 1`.
+    const levelExp = (rows: Array<RawCardLevel & { exp: number }>) => {
+      const groups: Record<string, number[]> = {};
+      for (const row of [...rows].sort((a, b) => a.level - b.level)) (groups[String(row.group)] ??= [])[row.level - 1] = row.exp;
+      return groups;
+    };
+    return {
+      member: Object.fromEntries(cards.map((card) => [String(card.id), [card.assetId, card.characterId, card.rarity, card.cardType, card.title, memberGroups.get(card.id) ?? 0]])),
+      support: Object.fromEntries(supportCards.map((card) => [String(card.id), [card.assetId, card.rarity, card.cardType, card.title, supportGroups.get(card.id) ?? 0]])),
+      levelExp: { member: levelExp(memberLevels._allData), support: levelExp(supportLevels._allData) },
+    } satisfies DeckCardLookup;
+  });
 }
 
 export function getBuildStoryDetail(locale: AppLocale, advId: number): Promise<StoryDetailData> {

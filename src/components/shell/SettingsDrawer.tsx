@@ -14,6 +14,8 @@ import {
 } from "@/lib/cache/usage";
 import { formatBytes } from "@/lib/format/bytes";
 import { useOverlay } from "@/lib/overlay/use-overlay";
+import { defaultGameServer } from "@/lib/game-api/server";
+import { GAME_SERVER_SETTINGS } from "@/lib/settings/schema";
 import { useSettings } from "@/lib/settings/use-settings";
 import Modal from "@/components/shared/Modal";
 import Popover from "@/components/shared/Popover";
@@ -73,6 +75,10 @@ function GeneralSettings({ locale, pathname }: SettingsDrawerProps) {
   const update = (patch: Partial<AppSettings>) => {
     updateSettings(patch);
   };
+  const serverLabel = (value: AppSettings["gameServer"]) =>
+    value === "auto"
+      ? t(locale, "settings.gameServerAuto", { server: t(locale, `gameServer.names.${defaultGameServer(locale)}`) })
+      : t(locale, `gameServer.names.${value}`);
 
   return (
     <div className="space-y-6">
@@ -127,6 +133,43 @@ function GeneralSettings({ locale, pathname }: SettingsDrawerProps) {
           label={(value) => t(locale, `settings.options.${value}`)}
           onChange={(value) => update({ colorScheme: value as AppSettings["colorScheme"] })}
         />
+      </Section>
+
+      <Section title={t(locale, "settings.gameServer")}>
+        <Popover
+          matchTriggerWidth
+          trigger={({ ref, onClick, ...aria }) => (
+            <button
+              ref={ref as React.Ref<HTMLButtonElement>}
+              type="button"
+              className="mn-control flex w-full items-center justify-between rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface-strong)] px-5 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]"
+              onClick={onClick}
+              {...aria}
+            >
+              <span className="truncate">{serverLabel(settings.gameServer)}</span>
+              {chevronDown}
+            </button>
+          )}
+        >
+          {({ close: closePopover }) => (
+            <>
+              {GAME_SERVER_SETTINGS.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  aria-pressed={item === settings.gameServer}
+                  className={`flex w-full items-center rounded-full px-4 py-2 text-left text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${item === settings.gameServer ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
+                  onClick={() => {
+                    update({ gameServer: item });
+                    closePopover();
+                  }}
+                >
+                  {serverLabel(item)}
+                </button>
+              ))}
+            </>
+          )}
+        </Popover>
       </Section>
     </div>
   );

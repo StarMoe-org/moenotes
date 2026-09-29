@@ -26,6 +26,7 @@ const allowedFetchFiles = new Set([
   "src/lib/story/player-client.ts",
   "src/lib/account/client.ts",
   "src/lib/account/game-accounts.ts",
+  "src/lib/game-api/client.ts",
 ]);
 
 const allowedDomainFiles = new Set([
@@ -33,6 +34,7 @@ const allowedDomainFiles = new Set([
   "src/config/masterdata.ts",
   "src/config/site.ts",
   "src/config/analytics.ts",
+  "src/config/game-api.ts",
 ]);
 
 const allowedInternalRouteFiles = new Set([
