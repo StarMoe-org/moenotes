@@ -19,6 +19,7 @@ import {
   getCharacterFaceIconUrl,
   type CardType,
 } from "@/lib/cards/assets";
+import { getMusicRankingHref } from "@/lib/game-api/links";
 
 interface Props {
   locale: AppLocale;
@@ -354,6 +355,14 @@ export default function MusicDetail({ locale, initialSong }: Props) {
               })}
             </div>
           </div>
+
+          <a
+            href={getMusicRankingHref(locale, song.id)}
+            className="mn-paper mn-focus group flex items-center justify-between gap-4 px-6 py-4 transition hover:-translate-y-0.5 sm:px-8"
+          >
+            <span className="font-[var(--mn-font-display)] text-lg text-[var(--mn-text)] group-hover:text-[var(--mn-accent-deep)]">{t(locale, "music.ranking.title")}</span>
+            <svg className="h-5 w-5 shrink-0 text-[var(--mn-text-muted)] transition group-hover:translate-x-0.5 group-hover:text-[var(--mn-accent-deep)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+          </a>
 
           {/* Back Action */}
           <div className="flex justify-start">

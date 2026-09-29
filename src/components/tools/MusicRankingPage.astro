@@ -1,0 +1,17 @@
+---
+import MusicRankingTool from "@/components/tools/MusicRankingTool";
+import PageLayout from "@/layouts/PageLayout.astro";
+import type { AppLocale } from "@/config/locales";
+import { getBuildDeckCardLookup, getBuildMusic } from "@/lib/masterdata/build-data";
+
+interface Props {
+  locale: AppLocale;
+}
+
+const { locale } = Astro.props;
+const [songs, deckCards] = await Promise.all([getBuildMusic(locale), getBuildDeckCardLookup(locale)]);
+---
+
+<PageLayout locale={locale} titleKey="seo.musicRanking.title" descriptionKey="seo.musicRanking.description">
+  <MusicRankingTool client:load locale={locale} songs={songs} deckCards={deckCards} />
+</PageLayout>
