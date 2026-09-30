@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { matches, sortBy, type ChartRow } from "@/lib/chart-data/catalog";
 import { EFF_RANKS, RANKS, SPEEDS, roomSize, type RankBy } from "@/lib/chart-data/query";
 import { X_MAX, eventDominance, formatLength, lengthMs, orderRates, rank, rankThreshold, reachChance, requiredPower } from "@/lib/chart-data/ranking";
@@ -70,6 +70,9 @@ function useRanking(ctx: ChartDataContext) {
     const byPool = state.rankBy === "efficiency" ? list : null;
     list = list.filter((r) => matches(r, state.search) && (!state.frontier || !unsorted || r.frontier));
     const top = hi === "perMinute" && byPool && byPool.length ? byPool[0]!.perMinute ?? null : null;
+    // Keep the selected measure beside the song, including in the narrow view.
+    const primary = cols.indexOf(hi as Col);
+    if (primary > 2) cols.splice(2, 0, ...cols.splice(primary, 1));
     return { list, all, hi, cols, unsorted, top };
   }, [ctx, state, pool, skills]);
 }
@@ -101,7 +104,6 @@ export default function RankView({ ctx }: { ctx: ChartDataContext }) {
 
 function RankTable({ ctx }: { ctx: ChartDataContext }) {
   const { tr, state } = ctx;
-  const [allColumns, setAllColumns] = useState(false);
   const { list, all, hi, cols, unsorted, top } = useRanking(ctx);
   const barValue = (r: Listed): number | null | undefined => (hi === "time" ? ctx.lengthOf(r) : hi === "level" ? r.displayLevel : hi === "bpm" ? r[state.speedBy]
     : hi ? (r[hi as keyof Listed] as number | null | undefined) : null);
@@ -152,12 +154,12 @@ function RankTable({ ctx }: { ctx: ChartDataContext }) {
     <div className="mn-cd-table-box">
       <div className="mn-cd-table-toolbar">
         <div className="mn-cd-count">{`${tr("chartsCount", { n: list.length })}${list.length !== all ? ` / ${all}` : ""}`}</div>
-        <label className="mn-cd-check mn-cd-columns-toggle"><input type="checkbox" checked={allColumns} onChange={(e) => setAllColumns(e.target.checked)} />{tr("allColumns")}{allColumns ? <small>{tr("allColumnsHint")}</small> : null}</label>
+        <span className="mn-cd-scroll-hint">{tr("allColumnsHint")}</span>
       </div>
       <div className="mn-cd-table-card mn-cd-glass">
         {list.length ? (
-          <div className="mn-cd-table-scroll">
-            <table className="mn-cd-rank-table" data-rank-by={state.rankBy} data-columns={allColumns ? "all" : "auto"}>
+          <div className="mn-cd-table-scroll" tabIndex={0} role="region" aria-label={tr("views.rank")}>
+            <table className="mn-cd-rank-table" data-rank-by={state.rankBy}>
               <thead>
                 <tr>{cols.map((k) => <th key={k} className={`c-${k}${k === hi ? " hi" : ""}`}>{head(k)}</th>)}</tr>
               </thead>

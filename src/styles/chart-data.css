@@ -370,10 +370,12 @@ html[data-theme="dark"] .mn-cd {
 }
 
 .mn-cd-aptitude > tbody > tr > td { vertical-align: top; }
-.mn-cd-aptitude > tbody > tr > td:first-child { min-width: 180px; }
+.mn-cd-aptitude > tbody > tr > td:first-child { width: 200px; min-width: 200px; max-width: 200px; overflow-wrap: anywhere; white-space: normal; }
+.mn-cd-aptitude > tbody > tr > td:nth-child(2) { width: 150px; min-width: 150px; max-width: 150px; overflow-wrap: anywhere; }
+.mn-cd-aptitude > tbody > tr > td.num { white-space: nowrap; }
 .mn-cd-aptitude small { display: block; color: var(--mn-text-muted); font-size: 11px; }
-.mn-cd-aptitude details { text-align: left; min-width: 100px; }
-.mn-cd-aptitude details[open] { min-width: 360px; }
+.mn-cd-aptitude details { text-align: left; width: 260px; max-width: 260px; overflow-wrap: anywhere; }
+.mn-cd-aptitude details:not([open]) { width: auto; }
 .mn-cd-aptitude summary { cursor: pointer; }
 
 /* Rankings stay a column-aligned list at every width. Breakpoints follow the content, including sidebars. */
@@ -383,13 +385,19 @@ html[data-theme="dark"] .mn-cd {
 .mn-cd-field, .mn-cd-skills { min-width: 0; max-width: 100%; }
 .mn-cd-table-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
 .mn-cd-table-toolbar .mn-cd-count { margin: 0; }
-.mn-cd-columns-toggle { display: none; }
-.mn-cd-columns-toggle small { color: var(--mn-text-muted); font-size: 11px; }
-.mn-cd-table-scroll { max-width: 100%; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--mn-accent) var(--mn-cream-deep); }
+.mn-cd-scroll-hint { display: none; color: var(--mn-text-muted); font-size: 11px; }
+.mn-cd-table-scroll { width: 100%; min-width: 0; max-width: 100%; overflow: auto; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: var(--mn-accent) var(--mn-cream-deep); }
+.mn-cd, .mn-cd-detail-body, .mn-cd-detail-body > *, .mn-cd-replay, .mn-cd-replay > div { min-width: 0; max-width: 100%; }
+.mn-cd-hero-text, .mn-cd-tile { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 .mn-cd-table-box > .mn-cd-table-scroll { max-height: 70vh; }
 .mn-cd-rank-table th { position: sticky; top: 0; z-index: 2; background: var(--mn-paper); }
 .mn-cd-rank-table .mn-cd-spread { display: block; }
-.mn-cd-rank-table .c-song { width: 23%; }
+.mn-cd-rank-table { min-width: 920px; }
+.mn-cd-rank-table .c-song { width: 210px; max-width: 210px; }
+.mn-cd-rank-table .mn-cd-song { width: 190px; max-width: 100%; }
+.mn-cd-rank-table .mn-cd-song-title { min-width: 0; }
+.mn-cd-rank-table .mn-cd-song-title .t { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+.mn-cd-rank-table .mn-cd-song-band { white-space: normal; overflow-wrap: anywhere; }
 .mn-cd-rank-table .mn-cd-song-title .t { max-width: clamp(110px, 17cqw, 230px); }
 @container chart-view (max-width: 1200px) {
   .mn-cd-tabs { flex-wrap: wrap; overflow: visible; }
@@ -402,7 +410,7 @@ html[data-theme="dark"] .mn-cd {
   .mn-cd-num.skill { width: 54px; }
 }
 @container chart-ranking (max-width: 1200px) {
-  .mn-cd-columns-toggle { display: inline-flex; }
+  .mn-cd-scroll-hint { display: inline; }
   .mn-cd-rank-table { font-size: 12px; }
   .mn-cd-rank-table :is(th, td) { padding: 7px 6px; }
   .mn-cd-rank-table th { white-space: normal; font-size: 11px; line-height: 1.4; }
@@ -411,12 +419,10 @@ html[data-theme="dark"] .mn-cd {
   .mn-cd-rank-table .mn-cd-song-title .t { max-width: 150px; }
   .mn-cd-rank-table .mn-cd-song-band { font-size: 11px; }
   .mn-cd-rank-table .mn-cd-bar { min-width: 66px; padding: 1px 4px; }
-  .mn-cd-rank-table[data-columns="auto"] :is(.c-relative, .c-dom) { display: none; }
-  .mn-cd-rank-table[data-columns="all"] { min-width: 1000px; }
-  .mn-cd-rank-table[data-columns="all"] :is(.c-rank, .c-song) { position: sticky; background: var(--mn-paper); z-index: 1; }
-  .mn-cd-rank-table[data-columns="all"] .c-rank { left: 0; min-width: 40px; width: 40px; }
-  .mn-cd-rank-table[data-columns="all"] .c-song { left: 40px; width: 180px; }
-  .mn-cd-rank-table[data-columns="all"] th:is(.c-rank, .c-song) { z-index: 3; }
+  .mn-cd-rank-table .c-rank { min-width: 32px; width: 32px; }
+  .mn-cd-rank-table .c-song { position: sticky; left: 0; width: 180px; background: var(--mn-paper); z-index: 1; }
+  .mn-cd-rank-table .mn-cd-song { width: 160px; }
+  .mn-cd-rank-table th.c-song { z-index: 3; }
 }
 .mn-cd-verification-scroll { max-width: 100%; overflow-x: auto; margin: 16px 0; border: 1px solid var(--mn-glass-border); border-radius: 10px; }
 .mn-cd-verification { width: 100%; min-width: 640px; border-collapse: collapse; table-layout: fixed; font-size: 12px; }
@@ -444,8 +450,6 @@ html[data-theme="dark"] .mn-cd {
 .mn-cd-pareto-note summary { cursor: pointer; }
 @container chart-view (max-width: 760px) { .mn-cd-guide { grid-template-columns: 1fr; } .mn-cd-toc { position: static; } }
 @container chart-ranking (max-width: 860px) {
-  .mn-cd-rank-table[data-columns="auto"][data-rank-by="efficiency"] :is(.c-bpm, .c-notes, .c-density) { display: none; }
-  .mn-cd-rank-table[data-columns="auto"][data-rank-by="event"] .c-perHour { display: none; }
   .mn-cd-rank-table .mn-cd-song-title .t { max-width: 130px; white-space: normal; overflow-wrap: anywhere; }
 }
 @container chart-ranking (max-width: 500px) {
@@ -454,8 +458,8 @@ html[data-theme="dark"] .mn-cd {
   .mn-cd-rank-table .mn-cd-song-band { display: none; }
   .mn-cd-rank-table .mn-cd-lv small { display: none; }
   .mn-cd-rank-table .mn-cd-no { min-width: 22px; padding: 0 2px; }
-  .mn-cd-rank-table[data-columns="auto"] :is(.c-time, .c-bpm, .c-notes, .c-density, .c-rate, .c-chance) { display: none; }
-  .mn-cd-rank-table[data-columns="auto"] :is(.c-time, .c-bpm, .c-notes, .c-density).hi { display: table-cell; }
+  .mn-cd-rank-table .c-song { width: 148px; max-width: 148px; }
+  .mn-cd-rank-table .mn-cd-song { width: 140px; }
 }
 
 /* The reading layout uses the actual available width, including the site's sidebar. */
