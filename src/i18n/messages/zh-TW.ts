@@ -1036,13 +1036,11 @@ export const zhTW = {
     },
     countdown: { startsIn: "距開始", endsIn: "距結束", countingEndsIn: "距結果公布", daysClock: "{days} 天 {clock}" },
     cutoff: "前 {rank} 名",
-    cutoffCard: "第 {rank} 名",
     challenges: {
       title: "挑戰歌曲排行榜",
       songs: "挑戰歌曲",
       songNumber: "第 {n} 首",
       none: "本活動沒有挑戰歌曲。",
-      orderNote: "名次依遊戲回傳的順序：同分時先達到的排在前面。每首歌各自採集，大約每分鐘一次，幾首歌之間不是同一時刻的快照。",
       lastSeen: "採集已結束；這是最後一次讀到的榜單，不是確認過的最終排名。",
     },
     board: {

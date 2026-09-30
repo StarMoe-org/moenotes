@@ -248,9 +248,12 @@ function EventHeader({ locale, server, servers, event, entry, name }: {
   return (
     <div className="mn-paper overflow-hidden">
       <div className="grid gap-0 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-        <ContentServerProvider server={source} servers={servers}>
-          <EventBanner event={art} alt={t(locale, "events.bannerAlt", { name })} eager className="h-full" />
-        </ContentServerProvider>
+        {/* The banner keeps its 7:3 width inside its column; sized by the row's height it would spill over the text. */}
+        <div className="min-w-0 self-center overflow-hidden">
+          <ContentServerProvider server={source} servers={servers}>
+            <EventBanner event={art} alt={t(locale, "events.bannerAlt", { name })} eager />
+          </ContentServerProvider>
+        </div>
         <div className="flex min-w-0 flex-col justify-center gap-3 p-5 sm:p-6">
           <div className="flex flex-wrap items-center gap-2">
             <StatusChip tone={event.eventStatus === "nowOn" ? "live" : event.eventStatus === "aggregation" || event.eventStatus === "feature" ? "wait" : "done"}>
@@ -407,14 +410,12 @@ function ChallengeBoard({ locale, server, eventId, challenge, song, cards }: {
     };
   }, [server, eventId, challenge.challengeMusicId, readable, attempt, tick]);
 
-  const numbers = new Intl.NumberFormat(locale);
   const boundaries = useMemo(() => rewardBoundaries(challenge), [challenge]);
   const top = load.state === "ready" ? load.rows : [];
   const fetchedAt = load.state === "ready" ? load.response.fetchedAt ?? challenge.lastFetchedAt ?? null : challenge.lastFetchedAt ?? null;
   const serverTime = load.state === "ready" ? load.response.serverTime : null;
   const finalQuality = load.state === "ready" ? load.response.finalQuality : null;
   const stale = load.state === "ready" ? load.response.stale : Boolean(challenge.stale);
-  const cutoffs = boundaries.filter((rank) => rank <= top.length && rank > 1).slice(0, 4);
 
   return (
     <div className="px-4 py-4 sm:px-6">
@@ -442,17 +443,6 @@ function ChallengeBoard({ locale, server, eventId, challenge, song, cards }: {
         </div>
       </div>
 
-      {cutoffs.length > 0 && (
-        <dl className="mb-4 grid grid-cols-2 gap-2 px-2 sm:grid-cols-4">
-          {cutoffs.map((rank) => (
-            <div key={rank} className="rounded-xl border border-[var(--mn-border)] bg-[var(--mn-surface)] px-3 py-2">
-              <dt className="text-[10px] font-black tracking-wider text-[var(--mn-text-muted)]">{t(locale, "eventTracker.cutoffCard", { rank: numbers.format(rank) })}</dt>
-              <dd className="font-mono text-base font-black tabular-nums text-[var(--mn-text)]">{numbers.format(top[rank - 1]!.score)}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
-
       {!readable ? (
         <BoardNotice locale={locale} server={server} challenge={challenge} />
       ) : load.state === "loading" ? (
@@ -474,10 +464,11 @@ function ChallengeBoard({ locale, server, eventId, challenge, song, cards }: {
         <RankingList locale={locale} rows={top} cards={cards} assetUrl={assetUrl} boundaries={boundaries} />
       )}
 
-      <p className="mt-4 border-t border-[var(--mn-glass-border)] px-2 pt-3 text-xs leading-6 text-[var(--mn-text-muted)]">
-        {t(locale, "eventTracker.challenges.orderNote")}
-        {finalQuality === "lastSeen" && ` ${t(locale, "eventTracker.challenges.lastSeen")}`}
-      </p>
+      {finalQuality === "lastSeen" && (
+        <p className="mt-4 border-t border-[var(--mn-glass-border)] px-2 pt-3 text-xs leading-6 text-[var(--mn-text-muted)]">
+          {t(locale, "eventTracker.challenges.lastSeen")}
+        </p>
+      )}
     </div>
   );
 }

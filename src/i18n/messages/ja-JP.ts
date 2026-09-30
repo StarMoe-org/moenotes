@@ -1030,13 +1030,11 @@ export const jaJP = {
     },
     countdown: { startsIn: "開始まで", endsIn: "終了まで", countingEndsIn: "結果発表まで", daysClock: "{days}日 {clock}" },
     cutoff: "{rank}位まで",
-    cutoffCard: "{rank}位",
     challenges: {
       title: "チャレンジ楽曲ランキング",
       songs: "チャレンジ楽曲",
       songNumber: "{n}曲目",
       none: "このイベントにはチャレンジ楽曲がありません。",
-      orderNote: "順位はゲームの返した並びのままです。同スコアの場合は先に達成したプレイヤーが上位です。楽曲ごとに約1分おきに別々に取得しているため、楽曲間は同時刻のスナップショットではありません。",
       lastSeen: "取得期間は終了しました。最後に取得したランキングで、確定した最終順位ではありません。",
     },
     board: {

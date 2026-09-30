@@ -999,13 +999,11 @@ export const koKR = {
     },
     countdown: { startsIn: "시작까지", endsIn: "종료까지", countingEndsIn: "결과 발표까지", daysClock: "{days}일 {clock}" },
     cutoff: "{rank}위까지",
-    cutoffCard: "{rank}위",
     challenges: {
       title: "챌린지 곡 랭킹",
       songs: "챌린지 곡",
       songNumber: "{n}번째 곡",
       none: "이 이벤트에는 챌린지 곡이 없습니다.",
-      orderNote: "순위는 게임이 돌려준 순서 그대로입니다. 같은 점수면 먼저 달성한 쪽이 위입니다. 곡마다 약 1분 간격으로 따로 수집하므로 곡끼리 같은 시점의 스냅샷은 아닙니다.",
       lastSeen: "수집 기간이 끝났습니다. 마지막으로 읽은 랭킹이며 확정된 최종 순위는 아닙니다.",
     },
     board: {

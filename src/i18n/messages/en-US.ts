@@ -999,13 +999,11 @@ export const enUS = {
     },
     countdown: { startsIn: "Starts in", endsIn: "Ends in", countingEndsIn: "Results in", daysClock: "{days}d {clock}" },
     cutoff: "Top {rank}",
-    cutoffCard: "Rank {rank}",
     challenges: {
       title: "Challenge Song Rankings",
       songs: "Challenge songs",
       songNumber: "SONG {n}",
       none: "This event has no challenge songs.",
-      orderNote: "Places follow the game's list: of two equal scores, the one reached first ranks higher. Each song is read on its own, about once a minute, so the songs are not one snapshot.",
       lastSeen: "Collection has closed; this is the last copy read, not a confirmed final ranking.",
     },
     board: {

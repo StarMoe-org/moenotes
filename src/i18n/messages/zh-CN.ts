@@ -1036,13 +1036,11 @@ export const zhCN = {
     },
     countdown: { startsIn: "距开始", endsIn: "距结束", countingEndsIn: "距结果公布", daysClock: "{days} 天 {clock}" },
     cutoff: "前 {rank} 名",
-    cutoffCard: "第 {rank} 名",
     challenges: {
       title: "挑战歌曲排行榜",
       songs: "挑战歌曲",
       songNumber: "第 {n} 首",
       none: "本活动没有挑战歌曲。",
-      orderNote: "名次按游戏返回的顺序：同分时先达到的排在前面。每首歌单独采集，大约每分钟一次，几首歌之间不是同一时刻的快照。",
       lastSeen: "采集已结束；这是最后一次读到的榜单，不是确认过的最终排名。",
     },
     board: {
