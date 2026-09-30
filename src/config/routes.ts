@@ -289,6 +289,22 @@ export const routeRegistry = [
         ],
       },
       {
+        // rankd's live event data (point ranking, challenge song boards), fetched in the browser: `?server=&event=&song=`.
+        id: "event-tracker",
+        path: "/events/tracker",
+        labelKey: "nav.items.eventTracker",
+        component: "event-tracker",
+        seo: {
+          titleKey: "seo.eventTracker.title",
+          descriptionKey: "seo.eventTracker.description",
+          keywords: ["BanG Dream! Our Notes event tracker", "Our Notes event ranking", "Our Notes challenge song ranking", "event cutoffs", "event leaderboard"],
+          sitemap: { priority: 0.7, changefreq: "hourly" },
+        },
+        nav: { order: 7, icon: "calendar" },
+        searchable: true,
+        keywords: ["tracker", "ranking", "leaderboard", "cutoff", "challenge", "event points"],
+      },
+      {
         // In-game announcements from rankd, fetched in the browser: the shell is static, the list changes any time.
         id: "news",
         path: "/news",

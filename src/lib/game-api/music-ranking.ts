@@ -61,23 +61,33 @@ export function levelFromExp(levelExp: readonly number[] | undefined, exp: numbe
   return Math.max(level, 1);
 }
 
-export function toRankingRows(ranking: MusicRanking): RankingRow[] {
+/**
+ * `by: "score"` (song rankings) sorts by score and gives tied scores the better place. `by: "response"` (event
+ * challenge boards) keeps the game's order and numbers rows `index + 1`: there the earlier of two equal scores
+ * ranks first, so rows are never reordered or merged.
+ */
+export function toRankingRows(ranking: MusicRanking, by: "score" | "response" = "score"): RankingRow[] {
   const players = (Array.isArray(ranking.players) ? ranking.players : [])
-    .map((player, index) => ({ player, index, score: typeof player.score === "number" ? player.score : 0 }))
-    .sort((a, b) => b.score - a.score || a.index - b.index);
+    .map((player, index) => ({ player, index, score: typeof player.score === "number" ? player.score : 0 }));
+  if (by === "score") players.sort((a, b) => b.score - a.score || a.index - b.index);
   const counts = new Map<number, number>();
   for (const { score } of players) counts.set(score, (counts.get(score) ?? 0) + 1);
 
   let rank = 0;
   let previous: number | null = null;
+  const seen = new Set<string>();
   return players.map(({ player, index, score }, position) => {
-    if (score !== previous) rank = position + 1;
+    if (by === "response" || score !== previous) rank = position + 1;
     previous = score;
     const deck = player.highScoreDeck;
+    // Boards keep repeated players as the game sent them; the key still has to be unique.
+    let uid = player.playerData?.id ?? String(index);
+    if (seen.has(uid)) uid = `${uid}#${index}`;
+    seen.add(uid);
     return {
       rank,
-      tied: (counts.get(score) ?? 0) > 1,
-      uid: player.playerData?.id ?? String(index),
+      tied: by === "score" && (counts.get(score) ?? 0) > 1,
+      uid,
       name: player.playerData?.name ?? "",
       score,
       deckName: deck?.name ?? "",
