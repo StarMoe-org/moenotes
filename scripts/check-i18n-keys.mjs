@@ -22,7 +22,7 @@ const localeFiles = {
 
 function loadMessageObject(file, exportName) {
   let source = readFileSync(file, "utf8");
-  source = source.replace(/import[^;]+;\s*/g, "");
+  source = source.replace(/^\s*import\s+[^;]+;\s*/gm, "");
   source = source.replace(/as const satisfies MessageTree/g, "");
   source = source.replace(new RegExp(`export const ${exportName} =`), "module.exports =");
   const context = { module: { exports: {} }, exports: {} };

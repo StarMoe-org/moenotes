@@ -66,6 +66,8 @@ directory Astro keeps intermediate output in `<cwd>/.astro/` and renames it into
 | `MOENOTES_SERVERS` | _(from the release manifest)_ | Comma-separated game servers to build (`tw,jp`) regardless of their asset exports ([servers.md](servers.md)) |
 | `PUBLIC_ASSET_API`, `PUBLIC_CHART_SITE`, `PUBLIC_CUBISM_CORE` | public origins | Public URLs written into pages (`src/config/assets.ts`; the Live2D viewer loads Cubism Core from the last one, see live2d-viewer.md) |
 | `PUBLIC_STORY_SITE` | public origin | The story site the story player reads (default `https://storage.bdon.moe/moenotes`; story-player.md) |
+| `PUBLIC_MUSIC_DATA_SITE` | public origin | The music data site whose `music-data.json` the chart data tool reads in the browser (default `https://storage.bdon.moe/moenotes/music-data`); in development any copy served with CORS, e.g. `https://ournotes-songs.pages.dev` |
+| `PUBLIC_MUSIC_PLAYER_SITE` | story-site origin | Shared song-page modules at `/songs/`, separate from the music-data directory; defaults to `PUBLIC_STORY_SITE` or `https://storage.bdon.moe/moenotes` |
 | `PUBLIC_STORY_SITE_JP` | public origin | The JP story site, listed beside it (default `https://storage.bdon.moe/moenotes/jp`; story-player.md) |
 | `PUBLIC_GAME_API` | public origin | Moenotes-ranking (rankd), which serves the music rankings and announcements pages read in the browser (default `https://api.bdon.moe`; its CORS list must include this site) |
 | `PUBLIC_CUBISM_MOTIONSYNC_CORE` | URL | Live2D's MotionSync Core 5.0.4 for the story player's voice lip sync; defaults to the copy in the storage bucket (story-player.md) |

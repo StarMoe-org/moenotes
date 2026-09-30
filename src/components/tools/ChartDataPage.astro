@@ -1,0 +1,21 @@
+---
+import ChartDataTool from "@/components/chart-data/ChartDataTool";
+import PageLayout from "@/layouts/PageLayout.astro";
+import type { AppLocale } from "@/config/locales";
+import { t } from "@/i18n";
+import { getChartDataGuide } from "@/i18n/guides/chart-data";
+
+interface Props {
+  locale: AppLocale;
+}
+
+const { locale } = Astro.props;
+// The chart figures come from music-data.json in the browser (assetConfig.musicDataSite); the guide ships with the page
+// in the page's language only.
+const guide = getChartDataGuide(locale);
+---
+
+<PageLayout locale={locale} titleKey="seo.chartData.title" descriptionKey="seo.chartData.description" showDescription={false}>
+  <a slot="title-badge" href={`${Astro.url.pathname}?v=guide`} class="rounded-full border border-[var(--mn-border)] px-2 py-0.5 text-xs text-[var(--mn-text-muted)]" title={t(locale, "chartData.betaHint")}>{t(locale, "chartData.beta")}</a>
+  <ChartDataTool client:load locale={locale} guide={guide} />
+</PageLayout>

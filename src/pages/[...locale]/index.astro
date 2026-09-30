@@ -5,6 +5,7 @@ import ChartPreview3DPage from "@/components/tools/ChartPreview3DPage.astro";
 import Live2DViewerPage from "@/components/tools/Live2DViewerPage.astro";
 import StoryPlayerPage from "@/components/tools/StoryPlayerPage.astro";
 import MusicRankingPage from "@/components/tools/MusicRankingPage.astro";
+import ChartDataPage from "@/components/tools/ChartDataPage.astro";
 import CardsPage from "@/components/cards/CardsPage.astro";
 import CardDetailPage from "@/components/cards/CardDetailPage.astro";
 import SupportCardsPage from "@/components/support-cards/SupportCardsPage.astro";
@@ -127,6 +128,8 @@ const component = match.item.component ?? "page";
     <StoryPlayerPage locale={locale} />
   ) : component === "music-ranking" ? (
     <MusicRankingPage locale={locale} />
+  ) : component === "chart-data" ? (
+    <ChartDataPage locale={locale} />
   ) : component === "account" ? (
     <AccountPage locale={locale} />
   ) : component === "player" ? (

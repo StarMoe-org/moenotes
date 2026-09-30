@@ -17,6 +17,8 @@ export interface RawMusic {
   lyricistTextID: string;
   arrangerTextID: string;
   bandIDs: number[];
+  /** A song can name a band without a MasterBand entry (for example CRYCHIC). */
+  bandNameTextID?: string;
   vocalCharacterIDs: number[];
   musicType: number;
   startAt: string;
@@ -133,7 +135,7 @@ export function normalizeMusic(
   return musicList.map((music) => {
     const bandId = music.bandIDs[0] ?? 0;
     const band = bandMap.get(bandId);
-    const bandName = band ? resolveText(band.nameTextID) : "";
+    const bandName = music.bandNameTextID ? resolveText(music.bandNameTextID) : band ? resolveText(band.nameTextID) : "";
 
     const title = resolveText(music.titleTextID);
     const composer = resolveText(music.composerTextID);

@@ -22,6 +22,14 @@ export const assetConfig = {
    */
   storySite: (import.meta.env.PUBLIC_STORY_SITE || "https://storage.bdon.moe/moenotes").replace(/\/+$/, ""),
   /**
+   * The music data site the chart data tool reads at runtime: `{musicDataSite}/music-data.json` (nnnotes `music-data`,
+   * with the ournotes-deck statistics), published into the storage bucket by StarMoe-org/nnnotes workflows like the
+   * story site. A new file needs no rebuild of this site.
+   */
+  musicDataSite: (import.meta.env.PUBLIC_MUSIC_DATA_SITE || "https://storage.bdon.moe/moenotes/music-data").replace(/\/+$/, ""),
+  /** Shared song-page modules; published at the storage site's root, beside the music-data directory. */
+  musicPlayerSite: (import.meta.env.PUBLIC_MUSIC_PLAYER_SITE || import.meta.env.PUBLIC_STORY_SITE || "https://storage.bdon.moe/moenotes").replace(/\/+$/, ""),
+  /**
    * The JP story site, built separately (JP Live2D model ids overlap the international ones): `jp/` of the same bucket.
    * The story player lists both; an episode both have plays from `storySite`. Set `PUBLIC_STORY_SITE_JP` to the
    * `storySite` root to list one site only.
