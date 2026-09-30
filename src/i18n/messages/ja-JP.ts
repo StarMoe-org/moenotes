@@ -114,6 +114,7 @@ export const jaJP = {
     home: "ホーム",
     groups: {
       database: "データベース",
+      music: "楽曲",
       events: "イベント",
       story: "ストーリー",
       tools: "ツール",
@@ -123,7 +124,7 @@ export const jaJP = {
       characters: "キャラクター",
       cards: "カード",
       supportCards: "サポートカード",
-      music: "楽曲",
+      music: "楽曲一覧",
       eventList: "イベント一覧",
       gacha: "ガチャ",
       rewards: "ミッション・報酬",
@@ -143,7 +144,7 @@ export const jaJP = {
       designSystem: "デザインシステム",
       chartPreview: "譜面プレビュー",
       live2dViewer: "Live2D ビューア",
-      storyPlayer: "ストーリープレイヤー", news: "お知らせ", eventTracker: "イベントトラッカー", musicRanking: "楽曲ランキング", chartData: "譜面データ",
+      storyPlayer: "ストーリープレイヤー", news: "お知らせ", eventTracker: "イベントトラッカー", musicRanking: "楽曲ランキング", chartData: "楽曲meta",
     },
   },
   shell: {
@@ -1426,6 +1427,10 @@ export const jaJP = {
       title: "Our Notes 楽曲・メロディ手帳",
       description: "広大な星空の下に響き渡る青春の調べに耳を澄ませて。少女たちが弦を爪弾き、歌声を重ねる。躍動する音符のすべてが、未来と夢へと宛てた純粋な手紙です。",
     },
+    musics: {
+      title: "BanG Dream! Our Notes 楽曲と譜面",
+      description: "音と旋律が織りなす星空の下、Our Notes の全楽曲、楽曲 meta データ、3D 譜面プレビュー、スコアランキングをお届け。少女たちが奏でる物語を心ゆくまでお楽しみください。",
+    },
     gacha: {
       title: "Our Notes メンバー募集手帳",
       description: "スポットライトが灯った瞬間の胸の高鳴りをもう一度。満天の星空の下でそっと願いを捧げ、あなただけの光が掌の上に舞い降りる瞬間を静かに待ちましょう。",
@@ -1505,7 +1510,7 @@ export const jaJP = {
     chartPreview: { title: "Our Notes 3D 譜面プレビュー", description: "楽曲と難易度を選ぶだけで、Our Notes のライブ画面をブラウザ上に 3D で再現。レーン・ノーツ・タップエフェクトが音楽に合わせてオート演奏され、一時停止やシーク、速度変更も自由です。" },
     live2dViewer: { title: "Our Notes Live2D ビューア", description: "BanG Dream! Our Notes のすべての Live2D モデルをキャラクターと衣装ごとにブラウザで閲覧。ストーリーと同じ待機モーション、まばたき、呼吸、物理演算を再現し、モーションや表情もいつでも切り替えられます。" },
     storyPlayer: { title: "Our Notes ストーリープレイヤー", description: "BanG Dream! Our Notes のストーリーを、ゲームのストーリー画面と同じようにブラウザで再生。Live2D キャラクター、ステージ、カメラと演出、会話ウィンドウ、BGM、効果音、ボイスを日本語・英語・中国語・韓国語で楽しめます。" },
-    chartData: { title: "Our Notes 譜面データ", description: "BanG Dream! Our Notes の全譜面を、スコア効率、イベントランクに必要な総合力、速さ、レベル、長さでランキング。散布図、譜面の詳細、スコアモデルの定義も掲載しています。数値はゲームクライアントの逆コンパイルに基づいています。" },
+    chartData: { title: "Our Notes 楽曲meta", description: "BanG Dream! Our Notes の全譜面を、スコア効率、イベントランクに必要な総合力、速さ、レベル、長さでランキング。散布図、譜面の詳細、スコアモデルの定義も掲載しています。数値はゲームクライアントの逆コンパイルに基づいています。" },
     assetViewer: {
       title: "Our Notes アセットアトリエ",
       description: "舞台裏の制作アトリエの重い扉を押して。静かに埃が舞うイーゼルや作業台の間に、今も色褪せることのない原画の筆跡と、最初の情熱を静かに辿ります。",

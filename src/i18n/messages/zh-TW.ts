@@ -114,6 +114,7 @@ export const zhTW = {
     home: "首頁",
     groups: {
       database: "資料庫",
+      music: "音樂",
       events: "活動",
       story: "劇情",
       tools: "工具",
@@ -123,7 +124,7 @@ export const zhTW = {
       characters: "角色",
       cards: "卡牌",
       supportCards: "支援卡",
-      music: "音樂",
+      music: "音樂列表",
       eventList: "活動一覽",
       gacha: "轉蛋",
       rewards: "任務與獎勵",
@@ -143,7 +144,7 @@ export const zhTW = {
       designSystem: "設計系統",
       chartPreview: "譜面預覽器",
       live2dViewer: "Live2D 瀏覽器",
-      storyPlayer: "劇情播放器", news: "遊戲公告", eventTracker: "活動追蹤器", musicRanking: "歌曲排行榜", chartData: "譜面資料",
+      storyPlayer: "劇情播放器", news: "遊戲公告", eventTracker: "活動追蹤器", musicRanking: "歌曲排行榜", chartData: "歌曲meta",
     },
   },
   shell: {
@@ -1432,6 +1433,10 @@ export const zhTW = {
       title: "Our Notes 樂曲與音樂資料庫",
       description: "聆聽回蕩在浩瀚星空下的青春回響。少女們撥動琴弦、放聲歌唱，每一個跳動的音符都是寫給未來與夢想的真摯信箋。",
     },
+    musics: {
+      title: "BanG Dream! Our Notes 音樂與譜面",
+      description: "在音符與旋律交織的星空下，探索 Our Notes 的全部樂曲、歌曲 Meta 資料、3D 譜面預覽與排行榜。沉浸於少女們用音樂編織的動人篇章。",
+    },
     gacha: {
       title: "Our Notes 轉蛋圖鑑",
       description: "重溫聚光燈亮起時的心跳邂逅。在繁星閃爍的夜空下許下心願，靜靜等候那枚屬於你的光芒如期降落在掌心之間。",
@@ -1511,7 +1516,7 @@ export const zhTW = {
     chartPreview: { title: "Our Notes 3D 譜面預覽器", description: "挑選一首樂曲與難度，在瀏覽器中以 3D 重現 Our Notes 的演出畫面：軌道、音符、擊打特效與音樂同步自動演奏，可隨時暫停、跳轉與調速。" },
     live2dViewer: { title: "Our Notes Live2D 瀏覽器", description: "依角色與服裝瀏覽 BanG Dream! Our Notes 的全部 Live2D 模型：在瀏覽器中重現劇情裡的待機動作、眨眼、呼吸與物理效果，並可隨時切換每一個動作與表情。" },
     storyPlayer: { title: "Our Notes 劇情播放器", description: "在瀏覽器中依遊戲的劇情畫面播放 BanG Dream! Our Notes 的劇情：Live2D 角色、舞台、鏡頭與特效、對話框、音樂、音效與語音，支援日語、英語、中文與韓語。" },
-    chartData: { title: "Our Notes 譜面資料", description: "BanG Dream! Our Notes 全部譜面的得分效率、活動評級所需綜合力、速度、等級與時長排行，附散佈圖、譜面詳情與得分模型的定義和推導；數值以遊戲反編譯為來源。" },
+    chartData: { title: "Our Notes 歌曲meta", description: "BanG Dream! Our Notes 全部譜面的得分效率、活動評級所需綜合力、速度、等級與時長排行，附散佈圖、譜面詳情與得分模型的定義和推導；數值以遊戲反編譯為來源。" },
     assetViewer: {
       title: "Our Notes 遊戲資源查看器",
       description: "推開通往幕後創作工坊的沉重木門。在安靜落滿塵埃的畫架與工作台間，探尋每一筆未曾褪色的原畫筆觸與最初匠心。",

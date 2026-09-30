@@ -112,8 +112,8 @@ export const enUS = {
   notFound: {"metaTitle": "Page not found", "title": "This signal drifted beyond our star chart.", "description": "The address may have changed, or this page is still being prepared. Return home to keep exploring.", "note": "If this link should work, send it to the developers so we can find our way back.", "home": "Back to home", "feedback": "Report this link"},
   nav: {
     home: "Home",
-    groups: { database: "Database", events: "Events", story: "Story", tools: "Tools", community: "About" },
-    items: { characters: "Characters", cards: "Cards", supportCards: "Support Cards", music: "Music", eventList: "Event List", gacha: "Gacha", rewards: "Missions & Rewards", titles: "Titles", backgrounds: "Backgrounds", stamps: "Stickers", comics: "Comics", items: "Items", mainStory: "Main Story", eventStory: "Event Story", friendshipStory: "Bond Stories", otherStory: "Other Stories", liveResultStory: "Post-live Talks", homeStory: "Home Stories", tutorialStory: "Tutorial Stories", assetViewer: "Asset Viewer", designSystem: "Design System", chartPreview: "Chart Previewer", live2dViewer: "Live2D Viewer", storyPlayer: "Story Player", news: "News", eventTracker: "Event Tracker", musicRanking: "Song Rankings", chartData: "Chart Data" },
+    groups: { database: "Database", music: "Music", events: "Events", story: "Story", tools: "Tools", community: "About" },
+    items: { characters: "Characters", cards: "Cards", supportCards: "Support Cards", music: "Music List", eventList: "Event List", gacha: "Gacha", rewards: "Missions & Rewards", titles: "Titles", backgrounds: "Backgrounds", stamps: "Stickers", comics: "Comics", items: "Items", mainStory: "Main Story", eventStory: "Event Story", friendshipStory: "Bond Stories", otherStory: "Other Stories", liveResultStory: "Post-live Talks", homeStory: "Home Stories", tutorialStory: "Tutorial Stories", assetViewer: "Asset Viewer", designSystem: "Design System", chartPreview: "Chart Previewer", live2dViewer: "Live2D Viewer", storyPlayer: "Story Player", news: "News", eventTracker: "Event Tracker", musicRanking: "Song Rankings", chartData: "Song Meta" },
   },
   shell: {
     openSidebar: "Open sidebar",
@@ -1395,6 +1395,10 @@ export const enUS = {
       title: "Our Notes Melody & Song Database",
       description: "Listen to youthful echoes ringing beneath the vast expanse of the starry sky. Girls pluck their strings and sing aloud, sending vibrant notes as sincere letters to the distant future.",
     },
+    musics: {
+      title: "BanG Dream! Our Notes Music & Charts",
+      description: "Explore all songs, chart meta data, 3D chart previews, and song score rankings in BanG Dream! Our Notes under a canopy of musical stars.",
+    },
     gacha: {
       title: "Our Notes Scout Compendium",
       description: "Relive the fluttering anticipation when the spotlight first flickers on. Make a quiet wish under the starlit canopy, waiting for that special ray of light to land softly in your palms.",
@@ -1474,7 +1478,7 @@ export const enUS = {
     chartPreview: { title: "Our Notes 3D Chart Previewer", description: "Pick a song and difficulty to watch its Our Notes chart rendered in 3D right in your browser: lanes, notes and hit effects auto-played in sync with the music, with pause, seek and speed controls." },
     live2dViewer: { title: "Our Notes Live2D Viewer", description: "Browse every Live2D model of BanG Dream! Our Notes by character and costume right in your browser: idle motion, blinking, breathing and physics as in the story, with every motion and expression on demand." },
     storyPlayer: { title: "Our Notes Story Player", description: "Play the stories of BanG Dream! Our Notes in your browser as the game's story screen shows them: Live2D characters, stages, camera and effects, the talk window, music, sound effects and voices, in Japanese, English, Chinese or Korean." },
-    chartData: { title: "Our Notes Chart Data", description: "Rankings of every BanG Dream! Our Notes chart by score efficiency, event rank power, speed, level and length, with scatter plots, chart details and the score model's definitions; figures sourced from the decompiled game client." },
+    chartData: { title: "Our Notes Song Meta", description: "Rankings of every BanG Dream! Our Notes chart by score efficiency, event rank power, speed, level and length, with scatter plots, chart details and the score model's definitions; figures sourced from the decompiled game client." },
     assetViewer: {
       title: "Our Notes Game Asset Workshop",
       description: "Step through the heavy wooden door into the backstage workshop. Amid silent easels and dusty worktables, explore unfading brushstrokes and original devotion that built this stage.",

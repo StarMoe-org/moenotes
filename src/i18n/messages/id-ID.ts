@@ -8,7 +8,7 @@ export const idID = {
     date: "Tanggal rilis",
     rarity: "Kelangkaan",
     ascending: "Meningkat",
-    descending: "Menurun",
+    descending: "Menurun"
   },
   assetBrowser: {
     noLanguages: "Belum ada bahasa konten yang tersedia.",
@@ -36,7 +36,7 @@ export const idID = {
       audio: "Audio",
       video: "Video",
       text: "Teks",
-      other: "File",
+      other: "File"
     },
     sorts: { name: "Nama A–Z", nameDescending: "Nama Z–A", size: "Terbesar lebih dulu" },
     title: "Penjelajah aset",
@@ -103,6 +103,15 @@ export const idID = {
     copy: "Salin jalur",
     copied: "Jalur disalin",
     copyError: "Gagal menyalin; coba lagi",
+    folders: "Folder",
+    subfolders: "Subfolder",
+    toggleTree: "Alihkan pohon direktori",
+    directoryTree: "Struktur direktori",
+    copyBundle: "Salin kunci bundle",
+    bundleCopied: "Kunci bundle disalin",
+    noFilesHere: "Tidak ada file langsung di direktori ini.",
+    preview: "Pratinjau",
+    openImage: "Buka gambar asli"
   },
   notFound: {
     metaTitle: "Halaman tidak ditemukan",
@@ -110,16 +119,24 @@ export const idID = {
     description: "Alamat mungkin telah berubah, atau halaman ini masih dipersiapkan. Kembali ke beranda untuk melanjutkan penjelajahan.",
     note: "Jika tautan ini seharusnya berfungsi, beri tahu pengembang untuk membantu kami menemukan kembali sinyal ini.",
     home: "Kembali ke beranda",
-    feedback: "Laporkan tautan ini",
+    feedback: "Laporkan tautan ini"
   },
   nav: {
     home: "Beranda",
-    groups: { database: "Database", story: "Cerita", tools: "Alat", community: "Tentang" },
+    groups: {
+      database: "Database",
+      music: "Musik",
+      events: "Event",
+      story: "Cerita",
+      tools: "Alat",
+      community: "Tentang"
+    },
     items: {
       characters: "Karakter",
       cards: "Kartu",
       supportCards: "Kartu Support",
       music: "Musik",
+      eventList: "Daftar Event",
       gacha: "Gacha",
       rewards: "Misi & Hadiah",
       titles: "Gelar",
@@ -136,7 +153,14 @@ export const idID = {
       tutorialStory: "Cerita Tutorial",
       assetViewer: "Penampil Aset",
       designSystem: "Sistem Desain",
-    },
+      chartPreview: "Pratinjau Chart",
+      live2dViewer: "Penampil Live2D",
+      storyPlayer: "Pemutar Cerita",
+      news: "Pengumuman",
+      eventTracker: "Pelacak Event",
+      musicRanking: "Peringkat Lagu",
+      chartData: "Meta Lagu"
+    }
   },
   shell: {
     openSidebar: "Buka bilah samping",
@@ -148,21 +172,164 @@ export const idID = {
     breadcrumbExpandItems: "Bentangkan halaman setara",
     commandPlaceholder: "Cari halaman atau fitur...",
     noCommandResults: "Tidak ada hasil",
-    shortcuts: "Pintasan",
+    shortcuts: "Pintasan"
+  },
+  account: {
+    signIn: "Masuk",
+    signOut: "Keluar",
+    menu: "Menu akun",
+    passport: "StarMoe Passport",
+    title: "Akun saya",
+    description: "StarMoe Passport Anda di Moenotes.",
+    manage: "Akun saya",
+    loading: "Memuat akun Anda…",
+    unavailable: "Layanan akun sedang tidak tersedia saat ini. Silakan coba lagi nanti.",
+    signedOutHint: "Masuk dengan StarMoe Passport Anda untuk mengatur profil Anda.",
+    changeAvatar: "Ubah avatar",
+    avatarHint: "Pilih karakter untuk mewakili Anda di Moenotes.",
+    avatarDefault: "Gunakan foto passport saya",
+    saving: "Menyimpan…",
+    saveFailed: "Gagal menyimpan. Silakan coba lagi.",
+    securityTitle: "Keamanan Passport",
+    securityHint: "Pengaturan ini tersimpan di StarMoe Passport Anda dan berlaku untuk semua situs StarMoe.",
+    password: "Kata sandi",
+    passwordHint: "Atur atau ubah kata sandi yang Anda gunakan untuk masuk.",
+    email: "Email",
+    emailHint: "Tambah atau ubah email masuk Anda.",
+    securityCenter: "Pusat keamanan",
+    securityCenterHint: "Verifikasi dua langkah, akun tertaut, dan perangkat yang masuk. Terbuka di tab baru.",
+    change: "Ubah",
+    open: "Buka",
+    comingSoonTitle: "Deck Our Notes",
+    comingSoonBadge: "Dalam pengembangan",
+    comingSoonBody: "Fitur pembentukan deck sedang dalam pengembangan. Nantikan!",
+    games: {
+      title: "Akun game",
+      hint: "Akun Our Notes Anda. Akun baru dimulai sebagai belum terverifikasi; masukkan kodenya ke nama dalam game Anda sebentar untuk memverifikasi kepemilikan.",
+      loadFailed: "Tidak dapat memuat akun game Anda. Silakan muat ulang halaman.",
+      unavailable: "Fitur akun game sedang tidak tersedia saat ini. Silakan coba lagi nanti.",
+      servers: { tw: "HK/MO/TW", jp: "Jepang", en: "Inggris", kr: "Korea" },
+      add: "Tambah akun game",
+      addAnother: "Tambah akun lain",
+      server: "Server",
+      profileId: "ID Pemain",
+      profileIdHint: "ID 11 digit pada profil dalam game Anda.",
+      profileIdHintJp: "ID pada profil dalam game Anda.",
+      addButton: "Tambah",
+      checking: "Memeriksa…",
+      verified: "Terverifikasi",
+      unverified: "Belum terverifikasi",
+      verifiedMeta: "ID {id} · terverifikasi {date}",
+      unverifiedMeta: "ID {id} · belum diverifikasi",
+      startVerify: "Verifikasi",
+      hideVerify: "Sembunyikan",
+      stepRename: "Di dalam game, ubah nama Anda agar memuat kode di bawah ini. Sisa nama lainnya boleh tetap sama.",
+      stepVerify: "Kembali ke sini dan klik Periksa. Nama baru mungkin membutuhkan waktu sekitar 15 detik untuk dapat dibaca.",
+      stepRestore: "Setelah terverifikasi, Anda dapat mengubah kembali nama Anda seperti semula.",
+      codeLabel: "Kode verifikasi",
+      copy: "Salin",
+      copied: "Disalin",
+      refreshCode: "Ganti kode",
+      refreshHint: "Game tidak mengizinkan kode ini dalam nama (misalnya terkena sensor kata)? Dapatkan kode baru.",
+      codeRefreshed: "Ini kode baru Anda. Kode lama sudah tidak berlaku lagi.",
+      verify: "Periksa",
+      nameMismatch: "Belum terbaca: game masih menampilkan nama “{name}”. Tunggu beberapa detik setelah mengganti nama, lalu coba lagi.",
+      addedNotice: "Berhasil menambahkan {name}. Masukkan kode ke dalam nama dalam game Anda untuk memverifikasinya.",
+      verifiedNotice: "{name} telah terverifikasi. Anda dapat mengubah kembali nama Anda sekarang.",
+      unnamed: "(tanpa nama)",
+      remove: "Hapus",
+      removeConfirm: "Konfirmasi hapus",
+      keep: "Pertahankan",
+      errors: {
+        invalidAccount: "ID ini bukan milik server yang dipilih. Periksa kembali server dan ID.",
+        playerNotFound: "Tidak ada pemain dengan ID ini di server yang dipilih.",
+        alreadyAdded: "Anda sudah menambahkan akun ini.",
+        tooManyAccounts: "Anda dapat menambahkan maksimal hingga 10 akun game.",
+        alreadyVerified: "Akun ini sudah terverifikasi.",
+        notFound: "Akun ini sudah tidak ada lagi di daftar Anda. Silakan muat ulang halaman.",
+        notVerified: "Harap verifikasi akun ini terlebih dahulu.",
+        tooSoon: "Terlalu cepat. Harap tunggu beberapa detik lalu coba lagi.",
+        gameUnavailable: "Game tidak dapat dijangkau saat ini (pemeliharaan atau masalah jaringan). Silakan coba lagi nanti.",
+        generic: "Terjadi kesalahan. Silakan coba lagi."
+      }
+    },
+    profile: {
+      show: "Profil",
+      loading: "Memuat profil…",
+      level: "Level",
+      favorites: "Difavoritkan oleh",
+      favoriteCard: "Kartu pameran: {title} ({character})",
+      fetchedAt: "Profil diperbarui {time}",
+      refresh: "Segarkan profil",
+      public: "Halaman profil publik",
+      publicOn: "Publik: siapa saja yang memiliki tautan dapat melihat profil ini.",
+      publicOff: "Pribadi: hanya Anda yang dapat melihat profil ini.",
+      copyLink: "Salin tautan",
+      openPage: "Buka",
+      profileCard: "Kartu profil",
+      profileCardNamed: "Kartu profil: {name}",
+      profileCardAlt: "Kartu profil {name}, gambar {index}"
+    },
+    share: {
+      button: "Buat gambar berbagi",
+      title: "Gambar berbagi",
+      rendering: "Membuat gambar…",
+      failed: "Gambar tidak dapat dibuat. Silakan coba lagi.",
+      retry: "Coba lagi",
+      hint: "Dibuat di browser Anda; tidak ada yang diunggah.",
+      alt: "Gambar berbagi dari {name}",
+      download: "Unduh",
+      copy: "Salin gambar",
+      copied: "Disalin",
+      share: "Bagikan"
+    }
+  },
+  player: {
+    title: "Profil pemain",
+    description: "Profil publik pemain Our Notes, diverifikasi dengan StarMoe Passport.",
+    documentTitle: "{name}",
+    loading: "Memuat profil pemain…",
+    invalid: "Tautan ini bukan alamat profil pemain yang valid.",
+    notFound: "Profil ini tidak ada, atau pemiliknya belum menjadikannya publik.",
+    unavailable: "Profil tidak dapat dimuat saat ini. Silakan coba lagi nanti.",
+    verified: "Terverifikasi dengan StarMoe Passport",
+    cta: "Main Our Notes juga? Tautkan akun Anda di Akun Saya dan buat profil Anda sendiri dapat dilihat publik.",
+    ctaButton: "Tautkan akun saya"
   },
   settings: {
     title: "Pengaturan",
     language: "Bahasa / Language",
     machineTranslationNotice: "Beberapa bahasa menggunakan terjemahan mesin dan mungkin tidak akurat.",
     colorScheme: "Tema",
+    gameServer: "Server game default",
+    gameServerAuto: "Otomatis ({server})",
     options: { system: "Sistem", light: "Terang", dark: "Gelap" },
+    tabs: { label: "Kategori pengaturan", general: "Umum", data: "Data" },
+    data: {
+      cacheTitle: "Cache unduhan",
+      total: "Tercache",
+      fileCount: "{count} file",
+      categories: { live2d: "Model Live2D", images: "Gambar", audio: "Audio", chart: "Chart 3D", data: "Data" },
+      categoryHints: {
+        live2d: "Karakter pada penampil Live2D dan cerita",
+        images: "Gambar di halaman, serta latar belakang dan ilustrasi cerita",
+        audio: "Suara, latar musik, dan efek suara cerita, serta audio di halaman",
+        chart: "Lagu, panggung, dan efek pratinjau chart 3D",
+        data: "Font, antarmuka, dan skrip cerita, serta data game yang dibaca halaman"
+      },
+      calculating: "Menghitung…",
+      clear: "Hapus",
+      clearAll: "Hapus semua data cache",
+      clearing: "Menghapus…",
+      unavailable: "Browser ini tidak mengizinkan situs menyimpan file (penjelajahan pribadi dapat memblokirnya), sehingga file diunduh setiap saat."
+    }
   },
   actions: {
     close: "Tutup",
     clearCache: "Clear cache",
     refresh: "Refresh",
     open: "Open",
-    viewGroup: "View group",
+    viewGroup: "View group"
   },
   home: {
     heading: "Basis Data BanG Dream! Our Notes",
@@ -180,7 +347,7 @@ export const idID = {
       live: "Acara musik",
       mission: "Misi terbatas",
       loginBonus: "Bonus masuk",
-      seasonPass: "Tiket musim",
+      seasonPass: "Tiket musim"
     },
     viewGacha: "Lihat detail gacha",
     viewMusic: "Lihat lagu",
@@ -212,13 +379,13 @@ export const idID = {
       items: "Item",
       itemsDesc: "View detailed information on all in-game items, consumables, and materials.",
       assetViewer: "Penampil Aset",
-      assetViewerDesc: "Browse, search, and preview static assets (images, audio, JSON) stored in the project's asset bucket.",
-    },
+      assetViewerDesc: "Browse, search, and preview static assets (images, audio, JSON) stored in the project's asset bucket."
+    }
   },
   page: {
     groupIntro: "Pages in this group are derived from one route registry, keeping sidebar, breadcrumbs, command palette, and SEO in sync.",
     placeholderTitle: "Page foundation is ready",
-    placeholderDescription: "Once the real Our Notes data shape is known, business components can be attached without rebuilding the foundation.",
+    placeholderDescription: "Once the real Our Notes data shape is known, business components can be attached without rebuilding the foundation."
   },
   cards: {
     searchPlaceholder: "Search titles, characters, or bands...",
@@ -273,17 +440,11 @@ export const idID = {
       copyStates: {
         image: "Image copied. You can paste it now.",
         link: "Image copying is unavailable, so the asset URL was copied instead.",
-        error: "Copy failed. Use Open Original instead.",
-      },
+        error: "Copy failed. Use Open Original instead."
+      }
     },
     rarities: { "2": "R", "3": "SR", "4": "SSR", "10": "Spesial" },
-    attributes: {
-      "1": "Red",
-      "2": "Blue",
-      "3": "Green",
-      "4": "Yellow",
-      "5": "Purple",
-    },
+    attributes: { "1": "Red", "2": "Blue", "3": "Green", "4": "Yellow", "5": "Purple" },
     growth: {
       level: "Level",
       levelValue: "Lv.{level} / {limit}",
@@ -294,8 +455,8 @@ export const idID = {
       awaken: "Kebangkitan",
       power: "Total kekuatan",
       skillLevel: "Level skill",
-      leaderSkillHint: "Level skill leader terhubung dengan jumlah Kebangkitan; menyesuaikannya juga akan mengubah Kebangkitan.",
-    },
+      leaderSkillHint: "Level skill leader terhubung dengan jumlah Kebangkitan; menyesuaikannya juga akan mengubah Kebangkitan."
+    }
   },
   supportCards: {
     searchPlaceholder: "Search titles, characters...",
@@ -316,8 +477,55 @@ export const idID = {
     diaryTitle: "Diary",
     growth: {
       limitBreak: "Terobosan batas",
-      skillLevelHint: "Seiring terobosan batas, pengabdian dan skill yang tertidur di dalam kartu akan mekar lebih cerah.",
-    },
+      skillLevelHint: "Seiring terobosan batas, pengabdian dan skill yang tertidur di dalam kartu akan mekar lebih cerah."
+    }
+  },
+  events: {
+    filterTitle: "Filter Event",
+    searchPlaceholder: "Cari event, karakter, atau lagu...",
+    status: "Status",
+    band: "Band bonus",
+    openDetail: "Lihat event: {name}",
+    emptyTitle: "Tidak ada event yang cocok",
+    emptyDescription: "Tidak ada event yang cocok dengan kriteria filter saat ini. Bersihkan filter untuk melihat semua event yang sedang berjalan dan lampau.",
+    reset: "Tampilkan semua",
+    noneOnServer: "{server} belum pernah mengadakan event apa pun.",
+    showServer: "Lihat {server}",
+    period: "Periode event",
+    displayUntil: "Layar event dibuka hingga",
+    eventId: "ID Event",
+    eventItem: "Item event",
+    song: "Lagu event",
+    rankings: "Peringkat",
+    rankingKinds: { score: "Peringkat skor", music: "Peringkat lagu", totalMusic: "Peringkat total lagu" },
+    rankingOff: "Tidak dibuka",
+    cards: "Kartu event",
+    bonus: "Bonus event",
+    bonusRank: "Rank {rank}",
+    bonusRankLabel: "Rank kartu",
+    bonusNote: "Rank adalah jumlah Kebangkitan kartu anggota atau jumlah Pembatasan Maksimal (Limit Break) kartu dukungan. Jika memenuhi beberapa kondisi, bonus akan dijumlahkan.",
+    bonusCardKinds: { member: "Kartu anggota", support: "Kartu dukungan" },
+    bonusTarget: "Kondisi",
+    bonusParameter: "Parameter",
+    bonusEventItem: "Item event",
+    bonusValue: "+{value}%",
+    bonusTargets: { attribute: "Kartu tipe {name}", tag: "Tag #{id}", any: "Semua kartu" },
+    story: "Cerita event",
+    storyUnlock: "Terbuka pada {count} pt",
+    pointRewards: "Hadiah poin event",
+    points: "{count} pt",
+    loopReward: "Setelah {from} pt, setiap terkumpul {every} pt",
+    liveRewards: "Hadiah Live",
+    liveNote: "Poin dan item yang diperoleh setiap pertunjukan Live berdasarkan peringkat skor.",
+    liveKinds: { live: "Live", challenge: "Challenge Live" },
+    scoreRank: "Peringkat skor",
+    livePoints: "pt",
+    liveItems: "Item",
+    probability: "Peluang {rate}%",
+    bannerAlt: "Banner event {name}",
+    backToList: "Kembali ke Daftar Event",
+    notFoundTitle: "Event tidak ditemukan",
+    notFoundDescription: "Pentas event ini mungkin telah lama berakhir, atau tirainya belum dibuka. Kembali ke daftar event untuk mencari panggung lainnya."
   },
   gacha: {
     searchPlaceholder: "Cari nama gacha, karakter pickup, atau judul kartu...",
@@ -362,8 +570,8 @@ export const idID = {
       pickups: "{count} pickup",
       idle: "Sentuh tarikan tunggal atau 10x untuk bertemu cahaya bintang di hatimu; kenangan hanya tersimpan di halaman ini.",
       guarantee: "{count} tarikan terakhir dari 10x tarik dijamin {rarity} atau lebih tinggi.",
-      note: "Setiap sentuhan ujung jari Anda adalah keajaiban lembut dari cahaya bintang dan peluang. Hanya untuk hiburan; semoga impian Anda terwujud!",
-    },
+      note: "Setiap sentuhan ujung jari Anda adalah keajaiban lembut dari cahaya bintang dan peluang. Hanya untuk hiburan; semoga impian Anda terwujud!"
+    }
   },
   schedule: {
     ongoing: "Berlangsung",
@@ -376,7 +584,7 @@ export const idID = {
     startsInHours: "Mulai dalam {count} jam",
     range: "{start} – {end}",
     from: "Dari {start}",
-    until: "Hingga {end}",
+    until: "Hingga {end}"
   },
   rewards: {
     searchPlaceholder: "Cari nama atau hadiah...",
@@ -423,10 +631,10 @@ export const idID = {
       stamp: "Stiker",
       degree: "Gelar",
       spot: "Spot beranda",
-      other: "Lainnya",
+      other: "Lainnya"
     },
     unknownReward: "{kind} #{id}",
-    count: "×{count}",
+    count: "×{count}"
   },
   titles: {
     searchPlaceholder: "Cari judul gelar, karakter, atau syarat pembukaan...",
@@ -437,7 +645,7 @@ export const idID = {
     openPreview: "Lihat gelar: {name}",
     emptyTitle: "Tidak ada gelar yang cocok",
     emptyDescription: "Tidak ada lambang atau janji yang sesuai dengan filter. Atur ulang untuk melihat setiap kehormatan yang diberikan kepada para gadis.",
-    reset: "Tampilkan semua gelar",
+    reset: "Tampilkan semua gelar"
   },
   backgrounds: {
     searchPlaceholder: "Cari latar belakang...",
@@ -448,7 +656,198 @@ export const idID = {
     openOriginal: "Buka gambar asli",
     emptyTitle: "Tidak ada pemandangan yang cocok",
     emptyDescription: "Tidak ada pemandangan yang sesuai dengan tampilan ini. Atur ulang filter untuk menyusuri jalan dan panggung penuh kenangan lainnya.",
-    reset: "Tampilkan semua latar belakang",
+    reset: "Tampilkan semua latar belakang"
+  },
+  chartPreview3d: {
+    credit: "emptysekai by StarMoe",
+    stageLabel: "Layar chart 3D",
+    difficulty: "Tingkat kesulitan",
+    chooseSong: "Pilih lagu",
+    changeSong: "Ganti lagu",
+    preparing: "Menyiapkan panggung…",
+    loading: "Memuat chart…",
+    emptyTitle: "Pilih lagu untuk menyalakan panggung",
+    emptyDescription: "Buka pemilih lagu, filter daftar dan pilih tingkat kesulitan, maka permainan otomatis dalam game akan dihadirkan kembali di sini secara 3D.",
+    fullscreen: "Layar penuh",
+    exitFullscreen: "Keluar dari layar penuh",
+    lock: "Kunci layar",
+    unlock: "Buka kunci",
+    loadErrorTitle: "Panggung belum dapat dinyalakan",
+    loadErrorDescription: "Data chart tidak berhasil diterima, mungkin jaringan terputus atau situs chart sedang tidak tersedia untuk sementara. Silakan coba lagi nanti.",
+    missingDescription: "Data 3D untuk chart ini belum disertakan. Coba ganti lagu atau tingkat kesulitan lain.",
+    retry: "Muat ulang",
+    unsupportedTitle: "Browser ini tidak dapat merender chart 3D",
+    unsupportedDescription: "Pratinjau chart memerlukan WebGL2 dan WebAudio. Silakan gunakan browser desktop atau seluler versi terbaru."
+  },
+  storyPlayer: {
+    stageLabel: "Layar cerita",
+    preparing: "Menyiapkan pemutar cerita…",
+    loading: "Memuat cerita…",
+    retry: "Coba lagi",
+    fullscreen: "Layar penuh",
+    exitFullscreen: "Keluar dari layar penuh",
+    errorTitle: "Cerita tidak dapat diputar",
+    errorDescription: "Data cerita atau Live2D Cubism Core tidak dapat diterima, atau pemutar terhenti. Jaringan mungkin terputus atau situs cerita sedang tidak tersedia untuk sementara. Silakan coba lagi nanti.",
+    unsupportedTitle: "Browser ini tidak dapat memutar cerita",
+    unsupportedDescription: "Pemutar cerita memerlukan WebGL2. Silakan gunakan browser desktop atau seluler versi terbaru.",
+    refusedTitle: "Cerita ini belum dapat diputar",
+    refusedDescription: "Cerita ini menggunakan bagian layar cerita dalam game yang belum direproduksi oleh pemutar ini, sehingga ditolak untuk mencegah kesalahan tampilan. Anda tetap dapat membaca teksnya di halaman cerita.",
+    language: "Bahasa",
+    languages: { ja: "日本語", en: "English", "zh-Hant": "繁體中文", "zh-Hans": "简体中文", ko: "한국어" },
+    previous: "Episode sebelumnya",
+    next: "Episode berikutnya",
+    readText: "Baca teks",
+    noMotionSync: "Sinkronisasi bibir suara (Live2D MotionSync) tidak tersedia di situs ini: karakter yang menggunakannya tidak akan menggerakkan mulut saat berbicara.",
+    motionSyncLicense: "Sinkronisasi bibir suara menggunakan Live2D Cubism MotionSync Core © Live2D Inc., yang disediakan oleh situs ini tanpa modifikasi di bawah lisensi Live2D. Fitur ini bukan bagian dari kode sumber terbuka situs ini; lisensi melarang penyalinan untuk penggunaan lain atau rekayasa balik.",
+    motionSyncLicenseLink: "Perjanjian Lisensi Perangkat Lunak Hak Milik Live2D",
+    noMatches: "Tidak ada cerita yang cocok dengan filter.",
+    notice: "Cerita diputar di browser Anda menggunakan data asli game; apa yang Anda lihat tidak mewakili kualitas akhir game. Satu episode mengunduh puluhan hingga ratusan MB, harap perhatikan penggunaan kuota data seluler Anda.",
+    listLoading: "Memuat daftar cerita…",
+    listError: "Daftar cerita tidak dapat dimuat.",
+    listEmpty: "Belum ada cerita yang dipublikasikan.",
+    emptyTitle: "Pilih cerita",
+    emptyDescription: "Pilih sebuah episode dari daftar cerita untuk mulai memutar.",
+    chooseStory: "Pilih cerita",
+    sections: "Kategori cerita",
+    playing: "Sedang memutar",
+    searchPlaceholder: "Cari judul, bab, karakter, atau ID ADV…",
+    categoryTitle: "Tipe",
+    otherEpisodes: "Episode lainnya",
+    openInPlayer: "Putar dengan Live2D",
+    controls: {
+      play: "Putar",
+      pause: "Jeda",
+      next: "Kalimat berikutnya",
+      auto: "Otomatis",
+      fastForward: "Percepat",
+      skip: "Lewati",
+      skipConfirm: "Lewati sisa episode ini?",
+      cancel: "Batal",
+      settings: "Pengaturan",
+      position: "Posisi pemutaran",
+      video: "Posisi video",
+      start: "Mulai putar",
+      replay: "Putar ulang",
+      ended: "Episode telah berakhir",
+      nextEpisode: "Episode berikutnya",
+      show: "Tampilkan kontrol",
+      speed: "Kecepatan percepat",
+      speedHint: "Kecepatan di atas ×1 akan mengaktifkan Otomatis; mematikan Otomatis akan kembali ke ×1."
+    },
+    volume: {
+      title: "Volume",
+      Bgm: "BGM",
+      Se: "Efek suara",
+      Voice: "Suara karakter",
+      Movie: "Video",
+      mute: "Bisukan {name}",
+      unmute: "Bunyikan {name}"
+    },
+    info: {
+      title: "Petunjuk penggunaan",
+      controls: "Kontrol",
+      shortcuts: "Pintasan keyboard",
+      about: "Tentang pemutar cerita",
+      legend: {
+        play: {
+          name: "Putar / Jeda",
+          description: "Menjeda akan menghentikan gambar, suara, dan video secara bersamaan"
+        },
+        next: { name: "Kalimat berikutnya", description: "Sama seperti mengklik layar cerita" },
+        auto: {
+          name: "Otomatis",
+          description: "Secara otomatis lanjut ke dialog berikutnya setelah dialog selesai disuarakan"
+        },
+        fastForward: { name: "Percepat", description: "Beralih secara berurutan: ×1 → ×1.5 → ×1.7 → ×2" },
+        skip: { name: "Lewati", description: "Melewati sisa episode setelah konfirmasi" },
+        settings: {
+          name: "Pengaturan",
+          description: "Volume musik, efek suara, suara karakter, video, dan kecepatan maju cepat"
+        },
+        fullscreen: { name: "Layar penuh", description: "Menampilkan layar cerita memenuhi seluruh layar" }
+      }
+    },
+    credit: "Live2D Cubism Core / MotionSync Core © Live2D Inc. · emptysekai by StarMoe"
+  },
+  live2d: {
+    stageLabel: "Panggung Live2D",
+    preparing: "Menyiapkan runtime Live2D…",
+    loading: "Memuat model…",
+    loadErrorTitle: "Model tidak dapat ditampilkan",
+    loadErrorDescription: "Data model atau Live2D Cubism Core tidak sampai. Jaringan mungkin terputus atau situs model sedang tidak tersedia untuk sementara. Silakan coba lagi nanti.",
+    retry: "Coba lagi",
+    unsupportedTitle: "Browser ini tidak mendukung penampil Live2D",
+    unsupportedDescription: "Penampil Live2D memerlukan WebGL2. Silakan buka halaman ini di browser desktop atau seluler versi terbaru.",
+    fullscreen: "Layar penuh",
+    exitFullscreen: "Keluar dari layar penuh",
+    zoomIn: "Perbesar",
+    zoomOut: "Perkecil",
+    zoomReset: "Atur ulang zoom",
+    filterTitle: "Filter model",
+    searchPlaceholder: "Cari karakter, kostum, atau ID model…",
+    kindTitle: "Tipe",
+    showLowQuality: "Tampilkan salinan kualitas rendah",
+    sideCharacters: "Karakter lainnya",
+    chooseCharacter: "Pilih karakter",
+    costumes: "Kostum",
+    listLoading: "Memuat daftar model…",
+    listError: "Daftar model gagal dimuat.",
+    listEmpty: "Belum ada model Live2D yang dipublikasikan.",
+    emptyTitle: "Pilih karakter",
+    emptyDescription: "Buka filter untuk memilih karakter berdasarkan band; kostum, gerakan, dan ekspresi mereka tersedia di panel samping model.",
+    credit: "Live2D Cubism Core © Live2D Inc. · emptysekai by StarMoe",
+    noticeTitle: "Tentang data model",
+    notice: "moenotes mereproduksi apa yang terdapat di paket data game: setiap model, gerakan, dan ekspresi di sini berasal dari game itu sendiri, dan apa yang Anda lihat di browser tidak mencerminkan kualitas akhir game. Kami tidak menyediakan fitur penyuntingan bebas parameter model: model yang diubah dengan parameter kustom dapat terdistorsi parah dan tidak mencerminkan penampilannya di dalam game, jadi harap jangan membagikannya sebagai konten resmi.",
+    controls: "Kontrol model",
+    controlsWaiting: "Kontrol akan muncul setelah model siap.",
+    motions: "Gerakan",
+    expressions: "Ekspresi",
+    noExpressions: "Model ini tidak memiliki ekspresi.",
+    loop: "Ulangi gerakan",
+    options: "Opsi",
+    physics: "Fisika",
+    breath: "Pernapasan",
+    pause: "Jeda",
+    resume: "Lanjutkan",
+    reset: "Kembali ke diam",
+    lowQuality: "Kualitas rendah",
+    costumeDefault: "Default",
+    kind: { story: "Cerita", live: "Live", side: "Karakter pendukung" },
+    costume: {
+      casual: "Pakaian kasual",
+      spring: "Musim semi",
+      summer: "Musim panas",
+      winter: "Musim dingin",
+      school: "Seragam sekolah",
+      hs: "SMA",
+      jhs: "SMP",
+      grade1: "Kelas 1",
+      grade2: "Kelas 2",
+      grade3: "Kelas 3",
+      live: "Pakaian Live",
+      roomwear: "Pakaian santai",
+      arbeit: "Kerja paruh waktu",
+      livehouse: "Live house",
+      ring: "RiNG",
+      caretaker: "Perawat",
+      child: "Masa kecil",
+      detective: "Detektif",
+      idol: "Idola",
+      virtual: "Avatar virtual",
+      soundonly: "Hanya suara",
+      suits: "Setelan jas",
+      sweat: "Baju olahraga",
+      maid: "Pelayan (Maid)",
+      still: "Gambar diam",
+      mask: "Topeng",
+      silhouette: "Siluet",
+      glasses: "Kacamata",
+      noseGlasses: "Kacamata hidung lelucon",
+      sunglasses: "Kacamata hitam",
+      hat: "Topi",
+      hairdown: "Rambut terurai",
+      twintails: "Kuncir dua"
+    }
   },
   music: {
     audio: {
@@ -460,10 +859,18 @@ export const idID = {
       seek: "Posisi pemutaran",
       download: "Unduh {kind}",
       unavailableTitle: "Melodi masih dalam penggubahan",
-      unavailableDescription: "Nada-nada masih mengembara di langit malam. Setelah terkumpul, melodi yang menyentuh hati ini akan bangkit di sini.",
+      unavailableDescription: "Nada-nada masih mengembara di langit malam. Setelah terkumpul, melodi yang menyentuh hati ini akan bangkit di sini."
     },
     searchPlaceholder: "Search titles, authors, bands, or singers...",
     filterTitle: "Filter Music",
+    filters: {
+      bandOther: "Lainnya",
+      difficulty: "Tingkat kesulitan",
+      level: "Level",
+      levelMin: "Level minimum",
+      levelMax: "Level maksimum",
+      levelRange: "Lv {min}–{max}"
+    },
     results: "{count} songs",
     loading: "Loading music data...",
     loadErrorTitle: "Music data is unavailable",
@@ -478,8 +885,42 @@ export const idID = {
     backToList: "Back to music catalog",
     songInfoTitle: "Song Details",
     difficultiesTitle: "Difficulty Charts",
+    ranking: {
+      title: "Peringkat Skor Tertinggi",
+      loading: "Mengambil peringkat dari game…",
+      updatedAgo: "Diperbarui {time}",
+      level: "Lv.{level}",
+      refreshing: "Menyegarkan di latar belakang",
+      empty: "Belum ada yang mencetak skor di server ini.",
+      retry: "Coba lagi",
+      showAll: "Tampilkan semua {count}",
+      showLess: "Tampilkan 20 teratas",
+      tied: "Skor seri",
+      power: "Kekuatan deck {power}",
+      columns: { rank: "#", player: "Pemain", score: "Skor", deck: "Deck" },
+      errors: {
+        pending: "Masih mengambil peringkat ini",
+        pendingHint: "Permintaan ini sedang mengantre di belakang lagu lain di server ini. Coba lagi dalam beberapa detik.",
+        upstream: "Server game tidak dapat dijangkau saat ini",
+        upstreamHint: "Server mungkin sedang dalam pemeliharaan. Peringkat akan kembali setelah server game aktif kembali.",
+        failed: "Peringkat tidak dapat dimuat",
+        failedHint: "Periksa koneksi Anda dan coba lagi."
+      }
+    },
     difficultyLevels: { easy: "EASY", normal: "NORMAL", hard: "HARD", expert: "EXPERT" },
     notesCount: "Notes: {count}",
+    preview2d: "Pratinjau 2D",
+    preview2dLabel: "Pratinjau chart {difficulty} dalam 2D",
+    preview3d: "Pratinjau 3D",
+    preview3dLabel: "Pratinjau chart {difficulty} dalam 3D",
+    picker: {
+      title: "Pilih lagu",
+      songHint: "Klik sampul untuk memilih lagu tersebut.",
+      hint: "Klik tingkat kesulitan untuk memilih chart tersebut, atau klik sampul untuk tetap pada tingkat kesulitan saat ini.",
+      pickSong: "Pilih {title}",
+      pickDifficulty: "Pilih {title} {difficulty}",
+      listLabel: "Daftar lagu"
+    },
     composer: "Composer",
     lyricist: "Lyricist",
     arranger: "Arranger",
@@ -492,8 +933,37 @@ export const idID = {
       description: "View and preview the high-resolution song album jacket.",
       jacket: "Album Jacket",
       jacketDesc: "Song album jacket image (Image/Jacket)",
-      previewFull: "Preview album jacket",
+      previewFull: "Preview album jacket"
     },
+    chartPreview: {
+      title: "Pratinjau Chart",
+      difficultyLabel: "Tingkat kesulitan",
+      themeLabel: "Warna bagan",
+      themes: { white: "Terang", black: "Gelap" },
+      draw: "Gambar chart",
+      idleHint: "Gambar bagan not lengkap dari tingkat kesulitan yang dipilih; kolom dibaca dari bawah ke atas, dari kiri ke kanan. Pembuatan chart pertama kali mengunduh perender satu kali, lalu langsung dijalankan di browser Anda.",
+      fetching: "Mengambil chart…",
+      fetchingHint: "Mengambil file not dan sampul dari server aset.",
+      rendering: "Menggambar chart…",
+      renderingHint: "Perender sedang menyusun setiap not pada perangkat ini. Chart yang panjang mungkin memerlukan waktu beberapa detik.",
+      openViewer: "Lihat ukuran penuh",
+      download: "Unduh PNG",
+      imageAlt: "Lembar chart {title} {difficulty}",
+      missingTitle: "Chart ini belum dipublikasikan",
+      missingDescription: "File not untuk tingkat kesulitan ini belum sampai ke server aset. Coba tingkat kesulitan lain, atau kembali setelah pembaruan aset berikutnya.",
+      failedTitle: "Chart tidak dapat digambar",
+      failedDescription: "Terjadi kesalahan saat mengambil atau menggambar chart ini. Silakan coba lagi; jika terus gagal, coba tingkat kesulitan atau browser lain.",
+      unsupportedTitle: "Browser ini tidak dapat menggambar chart",
+      unsupportedDescription: "Pratinjau chart memerlukan WebAssembly dan module worker. Silakan buka halaman ini di versi terbaru Chrome, Edge, Firefox, atau Safari.",
+      retry: "Coba lagi",
+      viewerHint: "Seret untuk menggeser · Gulir atau cubit untuk memperbesar/memperkecil · Klik dua kali untuk memperbesar · Tombol panah, +/- dan 0 juga berfungsi",
+      zoomIn: "Perbesar",
+      zoomOut: "Perkecil",
+      fit: "Sesuaikan ukuran",
+      credit: "Lembar chart digambar di browser Anda oleh perender chart moenotes (WebAssembly). Gambar ini merupakan pratinjau yang sedang dikembangkan, bukan tampilan asli dalam game.",
+      sourceLink: "Kode sumber & lisensi",
+      sheetCredit: "{label}: {value}"
+    }
   },
   characters: {
     searchPlaceholder: "Search characters, voice actors, bands...",
@@ -531,17 +1001,18 @@ export const idID = {
       faceDesc: "Small face icon layer",
       board: "Board",
       boardDesc: "Background board icon",
-      bio: "Bio",
-    },
+      bio: "Bio"
+    }
   },
   story: {
     categories: {
       main: "Cerita utama",
+      event: "Cerita Event",
       friendship: "Cerita ikatan",
       liveResult: "Obrolan pasca-live",
       home: "Cerita home",
       tutorial: "Cerita tutorial",
-      other: "Cerita lainnya",
+      other: "Cerita lainnya"
     },
     ui: {
       searchPlaceholder: "Judul, karakter, chapter, atau ADV ID",
@@ -560,140 +1031,613 @@ export const idID = {
       parsing: "Mengurai skrip dan suara…",
       autoplay: "Putar otomatis",
       narration: "Narasi",
+      speakerMasked: "??? ({name})",
+      speakerHidden: "({name})",
       playing: "Sedang diputar",
       paused: "Dijeda",
       line: "Baris {current} / {total}",
+      clip: "Klip cerita",
+      clipUnavailable: "Klip ini belum dapat diputar",
+      chat: "Pesan",
+      showBackgrounds: "Tampilkan latar belakang",
+      scene: "Adegan {n}",
+      subtitles: "Subtitle",
+      episode: "EPISODE {n}",
+      anotherEpisode: "SUDUT PANDANG {n}",
+      extraEpisode: "EKSTRA {n}",
+      anotherStories: "Sudut pandang lain",
+      extraStories: "Episode ekstra",
+      previousEpisode: "Sebelumnya",
+      nextEpisode: "Berikutnya",
+      showSubtitleList: "Tampilkan subtitle ({count})",
+      hideSubtitleList: "Sembunyikan subtitle"
+    }
+  },
+  eventTracker: {
+    eventLabel: "Event",
+    currentEvent: "Event saat ini",
+    eventFallback: "Event #{id}",
+    songFallback: "Lagu #{id}",
+    loading: "Memeriksa event di server ini…",
+    noEvent: "Tidak ada event di server ini saat ini",
+    noEventHint: "Pelacak akan dibuka segera setelah server mengumumkan event berikutnya.",
+    notFound: "Event ini tidak ada di server ini",
+    notFoundHint: "Tautan mungkin mengarah ke event di server lain. Buka event yang sedang berlangsung saat ini.",
+    openEvent: "Detail event",
+    openTracker: "Buka pelacak peringkat",
+    stale: "pembaruan terlambat",
+    eventStatus: {
+      feature: "Segera hadir",
+      nowOn: "Sedang berlangsung",
+      aggregation: "Menghitung hasil",
+      result: "Hasil diumumkan",
+      end: "Telah berakhir"
     },
+    collect: {
+      unknown: "Tidak diketahui",
+      disabled: "Tidak ada peringkat",
+      pending: "Belum dimulai",
+      collecting: "Sedang dilacak",
+      finalizing: "Mengonfirmasi peringkat akhir",
+      archiving: "Mengarsipkan",
+      archived: "Peringkat akhir",
+      missed: "Tidak terkumpul"
+    },
+    countdown: {
+      startsIn: "Mulai dalam",
+      endsIn: "Berakhir dalam",
+      countingEndsIn: "Hasil dalam",
+      daysClock: "{days} hari {clock}"
+    },
+    cutoff: "Top {rank}",
+    challenges: {
+      title: "Peringkat Lagu Tantangan",
+      songs: "Lagu tantangan",
+      songNumber: "LAGU {n}",
+      none: "Event ini tidak memiliki lagu tantangan.",
+      lastSeen: "Pengumpulan data telah ditutup; ini adalah data terakhir yang dibaca, bukan peringkat akhir yang terkonfirmasi."
+    },
+    board: {
+      unknown: "Game belum menyatakan apakah lagu ini memiliki peringkat",
+      disabled: "Lagu ini tidak memiliki peringkat",
+      pending: "Peringkat lagu ini belum dibuka",
+      missed: "Peringkat ini tidak terkumpul",
+      startsAt: "Dibuka {time}"
+    },
+    points: {
+      title: "Peringkat Poin Event",
+      disabled: "Event ini tidak memiliki peringkat poin. Hanya peringkat lagu tantangan di atas yang memiliki peringkat.",
+      interrupted: "pengumpulan terganggu, data mungkin kedaluwarsa",
+      frozen: "perhitungan sedang berlangsung, skor dibekukan",
+      tied: "Seri",
+      notReturned: "Tidak dikembalikan kali ini: {ranks}"
+    }
+  },
+  musicRanking: {
+    changeSong: "Ganti lagu",
+    chooseSong: "Pilih lagu",
+    emptyTitle: "Pilih lagu untuk melihat peringkatnya",
+    emptyDescription: "Setiap lagu memiliki peringkat skor tertinggi masing-masing di setiap server. Pilih satu lagu untuk melihat pemain teratas, skor, dan deck mereka."
+  },
+  chartData: {
+    referenceEstimate: "Estimasi referensi",
+    replay: {
+      title: "Perhitungan satu putaran",
+      loading: "Memuat model…",
+      hint: "Tentukan penilaian sebelum konversi skill, lalu hitung putaran ini. Default tanpa skill; hasil akhir mencakup jumlah penilaian setelah konversi.",
+      power: "Kekuatan deck",
+      seed: "Seed acak",
+      clock: "Frame rate",
+      mode: "Mode",
+      free: "Free Live",
+      fixedRanks: "Gekisou · rank tetap",
+      reset: "Atur ulang penilaian",
+      run: "Hitung",
+      export: "Ekspor JSON",
+      advanced: "Impor / Ekspor",
+      advancedHint: "JSON menyimpan waktu not, urutan frame, skill, dan konfirmasi rank. Input yang diimpor divalidasi oleh Rust.",
+      import: "Impor JSON",
+      error: "Perhitungan gagal",
+      ready: "Siap dihitung",
+      calculating: "Menghitung…",
+      score: "Skor akhir",
+      frameScore: "Skor tampilan frame terakhir",
+      life: "Life",
+      combo: "Combo",
+      note: "Not",
+      time: "Waktu",
+      type: "Tipe",
+      judgement: "Penilaian",
+      range: "Rentang",
+      just: "Just",
+      luck: "Poin keberuntungan",
+      complete: "Telah dihitung",
+      wrongChart: "File berisi chart lain atau format tidak didukung.",
+      importedMode: "Mode yang diimpor",
+      incomplete: "Input yang belum lengkap tidak dapat ditampilkan sebagai hasil satu putaran penuh.",
+      importedClock: "Pengaturan waktu yang diimpor",
+      exactPlan: "Perhitungan per not",
+      greatShare: "Peluang Great",
+      justShare: "Rasio Just",
+      presetHint: "Sisa peluang dialokasikan untuk Perfect; Just hanya berlaku jika memenuhi syarat. Pengaturan segmen menimpa pengaturan seluruh lagu; baris bawah diprioritaskan. Seed menghasilkan satu permainan yang dapat direproduksi, bukan skor rata-rata.",
+      rawPreset: "Atur ulang input mentah sebelum menggunakan slider ini.",
+      probabilityTotal: "Jumlah peluang Great, Good, Bad, dan Miss tidak boleh melebihi 100%.",
+      remove: "Hapus",
+      end: "Selesai (detik)",
+      start: "Mulai (detik)",
+      customSegment: "Segmen kustom",
+      segment: "Segmen",
+      editNotes: "Lihat / edit not perorangan",
+      generate: "Hasilkan penilaian",
+      planSeed: "Seed penilaian",
+      wholeSong: "Seluruh lagu"
+    },
+    beta: "Beta",
+    developmentData: "Data pengembangan lokal",
+    uncommittedModel: "Perubahan model belum di-commit",
+    betaHint: "Perhitungan model Rust; lihat panduan untuk verifikasi native ARM64 dan replay per not.",
+    views: { rank: "Peringkat", charts: "Grafik", guide: "Panduan" },
+    lead: {
+      rank: "Efisiensi, peringkat event, kecepatan, level, dan durasi dari {songs} lagu dan {charts} chart. Angka skor mengikuti skenario permainan yang dipilih: secara default Gekisou Live pada rank 1 di ketiga rentang (kasus terbaik), atau Free Live tanpa Gekisou; lihat panduan. Buka baris mana pun untuk melihat detail chart; kredit, audio, dan pratinjau chart ada di halaman masing-masing lagu.",
+      charts: "Distribusi sebaran {songs} lagu dan {charts} chart. Pilih dua metrik mana saja untuk diagram sebar; buka titik mana pun untuk detail chart."
+    },
+    loading: "Memuat data chart…",
+    loadError: "Data chart tidak dapat dimuat. Jaringan mungkin terputus; silakan coba lagi nanti.",
+    retry: "Coba lagi",
+    all: "Semua",
+    search: "Cari judul, bacaan, kredit…",
+    chartsCount: "{n} chart",
+    jackets: "Sampul",
+    jacketsHint: "Tampilkan atau sembunyikan sampul",
+    swap: "Tukar sumbu",
+    band: "Band",
+    difficulty: "Tingkat kesulitan",
+    empty: "Tidak ada chart yang cocok",
+    emptyHint: "Band, tingkat kesulitan, pencarian, atau filter “hanya batas terdepan (frontier)” mengecualikan semua chart.",
+    clear: "Bersihkan filter",
+    difficulties: { easy: "Easy", normal: "Normal", hard: "Hard", expert: "Expert" },
+    rankBy: {
+      efficiency: "Efisiensi",
+      event: "Event · peringkat",
+      speed: "Tercepat",
+      level: "Level tertinggi",
+      notes: "Not terbanyak",
+      long: "Terdurasi terpanjang",
+      short: "Terdurasi terpendek",
+      skip: "Skor lewati"
+    },
+    speedBy: { density: "Kepadatan not", bpmMax: "BPM Maks", bpm: "BPM Utama" },
+    rankHint: {
+      efficiency: "Ekspektasi skor per menit per poin kekuatan deck. Urutan skill diundi setiap live, sehingga nilai ekspektasi hanya bergantung pada nilai rata-rata skill; rentang adalah nilai min–maks dari 120 kombinasi urutan.",
+      event: "Poin event hanya bergantung pada peringkat skor. Tanpa kekuatan deck: kekuatan deck yang dibutuhkan ekspektasi skor untuk mencapai peringkat target (urutan naik); dengan kekuatan deck: jumlah putaran target per jam.",
+      speed: "Berdasarkan kepadatan not atau BPM.",
+      level: "Berdasarkan level tampilan (dengan desimal), lalu berdasarkan jumlah not.",
+      notes: "Not yang dinilai, yaitu kombo dari Full Combo.",
+      long: "Berdasarkan panjang durasi BGM.",
+      short: "Berdasarkan panjang durasi BGM, dari yang terpendek.",
+      skip: "Skor per poin kekuatan deck saat live dilewati; durasi dan skill tidak berpengaruh."
+    },
+    scenario: {
+      title: "Skenario",
+      battle: "Gekisou Live",
+      free: "Free Live",
+      battleHint: "Multipemain (hingga 5 orang), Gekisou aktif",
+      freeHint: "Solo, Gekisou nonaktif",
+      ranks: "Rank",
+      range: "Rentang {n}",
+      rangeMission: "Rentang {n} · {mission}",
+      best: "Rank 1 adalah kasus terbaik",
+      ranksPending: "Rank 2–5: data menunggu pembaruan",
+      accuracy: "Akurasi",
+      great: "Proporsi Great",
+      just: "Rasio Just",
+      accNote: "Perkiraan, tanpa putus kombo; proporsi Great berlaku untuk setiap not, rasio Just hanya untuk rentang misi Just",
+      accNoteFree: "Perkiraan, tanpa putus kombo; proporsi Great berlaku untuk setiap not",
+      pending: "data menunggu pembaruan",
+      room: "Pemain",
+      roomHint: "Total skor seluruh pemain di ruangan dinilai; dengan asumsi semua pemain mendapat skor yang sama dengan Anda, skor yang Anda butuhkan adalah √(5/n) × ambang batas Gekisou Live",
+      soloRanks: "Free Live menggunakan ambang batas rank solo"
+    },
+    length: "Durasi",
+    bgm: "BGM",
+    chart: "Chart",
+    overhead: "Waktu tambahan per putaran",
+    seconds: "{n} dtk",
+    skills: "Bonus skor skill %",
+    skillSlot: "Skill {n}",
+    meanSkill: "rata-rata {v}%",
+    presets: { all150: "Semua 150", all100: "Semua 100", none: "Tanpa skill" },
+    target: "Target rank",
+    power: "Kekuatan deck",
+    powerHint: "kosong: hanya menampilkan kekuatan yang dibutuhkan",
+    frontier: "Hanya batas terdepan (frontier)",
+    allColumns: "Semua kolom",
+    allColumnsHint: "Geser ke samping untuk membandingkan",
+    col: {
+      rank: "#",
+      song: "Lagu",
+      level: "Level",
+      time: "Durasi",
+      bpm: "BPM",
+      notes: "Not",
+      density: "Not/dtk",
+      rate: "Skor/kekuatan",
+      perMinute: "Skor/kekuatan/menit",
+      relative: "Relatif",
+      dom: "Terkalahkan",
+      skip: "Koefisien lewati",
+      base: "Koefisien dasar",
+      need: "Kekuatan dibutuhkan",
+      chance: "Tingkat pencapaian",
+      perHour: "Putaran/jam",
+      goal: "Target/jam"
+    },
+    onFrontier: "batas terdepan",
+    dominatedBy: "didominasi oleh {n}",
+    tipDom: "Tidak lebih baik dalam efisiensi ekspektasi untuk setiap rata-rata skill 0–150% dan waktu tambahan apa pun daripada: {charts}",
+    tipDomEvent: "Membutuhkan kekuatan deck tidak lebih rendah untuk rank apa pun pada rata-rata skill 0–150%, dan durasinya tidak lebih pendek dari: {charts}",
+    tipSpread: "min–maks dari 120 kombinasi urutan skill",
+    listSeparator: ", ",
+    noStats: "File music-data.json ini tidak memiliki statistik deck (dibuat dengan --no-deck): angka skor tidak tersedia.",
+    axes: {
+      displayLevel: "Level",
+      density: "Kepadatan N/dtk",
+      bpm: "BPM Utama",
+      bpmMax: "BPM Maks",
+      notes: "Not",
+      bgmMs: "Durasi BGM (dtk)",
+      perMinute: "Skor/kekuatan/menit",
+      rate: "Skor/kekuatan",
+      base: "Koefisien dasar",
+      skip: "Koefisien lewati"
+    },
+    scatter: "Diagram sebar",
+    pareto: "Batas Pareto (frontier)",
+    approximateShort: "Perkiraan",
+    paretoHelp: "Tentang batas terdepan (frontier)",
+    lowerBetter: "Makin rendah makin baik",
+    higherBetter: "Makin tinggi makin baik",
+    xGoal: "Target sumbu X",
+    yGoal: "Target sumbu Y",
+    plotted: "{n} chart kandidat",
+    paretoCount: "{n} di batas terdepan",
+    paretoHint: "Batas terdepan dihitung berdasarkan filter, parameter, dan target dua sumbu saat ini. Garis menghubungkan kandidat diskret, tidak menyiratkan adanya chart perantara. Ini berbeda dari dominasi peringkat lintas rata-rata skill dan waktu tambahan.",
+    x: "X",
+    y: "Y",
+    levelDist: "Distribusi level",
+    bandShare: "Jumlah lagu per band",
+    levelBar: "Lv {level} {difficulty}: {n}",
+    songPage: "Halaman lagu",
+    songPageHint: "Kredit, vokal, audio, sampul, dan pratinjau chart di halaman lagu",
+    preview3d: "Pratinjau 3D",
+    missions: { combo: "Combo", luck: "Keberuntungan", just: "Just" },
+    detail: {
+      musicType: "Tipe lagu",
+      bgm: "BGM",
+      musicId: "ID Lagu",
+      scoreId: "ID Chart",
+      notes: "Not",
+      fullCombo: "Hitungan Full Combo",
+      density: "Kepadatan",
+      bpm: "BPM",
+      bpmChanges: "{n} kali perubahan BPM",
+      span: "Rentang not",
+      musicLength: "Durasi chart",
+      timeline: "Garis waktu",
+      fever: "Fever",
+      skill: "Skill",
+      mission: "Misi Gekisou",
+      composition: "Komposisi not",
+      weights: "Bobot posisi skill",
+      weightsHint: "Poin skor yang ditambahkan oleh skill skor biasa +100% pada anggota di posisi k selama seluruh putaran live, per poin kekuatan deck (simulasi satu putaran penuh: memperhitungkan jendela aktivasi, frame, dan kombo; di Gekisou Live juga mencakup Just dan bonus peringkat dari peringkat yang dipilih), dirata-ratakan dari semua seed dan disesuaikan dengan akurasi; dan proporsinya terhadap W. Anggota mana yang berada di posisi mana diundi setiap putaran, sehingga nilai ekspektasi hanya menggunakan W.",
+      seeds: "{n} seed",
+      unplayable: "Tidak dapat dimainkan di Gekisou Live",
+      unplayableHint: "Fever lebih dari 3: dari kode dekompilasi, game hanya menyimpan 3 rentang Gekisou dan gagal saat Fever ke-4 dimulai",
+      unplayableFree: "; Free Live tidak memiliki Gekisou dan dapat dimainkan seperti biasa: beralih ke Free Live untuk melihat nilainya",
+      score: "Skor (skenario saat ini)",
+      noFigures: "Skor",
+      twoScores: "Dua set skor Gekisou Live (per poin kekuatan deck)",
+      twoScoresHint: "Gekisou Live mencatat dua set skor sekaligus: yang pertama dengan Gekisou, yaitu angka pada skenario ini; yang kedua tanpa Gekisou, disimpan sebagai skor terbaik lagu, mendekati skor Free Live",
+      orders: "Rentang urutan",
+      sameOrder: "Skill sama: urutan tidak memengaruhi skor",
+      ranks: "Ambang batas rank skor",
+      rank: "Rank",
+      required: "Skor yang dibutuhkan",
+      requiredRoom: "Skor yang dibutuhkan (ruangan {n} orang, per orang)",
+      needPower: "Kekuatan yang dibutuhkan (ekspektasi)",
+      needRange: "Kekuatan yang dibutuhkan (rentang urutan)",
+      chanceAt: "Peluang tercapai pada kekuatan {power}",
+      ranksHint: "Ambang batas ditentukan per lagu dan digunakan bersama oleh semua tingkat kesulitan; Free Live menggunakan ambang batas solo. Kekuatan yang dibutuhkan = ambang batas ÷ ekspektasi skor per kekuatan (termasuk akurasi).",
+      ranksHintRoom: "Ambang batas ditentukan per lagu dan digunakan bersama oleh semua tingkat kesulitan. Gekisou Live menilai total skor seluruh pemain di ruangan; di sini diasumsikan ruangan berisi {n} pemain yang semuanya mendapat skor sama dengan Anda: Anda memerlukan √(5/{n}) × ambang batas Gekisou Live. Kekuatan yang dibutuhkan = skor tersebut ÷ ekspektasi skor per kekuatan (termasuk akurasi).",
+      close: "Tutup",
+      measures: "Metrik peringkat per rentang",
+      measureRange: "Rentang",
+      measureCompared: "Metrik pembanding",
+      measure: { maxCombo: "Maks combo Gekisou", justCount: "Jumlah Just", luckPoints: "Poin keberuntungan" },
+      measuresHint: "Setiap rentang Gekisou Live memeringkatkan pemain di ruangan berdasarkan metrik misinya: misi kombo berdasarkan kombo Gekisou maksimum, misi keberuntungan berdasarkan poin keberuntungan, misi Just berdasarkan jumlah Just (sel tebal). Menurut model ini, ini adalah rata-rata seed tanpa skill Gekisou pada permainan optimal teoritis, dengan nilai min–maks antarseed dalam tanda kurung; \"–\" berarti data menunggu pembaruan. Halaman ini tidak memodelkan lawan dan menggunakan peringkat yang Anda pilih; peringkat tidak diturunkan dari metrik ini."
+    },
+    aptitude: {
+      ratio: "Rasio terhadap baseline tanpa skill biasa",
+      crossSeeds: "Suku silang: {n} seed",
+      rawPerfect: "Peningkatan skor mentah All-Perfect (rata-rata ± SE)",
+      missingCross: "Suku silang tidak lengkap; peningkatan penuh tidak tersedia",
+      noPlain: "Peningkatan skenario saat ini tanpa skill biasa / kekuatan",
+      missingPerfectCross: "Suku silang Perfect belum diukur; peningkatan penuh tidak tersedia",
+      crossAtRank1: "Suku silang tetap pada rank 1; hanya sebagai referensi",
+      zero: {
+        none: "Tidak ada peningkatan skor pada permainan optimal teoritis",
+        measures: "Hanya metrik peringkat"
+      },
+      title: "Kesesuaian skill Gekisou",
+      hint: "Setiap baris hanya membawa satu skill Gekisou atau skill dukungan Gekisou tersendiri, dengan slot lainnya kosong. Ini membandingkan efek skill tunggal pada chart ini, tanpa memilih kartu atau formasi tim, dan mempertahankan baseline peringkat tidak berubah. Peningkatan dari skill yang berbeda tidak dapat dijumlahkan.",
+      power: "Peningkatan skor pada kekuatan {n}; nilai skill biasa mengikuti pengaturan di atas.",
+      skill: "Skill",
+      band: "Syarat band",
+      gain: "Peningkatan / kekuatan",
+      score: "Peningkatan skor",
+      seeds: "Seed",
+      details: "Perubahan rentang",
+      support: "Skill dukungan Gekisou",
+      member: "Skill Gekisou anggota",
+      level: "Lv {n}",
+      noCondition: "Tanpa syarat",
+      match: "Cocok",
+      mismatch: "Tidak cocok",
+      deterministic: "Deterministik",
+      targetUnmet: "Target SE tidak terpenuhi",
+      baseSe: "Peningkatan skor mentah rank 1, All-Just, tanpa Great tanpa skill biasa / kekuatan (rata-rata ± SE)",
+      converted: "Tambahan konversi penilaian",
+      metricsHint: "Metrik rentang adalah rata-rata peningkatan ± standard error pada permainan All-Just tanpa Great; slider akurasi tidak mengubah skalanya.",
+      empty: "Tidak ada kesesuaian skill yang cocok dengan misi chart ini.",
+      approximation: "Peningkatan deterministik tanpa skill biasa berasal dari putaran satu sesi utuh; angka acak adalah rata-rata seed, bukan ekspektasi game. Konversi rank memiliki galat pembulatan; suku silang skill biasa dan akurasi adalah perkiraan. Standard error hanya menggambarkan variasi sampel, bukan kesalahan model; nilai error masing-masing tidak boleh dijumlahkan sebagai kuantitas independen.",
+      factors: "Faktor chart",
+      factor: {
+        judgedNotes: "Not yang dinilai dalam rentang",
+        justNotes: "Not Just",
+        perfectNotes: "Not Perfect di rentang Just",
+        tailNotes: "Not penutup (tail)",
+        comboAtStart: "Kombo saat mulai",
+        lotteries: "Jumlah undian tanpa skill"
+      },
+      factorsHint: "Not rentang berada di antara Start hingga frame skor End; bagian penutup (tail) berada setelah End hingga Complete dan tidak masuk ke skor rentang. Beberapa tipe penilaian di rentang Just tidak memiliki baris Just dan hanya bisa berupa Perfect. Undian adalah rata-rata seed dasar ± standard error."
+    },
+    kinds: { tap: "Tap", flick: "Flick", slide: "Slide", trace: "Trace", combo: "Titik kombo" },
+    source: "Data: Global / Jepang · versi {version}",
+    sourceHint: "diekstrak dari region {region} · master {master} · klien {client}",
+    deckModel: "model skor",
+    caveat: "Angka bersumber dari dekompilasi klien game: kami berusaha menyajikan secara akurat namun tidak menjamin kebenaran mutlak; jika ada perbedaan dengan sumber resmi lainnya, percayalah pada sumber tersebut"
+  },
+  gameServer: {
+    inZone: "{time} ({zone})",
+    onlyOn: "Hanya {servers}",
+    notOnServer: "Belum tersedia di {server}; menampilkan konten dari {source}.",
+    schedules: "Jadwal per server",
+    timesIn: "Waktu dalam format {zone}",
+    localTimesIn: "Waktu ditampilkan dalam zona waktu lokal Anda ({zone})",
+    label: "Server game",
+    short: { tw: "TW", jp: "JP", kr: "KR", en: "EN" },
+    names: {
+      tw: "Server Tradisional Chinese",
+      jp: "Server Jepang",
+      kr: "Server Korea",
+      en: "Server Global (Inggris)"
+    }
+  },
+  news: {
+    detailTitle: "Pengumuman",
+    categoryLabel: "Kategori",
+    category: {
+      all: "Semua",
+      maintenance: "Pemeliharaan",
+      bug: "Masalah yang Diketahui",
+      campaign: "Kampanye",
+      update: "Pembaruan",
+      gacha: "Gacha",
+      other: "Lainnya"
+    },
+    checkedAgo: "Daftar diperiksa {time}",
+    loading: "Mengumpulkan pengumuman…",
+    empty: "Server ini tidak memiliki pengumuman saat ini.",
+    retry: "Coba lagi",
+    updated: "Diperbarui",
+    backToList: "Kembali ke daftar pengumuman",
+    notFound: "Pengumuman tidak ditemukan",
+    notFoundHint: "Tautan mungkin tidak lengkap, atau pengumuman belum pernah dikumpulkan. Buka daftar untuk melihat pengumuman yang ada di server saat ini.",
+    errors: {
+      pending: "Masih mengambil pengumuman ini",
+      pendingHint: "Sedang dalam antrean dan akan siap dalam beberapa detik. Coba lagi sebentar lagi.",
+      upstream: "Server game tidak dapat dijangkau saat ini",
+      upstreamHint: "Server game mungkin sedang dalam pemeliharaan. Silakan coba lagi nanti.",
+      failed: "Pengumuman tidak dapat dimuat",
+      failedHint: "Periksa koneksi Anda dan coba lagi."
+    },
+    period: "Periode",
+    lastUpdated: "Terakhir diperbarui",
+    withdrawn: "Telah ditarik dari game",
+    olderVersion: "Versi sebelumnya",
+    history: "Versi",
+    latestRevision: "{time} (terbaru)",
+    noBody: "Pengumuman ini tidak memiliki teks isi."
   },
   seo: {
+    events: {
+      title: "Event Game",
+      description: "Event dalam game, pengumuman, pool gacha, misi, dan hadiah dari setiap server BanG Dream! Our Notes."
+    },
+    eventTracker: {
+      title: "Pelacak Event",
+      description: "Peringkat langsung event BanG Dream! Our Notes saat ini di setiap server: papan peringkat lagu tantangan beserta deck, garis batas hadiah (cut-off), peringkat poin event, dan sisa waktu."
+    },
+    musicRanking: {
+      title: "Peringkat Lagu",
+      description: "Peringkat skor tertinggi setiap lagu di setiap server BanG Dream! Our Notes: pemain, skor, dan deck."
+    },
+    news: {
+      title: "Pengumuman Game",
+      description: "Pemeliharaan, masalah yang diketahui, kampanye, dan pembaruan: pengumuman dalam game dari setiap server BanG Dream! Our Notes."
+    },
+    newsDetail: { title: "Pengumuman", description: "Pengumuman dalam game dari BanG Dream! Our Notes." },
     home: {
       title: "Database & viewer BanG Dream! Our Notes",
-      description: "Database fan multibahasa StarMoe untuk BanG Dream! Our Notes — karakter, kartu, musik, cerita, komik, stiker, dan aset game.",
+      description: "Database fan multibahasa StarMoe untuk BanG Dream! Our Notes — karakter, kartu, musik, cerita, komik, stiker, dan aset game."
     },
     database: {
       title: "Database BanG Dream! Our Notes",
-      description: "Jelajahi karakter, kartu, kartu support, musik, cerita, komik, stiker, item, dan aset game Our Notes dalam satu tempat.",
+      description: "Jelajahi karakter, kartu, kartu support, musik, cerita, komik, stiker, item, dan aset game Our Notes dalam satu tempat."
     },
     characters: {
       title: "Database karakter Our Notes",
-      description: "Jelajahi karakter BanG Dream! Our Notes per band, lengkap dengan profil, part, ulang tahun, zodiak, sprite, dan kartu terkait.",
+      description: "Jelajahi karakter BanG Dream! Our Notes per band, lengkap dengan profil, part, ulang tahun, zodiak, sprite, dan kartu terkait."
     },
     characterDetail: {
       title: "Halaman detail karakter",
-      description: "Lihat sprite penuh, profil, dan kartu unggulan karakter BanG Dream! Our Notes secara detail.",
+      description: "Lihat sprite penuh, profil, dan kartu unggulan karakter BanG Dream! Our Notes secara detail."
     },
     cards: {
       title: "Database kartu Our Notes",
-      description: "Telusuri artwork kartu BanG Dream! Our Notes dan filter cepat berdasarkan karakter, rarity, atribut, dan band.",
+      description: "Telusuri artwork kartu BanG Dream! Our Notes dan filter cepat berdasarkan karakter, rarity, atribut, dan band."
     },
     stamps: {
       title: "Database stiker Our Notes",
-      description: "Telusuri stiker karakter, emotikon, dan artwork ekspresi berkualitas tinggi dari BanG Dream! Our Notes.",
+      description: "Telusuri stiker karakter, emotikon, dan artwork ekspresi berkualitas tinggi dari BanG Dream! Our Notes."
     },
     comics: {
       title: "Database komik Our Notes",
-      description: "Baca dan jelajahi komik layar loading serta artwork manga original BanG Dream! Our Notes.",
+      description: "Baca dan jelajahi komik layar loading serta artwork manga original BanG Dream! Our Notes."
     },
     items: {
       title: "Database item Our Notes",
-      description: "Cari item, material, ikon inventori, dan deskripsi in-game BanG Dream! Our Notes dalam daftar yang dapat dicari.",
+      description: "Cari item, material, ikon inventori, dan deskripsi in-game BanG Dream! Our Notes dalam daftar yang dapat dicari."
     },
     cardDetail: {
       title: "Halaman detail kartu",
-      description: "Tampilkan artwork kartu, karakter, atribut, rarity, dan stat dasar Our Notes.",
+      description: "Tampilkan artwork kartu, karakter, atribut, rarity, dan stat dasar Our Notes."
     },
     supportCards: {
       title: "Database kartu support Our Notes",
-      description: "Telusuri artwork kartu support BanG Dream! Our Notes dan filter berdasarkan karakter, rarity, atribut, dan band.",
+      description: "Telusuri artwork kartu support BanG Dream! Our Notes dan filter berdasarkan karakter, rarity, atribut, dan band."
     },
     supportCardDetail: {
       title: "Halaman detail kartu support",
-      description: "Tampilkan artwork kartu support, karakter, atribut, rarity, dan stat dasar Our Notes.",
+      description: "Tampilkan artwork kartu support, karakter, atribut, rarity, dan stat dasar Our Notes."
     },
     music: {
       title: "Database musik Our Notes",
-      description: "Jelajahi daftar lagu BanG Dream! Our Notes dengan vokal, lirik, komposer, arranger, difficulty, dan jumlah note maksimum.",
+      description: "Jelajahi daftar lagu BanG Dream! Our Notes dengan vokal, lirik, komposer, arranger, difficulty, dan jumlah note maksimum."
+    },
+    musics: {
+      title: "Musik & Chart BanG Dream! Our Notes",
+      description: "Jelajahi semua lagu, data meta chart, pratinjau chart 3D, dan peringkat skor lagu di BanG Dream! Our Notes di bawah hamparan bintang musik."
     },
     gacha: {
       title: "Kompendium Rekrutmen Our Notes",
-      description: "Kenang kembali setiap pertemuan mendebarkan di bawah lampu panggung. Telusuri rekrutmen BanG Dream! Our Notes, jadwal, anggota pickup, dan simulator gacha.",
+      description: "Kenang kembali setiap pertemuan mendebarkan di bawah lampu panggung. Telusuri rekrutmen BanG Dream! Our Notes, jadwal, anggota pickup, dan simulator gacha."
+    },
+    eventList: {
+      title: "Daftar Event",
+      description: "Semua event dalam game BanG Dream! Our Notes: jadwal, anggota dan atribut bonus, kartu event, cerita event, hadiah poin, dan hadiah live, server demi server."
+    },
+    eventDetail: {
+      title: "Detail Event",
+      description: "Jadwal event, bonus, kartu dan lagu, poin event untuk membuka cerita, serta hadiah poin dan hadiah live. Setiap janji perjalanan tertulis di sini."
     },
     gachaDetail: {
       title: "Detail rekrutmen",
-      description: "Temukan momen berkilau di bawah lampu sorot. Lihat jadwal rekrutmen Our Notes, ilustrasi kartu pickup, dan daftar pertemuan lengkap.",
+      description: "Temukan momen berkilau di bawah lampu sorot. Lihat jadwal rekrutmen Our Notes, ilustrasi kartu pickup, dan daftar pertemuan lengkap."
     },
     rewards: {
       title: "Misi & Hadiah Our Notes",
-      description: "Buka janji-janji kita dengan langit bertabur bintang. Jelajahi tiket misi musim, tujuan acara, dan hadiah masuk harian BanG Dream! Our Notes.",
+      description: "Buka janji-janji kita dengan langit bertabur bintang. Jelajahi tiket misi musim, tujuan acara, dan hadiah masuk harian BanG Dream! Our Notes."
     },
     rewardDetail: {
       title: "Detail misi & hadiah",
-      description: "Hitung kegembiraan dan hasil yang terkumpul di sepanjang perjalanan. Lihat hadiah tingkatan tiket Our Notes, target terbatas, dan hadiah masuk harian.",
+      description: "Hitung kegembiraan dan hasil yang terkumpul di sepanjang perjalanan. Lihat hadiah tingkatan tiket Our Notes, target terbatas, dan hadiah masuk harian."
     },
     titles: {
       title: "Kompendium Gelar Our Notes",
-      description: "Ukir setiap tonggak dan kenangan bercahaya. Telusuri jurnal gelar BanG Dream! Our Notes, melihat lencana, lambang, dan ikrar para gadis di setiap band.",
+      description: "Ukir setiap tonggak dan kenangan bercahaya. Telusuri jurnal gelar BanG Dream! Our Notes, melihat lencana, lambang, dan ikrar para gadis di setiap band."
     },
     backgrounds: {
       title: "Latar Belakang Profil Our Notes",
-      description: "Menyusuri jalan dan panggung yang bercahaya lembut. Telusuri latar belakang profil BanG Dream! Our Notes untuk memilih suasana bagi kenangan Anda.",
+      description: "Menyusuri jalan dan panggung yang bercahaya lembut. Telusuri latar belakang profil BanG Dream! Our Notes untuk memilih suasana bagi kenangan Anda."
     },
     songDetail: {
       title: "Halaman detail lagu",
-      description: "Lihat jacket album, kreator, vokal, dan constant difficulty lagu Our Notes secara detail.",
+      description: "Lihat jacket album, kreator, vokal, dan constant difficulty lagu Our Notes secara detail."
     },
     story: {
       title: "Arsip cerita Our Notes",
-      description: "Jelajahi cerita utama, cerita ikatan, obrolan pasca-live, cerita home, dan skrip bersuara BanG Dream! Our Notes.",
+      description: "Jelajahi cerita utama, cerita ikatan, obrolan pasca-live, cerita home, dan skrip bersuara BanG Dream! Our Notes."
     },
     mainStory: {
       title: "Cerita utama Our Notes",
-      description: "Baca chapter cerita utama BanG Dream! Our Notes dan dengarkan suara karakter di setiap adegan.",
+      description: "Baca chapter cerita utama BanG Dream! Our Notes dan dengarkan suara karakter di setiap adegan."
     },
     friendshipStory: {
       title: "Cerita ikatan Our Notes",
-      description: "Jelajahi cerita ikatan antar karakter BanG Dream! Our Notes dengan skrip dan voice.",
+      description: "Jelajahi cerita ikatan antar karakter BanG Dream! Our Notes dengan skrip dan voice."
     },
     otherStory: {
       title: "Cerita & dialog lain Our Notes",
-      description: "Telusuri obrolan pasca-live, cerita home, intro lokasi, dan cerita tutorial BanG Dream! Our Notes.",
+      description: "Telusuri obrolan pasca-live, cerita home, intro lokasi, dan cerita tutorial BanG Dream! Our Notes."
     },
     storyDetail: {
       title: "Halaman detail cerita",
-      description: "Baca skrip cerita dan putar voice karakter yang sesuai dengan dialog.",
+      description: "Baca skrip cerita dan putar voice karakter yang sesuai dengan dialog."
     },
     liveResultStory: {
       title: "Daftar obrolan pasca-live",
-      description: "Jelajahi dialog karakter setelah live performance dalam bentuk daftar.",
+      description: "Jelajahi dialog karakter setelah live performance dalam bentuk daftar."
     },
     homeStory: {
       title: "Daftar cerita home",
-      description: "Lihat intro spot home dan dialog tap dalam satu tempat.",
+      description: "Lihat intro spot home dan dialog tap dalam satu tempat."
     },
     tutorialStory: {
       title: "Daftar cerita tutorial",
-      description: "Jelajahi adegan cerita yang digunakan di tutorial game.",
+      description: "Jelajahi adegan cerita yang digunakan di tutorial game."
     },
     eventStory: {
       title: "Daftar cerita event",
-      description: "Cari dan jelajahi cerita event BanG Dream! Our Notes.",
+      description: "Cari dan jelajahi cerita event BanG Dream! Our Notes."
     },
     tools: {
       title: "Alat database Our Notes",
-      description: "Gunakan alat Moenotes untuk menelusuri data dan aset game publik BanG Dream! Our Notes.",
+      description: "Gunakan alat Moenotes untuk menelusuri data dan aset game publik BanG Dream! Our Notes."
+    },
+    chartPreview: {
+      title: "Pratinjau Chart 3D Our Notes",
+      description: "Pilih lagu dan tingkat kesulitan untuk melihat chart Our Notes yang dirender dalam 3D langsung di browser Anda: jalur, not, dan efek ketukan dimainkan secara otomatis selaras dengan musik, lengkap dengan kontrol jeda, lompat waktu, dan kecepatan."
+    },
+    live2dViewer: {
+      title: "Penampil Live2D Our Notes",
+      description: "Jelajahi setiap model Live2D dari BanG Dream! Our Notes berdasarkan karakter dan kostum langsung di browser Anda: gerakan diam, kedipan, pernapasan, dan fisika seperti di dalam cerita, dengan semua gerakan dan ekspresi sesuai permintaan."
+    },
+    storyPlayer: {
+      title: "Pemutar Cerita Our Notes",
+      description: "Putar cerita BanG Dream! Our Notes di browser Anda persis seperti tampilan cerita di game: karakter Live2D, panggung, kamera dan efek, kotak dialog, musik, efek suara, dan suara karakter, dalam bahasa Jepang, Inggris, Mandarin, atau Korea."
+    },
+    chartData: {
+      title: "Meta Lagu Our Notes",
+      description: "Peringkat setiap chart BanG Dream! Our Notes berdasarkan efisiensi skor, kekuatan rank event, kecepatan, level, dan durasi, dengan diagram sebar, detail chart, dan definisi model skor; angka bersumber dari dekompilasi klien game."
     },
     assetViewer: {
       title: "Penampil aset game Our Notes",
-      description: "Cari dan telusuri aset game publik seperti artwork kartu, jacket musik, dan gambar karakter BanG Dream! Our Notes.",
+      description: "Cari dan telusuri aset game publik seperti artwork kartu, jacket musik, dan gambar karakter BanG Dream! Our Notes."
     },
     about: {
       title: "Tentang Moenotes & StarMoe",
-      description: "Kenali Moenotes, database dan viewer fan multibahasa StarMoe untuk karakter, musik, kartu, dan cerita BanG Dream! Our Notes.",
+      description: "Kenali Moenotes, database dan viewer fan multibahasa StarMoe untuk karakter, musik, kartu, dan cerita BanG Dream! Our Notes."
     },
+    account: {
+      title: "Akun saya",
+      description: "StarMoe Passport Anda di Moenotes: pilih karakter yang mewakili diri Anda."
+    },
+    player: { title: "Profil pemain", description: "Profil publik pemain Our Notes di Moenotes." },
     designSystem: {
       title: "Referensi sistem desain",
-      description: "Referensi bahasa visual dan pustaka komponen Moenotes.",
-    },
+      description: "Referensi bahasa visual dan pustaka komponen Moenotes."
+    }
   },
   designSystem: {
     sirius: {
@@ -703,7 +1647,7 @@ export const idID = {
       grid: "Kisi koordinat",
       card: "Panel konten",
       raised: "Panel melayang",
-      surface: "Permukaan hening",
+      surface: "Permukaan hening"
     },
     title: "Sistem Desain",
     subtitle: "Moenotes visual language reference — colors, typography, components, and interactions.",
@@ -713,7 +1657,7 @@ export const idID = {
       components: "Components",
       modals: "Modals",
       filters: "Filters",
-      animations: "Animations",
+      animations: "Animations"
     },
     colors: {
       accent: "Accent",
@@ -736,7 +1680,7 @@ export const idID = {
       surface: "Surface",
       border: "Border",
       text: "Text",
-      muted: "Muted",
+      muted: "Muted"
     },
     typography: { display: "Display Font", body: "Body Font", hand: "Hand Font", note: "Note Font" },
     components: {
@@ -754,7 +1698,7 @@ export const idID = {
       selectPlaceholder: "Choose option...",
       optA: "Option A",
       optB: "Option B",
-      optC: "Option C",
+      optC: "Option C"
     },
     modals: {
       openSm: "Small Modal",
@@ -767,7 +1711,7 @@ export const idID = {
       copyModal: "Copy Modal",
       copyModalTitle: "Image Preview",
       copy: "Copy",
-      save: "Save",
+      save: "Save"
     },
     filters: {
       title: "Filter Demo",
@@ -783,7 +1727,7 @@ export const idID = {
       date: "Date",
       level: "Level",
       onlyComplete: "Completed only",
-      reset: "Reset",
+      reset: "Reset"
     },
     animations: {
       spring: "Spring Interaction",
@@ -793,8 +1737,8 @@ export const idID = {
       stagger: "Stagger Animation",
       staggerDesc: "Staggered fade-in — list items appear in sequence",
       wobble: "Wobble Effect",
-      wobbleDesc: "Hover wobble — stamp/sticker style",
-    },
+      wobbleDesc: "Hover wobble — stamp/sticker style"
+    }
   },
   filter: {
     title: "Filter",
@@ -807,19 +1751,33 @@ export const idID = {
     openQuickFilter: "Buka filter",
     drawerHintTitle: "Filter dipindahkan ke samping",
     drawerHintBody: "Klik tab di sebelah kiri untuk membuka atau menutup filter kapan saja.",
-    drawerHintDismiss: "Mengerti",
+    drawerHintDismiss: "Mengerti"
+  },
+  browserNotice: {
+    title: "Browser ini mungkin tidak menampilkan situs dengan benar",
+    description: "Browser dalam aplikasi (in-app browser) dan browser dengan mesin lama dapat merusak tata letak, audio, dan pratinjau chart.",
+    inAppHint: "Ketuk menu ··· di pojok kanan atas dan pilih “Buka di browser”.",
+    ios: "Semua browser di iPhone dan iPad menggunakan mesin Safari, yang diperbarui bersamaan dengan iOS. Perbarui ke iOS terbaru di Pengaturan › Umum › Pembaruan Perangkat Lunak.",
+    android: "Untuk pengalaman penuh, buka situs ini di Chrome atau Edge.",
+    desktop: "Untuk pengalaman penuh, buka situs ini di Edge atau Chrome.",
+    download: "Dapatkan {name}",
+    dismiss: "Tutup pemberitahuan"
   },
   modal: { close: "Tutup" },
   footer: {
     desc: "A next-generation viewer for BanG Dream! Our Notes.",
     explore: "Jelajahi",
     sister: "Sister Sites",
+    friendly: "Situs Sahabat",
     contact: "Contact & Feedback",
     feedback: "Submit Feedback / Contribution",
     bugReport: "Bug Report",
+    discord: "Komunitas Discord ({name})",
+    qq: "Grup QQ {name} ({number})",
+    github: "Kode sumber di GitHub",
     email: "Email mail@exmeaning.com",
     disclaimer: "This site only provides material display. Game copyright belongs to Bushiroad / Craft Egg / Ishimori. This is a fan-made website, a doujin database for research purposes only.",
-    copyright: "© 2026 Moenotes · Unofficial Fan Site",
+    copyright: "© 2026 Moenotes · Unofficial Fan Site"
   },
   stamps: {
     fallbackNameNoChar: "Stiker #{id}",
@@ -836,7 +1794,7 @@ export const idID = {
     quickFilter: "Open quick filters",
     stickerImageAlt: "{name} sticker",
     copiedImage: "Sticker copied to clipboard.",
-    copiedLink: "Sticker asset link copied.",
+    copiedLink: "Sticker asset link copied."
   },
   comics: {
     loadingName: "Komik Loading #{id}",
@@ -852,7 +1810,7 @@ export const idID = {
     quickFilter: "Open quick filters",
     comicImageAlt: "{name} comic",
     copiedImage: "Comic copied to clipboard.",
-    copiedLink: "Comic asset link copied.",
+    copiedLink: "Comic asset link copied."
   },
   items: {
     searchPlaceholder: "Search item name, description...",
@@ -863,7 +1821,7 @@ export const idID = {
       "1": "Recovery/Tickets",
       "2": "Materials/Prisms",
       "3": "Character Pieces",
-      "4": "Tiket Penukaran & Poin",
+      "4": "Tiket Penukaran & Poin"
     },
     results: "{count} items",
     loading: "Loading item data...",
@@ -873,7 +1831,7 @@ export const idID = {
     emptyTitle: "No items match these filters",
     emptyDescription: "This filter combination has no results. Clear the filters to browse every item again.",
     reset: "View all items",
-    quickFilter: "Open quick filters",
+    quickFilter: "Open quick filters"
   },
   about: {
     teamIntro: "we are a small team from <a href=\"https://github.com/moe-sekai\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-[var(--mn-accent-deep)] underline decoration-2 decoration-[var(--mn-accent)] underline-offset-4 hover:text-[var(--mn-accent)]\">StarMoe</a>. During the two years of building <em>MoeSekai</em>, we have been thinking: what should a good wiki actually look like?",
@@ -885,10 +1843,14 @@ export const idID = {
     openSourceTitle: "Open Source License",
     openSourceDesc: "The project frontend is open-sourced under the <strong>AGPL v3</strong> license. We are committed to open and transparent collaboration, and welcome any contributions.",
     openSourceLink: "GitHub Repository",
+    communityTitle: "Bergabung dengan komunitas",
+    communityDesc: "Ngobrol bersama kami di Discord {name}, laporkan masalah, atau ikuti perkembangan di GitHub.",
+    discordLink: "Gabung Discord",
+    githubLink: "GitHub",
     assetsTitle: "Copyright & Assets",
     assetsDesc: "In-game assets (art, audio, etc.) are copyrighted by <strong>Bushiroad / Craft Egg / Ishimori</strong>. Self-made compatible assets are licensed under the <strong>CC BY-NC 4.0</strong> license.",
     assetsLink: "CC BY-NC 4.0 License",
     techStackTitle: "Technology Stack",
-    techStackDesc: "Built using a modern, lightweight, and highly performant stack to ensure fast loading times and a smooth, notebook-like experience.",
-  },
+    techStackDesc: "Built using a modern, lightweight, and highly performant stack to ensure fast loading times and a smooth, notebook-like experience."
+  }
 } as const satisfies MessageTree;

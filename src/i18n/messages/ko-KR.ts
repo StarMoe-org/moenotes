@@ -112,8 +112,8 @@ export const koKR = {
   notFound: {"metaTitle": "페이지를 찾을 수 없습니다", "title": "이 신호가 별지도 밖으로 떠났어요.", "description": "주소가 바뀌었거나 페이지를 준비 중입니다. 홈으로 돌아가 탐색을 계속해 보세요.", "note": "유효한 링크라면 개발자에게 알려 주세요.", "home": "홈으로 돌아가기", "feedback": "링크 신고"},
   nav: {
     home: "홈",
-    groups: { database: "데이터베이스", events: "이벤트", story: "스토리", tools: "도구", community: "소개" },
-    items: { characters: "캐릭터", cards: "카드", supportCards: "서포트 카드", music: "음악", eventList: "이벤트 목록", gacha: "뽑기", rewards: "미션·보상", titles: "칭호", backgrounds: "배경", stamps: "스티커", comics: "만화", items: "아이템", mainStory: "메인 스토리", eventStory: "이벤트 스토리", friendshipStory: "인연 스토리", otherStory: "기타 스토리", liveResultStory: "라이브 종료 대화", homeStory: "홈 스토리", tutorialStory: "튜토리얼 스토리", assetViewer: "에셋 뷰어", designSystem: "디자인 시스템", chartPreview: "채보 미리보기", live2dViewer: "Live2D 뷰어", storyPlayer: "스토리 플레이어", news: "공지사항", eventTracker: "이벤트 트래커", musicRanking: "곡 랭킹", chartData: "채보 데이터" },
+    groups: { database: "데이터베이스", music: "음악", events: "이벤트", story: "스토리", tools: "도구", community: "소개" },
+    items: { characters: "캐릭터", cards: "카드", supportCards: "서포트 카드", music: "음악 목록", eventList: "이벤트 목록", gacha: "뽑기", rewards: "미션·보상", titles: "칭호", backgrounds: "배경", stamps: "스티커", comics: "만화", items: "아이템", mainStory: "메인 스토리", eventStory: "이벤트 스토리", friendshipStory: "인연 스토리", otherStory: "기타 스토리", liveResultStory: "라이브 종료 대화", homeStory: "홈 스토리", tutorialStory: "튜토리얼 스토리", assetViewer: "에셋 뷰어", designSystem: "디자인 시스템", chartPreview: "채보 미리보기", live2dViewer: "Live2D 뷰어", storyPlayer: "스토리 플레이어", news: "공지사항", eventTracker: "이벤트 트래커", musicRanking: "곡 랭킹", chartData: "곡 메타" },
   },
   shell: {
     openSidebar: "사이드바 열기",
@@ -1395,6 +1395,10 @@ export const koKR = {
       title: "Our Notes 악곡·선율 노트",
       description: "광활한 밤하늘 아래로 울려 퍼지는 청춘의 선율에 귀 기울여보세요. 소녀들이 현을 퉁기고 목소리를 높여 부르는 모든 음표는 미래와 꿈을 향해 띄우는 편지입니다.",
     },
+    musics: {
+      title: "BanG Dream! Our Notes 음악과 채보",
+      description: "음표와 선율이 수놓는 별빛 아래에서 BanG Dream! Our Notes의 모든 악곡, 곡 메타 데이터, 3D 채보 미리보기와 스코어 랭킹을 만나보세요.",
+    },
     gacha: {
       title: "Our Notes 멤버 모집 노트",
       description: "스포트라이트가 켜지던 순간의 떨리는 설렘을 다시 한번. 수많은 별이 빛나는 밤하늘 아래 소원을 띄우고, 당신만의 빛이 손바닥 위에 사뿐히 내려앉기를 기다려보세요.",
@@ -1474,7 +1478,7 @@ export const koKR = {
     chartPreview: { title: "Our Notes 3D 채보 미리보기", description: "곡과 난이도를 고르면 Our Notes의 라이브 화면을 브라우저에서 3D로 재현합니다. 레인, 노트, 타격 이펙트가 음악에 맞춰 자동 연주되며 일시정지, 탐색, 속도 조절도 가능합니다." },
     live2dViewer: { title: "Our Notes Live2D 뷰어", description: "BanG Dream! Our Notes의 모든 Live2D 모델을 캐릭터와 의상별로 브라우저에서 둘러보세요. 스토리와 같은 대기 모션, 눈 깜빡임, 호흡, 물리 효과를 재현하며 모든 모션과 표정을 언제든 바꿀 수 있습니다." },
     storyPlayer: { title: "Our Notes 스토리 플레이어", description: "BanG Dream! Our Notes의 스토리를 게임의 스토리 화면 그대로 브라우저에서 재생하세요. Live2D 캐릭터, 무대, 카메라와 연출, 대화창, 음악, 효과음, 보이스를 일본어·영어·중국어·한국어로 즐길 수 있습니다." },
-    chartData: { title: "Our Notes 채보 데이터", description: "BanG Dream! Our Notes의 모든 채보를 스코어 효율, 이벤트 랭크에 필요한 종합력, 속도, 레벨, 길이로 정렬한 랭킹과 산점도, 채보 상세, 스코어 모델의 정의를 제공합니다. 수치는 디컴파일한 게임 클라이언트에 근거합니다." },
+    chartData: { title: "Our Notes 곡 메타", description: "BanG Dream! Our Notes의 모든 채보를 스코어 효율, 이벤트 랭크에 필요한 종합력, 속도, 레벨, 길이로 정렬한 랭킹과 산점도, 채보 상세, 스코어 모델의 정의를 제공합니다. 수치는 디컴파일한 게임 클라이언트에 근거합니다." },
     assetViewer: {
       title: "Our Notes 에셋 아틀리에",
       description: "무대 뒤편 제작 아틀리에의 묵직한 문을 밀어봅니다. 고요히 먼지 내려앉은 이젤과 작업대 사이, 지금도 바래지 않은 원화의 붓질과 첫 마음을 찾아 떠납니다.",

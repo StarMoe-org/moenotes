@@ -114,6 +114,7 @@ export const zhCN = {
     home: "首页",
     groups: {
       database: "资料库",
+      music: "音乐",
       events: "活动",
       story: "剧情",
       tools: "工具",
@@ -123,7 +124,7 @@ export const zhCN = {
       characters: "角色",
       cards: "卡牌",
       supportCards: "支援卡",
-      music: "音乐",
+      music: "音乐列表",
       eventList: "活动一览",
       gacha: "招募",
       rewards: "任务与奖励",
@@ -143,7 +144,7 @@ export const zhCN = {
       designSystem: "设计系统",
       chartPreview: "谱面预览器",
       live2dViewer: "Live2D 浏览器",
-      storyPlayer: "剧情播放器", news: "游戏公告", eventTracker: "活动追踪器", musicRanking: "歌曲排行榜", chartData: "谱面数据",
+      storyPlayer: "剧情播放器", news: "游戏公告", eventTracker: "活动追踪器", musicRanking: "歌曲排行榜", chartData: "歌曲meta",
     },
   },
   shell: {
@@ -1432,6 +1433,10 @@ export const zhCN = {
       title: "Our Notes 乐曲与音乐资料库",
       description: "聆听回荡在浩瀚星空下的青春回响。少女们拨动琴弦、放声歌唱，每一个跳动的音符都是写给未来与梦想的真挚信笺。",
     },
+    musics: {
+      title: "BanG Dream! Our Notes 音乐与谱面",
+      description: "在音符与旋律交织的星空下，探索 Our Notes 的全部乐曲、歌曲 Meta 数据、3D 谱面预览与排行榜。沉浸于少女们用音乐编织的动人篇章。",
+    },
     gacha: {
       title: "Our Notes 招募图鉴",
       description: "重温聚光灯亮起时的心跳邂逅。在繁星闪烁的夜空下许下心愿，静静等候那枚属于你的光芒如期降落在掌心之间。",
@@ -1511,7 +1516,7 @@ export const zhCN = {
     chartPreview: { title: "Our Notes 3D 谱面预览器", description: "挑选一首乐曲与难度，在浏览器中以 3D 重现 Our Notes 的演出画面：轨道、音符、击打特效与音乐同步自动演奏，可随时暂停、跳转与调速。" },
     live2dViewer: { title: "Our Notes Live2D 浏览器", description: "按角色与服装浏览 BanG Dream! Our Notes 的全部 Live2D 模型：在浏览器中重现剧情里的待机动作、眨眼、呼吸与物理效果，并可随时切换每一个动作与表情。" },
     storyPlayer: { title: "Our Notes 剧情播放器", description: "在浏览器中按游戏的剧情画面播放 BanG Dream! Our Notes 的剧情：Live2D 角色、舞台、镜头与特效、对话框、音乐、音效与语音，支持日语、英语、中文与韩语。" },
-    chartData: { title: "Our Notes 谱面数据", description: "BanG Dream! Our Notes 全部谱面的得分效率、活动评级所需综合力、速度、等级与时长排行，附散点图、谱面详情与得分模型的定义和推导；数值以游戏反编译为来源。" },
+    chartData: { title: "Our Notes 歌曲meta", description: "BanG Dream! Our Notes 全部谱面的得分效率、活动评级所需综合力、速度、等级与时长排行，附散点图、谱面详情与得分模型的定义和推导；数值以游戏反编译为来源。" },
     assetViewer: {
       title: "Our Notes 游戏资源查看器",
       description: "推开通往幕后创作工坊的沉重木门。在安静落满尘埃的画架与工作台间，探寻每一笔未曾褪色的原画笔触与最初匠心。",

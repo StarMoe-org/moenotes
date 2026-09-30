@@ -8,7 +8,7 @@ export const thTH = {
     date: "วันที่ปล่อย",
     rarity: "ความหายาก",
     ascending: "จากน้อยไปมาก",
-    descending: "จากมากไปน้อย",
+    descending: "จากมากไปน้อย"
   },
   assetBrowser: {
     noLanguages: "ยังไม่มีภาษาของทรัพยากรที่พร้อมใช้งาน",
@@ -36,7 +36,7 @@ export const thTH = {
       audio: "เสียง",
       video: "วิดีโอ",
       text: "ข้อความ",
-      other: "ไฟล์",
+      other: "ไฟล์"
     },
     sorts: { name: "ชื่อ ก–ฮ", nameDescending: "ชื่อ ฮ–ก", size: "ขนาดใหญ่สุดก่อน" },
     title: "ตัวสำรวจแอสเซ็ต",
@@ -103,6 +103,15 @@ export const thTH = {
     copy: "คัดลอกเส้นทาง",
     copied: "คัดลอกเส้นทางแล้ว",
     copyError: "การคัดลอกล้มเหลว โปรดลองอีกครั้ง",
+    folders: "โฟลเดอร์",
+    subfolders: "โฟลเดอร์ย่อย",
+    toggleTree: "สลับมุมมองโครงสร้างไดเรกทอรี",
+    directoryTree: "โครงสร้างไดเรกทอรี",
+    copyBundle: "คัดลอกคีย์บันเดิล",
+    bundleCopied: "คัดลอกคีย์บันเดิลแล้ว",
+    noFilesHere: "ไม่มีไฟล์ในโฟลเดอร์นี้โดยตรง",
+    preview: "ดูตัวอย่าง",
+    openImage: "ดูรูปภาพต้นฉบับ"
   },
   notFound: {
     metaTitle: "ไม่พบหน้าเว็บ",
@@ -110,16 +119,24 @@ export const thTH = {
     description: "ที่อยู่อาจมีการเปลี่ยนแปลง หรือหน้านี้กำลังอยู่ระหว่างการจัดเตรียม กลับสู่หน้าแรกเพื่อสำรวจต่อ",
     note: "หากลิงก์นี้ควรใช้งานได้ โปรดแจ้งให้นักพัฒนาทราบเพื่อช่วยให้เราค้นพบสัญญาณนี้อีกครั้ง",
     home: "กลับหน้าแรก",
-    feedback: "รายงานลิงก์นี้",
+    feedback: "รายงานลิงก์นี้"
   },
   nav: {
     home: "หน้าแรก",
-    groups: { database: "ฐานข้อมูล", story: "เรื่องราว", tools: "เครื่องมือ", community: "เกี่ยวกับ" },
+    groups: {
+      database: "ฐานข้อมูล",
+      music: "เพลง",
+      events: "อีเวนต์",
+      story: "เรื่องราว",
+      tools: "เครื่องมือ",
+      community: "เกี่ยวกับ"
+    },
     items: {
       characters: "ตัวละคร",
       cards: "การ์ด",
       supportCards: "การ์ดซัพพอร์ต",
       music: "เพลง",
+      eventList: "รายการอีเวนต์",
       gacha: "กาชา",
       rewards: "ภารกิจและรางวัล",
       titles: "ฉายา",
@@ -136,7 +153,14 @@ export const thTH = {
       tutorialStory: "เรื่องสอนเล่น",
       assetViewer: "ตัวดูแอสเซ็ต",
       designSystem: "ระบบดีไซน์",
-    },
+      chartPreview: "ตัวอย่างชาร์ตเพลง",
+      live2dViewer: "ตัวดู Live2D",
+      storyPlayer: "เครื่องเล่นเรื่องราว",
+      news: "ประกาศเกม",
+      eventTracker: "ตัวติดตามอีเวนต์",
+      musicRanking: "อันดับเพลง",
+      chartData: "เมตาข้อมูลเพลง"
+    }
   },
   shell: {
     openSidebar: "เปิดแถบด้านข้าง",
@@ -148,21 +172,169 @@ export const thTH = {
     breadcrumbExpandItems: "ขยายหน้าระดับเดียวกัน",
     commandPlaceholder: "ค้นหาหน้าหรือฟีเจอร์...",
     noCommandResults: "ไม่พบผลลัพธ์",
-    shortcuts: "ทางลัด",
+    shortcuts: "ทางลัด"
+  },
+  account: {
+    signIn: "เข้าสู่ระบบ",
+    signOut: "ออกจากระบบ",
+    menu: "เมนูบัญชี",
+    passport: "StarMoe Passport",
+    title: "บัญชีของฉัน",
+    description: "StarMoe Passport ของคุณบน Moenotes",
+    manage: "บัญชีของฉัน",
+    loading: "กำลังโหลดบัญชีของคุณ…",
+    unavailable: "ระบบบัญชีไม่พร้อมใช้งานในขณะนี้ โปรดลองใหม่อีกครั้งในภายหลัง",
+    signedOutHint: "เข้าสู่ระบบด้วย StarMoe Passport เพื่อตั้งค่าโปรไฟล์ของคุณ",
+    changeAvatar: "เปลี่ยนรูปโปรไฟล์",
+    avatarHint: "เลือกตัวละครเพื่อเป็นตัวแทนของคุณบน Moenotes",
+    avatarDefault: "ใช้รูปโปรไฟล์จาก Passport",
+    saving: "กำลังบันทึก…",
+    saveFailed: "บันทึกไม่สำเร็จ โปรดลองใหม่อีกครั้ง",
+    securityTitle: "ความปลอดภัยของ Passport",
+    securityHint: "การตั้งค่าเหล่านี้จัดเก็บไว้ใน StarMoe Passport ของคุณ และมีผลกับทุกเว็บไซต์ของ StarMoe",
+    password: "รหัสผ่าน",
+    passwordHint: "ตั้งหรือเปลี่ยนรหัสผ่านที่คุณใช้เข้าสู่ระบบ",
+    email: "อีเมล",
+    emailHint: "ผูกหรือเปลี่ยนอีเมลสำหรับเข้าสู่ระบบ",
+    securityCenter: "ศูนย์ความปลอดภัย",
+    securityCenterHint: "การยืนยันตัวตนแบบสองขั้นตอน บัญชีที่เชื่อมโยง และอุปกรณ์ที่เข้าสู่ระบบ จะเปิดในแท็บใหม่",
+    change: "เปลี่ยน",
+    open: "เปิด",
+    comingSoonTitle: "จัดทีม Our Notes",
+    comingSoonBadge: "กำลังพัฒนา",
+    comingSoonBody: "ฟังก์ชันจัดทีมกำลังอยู่ระหว่างการพัฒนา โปรดติดตาม!",
+    games: {
+      title: "บัญชีเกม",
+      hint: "บัญชี Our Notes ของคุณ บัญชีที่เพิ่มใหม่จะมีสถานะ \"ยังไม่ยืนยัน\" โปรดใส่รหัสยืนยันลงในชื่อเล่นในเกมชั่วคราวเพื่อยืนยันความเป็นเจ้าของ",
+      loadFailed: "โหลดบัญชีเกมไม่สำเร็จ โปรดรีเฟรชหน้าเว็บ",
+      unavailable: "ฟังก์ชันบัญชีเกมไม่พร้อมใช้งานในขณะนี้ โปรดลองใหม่อีกครั้งในภายหลัง",
+      servers: {
+        tw: "เซิร์ฟเวอร์ไต้หวัน/ฮ่องกง/มาเก๊า",
+        jp: "เซิร์ฟเวอร์ญี่ปุ่น",
+        en: "เซิร์ฟเวอร์โกลบอล (EN)",
+        kr: "เซิร์ฟเวอร์เกาหลี"
+      },
+      add: "เพิ่มบัญชีเกม",
+      addAnother: "เพิ่มบัญชีอื่น",
+      server: "เซิร์ฟเวอร์",
+      profileId: "ID ผู้เล่น",
+      profileIdHint: "ID 11 หลักที่แสดงบนหน้าโปรไฟล์ในเกมของคุณ",
+      profileIdHintJp: "ID ที่แสดงบนหน้าโปรไฟล์ในเกมของคุณ",
+      addButton: "เพิ่ม",
+      checking: "กำลังตรวจสอบ…",
+      verified: "ยืนยันแล้ว",
+      unverified: "ยังไม่ยืนยัน",
+      verifiedMeta: "ID {id} · ยืนยันเมื่อ {date}",
+      unverifiedMeta: "ID {id} · ยังไม่ได้รับการยืนยัน",
+      startVerify: "ไปยืนยัน",
+      hideVerify: "ซ่อน",
+      stepRename: "เปลี่ยนชื่อเล่นในเกมให้มีรหัสยืนยันด้านล่างนี้ โดยยังคงส่วนอื่นของชื่อไว้ได้",
+      stepVerify: "กลับมาที่นี่แล้วกด \"ตรวจสอบ\" ชื่อใหม่อาจใช้เวลาประมาณ 15 วินาทีในการแสดงผล",
+      stepRestore: "เมื่อยืนยันสำเร็จแล้ว คุณสามารถเปลี่ยนชื่อกลับได้ตามต้องการ",
+      codeLabel: "รหัสยืนยัน",
+      copy: "คัดลอก",
+      copied: "คัดลอกแล้ว",
+      refreshCode: "เปลี่ยนรหัสใหม่",
+      refreshHint: "เกมไม่อนุญาตให้ใช้รหัสนี้ในการเปลี่ยนชื่อ (เช่น ติดคำต้องห้าม)? สามารถสุ่มเปลี่ยนรหัสใหม่ได้",
+      codeRefreshed: "เปลี่ยนเป็นรหัสใหม่แล้ว รหัสเดิมจะไม่สามารถใช้ได้อีกต่อไป",
+      verify: "ตรวจสอบ",
+      nameMismatch: "ยังไม่พบรหัส: ชื่อในเกมยังคงเป็น \"{name}\" โปรดรอสักครู่หลังจากเปลี่ยนชื่อแล้วลองใหม่อีกครั้ง",
+      addedNotice: "เพิ่ม {name} แล้ว ใส่รหัสยืนยันลงในชื่อเล่นในเกมเพื่อยืนยันให้เสร็จสมบูรณ์",
+      verifiedNotice: "{name} ได้รับการยืนยันแล้ว ตอนนี้สามารถเปลี่ยนชื่อกลับได้",
+      unnamed: "(ไม่มีชื่อ)",
+      remove: "ลบออก",
+      removeConfirm: "ยืนยันการลบ",
+      keep: "เก็บไว้",
+      errors: {
+        invalidAccount: "ID นี้ไม่ได้อยู่ในเซิร์ฟเวอร์ที่เลือก โปรดตรวจสอบเซิร์ฟเวอร์และ ID",
+        playerNotFound: "ไม่พบผู้เล่นที่มี ID นี้ในเซิร์ฟเวอร์ที่เลือก",
+        alreadyAdded: "คุณได้เพิ่มบัญชีนี้ไปแล้ว",
+        tooManyAccounts: "สามารถเพิ่มบัญชีเกมได้สูงสุด 10 บัญชี",
+        alreadyVerified: "บัญชีนี้ได้รับการยืนยันแล้ว",
+        notFound: "บัญชีนี้ไม่อยู่ในรายการของคุณแล้ว โปรดรีเฟรชหน้าเว็บ",
+        notVerified: "โปรดยืนยันบัญชีนี้ก่อน",
+        tooSoon: "ดำเนินการเร็วเกินไป โปรดรอสักครู่แล้วลองใหม่อีกครั้ง",
+        gameUnavailable: "ไม่สามารถเชื่อมต่อกับเกมได้ในขณะนี้ (อยู่ระหว่างปิดปรับปรุงหรือปัญหาเครือข่าย) โปรดลองใหม่อีกครั้งในภายหลัง",
+        generic: "เกิดข้อผิดพลาดขึ้น โปรดลองใหม่อีกครั้ง"
+      }
+    },
+    profile: {
+      show: "โปรไฟล์",
+      loading: "กำลังโหลดโปรไฟล์…",
+      level: "เลเวล",
+      favorites: "ถูกเพิ่มเป็นรายการโปรด",
+      favoriteCard: "การ์ดโชว์: {title} ({character})",
+      fetchedAt: "อัปเดตโปรไฟล์เมื่อ {time}",
+      refresh: "รีเฟรชโปรไฟล์",
+      public: "หน้าโปรไฟล์สาธารณะ",
+      publicOn: "เปิด: ทุกคนที่มีลิงก์สามารถดูโปรไฟล์นี้ได้",
+      publicOff: "ปิด: มีเพียงคุณเท่านั้นที่เห็นโปรไฟล์นี้",
+      copyLink: "คัดลอกลิงก์",
+      openPage: "เปิด",
+      profileCard: "นามบัตรโปรไฟล์",
+      profileCardNamed: "นามบัตรโปรไฟล์: {name}",
+      profileCardAlt: "นามบัตรโปรไฟล์ของ {name} รูปที่ {index}"
+    },
+    share: {
+      button: "สร้างรูปภาพแชร์",
+      title: "รูปภาพแชร์",
+      rendering: "กำลังสร้างรูปภาพ…",
+      failed: "สร้างรูปภาพไม่สำเร็จ โปรดลองใหม่อีกครั้ง",
+      retry: "ลองใหม่",
+      hint: "สร้างรูปภาพในเบราว์เซอร์ของคุณ ไม่มีการอัปโหลดไฟล์ใดๆ",
+      alt: "รูปภาพแชร์ของ {name}",
+      download: "ดาวน์โหลด",
+      copy: "คัดลอกรูปภาพ",
+      copied: "คัดลอกแล้ว",
+      share: "แชร์"
+    }
+  },
+  player: {
+    title: "โปรไฟล์ผู้เล่น",
+    description: "หน้าโปรไฟล์สาธารณะของผู้เล่น Our Notes ที่ได้รับการยืนยันด้วย StarMoe Passport",
+    documentTitle: "{name}",
+    loading: "กำลังโหลดโปรไฟล์ผู้เล่น…",
+    invalid: "ลิงก์นี้ไม่ใช่ที่อยู่โปรไฟล์ผู้เล่นที่ถูกต้อง",
+    notFound: "ไม่มีโปรไฟล์นี้ หรือเจ้าของยังไม่ได้เปิดเป็นสาธารณะ",
+    unavailable: "ไม่สามารถโหลดโปรไฟล์นี้ได้ในขณะนี้ โปรดลองใหม่อีกครั้งในภายหลัง",
+    verified: "ยืนยันด้วย StarMoe Passport แล้ว",
+    cta: "คุณเล่น Our Notes ด้วยใช่ไหม? ผูกบัญชีของคุณใน \"บัญชีของฉัน\" แล้วเปิดโปรไฟล์ของคุณเป็นสาธารณะได้เลย",
+    ctaButton: "ผูกบัญชีของฉัน"
   },
   settings: {
     title: "การตั้งค่า",
     language: "ภาษา / Language",
     machineTranslationNotice: "บางภาษาใช้การแปลด้วยเครื่อง อาจมีจุดที่ไม่ถูกต้อง",
     colorScheme: "ธีม",
+    gameServer: "เซิร์ฟเวอร์เกมเริ่มต้น",
+    gameServerAuto: "อัตโนมัติ ({server})",
     options: { system: "ระบบ", light: "สว่าง", dark: "มืด" },
+    tabs: { label: "หมวดหมู่การตั้งค่า", general: "ทั่วไป", data: "ข้อมูล" },
+    data: {
+      cacheTitle: "แคชดาวน์โหลด",
+      total: "แคชแล้ว",
+      fileCount: "{count} ไฟล์",
+      categories: { live2d: "โมเดล Live2D", images: "รูปภาพ", audio: "เสียง", chart: "ชาร์ต 3D", data: "ข้อมูล" },
+      categoryHints: {
+        live2d: "ตัวละครในตัวดู Live2D และเนื้อเรื่อง",
+        images: "รูปภาพบนหน้าเว็บ รวมถึงพื้นหลังและภาพประกอบของเนื้อเรื่อง",
+        audio: "เสียงพากย์ เพลงประกอบ และเอฟเฟกต์เสียงของเนื้อเรื่อง รวมถึงเสียงบนหน้าเว็บ",
+        chart: "เพลง เวที และเอฟเฟกต์ของตัวอย่างชาร์ต 3D",
+        data: "ฟอนต์ อินเทอร์เฟซ และบทละครของเนื้อเรื่อง รวมถึงข้อมูลเกมที่หน้าเว็บเรียกใช้"
+      },
+      calculating: "กำลังคำนวณ…",
+      clear: "ล้าง",
+      clearAll: "ล้างข้อมูลแคชทั้งหมด",
+      clearing: "กำลังล้าง…",
+      unavailable: "เบราว์เซอร์นี้ไม่อนุญาตให้เว็บไซต์จัดเก็บไฟล์ (โหมดไม่ระบุตัวตนอาจบล็อกไว้) ไฟล์จึงจะถูกดาวน์โหลดใหม่ทุกครั้ง"
+    }
   },
   actions: {
     close: "ปิด",
     clearCache: "Clear cache",
     refresh: "Refresh",
     open: "Open",
-    viewGroup: "View group",
+    viewGroup: "View group"
   },
   home: {
     heading: "ฐานข้อมูล BanG Dream! Our Notes",
@@ -180,7 +352,7 @@ export const thTH = {
       live: "อีเวนต์บทเพลง",
       mission: "ภารกิจจำกัดเวลา",
       loginBonus: "โบนัสล็อกอิน",
-      seasonPass: "พาสฤดูกาล",
+      seasonPass: "พาสฤดูกาล"
     },
     viewGacha: "ดูรายละเอียดกาชา",
     viewMusic: "ดูบทเพลง",
@@ -212,13 +384,13 @@ export const thTH = {
       items: "ไอเท็ม",
       itemsDesc: "View detailed information on all in-game items, consumables, and materials.",
       assetViewer: "ตัวดูแอสเซ็ต",
-      assetViewerDesc: "Browse, search, and preview static assets (images, audio, JSON) stored in the project's asset bucket.",
-    },
+      assetViewerDesc: "Browse, search, and preview static assets (images, audio, JSON) stored in the project's asset bucket."
+    }
   },
   page: {
     groupIntro: "Pages in this group are derived from one route registry, keeping sidebar, breadcrumbs, command palette, and SEO in sync.",
     placeholderTitle: "Page foundation is ready",
-    placeholderDescription: "Once the real Our Notes data shape is known, business components can be attached without rebuilding the foundation.",
+    placeholderDescription: "Once the real Our Notes data shape is known, business components can be attached without rebuilding the foundation."
   },
   cards: {
     searchPlaceholder: "Search titles, characters, or bands...",
@@ -273,17 +445,11 @@ export const thTH = {
       copyStates: {
         image: "Image copied. You can paste it now.",
         link: "Image copying is unavailable, so the asset URL was copied instead.",
-        error: "Copy failed. Use Open Original instead.",
-      },
+        error: "Copy failed. Use Open Original instead."
+      }
     },
     rarities: { "2": "R", "3": "SR", "4": "SSR", "10": "พิเศษ" },
-    attributes: {
-      "1": "Red",
-      "2": "Blue",
-      "3": "Green",
-      "4": "Yellow",
-      "5": "Purple",
-    },
+    attributes: { "1": "Red", "2": "Blue", "3": "Green", "4": "Yellow", "5": "Purple" },
     growth: {
       level: "เลเวล",
       levelValue: "Lv.{level} / {limit}",
@@ -294,8 +460,8 @@ export const thTH = {
       awaken: "ปลุกพลัง",
       power: "พลังรวม",
       skillLevel: "เลเวลสกิล",
-      leaderSkillHint: "เลเวลสกิลหัวหน้าผูกกับจำนวนการปลุกพลัง การปรับจะเปลี่ยนการปลุกพลังด้วย",
-    },
+      leaderSkillHint: "เลเวลสกิลหัวหน้าผูกกับจำนวนการปลุกพลัง การปรับจะเปลี่ยนการปลุกพลังด้วย"
+    }
   },
   supportCards: {
     searchPlaceholder: "Search titles, characters...",
@@ -316,8 +482,55 @@ export const thTH = {
     diaryTitle: "Diary",
     growth: {
       limitBreak: "ปลดลิมิต",
-      skillLevelHint: "เมื่อปลดลิมิต ความตั้งใจและสกิลที่หลับใหลอยู่ในการ์ดจะเบ่งบานยิ่งขึ้น",
-    },
+      skillLevelHint: "เมื่อปลดลิมิต ความตั้งใจและสกิลที่หลับใหลอยู่ในการ์ดจะเบ่งบานยิ่งขึ้น"
+    }
+  },
+  events: {
+    filterTitle: "กรองอีเวนต์",
+    searchPlaceholder: "ค้นหาอีเวนต์ ตัวละคร หรือเพลง...",
+    status: "สถานะ",
+    band: "วงโบนัส",
+    openDetail: "ดูอีเวนต์: {name}",
+    emptyTitle: "ไม่พบอีเวนต์ที่ตรงกัน",
+    emptyDescription: "ไม่มีอีเวนต์ที่ตรงตามตัวกรองปัจจุบัน ล้างตัวกรองเพื่อดูอีเวนต์ทั้งหมดที่กำลังดำเนินอยู่และที่ผ่านมา",
+    reset: "แสดงทั้งหมด",
+    noneOnServer: "{server} ยังไม่มีการจัดอีเวนต์ใดๆ ในขณะนี้",
+    showServer: "ดู {server}",
+    period: "ระยะเวลากิจกรรม",
+    displayUntil: "หน้าอีเวนต์เปิดถึง",
+    eventId: "ID อีเวนต์",
+    eventItem: "ไอเท็มอีเวนต์",
+    song: "เพลงอีเวนต์",
+    rankings: "อันดับ",
+    rankingKinds: { score: "อันดับคะแนน", music: "อันดับเพลง", totalMusic: "อันดับเพลงรวม" },
+    rankingOff: "ไม่มี",
+    cards: "การ์ดอีเวนต์",
+    bonus: "โบนัสอีเวนต์",
+    bonusRank: "Rank {rank}",
+    bonusRankLabel: "Rank การ์ด",
+    bonusNote: "Rank คือจำนวนครั้งการปลุกพลังของการ์ดสมาชิก หรือจำนวนครั้งการปลดลิมิตของการ์ดซัพพอร์ต โบนัสจะทับซ้อนกัน: หากการ์ดตรงตามเงื่อนไขหลายข้อ ค่าโบนัสทั้งหมดจะรวมเข้าด้วยกัน",
+    bonusCardKinds: { member: "การ์ดสมาชิก", support: "การ์ดซัพพอร์ต" },
+    bonusTarget: "เงื่อนไข",
+    bonusParameter: "ค่าสถานะ",
+    bonusEventItem: "ไอเท็มอีเวนต์",
+    bonusValue: "+{value}%",
+    bonusTargets: { attribute: "การ์ดคุณสมบัติ {name}", tag: "แท็ก #{id}", any: "การ์ดทั้งหมด" },
+    story: "เรื่องอีเวนต์",
+    storyUnlock: "ปลดล็อกที่ {count} pt",
+    pointRewards: "รางวัลแต้มอีเวนต์",
+    points: "{count} pt",
+    loopReward: "หลังจาก {from} pt จะได้รับทุกๆ {every} pt",
+    liveRewards: "รางวัลไลฟ์",
+    liveNote: "แต้มและไอเท็มที่ได้รับต่อหนึ่งไลฟ์ตามแต่ละระดับคะแนน (Score Rank)",
+    liveKinds: { live: "ไลฟ์", challenge: "ชาเลนจ์ไลฟ์" },
+    scoreRank: "ระดับคะแนน (Score Rank)",
+    livePoints: "pt",
+    liveItems: "ไอเท็ม",
+    probability: "โอกาส {rate}%",
+    bannerAlt: "แบนเนอร์ {name}",
+    backToList: "กลับสู่รายการอีเวนต์",
+    notFoundTitle: "ไม่พบบันทึกอีเวนต์นี้",
+    notFoundDescription: "อีเวนต์นี้อาจปิดฉากลงไปนานแล้ว หรือยังไม่ถึงเวลาเปิดม่านการแสดง กลับสู่รายการอีเวนต์เพื่อค้นหาเวทีอื่น"
   },
   gacha: {
     searchPlaceholder: "ค้นหาชื่อกาชา ตัวละคร Pick Up หรือชื่อการ์ด...",
@@ -362,8 +575,8 @@ export const thTH = {
       pickups: "Pick Up {count}",
       idle: "แตะสุ่มเดี่ยวหรือสุ่ม 10 ครั้งเพื่อพบกับแสงดาวในใจคุณ บันทึกจะคงอยู่เฉพาะในหน้านี้เท่านั้น",
       guarantee: "การสุ่ม {count} ครั้งสุดท้ายของการสุ่ม 10 ครั้ง การันตี {rarity} ขึ้นไป",
-      note: "ทุกการสัมผัสจากปลายนิ้วคือปาฏิหาริย์เล็กๆ จากแสงดาวและความน่าจะเป็น เพื่อความบันเทิงเท่านั้น ขอให้คำอธิษฐานของคุณเป็นจริง!",
-    },
+      note: "ทุกการสัมผัสจากปลายนิ้วคือปาฏิหาริย์เล็กๆ จากแสงดาวและความน่าจะเป็น เพื่อความบันเทิงเท่านั้น ขอให้คำอธิษฐานของคุณเป็นจริง!"
+    }
   },
   schedule: {
     ongoing: "กำลังดำเนินอยู่",
@@ -376,7 +589,7 @@ export const thTH = {
     startsInHours: "เริ่มในอีก {count} ชั่วโมง",
     range: "{start} – {end}",
     from: "ตั้งแต่ {start}",
-    until: "ถึง {end}",
+    until: "ถึง {end}"
   },
   rewards: {
     searchPlaceholder: "ค้นหาชื่อหรือของรางวัล...",
@@ -423,10 +636,10 @@ export const thTH = {
       stamp: "สติกเกอร์",
       degree: "ฉายา",
       spot: "จุดหน้าหลัก",
-      other: "อื่นๆ",
+      other: "อื่นๆ"
     },
     unknownReward: "{kind} #{id}",
-    count: "×{count}",
+    count: "×{count}"
   },
   titles: {
     searchPlaceholder: "ค้นหาชื่อฉายา ตัวละคร หรือเงื่อนไขการปลดล็อก...",
@@ -437,7 +650,7 @@ export const thTH = {
     openPreview: "ดูฉายา: {name}",
     emptyTitle: "ไม่พบฉายาที่ตรงกัน",
     emptyDescription: "ไม่พบตราสัญลักษณ์หรือคำสาบานที่ตรงกับตัวกรอง รีเซ็ตเพื่อชมเกียรติยศทั้งหมดที่มอบให้กับเหล่าเด็กสาว",
-    reset: "แสดงฉายาทั้งหมด",
+    reset: "แสดงฉายาทั้งหมด"
   },
   backgrounds: {
     searchPlaceholder: "ค้นหาพื้นหลัง...",
@@ -448,7 +661,195 @@ export const thTH = {
     openOriginal: "เปิดภาพต้นฉบับ",
     emptyTitle: "ไม่พบทิวทัศน์ที่ตรงกัน",
     emptyDescription: "ท้องฟ้านี้ยังไม่สะท้อนทิวทัศน์ที่เข้ากัน รีเซ็ตตัวกรองเพื่อเดินเล่นผ่านเวทีและมุมถนนที่เปี่ยมด้วยความทรงจำเพิ่มเติม",
-    reset: "แสดงพื้นหลังทั้งหมด",
+    reset: "แสดงพื้นหลังทั้งหมด"
+  },
+  chartPreview3d: {
+    credit: "emptysekai by StarMoe",
+    stageLabel: "มุมมองชาร์ต 3D",
+    difficulty: "ระดับความยาก",
+    chooseSong: "เลือกเพลง",
+    changeSong: "เปลี่ยนเพลง",
+    preparing: "กำลังจัดเตรียมเวที…",
+    loading: "กำลังโหลดชาร์ตเพลง…",
+    emptyTitle: "เลือกเพลงเพื่อจุดประกายแสงไฟบนเวที",
+    emptyDescription: "เปิดตัวเลือกเพลง กรองรายชื่อและเลือกระดับความยาก เพื่อจำลองการเล่นอัตโนมัติของเกมในรูปแบบ 3D ได้ที่นี่",
+    fullscreen: "เต็มจอ",
+    exitFullscreen: "ออกจากโหมดเต็มจอ",
+    lock: "ล็อกหน้าจอ",
+    unlock: "ปลดล็อก",
+    loadErrorTitle: "เวทีไม่สามารถสว่างขึ้นได้",
+    loadErrorDescription: "ข้อมูลชาร์ตเพลงมาไม่ถึง อาจเกิดจากเครือข่ายขัดข้องหรือเว็บไซต์ชาร์ตไม่พร้อมใช้งานชั่วคราว โปรดลองใหม่อีกครั้งในภายหลัง",
+    missingDescription: "ชาร์ตนี้ยังไม่มีข้อมูล 3D ลองเลือกเพลงหรือระดับความยากอื่นดูนะ",
+    retry: "โหลดใหม่",
+    unsupportedTitle: "เบราว์เซอร์นี้ไม่รองรับการแสดงผลชาร์ต 3D",
+    unsupportedDescription: "ตัวแสดงตัวอย่างชาร์ตจำเป็นต้องใช้ WebGL2 และ WebAudio โปรดใช้เบราว์เซอร์สำหรับเดสก์ท็อปหรือมือถือเวอร์ชันล่าสุด"
+  },
+  storyPlayer: {
+    stageLabel: "หน้าจอเนื้อเรื่อง",
+    preparing: "กำลังเตรียมเครื่องเล่นเรื่องราว…",
+    loading: "กำลังโหลดเนื้อเรื่อง…",
+    retry: "ลองใหม่",
+    fullscreen: "เต็มจอ",
+    exitFullscreen: "ออกจากโหมดเต็มจอ",
+    errorTitle: "ไม่สามารถเล่นเนื้อเรื่องนี้ได้",
+    errorDescription: "ข้อมูลเนื้อเรื่องหรือ Live2D Cubism Core ไม่สามารถโหลดได้ หรือเครื่องเล่นหยุดทำงาน อาจเกิดจากปัญหาเครือข่ายหรือเซิร์ฟเวอร์เนื้อเรื่องไม่พร้อมใช้งาน โปรดลองใหม่อีกครั้งในภายหลัง",
+    unsupportedTitle: "เบราว์เซอร์นี้ไม่สามารถเล่นเนื้อเรื่องได้",
+    unsupportedDescription: "เครื่องเล่นเรื่องราวจำเป็นต้องใช้ WebGL2 โปรดใช้เบราว์เซอร์บนเดสก์ท็อปหรือมือถือเวอร์ชันล่าสุด",
+    refusedTitle: "เนื้อเรื่องนี้ยังไม่สามารถเล่นได้ในขณะนี้",
+    refusedDescription: "เนื้อเรื่องนี้ใช้คุณสมบัติของหน้าจอเกมที่เครื่องเล่นยังไม่รองรับ เพื่อหลีกเลี่ยงการแสดงผลที่ผิดพลาด เครื่องเล่นจึงไม่เปิดเล่น คุณยังคงสามารถอ่านข้อความบทสนทนาได้ที่หน้าเนื้อเรื่อง",
+    language: "ภาษา",
+    languages: { ja: "日本語", en: "English", "zh-Hant": "繁體中文", "zh-Hans": "简体中文", ko: "한국어" },
+    previous: "ตอนก่อนหน้า",
+    next: "ตอนถัดไป",
+    readText: "อ่านบทสนทนา",
+    noMotionSync: "เว็บไซต์นี้ไม่รองรับการซิงค์ขยับปากตามเสียง (Live2D MotionSync): ตัวละครที่ใช้ฟังก์ชันนี้จะไม่อ้าปากขณะพูด",
+    motionSyncLicense: "การซิงค์ขยับปากตามเสียงใช้ Live2D Cubism MotionSync Core © Live2D Inc. โดยเว็บไซต์นี้ให้บริการตามข้อตกลงใบอนุญาตของ Live2D โดยไม่มีการดัดแปลง ฟังก์ชันนี้ไม่ได้เป็นส่วนหนึ่งของโอเพนซอร์สโค้ดของเว็บไซต์ ไม่อนุญาตให้ทำซ้ำเพื่อวัตถุประสงค์อื่นหรือทำวิศวกรรมย้อนกลับ",
+    motionSyncLicenseLink: "ข้อตกลงใบอนุญาตซอฟต์แวร์กรรมสิทธิ์ Live2D",
+    noMatches: "ไม่พบเนื้อเรื่องที่ตรงตามตัวกรอง",
+    notice: "เนื้อเรื่องเล่นในเบราว์เซอร์โดยอิงจากข้อมูลของตัวเกม ภาพที่แสดงอาจไม่ใช่คุณภาพสุดท้ายของเกม แต่ละตอนต้องดาวน์โหลดข้อมูลตั้งแต่หลายสิบถึงหลายร้อย MB โปรดระวังปริมาณการใช้อินเทอร์เน็ตบนมือถือ",
+    listLoading: "กำลังโหลดรายการเนื้อเรื่อง…",
+    listError: "โหลดรายการเนื้อเรื่องไม่สำเร็จ",
+    listEmpty: "ยังไม่มีการเผยแพร่เนื้อเรื่องใดๆ",
+    emptyTitle: "เลือกเนื้อเรื่อง",
+    emptyDescription: "เลือกตอนจากรายการเนื้อเรื่องเพื่อเริ่มรับชม",
+    chooseStory: "เลือกเนื้อเรื่อง",
+    sections: "ประเภทเนื้อเรื่อง",
+    playing: "กำลังเล่น",
+    searchPlaceholder: "ค้นหาชื่อตอน บท ตัวละคร หรือ ADV ID…",
+    categoryTitle: "ประเภท",
+    otherEpisodes: "ตอนอื่นๆ",
+    openInPlayer: "เล่นด้วย Live2D",
+    controls: {
+      play: "เล่น",
+      pause: "หยุดชั่วคราว",
+      next: "บทถัดไป",
+      auto: "อัตโนมัติ",
+      fastForward: "กรอไปข้างหน้า",
+      skip: "ข้าม",
+      skipConfirm: "ต้องการข้ามเนื้อเรื่องที่เหลือของตอนนี้หรือไม่?",
+      cancel: "ยกเลิก",
+      settings: "ตั้งค่า",
+      position: "ตำแหน่งการเล่น",
+      video: "ตำแหน่งวิดีโอ",
+      start: "เริ่มเล่น",
+      replay: "เล่นใหม่อีกครั้ง",
+      ended: "ตอนนี้จบลงแล้ว",
+      nextEpisode: "ตอนถัดไป",
+      show: "แสดงแถบควบคุม",
+      speed: "ความเร็วกรอไปข้างหน้า",
+      speedHint: "เมื่อความเร็วสูงกว่า ×1 จะเปิดโหมด「อัตโนมัติ」ทันที และเมื่อปิดโหมด「อัตโนมัติ」จะกลับเป็น ×1"
+    },
+    volume: {
+      title: "ระดับเสียง",
+      Bgm: "ดนตรีประกอบ",
+      Se: "เอฟเฟกต์เสียง",
+      Voice: "เสียงพากย์",
+      Movie: "วิดีโอ",
+      mute: "ปิดเสียง {name}",
+      unmute: "เปิดเสียง {name}"
+    },
+    info: {
+      title: "วิธีใช้งาน",
+      controls: "การควบคุม",
+      shortcuts: "ปุ่มลัดแป้นพิมพ์",
+      about: "เกี่ยวกับเครื่องเล่นเรื่องราว",
+      legend: {
+        play: {
+          name: "เล่น / หยุดชั่วคราว",
+          description: "เมื่อหยุดชั่วคราว ภาพ เสียง และวิดีโอจะหยุดพร้อมกันทั้งหมด"
+        },
+        next: { name: "บทถัดไป", description: "มีผลเหมือนกับการคลิกที่หน้าจอเนื้อเรื่อง" },
+        auto: { name: "อัตโนมัติ", description: "เล่นบทสนทนาถัดไปโดยอัตโนมัติเมื่อบทพูดปัจจุบันจบลง" },
+        fastForward: { name: "กรอไปข้างหน้า", description: "สลับความเร็ววนตามลำดับ ×1 → ×1.5 → ×1.7 → ×2" },
+        skip: { name: "ข้าม", description: "ข้ามเนื้อเรื่องที่เหลือของตอนนี้หลังจากยืนยัน" },
+        settings: {
+          name: "ตั้งค่า",
+          description: "ปรับระดับเสียงดนตรีประกอบ เอฟเฟกต์ เสียงพากย์ วิดีโอ และความเร็วกรอไปข้างหน้า"
+        },
+        fullscreen: { name: "เต็มจอ", description: "ขยายหน้าจอเนื้อเรื่องให้เต็มจอ" }
+      }
+    },
+    credit: "Live2D Cubism Core / MotionSync Core © Live2D Inc. · emptysekai by StarMoe"
+  },
+  live2d: {
+    stageLabel: "เวที Live2D",
+    preparing: "กำลังเตรียมสภาพแวดล้อมรันไทม์ Live2D…",
+    loading: "กำลังโหลดโมเดล…",
+    loadErrorTitle: "ไม่สามารถแสดงโมเดลได้",
+    loadErrorDescription: "ข้อมูลโมเดลหรือ Live2D Cubism Core ไม่สามารถโหลดได้ อาจเกิดจากปัญหาเครือข่ายหรือเซิร์ฟเวอร์โมเดลไม่พร้อมใช้งานชั่วคราว โปรดลองใหม่อีกครั้งในภายหลัง",
+    retry: "ลองใหม่",
+    unsupportedTitle: "เบราว์เซอร์นี้ไม่สามารถแสดงโมเดล Live2D ได้",
+    unsupportedDescription: "ตัวดู Live2D จำเป็นต้องใช้ WebGL2 โปรดใช้เบราว์เซอร์สำหรับเดสก์ท็อปหรือมือถือเวอร์ชันล่าสุด",
+    fullscreen: "เต็มจอ",
+    exitFullscreen: "ออกจากโหมดเต็มจอ",
+    zoomIn: "ซูมเข้า",
+    zoomOut: "ซูมออก",
+    zoomReset: "รีเซ็ตการซูม",
+    filterTitle: "กรองโมเดล",
+    searchPlaceholder: "ค้นหาตัวละคร ชุด หรือ ID โมเดล…",
+    kindTitle: "ประเภท",
+    showLowQuality: "แสดงเวอร์ชันคุณภาพต่ำ",
+    sideCharacters: "ตัวละครอื่นๆ",
+    chooseCharacter: "เลือกตัวละคร",
+    costumes: "ชุดคอสตูม",
+    listLoading: "กำลังโหลดรายการโมเดล…",
+    listError: "โหลดรายการโมเดลไม่สำเร็จ",
+    listEmpty: "ยังไม่มีการเผยแพร่โมเดล Live2D ใดๆ",
+    emptyTitle: "เลือกตัวละคร",
+    emptyDescription: "เปิดตัวกรองเพื่อเลือกตัวละครตามวง โดยชุด ท่าทาง และสีหน้าสามารถเปลี่ยนได้ในแผงข้างโมเดล",
+    credit: "Live2D Cubism Core © Live2D Inc. · emptysekai by StarMoe",
+    noticeTitle: "เกี่ยวกับข้อมูลโมเดล",
+    notice: "moenotes มุ่งมั่นที่จะจำลองเนื้อหาตามแพ็กเกจข้อมูลของเกมอย่างเที่ยงตรง: ทุกโมเดล ท่าทาง และสีหน้าที่นี่มาจากตัวเกมโดยตรง และการแสดงผลบนเว็บไม่ได้สะท้อนถึงคุณภาพขั้นสุดท้ายของเกม เราไม่มีฟังก์ชันสำหรับแก้ไขพารามิเตอร์ของโมเดลตามใจชอบ เนื่องจากโมเดลที่ปรับแต่งพารามิเตอร์อาจบิดเบี้ยวและไม่ตรงกับความเป็นจริงในเกม จึงขอความกรุณาอย่านำไปเผยแพร่ในฐานะเนื้อหาทางการ",
+    controls: "การควบคุมโมเดล",
+    controlsWaiting: "แผงควบคุมจะพร้อมใช้งานเมื่อโมเดลโหลดเสร็จสิ้น",
+    motions: "ท่าทาง",
+    expressions: "สีหน้า",
+    noExpressions: "โมเดลนี้ไม่มีการแสดงสีหน้า",
+    loop: "เล่นท่าทางวนซ้ำ",
+    options: "ตัวเลือก",
+    physics: "ระบบฟิสิกส์",
+    breath: "การหายใจ",
+    pause: "หยุดชั่วคราว",
+    resume: "เล่นต่อ",
+    reset: "กลับสู่ท่ายืนปกติ",
+    lowQuality: "คุณภาพต่ำ",
+    costumeDefault: "ค่าเริ่มต้น",
+    kind: { story: "เนื้อเรื่อง", live: "ไลฟ์", side: "ตัวละครสมทบ" },
+    costume: {
+      casual: "ชุดลำลอง",
+      spring: "ฤดูใบไม้ผลิ",
+      summer: "ฤดูร้อน",
+      winter: "ฤดูหนาว",
+      school: "ชุดนักเรียน",
+      hs: "มัธยมปลาย",
+      jhs: "มัธยมต้น",
+      grade1: "ปี 1",
+      grade2: "ปี 2",
+      grade3: "ปี 3",
+      live: "ชุดการแสดงไลฟ์",
+      roomwear: "ชุดอยู่บ้าน",
+      arbeit: "ชุดทำงานพิเศษ",
+      livehouse: "Live House",
+      ring: "RiNG",
+      caretaker: "ผู้ดูแล",
+      child: "วัยเด็ก",
+      detective: "นักสืบ",
+      idol: "ไอดอล",
+      virtual: "ร่างเสมือน",
+      soundonly: "เสียงเท่านั้น",
+      suits: "ชุดสูท",
+      sweat: "ชุดวอร์ม",
+      maid: "ชุดเมด",
+      still: "ภาพนิ่ง",
+      mask: "หน้ากาก",
+      silhouette: "เงาร่าง",
+      glasses: "แว่นตา",
+      noseGlasses: "แว่นตาตลก",
+      sunglasses: "แว่นกันแดด",
+      hat: "หมวก",
+      hairdown: "ปล่อยผม",
+      twintails: "ทวินเทล"
+    }
   },
   music: {
     audio: {
@@ -460,10 +861,18 @@ export const thTH = {
       seek: "ตำแหน่งการเล่น",
       download: "ดาวน์โหลด {kind}",
       unavailableTitle: "ท่วงทำนองยังอยู่ระหว่างการประพันธ์",
-      unavailableDescription: "ตัวโน้ตยังคงโลดแล่นอยู่บนท้องฟ้ายามค่ำคืน เมื่อรวบรวมเสร็จแล้ว ท่วงทำนองอันน่าประทับใจนี้จะตื่นขึ้นที่นี่",
+      unavailableDescription: "ตัวโน้ตยังคงโลดแล่นอยู่บนท้องฟ้ายามค่ำคืน เมื่อรวบรวมเสร็จแล้ว ท่วงทำนองอันน่าประทับใจนี้จะตื่นขึ้นที่นี่"
     },
     searchPlaceholder: "Search titles, authors, bands, or singers...",
     filterTitle: "Filter Music",
+    filters: {
+      bandOther: "อื่นๆ",
+      difficulty: "ระดับความยาก",
+      level: "เลเวล",
+      levelMin: "เลเวลต่ำสุด",
+      levelMax: "เลเวลสูงสุด",
+      levelRange: "Lv {min}–{max}"
+    },
     results: "{count} songs",
     loading: "Loading music data...",
     loadErrorTitle: "Music data is unavailable",
@@ -478,8 +887,42 @@ export const thTH = {
     backToList: "Back to music catalog",
     songInfoTitle: "Song Details",
     difficultiesTitle: "Difficulty Charts",
+    ranking: {
+      title: "อันดับคะแนนสูงสุด",
+      loading: "กำลังดึงข้อมูลอันดับจากเกม…",
+      updatedAgo: "อัปเดตเมื่อ {time}",
+      level: "Lv.{level}",
+      refreshing: "กำลังรีเฟรชในพื้นหลัง",
+      empty: "ยังไม่มีผู้เล่นทำคะแนนบนเซิร์ฟเวอร์นี้",
+      retry: "ลองใหม่",
+      showAll: "แสดงทั้งหมด {count} อันดับ",
+      showLess: "แสดงเฉพาะ 20 อันดับแรก",
+      tied: "คะแนนเท่ากัน",
+      power: "พลังวง {power}",
+      columns: { rank: "#", player: "ผู้เล่น", score: "คะแนน", deck: "ทีม" },
+      errors: {
+        pending: "กำลังดึงข้อมูลอันดับ",
+        pendingHint: "คำขอนี้ต่อคิวอยู่ด้านหลังเพลงอื่นในเซิร์ฟเวอร์ โปรดลองใหม่อีกครั้งในอีกสักครู่",
+        upstream: "ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์เกมได้ในขณะนี้",
+        upstreamHint: "เซิร์ฟเวอร์เกมอาจอยู่ระหว่างปิดปรับปรุง อันดับจะกลับมาแสดงเมื่อเกมเปิดให้บริการตามปกติ",
+        failed: "โหลดอันดับไม่สำเร็จ",
+        failedHint: "โปรดตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่อีกครั้ง"
+      }
+    },
     difficultyLevels: { easy: "EASY", normal: "NORMAL", hard: "HARD", expert: "EXPERT" },
     notesCount: "Notes: {count}",
+    preview2d: "พรีวิว 2D",
+    preview2dLabel: "ดูตัวอย่างชาร์ต {difficulty} ในแบบ 2D",
+    preview3d: "พรีวิว 3D",
+    preview3dLabel: "ดูตัวอย่างชาร์ต {difficulty} ในแบบ 3D",
+    picker: {
+      title: "เลือกเพลง",
+      songHint: "คลิกที่ภาพปกเพื่อเลือกเพลงนี้",
+      hint: "คลิกที่ระดับความยากเพื่อเลือกชาร์ตนั้น หรือคลิกที่ภาพปกเพื่อใช้ระดับความยากปัจจุบัน",
+      pickSong: "เลือก «{title}»",
+      pickDifficulty: "เลือก «{title}» {difficulty}",
+      listLabel: "รายการเพลง"
+    },
     composer: "Composer",
     lyricist: "Lyricist",
     arranger: "Arranger",
@@ -492,8 +935,37 @@ export const thTH = {
       description: "View and preview the high-resolution song album jacket.",
       jacket: "Album Jacket",
       jacketDesc: "Song album jacket image (Image/Jacket)",
-      previewFull: "Preview album jacket",
+      previewFull: "Preview album jacket"
     },
+    chartPreview: {
+      title: "ตัวอย่างชาร์ตเพลง",
+      difficultyLabel: "ระดับความยาก",
+      themeLabel: "โทนสีชาร์ต",
+      themes: { white: "สว่าง", black: "มืด" },
+      draw: "สร้างชาร์ต",
+      idleHint: "วาดชาร์ตโน้ตเต็มรูปแบบของระดับความยากที่เลือก แต่ละคอลัมน์อ่านจากล่างขึ้นบนและซ้ายไปขวา การสร้างครั้งแรกจะดาวน์โหลดตัวเรนเดอร์หนึ่งครั้ง จากนั้นจะทำงานในเบราว์เซอร์ของคุณโดยตรง",
+      fetching: "กำลังดึงข้อมูลชาร์ตเพลง…",
+      fetchingHint: "กำลังดึงไฟล์โน้ตและภาพปกจากเซิร์ฟเวอร์แอสเซ็ต",
+      rendering: "กำลังวาดชาร์ตเพลง…",
+      renderingHint: "ตัวเรนเดอร์กำลังจัดวางโน้ตแต่ละตัวบนอุปกรณ์นี้ ชาร์ตที่ยาวอาจใช้เวลาสักครู่",
+      openViewer: "ดูขนาดเต็ม",
+      download: "ดาวน์โหลด PNG",
+      imageAlt: "แผ่นชาร์ต {title} {difficulty}",
+      missingTitle: "ชาร์ตนี้ยังไม่ได้เผยแพร่",
+      missingDescription: "ไฟล์โน้ตสำหรับระดับความยากนี้ยังมาไม่ถึงเซิร์ฟเวอร์แอสเซ็ต โปรดลองระดับความยากอื่น หรือกลับมาใหม่หลังจากการอัปเดตแอสเซ็ตครั้งถัดไป",
+      failedTitle: "วาดชาร์ตเพลงไม่สำเร็จ",
+      failedDescription: "เกิดข้อผิดพลาดขณะดึงข้อมูลหรือวาดชาร์ตนี้ โปรดลองใหม่อีกครั้ง หากยังคงล้มเหลว ให้ลองเปลี่ยนระดับความยากหรือเบราว์เซอร์",
+      unsupportedTitle: "เบราว์เซอร์นี้ไม่สามารถวาดชาร์ตเพลงได้",
+      unsupportedDescription: "การดูตัวอย่างชาร์ตจำเป็นต้องใช้ WebAssembly และ Module Worker โปรดเปิดหน้านี้ใน Chrome, Edge, Firefox หรือ Safari เวอร์ชันล่าสุด",
+      retry: "ลองใหม่",
+      viewerHint: "ลากเพื่อเลื่อน · เลื่อนเมาส์หรือบีบนิ้วเพื่อซูม · ดับเบิลคลิกเพื่อซูมเข้า · สามารถใช้ปุ่มลูกศร, +/- และ 0 ได้",
+      zoomIn: "ซูมเข้า",
+      zoomOut: "ซูมออก",
+      fit: "พอดีหน้าจอ",
+      credit: "แผ่นชาร์ตเพลงถูกเรนเดอร์ในเบราว์เซอร์ของคุณโดยตัวเรนเดอร์ชาร์ตของ moenotes (WebAssembly) ภาพที่เห็นเป็นการแสดงตัวอย่างที่อยู่ระหว่างการพัฒนา ไม่ใช่ภาพจริงในเกม",
+      sourceLink: "ซอร์สโค้ดและสัญญาอนุญาต",
+      sheetCredit: "{label}: {value}"
+    }
   },
   characters: {
     searchPlaceholder: "Search characters, voice actors, bands...",
@@ -531,17 +1003,18 @@ export const thTH = {
       faceDesc: "Small face icon layer",
       board: "Board",
       boardDesc: "Background board icon",
-      bio: "Bio",
-    },
+      bio: "Bio"
+    }
   },
   story: {
     categories: {
       main: "เรื่องหลัก",
+      event: "เรื่องอีเวนต์",
       friendship: "เรื่องสายสัมพันธ์",
       liveResult: "บทสนทนาหลังไลฟ์",
       home: "เรื่องโฮม",
       tutorial: "เรื่องสอนเล่น",
-      other: "เรื่องอื่นๆ",
+      other: "เรื่องอื่นๆ"
     },
     ui: {
       searchPlaceholder: "ชื่อ ตัวละคร บทหรือ ADV ID",
@@ -560,140 +1033,604 @@ export const thTH = {
       parsing: "กำลังวิเคราะห์สคริปต์และเสียง…",
       autoplay: "เล่นอัตโนมัติ",
       narration: "คำบรรยาย",
+      speakerMasked: "??? ({name})",
+      speakerHidden: "({name})",
       playing: "กำลังเล่นอัตโนมัติ",
       paused: "หยุดชั่วคราว",
       line: "บท {current} / {total}",
+      clip: "แอนิเมชันเรื่องราว",
+      clipUnavailable: "แอนิเมชันนี้ยังไม่พร้อมให้รับชมในขณะนี้",
+      chat: "ข้อความแชท",
+      showBackgrounds: "แสดงพื้นหลัง",
+      scene: "ฉากที่ {n}",
+      subtitles: "คำบรรยาย",
+      episode: "EPISODE {n}",
+      anotherEpisode: "ANOTHER {n}",
+      extraEpisode: "EXTRA {n}",
+      anotherStories: "เรื่องราวมุมมองอื่น",
+      extraStories: "เรื่องราวตอนพิเศษ",
+      previousEpisode: "ตอนก่อนหน้า",
+      nextEpisode: "ตอนถัดไป",
+      showSubtitleList: "แสดงคำบรรยาย ({count})",
+      hideSubtitleList: "ซ่อนคำบรรยาย"
+    }
+  },
+  eventTracker: {
+    eventLabel: "อีเวนต์",
+    currentEvent: "อีเวนต์ปัจจุบัน",
+    eventFallback: "อีเวนต์ #{id}",
+    songFallback: "เพลง #{id}",
+    loading: "กำลังตรวจสอบอีเวนต์ของเซิร์ฟเวอร์…",
+    noEvent: "ไม่มีอีเวนต์ในเซิร์ฟเวอร์นี้ในขณะนี้",
+    noEventHint: "ตัวติดตามจะเริ่มทำงานทันทีที่เซิร์ฟเวอร์ประกาศอีเวนต์ถัดไป",
+    notFound: "ไม่มีอีเวนต์นี้ในเซิร์ฟเวอร์นี้",
+    notFoundHint: "ลิงก์อาจชี้ไปยังอีเวนต์ของเซิร์ฟเวอร์อื่น ลองเปิดดูอีเวนต์ปัจจุบันแทน",
+    openEvent: "รายละเอียดอีเวนต์",
+    openTracker: "ดูตัวติดตามอันดับ",
+    stale: "รีเฟรชเกินเวลาที่กำหนด",
+    eventStatus: {
+      feature: "กำลังจะมาถึง",
+      nowOn: "กำลังดำเนินอยู่",
+      aggregation: "กำลังรวบรวมผลลัพธ์",
+      result: "ประกาศผลลัพธ์",
+      end: "สิ้นสุดแล้ว"
     },
+    collect: {
+      unknown: "ไม่ทราบสถานะ",
+      disabled: "ไม่มีการจัดอันดับ",
+      pending: "ยังไม่เริ่ม",
+      collecting: "กำลังติดตาม",
+      finalizing: "กำลังยืนยันอันดับสุดท้าย",
+      archiving: "กำลังจัดเก็บถาวร",
+      archived: "สรุปผลแล้ว",
+      missed: "ไม่สามารถเก็บข้อมูลได้"
+    },
+    countdown: {
+      startsIn: "เริ่มในอีก",
+      endsIn: "สิ้นสุดในอีก",
+      countingEndsIn: "ประกาศผลในอีก",
+      daysClock: "{days} วัน {clock}"
+    },
+    cutoff: "อันดับ {rank}",
+    challenges: {
+      title: "อันดับเพลงชาเลนจ์",
+      songs: "เพลงชาเลนจ์",
+      songNumber: "เพลงที่ {n}",
+      none: "อีเวนต์นี้ไม่มีเพลงชาเลนจ์",
+      lastSeen: "การเก็บข้อมูลปิดลงแล้ว นี่คือข้อมูลล่าสุดที่อ่านได้ ไม่ใช่อันดับทางการที่ได้รับการยืนยัน"
+    },
+    board: {
+      unknown: "เกมไม่ได้ระบุว่าเพลงนี้มีการจัดอันดับหรือไม่",
+      disabled: "เพลงนี้ไม่มีการจัดอันดับ",
+      pending: "การจัดอันดับของเพลงนี้ยังไม่เปิดให้เข้าร่วม",
+      missed: "ไม่สามารถเก็บข้อมูลการจัดอันดับนี้ได้",
+      startsAt: "เปิดเวลา {time}"
+    },
+    points: {
+      title: "อันดับแต้มอีเวนต์",
+      disabled: "อีเวนต์นี้ไม่มีการจัดอันดับแต้ม มีเพียงอันดับเพลงชาเลนจ์ด้านบนเท่านั้น",
+      interrupted: "การเก็บข้อมูลขัดข้อง ข้อมูลอาจล้าสมัย",
+      frozen: "กำลังประมวลผล คะแนนถูกตรึงไว้",
+      tied: "อันดับร่วม",
+      notReturned: "ไม่ได้รับข้อมูลอันดับในรอบนี้: {ranks}"
+    }
+  },
+  musicRanking: {
+    changeSong: "เปลี่ยนเพลง",
+    chooseSong: "เลือกเพลง",
+    emptyTitle: "เลือกเพลงเพื่อดูอันดับคะแนน",
+    emptyDescription: "แต่ละเพลงมีอันดับคะแนนสูงสุดแยกตามแต่ละเซิร์ฟเวอร์ เลือกเพลงเพื่อดูผู้เล่นแถวหน้า คะแนน และทีมของพวกเขา"
+  },
+  chartData: {
+    referenceEstimate: "การประเมินอ้างอิง",
+    replay: {
+      title: "จำลองการเล่นหนึ่งไลฟ์",
+      loading: "กำลังโหลดโมเดล…",
+      hint: "กำหนดคำตัดสินก่อนการแปลงสกิล แล้วคำนวณการเล่นรอบนี้ ค่าเริ่มต้นคือไม่มีสกิล ผลลัพธ์จะแสดงจำนวนคำตัดสินหลังการแปลง",
+      power: "พลังวงรวม",
+      seed: "Seed สุ่ม",
+      clock: "เฟรมเรต",
+      mode: "โหมด",
+      free: "ฟรีไลฟ์",
+      fixedRanks: "เกคิโซว · กำหนดอันดับคงที่",
+      reset: "รีเซ็ตโน้ต",
+      run: "คำนวณ",
+      export: "ส่งออก JSON",
+      advanced: "นำเข้า / ส่งออก",
+      advancedHint: "JSON จะบันทึกเวลาของโน้ต ลำดับภายในเฟรม สกิล และการยืนยันอันดับ โดยข้อมูลที่นำเข้าจะได้รับการตรวจสอบความถูกต้องผ่าน Rust",
+      import: "นำเข้า JSON",
+      error: "การคำนวณล้มเหลว",
+      ready: "พร้อมคำนวณ",
+      calculating: "กำลังคำนวณ…",
+      score: "คะแนนสุดท้าย",
+      frameScore: "คะแนนที่แสดงในเฟรมสุดท้าย",
+      life: "พลังชีวิต",
+      combo: "คอมโบ",
+      note: "โน้ต",
+      time: "เวลา",
+      type: "ประเภท",
+      judgement: "คำตัดสิน",
+      range: "ช่วงเวลา",
+      just: "Just",
+      luck: "แต้มโชคช่วย",
+      complete: "คำนวณเสร็จสิ้น",
+      wrongChart: "ไฟล์เป็นของชาร์ตอื่นหรือไม่รองรับรูปแบบนี้",
+      importedMode: "โหมดที่นำเข้า",
+      incomplete: "ข้อมูลที่นำเข้ายังไม่สมบูรณ์ จึงไม่สามารถแสดงเป็นผลลัพธ์ทั้งไลฟ์ได้",
+      importedClock: "การตั้งค่าเวลาที่นำเข้า",
+      exactPlan: "คำนวณแยกรายโน้ต",
+      greatShare: "โอกาสได้ Great",
+      justShare: "อัตรา Just",
+      presetHint: "ความน่าจะเป็นที่เหลือจะเป็น Perfect ส่วน Just จะใช้กับโน้ตที่เข้าเกณฑ์เท่านั้น การตั้งค่าช่วงเวลาจะเขียนทับการตั้งค่าทั้งเพลง โดยแถวด้านล่างจะมีความสำคัญกว่า Seed จะสร้างการเล่นที่ทำซ้ำได้หนึ่งรอบ ไม่ใช่คะแนนเฉลี่ย",
+      rawPreset: "โปรดรีเซ็ตข้อมูลดิบก่อนใช้งานแถบเลื่อนเหล่านี้",
+      probabilityTotal: "ผลรวมความน่าจะเป็นของ Great, Good, Bad และ Miss ต้องไม่เกิน 100%",
+      remove: "ลบออก",
+      end: "สิ้นสุด (วินาที)",
+      start: "เริ่มต้น (วินาที)",
+      customSegment: "ช่วงเวลาที่กำหนดเอง",
+      segment: "ช่วงเวลา",
+      editNotes: "ดู / แก้ไขโน้ตรายตัว",
+      generate: "สร้างคำตัดสิน",
+      planSeed: "Seed คำตัดสิน",
+      wholeSong: "ค่าเริ่มต้นทั้งเพลง"
+    },
+    beta: "Beta",
+    developmentData: "ข้อมูลการพัฒนาภายในเครื่อง",
+    uncommittedModel: "โมเดลมีการแก้ไขที่ยังไม่ได้คอมมิต",
+    betaHint: "การคำนวณด้วยโมเดล Rust; ดูคำแนะนำสำหรับการตรวจสอบแบบเนทีฟบน ARM64 และการจำลองเล่นซ้ำรายโน้ต",
+    views: { rank: "อันดับ", charts: "กราฟชาร์ต", guide: "คำอธิบาย" },
+    lead: {
+      rank: "ประสิทธิภาพ, อันดับอีเวนต์, ความเร็ว, เลเวล และความยาวของเพลง {songs} เพลงและชาร์ต {charts} ชาร์ต ตัวเลขคะแนนคำนวณตามสถานการณ์การเล่นที่เลือก: ค่าเริ่มต้นคือ เกคิโซวไลฟ์ อันดับ 1 ในทั้งสามช่วง (กรณีที่ดีที่สุด) หรือฟรีไลฟ์โดยไม่มีเกคิโซว ดูเพิ่มเติมได้ที่คู่มือ คลิกแถวใดก็ได้เพื่อดูรายละเอียดชาร์ต ข้อมูลเครดิต ไฟล์เสียง และตัวอย่างชาร์ตสามารถดูได้ในหน้าเพลงแต่ละเพลง",
+      charts: "การกระจายตัวของเพลง {songs} เพลงและชาร์ต {charts} ชาร์ต เลือกข้อมูลสองค่าใดก็ได้สำหรับแผนภาพการกระจาย; คลิกที่จุดใดก็ได้เพื่อดูรายละเอียดชาร์ต"
+    },
+    loading: "กำลังโหลดข้อมูลชาร์ต…",
+    loadError: "โหลดข้อมูลชาร์ตไม่สำเร็จ อาจเกิดจากปัญหาเครือข่าย โปรดลองใหม่อีกครั้งในภายหลัง",
+    retry: "ลองใหม่",
+    all: "ทั้งหมด",
+    search: "ค้นหาชื่อเพลง คำอ่าน เครดิต…",
+    chartsCount: "{n} ชาร์ต",
+    jackets: "ภาพปก",
+    jacketsHint: "แสดงหรือซ่อนภาพปก",
+    swap: "สลับแกน X/Y",
+    band: "วงดนตรี",
+    difficulty: "ระดับความยาก",
+    empty: "ไม่พบชาร์ตที่ตรงกัน",
+    emptyHint: "ตัวกรองวงดนตรี ความยาก คำค้นหา หรือตัวเลือก「เฉพาะแนวหน้า」ตัดชาร์ตทั้งหมดออก",
+    clear: "ล้างตัวกรอง",
+    difficulties: { easy: "Easy", normal: "Normal", hard: "Hard", expert: "Expert" },
+    rankBy: {
+      efficiency: "ประสิทธิภาพ",
+      event: "อีเวนต์ · ระดับ",
+      speed: "เร็วที่สุด",
+      level: "เลเวลสูงสุด",
+      notes: "จำนวนโน้ตมากสุด",
+      long: "ยาวที่สุด",
+      short: "สั้นที่สุด",
+      skip: "คะแนนเมื่อข้าม"
+    },
+    speedBy: { density: "ความหนาแน่น", bpmMax: "BPM สูงสุด", bpm: "BPM หลัก" },
+    rankHint: {
+      efficiency: "คะแนนที่คาดหวังต่อนาทีต่อหนึ่งหน่วยพลังวง ลำดับสกิลจะถูกสุ่มในแต่ละไลฟ์ ค่าคาดหวังจึงขึ้นอยู่กับค่าเฉลี่ยของสกิลเท่านั้น ช่วงคะแนนคือค่าต่ำสุด–สูงสุดจาก 120 ลำดับที่เป็นไปได้",
+      event: "แต้มอีเวนต์ขึ้นอยู่กับระดับคะแนนเท่านั้น หากไม่ระบุพลังวง: จะเรียงลำดับจากน้อยไปมากตามพลังวงที่ต้องการเพื่อให้ได้ระดับเป้าหมาย; หากระบุ: จะเรียงตามจำนวนรอบต่อชั่วโมงที่ทำได้ถึงระดับเป้าหมาย",
+      speed: "เรียงตามความหนาแน่นของโน้ตหรือ BPM",
+      level: "เรียงตามเลเวลที่แสดง (รวมทศนิยม) หากเท่ากันจะเรียงตามจำนวนโน้ต",
+      notes: "จำนวนโน้ตที่ต้องตัดสิน หรือจำนวนคอมโบเมื่อทำฟูลคอมโบ",
+      long: "เรียงตามความยาวของเพลง (BGM)",
+      short: "เรียงตามความยาวของเพลง (BGM) จากสั้นไปยาว",
+      skip: "คะแนนต่อหน่วยพลังวงเมื่อกดข้ามไลฟ์ โดยความยาวเพลงและสกิลจะไม่มีผล"
+    },
+    scenario: {
+      title: "สถานการณ์การเล่น",
+      battle: "เกคิโซวไลฟ์",
+      free: "ฟรีไลฟ์",
+      battleHint: "ผู้เล่นหลายคน (สูงสุด 5 คน), เปิดระบบเกคิโซว",
+      freeHint: "เล่นคนเดียว, ปิดระบบเกคิโซว",
+      ranks: "อันดับ",
+      range: "ช่วงที่ {n}",
+      rangeMission: "ช่วงที่ {n} · {mission}",
+      best: "อันดับ 1 คือกรณีที่ดีที่สุด",
+      ranksPending: "อันดับ 2–5: กำลังรอข้อมูล",
+      accuracy: "ความแม่นยำ",
+      great: "สัดส่วน Great",
+      just: "อัตรา Just",
+      accNote: "ค่าประมาณ ไม่รวมการหลุดคอมโบ; สัดส่วน Great จะมีผลกับทุกโน้ต ส่วนอัตรา Just จะมีผลเฉพาะช่วงภารกิจ Just เท่านั้น",
+      accNoteFree: "ค่าประมาณ ไม่รวมการหลุดคอมโบ; สัดส่วน Great จะมีผลกับทุกโน้ต",
+      pending: "กำลังรอข้อมูล",
+      room: "จำนวนผู้เล่นในห้อง",
+      roomHint: "การประเมินระดับจะคิดจากผลรวมคะแนนของผู้เล่นทุกคนในห้อง หากสมมติว่าผู้เล่นทุกคนทำคะแนนได้เท่ากับคุณ คุณจะต้องทำคะแนนให้ได้ √(5/n) × เกณฑ์ของเกคิโซวไลฟ์",
+      soloRanks: "ฟรีไลฟ์จะใช้เกณฑ์ระดับคะแนนสำหรับการเล่นคนเดียว"
+    },
+    length: "ความยาว",
+    bgm: "BGM",
+    chart: "ชาร์ต",
+    overhead: "เวลาเตรียมการต่อรอบ",
+    seconds: "{n} วินาที",
+    skills: "เปอร์เซ็นต์สกิลเพิ่มคะแนน",
+    skillSlot: "สกิลที่ {n}",
+    meanSkill: "เฉลี่ย {v}%",
+    presets: { all150: "150 ทั้งหมด", all100: "100 ทั้งหมด", none: "ไม่มีสกิล" },
+    target: "ระดับเป้าหมาย",
+    power: "พลังวงรวม",
+    powerHint: "เว้นว่าง: แสดงเฉพาะพลังวงที่ต้องการ",
+    frontier: "เฉพาะแนวหน้า",
+    allColumns: "ทุกคอลัมน์",
+    allColumnsHint: "เลื่อนไปด้านข้างเพื่อเปรียบเทียบ",
+    col: {
+      rank: "#",
+      song: "บทเพลง",
+      level: "เลเวล",
+      time: "ความยาว",
+      bpm: "BPM",
+      notes: "จำนวนโน้ต",
+      density: "โน้ต/วินาที",
+      rate: "คะแนน/พลังวง",
+      perMinute: "คะแนน/พลังวง/นาที",
+      relative: "สัมพัทธ์",
+      dom: "ถูกครอบงำ",
+      skip: "ตัวคูณข้าม",
+      base: "ตัวคูณพื้นฐาน",
+      need: "พลังวงที่ต้องการ",
+      chance: "อัตราความสำเร็จ",
+      perHour: "รอบ/ชม.",
+      goal: "รอบบรรลุเป้าหมาย/ชม."
+    },
+    onFrontier: "แนวหน้า",
+    dominatedBy: "ด้อยกว่า {n} ชาร์ต",
+    tipDom: "ไม่มีประสิทธิภาพที่คาดหวังดีกว่าชาร์ตต่อไปนี้ ในทุกค่าเฉลี่ยสกิล 0–150% และทุกเวลาเตรียมการ: {charts}",
+    tipDomEvent: "ต้องการพลังวงไม่น้อยไปกว่า และมีความยาวไม่สั้นไปกว่าชาร์ตต่อไปนี้ ในทุกระดับคะแนนและค่าเฉลี่ยสกิล 0–150%: {charts}",
+    tipSpread: "ค่าต่ำสุด–สูงสุดจาก 120 ลำดับสกิล",
+    listSeparator: ", ",
+    noStats: "ไฟล์ music-data.json นี้ไม่มีสถิติทีม (สร้างด้วย --no-deck) จึงไม่สามารถแสดงตัวเลขคะแนนได้",
+    axes: {
+      displayLevel: "เลเวล",
+      density: "ความหนาแน่น N/s",
+      bpm: "BPM หลัก",
+      bpmMax: "BPM สูงสุด",
+      notes: "จำนวนโน้ต",
+      bgmMs: "ความยาว BGM (วินาที)",
+      perMinute: "คะแนน/พลังวง/นาที",
+      rate: "คะแนน/พลังวง",
+      base: "ตัวคูณพื้นฐาน",
+      skip: "ตัวคูณข้าม"
+    },
+    scatter: "แผนภาพการกระจาย",
+    pareto: "แนวหน้าพาเรโต",
+    approximateShort: "ค่าประมาณ",
+    paretoHelp: "เกี่ยวกับแนวหน้านี้",
+    lowerBetter: "ค่ายิ่งน้อยยิ่งดี",
+    higherBetter: "ค่ายิ่งมากยิ่งดี",
+    xGoal: "เป้าหมายแกน X",
+    yGoal: "เป้าหมายแกน Y",
+    plotted: "ชาร์ตตัวเลือก {n} ชาร์ต",
+    paretoCount: "อยู่บนแนวหน้า {n} ชาร์ต",
+    paretoHint: "แนวหน้าคำนวณจากตัวกรอง พารามิเตอร์ และเป้าหมายของสองแกนในปัจจุบัน เส้นเชื่อมต่อเป็นเพียงการเชื่อมโยงชาร์ตที่มีอยู่ ไม่ได้หมายความว่ามีชาร์ตอยู่ตรงกลาง และต่างจากการครอบงำในตารางอันดับที่ครอบคลุมทุกค่าเฉลี่ยสกิลและเวลาเตรียมการ",
+    x: "แกน X",
+    y: "แกน Y",
+    levelDist: "การกระจายของเลเวล",
+    bandShare: "จำนวนเพลงตามวง",
+    levelBar: "Lv {level} {difficulty}: {n}",
+    songPage: "หน้าเพลง",
+    songPageHint: "ดูเครดิตผู้สร้าง นักร้อง ไฟล์เสียง ภาพปก และตัวอย่างชาร์ตได้ที่หน้าเพลง",
+    preview3d: "พรีวิว 3D",
+    missions: { combo: "คอมโบ", luck: "โชค", just: "Just" },
+    detail: {
+      musicType: "ประเภทเพลง",
+      bgm: "BGM",
+      musicId: "ID เพลง",
+      scoreId: "ID ชาร์ต",
+      notes: "จำนวนโน้ต",
+      fullCombo: "จำนวนฟูลคอมโบ",
+      density: "ความหนาแน่น",
+      bpm: "BPM",
+      bpmChanges: "เปลี่ยนความเร็ว {n} ครั้ง",
+      span: "ช่วงโน้ต",
+      musicLength: "ความยาวชาร์ต",
+      timeline: "ไทม์ไลน์",
+      fever: "Fever",
+      skill: "สกิล",
+      mission: "ภารกิจเกคิโซว",
+      composition: "โครงสร้างประเภทโน้ต",
+      weights: "น้ำหนักตำแหน่งสกิล",
+      weightsHint: "คะแนนที่สมาชิกในตำแหน่ง k เพิ่มขึ้นตลอดทั้งไลฟ์เมื่อใช้สกิลเพิ่มคะแนนธรรมดา +100% ต่อหนึ่งหน่วยพลังวง (จำลองทั้งไลฟ์: รวมช่วงเวลา เฟรม และคอมโบ; ในเกคิโซวไลฟ์รวม Just และโบนัสอันดับที่เลือกด้วย) โดยเฉลี่ยจาก Seed และปรับตามความแม่นยำ พร้อมแสดงสัดส่วนใน W สมาชิกที่จะลงตำแหน่งใดจะถูกสุ่มในแต่ละไลฟ์ ค่าคาดหวังจึงใช้เฉพาะ W",
+      seeds: "{n} Seed",
+      unplayable: "ไม่สามารถเล่นในเกคิโซวไลฟ์ได้",
+      unplayableHint: "มี Fever มากกว่า 3 ครั้ง: จากโค้ดที่ถอดรหัส ตัวเกมรองรับช่วงเกคิโซวได้เพียง 3 ช่วง และจะเกิดข้อผิดพลาดเมื่อ Fever ที่ 4 เริ่มต้นขึ้น",
+      unplayableFree: "；ฟรีไลฟ์ไม่มีระบบเกคิโซวและสามารถเล่นได้ตามปกติ: สลับไปที่ฟรีไลฟ์เพื่อดูตัวเลขคะแนน",
+      score: "คะแนน (สถานการณ์ปัจจุบัน)",
+      noFigures: "คะแนน",
+      twoScores: "คะแนน 2 รูปแบบของเกคิโซวไลฟ์ (ต่อหน่วยพลังวง)",
+      twoScoresHint: "เกคิโซวไลฟ์รายงานคะแนน 2 รูปแบบ: แบบแรกคือรวมเกคิโซว ซึ่งเป็นตัวเลขของสถานการณ์นี้; แบบที่สองคือไม่รวมเกคิโซว ซึ่งจะถูกบันทึกเป็นคะแนนสูงสุดของเพลง มีค่าใกล้เคียงกับคะแนนของฟรีไลฟ์",
+      orders: "ช่วงตามลำดับสกิล",
+      sameOrder: "สกิลเท่ากันทุกตำแหน่ง ลำดับจึงไม่มีผลต่อคะแนน",
+      ranks: "เกณฑ์ระดับคะแนน",
+      rank: "ระดับ",
+      required: "คะแนนที่ต้องการ",
+      requiredRoom: "คะแนนที่ต้องการ (ห้อง {n} คน, ต่อคน)",
+      needPower: "พลังวงที่ต้องการ (ค่าคาดหวัง)",
+      needRange: "พลังวงที่ต้องการ (ตามลำดับสกิล)",
+      chanceAt: "โอกาสสำเร็จที่พลังวง {power}",
+      ranksHint: "เกณฑ์คะแนนถูกกำหนดตามเพลงและใช้ร่วมกันทุกระดับความยาก; ฟรีไลฟ์ใช้เกณฑ์สำหรับเล่นคนเดียว พลังวงที่ต้องการ = เกณฑ์คะแนน ÷ คะแนนคาดหวังต่อพลังวง (รวมความแม่นยำแล้ว)",
+      ranksHintRoom: "เกณฑ์คะแนนถูกกำหนดตามเพลงและใช้ร่วมกันทุกระดับความยาก เกคิโซวไลฟ์คิดระดับจากผลรวมคะแนนของผู้เล่นทุกคนในห้อง หากสมมติว่าห้องมี {n} คนและทุกคนทำคะแนนได้เท่ากับคุณ: คะแนนที่คุณต้องทำได้ = √(5/{n}) × เกณฑ์ของเกคิโซวไลฟ์ พลังวงที่ต้องการ = คะแนนนั้น ÷ คะแนนคาดหวังต่อพลังวง (รวมความแม่นยำแล้ว)",
+      close: "ปิด",
+      measures: "ตัวชี้วัดอันดับในแต่ละช่วง",
+      measureRange: "ช่วงเวลา",
+      measureCompared: "วัดผลด้วย",
+      measure: { maxCombo: "คอมโบเกคิโซวสูงสุด", justCount: "จำนวน Just", luckPoints: "แต้มโชคช่วย" },
+      measuresHint: "แต่ละช่วงของเกคิโซวไลฟ์จะจัดอันดับผู้เล่นในห้องตามตัวชี้วัดของภารกิจนั้นๆ: ภารกิจคอมโบวัดจากคอมโบเกคิโซวสูงสุด, ภารกิจโชคช่วยวัดจากแต้มโชคช่วย, ภารกิจ Just วัดจากจำนวน Just (ช่องตัวหนา) ตามแบบจำลองนี้ ค่าที่แสดงคือค่าเฉลี่ยของ Seed เมื่อไม่ใส่สกิลเกคิโซวในการเล่นที่ดีที่สุดตามทฤษฎี ในวงเล็บคือค่าต่ำสุด–สูงสุดระหว่าง Seed; \"–\" หมายถึงรอการอัปเดตข้อมูล หน้านี้ไม่ได้จำลองคู่แข่ง อันดับขึ้นอยู่กับที่คุณเลือก ไม่ได้คำนวณจากตัวชี้วัดเหล่านี้"
+    },
+    aptitude: {
+      ratio: "เทียบกับเกณฑ์พื้นฐานที่ไม่มีสกิลธรรมดา",
+      crossSeeds: "พจน์ร่วม: {n} Seed",
+      rawPerfect: "คะแนนรวมที่เพิ่มขึ้นแบบ Perfect ทั้งหมด (ค่าเฉลี่ย ± SE)",
+      missingCross: "ไม่มีข้อมูลพจน์ร่วม ไม่สามารถระบุคะแนนที่เพิ่มขึ้นทั้งหมดได้",
+      noPlain: "คะแนนที่เพิ่มขึ้นในสถานการณ์ปัจจุบันโดยไม่มีสกิลธรรมดา / พลังวง",
+      missingPerfectCross: "พจน์ร่วม Perfect ยังไม่ได้วัดผล ไม่สามารถระบุคะแนนที่เพิ่มขึ้นทั้งหมดได้",
+      crossAtRank1: "พจน์ร่วมคงอยู่ที่อันดับ 1 สำหรับอ้างอิงเท่านั้น",
+      zero: {
+        none: "ไม่มีคะแนนเพิ่มขึ้นในการเล่นที่ดีที่สุดตามทฤษฎี",
+        measures: "เปลี่ยนเฉพาะตัวชี้วัดอันดับเท่านั้น"
+      },
+      title: "ความเหมาะสมของสกิลเกคิโซว",
+      hint: "แต่ละแถวจะจำลองโดยใส่สกิลเกคิโซวหรือสกิลซัพพอร์ตเกคิโซวเพียงสกิลเดียว ช่องอื่นเว้นว่างไว้ เพื่อเปรียบเทียบผลกระทบของสกิลเดี่ยวต่อชาร์ตนี้ ไม่ได้เป็นการจัดทีมหรือเลือกการ์ด และไม่เปลี่ยนเกณฑ์อ้างอิงของอันดับ คะแนนที่เพิ่มขึ้นของแต่ละสกิลไม่สามารถนำมาบวกกันได้",
+      power: "คะแนนที่เพิ่มขึ้นที่พลังวง {n}; ค่าสกิลธรรมดาเป็นไปตามการตั้งค่าด้านบน",
+      skill: "สกิล",
+      band: "เงื่อนไขวงดนตรี",
+      gain: "คะแนนเพิ่ม / พลังวง",
+      score: "คะแนนที่เพิ่มขึ้น",
+      seeds: "Seed",
+      details: "การเปลี่ยนแปลงในแต่ละช่วง",
+      support: "สกิลซัพพอร์ตเกคิโซว",
+      member: "สกิลเกคิโซวของการ์ดสมาชิก",
+      level: "Lv {n}",
+      noCondition: "ไม่มีเงื่อนไข",
+      match: "ตรงเงื่อนไข",
+      mismatch: "ไม่ตรงเงื่อนไข",
+      deterministic: "แน่นอน",
+      targetUnmet: "ไม่บรรลุเป้าหมาย SE",
+      baseSe: "คะแนนที่เพิ่มขึ้นแบบอันดับ 1, Just ทั้งหมด, ไม่มี Great โดยไม่มีสกิลธรรมดา / พลังวง (ค่าเฉลี่ย ± SE)",
+      converted: "จำนวนการแปลงคำตัดสินพิเศษ",
+      metricsHint: "ตัวชี้วัดช่วงเวลาคือค่าเฉลี่ยของคะแนนที่เพิ่มขึ้น ± ความคลาดเคลื่อนมาตรฐาน (SE) เมื่อเล่นได้ Just ทั้งหมดและไม่มี Great โดยแถบเลื่อนความแม่นยำจะไม่ปรับขนาดค่าเหล่านี้",
+      empty: "ไม่มีความเหมาะสมของสกิลที่ตรงกับภารกิจของชาร์ตนี้",
+      approximation: "คะแนนที่เพิ่มขึ้นแบบแน่นอนโดยไม่มีสกิลธรรมดาคำนวณจากการจำลองทั้งไลฟ์; ตัวเลขสุ่มคือค่าเฉลี่ยของ Seed ไม่ใช่ค่าคาดหวังในเกม การแปลงอันดับมีข้อผิดพลาดจากการปัดเศษ พจน์ร่วมของสกิลธรรมดาและความแม่นยำเป็นค่าประมาณ ความคลาดเคลื่อนมาตรฐาน (SE) แสดงถึงสัญญาณรบกวนจากการสุ่ม ไม่ใช่ความคลาดเคลื่อนของแบบจำลอง และไม่สามารถนำความคลาดเคลื่อนของแต่ละส่วนมารวมกันเป็นปริมาณอิสระได้",
+      factors: "ปัจจัยของชาร์ต",
+      factor: {
+        judgedNotes: "โน้ตที่ตัดสินในแต่ละช่วง",
+        justNotes: "โน้ต Just",
+        perfectNotes: "โน้ต Perfect ในช่วง Just",
+        tailNotes: "โน้ตช่วงท้าย",
+        comboAtStart: "คอมโบเริ่มต้น",
+        lotteries: "จำนวนการสุ่มโดยไม่มีสกิล"
+      },
+      factorsHint: "โน้ตของช่วงเวลาจะอยู่หลัง Start จนถึงเฟรมคะแนน End; ส่วนท้ายจะอยู่หลัง End จนถึง Complete และไม่นับรวมในคะแนนของช่วง ประเภทคำตัดสินบางประเภทในช่วง Just ไม่มีแถว Just และทำได้เพียง Perfect เท่านั้น การสุ่มคือค่าเฉลี่ยของ Seed พื้นฐาน ± ความคลาดเคลื่อนมาตรฐาน"
+    },
+    kinds: { tap: "แตะ", flick: "ปัด", slide: "สไลด์", trace: "เทรซ", combo: "จุดคอมโบ" },
+    source: "ข้อมูล: โกลบอล / ญี่ปุ่น · เวอร์ชัน {version}",
+    sourceHint: "ดึงข้อมูลจากภูมิภาค {region} · master {master} · ไคลเอนต์ {client}",
+    deckModel: "แบบจำลองคะแนน",
+    caveat: "ตัวเลขอ้างอิงจากการถอดรหัสไคลเอนต์ของเกม เรามุ่งหวังความแม่นยำแต่ไม่สามารถรับประกันความถูกต้องได้ หากมีข้อมูลที่ขัดแย้งกับแหล่งอื่น โปรดอ้างอิงตามแหล่งนั้น"
+  },
+  gameServer: {
+    inZone: "{time} ({zone})",
+    onlyOn: "เฉพาะ {servers}",
+    notOnServer: "ยังไม่เปิดให้บริการบน {server}; แสดงเนื้อหาจาก {source}",
+    schedules: "กำหนดการตามเซิร์ฟเวอร์",
+    timesIn: "เวลาทั้งหมดเป็น {zone}",
+    localTimesIn: "เวลาทั้งหมดแสดงตามเวลาท้องถิ่นของคุณ ({zone})",
+    label: "เซิร์ฟเวอร์เกม",
+    short: { tw: "TW", jp: "JP", kr: "KR", en: "EN" },
+    names: {
+      tw: "เซิร์ฟเวอร์จีนดั้งเดิม",
+      jp: "เซิร์ฟเวอร์ญี่ปุ่น",
+      kr: "เซิร์ฟเวอร์เกาหลี",
+      en: "เซิร์ฟเวอร์โกลบอล (ภาษาอังกฤษ)"
+    }
+  },
+  news: {
+    detailTitle: "รายละเอียดประกาศ",
+    categoryLabel: "หมวดหมู่",
+    category: {
+      all: "ทั้งหมด",
+      maintenance: "ปิดปรับปรุง",
+      bug: "ปัญหาที่พบ",
+      campaign: "แคมเปญ",
+      update: "อัปเดต",
+      gacha: "กาชา",
+      other: "อื่นๆ"
+    },
+    checkedAgo: "ตรวจสอบรายการเมื่อ {time}",
+    loading: "กำลังรวบรวมประกาศ…",
+    empty: "เซิร์ฟเวอร์นี้ไม่มีประกาศในขณะนี้",
+    retry: "ลองใหม่",
+    updated: "มีการอัปเดต",
+    backToList: "กลับสู่รายการประกาศ",
+    notFound: "ไม่พบประกาศนี้",
+    notFoundHint: "ลิงก์อาจไม่สมบูรณ์ หรือประกาศนี้ไม่เคยถูกเก็บข้อมูล เปิดรายการประกาศเพื่อดูข้อมูลล่าสุดบนเซิร์ฟเวอร์",
+    errors: {
+      pending: "กำลังดึงข้อมูลประกาศนี้",
+      pendingHint: "คำขอนี้อยู่ในคิวและจะพร้อมใช้งานในอีกไม่กี่วินาที โปรดลองใหม่อีกครั้งในภายหลัง",
+      upstream: "ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์เกมได้ในขณะนี้",
+      upstreamHint: "เซิร์ฟเวอร์อาจอยู่ระหว่างปิดปรับปรุง โปรดลองใหม่อีกครั้งในภายหลัง",
+      failed: "โหลดประกาศไม่สำเร็จ",
+      failedHint: "โปรดตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่อีกครั้ง"
+    },
+    period: "ระยะเวลา",
+    lastUpdated: "อัปเดตล่าสุด",
+    withdrawn: "นำลงจากเกมแล้ว",
+    olderVersion: "เวอร์ชันก่อนหน้า",
+    history: "เวอร์ชัน",
+    latestRevision: "{time} (ล่าสุด)",
+    noBody: "ประกาศนี้ไม่มีเนื้อหาข้อความ"
   },
   seo: {
+    events: {
+      title: "อีเวนต์ในเกม",
+      description: "อีเวนต์ในเกม ประกาศ ตู้กาชา ภารกิจ และของรางวัลของทุกเซิร์ฟเวอร์ใน BanG Dream! Our Notes"
+    },
+    eventTracker: {
+      title: "ตัวติดตามอีเวนต์",
+      description: "อันดับสดของอีเวนต์ปัจจุบันใน BanG Dream! Our Notes ทุกเซิร์ฟเวอร์: ลีดเดอร์บอร์ดเพลงชาเลนจ์พร้อมทีม เกณฑ์คะแนนรับรางวัล อันดับแต้มอีเวนต์ และเวลาที่เหลือ"
+    },
+    musicRanking: {
+      title: "อันดับเพลง",
+      description: "อันดับคะแนนสูงสุดของทุกเพลงในแต่ละเซิร์ฟเวอร์ของ BanG Dream! Our Notes: ผู้เล่น คะแนน และทีม"
+    },
+    news: {
+      title: "ประกาศเกม",
+      description: "การปิดปรับปรุง ปัญหาที่พบ แคมเปญ และการอัปเดต: ประกาศในเกมของทุกเซิร์ฟเวอร์ใน BanG Dream! Our Notes"
+    },
+    newsDetail: { title: "รายละเอียดประกาศ", description: "ประกาศภายในเกมของ BanG Dream! Our Notes" },
     home: {
       title: "ฐานข้อมูลและตัวดู BanG Dream! Our Notes",
-      description: "ฐานข้อมูลแฟนหลายภาษาของ StarMoe สำหรับ BanG Dream! Our Notes — ตัวละคร การ์ด เพลง เรื่องราว การ์ตูน สติกเกอร์ และแอสเซ็ตเกม",
+      description: "ฐานข้อมูลแฟนหลายภาษาของ StarMoe สำหรับ BanG Dream! Our Notes — ตัวละคร การ์ด เพลง เรื่องราว การ์ตูน สติกเกอร์ และแอสเซ็ตเกม"
     },
     database: {
       title: "ฐานข้อมูล BanG Dream! Our Notes",
-      description: "เรียกดูตัวละคร การ์ด การ์ดซัพพอร์ต เพลง เรื่องราว การ์ตูน สติกเกอร์ ไอเท็ม และแอสเซ็ตเกมของ Our Notes ในที่เดียว",
+      description: "เรียกดูตัวละคร การ์ด การ์ดซัพพอร์ต เพลง เรื่องราว การ์ตูน สติกเกอร์ ไอเท็ม และแอสเซ็ตเกมของ Our Notes ในที่เดียว"
     },
     characters: {
       title: "ฐานข้อมูลตัวละคร Our Notes",
-      description: "สำรวจตัวละคร BanG Dream! Our Notes ตามวง พร้อมโปรไฟล์ ตำแหน่ง วันเกิด ราศี สไปรต์ และการ์ดที่เกี่ยวข้อง",
+      description: "สำรวจตัวละคร BanG Dream! Our Notes ตามวง พร้อมโปรไฟล์ ตำแหน่ง วันเกิด ราศี สไปรต์ และการ์ดที่เกี่ยวข้อง"
     },
     characterDetail: {
       title: "หน้ารายละเอียดตัวละคร",
-      description: "ดูสไปรต์ทั้งตัว โปรไฟล์ และการ์ดตัวแทนของตัวละคร BanG Dream! Our Notes อย่างละเอียด",
+      description: "ดูสไปรต์ทั้งตัว โปรไฟล์ และการ์ดตัวแทนของตัวละคร BanG Dream! Our Notes อย่างละเอียด"
     },
     cards: {
       title: "ฐานข้อมูลการ์ด Our Notes",
-      description: "เรียกดูอาร์ตการ์ด BanG Dream! Our Notes และกรองอย่างรวดเร็วตามตัวละคร ความหายาก ธาตุ และวง",
+      description: "เรียกดูอาร์ตการ์ด BanG Dream! Our Notes และกรองอย่างรวดเร็วตามตัวละคร ความหายาก ธาตุ และวง"
     },
     stamps: {
       title: "ฐานข้อมูลสติกเกอร์ Our Notes",
-      description: "เรียกดูสติกเกอร์ ตัวละคร อีโมจิ และอาร์ตสีหน้าคุณภาพสูงจาก BanG Dream! Our Notes",
+      description: "เรียกดูสติกเกอร์ ตัวละคร อีโมจิ และอาร์ตสีหน้าคุณภาพสูงจาก BanG Dream! Our Notes"
     },
     comics: {
       title: "ฐานข้อมูลการ์ตูน Our Notes",
-      description: "อ่านและเรียกดูการ์ตูนหน้าโหลดและอาร์ตมังงะต้นฉบับของ BanG Dream! Our Notes",
+      description: "อ่านและเรียกดูการ์ตูนหน้าโหลดและอาร์ตมังงะต้นฉบับของ BanG Dream! Our Notes"
     },
     items: {
       title: "ฐานข้อมูลไอเท็ม Our Notes",
-      description: "ค้นหาไอเท็ม วัตถุดิบ ไอคอนคลัง และคำอธิบายในเกมของ BanG Dream! Our Notes ในรายการเดียว",
+      description: "ค้นหาไอเท็ม วัตถุดิบ ไอคอนคลัง และคำอธิบายในเกมของ BanG Dream! Our Notes ในรายการเดียว"
     },
     cardDetail: {
       title: "หน้ารายละเอียดการ์ด",
-      description: "แสดงอาร์ตการ์ด ตัวละคร ธาตุ ความหายาก และสเตตัสพื้นฐานของ Our Notes",
+      description: "แสดงอาร์ตการ์ด ตัวละคร ธาตุ ความหายาก และสเตตัสพื้นฐานของ Our Notes"
     },
     supportCards: {
       title: "ฐานข้อมูลการ์ดซัพพอร์ต Our Notes",
-      description: "เรียกดูอาร์ตการ์ดซัพพอร์ต BanG Dream! Our Notes และกรองตามตัวละคร ความหายาก ธาตุ และวง",
+      description: "เรียกดูอาร์ตการ์ดซัพพอร์ต BanG Dream! Our Notes และกรองตามตัวละคร ความหายาก ธาตุ และวง"
     },
     supportCardDetail: {
       title: "หน้ารายละเอียดการ์ดซัพพอร์ต",
-      description: "แสดงอาร์ตการ์ดซัพพอร์ต ตัวละคร ธาตุ ความหายาก และสเตตัสพื้นฐานของ Our Notes",
+      description: "แสดงอาร์ตการ์ดซัพพอร์ต ตัวละคร ธาตุ ความหายาก และสเตตัสพื้นฐานของ Our Notes"
     },
     music: {
       title: "ฐานข้อมูลเพลง Our Notes",
-      description: "เรียกดูรายชื่อเพลง BanG Dream! Our Notes พร้อมนักร้อง ผู้แต่ง คำร้อง ความยาก และจำนวนโน้ตสูงสุด",
+      description: "เรียกดูรายชื่อเพลง BanG Dream! Our Notes พร้อมนักร้อง ผู้แต่ง คำร้อง ความยาก และจำนวนโน้ตสูงสุด"
+    },
+    musics: {
+      title: "เพลงและชาร์ต BanG Dream! Our Notes",
+      description: "สำรวจบทเพลงทั้งหมด ข้อมูลเมตาชาร์ต ตัวอย่างชาร์ต 3D และอันดับคะแนนเพลงใน BanG Dream! Our Notes ใต้ผืนฟ้าแห่งดวงดาวแห่งเสียงดนตรี"
     },
     gacha: {
       title: "คู่มือการรับสมัคร Our Notes",
-      description: "ย้อนรอยทุกการพบพานอันน่าตื่นเต้นใต้แสงไฟเวที สำรวจประวัติกาชา BanG Dream! Our Notes กำหนดการ สมาชิก Pick Up และระบบจำลองการสุ่มกาชา",
+      description: "ย้อนรอยทุกการพบพานอันน่าตื่นเต้นใต้แสงไฟเวที สำรวจประวัติกาชา BanG Dream! Our Notes กำหนดการ สมาชิก Pick Up และระบบจำลองการสุ่มกาชา"
+    },
+    eventList: {
+      title: "รายการอีเวนต์",
+      description: "อีเวนต์ทั้งหมดในเกม BanG Dream! Our Notes: ตารางเวลา สมาชิกและคุณสมบัติโบนัส การ์ดอีเวนต์ เรื่องราวอีเวนต์ รางวัลแต้ม และรางวัลไลฟ์ แยกตามเซิร์ฟเวอร์"
+    },
+    eventDetail: {
+      title: "รายละเอียดอีเวนต์",
+      description: "กำหนดการอีเวนต์ โบนัส การ์ด และเพลง แต้มอีเวนต์สำหรับปลดล็อกเรื่องราว พร้อมรางวัลแต้มและรางวัลไลฟ์ บันทึกทุกคำสัญญาของการเดินทางไว้ที่นี่"
     },
     gachaDetail: {
       title: "รายละเอียดกาชา",
-      description: "สัมผัสช่วงเวลาเปล่งประกายใต้สปอตไลต์ ตรวจสอบระยะเวลากาชา Our Notes การ์ด Pick Up และรายชื่อการพบพานทั้งหมด",
+      description: "สัมผัสช่วงเวลาเปล่งประกายใต้สปอตไลต์ ตรวจสอบระยะเวลากาชา Our Notes การ์ด Pick Up และรายชื่อการพบพานทั้งหมด"
     },
     rewards: {
       title: "ภารกิจและรางวัล Our Notes",
-      description: "เปิดบันทึกคำสัญญากับผืนฟ้าราตรี รวบรวมพาสภารกิจ BanG Dream! Our Notes ภารกิจอีเวนต์ และโบนัสล็อกอินรายวัน",
+      description: "เปิดบันทึกคำสัญญากับผืนฟ้าราตรี รวบรวมพาสภารกิจ BanG Dream! Our Notes ภารกิจอีเวนต์ และโบนัสล็อกอินรายวัน"
     },
     rewardDetail: {
       title: "รายละเอียดภารกิจและรางวัล",
-      description: "นับความสุขและผลผลิตที่เก็บเกี่ยวได้ตลอดเส้นทาง ตรวจสอบรางวัลตามระดับพาส Our Notes เป้าหมายจำกัดเวลา และของขวัญล็อกอินรายวัน",
+      description: "นับความสุขและผลผลิตที่เก็บเกี่ยวได้ตลอดเส้นทาง ตรวจสอบรางวัลตามระดับพาส Our Notes เป้าหมายจำกัดเวลา และของขวัญล็อกอินรายวัน"
     },
     titles: {
       title: "คู่มือฉายา Our Notes",
-      description: "สลักทุกย่างก้าวและความทรงจำอันสว่างไสว เปิดสมุดฉายา BanG Dream! Our Notes เพื่อสำรวจเข็มกลัด ตราสัญลักษณ์ และคำสาบานของแต่ละวง",
+      description: "สลักทุกย่างก้าวและความทรงจำอันสว่างไสว เปิดสมุดฉายา BanG Dream! Our Notes เพื่อสำรวจเข็มกลัด ตราสัญลักษณ์ และคำสาบานของแต่ละวง"
     },
     backgrounds: {
       title: "พื้นหลังโปรไฟล์ Our Notes",
-      description: "เดินเล่นไปตามมุมถนนและเวทีที่ส่องประกายระยิบระยับ เลือกพื้นหลังการ์ดโปรไฟล์ BanG Dream! Our Notes ที่บันทึกความทรงจำของคุณ",
+      description: "เดินเล่นไปตามมุมถนนและเวทีที่ส่องประกายระยิบระยับ เลือกพื้นหลังการ์ดโปรไฟล์ BanG Dream! Our Notes ที่บันทึกความทรงจำของคุณ"
     },
     songDetail: {
       title: "หน้ารายละเอียดเพลง",
-      description: "ดูปกอัลบั้ม ผู้สร้าง นักร้อง และค่าความยากของเพลง Our Notes อย่างละเอียด",
+      description: "ดูปกอัลบั้ม ผู้สร้าง นักร้อง และค่าความยากของเพลง Our Notes อย่างละเอียด"
     },
     story: {
       title: "คลังเรื่องราว Our Notes",
-      description: "เรียกดูเรื่องหลัก เรื่องสายสัมพันธ์ บทสนทนาหลังไลฟ์ เรื่องโฮม และสคริปต์พร้อมเสียงของ BanG Dream! Our Notes",
+      description: "เรียกดูเรื่องหลัก เรื่องสายสัมพันธ์ บทสนทนาหลังไลฟ์ เรื่องโฮม และสคริปต์พร้อมเสียงของ BanG Dream! Our Notes"
     },
     mainStory: {
       title: "เรื่องหลัก Our Notes",
-      description: "อ่านบทของเรื่องหลัก BanG Dream! Our Notes และฟังเสียงตัวละครในแต่ละฉาก",
+      description: "อ่านบทของเรื่องหลัก BanG Dream! Our Notes และฟังเสียงตัวละครในแต่ละฉาก"
     },
     friendshipStory: {
       title: "เรื่องสายสัมพันธ์ Our Notes",
-      description: "สำรวจเรื่องสายสัมพันธ์ระหว่างตัวละคร BanG Dream! Our Notes พร้อมสคริปต์และเสียง",
+      description: "สำรวจเรื่องสายสัมพันธ์ระหว่างตัวละคร BanG Dream! Our Notes พร้อมสคริปต์และเสียง"
     },
     otherStory: {
       title: "เรื่องและบทสนทนาอื่นๆ Our Notes",
-      description: "เรียกดูบทสนทนาหลังไลฟ์ เรื่องโฮม แนะนำสถานที่ และเรื่องสอนเล่นของ BanG Dream! Our Notes",
+      description: "เรียกดูบทสนทนาหลังไลฟ์ เรื่องโฮม แนะนำสถานที่ และเรื่องสอนเล่นของ BanG Dream! Our Notes"
     },
     storyDetail: {
       title: "หน้ารายละเอียดเรื่อง",
-      description: "อ่านสคริปต์เรื่องและเล่นเสียงตัวละครที่ตรงกับบทสนทนา",
+      description: "อ่านสคริปต์เรื่องและเล่นเสียงตัวละครที่ตรงกับบทสนทนา"
     },
     liveResultStory: {
       title: "รายการบทสนทนาหลังไลฟ์",
-      description: "เรียกดูบทสนทนาของตัวละครหลังการแสดงไลฟ์ในรูปแบบรายการ",
+      description: "เรียกดูบทสนทนาของตัวละครหลังการแสดงไลฟ์ในรูปแบบรายการ"
     },
-    homeStory: {
-      title: "รายการเรื่องโฮม",
-      description: "เรียกดูแนะนำจุดโฮมและบทสนทนาแบบแตะในที่เดียว",
-    },
-    tutorialStory: {
-      title: "รายการเรื่องสอนเล่น",
-      description: "เรียกดูฉากเรื่องที่ใช้ในบทสอนเล่นของเกม",
-    },
+    homeStory: { title: "รายการเรื่องโฮม", description: "เรียกดูแนะนำจุดโฮมและบทสนทนาแบบแตะในที่เดียว" },
+    tutorialStory: { title: "รายการเรื่องสอนเล่น", description: "เรียกดูฉากเรื่องที่ใช้ในบทสอนเล่นของเกม" },
     eventStory: {
       title: "รายการเรื่องอีเวนต์",
-      description: "ค้นหาและเรียกดูเรื่องอีเวนต์ของ BanG Dream! Our Notes",
+      description: "ค้นหาและเรียกดูเรื่องอีเวนต์ของ BanG Dream! Our Notes"
     },
     tools: {
       title: "เครื่องมือฐานข้อมูล Our Notes",
-      description: "ใช้เครื่องมือ Moenotes เพื่อสำรวจข้อมูลและแอสเซ็ตเกมสาธารณะของ BanG Dream! Our Notes",
+      description: "ใช้เครื่องมือ Moenotes เพื่อสำรวจข้อมูลและแอสเซ็ตเกมสาธารณะของ BanG Dream! Our Notes"
+    },
+    chartPreview: {
+      title: "ตัวอย่างชาร์ต 3D ของ Our Notes",
+      description: "เลือกเพลงและระดับความยากเพื่อรับชมการแสดงผลชาร์ตของ Our Notes ในรูปแบบ 3D บนเบราว์เซอร์ของคุณ: เลน โน้ต และเอฟเฟกต์การแตะเล่นอัตโนมัติซิงค์กับเสียงเพลง พร้อมระบบหยุด เลื่อนตำแหน่ง และปรับความเร็ว"
+    },
+    live2dViewer: {
+      title: "ตัวดู Live2D ของ Our Notes",
+      description: "เรียกดูโมเดล Live2D ทั้งหมดของ BanG Dream! Our Notes ตามตัวละครและชุดคอสตูมบนเบราว์เซอร์ของคุณ: ท่ายืนปกติ การกะพริบตา การหายใจ และระบบฟิสิกส์เหมือนในเรื่องราว พร้อมสั่งเล่นท่าทางและสีหน้าได้ตามต้องการ"
+    },
+    storyPlayer: {
+      title: "เครื่องเล่นเรื่องราว Our Notes",
+      description: "เล่นเรื่องราวของ BanG Dream! Our Notes บนเบราว์เซอร์ของคุณเหมือนหน้าจอเรื่องราวในเกม: ตัวละคร Live2D เวที มุมกล้องและเอฟเฟกต์ กล่องข้อความ ดนตรี เสียงเอฟเฟกต์ และเสียงพากย์ รองรับภาษาญี่ปุ่น อังกฤษ จีน และเกาหลี"
+    },
+    chartData: {
+      title: "เมตาข้อมูลเพลง Our Notes",
+      description: "อันดับชาร์ตทั้งหมดของ BanG Dream! Our Notes ตามประสิทธิภาพคะแนน พลังวงสำหรับระดับอีเวนต์ ความเร็ว เลเวล และความยาว พร้อมแผนภาพการกระจาย รายละเอียดชาร์ต และคำจำกัดความของแบบจำลองคะแนน ข้อมูลมาจากการถอดรหัสไคลเอนต์เกม"
     },
     assetViewer: {
       title: "ตัวดูแอสเซ็ตเกม Our Notes",
-      description: "ค้นหาและเรียกดูแอสเซ็ตเกมสาธารณะ เช่น อาร์ตการ์ด ปกเพลง และภาพตัวละครของ BanG Dream! Our Notes",
+      description: "ค้นหาและเรียกดูแอสเซ็ตเกมสาธารณะ เช่น อาร์ตการ์ด ปกเพลง และภาพตัวละครของ BanG Dream! Our Notes"
     },
     about: {
       title: "เกี่ยวกับ Moenotes และ StarMoe",
-      description: "แนะนำ Moenotes ฐานข้อมูลและตัวดูแฟนหลายภาษาของ StarMoe สำหรับตัวละคร เพลง การ์ด และเรื่องราวของ BanG Dream! Our Notes",
+      description: "แนะนำ Moenotes ฐานข้อมูลและตัวดูแฟนหลายภาษาของ StarMoe สำหรับตัวละคร เพลง การ์ด และเรื่องราวของ BanG Dream! Our Notes"
     },
-    designSystem: {
-      title: "อ้างอิงระบบดีไซน์",
-      description: "เอกสารอ้างอิงภาษาภาพและไลบรารีคอมโพเนนต์ของ Moenotes",
+    account: {
+      title: "บัญชีของฉัน",
+      description: "StarMoe Passport ของคุณบน Moenotes: เลือกตัวละครเพื่อเป็นตัวแทนของคุณ"
     },
+    player: { title: "โปรไฟล์ผู้เล่น", description: "หน้าโปรไฟล์สาธารณะของผู้เล่น Our Notes บน Moenotes" },
+    designSystem: { title: "อ้างอิงระบบดีไซน์", description: "เอกสารอ้างอิงภาษาภาพและไลบรารีคอมโพเนนต์ของ Moenotes" }
   },
   designSystem: {
     sirius: {
@@ -703,7 +1640,7 @@ export const thTH = {
       grid: "พิกัดกริด",
       card: "แผงเนื้อหา",
       raised: "แผงลอยตัว",
-      surface: "พื้นผิวสงบนิ่ง",
+      surface: "พื้นผิวสงบนิ่ง"
     },
     title: "ระบบดีไซน์",
     subtitle: "Moenotes visual language reference — colors, typography, components, and interactions.",
@@ -713,7 +1650,7 @@ export const thTH = {
       components: "Components",
       modals: "Modals",
       filters: "Filters",
-      animations: "Animations",
+      animations: "Animations"
     },
     colors: {
       accent: "Accent",
@@ -736,7 +1673,7 @@ export const thTH = {
       surface: "Surface",
       border: "Border",
       text: "Text",
-      muted: "Muted",
+      muted: "Muted"
     },
     typography: { display: "Display Font", body: "Body Font", hand: "Hand Font", note: "Note Font" },
     components: {
@@ -754,7 +1691,7 @@ export const thTH = {
       selectPlaceholder: "Choose option...",
       optA: "Option A",
       optB: "Option B",
-      optC: "Option C",
+      optC: "Option C"
     },
     modals: {
       openSm: "Small Modal",
@@ -767,7 +1704,7 @@ export const thTH = {
       copyModal: "Copy Modal",
       copyModalTitle: "Image Preview",
       copy: "Copy",
-      save: "Save",
+      save: "Save"
     },
     filters: {
       title: "Filter Demo",
@@ -783,7 +1720,7 @@ export const thTH = {
       date: "Date",
       level: "Level",
       onlyComplete: "Completed only",
-      reset: "Reset",
+      reset: "Reset"
     },
     animations: {
       spring: "Spring Interaction",
@@ -793,8 +1730,8 @@ export const thTH = {
       stagger: "Stagger Animation",
       staggerDesc: "Staggered fade-in — list items appear in sequence",
       wobble: "Wobble Effect",
-      wobbleDesc: "Hover wobble — stamp/sticker style",
-    },
+      wobbleDesc: "Hover wobble — stamp/sticker style"
+    }
   },
   filter: {
     title: "ตัวกรอง",
@@ -807,19 +1744,33 @@ export const thTH = {
     openQuickFilter: "เปิดตัวกรอง",
     drawerHintTitle: "ย้ายตัวกรองไปไว้ที่แถบด้านข้างแล้ว",
     drawerHintBody: "คลิกแท็บทางด้านซ้ายเพื่อเปิดหรือซ่อนตัวกรองได้ตลอดเวลา",
-    drawerHintDismiss: "เข้าใจแล้ว",
+    drawerHintDismiss: "เข้าใจแล้ว"
+  },
+  browserNotice: {
+    title: "เบราว์เซอร์นี้อาจแสดงผลเว็บไซต์ได้ไม่สมบูรณ์",
+    description: "เบราว์เซอร์ภายในแอปหรือเบราว์เซอร์ที่ใช้เอนจินเวอร์ชันเก่าอาจทำให้การจัดหน้า เสียง และตัวอย่างชาร์ตทำงานผิดพลาด",
+    inAppHint: "แตะที่เมนู ··· ที่มุมบนขวา แล้วเลือก \"เปิดในเบราว์เซอร์\"",
+    ios: "เบราว์เซอร์ทั้งหมดบน iPhone และ iPad ทำงานบนเอนจินของ Safari ซึ่งจะอัปเดตไปพร้อมกับ iOS โปรดอัปเดต iOS ให้เป็นเวอร์ชันล่าสุดใน การตั้งค่า › ทั่วไป › อัปเดตซอฟต์แวร์",
+    android: "เพื่อประสบการณ์การใช้งานที่สมบูรณ์ โปรดเปิดเว็บไซต์นี้ใน Chrome หรือ Edge",
+    desktop: "เพื่อประสบการณ์การใช้งานที่สมบูรณ์ โปรดเปิดเว็บไซต์นี้ใน Edge หรือ Chrome",
+    download: "ดาวน์โหลด {name}",
+    dismiss: "ปิดการแจ้งเตือน"
   },
   modal: { close: "ปิด" },
   footer: {
     desc: "A next-generation viewer for BanG Dream! Our Notes.",
     explore: "สำรวจ",
     sister: "Sister Sites",
+    friendly: "เว็บไซต์พันธมิตร",
     contact: "Contact & Feedback",
     feedback: "Submit Feedback / Contribution",
     bugReport: "Bug Report",
+    discord: "ชุมชน Discord ({name})",
+    qq: "กลุ่ม QQ {name} ({number})",
+    github: "ซอร์สโค้ดบน GitHub",
     email: "อีเมล mail@exmeaning.com",
     disclaimer: "This site only provides material display. Game copyright belongs to Bushiroad / Craft Egg / Ishimori. This is a fan-made website, a doujin database for research purposes only.",
-    copyright: "© 2026 Moenotes · Unofficial Fan Site",
+    copyright: "© 2026 Moenotes · Unofficial Fan Site"
   },
   stamps: {
     fallbackNameNoChar: "สติกเกอร์ #{id}",
@@ -836,7 +1787,7 @@ export const thTH = {
     quickFilter: "Open quick filters",
     stickerImageAlt: "{name} sticker",
     copiedImage: "Sticker copied to clipboard.",
-    copiedLink: "Sticker asset link copied.",
+    copiedLink: "Sticker asset link copied."
   },
   comics: {
     loadingName: "การ์ตูนหน้าโหลด #{id}",
@@ -852,7 +1803,7 @@ export const thTH = {
     quickFilter: "Open quick filters",
     comicImageAlt: "{name} comic",
     copiedImage: "Comic copied to clipboard.",
-    copiedLink: "Comic asset link copied.",
+    copiedLink: "Comic asset link copied."
   },
   items: {
     searchPlaceholder: "Search item name, description...",
@@ -863,7 +1814,7 @@ export const thTH = {
       "1": "Recovery/Tickets",
       "2": "Materials/Prisms",
       "3": "Character Pieces",
-      "4": "ตั๋วแลกเปลี่ยนและพอยต์",
+      "4": "ตั๋วแลกเปลี่ยนและพอยต์"
     },
     results: "{count} items",
     loading: "Loading item data...",
@@ -873,7 +1824,7 @@ export const thTH = {
     emptyTitle: "No items match these filters",
     emptyDescription: "This filter combination has no results. Clear the filters to browse every item again.",
     reset: "View all items",
-    quickFilter: "Open quick filters",
+    quickFilter: "Open quick filters"
   },
   about: {
     teamIntro: "we are a small team from <a href=\"https://github.com/moe-sekai\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-[var(--mn-accent-deep)] underline decoration-2 decoration-[var(--mn-accent)] underline-offset-4 hover:text-[var(--mn-accent)]\">StarMoe</a>. During the two years of building <em>MoeSekai</em>, we have been thinking: what should a good wiki actually look like?",
@@ -885,10 +1836,14 @@ export const thTH = {
     openSourceTitle: "Open Source License",
     openSourceDesc: "The project frontend is open-sourced under the <strong>AGPL v3</strong> license. We are committed to open and transparent collaboration, and welcome any contributions.",
     openSourceLink: "GitHub Repository",
+    communityTitle: "เข้าร่วมชุมชน",
+    communityDesc: "ร่วมพูดคุยกับเราใน Discord {name}, รายงานปัญหา หรือติดตามความคืบหน้าการพัฒนาบน GitHub",
+    discordLink: "เข้าร่วม Discord",
+    githubLink: "GitHub",
     assetsTitle: "Copyright & Assets",
     assetsDesc: "In-game assets (art, audio, etc.) are copyrighted by <strong>Bushiroad / Craft Egg / Ishimori</strong>. Self-made compatible assets are licensed under the <strong>CC BY-NC 4.0</strong> license.",
     assetsLink: "CC BY-NC 4.0 License",
     techStackTitle: "Technology Stack",
-    techStackDesc: "Built using a modern, lightweight, and highly performant stack to ensure fast loading times and a smooth, notebook-like experience.",
-  },
+    techStackDesc: "Built using a modern, lightweight, and highly performant stack to ensure fast loading times and a smooth, notebook-like experience."
+  }
 } as const satisfies MessageTree;

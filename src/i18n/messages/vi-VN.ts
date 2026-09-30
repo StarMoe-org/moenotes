@@ -8,7 +8,7 @@ export const viVN = {
     date: "Ngày phát hành",
     rarity: "Độ hiếm",
     ascending: "Tăng dần",
-    descending: "Giảm dần",
+    descending: "Giảm dần"
   },
   assetBrowser: {
     noLanguages: "Chưa có ngôn ngữ tài nguyên nào khả dụng.",
@@ -36,7 +36,7 @@ export const viVN = {
       audio: "Âm thanh",
       video: "Video",
       text: "Văn bản",
-      other: "Tệp",
+      other: "Tệp"
     },
     sorts: { name: "Tên A–Z", nameDescending: "Tên Z–A", size: "Lớn nhất trước" },
     title: "Trình duyệt tài nguyên",
@@ -103,6 +103,15 @@ export const viVN = {
     copy: "Sao chép đường dẫn",
     copied: "Đã sao chép đường dẫn",
     copyError: "Sao chép thất bại; hãy thử lại",
+    folders: "Thư mục",
+    subfolders: "Thư mục con",
+    toggleTree: "Bật/tắt cây thư mục",
+    directoryTree: "Cấu trúc thư mục",
+    copyBundle: "Sao chép khóa Bundle",
+    bundleCopied: "Đã sao chép khóa Bundle",
+    noFilesHere: "Không có tệp trực tiếp trong thư mục này.",
+    preview: "Xem trước",
+    openImage: "Mở ảnh gốc"
   },
   notFound: {
     metaTitle: "Không tìm thấy trang",
@@ -110,16 +119,24 @@ export const viVN = {
     description: "Địa chỉ có thể đã thay đổi hoặc trang này vẫn đang được chuẩn bị. Hãy quay về trang chủ để tiếp tục khám phá.",
     note: "Nếu liên kết này đáng lẽ phải hoạt động, hãy phản hồi cho nhà phát triển để giúp chúng tôi tìm lại tín hiệu này.",
     home: "Về trang chủ",
-    feedback: "Báo cáo liên kết này",
+    feedback: "Báo cáo liên kết này"
   },
   nav: {
     home: "Trang chủ",
-    groups: { database: "Cơ sở dữ liệu", story: "Cốt truyện", tools: "Công cụ", community: "Giới thiệu" },
+    groups: {
+      database: "Cơ sở dữ liệu",
+      music: "Âm nhạc",
+      events: "Sự kiện",
+      story: "Cốt truyện",
+      tools: "Công cụ",
+      community: "Giới thiệu"
+    },
     items: {
       characters: "Nhân vật",
       cards: "Thẻ bài",
       supportCards: "Thẻ hỗ trợ",
       music: "Nhạc",
+      eventList: "Danh sách sự kiện",
       gacha: "Gacha",
       rewards: "Nhiệm vụ & Phần thưởng",
       titles: "Danh hiệu",
@@ -136,7 +153,14 @@ export const viVN = {
       tutorialStory: "Cốt truyện hướng dẫn",
       assetViewer: "Trình xem tài nguyên",
       designSystem: "Hệ thống thiết kế",
-    },
+      chartPreview: "Trình xem trước phổ nhạc",
+      live2dViewer: "Trình xem Live2D",
+      storyPlayer: "Trình phát cốt truyện",
+      news: "Thông báo game",
+      eventTracker: "Theo dõi sự kiện",
+      musicRanking: "Bảng xếp hạng bài hát",
+      chartData: "Meta bài hát"
+    }
   },
   shell: {
     openSidebar: "Mở thanh bên",
@@ -148,21 +172,170 @@ export const viVN = {
     breadcrumbExpandItems: "Mở rộng trang cùng cấp",
     commandPlaceholder: "Tìm trang hoặc tính năng...",
     noCommandResults: "Không có kết quả",
-    shortcuts: "Phím tắt",
+    shortcuts: "Phím tắt"
+  },
+  account: {
+    signIn: "Đăng nhập",
+    signOut: "Đăng xuất",
+    menu: "Menu tài khoản",
+    passport: "StarMoe Passport",
+    title: "Tài khoản của tôi",
+    description: "StarMoe Passport của bạn trên Moenotes.",
+    manage: "Tài khoản của tôi",
+    loading: "Đang tải tài khoản…",
+    unavailable: "Dịch vụ tài khoản hiện không khả dụng. Vui lòng thử lại sau.",
+    signedOutHint: "Đăng nhập bằng StarMoe Passport để thiết lập hồ sơ của bạn.",
+    changeAvatar: "Đổi ảnh đại diện",
+    avatarHint: "Chọn một nhân vật làm đại diện cho bạn trên Moenotes.",
+    avatarDefault: "Dùng ảnh đại diện Passport",
+    saving: "Đang lưu…",
+    saveFailed: "Không thể lưu. Vui lòng thử lại.",
+    securityTitle: "Bảo mật Passport",
+    securityHint: "Các cài đặt này nằm trong StarMoe Passport của bạn và áp dụng cho mọi trang web StarMoe.",
+    password: "Mật khẩu",
+    passwordHint: "Thiết lập hoặc đổi mật khẩu đăng nhập của bạn.",
+    email: "Email",
+    emailHint: "Thêm hoặc đổi email đăng nhập của bạn.",
+    securityCenter: "Trung tâm bảo mật",
+    securityCenterHint: "Xác minh hai bước, liên kết tài khoản và thiết bị đã đăng nhập. Mở trong tab mới.",
+    change: "Thay đổi",
+    open: "Mở",
+    comingSoonTitle: "Đội hình Our Notes",
+    comingSoonBadge: "Đang phát triển",
+    comingSoonBody: "Tính năng xây dựng đội hình đang được phát triển. Hãy đón chờ nhé!",
+    games: {
+      title: "Tài khoản game",
+      hint: "Tài khoản Our Notes của bạn. Tài khoản mới thêm sẽ ở trạng thái «Chưa xác minh»; hãy tạm thời đặt mã xác nhận vào tên trong game để xác minh quyền sở hữu.",
+      loadFailed: "Không thể tải tài khoản game của bạn. Vui lòng tải lại trang.",
+      unavailable: "Tính năng tài khoản game hiện không khả dụng. Vui lòng thử lại sau.",
+      servers: { tw: "Đài Loan/Hồng Kông/Ma Cao", jp: "Nhật Bản", en: "Bản tiếng Anh", kr: "Hàn Quốc" },
+      add: "Thêm tài khoản game",
+      addAnother: "Thêm tài khoản khác",
+      server: "Máy chủ",
+      profileId: "ID người chơi",
+      profileIdHint: "ID 11 chữ số trên hồ sơ trong game của bạn.",
+      profileIdHintJp: "ID trên hồ sơ trong game của bạn.",
+      addButton: "Thêm",
+      checking: "Đang kiểm tra…",
+      verified: "Đã xác minh",
+      unverified: "Chưa xác minh",
+      verifiedMeta: "ID {id} · Đã xác minh {date}",
+      unverifiedMeta: "ID {id} · Chưa xác minh",
+      startVerify: "Xác minh",
+      hideVerify: "Thu gọn",
+      stepRename: "Trong game, hãy đổi tên để chứa mã bên dưới. Phần còn lại của tên có thể giữ nguyên.",
+      stepVerify: "Quay lại đây và nhấn Kiểm tra. Tên mới có thể mất khoảng 15 giây để hiển thị.",
+      stepRestore: "Sau khi xác minh thành công, bạn có thể đổi lại tên cũ.",
+      codeLabel: "Mã xác minh",
+      copy: "Sao chép",
+      copied: "Đã sao chép",
+      refreshCode: "Đổi mã khác",
+      refreshHint: "Game không cho phép dùng mã này trong tên (ví dụ: bị bộ lọc từ chặn)? Hãy lấy mã mới.",
+      codeRefreshed: "Đã đổi mã mới. Mã cũ không còn hiệu lực.",
+      verify: "Kiểm tra",
+      nameMismatch: "Chưa nhận diện được: tên trong game hiện vẫn là «{name}». Hãy đợi vài giây sau khi đổi tên rồi thử lại.",
+      addedNotice: "Đã thêm {name}. Hãy nhập mã vào tên trong game để hoàn tất xác minh.",
+      verifiedNotice: "{name} đã được xác minh. Bây giờ bạn có thể đổi lại tên cũ.",
+      unnamed: "(không tên)",
+      remove: "Xóa",
+      removeConfirm: "Xác nhận xóa",
+      keep: "Giữ lại",
+      errors: {
+        invalidAccount: "ID này không thuộc về máy chủ đã chọn. Vui lòng kiểm tra lại máy chủ và ID.",
+        playerNotFound: "Không tìm thấy người chơi có ID này trên máy chủ đã chọn.",
+        alreadyAdded: "Bạn đã thêm tài khoản này rồi.",
+        tooManyAccounts: "Bạn có thể thêm tối đa 10 tài khoản game.",
+        alreadyVerified: "Tài khoản này đã được xác minh rồi.",
+        notFound: "Tài khoản này không còn trong danh sách của bạn. Vui lòng tải lại trang.",
+        notVerified: "Vui lòng xác minh tài khoản này trước.",
+        tooSoon: "Thao tác quá nhanh. Vui lòng đợi vài giây rồi thử lại.",
+        gameUnavailable: "Hiện không thể kết nối tới máy chủ game (bảo trì hoặc sự cố mạng). Vui lòng thử lại sau.",
+        generic: "Đã xảy ra lỗi. Vui lòng thử lại."
+      }
+    },
+    profile: {
+      show: "Hồ sơ",
+      loading: "Đang tải hồ sơ…",
+      level: "Cấp độ",
+      favorites: "Lượt yêu thích",
+      favoriteCard: "Thẻ trưng bày: {title} ({character})",
+      fetchedAt: "Hồ sơ cập nhật lúc {time}",
+      refresh: "Làm mới hồ sơ",
+      public: "Trang cá nhân công khai",
+      publicOn: "Bật: bất kỳ ai có liên kết đều có thể xem hồ sơ này.",
+      publicOff: "Tắt: chỉ có bạn mới có thể xem hồ sơ này.",
+      copyLink: "Sao chép liên kết",
+      openPage: "Mở",
+      profileCard: "Danh thiếp cá nhân",
+      profileCardNamed: "Danh thiếp cá nhân: {name}",
+      profileCardAlt: "Danh thiếp cá nhân của {name}, ảnh {index}"
+    },
+    share: {
+      button: "Tạo ảnh chia sẻ",
+      title: "Ảnh chia sẻ",
+      rendering: "Đang tạo hình ảnh…",
+      failed: "Không thể tạo hình ảnh. Vui lòng thử lại.",
+      retry: "Thử lại",
+      hint: "Hình ảnh được vẽ ngay trong trình duyệt của bạn; không có dữ liệu nào tải lên máy chủ.",
+      alt: "Ảnh chia sẻ của {name}",
+      download: "Tải xuống",
+      copy: "Sao chép hình ảnh",
+      copied: "Đã sao chép",
+      share: "Chia sẻ"
+    }
+  },
+  player: {
+    title: "Hồ sơ người chơi",
+    description: "Trang cá nhân công khai của người chơi Our Notes, đã được xác minh bằng StarMoe Passport.",
+    documentTitle: "{name}",
+    loading: "Đang tải hồ sơ người chơi…",
+    invalid: "Liên kết này không trỏ đến hồ sơ người chơi.",
+    notFound: "Hồ sơ này không tồn tại hoặc chủ sở hữu chưa đặt ở chế độ công khai.",
+    unavailable: "Hiện không thể tải hồ sơ này. Vui lòng thử lại sau.",
+    verified: "Đã xác minh bằng StarMoe Passport",
+    cta: "Bạn cũng chơi Our Notes? Hãy liên kết tài khoản tại mục Tài khoản của tôi để công khai hồ sơ của chính mình.",
+    ctaButton: "Liên kết tài khoản của tôi"
   },
   settings: {
     title: "Cài đặt",
     language: "Ngôn ngữ / Language",
     machineTranslationNotice: "Một số ngôn ngữ dùng dịch máy và có thể chưa chính xác.",
     colorScheme: "Giao diện",
+    gameServer: "Máy chủ game mặc định",
+    gameServerAuto: "Tự động ({server})",
     options: { system: "Hệ thống", light: "Sáng", dark: "Tối" },
+    tabs: { label: "Phân loại cài đặt", general: "Chung", data: "Dữ liệu" },
+    data: {
+      cacheTitle: "Bộ nhớ đệm tải xuống",
+      total: "Đã lưu đệm",
+      fileCount: "{count} tệp",
+      categories: {
+        live2d: "Mô hình Live2D",
+        images: "Hình ảnh",
+        audio: "Âm thanh",
+        chart: "Phổ nhạc 3D",
+        data: "Dữ liệu"
+      },
+      categoryHints: {
+        live2d: "Nhân vật trong trình xem Live2D và cốt truyện",
+        images: "Hình ảnh trên các trang, cùng hình nền và tranh minh họa của cốt truyện",
+        audio: "Giọng lồng tiếng, nhạc nền và hiệu ứng âm thanh của cốt truyện, cùng âm thanh trên các trang",
+        chart: "Bài hát, sân khấu và hiệu ứng của trình xem trước phổ nhạc 3D",
+        data: "Phông chữ, giao diện và kịch bản cốt truyện, cùng dữ liệu game trang web đọc"
+      },
+      calculating: "Đang tính toán…",
+      clear: "Xóa",
+      clearAll: "Xóa toàn bộ dữ liệu bộ nhớ đệm",
+      clearing: "Đang xóa…",
+      unavailable: "Trình duyệt này không cho phép trang web lưu tệp (duyệt web ẩn danh có thể chặn lưu trữ), vì vậy dữ liệu sẽ được tải về mỗi lần truy cập."
+    }
   },
   actions: {
     close: "Đóng",
     clearCache: "Clear cache",
     refresh: "Refresh",
     open: "Open",
-    viewGroup: "View group",
+    viewGroup: "View group"
   },
   home: {
     heading: "Cơ sở dữ liệu BanG Dream! Our Notes",
@@ -180,7 +353,7 @@ export const viVN = {
       live: "Sự kiện bài hát",
       mission: "Nhiệm vụ giới hạn",
       loginBonus: "Thưởng đăng nhập",
-      seasonPass: "Vé mùa",
+      seasonPass: "Vé mùa"
     },
     viewGacha: "Xem chi tiết gacha",
     viewMusic: "Xem bài hát",
@@ -212,13 +385,13 @@ export const viVN = {
       items: "Vật phẩm",
       itemsDesc: "View detailed information on all in-game items, consumables, and materials.",
       assetViewer: "Trình xem tài nguyên",
-      assetViewerDesc: "Browse, search, and preview static assets (images, audio, JSON) stored in the project's asset bucket.",
-    },
+      assetViewerDesc: "Browse, search, and preview static assets (images, audio, JSON) stored in the project's asset bucket."
+    }
   },
   page: {
     groupIntro: "Pages in this group are derived from one route registry, keeping sidebar, breadcrumbs, command palette, and SEO in sync.",
     placeholderTitle: "Page foundation is ready",
-    placeholderDescription: "Once the real Our Notes data shape is known, business components can be attached without rebuilding the foundation.",
+    placeholderDescription: "Once the real Our Notes data shape is known, business components can be attached without rebuilding the foundation."
   },
   cards: {
     searchPlaceholder: "Search titles, characters, or bands...",
@@ -273,17 +446,11 @@ export const viVN = {
       copyStates: {
         image: "Image copied. You can paste it now.",
         link: "Image copying is unavailable, so the asset URL was copied instead.",
-        error: "Copy failed. Use Open Original instead.",
-      },
+        error: "Copy failed. Use Open Original instead."
+      }
     },
     rarities: { "2": "R", "3": "SR", "4": "SSR", "10": "Đặc biệt" },
-    attributes: {
-      "1": "Red",
-      "2": "Blue",
-      "3": "Green",
-      "4": "Yellow",
-      "5": "Purple",
-    },
+    attributes: { "1": "Red", "2": "Blue", "3": "Green", "4": "Yellow", "5": "Purple" },
     growth: {
       level: "Cấp độ",
       levelValue: "Lv.{level} / {limit}",
@@ -294,8 +461,8 @@ export const viVN = {
       awaken: "Thức tỉnh",
       power: "Tổng lực chiến",
       skillLevel: "Cấp kỹ năng",
-      leaderSkillHint: "Cấp kỹ năng đội trưởng liên kết với số lần Thức tỉnh; thay đổi cấp sẽ đồng bộ sửa đổi Thức tỉnh.",
-    },
+      leaderSkillHint: "Cấp kỹ năng đội trưởng liên kết với số lần Thức tỉnh; thay đổi cấp sẽ đồng bộ sửa đổi Thức tỉnh."
+    }
   },
   supportCards: {
     searchPlaceholder: "Search titles, characters...",
@@ -316,8 +483,55 @@ export const viVN = {
     diaryTitle: "Diary",
     growth: {
       limitBreak: "Vượt giới hạn",
-      skillLevelHint: "Cùng với việc vượt giới hạn, tâm ý và kỹ năng ẩn chứa trong thẻ bài sẽ càng tỏa sáng.",
-    },
+      skillLevelHint: "Cùng với việc vượt giới hạn, tâm ý và kỹ năng ẩn chứa trong thẻ bài sẽ càng tỏa sáng."
+    }
+  },
+  events: {
+    filterTitle: "Lọc sự kiện",
+    searchPlaceholder: "Tìm kiếm sự kiện, nhân vật hoặc bài hát...",
+    status: "Trạng thái",
+    band: "Ban nhạc thưởng",
+    openDetail: "Xem sự kiện: {name}",
+    emptyTitle: "Không tìm thấy sự kiện phù hợp",
+    emptyDescription: "Không có sự kiện nào khớp với bộ lọc hiện tại. Hãy xóa bộ lọc để xem tất cả sự kiện đang và đã diễn ra.",
+    reset: "Hiển thị tất cả",
+    noneOnServer: "{server} hiện chưa tổ chức sự kiện nào.",
+    showServer: "Xem {server}",
+    period: "Thời gian diễn ra sự kiện",
+    displayUntil: "Trang sự kiện mở đến",
+    eventId: "ID sự kiện",
+    eventItem: "Vật phẩm sự kiện",
+    song: "Bài hát sự kiện",
+    rankings: "Bảng xếp hạng",
+    rankingKinds: { score: "Xếp hạng điểm số", music: "Xếp hạng bài hát", totalMusic: "Xếp hạng tổng bài hát" },
+    rankingOff: "Không có",
+    cards: "Thẻ bài sự kiện",
+    bonus: "Thưởng sự kiện",
+    bonusRank: "Rank {rank}",
+    bonusRankLabel: "Rank thẻ bài",
+    bonusNote: "Rank là số lần thức tỉnh của thẻ thành viên hoặc số lần đột phá giới hạn của thẻ hỗ trợ. Thưởng được cộng dồn: thẻ đáp ứng nhiều điều kiện sẽ nhận được tất cả điểm cộng.",
+    bonusCardKinds: { member: "Thẻ thành viên", support: "Thẻ hỗ trợ" },
+    bonusTarget: "Điều kiện",
+    bonusParameter: "Chỉ số",
+    bonusEventItem: "Vật phẩm sự kiện",
+    bonusValue: "+{value}%",
+    bonusTargets: { attribute: "Thẻ thuộc tính {name}", tag: "Tag #{id}", any: "Mọi thẻ bài" },
+    story: "Cốt truyện sự kiện",
+    storyUnlock: "Mở khóa khi đạt {count} pt",
+    pointRewards: "Phần thưởng điểm sự kiện",
+    points: "{count} pt",
+    loopReward: "Sau mốc {from} pt, cứ mỗi {every} pt nhận thêm",
+    liveRewards: "Phần thưởng biểu diễn",
+    liveNote: "Điểm pt và vật phẩm nhận được sau mỗi buổi biểu diễn dựa theo xếp hạng điểm số.",
+    liveKinds: { live: "Live", challenge: "Challenge Live" },
+    scoreRank: "Xếp hạng điểm số",
+    livePoints: "pt",
+    liveItems: "Vật phẩm",
+    probability: "Tỷ lệ {rate}%",
+    bannerAlt: "Banner sự kiện {name}",
+    backToList: "Quay lại danh sách sự kiện",
+    notFoundTitle: "Không tìm thấy sự kiện",
+    notFoundDescription: "Sự kiện này có thể đã khép màn từ lâu, hoặc bức màn vẫn chưa được kéo lên. Hãy quay lại danh sách sự kiện để tìm kiếm sân khấu khác nhé."
   },
   gacha: {
     searchPlaceholder: "Tìm kiếm tên gacha, nhân vật Pick Up hoặc tên thẻ bài...",
@@ -362,8 +576,8 @@ export const viVN = {
       pickups: "{count} Pick Up",
       idle: "Chạm vào quay đơn hoặc 10 lần để gặp gỡ ánh sao trong tim bạn; kỷ niệm chỉ lưu giữ trên trang này.",
       guarantee: "{count} lượt cuối của lần quay 10 đảm bảo nhận được từ {rarity} trở lên.",
-      note: "Mỗi cái chạm tay là một phép màu nhỏ dệt nên từ ánh sao và xác suất. Chỉ dùng để giải trí; chúc mọi mong ước của bạn thành hiện thực!",
-    },
+      note: "Mỗi cái chạm tay là một phép màu nhỏ dệt nên từ ánh sao và xác suất. Chỉ dùng để giải trí; chúc mọi mong ước của bạn thành hiện thực!"
+    }
   },
   schedule: {
     ongoing: "Đang diễn ra",
@@ -376,7 +590,7 @@ export const viVN = {
     startsInHours: "Bắt đầu sau {count} giờ",
     range: "{start} – {end}",
     from: "Từ {start}",
-    until: "Đến {end}",
+    until: "Đến {end}"
   },
   rewards: {
     searchPlaceholder: "Tìm kiếm tên hoặc phần thưởng...",
@@ -423,10 +637,10 @@ export const viVN = {
       stamp: "Nhãn dán",
       degree: "Danh hiệu",
       spot: "Địa điểm sảnh chính",
-      other: "Khác",
+      other: "Khác"
     },
     unknownReward: "{kind} #{id}",
-    count: "×{count}",
+    count: "×{count}"
   },
   titles: {
     searchPlaceholder: "Tìm kiếm tên danh hiệu, nhân vật hoặc điều kiện nhận...",
@@ -437,7 +651,7 @@ export const viVN = {
     openPreview: "Xem danh hiệu: {name}",
     emptyTitle: "Không tìm thấy danh hiệu phù hợp",
     emptyDescription: "Không có biểu tượng hay lời thề nào phù hợp với bộ lọc. Hãy đặt lại để chiêm ngưỡng mọi danh hiệu trao cho các thiếu nữ.",
-    reset: "Hiển thị tất cả danh hiệu",
+    reset: "Hiển thị tất cả danh hiệu"
   },
   backgrounds: {
     searchPlaceholder: "Tìm kiếm hình nền...",
@@ -448,7 +662,195 @@ export const viVN = {
     openOriginal: "Mở ảnh gốc",
     emptyTitle: "Không tìm thấy khung cảnh phù hợp",
     emptyDescription: "Không có cảnh vật nào phù hợp với góc nhìn này. Hãy đặt lại bộ lọc để dạo bước qua nhiều góc phố và sân khấu đong đầy kỷ niệm.",
-    reset: "Hiển thị tất cả hình nền",
+    reset: "Hiển thị tất cả hình nền"
+  },
+  chartPreview3d: {
+    credit: "emptysekai by StarMoe",
+    stageLabel: "Màn hình phổ nhạc 3D",
+    difficulty: "Độ khó",
+    chooseSong: "Chọn bài hát",
+    changeSong: "Đổi bài hát",
+    preparing: "Đang chuẩn bị sân khấu…",
+    loading: "Đang tải phổ nhạc…",
+    emptyTitle: "Chọn một bài hát để thắp sáng sân khấu",
+    emptyDescription: "Mở danh sách bài hát, lọc bài và chọn độ khó, phần tự động diễn tấu trong game sẽ được tái hiện tại đây dưới dạng 3D.",
+    fullscreen: "Toàn màn hình",
+    exitFullscreen: "Thoát toàn màn hình",
+    lock: "Khóa màn hình",
+    unlock: "Mở khóa",
+    loadErrorTitle: "Sân khấu tạm thời chưa thể bừng sáng",
+    loadErrorDescription: "Dữ liệu phổ nhạc chưa tải được. Có thể do mất kết nối mạng hoặc trang phổ nhạc tạm thời không hoạt động. Vui lòng thử lại sau.",
+    missingDescription: "Phổ nhạc này chưa có dữ liệu 3D. Hãy thử bài hát hoặc độ khó khác nhé.",
+    retry: "Tải lại",
+    unsupportedTitle: "Trình duyệt này không thể hiển thị phổ nhạc 3D",
+    unsupportedDescription: "Trình xem trước phổ nhạc yêu cầu WebGL2 và WebAudio. Vui lòng sử dụng phiên bản mới của trình duyệt trên máy tính hoặc điện thoại."
+  },
+  storyPlayer: {
+    stageLabel: "Màn hình cốt truyện",
+    preparing: "Đang chuẩn bị trình phát cốt truyện…",
+    loading: "Đang tải cốt truyện…",
+    retry: "Thử lại",
+    fullscreen: "Toàn màn hình",
+    exitFullscreen: "Thoát toàn màn hình",
+    errorTitle: "Không thể phát cốt truyện này",
+    errorDescription: "Dữ liệu cốt truyện hoặc Live2D Cubism Core chưa tải được, hoặc trình phát đã dừng. Có thể do mất kết nối mạng hoặc trang cốt truyện tạm thời không hoạt động. Vui lòng thử lại sau.",
+    unsupportedTitle: "Trình duyệt này không thể phát cốt truyện",
+    unsupportedDescription: "Trình phát cốt truyện yêu cầu WebGL2. Vui lòng sử dụng phiên bản mới của trình duyệt trên máy tính hoặc điện thoại.",
+    refusedTitle: "Cốt truyện này tạm thời chưa thể phát",
+    refusedDescription: "Cốt truyện này sử dụng một số tính năng hiển thị chưa được hỗ trợ trên trình phát; nhằm tránh hiển thị sai lệch, trình phát từ chối phát đoạn này. Bạn vẫn có thể đọc toàn bộ văn bản trên trang cốt truyện.",
+    language: "Ngôn ngữ",
+    languages: { ja: "日本語", en: "English", "zh-Hant": "繁體中文", "zh-Hans": "简体中文", ko: "한국어" },
+    previous: "Tập trước",
+    next: "Tập sau",
+    readText: "Đọc văn bản",
+    noMotionSync: "Đồng bộ khẩu hình giọng nói (Live2D MotionSync) không khả dụng trên trang này: nhân vật sử dụng tính năng này sẽ không mấp máy môi khi nói.",
+    motionSyncLicense: "Tính năng đồng bộ khẩu hình sử dụng Live2D Cubism MotionSync Core © Live2D Inc., được trang web này cung cấp nguyên bản theo giấy phép của Live2D. Tính năng này không thuộc mã nguồn mở của trang web; giấy phép không cho phép sao chép cho mục đích khác hoặc thực hiện dịch ngược.",
+    motionSyncLicenseLink: "Thỏa thuận cấp phép phần mềm độc quyền Live2D",
+    noMatches: "Không có cốt truyện nào khớp với bộ lọc.",
+    notice: "Cốt truyện được phát trong trình duyệt của bạn từ chính dữ liệu của game; nội dung hiển thị không đại diện cho chất lượng sản phẩm cuối cùng của trò chơi. Mỗi tập có dung lượng từ hàng chục đến hàng trăm MB, xin vui lòng lưu ý lưu lượng khi dùng mạng di động.",
+    listLoading: "Đang tải danh sách cốt truyện…",
+    listError: "Không thể tải danh sách cốt truyện.",
+    listEmpty: "Chưa có cốt truyện nào được phát hành.",
+    emptyTitle: "Chọn một phần cốt truyện",
+    emptyDescription: "Chọn một tập từ danh sách cốt truyện để bắt đầu phát.",
+    chooseStory: "Chọn cốt truyện",
+    sections: "Phân loại cốt truyện",
+    playing: "Đang phát",
+    searchPlaceholder: "Tìm kiếm tiêu đề, chương, nhân vật hoặc ID ADV…",
+    categoryTitle: "Thể loại",
+    otherEpisodes: "Các tập khác",
+    openInPlayer: "Phát bằng Live2D",
+    controls: {
+      play: "Phát",
+      pause: "Tạm dừng",
+      next: "Câu tiếp theo",
+      auto: "Tự động",
+      fastForward: "Tua nhanh",
+      skip: "Bỏ qua",
+      skipConfirm: "Bỏ qua phần còn lại của tập này?",
+      cancel: "Hủy",
+      settings: "Cài đặt",
+      position: "Tiến độ phát",
+      video: "Tiến độ video",
+      start: "Bắt đầu phát",
+      replay: "Phát lại",
+      ended: "Tập này đã kết thúc",
+      nextEpisode: "Tập tiếp theo",
+      show: "Hiện thanh điều khiển",
+      speed: "Tốc độ tua nhanh",
+      speedHint: "Tốc độ trên ×1 sẽ tự động bật «Tự động»; tắt «Tự động» sẽ trở về ×1."
+    },
+    volume: {
+      title: "Âm lượng",
+      Bgm: "Nhạc nền",
+      Se: "Hiệu ứng",
+      Voice: "Giọng nói",
+      Movie: "Video",
+      mute: "Tắt tiếng {name}",
+      unmute: "Bật tiếng {name}"
+    },
+    info: {
+      title: "Hướng dẫn sử dụng",
+      controls: "Thao tác",
+      shortcuts: "Phím tắt",
+      about: "Giới thiệu trình phát cốt truyện",
+      legend: {
+        play: {
+          name: "Phát / Tạm dừng",
+          description: "Khi tạm dừng, hình ảnh, âm thanh và video sẽ dừng đồng thời"
+        },
+        next: { name: "Câu tiếp theo", description: "Tương đương với việc nhấp vào màn hình cốt truyện" },
+        auto: { name: "Tự động", description: "Tự động chuyển sang câu tiếp theo sau khi lời thoại kết thúc" },
+        fastForward: { name: "Tua nhanh", description: "Chuyển đổi tuần tự theo ×1 → ×1.5 → ×1.7 → ×2" },
+        skip: { name: "Bỏ qua", description: "Bỏ qua phần còn lại của tập này sau khi xác nhận" },
+        settings: {
+          name: "Cài đặt",
+          description: "Âm lượng nhạc nền, hiệu ứng, giọng nói và video, cùng tốc độ tua nhanh"
+        },
+        fullscreen: { name: "Toàn màn hình", description: "Hiển thị khung hình cốt truyện tràn màn hình" }
+      }
+    },
+    credit: "Live2D Cubism Core / MotionSync Core © Live2D Inc. · emptysekai by StarMoe"
+  },
+  live2d: {
+    stageLabel: "Sân khấu Live2D",
+    preparing: "Đang chuẩn bị môi trường chạy Live2D…",
+    loading: "Đang tải mô hình…",
+    loadErrorTitle: "Không thể hiển thị mô hình",
+    loadErrorDescription: "Dữ liệu mô hình hoặc Live2D Cubism Core chưa tải được. Có thể do lỗi mạng hoặc trang mô hình tạm thời không hoạt động. Vui lòng thử lại sau.",
+    retry: "Thử lại",
+    unsupportedTitle: "Trình duyệt này không thể hiển thị mô hình Live2D",
+    unsupportedDescription: "Trình xem Live2D yêu cầu WebGL2. Vui lòng sử dụng phiên bản mới của trình duyệt trên máy tính hoặc điện thoại.",
+    fullscreen: "Toàn màn hình",
+    exitFullscreen: "Thoát toàn màn hình",
+    zoomIn: "Phóng to",
+    zoomOut: "Thu nhỏ",
+    zoomReset: "Đặt lại thu phóng",
+    filterTitle: "Lọc mô hình",
+    searchPlaceholder: "Tìm kiếm nhân vật, trang phục hoặc ID mô hình…",
+    kindTitle: "Loại",
+    showLowQuality: "Hiện bản chất lượng thấp",
+    sideCharacters: "Nhân vật khác",
+    chooseCharacter: "Chọn nhân vật",
+    costumes: "Trang phục",
+    listLoading: "Đang tải danh sách mô hình…",
+    listError: "Không thể tải danh sách mô hình.",
+    listEmpty: "Chưa có mô hình Live2D nào được phát hành.",
+    emptyTitle: "Chọn một nhân vật",
+    emptyDescription: "Mở bộ lọc để chọn nhân vật theo ban nhạc; trang phục, động tác và biểu cảm có thể chuyển đổi trong bảng bên cạnh mô hình.",
+    credit: "Live2D Cubism Core © Live2D Inc. · emptysekai by StarMoe",
+    noticeTitle: "Về dữ liệu mô hình",
+    notice: "moenotes hướng tới việc tái hiện nguyên bản nội dung trong các gói dữ liệu game: mọi mô hình, động tác và biểu cảm tại đây đều trích xuất trực tiếp từ game, và hình ảnh hiển thị trên trình duyệt không đại diện cho chất lượng sản phẩm cuối cùng của trò chơi. Trang web không cung cấp tính năng tùy chỉnh thông số mô hình tự do: mô hình được tạo dáng bằng thông số tùy biến có thể bị biến dạng nghiêm trọng và không phản ánh diện mạo thực tế trong game, xin vui lòng không chia sẻ như nội dung chính thức.",
+    controls: "Điều khiển mô hình",
+    controlsWaiting: "Thanh điều khiển sẽ xuất hiện khi mô hình sẵn sàng.",
+    motions: "Động tác",
+    expressions: "Biểu cảm",
+    noExpressions: "Mô hình này không có biểu cảm.",
+    loop: "Lặp lại động tác",
+    options: "Tùy chọn",
+    physics: "Hiệu ứng vật lý",
+    breath: "Hơi thở",
+    pause: "Tạm dừng",
+    resume: "Tiếp tục",
+    reset: "Trở về trạng thái chờ",
+    lowQuality: "Chất lượng thấp",
+    costumeDefault: "Mặc định",
+    kind: { story: "Cốt truyện", live: "Live", side: "Phụ" },
+    costume: {
+      casual: "Thường phục",
+      spring: "Mùa xuân",
+      summer: "Mùa hè",
+      winter: "Mùa đông",
+      school: "Đồng phục học sinh",
+      hs: "Cấp ba",
+      jhs: "Cấp hai",
+      grade1: "Năm nhất",
+      grade2: "Năm hai",
+      grade3: "Năm ba",
+      live: "Trang phục biểu diễn",
+      roomwear: "Đồ mặc nhà",
+      arbeit: "Làm thêm",
+      livehouse: "Live House",
+      ring: "RiNG",
+      caretaker: "Người chăm sóc",
+      child: "Tuổi thơ",
+      detective: "Thám tử",
+      idol: "Thần tượng",
+      virtual: "Ảo",
+      soundonly: "Chỉ âm thanh",
+      suits: "Âu phục",
+      sweat: "Đồ thể thao",
+      maid: "Hầu gái",
+      still: "Tĩnh",
+      mask: "Mặt nạ",
+      silhouette: "Bóng đen",
+      glasses: "Kính mắt",
+      noseGlasses: "Kính mũi hài hước",
+      sunglasses: "Kính râm",
+      hat: "Mũ",
+      hairdown: "Xõa tóc",
+      twintails: "Tóc hai bím"
+    }
   },
   music: {
     audio: {
@@ -460,10 +862,18 @@ export const viVN = {
       seek: "Vị trí phát",
       download: "Tải xuống {kind}",
       unavailableTitle: "Giai điệu vẫn đang được soạn thảo",
-      unavailableDescription: "Các nốt nhạc vẫn đang du hành giữa bầu trời đêm. Sau khi thu thập xong, giai điệu lay động lòng người này sẽ được đánh thức tại đây.",
+      unavailableDescription: "Các nốt nhạc vẫn đang du hành giữa bầu trời đêm. Sau khi thu thập xong, giai điệu lay động lòng người này sẽ được đánh thức tại đây."
     },
     searchPlaceholder: "Search titles, authors, bands, or singers...",
     filterTitle: "Filter Music",
+    filters: {
+      bandOther: "Khác",
+      difficulty: "Độ khó",
+      level: "Cấp độ",
+      levelMin: "Cấp tối thiểu",
+      levelMax: "Cấp tối đa",
+      levelRange: "Lv {min}–{max}"
+    },
     results: "{count} songs",
     loading: "Loading music data...",
     loadErrorTitle: "Music data is unavailable",
@@ -478,8 +888,42 @@ export const viVN = {
     backToList: "Back to music catalog",
     songInfoTitle: "Song Details",
     difficultiesTitle: "Difficulty Charts",
+    ranking: {
+      title: "Bảng xếp hạng điểm cao",
+      loading: "Đang lấy bảng xếp hạng từ game…",
+      updatedAgo: "Cập nhật lúc {time}",
+      level: "Lv.{level}",
+      refreshing: "đang làm mới ngầm",
+      empty: "Chưa có người chơi nào ghi nhận điểm số trên máy chủ này.",
+      retry: "Thử lại",
+      showAll: "Hiển thị toàn bộ {count} người chơi",
+      showLess: "Chỉ hiện top 20",
+      tied: "Đồng điểm",
+      power: "Tổng lực {power}",
+      columns: { rank: "Hạng", player: "Người chơi", score: "Điểm số", deck: "Đội hình" },
+      errors: {
+        pending: "Vẫn đang lấy bảng xếp hạng",
+        pendingHint: "Yêu cầu đang xếp hàng sau các bài hát khác trên máy chủ này. Vui lòng thử lại sau vài giây.",
+        upstream: "Hiện không thể kết nối tới máy chủ game",
+        upstreamHint: "Máy chủ có thể đang bảo trì. Bảng xếp hạng sẽ hoạt động trở lại sau khi bảo trì kết thúc.",
+        failed: "Không thể tải bảng xếp hạng",
+        failedHint: "Vui lòng kiểm tra kết nối mạng và thử lại."
+      }
+    },
     difficultyLevels: { easy: "EASY", normal: "NORMAL", hard: "HARD", expert: "EXPERT" },
     notesCount: "Notes: {count}",
+    preview2d: "Xem trước 2D",
+    preview2dLabel: "Xem trước phổ nhạc {difficulty} ở dạng 2D",
+    preview3d: "Xem trước 3D",
+    preview3dLabel: "Xem trước phổ nhạc {difficulty} ở dạng 3D",
+    picker: {
+      title: "Chọn bài hát",
+      songHint: "Nhấp vào ảnh bìa để chọn bài hát này.",
+      hint: "Nhấp vào độ khó để chọn phổ nhạc đó, hoặc nhấp vào ảnh bìa để giữ độ khó hiện tại.",
+      pickSong: "Chọn «{title}»",
+      pickDifficulty: "Chọn «{title}» {difficulty}",
+      listLabel: "Danh sách bài hát"
+    },
     composer: "Composer",
     lyricist: "Lyricist",
     arranger: "Arranger",
@@ -492,8 +936,37 @@ export const viVN = {
       description: "View and preview the high-resolution song album jacket.",
       jacket: "Album Jacket",
       jacketDesc: "Song album jacket image (Image/Jacket)",
-      previewFull: "Preview album jacket",
+      previewFull: "Preview album jacket"
     },
+    chartPreview: {
+      title: "Xem trước phổ nhạc",
+      difficultyLabel: "Độ khó",
+      themeLabel: "Bảng màu phổ nhạc",
+      themes: { white: "Sáng", black: "Tối" },
+      draw: "Tạo phổ nhạc",
+      idleHint: "Vẽ biểu đồ nốt đầy đủ của độ khó đã chọn; các cột đọc từ dưới lên trên, từ trái sang phải. Lần đầu tạo sẽ tải bộ kết xuất một lần, sau đó chạy trực tiếp trong trình duyệt.",
+      fetching: "Đang lấy phổ nhạc…",
+      fetchingHint: "Đang lấy tệp nốt và ảnh bìa từ máy chủ tài nguyên.",
+      rendering: "Đang vẽ phổ nhạc…",
+      renderingHint: "Bộ kết xuất đang bố trí từng nốt nhạc trên thiết bị này. Phổ nhạc dài có thể mất vài giây.",
+      openViewer: "Xem kích thước đầy đủ",
+      download: "Tải PNG",
+      imageAlt: "Bản vẽ phổ nhạc {title} {difficulty}",
+      missingTitle: "Phổ nhạc này chưa được phát hành",
+      missingDescription: "Tệp nốt cho độ khó này chưa có trên máy chủ tài nguyên. Hãy thử độ khó khác hoặc quay lại sau bản cập nhật tài nguyên tiếp theo.",
+      failedTitle: "Không thể vẽ phổ nhạc",
+      failedDescription: "Đã xảy ra sự cố khi tải hoặc vẽ phổ nhạc này. Vui lòng thử lại; nếu vẫn thất bại, hãy thử độ khó hoặc trình duyệt khác.",
+      unsupportedTitle: "Trình duyệt này không thể vẽ phổ nhạc",
+      unsupportedDescription: "Trình xem trước phổ nhạc yêu cầu WebAssembly và module worker. Vui lòng mở trang này bằng phiên bản mới của Chrome, Edge, Firefox hoặc Safari.",
+      retry: "Thử lại",
+      viewerHint: "Kéo để di chuyển · Cuộn chuột hoặc chụm ngón tay để thu phóng · Nhấp đúp để phóng to · Cũng có thể dùng phím mũi tên, +/- và 0",
+      zoomIn: "Phóng to",
+      zoomOut: "Thu nhỏ",
+      fit: "Vừa khung hình",
+      credit: "Bản vẽ phổ nhạc được vẽ trong trình duyệt bởi bộ kết xuất phổ nhạc moenotes (WebAssembly). Hình ảnh hiển thị là bản xem trước đang trong quá trình phát triển, không phải giao diện chính thức trong game.",
+      sourceLink: "Mã nguồn & Giấy phép",
+      sheetCredit: "{label}: {value}"
+    }
   },
   characters: {
     searchPlaceholder: "Search characters, voice actors, bands...",
@@ -531,17 +1004,18 @@ export const viVN = {
       faceDesc: "Small face icon layer",
       board: "Board",
       boardDesc: "Background board icon",
-      bio: "Bio",
-    },
+      bio: "Bio"
+    }
   },
   story: {
     categories: {
       main: "Cốt truyện chính",
+      event: "Cốt truyện sự kiện",
       friendship: "Cốt truyện tình bạn",
       liveResult: "Hội thoại sau live",
       home: "Cốt truyện home",
       tutorial: "Cốt truyện hướng dẫn",
-      other: "Cốt truyện khác",
+      other: "Cốt truyện khác"
     },
     ui: {
       searchPlaceholder: "Tiêu đề, nhân vật, chương hoặc ADV ID",
@@ -560,140 +1034,613 @@ export const viVN = {
       parsing: "Đang phân tích kịch bản và giọng nói…",
       autoplay: "Tự phát",
       narration: "Lời dẫn",
+      speakerMasked: "??? ({name})",
+      speakerHidden: "({name})",
       playing: "Đang phát",
       paused: "Đã tạm dừng",
       line: "Câu {current} / {total}",
+      clip: "Hoạt họa cốt truyện",
+      clipUnavailable: "Đoạn hoạt họa này tạm thời chưa thể phát",
+      chat: "Tin nhắn",
+      showBackgrounds: "Hiện hình nền",
+      scene: "Cảnh {n}",
+      subtitles: "Phụ đề",
+      episode: "EPISODE {n}",
+      anotherEpisode: "Góc nhìn khác {n}",
+      extraEpisode: "Ngoại truyện {n}",
+      anotherStories: "Góc nhìn khác",
+      extraStories: "Ngoại truyện",
+      previousEpisode: "Tập trước",
+      nextEpisode: "Tập sau",
+      showSubtitleList: "Mở rộng phụ đề ({count})",
+      hideSubtitleList: "Thu gọn phụ đề"
+    }
+  },
+  eventTracker: {
+    eventLabel: "Sự kiện",
+    currentEvent: "Sự kiện hiện tại",
+    eventFallback: "Sự kiện #{id}",
+    songFallback: "Bài hát #{id}",
+    loading: "Đang kiểm tra sự kiện của máy chủ…",
+    noEvent: "Máy chủ hiện không có sự kiện nào",
+    noEventHint: "Bộ theo dõi sẽ bắt đầu hoạt động ngay khi máy chủ công bố sự kiện tiếp theo.",
+    notFound: "Máy chủ này không có sự kiện đó",
+    notFoundHint: "Liên kết có thể trỏ tới sự kiện của máy chủ khác. Bạn có thể chuyển sang xem sự kiện hiện tại.",
+    openEvent: "Chi tiết sự kiện",
+    openTracker: "Xem theo dõi bảng xếp hạng",
+    stale: "làm mới quá hạn",
+    eventStatus: {
+      feature: "Sắp diễn ra",
+      nowOn: "Đang diễn ra",
+      aggregation: "Đang tổng kết",
+      result: "Công bố kết quả",
+      end: "Đã kết thúc"
     },
+    collect: {
+      unknown: "Không rõ",
+      disabled: "Không có bảng xếp hạng",
+      pending: "Chưa bắt đầu",
+      collecting: "Đang theo dõi",
+      finalizing: "Đang xác nhận thứ hạng cuối cùng",
+      archiving: "Đang lưu trữ",
+      archived: "Chính thức",
+      missed: "Chưa thu thập được"
+    },
+    countdown: {
+      startsIn: "Bắt đầu sau",
+      endsIn: "Kết thúc sau",
+      countingEndsIn: "Công bố kết quả sau",
+      daysClock: "{days} ngày {clock}"
+    },
+    cutoff: "Top {rank}",
+    challenges: {
+      title: "Bảng xếp hạng bài hát thử thách",
+      songs: "Bài hát thử thách",
+      songNumber: "Bài thứ {n}",
+      none: "Sự kiện này không có bài hát thử thách.",
+      lastSeen: "Thu thập dữ liệu đã kết thúc; đây là bảng xếp hạng ghi nhận lần cuối, không phải kết quả chính thức đã xác nhận."
+    },
+    board: {
+      unknown: "Game chưa thông báo bài hát này có bảng xếp hạng hay không",
+      disabled: "Bài hát này không có bảng xếp hạng",
+      pending: "Bảng xếp hạng bài hát này chưa mở",
+      missed: "Chưa thu thập được bảng xếp hạng này",
+      startsAt: "Mở lúc {time}"
+    },
+    points: {
+      title: "Bảng xếp hạng điểm sự kiện",
+      disabled: "Sự kiện này không có bảng xếp hạng điểm, chỉ có bảng xếp hạng bài hát thử thách ở trên.",
+      interrupted: "thu thập bị gián đoạn, dữ liệu có thể đã cũ",
+      frozen: "đang tổng kết, điểm đã đóng băng",
+      tied: "Đồng hạng",
+      notReturned: "Lần này chưa trả về: {ranks}"
+    }
+  },
+  musicRanking: {
+    changeSong: "Đổi bài hát",
+    chooseSong: "Chọn bài hát",
+    emptyTitle: "Chọn bài hát để xem bảng xếp hạng",
+    emptyDescription: "Mỗi bài hát đều có bảng xếp hạng điểm cao riêng trên từng máy chủ. Hãy chọn một bài để xem các người chơi đứng đầu, điểm số và đội hình của họ."
+  },
+  chartData: {
+    referenceEstimate: "Ước tính tham khảo",
+    replay: {
+      title: "Tính toán từng ván",
+      loading: "Đang tải mô hình…",
+      hint: "Thiết lập phán đoán trước khi chuyển đổi kỹ năng rồi tính toán ván này. Mặc định không có kỹ năng; kết quả hiển thị số lượng phán đoán sau chuyển đổi.",
+      power: "Tổng lực",
+      seed: "Seed ngẫu nhiên",
+      clock: "Tốc độ khung hình",
+      mode: "Chế độ",
+      free: "Free Live",
+      fixedRanks: "Gekisou · Thứ hạng cố định",
+      reset: "Đặt lại phán đoán",
+      run: "Tính toán",
+      export: "Xuất JSON",
+      advanced: "Nhập / Xuất",
+      advancedHint: "JSON lưu giữ thời điểm nốt, thứ tự khung hình, kỹ năng và xác nhận thứ hạng. Dữ liệu nhập vào được kiểm tra bởi Rust.",
+      import: "Nhập JSON",
+      error: "Tính toán thất bại",
+      ready: "Có thể tính toán",
+      calculating: "Đang tính toán…",
+      score: "Điểm số cuối cùng",
+      frameScore: "Điểm hiển thị khung hình cuối",
+      life: "Máu (Life)",
+      combo: "Combo",
+      note: "Nốt",
+      time: "Thời điểm",
+      type: "Loại",
+      judgement: "Phán đoán",
+      range: "Phạm vi",
+      just: "Just",
+      luck: "Điểm may mắn",
+      complete: "Đã tính toán",
+      wrongChart: "Tệp có phổ nhạc khác hoặc định dạng không được hỗ trợ.",
+      importedMode: "Chế độ đã nhập",
+      incomplete: "Dữ liệu nhập chưa hoàn chỉnh nên không thể hiển thị kết quả toàn bộ ván chơi.",
+      importedClock: "Thời gian đã nhập",
+      exactPlan: "Tính toán từng nốt",
+      greatShare: "Tỷ lệ Great",
+      justShare: "Tỷ lệ Just",
+      presetHint: "Tỷ lệ còn lại là Perfect, Just chỉ áp dụng cho các nốt đủ điều kiện. Thiết lập đoạn nhạc sẽ ghi đè thiết lập toàn bài; các hàng phía sau có độ ưu tiên cao hơn. Seed sẽ tạo ra một ván chơi có thể tái lập, không phải điểm trung bình.",
+      rawPreset: "Vui lòng đặt lại dữ liệu nhập gốc trước khi sử dụng các thanh trượt.",
+      probabilityTotal: "Tổng xác suất của Great, Good, Bad và Miss không được vượt quá 100%.",
+      remove: "Xóa",
+      end: "Kết thúc (giây)",
+      start: "Bắt đầu (giây)",
+      customSegment: "Đoạn tùy chỉnh",
+      segment: "Đoạn nhạc",
+      editNotes: "Xem / Chỉnh sửa từng nốt",
+      generate: "Tạo phán đoán",
+      planSeed: "Seed phán đoán",
+      wholeSong: "Mặc định toàn bài"
+    },
+    beta: "Beta",
+    developmentData: "Dữ liệu phát triển cục bộ",
+    uncommittedModel: "Mô hình chứa thay đổi chưa commit",
+    betaHint: "Tính toán bằng mô hình Rust; xem hướng dẫn để biết cách đối chiếu ARM64 gốc và tính toán từng ván theo nốt.",
+    views: { rank: "Xếp hạng", charts: "Biểu đồ", guide: "Hướng dẫn" },
+    lead: {
+      rank: "Hiệu suất, xếp hạng sự kiện, tốc độ, cấp độ và thời lượng của {songs} bài hát và {charts} phổ nhạc. Điểm số được tính theo kịch bản chơi đã chọn: mặc định là Gekisou Live đạt hạng 1 ở cả 3 khu vực (trường hợp tối ưu), hoặc có thể chuyển sang Free Live không bật Gekisou; xem hướng dẫn để biết thêm chi tiết. Nhấp vào hàng bất kỳ để xem chi tiết phổ nhạc; thông tin tác giả, âm thanh và xem trước phổ nhạc có trên trang của từng bài hát.",
+      charts: "Phân bố của {songs} bài hát và {charts} phổ nhạc. Bạn có thể tự do chọn hai trục của biểu đồ phân tán; nhấp vào điểm bất kỳ để xem chi tiết phổ nhạc."
+    },
+    loading: "Đang tải dữ liệu phổ nhạc…",
+    loadError: "Không thể tải dữ liệu phổ nhạc. Có thể do lỗi mạng; vui lòng thử lại sau.",
+    retry: "Thử lại",
+    all: "Tất cả",
+    search: "Tìm tên bài hát, cách đọc, tác giả…",
+    chartsCount: "{n} phổ nhạc",
+    jackets: "Ảnh bìa",
+    jacketsHint: "Hiện hoặc ẩn ảnh bìa",
+    swap: "Đổi trục ngang và dọc",
+    band: "Ban nhạc",
+    difficulty: "Độ khó",
+    empty: "Không có phổ nhạc nào khớp",
+    emptyHint: "Ban nhạc, độ khó, từ khóa tìm kiếm hoặc tùy chọn «Chỉ xem nhóm dẫn đầu» đã lọc hết tất cả phổ nhạc.",
+    clear: "Xóa bộ lọc",
+    difficulties: { easy: "Easy", normal: "Normal", hard: "Hard", expert: "Expert" },
+    rankBy: {
+      efficiency: "Hiệu suất",
+      event: "Sự kiện · Xếp hạng",
+      speed: "Nhanh nhất",
+      level: "Cấp cao nhất",
+      notes: "Nhiều nốt nhất",
+      long: "Dài nhất",
+      short: "Ngắn nhất",
+      skip: "Điểm số khi bỏ qua"
+    },
+    speedBy: { density: "Mật độ", bpmMax: "BPM tối đa", bpm: "BPM chính" },
+    rankHint: {
+      efficiency: "Điểm kỳ vọng trên mỗi phút cho mỗi điểm tổng lực. Thứ tự kích hoạt kỹ năng được chọn ngẫu nhiên mỗi ván, do đó kỳ vọng chỉ phụ thuộc vào giá trị kỹ năng trung bình; khoảng giá trị là min–max trong số 120 hoán vị thứ tự.",
+      event: "Điểm sự kiện chỉ phụ thuộc vào xếp hạng. Khi chưa nhập tổng lực: sắp xếp tăng dần theo tổng lực cần thiết để đạt xếp hạng mục tiêu (theo điểm kỳ vọng); khi đã nhập: sắp xếp theo số ván đạt xếp hạng mục tiêu mỗi giờ.",
+      speed: "Sắp xếp theo mật độ nốt hoặc BPM.",
+      level: "Sắp xếp theo cấp hiển thị (gồm cả số thập phân), nếu bằng nhau sẽ xếp theo số lượng nốt.",
+      notes: "Số lượng nốt được phán đoán, tương đương với số combo khi Full Combo.",
+      long: "Sắp xếp theo thời lượng BGM.",
+      short: "Sắp xếp theo thời lượng BGM, ngắn nhất xếp trước.",
+      skip: "Điểm trên mỗi điểm tổng lực khi bỏ qua ván chơi; thời lượng và kỹ năng không ảnh hưởng."
+    },
+    scenario: {
+      title: "Kịch bản",
+      battle: "Gekisou Live",
+      free: "Free Live",
+      battleHint: "nhiều người chơi (tối đa 5 người), bật Gekisou",
+      freeHint: "chơi đơn, tắt Gekisou",
+      ranks: "Thứ hạng",
+      range: "khu vực {n}",
+      rangeMission: "khu vực {n} · {mission}",
+      best: "hạng 1 là trường hợp tối ưu nhất",
+      ranksPending: "hạng 2–5: đang chờ dữ liệu",
+      accuracy: "Độ chính xác",
+      great: "Tỷ lệ Great",
+      just: "Tỷ lệ Just",
+      accNote: "ước tính xấp xỉ, không tính đứt combo; tỷ lệ Great áp dụng cho mọi nốt, tỷ lệ Just chỉ áp dụng cho phạm vi nhiệm vụ Just",
+      accNoteFree: "ước tính xấp xỉ, không tính đứt combo; tỷ lệ Great áp dụng cho mọi nốt",
+      pending: "đang chờ dữ liệu",
+      room: "Số người chơi",
+      roomHint: "được xếp hạng theo tổng điểm của phòng; giả định mọi người chơi đều đạt điểm như bạn, điểm bạn cần đạt = √(5/n) × ngưỡng Gekisou Live",
+      soloRanks: "Free Live sử dụng các ngưỡng xếp hạng chơi đơn"
+    },
+    length: "Thời lượng",
+    bgm: "BGM",
+    chart: "Phổ nhạc",
+    overhead: "Thời gian thêm mỗi ván",
+    seconds: "{n} giây",
+    skills: "% tăng điểm kỹ năng",
+    skillSlot: "Kỹ năng {n}",
+    meanSkill: "trung bình {v}%",
+    presets: { all150: "Toàn bộ 150", all100: "Toàn bộ 100", none: "Không có kỹ năng" },
+    target: "Xếp hạng mục tiêu",
+    power: "Tổng lực",
+    powerHint: "để trống: chỉ hiện tổng lực cần thiết",
+    frontier: "Chỉ xem nhóm dẫn đầu",
+    allColumns: "Tất cả các cột",
+    allColumnsHint: "Cuộn ngang để so sánh",
+    col: {
+      rank: "#",
+      song: "Bài hát",
+      level: "Cấp độ",
+      time: "Thời lượng",
+      bpm: "BPM",
+      notes: "Số nốt",
+      density: "N/s",
+      rate: "Điểm/Tổng lực",
+      perMinute: "Điểm/Tổng lực/phút",
+      relative: "Tương đối",
+      dom: "Bị áp đảo",
+      skip: "Hệ số bỏ qua",
+      base: "Hệ số cơ bản",
+      need: "Tổng lực cần thiết",
+      chance: "Tỷ lệ đạt",
+      perHour: "Ván/giờ",
+      goal: "Số ván đạt/giờ"
+    },
+    onFrontier: "nhóm dẫn đầu",
+    dominatedBy: "bị {n} phổ nhạc áp đảo",
+    tipDom: "Hiệu suất kỳ vọng không vượt trội hơn các phổ nhạc sau ở mọi mức kỹ năng trung bình 0–150% và mọi thời gian thêm: {charts}",
+    tipDomEvent: "Yêu cầu tổng lực không thấp hơn và thời lượng không ngắn hơn các phổ nhạc sau ở mọi xếp hạng và mức kỹ năng trung bình 0–150%: {charts}",
+    tipSpread: "khoảng min–max trong số 120 thứ tự kỹ năng",
+    listSeparator: ", ",
+    noStats: "Tệp music-data.json này không chứa thống kê đội hình (tạo bằng tùy chọn --no-deck): số liệu điểm số không khả dụng.",
+    axes: {
+      displayLevel: "Cấp độ",
+      density: "Mật độ nốt/giây",
+      bpm: "BPM chính",
+      bpmMax: "BPM tối đa",
+      notes: "Số nốt",
+      bgmMs: "Thời lượng BGM (giây)",
+      perMinute: "Điểm/Tổng lực/phút",
+      rate: "Điểm/Tổng lực",
+      base: "Hệ số cơ bản",
+      skip: "Hệ số bỏ qua"
+    },
+    scatter: "Biểu đồ phân tán",
+    pareto: "Đường biên Pareto",
+    approximateShort: "Xấp xỉ",
+    paretoHelp: "Giới thiệu đường biên Pareto",
+    lowerBetter: "Càng thấp càng tốt",
+    higherBetter: "Càng cao càng tốt",
+    xGoal: "Mục tiêu trục X",
+    yGoal: "Mục tiêu trục Y",
+    plotted: "{n} phổ nhạc ứng viên",
+    paretoCount: "{n} trên đường biên",
+    paretoHint: "Đường biên được tính dựa trên bộ lọc, tham số và hai mục tiêu hiện tại. Các đường nối liên kết các ứng viên rời rạc, không ngụ ý có phổ nhạc trung gian. Điều này khác với quan hệ áp đảo trong bảng xếp hạng trên mọi mức kỹ năng và thời gian thêm.",
+    x: "Trục X",
+    y: "Trục Y",
+    levelDist: "Phân bố cấp độ",
+    bandShare: "Số bài hát mỗi ban nhạc",
+    levelBar: "Lv {level} {difficulty}: {n}",
+    songPage: "Trang bài hát",
+    songPageHint: "Tác giả, ca sĩ, âm thanh, ảnh bìa và xem trước phổ nhạc có trên trang bài hát",
+    preview3d: "Xem trước 3D",
+    missions: { combo: "Combo", luck: "May mắn", just: "Just" },
+    detail: {
+      musicType: "Thể loại bài hát",
+      bgm: "BGM",
+      musicId: "ID bài hát",
+      scoreId: "ID phổ nhạc",
+      notes: "Số nốt",
+      fullCombo: "Số nốt Full Combo",
+      density: "Mật độ",
+      bpm: "BPM",
+      bpmChanges: "{n} lần đổi nhịp",
+      span: "Khoảng cách nốt",
+      musicLength: "Độ dài phổ nhạc",
+      timeline: "Dòng thời gian",
+      fever: "Fever",
+      skill: "Kỹ năng",
+      mission: "Nhiệm vụ Gekisou",
+      composition: "Cơ cấu nốt nhạc",
+      weights: "Trọng số vị trí kỹ năng",
+      weightsHint: "Điểm cộng thêm cho cả ván khi thành viên ở vị trí k có kỹ năng tăng điểm thường +100% chia cho tổng lực (mô phỏng cả ván: gồm cửa sổ kích hoạt, khung hình và combo; trong Gekisou Live còn có Just và thưởng xếp hạng đã chọn), tính trung bình theo các seed và nhân tỉ lệ chính xác; và tỉ lệ phần trăm chiếm trong W. Vị trí của từng thành viên được chọn ngẫu nhiên mỗi ván, vì vậy điểm kỳ vọng chỉ sử dụng W.",
+      seeds: "{n} seed",
+      unplayable: "Không thể chơi trong Gekisou Live",
+      unplayableHint: "Có hơn 3 lượt Fever: theo mã dịch ngược, game chỉ lưu giữ tối đa 3 khoảng Gekisou và sẽ gặp lỗi khi lượt Fever thứ 4 bắt đầu",
+      unplayableFree: "; Free Live không có Gekisou nên vẫn có thể chơi bình thường: chuyển sang Free Live để xem số liệu",
+      score: "Điểm số (kịch bản hiện tại)",
+      noFigures: "Điểm số",
+      twoScores: "Hai mức điểm của Gekisou Live (trên mỗi điểm tổng lực)",
+      twoScoresHint: "Gekisou Live ghi nhận hai hệ thống điểm: mức thứ nhất bao gồm Gekisou, là con số trong kịch bản này; mức thứ hai không có Gekisou, được lưu làm điểm cao nhất của bài hát, xấp xỉ điểm số trong Free Live",
+      orders: "Khoảng theo thứ tự",
+      sameOrder: "Kỹ năng giống nhau: thứ tự không ảnh hưởng đến điểm số",
+      ranks: "Ngưỡng xếp hạng điểm số",
+      rank: "Xếp hạng",
+      required: "Điểm cần đạt",
+      requiredRoom: "Điểm cần đạt (phòng {n} người, mỗi người)",
+      needPower: "Tổng lực cần thiết (kỳ vọng)",
+      needRange: "Tổng lực cần thiết (khoảng theo thứ tự)",
+      chanceAt: "Tỷ lệ đạt ở mức tổng lực {power}",
+      ranksHint: "Ngưỡng điểm được định nghĩa theo bài hát, dùng chung cho mọi độ khó; Free Live sử dụng ngưỡng chơi đơn. Tổng lực cần thiết = ngưỡng điểm ÷ điểm kỳ vọng trên mỗi điểm tổng lực (đã tính độ chính xác).",
+      ranksHintRoom: "Ngưỡng điểm được định nghĩa theo bài hát, dùng chung cho mọi độ khó. Gekisou Live đánh giá dựa trên tổng điểm của cả phòng; giả định phòng {n} người chơi và mọi người đạt điểm bằng bạn: điểm bạn cần = √(5/{n}) × ngưỡng Gekisou Live. Tổng lực cần thiết = số điểm đó ÷ điểm kỳ vọng trên mỗi điểm tổng lực (đã tính độ chính xác).",
+      close: "Đóng",
+      measures: "Chỉ số xếp hạng theo từng khu vực",
+      measureRange: "Khu vực",
+      measureCompared: "So sánh theo",
+      measure: { maxCombo: "Combo Gekisou tối đa", justCount: "Số nốt Just", luckPoints: "Điểm may mắn" },
+      measuresHint: "Mỗi khu vực Gekisou Live xếp hạng phòng theo chỉ số của nhiệm vụ khu vực đó: nhiệm vụ combo so sánh theo combo Gekisou tối đa, nhiệm vụ may mắn so sánh theo điểm may mắn, nhiệm vụ Just so sánh theo số nốt Just (ô in đậm). Theo mô hình này, đây là giá trị trung bình giữa các seed khi không có kỹ năng Gekisou ở cách chơi lý tưởng nhất, trong ngoặc là min–max giữa các seed; \"–\" là đang chờ dữ liệu. Trang này không mô phỏng đối thủ, thứ hạng do bạn tự chọn chứ không được tính từ các chỉ số này."
+    },
+    aptitude: {
+      ratio: "So với mốc chuẩn không kỹ năng thường",
+      crossSeeds: "Số hạng tương tác: {n} seed",
+      rawPerfect: "Mức tăng điểm gốc khi toàn bộ Perfect (trung bình ± SE)",
+      missingCross: "Thiếu số hạng tương tác; không thể đưa ra mức tăng đầy đủ",
+      noPlain: "Mức tăng không có kỹ năng thường trong kịch bản hiện tại / tổng lực",
+      missingPerfectCross: "Chưa đo số hạng tương tác Perfect; không thể đưa ra mức tăng đầy đủ",
+      crossAtRank1: "Số hạng tương tác giữ ở hạng 1; chỉ mang tính tham khảo",
+      zero: { none: "Không tăng điểm ở cách chơi lý tưởng nhất", measures: "Chỉ ảnh hưởng tới chỉ số xếp hạng" },
+      title: "Độ phù hợp kỹ năng Gekisou",
+      hint: "Mỗi dòng chỉ gắn một kỹ năng Gekisou hoặc kỹ năng hỗ trợ Gekisou đơn lẻ, các vị trí khác để trống. Bảng này so sánh tác động của từng kỹ năng riêng biệt trên phổ nhạc, không phụ thuộc vào thẻ bài hay đội hình, và giữ nguyên mốc xếp hạng cơ bản. Mức tăng của các kỹ năng khác nhau không thể cộng dồn.",
+      power: "Mức tăng điểm quy đổi ở tổng lực {n}; hệ số kỹ năng thường tuân theo thiết lập ở trên.",
+      skill: "Kỹ năng",
+      band: "Điều kiện ban nhạc",
+      gain: "Mức tăng / Tổng lực",
+      score: "Mức tăng điểm",
+      seeds: "Seed",
+      details: "Thay đổi khu vực",
+      support: "Kỹ năng hỗ trợ Gekisou",
+      member: "Kỹ năng Gekisou của thẻ thành viên",
+      level: "Lv {n}",
+      noCondition: "Không có",
+      match: "Thỏa mãn",
+      mismatch: "Không thỏa",
+      deterministic: "Tất định",
+      targetUnmet: "Mục tiêu SE chưa đạt",
+      baseSe: "Mức tăng gốc khi đạt hạng 1, toàn bộ Just, không có Great và không có kỹ năng thường / tổng lực (trung bình ± SE)",
+      converted: "Số lần chuyển đổi phán đoán tăng thêm",
+      metricsHint: "Các chỉ số khu vực là giá trị trung bình tăng ± sai số chuẩn khi toàn bộ Just và không có Great; thanh trượt độ chính xác không điều chỉnh giá trị này.",
+      empty: "Không có độ phù hợp kỹ năng nào khớp với nhiệm vụ của phổ nhạc này.",
+      approximation: "Mức tăng tất định không có kỹ năng thường thu được từ việc chạy toàn ván; số liệu ngẫu nhiên là giá trị trung bình giữa các seed, không phải kỳ vọng trong game. Quy đổi thứ hạng có sai số làm tròn; số hạng tương tác của kỹ năng thường và độ chính xác là giá trị xấp xỉ. Sai số chuẩn chỉ mô tả nhiễu lấy mẫu chứ không phải sai số mô hình, và không thể cộng các sai số thành phần như các đại lượng độc lập.",
+      factors: "Yếu tố phổ nhạc",
+      factor: {
+        judgedNotes: "Số nốt phán đoán trong khu vực",
+        justNotes: "Số nốt Just",
+        perfectNotes: "Số nốt Perfect trong khu vực Just",
+        tailNotes: "Số nốt phần đuôi",
+        comboAtStart: "Combo khi bắt đầu",
+        lotteries: "Số lần quay thưởng không kỹ năng"
+      },
+      factorsHint: "Nốt trong khu vực nằm từ sau điểm Bắt đầu đến khung điểm Kết thúc; phần đuôi nằm sau Kết thúc đến Hoàn thành và không tính vào điểm khu vực. Một số loại phán đoán trong khu vực Just không có hàng Just mà chỉ có thể là Perfect. Số lần quay thưởng là giá trị trung bình seed chuẩn ± sai số chuẩn."
+    },
+    kinds: { tap: "Tap", flick: "Flick", slide: "Slide", trace: "Trace", combo: "Điểm nối combo" },
+    source: "Dữ liệu: Quốc tế / Nhật Bản · phiên bản {version}",
+    sourceHint: "trích xuất từ khu vực {region} · master {master} · client {client}",
+    deckModel: "mô hình điểm số",
+    caveat: "Số liệu được trích xuất từ việc dịch ngược client game: chúng tôi hướng tới độ chính xác cao nhất nhưng không thể đảm bảo tuyệt đối; nếu có sự khác biệt với các nguồn tài liệu khác, xin vui lòng ưu tiên nguồn tài liệu đó"
+  },
+  gameServer: {
+    inZone: "{time} ({zone})",
+    onlyOn: "Chỉ trên {servers}",
+    notOnServer: "Chưa có trên máy chủ {server}; nội dung đang hiển thị theo máy chủ {source}.",
+    schedules: "Lịch trình theo máy chủ",
+    timesIn: "Thời gian theo múi giờ {zone}",
+    localTimesIn: "Thời gian hiển thị theo giờ địa phương của bạn ({zone})",
+    label: "Máy chủ game",
+    short: { tw: "TW", jp: "JP", kr: "KR", en: "EN" },
+    names: {
+      tw: "Máy chủ Đài Loan (Phồn thể)",
+      jp: "Máy chủ Nhật Bản",
+      kr: "Máy chủ Hàn Quốc",
+      en: "Máy chủ Quốc tế (Tiếng Anh)"
+    }
+  },
+  news: {
+    detailTitle: "Chi tiết thông báo",
+    categoryLabel: "Danh mục",
+    category: {
+      all: "Tất cả",
+      maintenance: "Bảo trì",
+      bug: "Sự cố đã biết",
+      campaign: "Chiến dịch",
+      update: "Cập nhật",
+      gacha: "Gacha",
+      other: "Khác"
+    },
+    checkedAgo: "Danh sách kiểm tra lúc {time}",
+    loading: "Đang tải thông báo…",
+    empty: "Máy chủ này hiện không có thông báo nào.",
+    retry: "Thử lại",
+    updated: "Đã cập nhật",
+    backToList: "Quay lại danh sách thông báo",
+    notFound: "Không tìm thấy thông báo này",
+    notFoundHint: "Liên kết có thể không đầy đủ hoặc thông báo này chưa từng được lưu trữ. Hãy mở danh sách để xem các thông báo hiện tại của máy chủ.",
+    errors: {
+      pending: "Vẫn đang lấy thông báo này",
+      pendingHint: "Yêu cầu đã được xếp hàng và sẽ sẵn sàng sau vài giây. Vui lòng thử lại ngay.",
+      upstream: "Hiện không thể kết nối tới máy chủ game",
+      upstreamHint: "Máy chủ có thể đang bảo trì. Vui lòng thử lại sau.",
+      failed: "Không thể tải thông báo",
+      failedHint: "Vui lòng kiểm tra kết nối mạng và thử lại."
+    },
+    period: "Thời hạn",
+    lastUpdated: "Cập nhật lần cuối",
+    withdrawn: "Đã gỡ trong game",
+    olderVersion: "Phiên bản trước",
+    history: "Phiên bản",
+    latestRevision: "{time} (mới nhất)",
+    noBody: "Thông báo này không có nội dung văn bản."
   },
   seo: {
+    events: {
+      title: "Sự kiện trong game",
+      description: "Sự kiện trong game, thông báo, các bể chiêu mộ gacha, nhiệm vụ và phần thưởng trên mọi máy chủ BanG Dream! Our Notes."
+    },
+    eventTracker: {
+      title: "Theo dõi sự kiện",
+      description: "Bảng xếp hạng thời gian thực của sự kiện BanG Dream! Our Notes đang diễn ra trên từng máy chủ: bảng xếp hạng bài hát thử thách kèm đội hình, mốc điểm thưởng, bảng xếp hạng điểm sự kiện và thời gian còn lại."
+    },
+    musicRanking: {
+      title: "Bảng xếp hạng bài hát",
+      description: "Bảng xếp hạng điểm cao của từng bài hát trên các máy chủ BanG Dream! Our Notes: danh sách người chơi, điểm số và đội hình."
+    },
+    news: {
+      title: "Thông báo game",
+      description: "Thời gian bảo trì, sự cố đã biết, chiến dịch và bản cập nhật: các thông báo trong game trên mọi máy chủ BanG Dream! Our Notes."
+    },
+    newsDetail: { title: "Chi tiết thông báo", description: "Thông báo trong game của BanG Dream! Our Notes." },
     home: {
       title: "Cơ sở dữ liệu & trình xem BanG Dream! Our Notes",
-      description: "Cơ sở dữ liệu fan đa ngôn ngữ của StarMoe cho BanG Dream! Our Notes — nhân vật, thẻ bài, nhạc, cốt truyện, truyện tranh, nhãn dán và tài nguyên game.",
+      description: "Cơ sở dữ liệu fan đa ngôn ngữ của StarMoe cho BanG Dream! Our Notes — nhân vật, thẻ bài, nhạc, cốt truyện, truyện tranh, nhãn dán và tài nguyên game."
     },
     database: {
       title: "Cơ sở dữ liệu BanG Dream! Our Notes",
-      description: "Duyệt nhân vật, thẻ bài, thẻ hỗ trợ, nhạc, cốt truyện, truyện tranh, nhãn dán, vật phẩm và tài nguyên game Our Notes tại một nơi.",
+      description: "Duyệt nhân vật, thẻ bài, thẻ hỗ trợ, nhạc, cốt truyện, truyện tranh, nhãn dán, vật phẩm và tài nguyên game Our Notes tại một nơi."
     },
     characters: {
       title: "Cơ sở dữ liệu nhân vật Our Notes",
-      description: "Khám phá nhân vật BanG Dream! Our Notes theo ban nhạc, kèm hồ sơ, part, sinh nhật, cung hoàng đạo, sprite và thẻ liên quan.",
+      description: "Khám phá nhân vật BanG Dream! Our Notes theo ban nhạc, kèm hồ sơ, part, sinh nhật, cung hoàng đạo, sprite và thẻ liên quan."
     },
     characterDetail: {
       title: "Trang chi tiết nhân vật",
-      description: "Xem sprite toàn thân, hồ sơ và thẻ đại diện của nhân vật BanG Dream! Our Notes một cách chi tiết.",
+      description: "Xem sprite toàn thân, hồ sơ và thẻ đại diện của nhân vật BanG Dream! Our Notes một cách chi tiết."
     },
     cards: {
       title: "Cơ sở dữ liệu thẻ bài Our Notes",
-      description: "Duyệt artwork thẻ BanG Dream! Our Notes và lọc nhanh theo nhân vật, độ hiếm, thuộc tính và ban nhạc.",
+      description: "Duyệt artwork thẻ BanG Dream! Our Notes và lọc nhanh theo nhân vật, độ hiếm, thuộc tính và ban nhạc."
     },
     stamps: {
       title: "Cơ sở dữ liệu nhãn dán Our Notes",
-      description: "Duyệt nhãn dán nhân vật, biểu cảm và artwork emoji chất lượng cao từ BanG Dream! Our Notes.",
+      description: "Duyệt nhãn dán nhân vật, biểu cảm và artwork emoji chất lượng cao từ BanG Dream! Our Notes."
     },
     comics: {
       title: "Cơ sở dữ liệu truyện tranh Our Notes",
-      description: "Đọc và duyệt truyện màn hình tải cùng artwork manga gốc của BanG Dream! Our Notes.",
+      description: "Đọc và duyệt truyện màn hình tải cùng artwork manga gốc của BanG Dream! Our Notes."
     },
     items: {
       title: "Cơ sở dữ liệu vật phẩm Our Notes",
-      description: "Tìm vật phẩm, nguyên liệu, icon kho và mô tả trong game của BanG Dream! Our Notes trong một danh sách.",
+      description: "Tìm vật phẩm, nguyên liệu, icon kho và mô tả trong game của BanG Dream! Our Notes trong một danh sách."
     },
     cardDetail: {
       title: "Trang chi tiết thẻ bài",
-      description: "Hiển thị artwork thẻ, nhân vật, thuộc tính, độ hiếm và chỉ số cơ bản của Our Notes.",
+      description: "Hiển thị artwork thẻ, nhân vật, thuộc tính, độ hiếm và chỉ số cơ bản của Our Notes."
     },
     supportCards: {
       title: "Cơ sở dữ liệu thẻ hỗ trợ Our Notes",
-      description: "Duyệt artwork thẻ hỗ trợ BanG Dream! Our Notes và lọc theo nhân vật, độ hiếm, thuộc tính và ban nhạc.",
+      description: "Duyệt artwork thẻ hỗ trợ BanG Dream! Our Notes và lọc theo nhân vật, độ hiếm, thuộc tính và ban nhạc."
     },
     supportCardDetail: {
       title: "Trang chi tiết thẻ hỗ trợ",
-      description: "Hiển thị artwork thẻ hỗ trợ, nhân vật, thuộc tính, độ hiếm và chỉ số cơ bản của Our Notes.",
+      description: "Hiển thị artwork thẻ hỗ trợ, nhân vật, thuộc tính, độ hiếm và chỉ số cơ bản của Our Notes."
     },
     music: {
       title: "Cơ sở dữ liệu nhạc Our Notes",
-      description: "Duyệt danh sách bài hát BanG Dream! Our Notes với ca sĩ, lời, nhạc sĩ, biên soạn, độ khó và số nốt tối đa.",
+      description: "Duyệt danh sách bài hát BanG Dream! Our Notes với ca sĩ, lời, nhạc sĩ, biên soạn, độ khó và số nốt tối đa."
+    },
+    musics: {
+      title: "Bài hát & Phổ nhạc BanG Dream! Our Notes",
+      description: "Dưới bầu trời sao đan dệt bởi những nốt nhạc và giai điệu, cùng khám phá toàn bộ bài hát, dữ liệu meta, xem trước phổ nhạc 3D và bảng xếp hạng điểm số trong BanG Dream! Our Notes. Đắm chìm trong những chương truyện cảm động được các thiếu nữ viết nên bằng âm nhạc."
     },
     gacha: {
       title: "Cẩm nang chiêu mộ Our Notes",
-      description: "Sống lại từng khoảnh khắc rung động dưới ánh đèn sân khấu. Duyệt qua các đợt chiêu mộ BanG Dream! Our Notes, lịch trình, thành viên Pick Up và giả lập gacha.",
+      description: "Sống lại từng khoảnh khắc rung động dưới ánh đèn sân khấu. Duyệt qua các đợt chiêu mộ BanG Dream! Our Notes, lịch trình, thành viên Pick Up và giả lập gacha."
+    },
+    eventList: {
+      title: "Danh sách sự kiện",
+      description: "Danh sách toàn bộ sự kiện trong game BanG Dream! Our Notes: lịch trình, thành viên và thuộc tính cộng thưởng, thẻ bài sự kiện, cốt truyện sự kiện, phần thưởng điểm và phần thưởng live, có thể chuyển đổi theo từng máy chủ."
+    },
+    eventDetail: {
+      title: "Chi tiết sự kiện",
+      description: "Thời gian diễn ra sự kiện, phần thưởng cộng thêm, thẻ bài và ca khúc sự kiện, điểm mở khóa cốt truyện, phần thưởng điểm và biểu diễn. Từng lời hẹn ước trong chuyến hành trình đều được khắc ghi tại đây."
     },
     gachaDetail: {
       title: "Chi tiết chiêu mộ",
-      description: "Khám phá khoảnh khắc rạng rỡ dưới ánh đèn sân khấu. Xem thời gian mở chiêu mộ Our Notes, thẻ Pick Up và danh sách gặp gỡ đầy đủ.",
+      description: "Khám phá khoảnh khắc rạng rỡ dưới ánh đèn sân khấu. Xem thời gian mở chiêu mộ Our Notes, thẻ Pick Up và danh sách gặp gỡ đầy đủ."
     },
     rewards: {
       title: "Nhiệm vụ & Phần thưởng Our Notes",
-      description: "Lật mở những ước hẹn cùng bầu trời sao. Khám phá vé nhiệm vụ mùa BanG Dream! Our Notes, mục tiêu sự kiện và quà đăng nhập hàng ngày.",
+      description: "Lật mở những ước hẹn cùng bầu trời sao. Khám phá vé nhiệm vụ mùa BanG Dream! Our Notes, mục tiêu sự kiện và quà đăng nhập hàng ngày."
     },
     rewardDetail: {
       title: "Chi tiết nhiệm vụ & phần thưởng",
-      description: "Điểm lại những niềm vui và thành quả gặt hái trên hành trình. Xem phần thưởng theo bậc vé Our Notes, mục tiêu giới hạn và quà đăng nhập mỗi ngày.",
+      description: "Điểm lại những niềm vui và thành quả gặt hái trên hành trình. Xem phần thưởng theo bậc vé Our Notes, mục tiêu giới hạn và quà đăng nhập mỗi ngày."
     },
     titles: {
       title: "Cẩm nang danh hiệu Our Notes",
-      description: "Khắc ghi từng cột mốc và kỷ niệm rực rỡ. Duyệt qua sổ tay danh hiệu BanG Dream! Our Notes, tìm hiểu huy hiệu, biểu tượng và lời thề của mỗi ban nhạc.",
+      description: "Khắc ghi từng cột mốc và kỷ niệm rực rỡ. Duyệt qua sổ tay danh hiệu BanG Dream! Our Notes, tìm hiểu huy hiệu, biểu tượng và lời thề của mỗi ban nhạc."
     },
     backgrounds: {
       title: "Hình nền hồ sơ Our Notes",
-      description: "Dạo bước qua những góc phố và sân khấu rực rỡ ánh sáng dịu êm. Duyệt hình nền hồ sơ BanG Dream! Our Notes để chọn khung cảnh cho kỷ niệm của bạn.",
+      description: "Dạo bước qua những góc phố và sân khấu rực rỡ ánh sáng dịu êm. Duyệt hình nền hồ sơ BanG Dream! Our Notes để chọn khung cảnh cho kỷ niệm của bạn."
     },
     songDetail: {
       title: "Trang chi tiết bài hát",
-      description: "Xem bìa album, tác giả, ca sĩ và hằng số độ khó của bài hát Our Notes chi tiết.",
+      description: "Xem bìa album, tác giả, ca sĩ và hằng số độ khó của bài hát Our Notes chi tiết."
     },
     story: {
       title: "Kho cốt truyện Our Notes",
-      description: "Duyệt cốt truyện chính, cốt truyện tình bạn, hội thoại sau live, cốt truyện home và kịch bản có giọng nói của BanG Dream! Our Notes.",
+      description: "Duyệt cốt truyện chính, cốt truyện tình bạn, hội thoại sau live, cốt truyện home và kịch bản có giọng nói của BanG Dream! Our Notes."
     },
     mainStory: {
       title: "Cốt truyện chính Our Notes",
-      description: "Đọc chương cốt truyện chính BanG Dream! Our Notes và nghe giọng nhân vật trong từng cảnh.",
+      description: "Đọc chương cốt truyện chính BanG Dream! Our Notes và nghe giọng nhân vật trong từng cảnh."
     },
     friendshipStory: {
       title: "Cốt truyện tình bạn Our Notes",
-      description: "Khám phá cốt truyện tình bạn giữa các nhân vật BanG Dream! Our Notes kèm kịch bản và voice.",
+      description: "Khám phá cốt truyện tình bạn giữa các nhân vật BanG Dream! Our Notes kèm kịch bản và voice."
     },
     otherStory: {
       title: "Cốt truyện & hội thoại khác Our Notes",
-      description: "Duyệt hội thoại sau live, cốt truyện home, giới thiệu địa điểm và cốt truyện hướng dẫn của BanG Dream! Our Notes.",
+      description: "Duyệt hội thoại sau live, cốt truyện home, giới thiệu địa điểm và cốt truyện hướng dẫn của BanG Dream! Our Notes."
     },
     storyDetail: {
       title: "Trang chi tiết cốt truyện",
-      description: "Đọc kịch bản cốt truyện và phát giọng nhân vật tương ứng với lời thoại.",
+      description: "Đọc kịch bản cốt truyện và phát giọng nhân vật tương ứng với lời thoại."
     },
     liveResultStory: {
       title: "Danh sách hội thoại sau live",
-      description: "Duyệt hội thoại nhân vật sau buổi live dưới dạng danh sách.",
+      description: "Duyệt hội thoại nhân vật sau buổi live dưới dạng danh sách."
     },
     homeStory: {
       title: "Danh sách cốt truyện home",
-      description: "Xem giới thiệu điểm home và hội thoại chạm tại một nơi.",
+      description: "Xem giới thiệu điểm home và hội thoại chạm tại một nơi."
     },
     tutorialStory: {
       title: "Danh sách cốt truyện hướng dẫn",
-      description: "Duyệt các cảnh cốt truyện dùng trong tutorial của game.",
+      description: "Duyệt các cảnh cốt truyện dùng trong tutorial của game."
     },
     eventStory: {
       title: "Danh sách cốt truyện sự kiện",
-      description: "Tìm và duyệt cốt truyện sự kiện của BanG Dream! Our Notes.",
+      description: "Tìm và duyệt cốt truyện sự kiện của BanG Dream! Our Notes."
     },
     tools: {
       title: "Công cụ cơ sở dữ liệu Our Notes",
-      description: "Dùng công cụ Moenotes để khám phá dữ liệu và tài nguyên game công khai của BanG Dream! Our Notes.",
+      description: "Dùng công cụ Moenotes để khám phá dữ liệu và tài nguyên game công khai của BanG Dream! Our Notes."
+    },
+    chartPreview: {
+      title: "Trình xem trước phổ nhạc 3D Our Notes",
+      description: "Chọn một bài hát và độ khó để thưởng thức phổ nhạc Our Notes được tái hiện 3D ngay trong trình duyệt của bạn: làn phím, nốt nhạc và hiệu ứng nhấn phím được tự động diễn tấu đồng bộ với âm nhạc, kèm các điều khiển tạm dừng, tua và đổi tốc độ."
+    },
+    live2dViewer: {
+      title: "Trình xem Live2D Our Notes",
+      description: "Duyệt toàn bộ mô hình Live2D của BanG Dream! Our Notes theo nhân vật và trang phục ngay trên trình duyệt: tái hiện động tác chờ, chớp mắt, hơi thở và hiệu ứng vật lý y như trong cốt truyện, cùng khả năng chuyển đổi mọi động tác và biểu cảm theo ý muốn."
+    },
+    storyPlayer: {
+      title: "Trình phát cốt truyện Our Notes",
+      description: "Thưởng thức các câu chuyện của BanG Dream! Our Notes trong trình duyệt sống động như trên màn hình game: nhân vật Live2D, sân khấu, góc quay và hiệu ứng, khung thoại, nhạc nền, âm thanh và lồng tiếng với hỗ trợ tiếng Nhật, tiếng Anh, tiếng Trung và tiếng Hàn."
+    },
+    chartData: {
+      title: "Meta bài hát Our Notes",
+      description: "Bảng xếp hạng tất cả phổ nhạc BanG Dream! Our Notes theo hiệu suất điểm, tổng lực xếp hạng sự kiện, tốc độ, cấp độ và thời lượng, kèm biểu đồ phân tán, chi tiết phổ nhạc và định nghĩa mô hình điểm số; các con số được trích xuất từ client game dịch ngược."
     },
     assetViewer: {
       title: "Trình xem tài nguyên game Our Notes",
-      description: "Tìm và duyệt tài nguyên game công khai như artwork thẻ, bìa nhạc và ảnh nhân vật của BanG Dream! Our Notes.",
+      description: "Tìm và duyệt tài nguyên game công khai như artwork thẻ, bìa nhạc và ảnh nhân vật của BanG Dream! Our Notes."
     },
     about: {
       title: "Giới thiệu Moenotes & StarMoe",
-      description: "Giới thiệu Moenotes, cơ sở dữ liệu và trình xem fan đa ngôn ngữ của StarMoe cho nhân vật, nhạc, thẻ và cốt truyện BanG Dream! Our Notes.",
+      description: "Giới thiệu Moenotes, cơ sở dữ liệu và trình xem fan đa ngôn ngữ của StarMoe cho nhân vật, nhạc, thẻ và cốt truyện BanG Dream! Our Notes."
+    },
+    account: {
+      title: "Tài khoản của tôi",
+      description: "StarMoe Passport của bạn trên Moenotes: chọn nhân vật đại diện cho bạn."
+    },
+    player: {
+      title: "Hồ sơ người chơi",
+      description: "Trang cá nhân công khai của người chơi Our Notes trên Moenotes."
     },
     designSystem: {
       title: "Tham chiếu hệ thống thiết kế",
-      description: "Tham chiếu ngôn ngữ hình ảnh và thư viện component của Moenotes.",
-    },
+      description: "Tham chiếu ngôn ngữ hình ảnh và thư viện component của Moenotes."
+    }
   },
   designSystem: {
     sirius: {
@@ -703,7 +1650,7 @@ export const viVN = {
       grid: "Lưới tọa độ",
       card: "Bảng nội dung",
       raised: "Bảng nổi",
-      surface: "Bề mặt tĩnh lặng",
+      surface: "Bề mặt tĩnh lặng"
     },
     title: "Hệ thống thiết kế",
     subtitle: "Moenotes visual language reference — colors, typography, components, and interactions.",
@@ -713,7 +1660,7 @@ export const viVN = {
       components: "Components",
       modals: "Modals",
       filters: "Filters",
-      animations: "Animations",
+      animations: "Animations"
     },
     colors: {
       accent: "Accent",
@@ -736,7 +1683,7 @@ export const viVN = {
       surface: "Surface",
       border: "Border",
       text: "Text",
-      muted: "Muted",
+      muted: "Muted"
     },
     typography: { display: "Display Font", body: "Body Font", hand: "Hand Font", note: "Note Font" },
     components: {
@@ -754,7 +1701,7 @@ export const viVN = {
       selectPlaceholder: "Choose option...",
       optA: "Option A",
       optB: "Option B",
-      optC: "Option C",
+      optC: "Option C"
     },
     modals: {
       openSm: "Small Modal",
@@ -767,7 +1714,7 @@ export const viVN = {
       copyModal: "Copy Modal",
       copyModalTitle: "Image Preview",
       copy: "Copy",
-      save: "Save",
+      save: "Save"
     },
     filters: {
       title: "Filter Demo",
@@ -783,7 +1730,7 @@ export const viVN = {
       date: "Date",
       level: "Level",
       onlyComplete: "Completed only",
-      reset: "Reset",
+      reset: "Reset"
     },
     animations: {
       spring: "Spring Interaction",
@@ -793,8 +1740,8 @@ export const viVN = {
       stagger: "Stagger Animation",
       staggerDesc: "Staggered fade-in — list items appear in sequence",
       wobble: "Wobble Effect",
-      wobbleDesc: "Hover wobble — stamp/sticker style",
-    },
+      wobbleDesc: "Hover wobble — stamp/sticker style"
+    }
   },
   filter: {
     title: "Bộ lọc",
@@ -807,19 +1754,33 @@ export const viVN = {
     openQuickFilter: "Mở bộ lọc",
     drawerHintTitle: "Bộ lọc đã chuyển sang thanh bên",
     drawerHintBody: "Nhấp vào tab bên trái để mở hoặc thu gọn bộ lọc bất cứ lúc nào.",
-    drawerHintDismiss: "Đã hiểu",
+    drawerHintDismiss: "Đã hiểu"
+  },
+  browserNotice: {
+    title: "Trình duyệt này có thể không hiển thị đúng trang web",
+    description: "Trình duyệt tích hợp trong ứng dụng hoặc trình duyệt có nhân lỗi thời có thể gây vỡ giao diện, lỗi âm thanh và không xem trước được phổ nhạc.",
+    inAppHint: "Nhấn vào menu ··· ở góc trên bên phải và chọn «Mở bằng trình duyệt».",
+    ios: "Mọi trình duyệt trên iPhone và iPad đều chạy trên nhân Safari vốn được cập nhật cùng iOS. Vui lòng cập nhật iOS lên phiên bản mới nhất trong Cài đặt › Cài đặt chung › Cập nhật phần mềm.",
+    android: "Để có trải nghiệm trọn vẹn nhất, vui lòng mở trang này bằng Chrome hoặc Edge.",
+    desktop: "Để có trải nghiệm trọn vẹn nhất, vui lòng mở trang này bằng Edge hoặc Chrome.",
+    download: "Tải {name}",
+    dismiss: "Đóng thông báo"
   },
   modal: { close: "Đóng" },
   footer: {
     desc: "A next-generation viewer for BanG Dream! Our Notes.",
     explore: "Khám phá",
     sister: "Sister Sites",
+    friendly: "Trang web liên kết",
     contact: "Contact & Feedback",
     feedback: "Submit Feedback / Contribution",
     bugReport: "Bug Report",
+    discord: "Cộng đồng Discord ({name})",
+    qq: "Nhóm QQ {name} ({number})",
+    github: "Mã nguồn trên GitHub",
     email: "Email mail@exmeaning.com",
     disclaimer: "This site only provides material display. Game copyright belongs to Bushiroad / Craft Egg / Ishimori. This is a fan-made website, a doujin database for research purposes only.",
-    copyright: "© 2026 Moenotes · Unofficial Fan Site",
+    copyright: "© 2026 Moenotes · Unofficial Fan Site"
   },
   stamps: {
     fallbackNameNoChar: "Nhãn dán #{id}",
@@ -836,7 +1797,7 @@ export const viVN = {
     quickFilter: "Open quick filters",
     stickerImageAlt: "{name} sticker",
     copiedImage: "Sticker copied to clipboard.",
-    copiedLink: "Sticker asset link copied.",
+    copiedLink: "Sticker asset link copied."
   },
   comics: {
     loadingName: "Truyện màn hình tải #{id}",
@@ -852,7 +1813,7 @@ export const viVN = {
     quickFilter: "Open quick filters",
     comicImageAlt: "{name} comic",
     copiedImage: "Comic copied to clipboard.",
-    copiedLink: "Comic asset link copied.",
+    copiedLink: "Comic asset link copied."
   },
   items: {
     searchPlaceholder: "Search item name, description...",
@@ -863,7 +1824,7 @@ export const viVN = {
       "1": "Recovery/Tickets",
       "2": "Materials/Prisms",
       "3": "Character Pieces",
-      "4": "Vé đổi & Điểm",
+      "4": "Vé đổi & Điểm"
     },
     results: "{count} items",
     loading: "Loading item data...",
@@ -873,7 +1834,7 @@ export const viVN = {
     emptyTitle: "No items match these filters",
     emptyDescription: "This filter combination has no results. Clear the filters to browse every item again.",
     reset: "View all items",
-    quickFilter: "Open quick filters",
+    quickFilter: "Open quick filters"
   },
   about: {
     teamIntro: "we are a small team from <a href=\"https://github.com/moe-sekai\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-[var(--mn-accent-deep)] underline decoration-2 decoration-[var(--mn-accent)] underline-offset-4 hover:text-[var(--mn-accent)]\">StarMoe</a>. During the two years of building <em>MoeSekai</em>, we have been thinking: what should a good wiki actually look like?",
@@ -885,10 +1846,14 @@ export const viVN = {
     openSourceTitle: "Open Source License",
     openSourceDesc: "The project frontend is open-sourced under the <strong>AGPL v3</strong> license. We are committed to open and transparent collaboration, and welcome any contributions.",
     openSourceLink: "GitHub Repository",
+    communityTitle: "Tham gia cộng đồng",
+    communityDesc: "Trò chuyện cùng chúng tôi trên Discord của {name}, báo lỗi hoặc theo dõi tiến độ phát triển trên GitHub.",
+    discordLink: "Tham gia Discord",
+    githubLink: "GitHub",
     assetsTitle: "Copyright & Assets",
     assetsDesc: "In-game assets (art, audio, etc.) are copyrighted by <strong>Bushiroad / Craft Egg / Ishimori</strong>. Self-made compatible assets are licensed under the <strong>CC BY-NC 4.0</strong> license.",
     assetsLink: "CC BY-NC 4.0 License",
     techStackTitle: "Technology Stack",
-    techStackDesc: "Built using a modern, lightweight, and highly performant stack to ensure fast loading times and a smooth, notebook-like experience.",
-  },
+    techStackDesc: "Built using a modern, lightweight, and highly performant stack to ensure fast loading times and a smooth, notebook-like experience."
+  }
 } as const satisfies MessageTree;
