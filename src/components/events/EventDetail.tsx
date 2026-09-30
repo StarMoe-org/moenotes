@@ -14,6 +14,7 @@ import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import { moveReleaseUrls } from "@/lib/assets/release";
 import type { EventBonus, EventBonusGroup, EventBonusTarget, EventDetailViewModel, EventLiveRow, EventStoryEpisode } from "@/lib/events/data";
+import { getEventTrackerHref } from "@/lib/game-api/links";
 import type { MusicViewModel } from "@/lib/music/data";
 import { getRoutePathById } from "@/lib/route/registry";
 import { formatMasterDate, formatScheduleRange } from "@/lib/schedule";
@@ -38,12 +39,12 @@ export default function EventDetail({ locale, event: faceted, servers }: Props) 
   const event = useMemo(() => faceted && moveReleaseUrls(valueForServer(faceted, server), entityServer(faceted, server)), [faceted, server]);
   return (
     <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer} entityServers={faceted?.servers ?? []}>
-      <EventDetailView locale={locale} event={event} schedules={faceted && <ServerSchedules locale={locale} faceted={faceted} servers={servers} alwaysLabel="" />} />
+      <EventDetailView locale={locale} server={server} event={event} schedules={faceted && <ServerSchedules locale={locale} faceted={faceted} servers={servers} alwaysLabel="" />} />
     </ServerScope>
   );
 }
 
-function EventDetailView({ locale, event, schedules }: { locale: AppLocale; event: EventDetailViewModel | null; schedules: ReactNode }) {
+function EventDetailView({ locale, server, event, schedules }: { locale: AppLocale; server: GameServer; event: EventDetailViewModel | null; schedules: ReactNode }) {
   const now = useNow();
   const timeZone = useDisplayTimeZone();
   if (!event) return <NotFound locale={locale} />;
@@ -86,6 +87,16 @@ function EventDetailView({ locale, event, schedules }: { locale: AppLocale; even
                 </div>
               )}
             </div>
+            {rankings.length > 0 && (
+              <div className="px-6 pb-4">
+                <a
+                  href={getEventTrackerHref(locale, { server, event: String(event.id) })}
+                  className="mn-focus mn-stamp-press inline-flex rounded-full border border-[var(--mn-border)] bg-[var(--mn-paper)] px-4 py-2 text-xs font-bold text-[var(--mn-accent-deep)] shadow-[var(--mn-shadow-stamp)]"
+                >
+                  {t(locale, "eventTracker.openTracker")}
+                </a>
+              </div>
+            )}
             <TimesNote locale={locale} value={event.startAt || event.endAt} timeZone={timeZone} className="px-6 pb-5 text-xs text-[var(--mn-text-muted)]" />
             <div className="px-6 pb-5 empty:hidden">{schedules}</div>
           </div>
