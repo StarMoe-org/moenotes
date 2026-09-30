@@ -10,7 +10,7 @@ import { PATH_PREFIX_LOCALE } from "./locales";
 export const GAME_SERVERS = ["tw", "jp", "en", "kr"] as const;
 export type GameServer = (typeof GAME_SERVERS)[number];
 
-/** Profile IDs on the international servers are 11 digits whose first digit names the server; JP IDs have no fixed shape. */
+/** International profile IDs are 11 digits with a regional prefix; JP accepts a positive signed int64. */
 const gameProfileIdPattern: Record<GameServer, RegExp> = {
   tw: /^2\d{10}$/,
   en: /^3\d{10}$/,
@@ -24,7 +24,9 @@ export function isGameServer(value: string): value is GameServer {
 
 /** Same check starmoe-api makes, so an ID that cannot be on the server is caught before the request. */
 export function isGameProfileId(server: GameServer, id: string): boolean {
-  return gameProfileIdPattern[server].test(id);
+  if (!gameProfileIdPattern[server].test(id)) return false;
+  // Compare decimal text to preserve int64 precision in both browsers and the deploy server.
+  return server !== "jp" || id.length < 19 || id <= "9223372036854775807";
 }
 
 /**
