@@ -2,6 +2,10 @@ import { useListSort } from "@/lib/filter/use-list-sort";
 import { sortEntries } from "@/lib/filter/list-sort";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
+import ServerScope from "@/components/shared/ServerScope";
+import type { ServerFaceted } from "@/lib/servers/facets";
+import { useServerFiles, useServerList } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
 import BaseFilters, {
   BandFilter,
@@ -14,13 +18,18 @@ import type { StampViewModel } from "@/lib/stamps/data";
 
 interface Props {
   locale: AppLocale;
-  initialStamps: StampViewModel[];
+  initialStamps: ServerFaceted<StampViewModel>[];
+  servers: GameServer[];
   initialBandNames: Array<[number, string]>;
 }
 
-export default function StampsExplorer({ locale, initialStamps, initialBandNames }: Props) {
+// View models carry server-neutral file URLs; the list shows the page server's files.
+const STAMP_FILES = ["imageUrl"] as const;
+
+export default function StampsExplorer({ locale, servers, initialStamps, initialBandNames }: Props) {
   const memory = useListPageMemory("stamps");
-  const [stamps] = useState<StampViewModel[]>(initialStamps);
+  const { server, pickServer, items: serverItems } = useServerList(locale, servers, initialStamps);
+  const stamps = useServerFiles(serverItems, server, STAMP_FILES);
   
   const [query, setQuery] = useState("");
   const sort = useListSort("stamps", locale, "");
@@ -295,60 +304,62 @@ export default function StampsExplorer({ locale, initialStamps, initialBandNames
   ]);
 
   return (
-    <>
-      <section className="min-w-0" aria-live="polite">
-        {filteredStamps.length === 0 ? (
-          <EmptyState locale={locale} onReset={resetFilters} />
-        ) : (
-          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {sortedEntries.map((stamp) => (
-              <button
-                key={stamp.id}
-                type="button"
-                onClick={() => {
-                  setSelectedStamp(stamp);
-                  saveCurrentState();
-                }}
-                className="mn-list-card group flex flex-col items-center justify-between min-w-0 p-4 sm:p-5 overflow-hidden border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)] text-center "
-                data-list-item-id={stamp.id}
-                aria-label={stamp.name}
-              >
-                <div className="aspect-[256/220] w-full flex items-center justify-center overflow-hidden rounded-2xl bg-[var(--mn-surface)] p-2 sm:p-3">
-                  <img className="max-h-full max-w-full object-contain" src={stamp.imageUrl} alt={stamp.name} loading="lazy" />
-                </div>
-                <div className="mt-4 w-full">
-                  <p className="truncate text-sm font-black text-[var(--mn-text)]">{stamp.name}</p>
-                  <p className="mt-1 text-[11px] font-bold text-[var(--mn-text-muted)]">#{stamp.id}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
+    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
+      <>
+        <section className="min-w-0" aria-live="polite">
+          {filteredStamps.length === 0 ? (
+            <EmptyState locale={locale} onReset={resetFilters} />
+          ) : (
+            <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {sortedEntries.map((stamp) => (
+                <button
+                  key={stamp.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedStamp(stamp);
+                    saveCurrentState();
+                  }}
+                  className="mn-list-card group flex flex-col items-center justify-between min-w-0 p-4 sm:p-5 overflow-hidden border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)] text-center "
+                  data-list-item-id={stamp.id}
+                  aria-label={stamp.name}
+                >
+                  <div className="aspect-[256/220] w-full flex items-center justify-center overflow-hidden rounded-2xl bg-[var(--mn-surface)] p-2 sm:p-3">
+                    <img className="max-h-full max-w-full object-contain" src={stamp.imageUrl} alt={stamp.name} loading="lazy" />
+                  </div>
+                  <div className="mt-4 w-full">
+                    <p className="truncate text-sm font-black text-[var(--mn-text)]">{stamp.name}</p>
+                    <p className="mt-1 text-[11px] font-bold text-[var(--mn-text-muted)]">#{stamp.id}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
 
-      <Modal
-        isOpen={selectedStamp !== null}
-        onClose={() => {
-          setSelectedStamp(null);
-          setCopyState("idle");
-          setDownloadState("idle");
-        }}
-        title={selectedStamp?.name ?? ""}
-        closeLabel={t(locale, "actions.close")}
-        size="sm"
-        headerActions={previewActions}
-      >
-        {selectedStamp && (
-          <div className="w-full overflow-hidden rounded-2xl border-[1.5px] border-[var(--mn-border)] mn-stripes-cream bg-[var(--mn-cream-deep)] p-6">
-            <img
-              className="mx-auto max-h-[50vh] object-contain"
-              src={selectedStamp.imageUrl}
-              alt={selectedStamp.name}
-            />
-          </div>
-        )}
-      </Modal>
-    </>
+        <Modal
+          isOpen={selectedStamp !== null}
+          onClose={() => {
+            setSelectedStamp(null);
+            setCopyState("idle");
+            setDownloadState("idle");
+          }}
+          title={selectedStamp?.name ?? ""}
+          closeLabel={t(locale, "actions.close")}
+          size="sm"
+          headerActions={previewActions}
+        >
+          {selectedStamp && (
+            <div className="w-full overflow-hidden rounded-2xl border-[1.5px] border-[var(--mn-border)] mn-stripes-cream bg-[var(--mn-cream-deep)] p-6">
+              <img
+                className="mx-auto max-h-[50vh] object-contain"
+                src={selectedStamp.imageUrl}
+                alt={selectedStamp.name}
+              />
+            </div>
+          )}
+        </Modal>
+      </>
+    </ServerScope>
   );
 }
 

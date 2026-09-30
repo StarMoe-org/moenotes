@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
+import ServerScope from "@/components/shared/ServerScope";
+import type { ServerFaceted } from "@/lib/servers/facets";
+import { useServerList } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import BaseFilters, { FilterButton, FilterSection, toggleArrayItem } from "@/components/shared/BaseFilters";
@@ -13,11 +17,13 @@ import type { RewardEntryKind, RewardEntrySummary } from "@/lib/rewards/data";
 import { getRoutePathById } from "@/lib/route/registry";
 import { formatScheduleRange, scheduleStatus, type ScheduleStatus } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
+import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 
 interface Props {
   locale: AppLocale;
-  initialEntries: RewardEntrySummary[];
+  initialEntries: ServerFaceted<RewardEntrySummary>[];
+  servers: GameServer[];
 }
 
 const kinds: RewardEntryKind[] = ["seasonPass", "mission", "loginBonus"];
@@ -28,10 +34,11 @@ export function rewardBannerCrop(kind: RewardEntryKind): string {
   return kind === "loginBonus" ? "object-top" : "";
 }
 
-export default function RewardsExplorer({ locale, initialEntries }: Props) {
+export default function RewardsExplorer({ locale, servers, initialEntries }: Props) {
   const memory = useListPageMemory("rewards");
   const now = useNow();
-  const [entries] = useState(initialEntries);
+  const timeZone = useDisplayTimeZone();
+  const { server, pickServer, items: entries } = useServerList(locale, servers, initialEntries);
   const [query, setQuery] = useState("");
   const sort = useListSort("rewards", locale, "date");
   const [selectedKinds, setSelectedKinds] = useState<RewardEntryKind[]>([]);
@@ -140,26 +147,28 @@ export default function RewardsExplorer({ locale, initialEntries }: Props) {
   ]);
 
   return (
-    <section className="min-w-0" aria-live="polite">
-      {filteredEntries.length === 0 ? (
-        <div className="mn-paper p-8 text-center sm:p-12">
-          <h2 className="font-[var(--mn-font-display)] text-2xl text-[var(--mn-text)]">{t(locale, "rewards.emptyTitle")}</h2>
-          <p className="mx-auto mt-3 max-w-xl text-sm font-medium leading-7 text-[var(--mn-text-muted)]">{t(locale, "rewards.emptyDescription")}</p>
-          <button type="button" onClick={resetFilters} className="mn-focus mn-stamp-press mt-6 rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-6 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]">
-            {t(locale, "rewards.reset")}
-          </button>
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4 5xl:grid-cols-5">
-          {sortedEntries.map((entry) => <RewardEntryCard key={entry.slug} entry={entry} locale={locale} now={now} onClick={saveCurrentState} />)}
-        </div>
-      )}
-    </section>
+    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
+      <section className="min-w-0" aria-live="polite">
+        {filteredEntries.length === 0 ? (
+          <div className="mn-paper p-8 text-center sm:p-12">
+            <h2 className="font-[var(--mn-font-display)] text-2xl text-[var(--mn-text)]">{t(locale, "rewards.emptyTitle")}</h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm font-medium leading-7 text-[var(--mn-text-muted)]">{t(locale, "rewards.emptyDescription")}</p>
+            <button type="button" onClick={resetFilters} className="mn-focus mn-stamp-press mt-6 rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-6 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]">
+              {t(locale, "rewards.reset")}
+            </button>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4 5xl:grid-cols-5">
+            {sortedEntries.map((entry) => <RewardEntryCard key={entry.slug} entry={entry} locale={locale} now={now} timeZone={timeZone} onClick={saveCurrentState} />)}
+          </div>
+        )}
+      </section>
+    </ServerScope>
   );
 }
 
-function RewardEntryCard({ entry, locale, now, onClick }: { entry: RewardEntrySummary; locale: AppLocale; now: number | null; onClick: () => void }) {
-  const schedule = formatScheduleRange(entry.startAt, entry.endAt, locale) || t(locale, "rewards.alwaysOpen");
+function RewardEntryCard({ entry, locale, now, timeZone, onClick }: { entry: RewardEntrySummary; locale: AppLocale; now: number | null; timeZone: string | null; onClick: () => void }) {
+  const schedule = formatScheduleRange(entry.startAt, entry.endAt, locale, timeZone) || t(locale, "rewards.alwaysOpen");
   return (
     <a
       href={localizePath(`${getRoutePathById("rewards")}/${entry.slug}`, locale)}

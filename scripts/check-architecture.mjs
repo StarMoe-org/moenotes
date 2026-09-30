@@ -45,6 +45,7 @@ const allowedInternalRouteFiles = new Set([
   "src/config/locales.ts",
   "src/config/assets.ts",
   "src/config/masterdata.ts",
+  "src/config/servers.ts",
   "src/i18n/routing.ts",
   "src/lib/route/registry.ts",
   "src/lib/route/static-paths.ts",

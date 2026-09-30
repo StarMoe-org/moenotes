@@ -1,11 +1,11 @@
-import { GAME_SERVERS, GAME_SERVER_TIME_ZONES, type GameServer } from "@/config/game-api";
+import { GAME_SERVER_TIME_ZONES, type GameServer } from "@/config/game-api";
+import { isGameServer } from "@/config/servers";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
+import { browserTimeZone } from "@/lib/schedule";
 import type { GameServerSetting } from "@/types/settings";
 
-export function isGameServer(value: unknown): value is GameServer {
-  return typeof value === "string" && (GAME_SERVERS as readonly string[]).includes(value);
-}
+export { isGameServer };
 
 /** The server a reader most likely plays on: the Chinese site languages read the TW server, the rest EN. */
 export function defaultGameServer(locale: AppLocale): GameServer {
@@ -26,7 +26,14 @@ export function parseGameSeconds(value: string | undefined): number | null {
   return Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : null;
 }
 
-/** Date and time in the server's own time zone; name the zone once next to it with serverTimeZoneName. */
+/**
+ * The zone game API times are shown in: the reader's (these pages fetch in the browser), else the server's own.
+ */
+function shownTimeZone(server: GameServer): string {
+  return browserTimeZone() ?? GAME_SERVER_TIME_ZONES[server];
+}
+
+/** Date and time in the reader's time zone; name the zone once next to it with serverTimeZoneName. */
 export function formatServerTime(time: number, server: GameServer, locale: AppLocale): string {
   return new Intl.DateTimeFormat(locale, {
     year: "numeric",
@@ -35,13 +42,13 @@ export function formatServerTime(time: number, server: GameServer, locale: AppLo
     hour: "2-digit",
     minute: "2-digit",
     hourCycle: "h23",
-    timeZone: GAME_SERVER_TIME_ZONES[server],
+    timeZone: shownTimeZone(server),
   }).format(time);
 }
 
-/** The server's zone at `time`, e.g. "GMT+8" or "UTC". */
+/** The zone formatServerTime shows `time` in, e.g. "GMT+8" or "UTC". */
 export function serverTimeZoneName(time: number, server: GameServer, locale: AppLocale): string {
-  return new Intl.DateTimeFormat(locale, { timeZone: GAME_SERVER_TIME_ZONES[server], timeZoneName: "short" })
+  return new Intl.DateTimeFormat(locale, { timeZone: shownTimeZone(server), timeZoneName: "short" })
     .formatToParts(time)
     .find((part) => part.type === "timeZoneName")?.value ?? "";
 }

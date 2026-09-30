@@ -113,7 +113,7 @@ export const enUS = {
   nav: {
     home: "Home",
     groups: { database: "Database", events: "Events", story: "Story", tools: "Tools", community: "About" },
-    items: { characters: "Characters", cards: "Cards", supportCards: "Support Cards", music: "Music", gacha: "Gacha", rewards: "Missions & Rewards", titles: "Titles", backgrounds: "Backgrounds", stamps: "Stickers", comics: "Comics", items: "Items", mainStory: "Main Story", eventStory: "Event Story", friendshipStory: "Bond Stories", otherStory: "Other Stories", liveResultStory: "Post-live Talks", homeStory: "Home Stories", tutorialStory: "Tutorial Stories", assetViewer: "Asset Viewer", designSystem: "Design System", chartPreview: "Chart Previewer", live2dViewer: "Live2D Viewer", storyPlayer: "Story Player", news: "News", musicRanking: "Song Rankings", chartData: "Chart Data" },
+    items: { characters: "Characters", cards: "Cards", supportCards: "Support Cards", music: "Music", eventList: "Event List", gacha: "Gacha", rewards: "Missions & Rewards", titles: "Titles", backgrounds: "Backgrounds", stamps: "Stickers", comics: "Comics", items: "Items", mainStory: "Main Story", eventStory: "Event Story", friendshipStory: "Bond Stories", otherStory: "Other Stories", liveResultStory: "Post-live Talks", homeStory: "Home Stories", tutorialStory: "Tutorial Stories", assetViewer: "Asset Viewer", designSystem: "Design System", chartPreview: "Chart Previewer", live2dViewer: "Live2D Viewer", storyPlayer: "Story Player", news: "News", musicRanking: "Song Rankings", chartData: "Chart Data" },
   },
   shell: {
     openSidebar: "Open sidebar",
@@ -419,6 +419,53 @@ export const enUS = {
     },
     diaryTitle: "Diary",
     growth: { limitBreak: "Limit Break", skillLevelHint: "As limits break, the quiet devotion and skill sleeping within the card bloom even brighter." },
+  },
+  events: {
+    filterTitle: "Filter Events",
+    searchPlaceholder: "Search events, characters or songs...",
+    status: "Status",
+    band: "Bonus band",
+    openDetail: "View event: {name}",
+    emptyTitle: "No matching events",
+    emptyDescription: "No event fits the current filters. Clear them to see every running and past event.",
+    reset: "Show all",
+    noneOnServer: "{server} has not held any events yet.",
+    showServer: "View {server}",
+    period: "Event period",
+    displayUntil: "Event screen open until",
+    eventId: "Event ID",
+    eventItem: "Event item",
+    song: "Event song",
+    rankings: "Rankings",
+    rankingKinds: { score: "Score ranking", music: "Song ranking", totalMusic: "Overall song ranking" },
+    rankingOff: "None",
+    cards: "Event cards",
+    bonus: "Event bonus",
+    bonusRank: "Rank {rank}",
+    bonusRankLabel: "Card rank",
+    bonusNote: "Rank is a member card's Awaken count or a support card's Limit Break count. Bonuses stack: a card meeting several conditions adds them all.",
+    bonusCardKinds: { member: "Member cards", support: "Support cards" },
+    bonusTarget: "Condition",
+    bonusParameter: "Parameters",
+    bonusEventItem: "Event items",
+    bonusValue: "+{value}%",
+    bonusTargets: { attribute: "{name} cards", tag: "Tag #{id}", any: "Any card" },
+    story: "Event story",
+    storyUnlock: "Unlocks at {count} pt",
+    pointRewards: "Event point rewards",
+    points: "{count} pt",
+    loopReward: "After {from} pt, every {every} pt",
+    liveRewards: "Live rewards",
+    liveNote: "Points and items one live earns at each score rank.",
+    liveKinds: { live: "Live", challenge: "Challenge Live" },
+    scoreRank: "Score rank",
+    livePoints: "pt",
+    liveItems: "Items",
+    probability: "{rate}% chance",
+    bannerAlt: "{name} banner",
+    backToList: "Back to Event List",
+    notFoundTitle: "Event not found",
+    notFoundDescription: "This event has either drawn its curtain long ago or has yet to raise it. Head back to the event list to find another stage.",
   },
   gacha: {
     searchPlaceholder: "Search gacha names, pickup characters, or card titles...",
@@ -880,6 +927,7 @@ export const enUS = {
   story: {
     categories: {
       main: "Main story",
+      event: "Event Story",
       friendship: "Bond stories",
       liveResult: "Post-live talks",
       home: "Home stories",
@@ -1174,6 +1222,11 @@ export const enUS = {
   },
   gameServer: {
     inZone: "{time} ({zone})",
+    onlyOn: "{servers} only",
+    notOnServer: "Not yet on the {server}; shown as on the {source}.",
+    schedules: "Schedule by server",
+    timesIn: "Times are {zone}",
+    localTimesIn: "Times are in your local time ({zone})",
     label: "Game server",
     short: {
       tw: "TW",
@@ -1227,7 +1280,7 @@ export const enUS = {
   seo: {
     events: {
       title: "In-game Events",
-      description: "Announcements, gacha pools, missions and rewards of every BanG Dream! Our Notes server, and the game's events to come.",
+      description: "In-game events, announcements, gacha pools, missions and rewards of every BanG Dream! Our Notes server.",
     },
     musicRanking: {
       title: "Song Rankings",
@@ -1292,6 +1345,14 @@ export const enUS = {
     gacha: {
       title: "Our Notes Scout Compendium",
       description: "Relive the fluttering anticipation when the spotlight first flickers on. Make a quiet wish under the starlit canopy, waiting for that special ray of light to land softly in your palms.",
+    },
+    eventList: {
+      title: "Event List",
+      description: "Every BanG Dream! Our Notes in-game event: schedule, bonus members and attributes, event cards, event story, point rewards and live rewards, server by server.",
+    },
+    eventDetail: {
+      title: "Event Detail",
+      description: "An event's schedule, bonuses, cards and song, the event points that unlock its story, and its point and live rewards. Every promise of the journey, written down here.",
     },
     gachaDetail: {
       title: "Scout Detail",

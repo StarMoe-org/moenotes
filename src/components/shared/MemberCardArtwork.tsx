@@ -7,6 +7,7 @@ import {
   type CardRarity,
   type CardType,
 } from "@/lib/cards/assets";
+import { useAssetUrl } from "@/lib/servers/use-content-server";
 
 interface Props {
   assetId: number;
@@ -31,14 +32,13 @@ export default function MemberCardArtwork({
   eager = false,
   className = "",
 }: Props) {
-  const [source, setSource] = useState(getCardThumbnailUrl(assetId));
-  const [failed, setFailed] = useState(false);
+  const assetUrl = useAssetUrl();
+  // The card's thumbnail, then the character's face icon, then the label.
+  const [attempt, setAttempt] = useState(0);
+  const source = assetUrl(attempt === 0 ? getCardThumbnailUrl(assetId) : getCharacterFaceIconUrl(characterId));
+  const failed = attempt > 1;
 
-  const handleImageError = () => {
-    const fallback = getCharacterFaceIconUrl(characterId);
-    if (source !== fallback) setSource(fallback);
-    else setFailed(true);
-  };
+  const handleImageError = () => setAttempt((current) => current + 1);
 
   return (
     <div className={`relative aspect-[3/4] overflow-hidden bg-[var(--mn-cream-deep)] ${className}`.trim()}>

@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
+import ServerScope from "@/components/shared/ServerScope";
+import { valueForServer, type ServerFacetedValue } from "@/lib/servers/facets";
+import { useContentServer } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import BannerImage from "@/components/shared/BannerImage";
@@ -9,10 +13,12 @@ import type { HomeLink, HomeSlide } from "@/lib/home/data";
 import { getRoutePathById } from "@/lib/route/registry";
 import { formatScheduleRange, scheduleStatus } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
+import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 
 interface Props {
   locale: AppLocale;
-  slides: HomeSlide[];
+  home: ServerFacetedValue<{ slides: HomeSlide[] }>;
+  servers: GameServer[];
 }
 
 const INTERVAL_MS = 6_000;
@@ -35,8 +41,20 @@ function usePrefersReducedMotion(): boolean {
   return reduced;
 }
 
-export default function HomeCarousel({ locale, slides }: Props) {
+/** The banners of the page's server, below the server switch of the home page. */
+export default function HomeCarousel({ locale, home, servers }: Props) {
+  const [server, pickServer] = useContentServer(locale, servers);
+  const { slides } = valueForServer(home, server);
+  return (
+    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
+      <Carousel key={server} locale={locale} slides={slides} />
+    </ServerScope>
+  );
+}
+
+function Carousel({ locale, slides }: { locale: AppLocale; slides: HomeSlide[] }) {
   const now = useNow();
+  const timeZone = useDisplayTimeZone();
   const reduceMotion = usePrefersReducedMotion();
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -64,7 +82,7 @@ export default function HomeCarousel({ locale, slides }: Props) {
   const move = (step: number) => setIndex((activeIndex + step + count) % count);
   const kindLabel = t(locale, `home.kinds.${active.kind}`);
   const title = active.title || kindLabel;
-  const schedule = formatScheduleRange(active.startAt, active.endAt, locale);
+  const schedule = formatScheduleRange(active.startAt, active.endAt, locale, timeZone);
   const href = active.link ? homeLinkHref(active.link, locale) : null;
   const banner = <BannerImage eager className="mn-list-caption border border-[var(--mn-glass-border)]" src={getImageAssetUrl(active.imagePath, locale)} alt={title} fallback={title} />;
 

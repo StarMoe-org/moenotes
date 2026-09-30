@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { GameServer } from "@/config/game-api";
 import type { AppLocale } from "@/config/locales";
+import { PRIMARY_SERVER } from "@/config/servers";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import GameServerSwitch from "@/components/shared/GameServerSwitch";
@@ -10,6 +11,7 @@ import { levelFromExp, toRankingRows, type DeckCardLookup, type RankingDeckCard,
 import { formatAge } from "@/lib/game-api/server";
 import { useGameServer } from "@/lib/game-api/use-game-server";
 import { buildDynamicPath, findRouteById } from "@/lib/route/registry";
+import { useServerAssetUrl } from "@/lib/servers/use-content-server";
 import { getSupportCardFrameUrl, getSupportCardRankIconUrl, getSupportCardThumbnailUrl } from "@/lib/support-cards/assets";
 
 interface Props {
@@ -20,7 +22,7 @@ interface Props {
 
 type Load =
   | { state: "loading" }
-  | { state: "ready"; rows: RankingRow[]; fetchedAt: number | null; serverTime: number | null; stale: boolean }
+  | { state: "ready"; server: GameServer; rows: RankingRow[]; fetchedAt: number | null; serverTime: number | null; stale: boolean }
   | { state: "error"; kind: "pending" | "upstream" | "failed" };
 
 const COLLAPSED_ROWS = 20;
@@ -64,6 +66,7 @@ export default function MusicRanking({ locale, musicId, cards }: Props) {
     fetchMusicRanking(server, musicId, controller.signal)
       .then((response) => setLoad({
         state: "ready",
+        server,
         rows: toRankingRows(response.data),
         fetchedAt: response.fetchedAt,
         serverTime: response.serverTime,
@@ -93,6 +96,8 @@ export default function MusicRanking({ locale, musicId, cards }: Props) {
   };
 
   const rows = load.state === "ready" ? load.rows : [];
+  // Deck cards show from the catalog of the ranking's server, which has every card its players own.
+  const assetUrl = useServerAssetUrl(load.state === "ready" ? load.server : server ?? PRIMARY_SERVER);
   const shown = expanded ? rows : rows.slice(0, COLLAPSED_ROWS);
   const numbers = new Intl.NumberFormat(locale);
 
@@ -148,6 +153,7 @@ export default function MusicRanking({ locale, musicId, cards }: Props) {
                   locale={locale}
                   row={row}
                   cards={cards}
+                  assetUrl={assetUrl}
                   numbers={numbers}
                   open={openRow === row.uid}
                   onToggle={() => setOpenRow((current) => (current === row.uid ? null : row.uid))}
@@ -172,10 +178,13 @@ export default function MusicRanking({ locale, musicId, cards }: Props) {
   );
 }
 
-function RankingRowItem({ locale, row, cards, numbers, open, onToggle }: {
+type AssetUrl = (url: string | undefined | null) => string;
+
+function RankingRowItem({ locale, row, cards, assetUrl, numbers, open, onToggle }: {
   locale: AppLocale;
   row: RankingRow;
   cards: DeckCardLookup;
+  assetUrl: AssetUrl;
   numbers: Intl.NumberFormat;
   open: boolean;
   onToggle: () => void;
@@ -203,15 +212,15 @@ function RankingRowItem({ locale, row, cards, numbers, open, onToggle }: {
         </span>
         <span className="text-right font-mono text-sm font-black text-[var(--mn-text)]">{numbers.format(row.score)}</span>
         <span className="hidden grid-cols-5 gap-1 md:grid" aria-hidden="true">
-          {row.cards.slice(0, 5).map((card) => <MemberThumb key={card.slot} card={card} cards={cards} locale={locale} compact />)}
+          {row.cards.slice(0, 5).map((card) => <MemberThumb key={card.slot} card={card} cards={cards} assetUrl={assetUrl} locale={locale} compact />)}
         </span>
       </button>
-      {open && <DeckDetail locale={locale} row={row} cards={cards} numbers={numbers} />}
+      {open && <DeckDetail locale={locale} row={row} cards={cards} assetUrl={assetUrl} numbers={numbers} />}
     </li>
   );
 }
 
-function DeckDetail({ locale, row, cards, numbers }: { locale: AppLocale; row: RankingRow; cards: DeckCardLookup; numbers: Intl.NumberFormat }) {
+function DeckDetail({ locale, row, cards, assetUrl, numbers }: { locale: AppLocale; row: RankingRow; cards: DeckCardLookup; assetUrl: AssetUrl; numbers: Intl.NumberFormat }) {
   const cardRoute = findRouteById("card-detail");
   const supportRoute = findRouteById("support-card-detail");
   const href = (route: typeof cardRoute, id: number | null) =>
@@ -232,11 +241,11 @@ function DeckDetail({ locale, row, cards, numbers }: { locale: AppLocale; row: R
           return (
             <div key={card.slot} className="min-w-0 space-y-2">
               <a href={memberHref} className="mn-focus block rounded-[4px]" title={member?.[4]}>
-                <MemberThumb card={card} cards={cards} locale={locale} />
+                <MemberThumb card={card} cards={cards} assetUrl={assetUrl} locale={locale} />
               </a>
               {card.supportCardId !== null && (
                 <a href={supportHref} className="mn-focus block rounded-[4px]" title={support?.[3]}>
-                  <SupportThumb card={card} id={card.supportCardId} cards={cards} locale={locale} />
+                  <SupportThumb card={card} id={card.supportCardId} cards={cards} assetUrl={assetUrl} locale={locale} />
                 </a>
               )}
             </div>
@@ -248,7 +257,7 @@ function DeckDetail({ locale, row, cards, numbers }: { locale: AppLocale; row: R
 }
 
 /** The awaken icon goes on the bottom right, and the level on the bottom left unless `compact` (the row's small preview). */
-function MemberThumb({ card, cards, locale, compact = false }: { card: RankingDeckCard; cards: DeckCardLookup; locale: AppLocale; compact?: boolean }) {
+function MemberThumb({ card, cards, assetUrl, locale, compact = false }: { card: RankingDeckCard; cards: DeckCardLookup; assetUrl: AssetUrl; locale: AppLocale; compact?: boolean }) {
   const entry = card.memberCardId !== null ? cards.member[String(card.memberCardId)] : undefined;
   const [fallback, setFallback] = useState(false);
   if (!entry) return <UnknownThumb id={card.memberCardId} ratio="aspect-[3/4]" />;
@@ -257,7 +266,7 @@ function MemberThumb({ card, cards, locale, compact = false }: { card: RankingDe
     <span className="relative block aspect-[3/4] overflow-hidden rounded-[4px] bg-[var(--mn-cream-deep)]">
       <img
         className="h-full w-full object-cover"
-        src={fallback ? getCharacterFaceIconUrl(characterId) : getCardThumbnailUrl(assetId)}
+        src={assetUrl(fallback ? getCharacterFaceIconUrl(characterId) : getCardThumbnailUrl(assetId))}
         alt={title}
         loading="lazy"
         onError={() => setFallback(true)}
@@ -274,14 +283,14 @@ function MemberThumb({ card, cards, locale, compact = false }: { card: RankingDe
   );
 }
 
-function SupportThumb({ card, id, cards, locale }: { card: RankingDeckCard; id: number; cards: DeckCardLookup; locale: AppLocale }) {
+function SupportThumb({ card, id, cards, assetUrl, locale }: { card: RankingDeckCard; id: number; cards: DeckCardLookup; assetUrl: AssetUrl; locale: AppLocale }) {
   const entry = cards.support[String(id)];
   if (!entry) return <UnknownThumb id={id} ratio="aspect-[16/9]" />;
   const [assetId, rarity, , title, levelGroup] = entry;
   const frame = getSupportCardFrameUrl(rarity);
   return (
     <span className="relative block aspect-[16/9] overflow-hidden rounded-[4px] bg-[var(--mn-cream-deep)]">
-      <img className="h-full w-full object-cover" src={getSupportCardThumbnailUrl(assetId)} alt={title} loading="lazy" />
+      <img className="h-full w-full object-cover" src={assetUrl(getSupportCardThumbnailUrl(assetId))} alt={title} loading="lazy" />
       {frame && <img className="pointer-events-none absolute inset-0 h-full w-full" src={frame} alt="" aria-hidden="true" />}
       <CardBadges
         locale={locale}

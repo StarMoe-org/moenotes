@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
+import ServerScope from "@/components/shared/ServerScope";
+import { moveReleaseUrls } from "@/lib/assets/release";
+import { entityServer, valueForServer, type ServerFacetedValue } from "@/lib/servers/facets";
+import { useAssetUrl, useContentServer } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
+import { formatMasterDay } from "@/lib/schedule";
+import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { localizePath } from "@/i18n/routing";
 import { getRoutePathById } from "@/lib/route/registry";
 import Modal from "@/components/shared/Modal";
@@ -36,7 +43,8 @@ import { LevelControl, StepControl } from "@/components/shared/CardGrowthControl
 interface Props {
   locale: AppLocale;
   supportCardId: number;
-  initialData: DetailData;
+  initialData: ServerFacetedValue<DetailData>;
+  servers: GameServer[];
 }
 
 interface DetailData {
@@ -69,8 +77,20 @@ function estimateTabWidth(label: string): number {
   return width;
 }
 
-export default function SupportCardDetail({ locale, initialData }: Props) {
-  const [data] = useState<DetailData>(initialData);
+/** The support card as the page's server has it (docs/servers.md). */
+export default function SupportCardDetail({ locale, initialData, servers }: Props) {
+  const [server, pickServer] = useContentServer(locale, servers);
+  const data = useMemo(() => moveReleaseUrls(valueForServer(initialData, server), entityServer(initialData, server)), [initialData, server]);
+  return (
+    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer} entityServers={initialData.servers}>
+      <SupportCardDetailView locale={locale} data={data} />
+    </ServerScope>
+  );
+}
+
+function SupportCardDetailView({ locale, data }: { locale: AppLocale; data: DetailData }) {
+  const assetUrl = useAssetUrl();
+  const timeZone = useDisplayTimeZone();
   const loading = false;
   const error = false;
   const [, setReloadKey] = useState(0);
@@ -89,24 +109,24 @@ export default function SupportCardDetail({ locale, initialData }: Props) {
         id: "full",
         label: t(locale, "cards.assets.full"),
         description: "1920 × 1080",
-        url: getSupportCardFullUrl(card.assetId),
+        url: assetUrl(getSupportCardFullUrl(card.assetId)),
       },
       {
         id: "thumbnail",
         label: t(locale, "cards.assets.thumbnail"),
         description: "512 × 288",
-        url: getSupportCardThumbnailUrl(card.assetId),
+        url: assetUrl(getSupportCardThumbnailUrl(card.assetId)),
       },
       {
         id: "sprite",
         label: t(locale, "cards.assets.skillSprite"),
         description: "120 × 48",
-        url: getSupportCardSkillSpriteUrl(card.assetId),
+        url: assetUrl(getSupportCardSkillSpriteUrl(card.assetId)),
         transparent: true,
         compact: true,
       },
     ];
-  }, [card, locale]);
+  }, [card, locale, assetUrl]);
 
   const [viewportWidth, setViewportWidth] = useState(1280);
 
@@ -396,7 +416,7 @@ export default function SupportCardDetail({ locale, initialData }: Props) {
                         </div>
                         <div className="flex justify-between border-b border-[var(--mn-border)]/20 pb-1">
                           <span>Release</span>
-                          <span className="text-[var(--mn-text)]">{formatDate(card.startAt, locale)}</span>
+                          <span className="text-[var(--mn-text)]">{formatMasterDay(card.startAt, locale, timeZone)}</span>
                         </div>
                         <div className="flex justify-between border-b border-[var(--mn-border)]/20 pb-1">
                           <span>Card ID</span>
@@ -448,14 +468,14 @@ export default function SupportCardDetail({ locale, initialData }: Props) {
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <img
                       className="h-6 w-auto object-contain block dark:hidden"
-                      src={getBandLogoUrl(card.bandId, locale)}
+                      src={assetUrl(getBandLogoUrl(card.bandId, locale))}
                       alt=""
                       aria-hidden="true"
                       onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                     />
                     <img
                       className="h-6 w-auto object-contain hidden dark:block"
-                      src={getBandLogoWhiteUrl(card.bandId, locale)}
+                      src={assetUrl(getBandLogoWhiteUrl(card.bandId, locale))}
                       alt=""
                       aria-hidden="true"
                       onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
@@ -466,7 +486,7 @@ export default function SupportCardDetail({ locale, initialData }: Props) {
                   <p className="mt-3 text-base font-medium text-[var(--mn-text-muted)]">{card.name}</p>
                 </div>
                 {getSupportRarityIconUrl(card.rarity)
-                  ? <img className="h-12 w-auto" src={getSupportRarityIconUrl(card.rarity)} alt={rarity} />
+                  ? <img className="h-12 w-auto" src={assetUrl(getSupportRarityIconUrl(card.rarity))} alt={rarity} />
                   : <span className="text-sm font-black text-[var(--mn-accent)]">{rarity}</span>}
               </div>
             </div>
@@ -475,14 +495,14 @@ export default function SupportCardDetail({ locale, initialData }: Props) {
             <div className="p-6 sm:p-8 bg-[var(--mn-paper)]">
               <div className="divide-y divide-dashed divide-[var(--mn-border)]/60">
                 <DetailRow label={t(locale, "cards.detailRarity")} value={rarity} />
-                <DetailRow label={t(locale, "cards.detailAttribute")} value={<span className="inline-flex items-center gap-2"><img className="h-5 w-5" src={getSupportCardTypeIconUrl(card.cardType)} alt="" aria-hidden="true" />{attribute}</span>} />
+                <DetailRow label={t(locale, "cards.detailAttribute")} value={<span className="inline-flex items-center gap-2"><img className="h-5 w-5" src={assetUrl(getSupportCardTypeIconUrl(card.cardType))} alt="" aria-hidden="true" />{attribute}</span>} />
                 <DetailRow
                   label={t(locale, "cards.detailBand")}
                   value={
                     <span className="inline-flex items-center gap-2">
                       <img
                         className="h-5 w-5 object-contain"
-                        src={getBandSmallIconUrl(card.bandId)}
+                        src={assetUrl(getBandSmallIconUrl(card.bandId))}
                         alt=""
                         aria-hidden="true"
                         onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
@@ -491,7 +511,7 @@ export default function SupportCardDetail({ locale, initialData }: Props) {
                     </span>
                   }
                 />
-                <DetailRow label={t(locale, "cards.detailReleasedAt")} value={formatDate(card.startAt, locale)} />
+                <DetailRow label={t(locale, "cards.detailReleasedAt")} value={formatMasterDay(card.startAt, locale, timeZone)} />
                 <DetailRow label={t(locale, "cards.detailCardId")} value={`#${card.id}`} />
                 <DetailRow label={t(locale, "cards.detailAssetId")} value={`#${card.assetId}`} />
 
@@ -504,7 +524,7 @@ export default function SupportCardDetail({ locale, initialData }: Props) {
                         <img
                           key={char.id}
                           className="h-7 w-7 rounded-full object-cover bg-[var(--mn-cream-deep)] border border-[var(--mn-border)] shadow-[var(--mn-shadow-stamp-sm)] transition-transform hover:scale-105"
-                          src={getCharacterFaceIconUrl(char.id)}
+                          src={assetUrl(getCharacterFaceIconUrl(char.id))}
                           alt={char.name}
                           title={char.name}
                         />
@@ -671,13 +691,14 @@ function ParameterBar({
 function SkillCard({ skill, level, locale }: { skill: SkillViewModel; level: number; locale: AppLocale }) {
   const isGekisou = skill.kind === "gekisou";
   const current = pickSkillLevel(skill, level);
+  const assetUrl = useAssetUrl();
   return (
     <article className="rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-surface-strong)] p-5 shadow-[var(--mn-shadow-stamp)]">
       <div className="flex items-start gap-4">
         {skill.iconUrl ? (
           <img
             className="h-14 w-14 shrink-0 rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)] object-contain p-1"
-            src={skill.iconUrl}
+            src={assetUrl(skill.iconUrl)}
             alt=""
             aria-hidden="true"
           />
@@ -712,13 +733,6 @@ function fallbackSkillDescription(skill: SkillLevelViewModel, locale: AppLocale)
   return t(locale, "cards.skillFallback", { values });
 }
 
-function formatDate(value: string, locale: AppLocale): string {
-  const normalized = value.replaceAll("/", "-").replace(" ", "T");
-  const date = new Date(normalized);
-  return Number.isNaN(date.getTime())
-    ? value
-    : new Intl.DateTimeFormat(locale, { year: "numeric", month: "long", day: "numeric" }).format(date);
-}
 
 function CopyIcon() {
   return (

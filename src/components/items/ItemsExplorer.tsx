@@ -2,6 +2,10 @@ import { useListSort } from "@/lib/filter/use-list-sort";
 import { sortEntries } from "@/lib/filter/list-sort";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
+import ServerScope from "@/components/shared/ServerScope";
+import type { ServerFaceted } from "@/lib/servers/facets";
+import { useAssetUrl, useServerList } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
 import BaseFilters, { FilterSection } from "@/components/shared/BaseFilters";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
@@ -14,14 +18,15 @@ import { getItemIconUrl } from "@/lib/items/assets";
 
 interface Props {
   locale: AppLocale;
-  initialItems: ItemViewModel[];
+  initialItems: ServerFaceted<ItemViewModel>[];
+  servers: GameServer[];
 }
 
 const displayGroups = [0, 1, 2, 3];
 
-export default function ItemsExplorer({ locale, initialItems }: Props) {
+export default function ItemsExplorer({ locale, servers, initialItems }: Props) {
   const memory = useListPageMemory("items");
-  const [items] = useState<ItemViewModel[]>(initialItems);
+  const { server, pickServer, items: items } = useServerList(locale, servers, initialItems);
   const [query, setQuery] = useState("");
   const sort = useListSort("items", locale, "");
   const [selectedGroups, setSelectedGroups] = useState<number[]>([]);
@@ -160,23 +165,25 @@ export default function ItemsExplorer({ locale, initialItems }: Props) {
   ]);
 
   return (
-    <section className="min-w-0" aria-live="polite">
-      {filteredItems.length === 0 ? (
-        <EmptyState locale={locale} onReset={resetFilters} />
-      ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4xl:grid-cols-7 5xl:grid-cols-8">
-          {sortedEntries.map((item) => (
-            <ItemCardItem key={item.id} item={item} locale={locale} />
-          ))}
-        </div>
-      )}
-    </section>
+    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
+      <section className="min-w-0" aria-live="polite">
+        {filteredItems.length === 0 ? (
+          <EmptyState locale={locale} onReset={resetFilters} />
+        ) : (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4xl:grid-cols-7 5xl:grid-cols-8">
+            {sortedEntries.map((item) => (
+              <ItemCardItem key={item.id} item={item} locale={locale} />
+            ))}
+          </div>
+        )}
+      </section>
+    </ServerScope>
   );
 }
 
 function ItemCardItem({ item, locale }: { item: ItemViewModel; locale: AppLocale }) {
   const [failed, setFailed] = useState(false);
-  const source = getItemIconUrl(item.imagePath, locale);
+  const source = useAssetUrl()(getItemIconUrl(item.imagePath, locale));
 
   const handleImageError = () => {
     setFailed(true);

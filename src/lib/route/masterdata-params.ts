@@ -1,9 +1,10 @@
 import { getBuildMasterData } from "@/lib/masterdata/build-snapshot";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
 import { validateMasterTable } from "@/lib/cards/data";
 import type { RouteStaticParamConfig } from "@/types/route";
 import { DEFAULT_LOCALE } from "@/config/locales";
 
-type DetailKind = "cards" | "support-cards" | "characters" | "music" | "gacha";
+type DetailKind = "cards" | "support-cards" | "characters" | "music" | "gacha" | "events";
 interface DetailRow { id: number; rarity?: number; cardType?: number }
 const tables: Record<DetailKind, string> = {
   cards: "MasterMemberCard.json",
@@ -11,6 +12,7 @@ const tables: Record<DetailKind, string> = {
   characters: "MasterCharacter.json",
   music: "MasterLiveMusic.json",
   gacha: "MasterGacha.json",
+  events: "MasterEvent.json",
 };
 
 export function detailParamsFromRows(kind: DetailKind, rows: DetailRow[]): RouteStaticParamConfig[] {
@@ -25,9 +27,15 @@ export function detailParamsFromRows(kind: DetailKind, rows: DetailRow[]): Route
   }));
 }
 
+/** Rows of a table on every server of the build: a detail page exists for an entity any server has. */
+async function rowsOfEveryServer<T>(file: string): Promise<T[]> {
+  const servers = await getBuildServers();
+  const tablesByServer = await Promise.all(servers.map((server) => getBuildMasterData(file, validateMasterTable<T>, server)));
+  return tablesByServer.flatMap((table) => table._allData);
+}
+
 export async function getMasterdataDetailParams(kind: DetailKind): Promise<RouteStaticParamConfig[]> {
-  const table = await getBuildMasterData(tables[kind], validateMasterTable<DetailRow>);
-  return detailParamsFromRows(kind, table._allData);
+  return detailParamsFromRows(kind, await rowsOfEveryServer<DetailRow>(tables[kind]));
 }
 
 export async function getMasterdataStoryParams(): Promise<RouteStaticParamConfig[]> {
@@ -49,8 +57,8 @@ export async function getMasterdataRewardParams(): Promise<RouteStaticParamConfi
   ] as const;
   const params: RouteStaticParamConfig[] = [];
   for (const [kind, file] of sources) {
-    const table = await getBuildMasterData(file, validateMasterTable<{ id: number }>);
-    for (const id of [...new Set(table._allData.map((row) => row.id))].filter((id) => Number.isSafeInteger(id) && id > 0).sort((a, b) => a - b)) {
+    const rows = await rowsOfEveryServer<{ id: number }>(file);
+    for (const id of [...new Set(rows.map((row) => row.id))].filter((id) => Number.isSafeInteger(id) && id > 0).sort((a, b) => a - b)) {
       const slug = rewardEntrySlug(kind, id);
       params.push({ params: { id: slug }, breadcrumbDetail: { label: slug } });
     }

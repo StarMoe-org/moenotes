@@ -3,6 +3,7 @@ import GachaDetail from "@/components/gacha/GachaDetail";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
 import { getBuildGachaDetail } from "@/lib/masterdata/build-data";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
 
 interface Props {
   locale: AppLocale;
@@ -11,8 +12,9 @@ interface Props {
 
 const { locale, gachaId } = Astro.props;
 const gacha = await getBuildGachaDetail(locale, gachaId);
+const servers = await getBuildServers();
 ---
 
 <PageLayout locale={locale} titleKey="seo.gachaDetail.title" descriptionKey="seo.gachaDetail.description">
-  <GachaDetail client:load locale={locale} gacha={gacha} />
+  <GachaDetail client:load servers={servers} locale={locale} gacha={gacha} />
 </PageLayout>

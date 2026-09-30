@@ -303,7 +303,7 @@ describe("query", () => {
     expect(serializeChartDataQuery(state, ctx)).toBe("");
   });
   test("a query round-trips", () => {
-    const query = "v=charts&band=2&d=hard%2Cexpert&q=ave&r=event&len=chart&oh=45&x=150%2C120%2C0%2C0%2C0&p=800000&tr=S&rk=2%2C1%2C5&gr=20&jr=80&n=3&jk=off&ax=bpm&ay=rate&c=10000103&frontier";
+    const query = "v=charts&band=2&d=hard%2Cexpert&q=ave&r=event&len=chart&oh=45&x=150%2C120%2C0%2C0%2C0&p=800000&tr=S&rk=2%2C1%2C5&gr=20&jr=80&n=3&ax=bpm&ay=rate&c=10000103&frontier";
     const state = parseChartDataQuery(query, ctx);
     expect(playScenario(state)).toEqual({ id: "battle", ranks: [2, 1, 5], great: 0.2, just: 0.8 });
     expect(state.room).toBe(3);

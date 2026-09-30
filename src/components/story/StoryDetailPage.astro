@@ -3,16 +3,19 @@ import StoryDetail from "@/components/story/StoryDetail";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
 import { getBuildStoryDetail } from "@/lib/masterdata/build-data";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
 
 interface Props { locale: AppLocale; advId: number; }
 const { locale, advId } = Astro.props;
-const detail = await getBuildStoryDetail(locale, advId);
+const [detail, servers] = await Promise.all([getBuildStoryDetail(locale, advId), getBuildServers()]);
 ---
 
 <PageLayout locale={locale} titleKey="seo.storyDetail.title" descriptionKey="seo.storyDetail.description">
   <StoryDetail
     client:load
     locale={locale}
+    servers={servers}
+    advServers={detail.servers}
     advId={advId}
     initialTitle={detail.title}
     initialScript={detail.script}

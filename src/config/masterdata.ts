@@ -11,5 +11,11 @@ export const masterdataConfig = {
    */
   internal: buildEnvOrigin("MOENOTES_MASTERDATA_INTERNAL"),
   versionPath: "/current_version.json",
+  /** Per region: its path and the SHA-256 of each file, so identical tables of several servers load once. */
+  indexPath: "/index.json",
+  /**
+   * The primary server's tables in an older single-directory checkout (`MOENOTES_MASTERDATA_DIR`). Over HTTP every
+   * server has its own path (`masterdataPath` in src/config/servers.ts).
+   */
   masterPath: "/master",
 } as const;

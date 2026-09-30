@@ -409,10 +409,10 @@ function fileResponse(body: Blob | ArrayBuffer, contentType: string, cacheState:
   });
 }
 
-/** The site roots (`<site>/`) of the story site and the chart site. */
+/** The site roots (`<site>/`) of the story sites and the chart site. */
 function siteRoots(base: string | undefined): string[] {
   const roots: string[] = [];
-  for (const site of [assetConfig.storySite, assetConfig.chartSite]) {
+  for (const site of [assetConfig.storySite, assetConfig.storySiteJp, assetConfig.chartSite]) {
     try {
       roots.push(new URL(`${site}/`, base).href);
     } catch {

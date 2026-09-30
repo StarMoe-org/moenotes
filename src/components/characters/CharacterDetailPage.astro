@@ -3,6 +3,7 @@ import CharacterDetail from "@/components/characters/CharacterDetail";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
 import { getBuildCharacterDetail } from "@/lib/masterdata/build-data";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
 
 interface Props {
   locale: AppLocale;
@@ -11,8 +12,9 @@ interface Props {
 
 const { locale, characterId } = Astro.props;
 const initialData = await getBuildCharacterDetail(locale, characterId);
+const servers = await getBuildServers();
 ---
 
 <PageLayout locale={locale} titleKey="seo.characterDetail.title" descriptionKey="seo.characterDetail.description">
-  <CharacterDetail client:load locale={locale} characterId={characterId} initialData={initialData} />
+  <CharacterDetail client:load servers={servers} locale={locale} characterId={characterId} initialData={initialData} />
 </PageLayout>

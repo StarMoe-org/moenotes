@@ -4,7 +4,7 @@
 
 MoeNotes 是由 [StarMoe](https://github.com/StarMoe-org) 团队为 BanG Dream! 企划 *Our Notes* 开发的静态数据与资料查看器。
 
-项目基于静态站点架构构建，提供角色、卡面、活动、歌曲谱面、剧情等游戏数据的检索与多语言浏览。
+项目基于静态站点架构构建，提供角色、卡面、活动、歌曲谱面、剧情等游戏数据的检索与多语言浏览。如果你想要了解游戏元数据/更新动态，可以访问 [moenotes-masterdata](https://github.com/StarMoe-org/moenotes-masterdata)。
 
 ## 特性
 

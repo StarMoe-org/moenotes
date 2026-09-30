@@ -1,5 +1,9 @@
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
+import ServerScope from "@/components/shared/ServerScope";
+import { forServer, type ServerFaceted } from "@/lib/servers/facets";
+import { useAssetUrl, useContentServer } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import { getAssetUrl } from "@/lib/assets/url";
@@ -13,24 +17,43 @@ import StoryPlayerLink from "@/components/story/StoryPlayerLink";
 /** Main episodes have an illustration; bond stories only a banner. Banners carry lettering, so they follow the locale. */
 function storyArtworkUrl(story: StoryViewModel | null, locale: AppLocale): string {
   if (!story) return "";
-  if (story.category === "main" && story.assets.image) return getAssetUrl({ path: `Story/Image/Episode/${story.assets.image}.png`, type: "raw", locale });
+  if ((story.category === "main" || story.category === "event") && story.assets.image) return getAssetUrl({ path: `Story/Image/Episode/${story.assets.image}.png`, type: "raw", locale });
   if (story.assets.banner) return getAssetUrl({ path: `Story/Banner/Episode/${story.assets.banner}.png`, type: "raw", locale });
   return "";
 }
 
-export default function StoryDetail({ locale, advId, initialTitle, initialScript, initialCharacters, initialTexts, story, previous, next }: {
+interface StoryDetailProps {
   locale: AppLocale;
   advId: number;
   initialTitle: string;
+  /** The script of the first server with the ADV; it plays the page server's files (docs/servers.md). */
   initialScript: ParsedStoryScript | null;
   initialCharacters: RawStoryCharacter[];
   initialTexts: RawText[];
-  story: StoryViewModel | null;
+  story: ServerFaceted<StoryViewModel> | null;
   previous: StoryNeighbor | null;
   next: StoryNeighbor | null;
+}
+
+export default function StoryDetail({ servers, advServers, story, ...props }: StoryDetailProps & {
+  /** The build's servers. */
+  servers: GameServer[];
+  /** Servers whose MasterData has the ADV. */
+  advServers: GameServer[];
 }) {
+  const [server, pickServer] = useContentServer(props.locale, servers);
+  const shown = useMemo(() => story && forServer(story, server), [story, server]);
+  return (
+    <ServerScope locale={props.locale} servers={servers} server={server} onChange={pickServer} entityServers={advServers}>
+      <StoryDetailView {...props} story={shown} />
+    </ServerScope>
+  );
+}
+
+function StoryDetailView({ locale, advId, initialTitle, initialScript, initialCharacters, initialTexts, story, previous, next }: Omit<StoryDetailProps, "story"> & { story: StoryViewModel | null }) {
   const [artworkFailed, setArtworkFailed] = useState(false);
-  const artworkUrl = storyArtworkUrl(story, locale);
+  const artworkUrl = useAssetUrl()(storyArtworkUrl(story, locale));
+  const isChapter = story?.category === "main" || story?.category === "event";
   const episodeLabel = story ? storyEpisodeLabel(locale, story) : "";
   const eyebrow = [story?.groupTitle || story?.bandName, episodeLabel].filter(Boolean).join(" · ");
 
@@ -41,7 +64,7 @@ export default function StoryDetail({ locale, advId, initialTitle, initialScript
           src={artworkUrl}
           alt=""
           onError={() => setArtworkFailed(true)}
-          className={`w-full shrink-0 border-b-[1.5px] border-[var(--mn-border)] bg-[var(--mn-cream-deep)] object-cover sm:w-72 sm:border-b-0 sm:border-r-[1.5px] ${story?.category === "main" ? "aspect-[4/3]" : "aspect-[49/16] sm:aspect-auto"}`}
+          className={`w-full shrink-0 border-b-[1.5px] border-[var(--mn-border)] bg-[var(--mn-cream-deep)] object-cover sm:w-72 sm:border-b-0 sm:border-r-[1.5px] ${isChapter ? "aspect-[4/3]" : "aspect-[49/16] sm:aspect-auto"}`}
         />
       )}
       <div className="flex min-w-0 flex-1 flex-col justify-center p-6">

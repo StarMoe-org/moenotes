@@ -2,7 +2,7 @@ import { buildEnvOrigin } from "./build-env";
 
 export const assetConfig = {
   /**
-   * moenotes-assets service: published files by asset path (/{language}/{key}/{label}.{ext}, see
+   * moenotes-assets service: published files by asset path (/{region}/{language}/{key}/{label}.{ext}, see
    * src/lib/assets/release.ts and docs/release-assets.md) and the bundle browser API.
    */
   api: (import.meta.env.PUBLIC_ASSET_API || "https://assets.bdon.moe").replace(/\/+$/, ""),
@@ -30,6 +30,12 @@ export const assetConfig = {
   /** Shared song-page modules; published at the storage site's root, beside the music-data directory. */
   musicPlayerSite: (import.meta.env.PUBLIC_MUSIC_PLAYER_SITE || import.meta.env.PUBLIC_STORY_SITE || "https://storage.bdon.moe/moenotes").replace(/\/+$/, ""),
   /**
+   * The JP story site, built separately (JP Live2D model ids overlap the international ones): `jp/` of the same bucket.
+   * The story player lists both; an episode both have plays from `storySite`. Set `PUBLIC_STORY_SITE_JP` to the
+   * `storySite` root to list one site only.
+   */
+  storySiteJp: (import.meta.env.PUBLIC_STORY_SITE_JP || "https://storage.bdon.moe/moenotes/jp").replace(/\/+$/, ""),
+  /**
    * Live2D Cubism Core for Web, which the Live2D viewer loads before a model (ournotes-player does not bundle it; Live2D's
    * own license applies). Override with `PUBLIC_CUBISM_CORE` to serve a copy; see docs/live2d-viewer.md.
    */
@@ -48,6 +54,10 @@ export const assetConfig = {
   /** The license the MotionSync Core comes under, linked from the story player's help dialog. */
   motionSyncLicense: "https://www.live2d.com/eula/live2d-proprietary-software-license-agreement_en.html",
   spineRuntime: import.meta.env.PUBLIC_SPINE_RUNTIME || "",
+  /**
+   * The asset service's default region (its `region` setting), whose files are also served without the region
+   * segment. It is the primary server's region (src/config/servers.ts); other servers' files carry `/{region}`.
+   */
   region: "tw",
   fonts: {
     googlePreconnect: "https://fonts.googleapis.com",

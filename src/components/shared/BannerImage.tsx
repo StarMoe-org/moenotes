@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAssetUrl } from "@/lib/servers/use-content-server";
 
 interface Props {
   src: string;
@@ -12,7 +13,8 @@ interface Props {
 }
 
 /** In-game banner artwork (7:3), shared by the gacha pages and the home carousel. */
-export default function BannerImage({ src, alt, fallback, className = "", imageClassName = "", eager = false }: Props) {
+export default function BannerImage({ src: neutralSrc, alt, fallback, className = "", imageClassName = "", eager = false }: Props) {
+  const src = useAssetUrl()(neutralSrc);
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const failed = !src || failedSrc === src;
 

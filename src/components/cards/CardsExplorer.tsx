@@ -2,6 +2,7 @@ import { useListSort } from "@/lib/filter/use-list-sort";
 import { sortEntries } from "@/lib/filter/list-sort";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
 import { t } from "@/i18n";
 import BaseFilters, {
   RarityFilter,
@@ -11,6 +12,9 @@ import BaseFilters, {
 } from "@/components/shared/BaseFilters";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import MemberCardItem from "@/components/cards/MemberCardItem";
+import ServerScope from "@/components/shared/ServerScope";
+import type { ServerFaceted } from "@/lib/servers/facets";
+import { serverOnlyLabel, useServerList } from "@/lib/servers/use-content-server";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 import {
   type CardViewModel,
@@ -22,15 +26,16 @@ import {
 
 interface Props {
   locale: AppLocale;
-  initialCards: CardViewModel[];
+  initialCards: ServerFaceted<CardViewModel>[];
+  servers: GameServer[];
 }
 
 const rarities: CardRarity[] = [4, 3, 2];
 const cardTypes: CardType[] = [1, 2, 3, 4, 5];
 
-export default function CardsExplorer({ locale, initialCards }: Props) {
+export default function CardsExplorer({ locale, initialCards, servers }: Props) {
   const memory = useListPageMemory("cards");
-  const [cards] = useState<CardViewModel[]>(initialCards);
+  const { server, pickServer, items: cards } = useServerList(locale, servers, initialCards);
   const [query, setQuery] = useState("");
   const sort = useListSort("cards", locale, "date rarity");
   const [selectedRarities, setSelectedRarities] = useState<number[]>([]);
@@ -214,17 +219,19 @@ export default function CardsExplorer({ locale, initialCards }: Props) {
   ]);
 
   return (
-    <section className="min-w-0" aria-live="polite">
-      {filteredCards.length === 0 ? (
-        <EmptyState locale={locale} onReset={resetFilters} />
-      ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4xl:grid-cols-7 5xl:grid-cols-8">
-          {sortedEntries.map((card) => (
-            <MemberCardItem key={card.id} card={card} locale={locale} onClick={saveCurrentState} />
-          ))}
-        </div>
-      )}
-    </section>
+    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
+      <section className="min-w-0" aria-live="polite">
+        {filteredCards.length === 0 ? (
+          <EmptyState locale={locale} onReset={resetFilters} />
+        ) : (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4xl:grid-cols-7 5xl:grid-cols-8">
+            {sortedEntries.map((card) => (
+              <MemberCardItem key={card.id} card={card} locale={locale} onClick={saveCurrentState} badge={serverOnlyLabel(locale, card, servers)} />
+            ))}
+          </div>
+        )}
+      </section>
+    </ServerScope>
   );
 }
 

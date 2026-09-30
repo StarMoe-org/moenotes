@@ -24,7 +24,8 @@ const exploreLinks = [
 <footer class="mn-site-footer mt-20 border-t-4 border-[var(--mn-accent)] bg-[var(--mn-paper)] text-[var(--mn-text)] transition-[padding] duration-300">
   {/* Clears the sidebar and an open filter drawer, like the main column. */}
   <div class="mx-auto max-w-[120rem] px-6 py-12 md:pl-[calc(var(--mn-sidebar-offset,18rem)+var(--mn-filter-offset,0rem)+1.5rem)] md:pr-6">
-    <div class="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
+    {/* Four columns only once the sidebar leaves them room; min-w-0 lets long text wrap instead of widening the page. */}
+    <div class="grid grid-cols-1 gap-10 sm:grid-cols-2 xl:grid-cols-4 [&>*]:min-w-0">
       {/* Column 1: Logo & Info */}
       <div class="flex flex-col gap-4">
         <a href={localizePath(getRoutePathById("home"), locale)} class="flex items-center text-[var(--mn-text)]">
@@ -131,7 +132,7 @@ const exploreLinks = [
           )}
           <li class="flex items-center gap-2 select-all">
             <svg class="h-4 w-4 shrink-0 text-[var(--mn-accent)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-            <span class="font-mono text-xs">{siteConfig.contact.email}</span>
+            <span class="min-w-0 break-all font-mono text-xs">{siteConfig.contact.email}</span>
           </li>
           <li class="mt-2 text-xs font-medium text-[var(--mn-text-muted)]/60">
             {t(locale, "footer.copyright")}

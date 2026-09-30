@@ -7,6 +7,8 @@ import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import { getBuildHomeData } from "@/lib/masterdata/build-data";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
+import { pickFacet } from "@/lib/servers/facets";
 import { getNavChildren, getNavigationGroups } from "@/lib/route/registry";
 
 interface Props {
@@ -14,7 +16,10 @@ interface Props {
 }
 
 const { locale } = Astro.props;
-const data = await getBuildHomeData(locale);
+const [data, servers] = await Promise.all([getBuildHomeData(locale), getBuildServers()]);
+// Each island gets its part of every server's home page.
+const slides = pickFacet(data, ["slides"]);
+const updates = pickFacet(data, ["rewards", "latestMusic", "latestCards", "latestSupportCards"]);
 // Same entries and order as the sidebar; a group without pages links to itself.
 const shortcuts = getNavigationGroups().flatMap((group) => {
   const children = getNavChildren(group);
@@ -27,17 +32,10 @@ const shortcuts = getNavigationGroups().flatMap((group) => {
 
   <section aria-labelledby="home-now">
     <SectionHeading id="home-now" title={t(locale, "home.now")} />
-    <HomeCarousel client:load locale={locale} slides={data.slides} />
+    <HomeCarousel client:load locale={locale} home={slides} servers={servers} />
   </section>
 
-  <HomeUpdates
-    client:load
-    locale={locale}
-    rewards={data.rewards}
-    songs={data.latestMusic}
-    cards={data.latestCards}
-    supportCards={data.latestSupportCards}
-  />
+  <HomeUpdates client:load locale={locale} home={updates} servers={servers} />
 
   <nav aria-labelledby="home-shortcuts">
     <SectionHeading id="home-shortcuts" title={t(locale, "home.shortcuts")} />

@@ -7,6 +7,7 @@ import { localizePath } from "@/i18n/routing";
 import type { PlayerSnapshot } from "@/lib/account/player-profile";
 import type { ProfileCardInfo } from "@/lib/account/profile-cards";
 import { buildDynamicPath, findRouteById } from "@/lib/route/registry";
+import { ContentServerProvider } from "@/lib/servers/use-content-server";
 
 interface Props {
   locale: AppLocale;
@@ -43,15 +44,18 @@ export default function PlayerProfileCard({ locale, snapshot, cards, own = false
             className="mn-focus block w-24 shrink-0 overflow-hidden rounded-xl border-[1.5px] border-[var(--mn-border)] shadow-[var(--mn-shadow-stamp)]"
             title={t(locale, "account.profile.favoriteCard", { title: card.title, character: card.characterName })}
           >
-            <MemberCardArtwork
-              assetId={card.assetId}
-              characterId={card.characterId}
-              rarity={card.rarity}
-              cardType={card.cardType}
-              alt={t(locale, "cards.cardImageAlt", { title: card.title, character: card.characterName })}
-              attributeLabel={t(locale, `cards.attributes.${card.cardType}`)}
-              fallbackLabel={card.characterName}
-            />
+            {/* The favorite card is one of the player's server's cards, so it shows from that server's catalog. */}
+            <ContentServerProvider server={snapshot.server} servers={[snapshot.server]}>
+              <MemberCardArtwork
+                assetId={card.assetId}
+                characterId={card.characterId}
+                rarity={card.rarity}
+                cardType={card.cardType}
+                alt={t(locale, "cards.cardImageAlt", { title: card.title, character: card.characterName })}
+                attributeLabel={t(locale, `cards.attributes.${card.cardType}`)}
+                fallbackLabel={card.characterName}
+              />
+            </ContentServerProvider>
           </a>
         )}
         <div className="min-w-0 flex-1">

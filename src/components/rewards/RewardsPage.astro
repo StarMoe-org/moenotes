@@ -3,6 +3,7 @@ import RewardsExplorer from "@/components/rewards/RewardsExplorer";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
 import { getBuildRewardEntries } from "@/lib/masterdata/build-data";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
 
 interface Props {
   locale: AppLocale;
@@ -10,8 +11,9 @@ interface Props {
 
 const { locale } = Astro.props;
 const entries = await getBuildRewardEntries(locale);
+const servers = await getBuildServers();
 ---
 
 <PageLayout locale={locale} titleKey="seo.rewards.title" descriptionKey="seo.rewards.description">
-  <RewardsExplorer client:load locale={locale} initialEntries={entries} />
+  <RewardsExplorer client:load servers={servers} locale={locale} initialEntries={entries} />
 </PageLayout>

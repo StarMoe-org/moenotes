@@ -28,7 +28,7 @@ interface MusicSelectDialogProps {
   title?: string;
   /** Session key of the remembered sort order. */
   sortPage?: string;
-  /** Pick songs only, for views that have no difficulty (the song ranking): no difficulty buttons. */
+  /** Pick songs only, for views that have no difficulty (the song ranking): levels are shown, not picked. */
   songOnly?: boolean;
 }
 
@@ -148,6 +148,20 @@ function SongOption({ locale, song, current, preferred, songOnly, onPick }: {
           </span>
           <span className="block truncate text-[10px] font-medium text-[var(--mn-text-muted)]">{song.bandName}</span>
         </span>
+        {/* Song-only: the levels are shown but not picked, so they stay part of the song's button. */}
+        {songOnly && (
+          <span className="grid grid-cols-4 gap-1 px-2.5 pb-2.5" aria-hidden="true">
+            {MUSIC_DIFFICULTIES.map((key) => {
+              const entry = song.difficulties.find((item) => item.difficulty === key);
+              if (!entry) return <span key={key} />;
+              return (
+                <span key={key} className={`rounded border py-0.5 text-center font-black ${DIFFICULTY_CHIP_CLASSES[key]}`}>
+                  <DifficultyChipFace difficulty={key} level={entry.displayLevel} />
+                </span>
+              );
+            })}
+          </span>
+        )}
       </button>
 
       {!songOnly && <div className="grid grid-cols-4 gap-1 px-2.5 pb-2.5">
@@ -167,12 +181,20 @@ function SongOption({ locale, song, current, preferred, songOnly, onPick }: {
                 current === key ? "ring-2 ring-[var(--mn-accent)] ring-offset-1 ring-offset-[var(--mn-paper)]" : ""
               }`}
             >
-              <span className="block text-[7px] leading-none opacity-60">{DIFFICULTY_SHORT_LABELS[key]}</span>
-              <span className="font-mono text-[11px] leading-tight">{entry.displayLevel}</span>
+              <DifficultyChipFace difficulty={key} level={entry.displayLevel} />
             </button>
           );
         })}
       </div>}
     </li>
+  );
+}
+
+function DifficultyChipFace({ difficulty, level }: { difficulty: MusicDifficulty; level: number }) {
+  return (
+    <>
+      <span className="block text-[7px] leading-none opacity-60">{DIFFICULTY_SHORT_LABELS[difficulty]}</span>
+      <span className="font-mono text-[11px] leading-tight">{level}</span>
+    </>
   );
 }

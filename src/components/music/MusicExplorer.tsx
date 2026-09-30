@@ -1,5 +1,9 @@
 import { useEffect, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
+import ServerScope from "@/components/shared/ServerScope";
+import type { ServerFaceted } from "@/lib/servers/facets";
+import { serverOnlyLabel, useServerList } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
@@ -12,13 +16,15 @@ import SongCard from "@/components/music/SongCard";
 
 interface Props {
   locale: AppLocale;
-  initialSongs: MusicViewModel[];
+  initialSongs: ServerFaceted<MusicViewModel>[];
+  servers: GameServer[];
 }
 
-export default function MusicExplorer({ locale, initialSongs }: Props) {
+export default function MusicExplorer({ locale, servers, initialSongs }: Props) {
   const memory = useListPageMemory("music");
 
-  const music = useMusicFilters(initialSongs, locale, "music");
+  const { server, pickServer, items: songs } = useServerList(locale, servers, initialSongs);
+  const music = useMusicFilters(songs, locale, "music");
   const { filters, setFilters } = music;
 
   useEffect(() => {
@@ -70,17 +76,19 @@ export default function MusicExplorer({ locale, initialSongs }: Props) {
   ]);
 
   return (
-    <section className="min-w-0" aria-live="polite">
-      {music.filtered.length === 0 ? (
-        <EmptyState locale={locale} onReset={resetFilters} />
-      ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6">
-          {music.sorted.map((song) => (
-            <SongCard key={song.id} song={song} locale={locale} onClick={saveCurrentState} />
-          ))}
-        </div>
-      )}
-    </section>
+    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
+      <section className="min-w-0" aria-live="polite">
+        {music.filtered.length === 0 ? (
+          <EmptyState locale={locale} onReset={resetFilters} />
+        ) : (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6">
+            {music.sorted.map((song) => (
+              <SongCard key={song.id} song={song} locale={locale} onClick={saveCurrentState} badge={serverOnlyLabel(locale, song, servers)} />
+            ))}
+          </div>
+        )}
+      </section>
+    </ServerScope>
   );
 }
 

@@ -11,10 +11,20 @@ import type { StoryCategory, StoryEpisodeKind } from "@/lib/story/data";
 export const STORY_LANGUAGES = ["ja", "en", "zh-Hant", "zh-Hans", "ko"] as const;
 export type StoryLanguage = typeof STORY_LANGUAGES[number];
 
+/**
+ * The story sites' roots, in precedence order: the international site (TW/HK/MO, every text language), then JP (its own
+ * site: JP Live2D model ids overlap the international ones). An episode on more than one plays from the first.
+ */
+export function getStorySiteRoots(): string[] {
+  return [...new Set([assetConfig.storySite, assetConfig.storySiteJp].filter(Boolean))];
+}
+
 /** A `stories.json` entry (ournotes.stories/1) as the player page reads it. */
 export interface StorySiteEntry {
   id: string;
   advId: number;
+  /** The story site the entry comes from (a root of getStorySiteRoots); its manifest and files are under it. */
+  root: string;
   /** The manifest path under the site root (`stories/<advId>.json`). */
   manifest: string;
   /** Episode titles by story language. */
@@ -30,11 +40,11 @@ export interface StorySiteEntry {
 }
 
 /** The story pages' three lists: main story, bond stories and the other talks (post-live, home spot, tutorial). */
-export type StorySection = "main" | "friendship" | "other";
-export const STORY_SECTIONS: readonly StorySection[] = ["main", "friendship", "other"];
+export type StorySection = "main" | "event" | "friendship" | "other";
+export const STORY_SECTIONS: readonly StorySection[] = ["main", "event", "friendship", "other"];
 
 export function storySection(category: StoryCategory | "other"): StorySection {
-  return category === "main" || category === "friendship" ? category : "other";
+  return category === "main" || category === "event" || category === "friendship" ? category : "other";
 }
 
 /** An episode as the picker lists it: the build's story data (localized at build time) of an advId. */
@@ -100,13 +110,30 @@ export function buildStoryPlayerEntries(
   return [...known, ...unknown];
 }
 
-export function getStoriesIndexUrl(): string {
-  return `${assetConfig.storySite}/stories.json`;
+export function getStoriesIndexUrl(root: string): string {
+  return `${root}/stories.json`;
 }
 
-/** A manifest path of the index, resolved against the site root. */
-export function getStoryManifestUrl(manifest: string): string {
-  return `${assetConfig.storySite}/${manifest.replace(/^\/+/, "")}`;
+/** A manifest path of a site's index, resolved against that site's root. */
+export function getStoryManifestUrl(root: string, manifest: string): string {
+  return `${root}/${manifest.replace(/^\/+/, "")}`;
+}
+
+/**
+ * The sites' indexes as one list, in site order: an advId a site before lists is left out of the later ones (the
+ * international site has every text language; JP only Japanese).
+ */
+export function mergeStorySiteEntries(sites: readonly (readonly StorySiteEntry[])[]): StorySiteEntry[] {
+  const seen = new Set<number>();
+  const merged: StorySiteEntry[] = [];
+  for (const entries of sites) {
+    for (const entry of entries) {
+      if (seen.has(entry.advId)) continue;
+      seen.add(entry.advId);
+      merged.push(entry);
+    }
+  }
+  return merged;
 }
 
 export function getStoryPlayerHref(locale: AppLocale, advId?: number): string {

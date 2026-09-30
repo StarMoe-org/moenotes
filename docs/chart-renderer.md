@@ -13,7 +13,9 @@ renderer compiled to WebAssembly (`wasm32-unknown-emscripten`).
 - `src/lib/music/chart-renderer.ts` starts one module worker per page on first use;
   `chart-render.worker.ts` instantiates the SDK once and transfers each PNG back.
 - The page fetches the chart (`Live/MusicScore/<chartKey>/<score>.json`) and the jacket's **PNG**
-  export from the asset service with `fetchReleaseBytes`, so the IndexedDB asset cache applies. The
+  export from the asset service with `fetchReleaseBytes`, so the IndexedDB asset cache applies. Both
+  come from the catalog of the server the page shows (`useAssetUrl`; a JP-only song's chart is only at
+  `/jp/ja/…`, see docs/servers.md). The
   WASM Skia build has no WebP decoder; an undecodable or missing jacket falls back to a sheet without
   a cover. `chartKey` is `MasterLiveMusicScore.musicScoreTextFileName` (e.g. `0069/0069_03`).
 - Sheet header text (title, localized difficulty, level, band, credits, master FC) comes from

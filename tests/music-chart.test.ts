@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { assetConfig } from "../src/config/assets";
-import { ReleaseRequestError, fetchReleaseBytes } from "../src/lib/assets/release";
+import { ReleaseRequestError, fetchReleaseBytes, serverAssetUrl } from "../src/lib/assets/release";
 import { getChartFileUrl, getChartImageFileName, getChartJacketUrl, getChartSheetMetadata } from "../src/lib/music/chart";
 import { normalizeMusic, validateMasterTable, type RawMusic, type RawMusicScore } from "../src/lib/music/data";
 
@@ -48,6 +48,12 @@ test("each difficulty carries the chart key of its score row", () => {
 test("chart and PNG jacket are addressed by release path in one language", () => {
   expect(getChartFileUrl("0069/0069_03")).toBe(`${api}/zh-Hans/Live/MusicScore/0069/0069_03/0069_03.json`);
   expect(getChartJacketUrl("jkt_004_100069")).toBe(`${api}/zh-Hans/Image/Jacket/jkt_004_100069/jkt_004_100069.png`);
+});
+
+test("a JP song's chart and jacket move to the JP catalog", () => {
+  expect(serverAssetUrl(getChartFileUrl("0109/0109_00"), "jp")).toBe(`${api}/jp/ja/Live/MusicScore/0109/0109_00/0109_00.json`);
+  expect(serverAssetUrl(getChartJacketUrl("jkt_003_100109"), "jp")).toBe(`${api}/jp/ja/Image/Jacket/jkt_003_100109/jkt_003_100109.png`);
+  expect(serverAssetUrl(getChartFileUrl("0109/0109_00"), "tw")).toBe(getChartFileUrl("0109/0109_00"));
 });
 
 test("sheet header uses localized labels and skips empty credits", () => {

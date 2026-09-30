@@ -7,6 +7,7 @@ import {
   type SupportCardType,
 } from "@/lib/support-cards/assets";
 import { getCharacterFaceIconUrl } from "@/lib/cards/assets";
+import { useAssetUrl } from "@/lib/servers/use-content-server";
 
 interface Props {
   assetId: number;
@@ -31,18 +32,14 @@ export default function SupportCardArtwork({
   eager = false,
   className = "",
 }: Props) {
-  const [source, setSource] = useState(getSupportCardThumbnailUrl(assetId));
-  const [failed, setFailed] = useState(false);
+  const assetUrl = useAssetUrl();
+  const fallbackCharId = characterIds[0];
+  // The card's thumbnail, then the first character's face icon, then the label.
+  const [attempt, setAttempt] = useState(0);
+  const source = assetUrl(attempt === 0 ? getSupportCardThumbnailUrl(assetId) : fallbackCharId ? getCharacterFaceIconUrl(fallbackCharId) : "");
+  const failed = attempt > 1 || !source;
 
-  const handleImageError = () => {
-    const fallbackCharId = characterIds[0];
-    const fallback = fallbackCharId ? getCharacterFaceIconUrl(fallbackCharId) : "";
-    if (fallback && source !== fallback) {
-      setSource(fallback);
-    } else {
-      setFailed(true);
-    }
-  };
+  const handleImageError = () => setAttempt((current) => current + 1);
 
   return (
     <div className={`relative aspect-[16/9] overflow-hidden bg-[var(--mn-cream-deep)] ${className}`.trim()}>

@@ -52,9 +52,14 @@ export function describeData(manifest: AssetManifest): DataVersion {
  * Why the published assets may not cover the MasterData a build would read right now, or null when they do.
  * MasterData moves first and the asset export follows, so a build in between would render pages whose story
  * tables are not published yet.
+ *
+ * Only regions with an exported release count: the build leaves a server out until its region's first release is
+ * exported (src/lib/masterdata/build-servers.ts), so that release, however long it runs, holds back no build, and
+ * its completion changes the build key.
  */
 export async function assetExportLag(manifest: AssetManifest, masterdataVersionUrl: string): Promise<string | null> {
-  const pending = Object.keys(manifest.pending ?? {});
+  const released = new Set(Object.keys(manifest.regions ?? {}));
+  const pending = Object.keys(manifest.pending ?? {}).filter((name) => released.has(name));
   if (pending.length) return `asset release still running for ${pending.join(", ")}`;
 
   const masterdata = await fetchJson<MasterdataManifest>(masterdataVersionUrl);

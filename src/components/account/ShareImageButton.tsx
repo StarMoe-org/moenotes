@@ -8,6 +8,7 @@ import { localizePath } from "@/i18n/routing";
 import type { PlayerSnapshot } from "@/lib/account/player-profile";
 import type { ProfileCardInfo } from "@/lib/account/profile-cards";
 import { renderShareImage, SHARE_HEIGHT, SHARE_WIDTH } from "@/lib/account/share-image";
+import { serverAssetUrl } from "@/lib/assets/release";
 import { getCardFullUrl } from "@/lib/cards/assets";
 
 interface Props {
@@ -56,7 +57,7 @@ export default function ShareImageButton({ locale, snapshot, cards, isPublic, ow
           badge: t(locale, "player.verified"),
           caption: card ? t(locale, "account.profile.favoriteCard", { title: card.title, character: card.characterName }) : "",
           link: link ? `${link.host}${link.pathname}` : "",
-          artUrl: card ? getCardFullUrl(card.assetId) : null,
+          artUrl: card ? serverAssetUrl(getCardFullUrl(card.assetId), snapshot.server) : null,
           profileCardUrl: snapshot.profileCard ? playerCardPath(snapshot.server, snapshot.profileId, 0, own) : null,
         },
         getComputedStyle(document.body).fontFamily,

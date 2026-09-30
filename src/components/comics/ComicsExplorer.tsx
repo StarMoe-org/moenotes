@@ -2,6 +2,10 @@ import { useListSort } from "@/lib/filter/use-list-sort";
 import { sortEntries } from "@/lib/filter/list-sort";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
+import ServerScope from "@/components/shared/ServerScope";
+import type { ServerFaceted } from "@/lib/servers/facets";
+import { useServerFiles, useServerList } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
 import BaseFilters, {
   BandFilter,
@@ -14,13 +18,18 @@ import type { ComicViewModel } from "@/lib/comics/data";
 
 interface Props {
   locale: AppLocale;
-  initialComics: ComicViewModel[];
+  initialComics: ServerFaceted<ComicViewModel>[];
+  servers: GameServer[];
   initialBandNames: Array<[number, string]>;
 }
 
-export default function ComicsExplorer({ locale, initialComics, initialBandNames }: Props) {
+// View models carry server-neutral file URLs; the list shows the page server's files.
+const COMIC_FILES = ["imageUrl"] as const;
+
+export default function ComicsExplorer({ locale, servers, initialComics, initialBandNames }: Props) {
   const memory = useListPageMemory("comics");
-  const [comics] = useState<ComicViewModel[]>(initialComics);
+  const { server, pickServer, items: serverItems } = useServerList(locale, servers, initialComics);
+  const comics = useServerFiles(serverItems, server, COMIC_FILES);
   
   const [query, setQuery] = useState("");
   const sort = useListSort("comics", locale, "");
@@ -272,62 +281,64 @@ export default function ComicsExplorer({ locale, initialComics, initialBandNames
   ]);
 
   return (
-    <>
-      <section className="min-w-0" aria-live="polite">
-        {filteredComics.length === 0 ? (
-          <EmptyState locale={locale} onReset={resetFilters} />
-        ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {sortedEntries.map((comic) => (
-              <button
-                key={comic.id}
-                type="button"
-                onClick={() => {
-                  setSelectedComic(comic);
-                  saveCurrentState();
-                }}
-                className="mn-list-card group flex flex-col min-w-0 overflow-hidden border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)] text-left"
-                data-list-item-id={comic.id}
-                aria-label={comic.name}
-              >
-                <div className="aspect-[928/778] w-full flex items-center justify-center overflow-hidden bg-[var(--mn-surface)] border-b-[1.5px] border-[var(--mn-border)]">
-                  <img className="h-full w-full object-cover group-hover:scale-[1.02] transition duration-300" src={comic.imageUrl} alt={comic.name} loading="lazy" />
-                </div>
-                <div className="p-4 flex-1 flex flex-col justify-between">
-                  <div>
-                    <h3 className="line-clamp-2 text-sm font-black leading-5 text-[var(--mn-text)]">{comic.name}</h3>
-                    <p className="mt-1.5 text-[10px] font-bold text-[var(--mn-text-muted)]">#{comic.id}</p>
+    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
+      <>
+        <section className="min-w-0" aria-live="polite">
+          {filteredComics.length === 0 ? (
+            <EmptyState locale={locale} onReset={resetFilters} />
+          ) : (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {sortedEntries.map((comic) => (
+                <button
+                  key={comic.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedComic(comic);
+                    saveCurrentState();
+                  }}
+                  className="mn-list-card group flex flex-col min-w-0 overflow-hidden border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)] text-left"
+                  data-list-item-id={comic.id}
+                  aria-label={comic.name}
+                >
+                  <div className="aspect-[928/778] w-full flex items-center justify-center overflow-hidden bg-[var(--mn-surface)] border-b-[1.5px] border-[var(--mn-border)]">
+                    <img className="h-full w-full object-cover group-hover:scale-[1.02] transition duration-300" src={comic.imageUrl} alt={comic.name} loading="lazy" />
                   </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
+                  <div className="p-4 flex-1 flex flex-col justify-between">
+                    <div>
+                      <h3 className="line-clamp-2 text-sm font-black leading-5 text-[var(--mn-text)]">{comic.name}</h3>
+                      <p className="mt-1.5 text-[10px] font-bold text-[var(--mn-text-muted)]">#{comic.id}</p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
 
-      <Modal
-        isOpen={selectedComic !== null}
-        onClose={() => {
-          setSelectedComic(null);
-          setCopyState("idle");
-          setDownloadState("idle");
-        }}
-        title={selectedComic?.name ?? ""}
-        closeLabel={t(locale, "actions.close")}
-        size="lg"
-        headerActions={previewActions}
-      >
-        {selectedComic && (
-          <div className="w-full overflow-hidden rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] p-2">
-            <img
-              className="mx-auto max-h-[65vh] w-full object-contain"
-              src={selectedComic.imageUrl}
-              alt={selectedComic.name}
-            />
-          </div>
-        )}
-      </Modal>
-    </>
+        <Modal
+          isOpen={selectedComic !== null}
+          onClose={() => {
+            setSelectedComic(null);
+            setCopyState("idle");
+            setDownloadState("idle");
+          }}
+          title={selectedComic?.name ?? ""}
+          closeLabel={t(locale, "actions.close")}
+          size="lg"
+          headerActions={previewActions}
+        >
+          {selectedComic && (
+            <div className="w-full overflow-hidden rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] p-2">
+              <img
+                className="mx-auto max-h-[65vh] w-full object-contain"
+                src={selectedComic.imageUrl}
+                alt={selectedComic.name}
+              />
+            </div>
+          )}
+        </Modal>
+      </>
+    </ServerScope>
   );
 }
 

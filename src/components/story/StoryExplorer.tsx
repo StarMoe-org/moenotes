@@ -2,6 +2,11 @@ import { useListSort } from "@/lib/filter/use-list-sort";
 import { sortEntries, type ListSort } from "@/lib/filter/list-sort";
 import { useEffect, useMemo, useState } from "react";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
+import ServerScope from "@/components/shared/ServerScope";
+import { serverReleaseFetcher } from "@/lib/assets/release";
+import type { ServerFaceted } from "@/lib/servers/facets";
+import { useAssetUrl, useContentServerScope, useServerList } from "@/lib/servers/use-content-server";
 import BaseFilters, { FilterButton, FilterSection } from "@/components/shared/BaseFilters";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import Modal from "@/components/shared/Modal";
@@ -15,16 +20,16 @@ import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import { storyEpisodeLabel } from "@/lib/story/labels";
 
-export type StorySection = "main" | "friendship" | "other";
+export type StorySection = "main" | "event" | "friendship" | "other";
 
-function storyCategoryKey(category: StoryCategory | "other"): string {
+export function storyCategoryKey(category: StoryCategory | "other"): string {
   if (category === "live-result") return "story.categories.liveResult";
   return `story.categories.${category}`;
 }
 
-export default function StoryExplorer({ locale, initialCategory, initialStories, initialCharacters, initialTexts }: { locale: AppLocale; initialCategory: StorySection; initialStories: StoryViewModel[]; initialCharacters: RawStoryCharacter[]; initialTexts: RawText[] }) {
+export default function StoryExplorer({ locale, servers, initialCategory, initialStories, initialCharacters, initialTexts }: { locale: AppLocale; servers: GameServer[]; initialCategory: StorySection; initialStories: ServerFaceted<StoryViewModel>[]; initialCharacters: RawStoryCharacter[]; initialTexts: RawText[] }) {
   const sort = useListSort(`story-${initialCategory}`, locale, "date");
-  const [stories] = useState<StoryViewModel[]>(initialStories);
+  const { server, pickServer, items: stories } = useServerList(locale, servers, initialStories);
   const [query, setQuery] = useState("");
   const [otherCategories, setOtherCategories] = useState<StoryCategory[]>([]);
   const loading = false;
@@ -35,11 +40,12 @@ export default function StoryExplorer({ locale, initialCategory, initialStories,
   const texts = initialTexts;
 
   const inSection = (story: StoryViewModel) => initialCategory === "other" ? ["live-result", "home", "tutorial"].includes(story.category) : story.category === initialCategory;
+  const hasFilters = initialCategory !== "main";
   const filtered = useMemo(() => stories.filter((story) => inSection(story) && (initialCategory !== "other" || otherCategories.length === 0 || otherCategories.includes(story.category)) && (!query.trim() || story.searchText.includes(query.trim().toLocaleLowerCase()))), [stories, initialCategory, otherCategories, query]);
   const sortedStories = useMemo(() => sortEntries(filtered, sort.value, locale), [filtered, sort.value, locale]);
   const reset = () => { sort.onChange("default"); setQuery(""); setOtherCategories([]); };
   const categoryTotal = stories.filter(inSection).length;
-  const quickFilterContent = initialCategory === "main" ? null : (
+  const quickFilterContent = hasFilters ? (
     <BaseFilters
       sort={sort}
       variant="plain"
@@ -82,22 +88,39 @@ export default function StoryExplorer({ locale, initialCategory, initialStories,
         <div />
       )}
     </BaseFilters>
-  );
+  ) : null;
 
   useQuickFilter(
     t(locale, storyCategoryKey(initialCategory)),
     quickFilterContent,
-    [initialCategory, query, otherCategories, filtered.length, categoryTotal, locale, sort.value]
+    [initialCategory, query, otherCategories, filtered.length, categoryTotal, locale, sort.value],
   );
 
   if (initialCategory === "main") {
     if (loading) return <State text={t(locale, "story.ui.loadingMain")} />;
     if (error) return <State text={t(locale, "story.ui.loadMainError")} action={() => setReload((v) => v + 1)} />;
-    return <MainStoryGroups stories={stories.filter(inSection)} locale={locale} sort="default" />;
+    return (
+      <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
+        <ChapterGroups stories={stories.filter(inSection)} locale={locale} sort="default" />
+      </ServerScope>
+    );
+  }
+
+  // Event stories are chapters too: listed by chapter, the filters and sort applying to the chapters.
+  if (initialCategory === "event") {
+    return (
+      <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
+        <section className="min-w-0" aria-live="polite">
+          {filtered.length === 0
+            ? <State text={t(locale, "story.ui.empty")} action={reset} />
+            : <ChapterGroups stories={filtered} locale={locale} sort={sort.value} />}
+        </section>
+      </ServerScope>
+    );
   }
 
   return (
-    <>
+    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
       <section className="min-w-0" aria-live="polite">
         {loading ? (
           <State text={t(locale, "story.ui.loading")} />
@@ -114,22 +137,24 @@ export default function StoryExplorer({ locale, initialCategory, initialStories,
         )}
       </section>
       <StoryReader story={active} locale={locale} characters={characters} texts={texts} onClose={() => setActive(null)} />
-    </>
+    </ServerScope>
   );
 }
 
-function MainStoryGroups({ stories, locale, sort }: { stories: StoryViewModel[]; locale: AppLocale; sort: ListSort }) {
+/** Episodes grouped by chapter; `sort` orders the chapters, episodes keep their in-game order. */
+function ChapterGroups({ stories, locale, sort }: { stories: StoryViewModel[]; locale: AppLocale; sort: ListSort }) {
+  const assetUrl = useAssetUrl();
   const chapters = [...new Map(stories.map((story) => [story.chapterId, story])).values()]
     .sort((a, b) => (a.chapterId ?? 0) - (b.chapterId ?? 0));
 
-  return <div className="space-y-8">{sortEntries(chapters.map((chapter) => ({ ...chapter, title: chapter.chapterName })), sort, locale).map((chapter) => {
+  return <div className="space-y-8">{sortEntries(chapters.map((chapter) => ({ ...chapter, id: chapter.chapterId ?? 0, title: chapter.chapterName })), sort, locale).map((chapter) => {
     // Main, another and extra episodes each number from 1, so they are listed as separate runs.
     const episodes = stories.filter((story) => story.chapterId === chapter.chapterId).sort((a, b) => a.sortOrder - b.sortOrder);
     const runs = (["main", "another", "extra"] as const)
       .map((kind) => ({ kind, episodes: episodes.filter((episode) => (episode.episodeKind ?? "main") === kind) }))
       .filter((run) => run.episodes.length > 0);
     const chapterAsset = chapter.chapterBanner || chapter.chapterImage;
-    const chapterImageUrl = chapterAsset ? getAssetUrl({ path: `Story/${chapter.chapterBanner ? "Banner" : "Image"}/Chapter/${chapterAsset}.png`, type: "raw" }) : "";
+    const chapterImageUrl = chapterAsset ? assetUrl(getAssetUrl({ path: `Story/${chapter.chapterBanner ? "Banner" : "Image"}/Chapter/${chapterAsset}.png`, type: "raw" })) : "";
     return <section key={chapter.chapterId} className="mn-list-group overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]">
       <div className="flex flex-col">
         {chapterImageUrl && (
@@ -147,9 +172,10 @@ function MainStoryGroups({ stories, locale, sort }: { stories: StoryViewModel[];
       <div className="space-y-5 border-t-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] p-4 sm:p-6">
         {runs.map((run) => <div key={run.kind}>
           {run.kind !== "main" && <h3 className="mb-3 text-xs font-black uppercase tracking-wider text-[var(--mn-text-muted)]">{t(locale, run.kind === "another" ? "story.ui.anotherStories" : "story.ui.extraStories")}</h3>}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {sortEntries(run.episodes, sort, locale).map((episode) => <a key={episode.id} href={localizePath(`/story/${episode.advId}`, locale)} className="mn-list-card mn-list-card-row group flex items-center gap-4 rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)] p-3 shadow-[var(--mn-shadow-stamp-sm)] transition hover:-translate-y-0.5 hover:shadow-[var(--mn-shadow-stamp)]">
-              <img src={getAssetUrl({ path: `Story/Banner/Episode/${episode.assets.banner}.png`, type: "raw", locale })} alt="" className="h-16 w-28 shrink-0 rounded-xl object-cover" loading="lazy" />
+          {/* Columns as wide as a banner and a title need, however narrow the content column is. */}
+          <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,17rem),1fr))]">
+            {run.episodes.map((episode) => <a key={episode.id} href={localizePath(`/story/${episode.advId}`, locale)} className="mn-list-card mn-list-card-row group flex min-w-0 items-center gap-4 rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)] p-3 shadow-[var(--mn-shadow-stamp-sm)] transition hover:-translate-y-0.5 hover:shadow-[var(--mn-shadow-stamp)]">
+              <img src={assetUrl(getAssetUrl({ path: `Story/Banner/Episode/${episode.assets.banner}.png`, type: "raw", locale }))} alt="" className="h-16 w-28 shrink-0 rounded-xl object-cover" loading="lazy" />
               <div className="min-w-0">
                 <p className="text-[11px] font-black text-[var(--mn-accent)]">
                   {storyEpisodeLabel(locale, episode)}
@@ -166,9 +192,10 @@ function MainStoryGroups({ stories, locale, sort }: { stories: StoryViewModel[];
 }
 
 function StoryCard({ story, locale, onOpen }: { story: StoryViewModel; locale: AppLocale; onOpen: () => void }) {
-  const hasCover = story.category === "main" || story.category === "friendship";
+  const assetUrl = useAssetUrl();
+  const hasCover = story.category !== "live-result" && story.category !== "home" && story.category !== "tutorial";
   const image = hasCover ? (story.assets.banner || story.assets.image) : "";
-  const imageUrl = image ? getAssetUrl({ path: `Story/Banner/${story.assets.banner ? "Episode" : "Chapter"}/${image}.png`, type: "raw", locale }) : "";
+  const imageUrl = image ? assetUrl(getAssetUrl({ path: `Story/Banner/${story.assets.banner ? "Episode" : "Chapter"}/${image}.png`, type: "raw", locale })) : "";
 
   const className = "mn-list-card group block w-full overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] text-left shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)]";
   const content = <>
@@ -196,7 +223,7 @@ function StoryCard({ story, locale, onOpen }: { story: StoryViewModel; locale: A
       </p>
     </div>
   </>;
-  return story.category === "main" || story.category === "friendship"
+  return hasCover
     ? <a href={localizePath(`/story/${story.advId}`, locale)} className={className} data-list-item-id={story.id}>{content}</a>
     : <button type="button" onClick={onOpen} className={className} data-list-item-id={story.id}>{content}</button>;
 }
@@ -204,6 +231,7 @@ function StoryCard({ story, locale, onOpen }: { story: StoryViewModel; locale: A
 function StoryReader({ story, locale, characters, texts, onClose }: { story: StoryViewModel | null; locale: AppLocale; characters: RawStoryCharacter[]; texts: RawText[]; onClose: () => void }) {
   const [script, setScript] = useState<ParsedStoryScript | null>(null);
   const [failed, setFailed] = useState(false);
+  const { server } = useContentServerScope();
 
   useEffect(() => {
     if (!story) return;
@@ -211,12 +239,13 @@ function StoryReader({ story, locale, characters, texts, onClose }: { story: Sto
     setScript(null);
     setFailed(false);
 
-    void fetchAndParseStory(story.assets.advEpisodeAsset, { locale })
+    // The script's tables come from the page server's catalog.
+    void fetchAndParseStory(story.assets.advEpisodeAsset, { locale, fetcher: serverReleaseFetcher(server) })
       .then((value) => alive && setScript(value))
       .catch(() => alive && setFailed(true));
 
     return () => { alive = false; };
-  }, [story, locale]);
+  }, [story, locale, server]);
 
   return <Modal
     isOpen={Boolean(story)}

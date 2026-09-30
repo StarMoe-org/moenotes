@@ -240,7 +240,7 @@ export const routeRegistry = [
     ],
   },
   {
-    // In-game happenings: announcements, gacha and missions now, and the game's events once it holds any.
+    // In-game happenings: the game's events, announcements, gacha and missions.
     id: "events",
     path: "/events",
     labelKey: "nav.groups.events",
@@ -254,6 +254,40 @@ export const routeRegistry = [
     searchable: true,
     keywords: ["events", "activities", "news", "gacha", "missions"],
     children: [
+      {
+        // MasterEvent. `/events` is this group's landing page, so the list lives one level down.
+        id: "event-list",
+        path: "/events/list",
+        labelKey: "nav.items.eventList",
+        component: "event-list",
+        seo: {
+          titleKey: "seo.eventList.title",
+          descriptionKey: "seo.eventList.description",
+          keywords: ["BanG Dream! Our Notes events", "Our Notes event list", "event bonus", "event rewards", "event story", "event schedule"],
+          sitemap: { priority: 0.8, changefreq: "daily" },
+        },
+        nav: { order: 5, icon: "calendar" },
+        searchable: true,
+        keywords: ["events", "event", "bonus", "event points", "event story"],
+        children: [
+          {
+            id: "event-detail",
+            kind: "dynamic",
+            path: "/events/:id",
+            pattern: "/events/:id",
+            parentId: "event-list",
+            labelKey: "nav.items.eventList",
+            component: "event-detail",
+            seo: {
+              titleKey: "seo.eventDetail.title",
+              descriptionKey: "seo.eventDetail.description",
+            },
+            nav: false,
+            searchable: false,
+            staticParams: async () => (await import("@/lib/route/masterdata-params")).getMasterdataDetailParams("events"),
+          },
+        ],
+      },
       {
         // In-game announcements from rankd, fetched in the browser: the shell is static, the list changes any time.
         id: "news",
@@ -382,6 +416,21 @@ export const routeRegistry = [
         nav: { order: 10, icon: "book" },
         searchable: true,
         keywords: ["main story", "scenario"],
+      },
+      {
+        id: "event-story",
+        path: "/story/event",
+        labelKey: "nav.items.eventStory",
+        component: "story-event",
+        seo: {
+          titleKey: "seo.eventStory.title",
+          descriptionKey: "seo.eventStory.description",
+          keywords: ["BanG Dream! Our Notes event story", "Our Notes event scenarios", "event story transcript", "event episodes", "character voices"],
+          sitemap: { priority: 0.6, changefreq: "weekly" },
+        },
+        nav: { order: 15, icon: "book" },
+        searchable: true,
+        keywords: ["event story", "event scenario", "scenario"],
       },
       {
         id: "friendship-story",

@@ -1,9 +1,16 @@
 import { masterdataConfig } from "@/config/masterdata";
+import { GAME_SERVER_PROFILES, PRIMARY_SERVER, type GameServer } from "@/config/servers";
 import { buildFetch } from "@/lib/build/fetch";
 import type { VersionManifest } from "@/types/masterdata";
 
+/** The metadata service's index.json: per region, its path and the SHA-256 of every file it serves. */
+interface MasterdataIndex {
+  regions?: Record<string, { path?: string; files?: Record<string, string> }>;
+}
+
 interface BuildSnapshotState {
   manifest?: Promise<VersionManifest>;
+  index?: Promise<MasterdataIndex | null>;
   tables: Map<string, Promise<unknown>>;
   activeRequests: number;
   waiters: Array<() => void>;
@@ -18,7 +25,11 @@ function sourceBases(): string[] {
   return [...new Set(Object.values(masterdataConfig.sources).map((base) => base.replace(/\/+$/, "")))];
 }
 
-/** Build-time override: read a local masterdata checkout (same layout as the mirrors) instead of the network. */
+/**
+ * Build-time override: read a local checkout of the data repository (StarMoe-org/moenotes-masterdata:
+ * `current_version.json` plus one directory per region, `hk-tw-mo/`, `jp/`, …) instead of the network. A checkout
+ * with the older single `master/` directory still serves the primary server.
+ */
 function localSourceDir(): string | undefined {
   const processEnv = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env;
   const dir = (import.meta.env.MOENOTES_MASTERDATA_DIR as string | undefined) ?? processEnv?.MOENOTES_MASTERDATA_DIR;
@@ -41,26 +52,40 @@ export function getBuildManifest(): Promise<VersionManifest> {
   return state.manifest;
 }
 
-export async function getBuildDataVersion(): Promise<string> {
-  return (await getBuildManifest()).dataVersion;
+/** The MasterData version a server's tables are at, or undefined when the metadata service does not serve it. */
+export async function getBuildMasterVersion(server: GameServer): Promise<string | undefined> {
+  return (await getBuildManifest()).regions?.[GAME_SERVER_PROFILES[server].masterdataRegion]?.version || undefined;
+}
+
+/**
+ * Identity of a server's table: its SHA-256 from index.json when the service lists it, so that servers serving the
+ * same bytes (the international servers share most tables) load and parse it once.
+ */
+export async function getBuildTableKey(server: GameServer, path: string): Promise<string> {
+  const name = path.replace(/^\/+/, "");
+  const index = await getBuildIndex();
+  const sha256 = index?.regions?.[GAME_SERVER_PROFILES[server].masterdataRegion]?.files?.[name];
+  return sha256 ? `sha256:${sha256}` : `${server}:${name}`;
 }
 
 export async function getBuildMasterData<T>(
   path: string,
   validate: (raw: unknown) => T,
+  server: GameServer = PRIMARY_SERVER,
 ): Promise<T> {
-  const cacheKey = path.replace(/^\/+/, "");
+  const name = path.replace(/^\/+/, "");
+  const cacheKey = await getBuildTableKey(server, name);
   let request = state.tables.get(cacheKey);
   if (!request) {
-    request = fetchBuildTable(cacheKey);
+    request = fetchBuildTable(server, name);
     state.tables.set(cacheKey, request);
   }
   return validate(await request);
 }
 
 /**
- * current_version.json only carries per-region hashes, while /master serves the merged tables,
- * so the cache token joins every region's hash: any region update invalidates it.
+ * Cache token of the whole manifest, joining every region's hash: any region update invalidates it. Tables are
+ * requested with their own region's version instead.
  */
 function resolveDataVersion(raw: Partial<VersionManifest>): string | undefined {
   if (raw.dataVersion || raw.version) return raw.dataVersion || raw.version;
@@ -93,15 +118,45 @@ async function fetchBuildManifest(): Promise<VersionManifest> {
   throw new Error(`Unable to load the build MasterData manifest: ${errors.join("; ")}`);
 }
 
-async function fetchBuildTable(path: string): Promise<unknown> {
-  const localDir = localSourceDir();
-  if (localDir) return readLocalJson(localDir, `${masterdataConfig.masterPath}/${path}`);
+function getBuildIndex(): Promise<MasterdataIndex | null> {
+  state.index ??= fetchBuildIndex();
+  return state.index;
+}
 
-  const version = await getBuildDataVersion();
+/** Only an optimization: without the index every server's tables are loaded on their own. */
+async function fetchBuildIndex(): Promise<MasterdataIndex | null> {
+  if (localSourceDir()) return null;
+  for (const base of sourceBases()) {
+    try {
+      return await fetchJsonWithRetry(`${base}${masterdataConfig.indexPath}`, { cache: "no-store" }) as MasterdataIndex;
+    } catch {
+      // Try the next source.
+    }
+  }
+  return null;
+}
+
+async function fetchBuildTable(server: GameServer, path: string): Promise<unknown> {
+  const profile = GAME_SERVER_PROFILES[server];
+  const localDir = localSourceDir();
+  if (localDir) {
+    try {
+      return await readLocalJson(localDir, `${profile.masterdataRegion}/${path}`);
+    } catch (error) {
+      if (server !== PRIMARY_SERVER) throw error;
+      return readLocalJson(localDir, `${masterdataConfig.masterPath}/${path}`);
+    }
+  }
+
+  // A table the index does not list for the region (JP lacks some Bilibili tables) is not requested at all.
+  const files = (await getBuildIndex())?.regions?.[profile.masterdataRegion]?.files;
+  if (files && !(path in files)) throw new Error(`MasterData table ${server}/${path} is not served`);
+
+  const version = await getBuildMasterVersion(server) ?? (await getBuildManifest()).dataVersion;
   const errors: string[] = [];
 
   for (const base of sourceBases()) {
-    const url = `${base}${masterdataConfig.masterPath}/${path}?v=${encodeURIComponent(version)}`;
+    const url = `${base}${profile.masterdataPath}/${path}?v=${encodeURIComponent(version)}`;
     try {
       return await fetchJsonWithRetry(url);
     } catch (error) {
@@ -109,7 +164,7 @@ async function fetchBuildTable(path: string): Promise<unknown> {
     }
   }
 
-  throw new Error(`Unable to load build MasterData table ${path}: ${errors.join("; ")}`);
+  throw new Error(`Unable to load build MasterData table ${server}/${path}: ${errors.join("; ")}`);
 }
 
 async function fetchJsonWithRetry(url: string, init?: RequestInit): Promise<unknown> {

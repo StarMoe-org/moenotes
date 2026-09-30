@@ -6,11 +6,17 @@ asset URL from its path; there is no generated index or sync step, so files the 
 exports appear without rebuilding the site.
 
 ```text
-{api}/{language}/{key}/{label}.{ext}
+{api}/{language}/{key}/{label}.{ext}            (the default region, tw)
+{api}/{region}/{language}/{key}/{label}.{ext}   (any region)
 https://assets.bdon.moe/zh-Hans/Character/Image/11/character_face_icon/character_face_icon.webp
 https://assets.bdon.moe/ja/Cri/Sound/A_Abracadabra/A_Abracadabra.m4a
+https://assets.bdon.moe/jp/ja/Cri/Sound/A_Abracadabra/A_Abracadabra.m4a   (the JP catalog)
 https://assets.bdon.moe/zh-Hans/Cri/Sound/A_Abracadabra/        (lists the key's files)
 ```
+
+- **Region**: every game server has its own catalog (docs/servers.md). Helpers and view models build the default
+  region's form; pages move it to the server they show (`serverAssetUrl`, `useAssetUrl`). The JP catalog publishes
+  `ja` only, so every language maps to it there.
 
 The service maps a path onto the newest snapshot that has published the key and answers
 404 for anything not exported. Path responses use a 10-minute cache with the content
