@@ -6,9 +6,10 @@ interface Props {
   locale: AppLocale;
   titleKey: string;
   descriptionKey: string;
+  showDescription?: boolean;
 }
 
-const { locale, titleKey, descriptionKey } = Astro.props;
+const { locale, titleKey, descriptionKey, showDescription = true } = Astro.props;
 ---
 
 <header class="mn-page-heading">
@@ -18,6 +19,6 @@ const { locale, titleKey, descriptionKey } = Astro.props;
     <slot name="title-badge" />
     <span class="mn-page-heading-track" aria-hidden="true"></span>
   </div>
-  <p>{t(locale, descriptionKey)}</p>
+  {showDescription ? <p>{t(locale, descriptionKey)}</p> : null}
 </header>
 <slot />

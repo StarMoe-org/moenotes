@@ -7,6 +7,13 @@
 /** A text in every language of the file: `{ja, en, "zh-Hant", "zh-Hans", ko}`. */
 export type DataText = Readonly<Record<string, string | undefined>>;
 
+export interface ReplayReference {
+  format: "nnnotes.replay-manifest/1";
+  manifestUrl: string;
+  sha256: string;
+  charts: number;
+}
+
 export interface DataBand {
   id: number;
   name?: DataText | null;
@@ -258,6 +265,8 @@ export interface DeckKind {
 }
 
 export interface DataProvenance {
+  developmentSample?: string;
+  localModel?: { gitHead?: string; workingTreeDirty?: boolean; sourceTreeSha256?: string; executableSha256?: string };
   region?: string;
   client?: { versionName?: string | null; versionCode?: number | null } | null;
   master?: { source?: string; version?: string } | null;
@@ -266,6 +275,7 @@ export interface DataProvenance {
 
 export interface MusicData {
   format?: string;
+  replay?: ReplayReference;
   provenance?: DataProvenance;
   languages?: readonly string[];
   bands?: readonly DataBand[];

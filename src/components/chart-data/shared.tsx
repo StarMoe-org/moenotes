@@ -72,7 +72,7 @@ export function Heading({ level = 2, title, children }: { level?: 2 | 3; title: 
 }
 
 export function Jacket({ ctx, row, size = "" }: { ctx: ChartDataContext; row: ChartRow; size?: "" | "sm" | "xl" }) {
-  const url = ctx.state.jackets ? ctx.jacketUrl(row) : null;
+  const url = ctx.jacketUrl(row);
   const [failed, setFailed] = useState<string | null>(null);
   return (
     <span className={`mn-cd-jk${size ? ` ${size}` : ""}`} style={{ ["--band" as string]: ctx.bandColor(row) }}>

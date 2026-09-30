@@ -15,8 +15,7 @@ const { locale } = Astro.props;
 const guide = getChartDataGuide(locale);
 ---
 
-<PageLayout locale={locale} titleKey="seo.chartData.title" descriptionKey="seo.chartData.description">
-  <span slot="title-badge" class="rounded-full border border-[var(--mn-border)] px-2 py-0.5 text-xs text-[var(--mn-text-muted)]" title={t(locale, "chartData.betaHint")}>{t(locale, "chartData.beta")}</span>
-  <p class="text-sm text-[var(--mn-text-muted)]">{t(locale, "chartData.betaHint")}</p>
+<PageLayout locale={locale} titleKey="seo.chartData.title" descriptionKey="seo.chartData.description" showDescription={false}>
+  <a slot="title-badge" href={`${Astro.url.pathname}?v=guide`} class="rounded-full border border-[var(--mn-border)] px-2 py-0.5 text-xs text-[var(--mn-text-muted)]" title={t(locale, "chartData.betaHint")}>{t(locale, "chartData.beta")}</a>
   <ChartDataTool client:load locale={locale} guide={guide} />
 </PageLayout>

@@ -4,6 +4,7 @@ import { roomSize } from "@/lib/chart-data/query";
 import { SCORE_RANKS, chartFigures, formatLength, modelPower, orderRates, plainKind, quantile, rankThreshold, reachChance, requiredPower, scoreRate, weightSum } from "@/lib/chart-data/ranking";
 import { FREE } from "@/lib/chart-data/scenario";
 import AptitudeDetail from "./AptitudeDetail";
+import ReplayDetail from "./ReplayDetail";
 import { MISSIONS, ScenarioPanel } from "./SettingsPanel";
 import { Heading, Icon, Jacket, fmt, fmtInt, diffShort, SongLink, type ChartDataContext } from "./shared";
 
@@ -210,7 +211,7 @@ export default function ChartDetail({ ctx, row }: { ctx: ChartDataContext; row: 
   return (
     <div className="mn-cd mn-cd-detail">
       <div className="mn-cd-hero" style={{ ["--band" as string]: ctx.bandColor(row) }}>
-        {state.jackets && ctx.jacketUrl(row) ? <div className="mn-cd-hero-bg" style={{ backgroundImage: `url("${ctx.jacketUrl(row)}")` }} /> : null}
+        {ctx.jacketUrl(row) ? <div className="mn-cd-hero-bg" style={{ backgroundImage: `url("${ctx.jacketUrl(row)}")` }} /> : null}
         <Jacket ctx={ctx} row={row} size="xl" />
         <div className="mn-cd-hero-text">
           <div className="mn-cd-hero-band"><i className="mn-cd-dot" style={{ background: ctx.bandColor(row) }} />{ctx.bandName(row)}</div>
@@ -275,7 +276,6 @@ export default function ChartDetail({ ctx, row }: { ctx: ChartDataContext; row: 
           {!figured && !(battle && row.unplayable) && row.stats ? <Tile label={tr("detail.noFigures")} value="–" sub={tr("scenario.pending")} /> : null}
         </div>
         {battle ? <Measures ctx={ctx} row={row} /> : null}
-        <AptitudeDetail ctx={ctx} row={row} />
         <Heading level={3} title={tr("detail.timeline")} />
         <div className="mn-cd-tl-scroll"><Timeline ctx={ctx} row={row} /></div>
         <div className="mn-cd-grid2">
@@ -296,6 +296,8 @@ export default function ChartDetail({ ctx, row }: { ctx: ChartDataContext; row: 
           </section>
         ) : null}
         <p className="mn-cd-ids">{`${tr("detail.musicId")} ${row.musicId} · ${tr("detail.scoreId")} ${row.scoreId} · ${tr("detail.musicType")} ${row.song.musicType ?? "–"}`}</p>
+        <ReplayDetail ctx={ctx} row={row} />
+        <AptitudeDetail ctx={ctx} row={row} />
       </div>
     </div>
   );

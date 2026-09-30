@@ -19,11 +19,16 @@ export interface ChartDataGuideSection {
   math?: readonly string[];
   after?: readonly string[];
   defs?: ReadonlyArray<readonly [string, string]>;
+  table?: { headers: readonly string[]; rows: ReadonlyArray<readonly string[]>; caption?: string };
 }
 
 export interface ChartDataGuide {
   title: string;
   lead: string;
+  reminder?: { title: string; text: string; priority?: string };
+  method?: { title: string; text: string };
+  contentsLabel?: string;
+  methodsLabel?: string;
   sections: readonly ChartDataGuideSection[];
 }
 

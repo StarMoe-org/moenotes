@@ -1,5 +1,6 @@
 import { DIFFICULTIES, SCORE_RANKS, type Difficulty, type LengthSource, type ScoreRank } from "./ranking";
 import { BEST_RANKS, RANK_MAX, formatRanks, parseRanks, type Scenario, type ScenarioId, type ScenarioSupport } from "./scenario";
+import { axisGoal } from "./pareto";
 
 /**
  * The chart data tool's choices live in the query, as on ournotes-player's chart data page (the page's language is
@@ -9,10 +10,7 @@ import { BEST_RANKS, RANK_MAX, formatRanks, parseRanks, type Scenario, type Scen
  *   &len=bgm|chart &oh=<seconds> &x=<percent>[,...] &frontier                      (efficiency)
  *   &gk=free &rk=<r>[,<r>,<r>]                        (play scenario: Free Live, else Gekisou Live with a rank 1-5
  *                                                      per range; default Gekisou Live at rank 1 everywhere)
- *   &gr=<Great percent> &jr=<Just percent>            (accuracy: Great share, default 0; Just rate in Just ranges,
- *                                                      default 100)
  *   &p=<power> &tr=<rank> &n=<players>                (event: rank chance; Gekisou Live room size, default 5)
- *   &jk=off                                                                        (no jackets)
  *   &ax=<figure> &ay=<figure>                                                      (scatter axes)
  *   &c=<scoreId>                                                                   (the chart detail open)
  */
@@ -57,9 +55,10 @@ export interface ChartDataState {
   just: number;
   /** Gekisou Live room size for the score ranks, 1..5. */
   room: number;
-  jackets: boolean;
   ax: Axis;
   ay: Axis;
+  xGoal: "min" | "max";
+  yGoal: "min" | "max";
   chart: number | null;
 }
 
@@ -72,7 +71,7 @@ export interface QueryContext {
 const oneOf = <T extends string>(values: readonly T[], value: string | null): value is T => value !== null && (values as readonly string[]).includes(value);
 const defaultRank = (ctx: QueryContext): RankBy => (ctx.hasStats ? "efficiency" : "speed");
 const defaultY = (ctx: QueryContext): Axis => (ctx.hasStats ? "perMinute" : "density");
-const pct = (v: string | null, def: number) => (v === null || !Number.isFinite(Number(v)) ? def : Math.min(100, Math.max(0, Math.round(Number(v)))));
+const pct = (value: string | null, fallback: number) => value === null || !Number.isFinite(Number(value)) ? fallback : Math.min(100, Math.max(0, Math.round(Number(value))));
 
 /** The scenario the figures are computed for: the state's scenario with its accuracy. */
 export function playScenario(state: Pick<ChartDataState, "mode" | "ranks" | "great" | "just">): Scenario {
@@ -92,6 +91,8 @@ export function parseChartDataQuery(search: string, ctx: QueryContext): ChartDat
   let rankBy: RankBy = oneOf(RANKS, q.get("r")) ? q.get("r") as RankBy : defaultRank(ctx);
   if (!ctx.hasStats && EFF_RANKS.has(rankBy)) rankBy = "speed";
   const ax = q.get("ax"), ay = q.get("ay"), view = q.get("v"), speed = q.get("sp"), target = q.get("tr");
+  const parsedAx = oneOf(AXES, ax) ? ax : "displayLevel";
+  const parsedAy = oneOf(AXES, ay) ? ay : defaultY(ctx);
   return {
     view: oneOf(VIEWS, view) ? view : "rank",
     band: q.get("band") || "",
@@ -110,9 +111,10 @@ export function parseChartDataQuery(search: string, ctx: QueryContext): ChartDat
     great: pct(q.get("gr"), 0),
     just: has.just ? pct(q.get("jr"), 100) : 100,
     room: Math.min(RANK_MAX, Math.max(1, Math.round(Number(q.get("n")) || 5))),
-    jackets: q.get("jk") !== "off",
-    ax: oneOf(AXES, ax) ? ax : "displayLevel",
-    ay: oneOf(AXES, ay) ? ay : defaultY(ctx),
+    ax: parsedAx,
+    ay: parsedAy,
+    xGoal: q.get("xg") === "max" ? "max" : q.get("xg") === "min" ? "min" : axisGoal(parsedAx),
+    yGoal: q.get("yg") === "min" ? "min" : q.get("yg") === "max" ? "max" : axisGoal(parsedAy),
     chart: Number(q.get("c")) || null,
   };
 }
@@ -139,9 +141,10 @@ export function serializeChartDataQuery(state: ChartDataState, ctx: QueryContext
   put("gr", state.great, 0);
   put("jr", state.just, 100);
   put("n", state.room, 5);
-  put("jk", state.jackets ? null : "off", null);
   put("ax", state.ax, "displayLevel");
   put("ay", state.ay, defaultY(ctx));
+  put("xg", state.xGoal, axisGoal(state.ax));
+  put("yg", state.yGoal, axisGoal(state.ay));
   put("c", state.chart, null);
   let text = p.toString();
   if (state.frontier) text += `${text ? "&" : ""}frontier`;

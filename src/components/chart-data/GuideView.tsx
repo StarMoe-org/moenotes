@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ChartDataGuide } from "@/i18n/guides/chart-data";
 import { Heading } from "./shared";
+import ModelSourceText from "./ModelSourceText";
 
 const no = (i: number) => String(i + 1).padStart(2, "0");
 
@@ -25,20 +26,27 @@ export default function GuideView({ guide }: { guide: ChartDataGuide }) {
     <>
       <div className="mn-cd-guide-head">
         <Heading title={guide.title} />
-        <p>{guide.lead}</p>
+        {guide.reminder ? <aside className="mn-cd-guide-reminder" role="note"><strong>{guide.reminder.title}</strong>{guide.reminder.priority ? <p><strong>{guide.reminder.priority}</strong></p> : null}<p><ModelSourceText text={guide.reminder.text} /></p></aside> : <p><ModelSourceText text={guide.lead} /></p>}
+        {guide.method ? <section className="mn-cd-guide-method" id="mn-cd-sources"><h2>{guide.method.title}</h2><p><ModelSourceText text={guide.method.text} /></p></section> : null}
       </div>
       <div className="mn-cd-guide">
-        <nav className="mn-cd-toc mn-cd-glass" aria-label={guide.title}>
+        <nav className="mn-cd-toc" aria-label={guide.title}>
           {guide.sections.map((x, i) => (
             <a key={x.title} href={`#mn-cd-g${i}`} aria-current={i === current ? "true" : "false"}><span>{no(i)}</span>{x.title}</a>
           ))}
         </nav>
+        <details className="mn-cd-toc-mobile"><summary>{guide.contentsLabel}</summary><nav aria-label={guide.title}>{guide.sections.map((x,i)=><a key={x.title} href={`#mn-cd-g${i}`} onClick={(e)=>{e.currentTarget.closest("details")?.removeAttribute("open");}}><span>{no(i)}</span>{x.title}</a>)}</nav></details>
         <article ref={body} className="mn-cd-g-body">
           {guide.sections.map((x, i) => (
             <section key={x.title} id={`mn-cd-g${i}`} className="mn-cd-g-section">
-              <Heading title={<><span className="mn-cd-g-no">{no(i)}</span> {x.title}</>} />
-              {(x.body ?? []).map((p) => <p key={p}>{p}</p>)}
+              <header className="mn-cd-guide-section-head"><span className="mn-cd-g-no">{no(i)}</span><h2>{x.title}</h2></header>
+              {!x.table ? (x.body ?? []).map((p) => <p key={p}>{p}</p>) : null}
               {x.math?.length ? <div className="mn-cd-formula">{x.math.map((m) => <code key={m}>{m}</code>)}</div> : null}
+              {x.table ? <div className="mn-cd-verification-scroll" tabIndex={0} role="region" aria-label={x.title}><table className="mn-cd-verification">
+                {x.table.caption ? <caption>{x.table.caption}</caption> : null}
+                <thead><tr>{x.table.headers.map((h) => <th scope="col" key={h}>{h}</th>)}</tr></thead>
+                <tbody>{x.table.rows.map((row, ri) => <tr key={ri}>{row.map((cell, ci) => <td key={ci}>{cell}</td>)}</tr>)}</tbody>
+              </table></div> : null}
               {(x.after ?? []).map((p) => <p key={p}>{p}</p>)}
               {x.defs?.length ? (
                 <dl className="mn-cd-defs">

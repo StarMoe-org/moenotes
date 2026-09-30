@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import type { ChartDataGuide } from "@/i18n/guides/chart-data";
@@ -28,6 +28,10 @@ interface Props {
 }
 
 type Load = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; data: MusicData };
+// The covered view refreshes when the modal closes; detail edits need only repaint the detail.
+const detailOpen = (ctx: ChartDataContext) => ctx.state.chart !== null && ctx.byScore.has(ctx.state.chart);
+const BackgroundRankView = memo(RankView, (_, next) => detailOpen(next.ctx));
+const BackgroundChartsView = memo(ChartsView, (_, next) => detailOpen(next.ctx));
 
 /**
  * Chart data: rankings, charts and a guide over nnnotes' music-data.json, ported from ournotes-player's chart data
@@ -133,7 +137,6 @@ export default function ChartDataTool({ locale, guide }: Props) {
   }, [data, current, rows, locale, tr, hasStats, support, update]);
 
   const detail = ctx && current?.chart ? ctx.byScore.get(current.chart) ?? null : null;
-  const songs = data?.songs?.length ?? 0;
 
   return (
     <div className="mn-cd">
@@ -149,7 +152,6 @@ export default function ChartDataTool({ locale, guide }: Props) {
         <main className="mn-cd-main"><GuideView guide={guide} /></main>
       ) : (
         <>
-          {ctx ? <p className="mn-cd-lead">{tr(`lead.${view}`, { songs, charts: ctx.rows.length })}</p> : null}
           {ctx ? <Filters ctx={ctx} /> : null}
           <main className="mn-cd-main">
             {load.status === "loading" || (load.status === "ready" && !ctx) ? (
@@ -160,7 +162,7 @@ export default function ChartDataTool({ locale, guide }: Props) {
                 <small>{load.message}</small>
                 <button type="button" className="mn-cd-ghost" onClick={() => setAttempt((n) => n + 1)}>{tr("retry")}</button>
               </div>
-            ) : ctx && view === "rank" ? <RankView ctx={ctx} /> : ctx ? <ChartsView ctx={ctx} /> : null}
+            ) : ctx && view === "rank" ? <BackgroundRankView ctx={ctx} /> : ctx ? <BackgroundChartsView ctx={ctx} /> : null}
           </main>
         </>
       )}
@@ -210,9 +212,6 @@ function Filters({ ctx }: { ctx: ChartDataContext }) {
             </button>
           ))}
         </div>
-        <button type="button" className="mn-cd-toggle" aria-pressed={state.jackets} title={tr("jacketsHint")} onClick={() => update({ jackets: !state.jackets })}>
-          <Icon name="image" /><span>{tr("jackets")}</span>
-        </button>
         <label className="mn-cd-search">
           <Icon name="search" />
           <input type="search" placeholder={tr("search")} value={state.search} aria-label={tr("search")} onChange={(e) => update({ search: e.target.value })} />
@@ -228,6 +227,7 @@ function Footer({ locale, data }: { locale: AppLocale; data: MusicData }) {
   const m = p.master ?? {};
   const c = p.client ?? {};
   const d = p.deck ?? null;
+  const development = p.developmentSample;
   // the data is the same on every server as far as we know; the region and versions it was taken from go in the hint
   const client = c.versionName ? `${c.versionName}${c.versionCode ? ` (${c.versionCode})` : ""}` : "?";
   const master = m.version ?? "?";
@@ -243,7 +243,7 @@ function Footer({ locale, data }: { locale: AppLocale; data: MusicData }) {
           </>
         ) : null}
       </span>
-      <span>{tr("caveat")}</span>
+      {development ? <span title={`${development}${p.localModel?.sourceTreeSha256 ? ` · SHA-256 ${p.localModel.sourceTreeSha256}` : ""}`}>{tr("developmentData")}{p.localModel?.workingTreeDirty ? ` · ${tr("uncommittedModel")}` : ""}</span> : null}
     </footer>
   );
 }

@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { matches, sortBy, type ChartRow } from "@/lib/chart-data/catalog";
 import { EFF_RANKS, RANKS, SPEEDS, roomSize, type RankBy } from "@/lib/chart-data/query";
 import { X_MAX, eventDominance, formatLength, lengthMs, orderRates, rank, rankThreshold, reachChance, requiredPower } from "@/lib/chart-data/ranking";
@@ -82,12 +82,11 @@ export default function RankView({ ctx }: { ctx: ChartDataContext }) {
       <div className="mn-cd-rank-head">
         <Seg<RankBy> variant="tabs" label={tr("views.rank")} value={state.rankBy} onPick={(rankBy) => update({ rankBy })} options={tabs} />
       </div>
-      <p className="mn-cd-hint">
-        {tr(`rankHint.${state.rankBy}`)}
         {state.rankBy === "speed" ? (
+          <div className="mn-cd-hint">
           <Seg label={tr("rankBy.speed")} value={state.speedBy} onPick={(speedBy) => update({ speedBy })} options={SPEEDS.map((k) => ({ value: k, label: tr(`speedBy.${k}`) }))} />
+          </div>
         ) : null}
-      </p>
       {state.rankBy === "efficiency" || state.rankBy === "event" ? (
         <>
           <ScenarioPanel ctx={ctx} rooms={state.rankBy === "event"} />
@@ -102,6 +101,7 @@ export default function RankView({ ctx }: { ctx: ChartDataContext }) {
 
 function RankTable({ ctx }: { ctx: ChartDataContext }) {
   const { tr, state } = ctx;
+  const [allColumns, setAllColumns] = useState(false);
   const { list, all, hi, cols, unsorted, top } = useRanking(ctx);
   const barValue = (r: Listed): number | null | undefined => (hi === "time" ? ctx.lengthOf(r) : hi === "level" ? r.displayLevel : hi === "bpm" ? r[state.speedBy]
     : hi ? (r[hi as keyof Listed] as number | null | undefined) : null);
@@ -150,11 +150,14 @@ function RankTable({ ctx }: { ctx: ChartDataContext }) {
 
   return (
     <div className="mn-cd-table-box">
-      <div className="mn-cd-count">{`${tr("chartsCount", { n: list.length })}${list.length !== all ? ` / ${all}` : ""}`}</div>
+      <div className="mn-cd-table-toolbar">
+        <div className="mn-cd-count">{`${tr("chartsCount", { n: list.length })}${list.length !== all ? ` / ${all}` : ""}`}</div>
+        <label className="mn-cd-check mn-cd-columns-toggle"><input type="checkbox" checked={allColumns} onChange={(e) => setAllColumns(e.target.checked)} />{tr("allColumns")}{allColumns ? <small>{tr("allColumnsHint")}</small> : null}</label>
+      </div>
       <div className="mn-cd-table-card mn-cd-glass">
         {list.length ? (
           <div className="mn-cd-table-scroll">
-            <table className="mn-cd-rank-table">
+            <table className="mn-cd-rank-table" data-rank-by={state.rankBy} data-columns={allColumns ? "all" : "auto"}>
               <thead>
                 <tr>{cols.map((k) => <th key={k} className={`c-${k}${k === hi ? " hi" : ""}`}>{head(k)}</th>)}</tr>
               </thead>
@@ -167,7 +170,7 @@ function RankTable({ ctx }: { ctx: ChartDataContext }) {
                     onClick={() => ctx.openChart(r.scoreId)}
                     onKeyDown={(e) => { if (e.key === "Enter") ctx.openChart(r.scoreId); }}
                   >
-                    {cols.map((k) => <td key={k} className={`${tdClass(k)} c-${k}${k === hi ? " hi" : ""}`}>{cell(k, r, i)}</td>)}
+                    {cols.map((k) => <td key={k} data-label={head(k)} className={`${tdClass(k)} c-${k}${k === hi ? " hi" : ""}`}>{cell(k, r, i)}</td>)}
                   </tr>
                 ))}
               </tbody>

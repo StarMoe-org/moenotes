@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { X_MAX, meanSkill } from "@/lib/chart-data/ranking";
 import { RANGES, RANK_MAX, type ScenarioId } from "@/lib/chart-data/scenario";
 import { SKILL_SLOTS } from "@/lib/chart-data/query";
@@ -45,19 +45,16 @@ function NumberInput({ value, onValue, className, min = 0, max, step, placeholde
   );
 }
 
-function Slider({ label, value, off, offText, onValue }: { label: string; value: number; off: boolean; offText: string; onValue: (v: number) => void }) {
-  return (
-    <label className="mn-cd-field">
-      <span>{label}</span>
-      <input type="range" min={0} max={100} step={1} value={value} disabled={off} aria-label={label} onChange={(e) => onValue(Number(e.target.value))} />
-      <output>{off ? offText : `${value}%`}</output>
-    </label>
-  );
+function AccuracySlider({ label, value, disabled = false, onValue, max = 100, step = 1, format = (v: number) => `${v}%` }: { label: string; value: number; disabled?: boolean; onValue: (value: number) => void; max?: number; step?: number; format?: (value: number) => string }) {
+  const [draft, setDraft] = useState(value);
+  useEffect(() => setDraft(value), [value]);
+  const commit = (input: HTMLInputElement) => { const next = Number(input.value); if (next !== value) startTransition(() => onValue(next)); };
+  return <label className="mn-cd-field"><span>{label}</span><input type="range" min={0} max={max} step={step} value={draft} disabled={disabled} aria-label={label} onChange={event => setDraft(Number(event.target.value))} onPointerUp={event => commit(event.currentTarget)} onPointerCancel={event => commit(event.currentTarget)} onKeyUp={event => commit(event.currentTarget)} onBlur={event => commit(event.currentTarget)} /><output>{format(draft)}</output></label>;
 }
 
 /**
- * The play scenario and the accuracy: Gekisou Live at a rank per range, or Free Live; the Great share, and in Gekisou
- * Live the Just rate. `rooms` adds the Gekisou Live room size (score ranks), `missions` names the ranges after a song's
+ * The reference play scenario: Gekisou Live at a rank per range, or Free Live.
+ * `rooms` adds the Gekisou Live room size (score ranks), `missions` names the ranges after a song's
  * Gekisou missions. Every change refigures the rows at once.
  */
 export function ScenarioPanel({ ctx, rooms = false, missions = null }: { ctx: ChartDataContext; rooms?: boolean; missions?: readonly number[] | null }) {
@@ -80,7 +77,6 @@ export function ScenarioPanel({ ctx, rooms = false, missions = null }: { ctx: Ch
             { value: "free", label: support.free ? tr("scenario.free") : `${tr("scenario.free")} · ${tr("scenario.pending")}`, disabled: !support.free },
           ]}
         />
-        <small className="mn-cd-note">{tr(battle ? "scenario.battleHint" : "scenario.freeHint")}</small>
       </div>
       {battle ? (
         <div className="mn-cd-field">
@@ -97,23 +93,21 @@ export function ScenarioPanel({ ctx, rooms = false, missions = null }: { ctx: Ch
               />
             </span>
           ))}
-          <small className="mn-cd-note">{support.ranks ? tr("scenario.best") : `${tr("scenario.best")} · ${tr("scenario.ranksPending")}`}</small>
+          {!support.ranks ? <small className="mn-cd-note">{tr("scenario.ranksPending")}</small> : null}
         </div>
       ) : null}
       <div className="mn-cd-field">
         <span>{tr("scenario.accuracy")}</span>
-        <Slider label={tr("scenario.great")} value={state.great} off={false} offText={tr("scenario.pending")} onValue={(great) => update({ great })} />
-        {battle ? <Slider label={tr("scenario.just")} value={state.just} off={!support.just} offText={tr("scenario.pending")} onValue={(just) => update({ just })} /> : null}
-        <small className="mn-cd-note">{tr(battle ? "scenario.accNote" : "scenario.accNoteFree")}</small>
+        <AccuracySlider label={tr("scenario.great")} value={state.great} onValue={great => update({ great })} />
+        {battle ? <AccuracySlider label={tr("scenario.just")} value={state.just} disabled={!support.just} onValue={just => update({ just })} /> : null}
+        <abbr className="mn-cd-note" title={tr(battle ? "scenario.accNote" : "scenario.accNoteFree")}>{tr("referenceEstimate")}</abbr>
       </div>
       {rooms && battle ? (
         <div className="mn-cd-field">
-          <span>{tr("scenario.room")}</span>
+          <span title={tr("scenario.roomHint")}>{tr("scenario.room")}</span>
           <Seg variant="mini" label={tr("scenario.room")} value={String(state.room)} onPick={(v) => update({ room: Number(v) })} options={RANK_OPTIONS.map((r) => ({ value: r, label: r }))} />
-          <small className="mn-cd-note">{tr("scenario.roomHint")}</small>
         </div>
       ) : null}
-      {rooms && !battle ? <small className="mn-cd-note">{tr("scenario.soloRanks")}</small> : null}
     </div>
   );
 }
@@ -129,11 +123,7 @@ export default function SettingsPanel({ ctx, event = false, frontier = false, ap
         <span>{tr("length")}</span>
         <Seg label={tr("length")} value={state.len} onPick={(len) => update({ len })} options={[{ value: "bgm", label: tr("bgm") }, { value: "chart", label: tr("chart") }]} />
       </div>
-      <label className="mn-cd-field">
-        <span>{tr("overhead")}</span>
-        <input type="range" min={0} max={180} step={5} value={state.overhead} aria-label={tr("overhead")} onChange={(e) => update({ overhead: Number(e.target.value) })} />
-        <output>{tr("seconds", { n: state.overhead })}</output>
-      </label>
+      <AccuracySlider label={tr("overhead")} value={state.overhead} max={180} step={5} onValue={overhead => update({ overhead })} format={v => tr("seconds", { n: v })} />
       </> : null}
       <div className="mn-cd-field">
         <span>{tr("skills")}</span>
