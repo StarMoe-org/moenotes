@@ -1272,6 +1272,7 @@ export const jaJP = {
     desc: "ステージと星の光に捧げる、Our Notes の散策手帳。",
     explore: "探索",
     sister: "姉妹サイト",
+    friendly: "友好サイト",
     contact: "お問い合わせ",
     feedback: "フィードバック送信 / 投稿",
     bugReport: "バグ報告",

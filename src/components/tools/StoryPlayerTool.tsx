@@ -6,13 +6,13 @@ import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import Modal from "@/components/shared/Modal";
 import Popover from "@/components/shared/Popover";
-import { getAssetUrl } from "@/lib/assets/url";
 import { fetchSiteStory, fetchStorySite, type StoryRuntimes } from "@/lib/story/player-client";
 import {
   buildStoryPlayerEntries,
   formatMegabytes,
   getStoryManifestUrl,
   getStoryPlayerHref,
+  getStoryPlayerArtworkUrl,
   parseStoryPlayerSearch,
   STORY_LANGUAGES,
   storyDownloadBytes,
@@ -284,7 +284,7 @@ function StoryHeader({ locale, entry, languages, language, switching, onLanguage
 /** The episode's banner; a plain tile for episodes without one (the other talks) or when it cannot be loaded. */
 function EpisodeArtwork({ locale, entry }: { locale: AppLocale; entry: StoryPlayerEntry }) {
   const [failed, setFailed] = useState(false);
-  const url = entry.image ? getAssetUrl({ path: `${entry.image}.png`, type: "raw", locale }) : "";
+  const url = getStoryPlayerArtworkUrl(entry.image, locale, entry.assetServer);
   const box = "h-14 w-24 shrink-0 rounded-xl border-[1.5px] border-[var(--mn-border)] sm:h-16 sm:w-28";
   if (!url || failed) {
     return (

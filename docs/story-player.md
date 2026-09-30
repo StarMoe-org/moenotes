@@ -39,6 +39,8 @@ The player version (`ournotes-player` in package.json) must read what that workf
   build time) for the episodes `stories.json` lists, in the story pages' order and in their three lists: main story by
   chapter (with its banner; main, another and extra episodes as separate runs), bond stories by pair, and the other
   talks by type. Episodes the build does not know yet are listed last under the other talks by the site's own titles.
+  Chapter and episode artwork keep their source server; entries played from the JP site use the JP Japanese asset
+  catalog, including episodes already present in the international MasterData whose artwork is not published there.
 - A `?story=` the index does not list is opened from its manifest (its `story` block is the index entry): a site build
   publishes each manifest as it lands and rewrites `stories.json` at its end. The story page's link checks the manifest
   the same way (a `HEAD`), so it never leads to a missing story.

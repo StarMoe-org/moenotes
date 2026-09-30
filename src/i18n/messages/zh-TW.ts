@@ -1366,6 +1366,7 @@ export const zhTW = {
     desc: "寫給舞台與星光的 Our Notes 漫步手帳",
     explore: "探索",
     sister: "姐妹站",
+    friendly: "友情站",
     contact: "聯繫與反饋",
     feedback: "提交反饋 / 投稿",
     bugReport: "錯誤報告",

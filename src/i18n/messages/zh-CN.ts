@@ -1366,6 +1366,7 @@ export const zhCN = {
     desc: "写给舞台与星光的 Our Notes 漫步手帐",
     explore: "探索",
     sister: "姐妹站",
+    friendly: "友情站",
     contact: "联系与反馈",
     feedback: "提交反馈 / 投稿",
     bugReport: "错误报告",

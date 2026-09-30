@@ -1241,6 +1241,7 @@ export const koKR = {
     desc: "무대와 별빛에 바치는 Our Notes 산책 노트",
     explore: "둘러보기",
     sister: "자매 사이트",
+    friendly: "우호 사이트",
     contact: "문의 & 피드백",
     feedback: "피드백 / 기여 제출",
     bugReport: "버그 신고",

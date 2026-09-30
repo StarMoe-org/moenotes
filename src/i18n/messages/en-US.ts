@@ -1241,6 +1241,7 @@ export const enUS = {
     desc: "A handwritten notebook for BanG Dream! Our Notes, dedicated to the stage and the stars.",
     explore: "Explore",
     sister: "Sister Sites",
+    friendly: "Friendly Sites",
     contact: "Contact & Feedback",
     feedback: "Submit Feedback / Contribution",
     bugReport: "Bug Report",

@@ -1,8 +1,10 @@
 import { assetConfig } from "@/config/assets";
 import type { AppLocale } from "@/config/locales";
+import { PRIMARY_SERVER, type GameServer } from "@/config/servers";
 import { getRoutePathById } from "@/lib/route/registry";
 import { localizePath } from "@/i18n/routing";
-import { assetLanguageOrder } from "@/lib/assets/release";
+import { assetLanguageOrder, serverAssetUrl } from "@/lib/assets/release";
+import { getImageAssetUrl } from "@/lib/assets/url";
 import type { StoryCategory, StoryEpisodeKind } from "@/lib/story/data";
 
 /** The story player's data: the story site's index entries and the episodes the page knows from the build. */
@@ -50,6 +52,7 @@ export function storySection(category: StoryCategory | "other"): StorySection {
 /** An episode as the picker lists it: the build's story data (localized at build time) of an advId. */
 export interface StoryPickerStory {
   advId: number;
+  assetServer: GameServer;
   category: StoryCategory;
   title: string;
   /** The group the episode belongs to (a chapter, a character's bond, a spot) and its name. */
@@ -95,7 +98,8 @@ export function buildStoryPlayerEntries(
     if (!site || listed.has(story.advId)) continue;
     listed.add(story.advId);
     const title = story.title || storySiteTitle(site, locale);
-    known.push({ ...story, site, title, section: storySection(story.category), searchText: `${story.searchText} ${title} ${story.advId}`.toLocaleLowerCase() });
+    const assetServer = site.root === assetConfig.storySiteJp && site.root !== assetConfig.storySite ? "jp" : story.assetServer;
+    known.push({ ...story, assetServer, site, title, section: storySection(story.category), searchText: `${story.searchText} ${title} ${story.advId}`.toLocaleLowerCase() });
   }
   const unknown = siteEntries
     .filter((entry) => !listed.has(entry.advId))
@@ -103,11 +107,15 @@ export function buildStoryPlayerEntries(
     .map((site): StoryPlayerEntry => {
       const title = storySiteTitle(site, locale);
       return {
-        advId: site.advId, site, category: "other", section: "other", title, groupId: "site", groupTitle: otherGroupTitle, groupSubtitle: "",
+        advId: site.advId, assetServer: PRIMARY_SERVER, site, category: "other", section: "other", title, groupId: "site", groupTitle: otherGroupTitle, groupSubtitle: "",
         groupImage: "", episodeLabel: "", episodeKind: null, episodeNote: "", image: "", searchText: `${title} ${site.advId}`.toLocaleLowerCase(),
       };
     });
   return [...known, ...unknown];
+}
+
+export function getStoryPlayerArtworkUrl(path: string, locale: AppLocale, server: GameServer): string {
+  return serverAssetUrl(getImageAssetUrl(path, locale), server);
 }
 
 export function getStoriesIndexUrl(root: string): string {
