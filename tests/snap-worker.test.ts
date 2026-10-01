@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { SnapRankingClient, snapProfileKey, snapSourceKey, type SnapRankingCatalogue, type SnapRankingSource, type SnapRankingState, type SnapWorkerPort, type SnapWorkerRequest, type SnapWorkerResponse } from "../src/lib/chart-data/snap-client";
+import { SnapRankingClient, isCurrentSnapCatalogue, snapProfileKey, snapSourceKey, type SnapRankingCatalogue, type SnapRankingSource, type SnapRankingState, type SnapWorkerPort, type SnapWorkerRequest, type SnapWorkerResponse } from "../src/lib/chart-data/snap-client";
 import { createSnapWorkerHandler } from "../src/lib/chart-data/snap-worker";
 import { SnapReplayError, type LoadedSnapReplay } from "../src/lib/chart-data/snap-bridge";
 import type { SnapEvaluationProfile } from "../src/lib/chart-data/snap-types";
@@ -11,6 +11,15 @@ const profile = (): SnapEvaluationProfile => ({ memberSkillPercent: [100, 120, 1
   greatFraction: 0.1, justFraction: 0.5, skillOrder: [4, 3, 2, 1, 0] });
 const loaded: LoadedSnapReplay = { ...identity, data: { format: "nnnotes.deck-data/1", provenance: {}, master: {}, charts: [] }, factory: () => { throw Error("No scoring in transport tests"); } };
 const catalogue: SnapRankingCatalogue = { choices: [], data: loaded.data, source: identity };
+
+test("catalogue admission checks content identity even when source version strings are unchanged", () => {
+  const current: SnapRankingCatalogue = { ...catalogue, data: { ...catalogue.data, provenance: { region: "tw", master: { version: "saved" }, deck: { commit: "frozen" } } } };
+  const music = { replay: source.reference, provenance: { region: "tw", master: { version: "saved" }, deck: { commit: "frozen" } } };
+  expect(isCurrentSnapCatalogue(current, music)).toBe(true);
+  expect(isCurrentSnapCatalogue(current, { ...music, replay: { ...music.replay, sha256: "c".repeat(64) } })).toBe(false);
+  expect(isCurrentSnapCatalogue(current, { ...music, provenance: { ...music.provenance, region: "jp" } })).toBe(false);
+  expect(isCurrentSnapCatalogue(current, null)).toBe(false);
+});
 
 describe("Snap Worker transport and paired replay", () => {
   test("same seed/order/accuracy/context paired replay, then version/profile/chart cache", async () => {

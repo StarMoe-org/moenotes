@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import RankView from "../src/components/chart-data/RankView";
+import ChartDetail from "../src/components/chart-data/ChartDetail";
 import type { ChartDataContext } from "../src/components/chart-data/shared";
 import { chartRows } from "../src/lib/chart-data/catalog";
 import { parseChartDataQuery } from "../src/lib/chart-data/query";
@@ -63,4 +64,19 @@ test("all None preserves the exact existing RankView markup", () => {
   expect(withNone).toContain("rankHint.efficiency");
   expect(withNone).not.toContain("snap.measurementHint");
   expect(withNone).not.toContain(measured.toLocaleString());
+});
+
+test("Snap detail reuses the same point and raw solo thresholds without linear power or chance", () => {
+  const ctx = context(), row = ctx.rows[0]!;
+  row.scoreRanks = [{ rank: "SS", requiredScore: 7777777, battleRequiredScore: 9999999 }];
+  ctx.eff = () => { throw new Error("Legacy linear scoring must not run for an active Snap detail"); };
+  const html = renderToStaticMarkup(<ChartDetail ctx={ctx} row={row} />);
+  expect(html).toContain(measured.toLocaleString());
+  expect(html).toContain("snap.baseline");
+  expect(html).toContain((7777777).toLocaleString());
+  expect(html).not.toContain((9999999).toLocaleString());
+  expect(html).not.toContain("detail.needPower");
+  expect(html).not.toContain("scenario.roomHint");
+  expect(html).not.toContain("col.rate");
+  expect(html).toContain("snap.timelineHint");
 });

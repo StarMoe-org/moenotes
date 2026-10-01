@@ -19,6 +19,7 @@
     "fiveSlots": { "memberIds": [1,2,3,4,5], "gekisouLevels": [null,null,null,null,null], "chartsCompleted": 85, "youth": { "score":4469543,"delta":15200 }, "ave": { "score":2866889,"delta":18093 } },
     "urlReloadSameResult": true,
     "needsContextCanReopenPicker": true,
+    "detail": { "sameMeasuredPoint":true,"easySiblingCalculates":true,"linearWeights":false,"thresholdColumns":2,"thresholdMode":"raw-solo" },
     "resetSelected": 0,
     "resetRemovesSelectionQuery": true,
     "mobileViewport": [390,844],

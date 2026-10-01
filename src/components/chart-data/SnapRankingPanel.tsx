@@ -20,6 +20,8 @@ export default function SnapRankingPanel({ ctx, catalogue, measurement, loading,
   const cards = useMemo(() => catalogue ? buildSnapSourceCards(catalogue.data, ctx.data, catalogue.labelSource, locale) : null, [catalogue, ctx.data, locale]);
   const choices = useMemo(() => catalogue ? labelSnapRankingCatalogue(catalogue.choices, catalogue.data, ctx.data, catalogue.labelSource, locale) : [], [catalogue, ctx.data, locale]);
   const active = state.snapSkills.some(Boolean);
+  const memberContextVisible = state.snapSkills.some((selection) => selection && choices.some((choice) => choice.kind === selection.kind
+    && choice.skillId === selection.skillId && choice.level === selection.level && choice.requirements.includes("paired-member")));
   const current = ctx.snap?.source && snapProfileKey(ctx.snap.profile) === measurement.profileKey && snapSourceKey(ctx.snap.source) === measurement.sourceKey;
   const catalogueStatus = !available ? "loadUnavailable" : catalogueError ? "calculationError" : null;
   const status = invalidMembers.length ? "invalidMember" : catalogueStatus ?? (current && measurement.status === "error" ? "calculationError"
@@ -29,7 +31,7 @@ export default function SnapRankingPanel({ ctx, catalogue, measurement, loading,
       loading={loading && !catalogueStatus} error={catalogueStatus ? tr(`snap.${catalogueStatus}`) : null} onOpen={onOpen}
       onSelect={(slot, selection) => update({ snapSkills: replaceSnapSlot(state.snapSkills, slot, selection) })}
       onReset={() => update({ snapSkills: [null, null, null, null, null], snapMembers: [null, null, null, null, null], snapPower: 300000 })}
-      renderContext={(slot, choice) => choice.requirements.includes("paired-member") || choice.kind === "gekisou-support" || state.snapMembers[slot]
+      renderContext={(slot, choice) => memberContextVisible || choice?.kind === "gekisou-support" || state.snapMembers[slot]
         ? <SnapPairedMemberControls locale={locale} members={cards?.members ?? []} value={state.snapMembers[slot] ?? null}
           onChange={(member) => update({ snapMembers: replaceSnapSlot(state.snapMembers, slot, member) })} /> : null} />
     {catalogue && !catalogue.labelSource ? <p className="mn-cd-note">{tr("snap.snapshotFallback")}</p> : null}
