@@ -1,0 +1,32 @@
+{
+  "schema": "ournotes.apk-signature-verification/1",
+  "verifiedAtUtc": "2026-10-01T04:59:27.009200+00:00",
+  "verifier": "Debian apksigner",
+  "files": [
+    {
+      "file": "base.apk",
+      "sha256": "4a095057b6cdc473b7ff67d82e88198507ae9c3a5f4114786d5cd2ad5f340d44",
+      "exitCode": 0,
+      "verified": true,
+      "v2": true,
+      "v3": true,
+      "signerCertificateSha256": "34fd32c2860f454dd320930f6ba0876ea8cc8e60a3d8320b3277aa761072508e",
+      "sourceStampVerified": false,
+      "logSha256": "c9b0d8b7991436a3a5bb61c4899bf4e13cc33a49c303b9b70d224680beb0bc79"
+    },
+    {
+      "file": "split_config.arm64_v8a.apk",
+      "sha256": "940b70c049e32cdff488608bca8cd40b716e6bec80763b480a191904e7b2e237",
+      "exitCode": 0,
+      "verified": true,
+      "v2": true,
+      "v3": true,
+      "signerCertificateSha256": "34fd32c2860f454dd320930f6ba0876ea8cc8e60a3d8320b3277aa761072508e",
+      "sourceStampVerified": false,
+      "logSha256": "b7b9ddcc13c2b4e859dbb096d39e6cae9806d248f42283c3611f9b11e6905056"
+    }
+  ],
+  "unityDataSplitVerification": "not-run",
+  "officialPlayDeliveryComparison": "not-established",
+  "ruleEquivalence": "not-established"
+}
