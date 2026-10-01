@@ -2,6 +2,8 @@
 
 状态：数据调查与模型 / 搜索前置方案；正式页面实现继续冻结。
 
+当前代码模块与待交付契约见[引擎分层状态](engine-layer-status.md)。用户新增[队伍与微操时序联合优化](micro-timing-search.md)，timing policy 属于共享求值输入，不能在网页单独叠加收益公式。
+
 ## 当前实际调查状态
 
 - 完整日服 APK 对应 1.0.4、versionCode 10053，原生条目已按内容哈希绑定，见[来源记录](latest-native-source-binding.json)。是否可执行为 latest-native oracle 由模型线检查，不能仅凭文件名通过原生 gate。

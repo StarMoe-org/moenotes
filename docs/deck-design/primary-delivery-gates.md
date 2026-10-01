@@ -10,6 +10,7 @@
 | JP Local 与 Live 初始化 | 一组初始培养的 5 成员/5 Snap，经真实 Player/cache、成员/技能 factory、非空 member-power 映射、options、score/note/life/撃奏 settings、原始 chart parser 与 mission utility；最终 capture 455/455 绑定调用返回 | 真实 rank table / LiveMusicScore / ranges、完整参数读回、SkillStatus 与整局；构造通过不能代替效果或合法域通过 |
 | JP 真实 factory 数值 | 真实 Local/Player/cache、SingletonCalculator、MemberDataContainer 与 SkillDataContainer 已取得；一组初始培养五人/Snap fixture 的整队力与五成员基础力，36 数值字段/10 身份字段与当前 Rust 一致 | VIP/账号/Unity lifecycle 仍不完整；SkillExecutor/LiveExecutor、技能效果、合法账号全域与最新线上认证未通过 |
 | JP 计分设置 | 同源实际 factory 的两个 f32 原字、16 条音符倍率与 6 条判定倍率，24 数值字段/22 键身份与当前 Rust 一致；独立 CNB probe，124 源文件前后未变 | 完整 note/life/Assist/撃奏输入契约与时钟；设置一致不代表逐帧得分或 Snap 行为一致 |
+| JP 无技能原生长谱 | 真实 timestamped input + AutoPerfect 隔离控制，29,790 返回调用、5,634 帧、364 判定、终分 209,797；源/原始流/采样独立审计 | 共享模型同输入差分、实际成员/Snap/撃奏 hooks、真实触控微操及自动结算；不得当作合法玩家 whole-live |
 | JP Snap 静态清点 | 615 普通/1,050 撃奏 effect 行，非零 condition/target/cumulative 引用无缺失；现有卡直接引用且有声明 rank 映射的行 790 条 | 所有行为的原生对照；另 875 条未被当前 SupportCard 直接引用，保留账本，不计玩家合法 case；19 个结构签名只用于实验排序 |
 | JP CardPower | 948,973 个独立输入、1,950,919 字段零差异，其中真实 member max × level 行对 4,910 个 | 合法玩家全局状态、五槽/Snap/场景组合；大量取整和溢出输入不计为合法队伍数 |
 | JP 原始谱面与洗牌 | 一份真实 chart 的 id/time/op 三列 1,092 字段；六个 root 的成员洗牌与后续随机状态 | 真实 parser settings、判定/fever/技能事件；无 Snap、注入 75,038 power 的构造证据不能认证完整配对 |
@@ -27,6 +28,8 @@ Local 初始 152-call 阶段的输入与报告 SHA、培养读回、14.365 s / 8
 [计分设置对照](latest-native-score-settings-comparison.json)使用恢复后实际字段读回：2 个 f32 原字、16 个 note-factor 值和 6 个 judgement-factor 值共 24 数值字段，22 个字典键相同，0 差异。复用的 capture 包含 498 个返回调用与 1 个真实 SkillStatus.GetName/本地化初始化异常；不把 499 次尝试称为全部通过。比较阶段新增 native 调用 0，Rust probe 只调用现有 `LiveScoreSettings::from_master`，124 源文件前后 SHA 不变、probe lock 字节不变；浮点只比较 f32 原字，不把 JSON 显示小数当 f64 比较。三个真实撃奏 range 与 364/233 判定/换算计数已由直接原生 LiveMusicScore ctor 取得，完整 utility 尚受 Unity 外部 icall 初始化限制，仍无 whole-live 通过。
 
 平台回收前完整保留了 455 capture、实际执行源码、method records 和 case。三份旧外部 JSON adapter 合同的完整文件没有回收，只剩捕获中的原 SHA/源码/负控制摘要；这个保留缺口见 [初始化摘要](latest-native-settings-pilot.json)的 `proofRetention`。恢复机已实际重跑并回收三份新合同，新 capture 引用新 SHA，不从摘要重建旧 proof；这些外部合同重复不增加原生游戏规则覆盖。
+
+[原生隔离长谱](latest-native-isolated-live-trace.json)已真实跑到最后音符 89,411 ms 后：末采样 89,923 ms，judged/combo/maxCombo 364、life 1000、score 209,797。它是 1 条无 SkillExecutor、无完整撃奏 driver hooks 的 AutoPerfect 组件轨迹；`FinishedAllNoteUpdate=true` 但 `IsPlaying=1`，没有强行 FinishLive。独立审计 14 个保留文件及七份实际执行源、29,790 returned、从 callIndex 510 起连续的 29,280 pending/29,280 returned 事件与全报告逐条一致；111 采样不等于全部 5,634 帧均已读回所有字段。这里只增加原生隔离轨迹证据，跨模型差分尚未完成。
 
 [真实 factory 与模型对照](latest-native-factory-model-comparison.json)新增 **1 个 fixture**，不是 36 个队伍：native 整队力 59,223；五成员 `LivePower` 各 10,122，三通道 BP 与四个整数 getter 共 35 字段，加整队力 1 字段，0 差异。新比较阶段复用已捕获的 389-call 原生报告，新增 native 调用 0。角色实读总 Rank 25、VIP ctor rank 0，空 item/memory 状态显式映射；完整可用账号的 VIP 初始化与 Unity 主循环仍需完成。第二 Support 技能的 native null 必须保留，真实 SupportList 是 `Local.SupportCard` 培养对象；不把 master、整队力或模型默认值替换这些对象/数值。
 
@@ -53,6 +56,8 @@ Local 初始 152-call 阶段的输入与报告 SHA、培养读回、14.365 s / 8
 - 小域独立穷举、可采纳上界反例、joint-root 与 held-out 敏感性是正式策略验收。较少示例 roots 的最优不称真实随机总体最优。
 
 完整数学与范围仍见[搜索设计](search-design.md)、[玩家目标](player-objectives.md)及[共享求值](shared-evaluation-and-data.md)。以上是待证的最小交付范围，不将现有 PoC 升格为正式实现。
+
+用户后续明确要求技能窗口附近提前/延后操作的微操计算。正式目标包含队伍与可执行 timing policy 的联合优化，见[微操搜索设计](micro-timing-search.md)。必须验证输入/判定/command/skill 各自时钟、同帧和回放、实际触控与长按滑条约束；判定流和 AutoInput 实验不能冒称玩家微操。该要求加入 M 的语义对照、S 的联合搜索和 B 的操作提示验收，完整目标不因此缩减。
 
 ## 截图到推荐的四个接口
 

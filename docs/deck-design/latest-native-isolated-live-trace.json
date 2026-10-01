@@ -1,0 +1,50 @@
+{
+  "format": "ournotes.native-continuous-independent-readback/1",
+  "version": {
+    "package": "com.bushiroad.sirius",
+    "versionName": "1.0.4",
+    "versionCode": 10053,
+    "restoredNativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+    "decodedMetadataSha256": "8cf963bc5a32262c2ad3e21307dda14d144bcced6fe7731986933718dcf9a91d",
+    "masterVersion": "1.0.0.300/52355a9de56a475f691b10ef58acba58",
+    "masterManifestSha256": "f4534fe8bf340b7a9bd99eb9b43ab384e9e3895a7e1eb3113cbb371e65780735",
+    "activeIfix": "unknown online; not loaded in this experiment"
+  },
+  "scope": "JP1.0.4-10053 same original native+metadata/offline-base/IFix not loaded; actual AutoPerfect core executor without SkillExecutor/Gekisou driver hooks. Not a legitimate player-action case, complete normal driver, game finish event or member+Snap whole-live certification",
+  "reportSha256": "80aae81b465b8d2b3176ce68c337dadc511d08204a367fb1f002f2a53ac723d1",
+  "archiveSha256": "1faae88294e2b7ab45d50e096687266edcdc3ed5bf8435ae08cc4999c07cc82d",
+  "sourceFilesVerified": 7,
+  "retainedFilesVerified": 14,
+  "boundCallsReturned": 29790,
+  "streamFirstCallIndex": 510,
+  "streamPendingEvents": 29280,
+  "streamReturnedEvents": 29280,
+  "streamEvents": 58560,
+  "streamMatchesFullReport": true,
+  "nativeFrames": 5634,
+  "compactSamples": 111,
+  "elapsedNanoseconds": 39445220992,
+  "peakRssKiB": 832140,
+  "nativeInputClockContract": "Actual timestamped input getters drive FT; syncedTime alone with original emptyInput stayed at position zero.",
+  "lastNativeNoteTimeMs": 89411,
+  "observedEnd": {
+    "judgedCount": 364,
+    "score": 209797,
+    "combo": 364,
+    "life": 1000,
+    "finishedAllNoteUpdate": true,
+    "isPlaying": 1
+  },
+  "automaticFinishCertified": false,
+  "wholeLiveCertified": false,
+  "independentIsolatedTraces": 1,
+  "newNativeCallsInAudit": 0,
+  "crossModelComparisonNotYetRun": true,
+  "pending": [
+    "Latest real member/Snap SkillStatus/SkillExecutor chain",
+    "Gekisou and full normal driver hooks",
+    "Automatic finish and legal account lifecycle",
+    "Cross-model trace comparison",
+    "Actual touch micro-timing controls"
+  ]
+}
