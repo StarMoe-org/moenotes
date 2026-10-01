@@ -286,7 +286,7 @@ export default function ChartDetail({ ctx, row }: { ctx: ChartDataContext; row: 
           ) : null}
           {!snap && !figured && !(battle && row.unplayable) && row.stats ? <Tile label={tr("detail.noFigures")} value="–" sub={tr("scenario.pending")} /> : null}
         </div>
-        {battle ? <Measures ctx={ctx} row={row} /> : null}
+        {battle && !snap ? <Measures ctx={ctx} row={row} /> : null}
         <Heading level={3} title={tr("detail.timeline")} />
         <div className="mn-cd-tl-scroll"><Timeline ctx={ctx} row={row} /></div>
         {snap ? <p className="mn-cd-hint">{tr("snap.timelineHint")}</p> : null}
@@ -313,8 +313,8 @@ export default function ChartDetail({ ctx, row }: { ctx: ChartDataContext; row: 
           </section>
         ) : null}
         <p className="mn-cd-ids">{`${tr("detail.musicId")} ${row.musicId} · ${tr("detail.scoreId")} ${row.scoreId} · ${tr("detail.musicType")} ${row.song.musicType ?? "–"}`}</p>
-        <ReplayDetail ctx={ctx} row={row} />
-        <AptitudeDetail ctx={ctx} row={row} />
+        {!snap ? <ReplayDetail ctx={ctx} row={row} /> : null}
+        {!snap ? <AptitudeDetail ctx={ctx} row={row} /> : null}
       </div>
     </div>
   );
