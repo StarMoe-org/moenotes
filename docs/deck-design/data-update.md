@@ -2,6 +2,10 @@
 
 状态：2026-10-01，Draft 设计。修复既有数据发布流程可先进行；最新游戏建模和搜索策略的验收仍是正式组卡功能的前置条件。本文件不表示自动更新修复已部署。
 
+发布仓库已形成 [nnnotes Draft PR #7](https://github.com/StarMoe-org/nnnotes/pull/7)：默认 TW/JP 独立矩阵、内容/消费端身份触发、manifest 一致性、发布前两次源复核、同区服普通/prebuilt 发布锁，以及逐首核对原始单人/房间门槛。验证为 177 passed、5 项可选环境测试 skipped，三份 workflow 通过 actionlint（未运行 shellcheck）；TW 与已保存 JP 数据各 85 首的真实源门槛核对通过。
+
+该 Draft 没有部署新矩阵，也没有实现下文的多资源原子 manifest 消费协议或任意 Snap 动态求值。当前 main 的 catalog 修复单独使用 [dry run](https://github.com/StarMoe-org/nnnotes/actions/runs/36817548100) 验证，不写生产数据；其完整结果仍待结束。
+
 ## 当前实际链路与故障
 
 StarMoe nnnotes 已有 `music-data.yml`：接收 `masterdata-updated`，每日补扫，并允许手动强制重建。它比较 master/resource/client 版本、resource hash、Deck/nnnotes commit 和 recipe，构建后运行 schema、来源、谱面、统计、音乐长度与消费端 smoke 检查。已有归档、发布开关和上传读回校验，应在此基础上修复。
