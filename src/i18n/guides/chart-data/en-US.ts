@@ -2,7 +2,7 @@ import type { ChartDataGuide } from "./index";
 
 export const enUS: ChartDataGuide = {
   "title": "Definitions, derivations and conditions",
-  "lead": "Rankings and aptitude show statistical references for theoretical best play. Chart details can also calculate one play from per-note inputs. Both use the same ournotes-deck Rust model; the native frame checks are listed below.",
+  "lead": "Rankings and aptitude show statistical references for theoretical best play. Chart details support simulating individual live scores based on custom judgements and skills. Calculation rules and details are explained below.",
   "sections": [
     {
       "title": "Score model",
@@ -272,13 +272,13 @@ export const enUS: ChartDataGuide = {
   ],
   "reminder": {
     "title": "When other results disagree",
-    "text": "For comparisons, align version, chart, scenario, power, judgement stream, skills, order, seed and frame clock. Include the request JSON and result when reporting a difference. Statistical sampling error, limited-precision references and native check coverage are explained above.",
+    "text": "When comparing against other sources, please ensure game version, chart, scenario, power, and skill setups match. If discrepancies arise, refer to in-game results.",
     "priority": "When you find a disagreement with other sources, the other sources are correct."
   },
   "contentsLabel": "Contents",
   "methodsLabel": "Method and remaining gaps",
   "method": {
     "title": "Sources and verification",
-    "text": "Charts and master data come from game resources extracted by nnnotes; ournotes-deck’s Rust model calculates the figures. We run the game client’s libil2cpp binary directly in the offline ARM64 emulator Unicorn. With the chart, skills, seed and clock fixed, we compare scoring, life, combo, skills and ranking against Rust frame by frame. Files, audio, display and Unity JSON object assembly use substitutes; scoring still executes native instructions. The table’s checked integers and float32 bits match exactly, showing that the model reproduces client calculations under these conditions. Real devices and server results are outside this comparison."
+    "text": "Charts and game data are extracted from game resources, and figures are calculated via our score simulation model, verified across multiple benchmark setups against game logic. Provided for team building and song selection reference."
   }
 };

@@ -36,7 +36,8 @@ export interface PopoverProps {
 }
 
 interface Coords {
-  top: number;
+  top?: number | undefined;
+  bottom?: number | undefined;
   left: number;
   width: number;
   maxHeight: number;
@@ -48,8 +49,8 @@ const VIEWPORT_MARGIN = 8;
 /**
  * Portal-based popover. Renders its panel into document.body so it never gets
  * clipped by any ancestor's overflow (modals, header cards, scroll containers).
- * Auto-flips above the trigger when there isn't enough room below, and caps its
- * height to the viewport so long lists scroll internally instead of overflowing.
+ * Uses fixed viewport coordinates so it works reliably inside scrolling overlays
+ * and auto-flips above the trigger when there is insufficient space below.
  */
 export default function Popover({
   trigger,
@@ -75,28 +76,40 @@ export default function Popover({
     const trigEl = triggerRef.current;
     if (!trigEl) return;
     const rect = trigEl.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom - VIEWPORT_MARGIN;
-    const spaceAbove = rect.top - VIEWPORT_MARGIN;
-    const placeTop = spaceBelow < 160 && spaceAbove > spaceBelow;
-    const maxHeight = Math.max(120, (placeTop ? spaceAbove : spaceBelow) - offset);
+    const vh = window.innerHeight;
+    const vw = window.innerWidth;
+
+    const availableBelow = Math.max(0, vh - rect.bottom - offset - VIEWPORT_MARGIN);
+    const availableAbove = Math.max(0, rect.top - offset - VIEWPORT_MARGIN);
+    const placeTop = availableBelow < 160 && availableAbove > availableBelow;
+    const maxHeight = Math.max(80, placeTop ? availableAbove : availableBelow);
 
     const width = rect.width;
-    let left = rect.left + window.scrollX;
-    if (align === "end") {
-      const panelWidth = matchTriggerWidth ? width : Math.max(minWidth ?? width, width);
-      left = rect.right + window.scrollX - panelWidth;
-    }
+    const panelWidth = matchTriggerWidth ? width : Math.max(minWidth ?? width, width);
+    const maxAllowedWidth = Math.max(0, vw - VIEWPORT_MARGIN * 2);
+    const effectiveWidth = Math.min(panelWidth, maxAllowedWidth);
+
+    let left = align === "end" ? rect.right - effectiveWidth : rect.left;
+    left = Math.max(VIEWPORT_MARGIN, Math.min(left, vw - effectiveWidth - VIEWPORT_MARGIN));
 
     setCoords({
-      top: placeTop
-        ? rect.top + window.scrollY - offset
-        : rect.bottom + window.scrollY + offset,
-      left,
-      width,
-      maxHeight,
+      top: placeTop ? undefined : Math.round(rect.bottom + offset),
+      bottom: placeTop ? Math.round(vh - rect.top + offset) : undefined,
+      left: Math.round(left),
+      width: Math.round(effectiveWidth),
+      maxHeight: Math.round(maxHeight),
       placement: placeTop ? "top" : "bottom",
     });
   }, [align, offset, minWidth, matchTriggerWidth]);
+
+  const toggle = useCallback(() => {
+    setOpen((prev) => {
+      if (!prev) {
+        updateCoords();
+      }
+      return !prev;
+    });
+  }, [updateCoords]);
 
   useLayoutEffect(() => {
     if (open) updateCoords();
@@ -114,41 +127,48 @@ export default function Popover({
     };
     window.addEventListener("resize", onScrollResize);
     window.addEventListener("scroll", onScrollResize, true);
+    window.visualViewport?.addEventListener("resize", onScrollResize);
+    window.visualViewport?.addEventListener("scroll", onScrollResize);
     document.addEventListener("keydown", onKeyDown, true);
     return () => {
       window.removeEventListener("resize", onScrollResize);
       window.removeEventListener("scroll", onScrollResize, true);
+      window.visualViewport?.removeEventListener("resize", onScrollResize);
+      window.visualViewport?.removeEventListener("scroll", onScrollResize);
       document.removeEventListener("keydown", onKeyDown, true);
     };
   }, [open, updateCoords]);
 
   const panelStyle: React.CSSProperties = coords
     ? {
-        position: "absolute",
-        top: coords.placement === "top" ? undefined : `${coords.top}px`,
-        bottom:
-          coords.placement === "top"
-            ? `${document.documentElement.scrollHeight - coords.top}px`
-            : undefined,
+        position: "fixed",
+        top: coords.top !== undefined ? `${coords.top}px` : undefined,
+        bottom: coords.bottom !== undefined ? `${coords.bottom}px` : undefined,
         left: `${coords.left}px`,
         ...(matchTriggerWidth ? { width: `${coords.width}px` } : { minWidth: `${minWidth ?? coords.width}px` }),
+        maxWidth: `calc(100vw - ${VIEWPORT_MARGIN * 2}px)`,
         maxHeight: `${coords.maxHeight}px`,
         overflowY: "auto",
       }
-    : { position: "absolute", visibility: "hidden" };
+    : { position: "fixed", visibility: "hidden" };
 
   return (
     <>
       {trigger({
         ref: setTriggerRef,
-        onClick: () => setOpen((v) => !v),
+        onClick: toggle,
         "aria-expanded": open,
         "aria-haspopup": true,
       })}
       {open &&
         createPortal(
           <>
-            <div className="fixed inset-0 z-[210]" onClick={close} aria-hidden="true" />
+            <div
+              className="fixed inset-0 z-[210] cursor-pointer"
+              onClick={close}
+              onPointerDown={close}
+              aria-hidden="true"
+            />
             <div
               ref={panelRef}
               style={panelStyle}

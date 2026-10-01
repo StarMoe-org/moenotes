@@ -25,7 +25,6 @@ export default function AptitudeDetail({ ctx, row }: { ctx: ChartDataContext; ro
   return (
     <section>
       <Heading level={3} title={<>{tr("aptitude.title")} <small className="mn-cd-note">{tr("beta")}</small></>} />
-      <p className="mn-cd-hint">{tr("betaHint")}</p>
       {!rows ? <p className="mn-cd-hint">{tr("scenario.pending")}</p> : (
         <>
           <p className="mn-cd-hint">{tr("aptitude.hint")}</p>
