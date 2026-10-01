@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { assertDeckDataIdentity, isCurrentDeckReply, planDeckRuntime, type DeckRuntimeCapabilities, type DeckWorkerRequest } from "../src/lib/deck/runtime-plan";
 
-const local: DeckRuntimeCapabilities = { browserRecognition: true, onnxWasm: true, onnxWebGpu: false, browserSolver: true, remoteRecognition: true, remoteSolver: true };
+const local: DeckRuntimeCapabilities = { browserRecognition: true, onnxWasm: true, browserSolver: true, remoteRecognition: true, remoteSolver: true };
 const noUpload = { uploadScreenshots: false, uploadRoster: false };
 const identity = { region: "jp", masterVersion: "synthetic/1", deckDataSha256: "a".repeat(64) };
 
@@ -9,9 +9,8 @@ describe("collection runtime plan", () => {
   test("WASM works without GPU and keeps both private inputs local", () => {
     expect(planDeckRuntime(local, noUpload)).toEqual({ recognition: "onnx-wasm", recommendation: "wasm-worker", uploads: { screenshots: false, roster: false } });
   });
-  test("WebGPU accelerates recognition while scoring remains the same WASM engine", () => {
-    expect(planDeckRuntime({ ...local, onnxWebGpu: true }, noUpload, true).recognition).toBe("onnx-webgpu");
-    expect(planDeckRuntime({ ...local, onnxWebGpu: true }, noUpload, true).recommendation).toBe("wasm-worker");
+  test("missing ONNX WASM support does not silently switch the recognition runtime", () => {
+    expect(() => planDeckRuntime({ ...local, onnxWasm: false }, noUpload)).toThrow("explicit screenshot upload consent");
   });
   test("ONNX alone is insufficient for screenshot recognition and cannot authorize uploads", () => {
     expect(() => planDeckRuntime({ ...local, browserRecognition: false }, noUpload)).toThrow("explicit screenshot upload consent");

@@ -9,7 +9,6 @@ export interface DeckRuntimeCapabilities {
   /** Complete image decoding/localization/preprocessing/merge pipeline, beyond ONNX inference alone. */
   browserRecognition: boolean;
   onnxWasm: boolean;
-  onnxWebGpu: boolean;
   /** Recommendation export, clock and cancellation support have passed browser parity tests. */
   browserSolver: boolean;
   remoteRecognition: boolean;
@@ -22,7 +21,7 @@ export interface DeckRuntimeConsent {
 }
 
 export interface DeckRuntimePlan {
-  recognition: "onnx-wasm" | "onnx-webgpu" | "remote";
+  recognition: "onnx-wasm" | "remote";
   recommendation: "wasm-worker" | "remote";
   uploads: { screenshots: boolean; roster: boolean };
 }
@@ -31,17 +30,15 @@ export interface DeckRuntimePlan {
 export function planDeckRuntime(
   capabilities: DeckRuntimeCapabilities,
   consent: DeckRuntimeConsent,
-  preferWebGpu = false,
 ): DeckRuntimePlan {
-  const localRecognition = capabilities.browserRecognition && (capabilities.onnxWasm || capabilities.onnxWebGpu);
+  const localRecognition = capabilities.browserRecognition && capabilities.onnxWasm;
   if (!localRecognition && !(capabilities.remoteRecognition && consent.uploadScreenshots)) {
     throw new Error("Recognition requires a supported local runtime or explicit screenshot upload consent");
   }
   if (!capabilities.browserSolver && !(capabilities.remoteSolver && consent.uploadRoster)) {
     throw new Error("Recommendation requires a supported local runtime or explicit roster upload consent");
   }
-  const recognition = !localRecognition ? "remote"
-    : capabilities.onnxWebGpu && (preferWebGpu || !capabilities.onnxWasm) ? "onnx-webgpu" : "onnx-wasm";
+  const recognition = localRecognition ? "onnx-wasm" : "remote";
   const recommendation = capabilities.browserSolver ? "wasm-worker" : "remote";
   return { recognition, recommendation, uploads: { screenshots: recognition === "remote", roster: recommendation === "remote" } };
 }

@@ -1,0 +1,26 @@
+{
+  "schema": "ournotes.latest-native-source-binding/1",
+  "package": "com.bushiroad.sirius",
+  "versionName": "1.0.4",
+  "versionCode": 10053,
+  "members": [
+    {
+      "archive": "base.apk",
+      "member": "assets/bin/Data/Managed/Metadata/global-metadata.dat",
+      "bytes": 28386492,
+      "sha256": "bbf82e20b16ac39ad14c6d3547250efb84daa6ae2c754e46ae9bae5270f9386c",
+      "matchesExtractedCandidate": true,
+      "extractedSha256": "bbf82e20b16ac39ad14c6d3547250efb84daa6ae2c754e46ae9bae5270f9386c"
+    },
+    {
+      "archive": "split_config.arm64_v8a.apk",
+      "member": "lib/arm64-v8a/libil2cpp.so",
+      "bytes": 207718136,
+      "sha256": "b1600689ee83c435b4a3eaa1ef0709b1ed27783eeda90dace814515a54e0a7ce",
+      "matchesExtractedCandidate": true,
+      "extractedSha256": "b1600689ee83c435b4a3eaa1ef0709b1ed27783eeda90dace814515a54e0a7ce"
+    }
+  ],
+  "runtimePatchState": "unconfirmed",
+  "semanticEquivalenceToOldNative": "not established"
+}
