@@ -1,0 +1,394 @@
+{
+  "format": "ournotes.latest-native-settings-pilot-summary/1",
+  "capturedOn": "2026-10-01",
+  "version": {
+    "package": "com.bushiroad.sirius",
+    "versionName": "1.0.4",
+    "versionCode": 10053,
+    "restoredNativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+    "decodedMetadataSha256": "8cf963bc5a32262c2ad3e21307dda14d144bcced6fe7731986933718dcf9a91d",
+    "masterVersion": "1.0.0.300/52355a9de56a475f691b10ef58acba58",
+    "masterManifestSha256": "f4534fe8bf340b7a9bd99eb9b43ab384e9e3895a7e1eb3113cbb371e65780735",
+    "activeIfix": "unknown online; not loaded in this experiment"
+  },
+  "scope": "JP Android 1.0.4 / 10053 offline-base plus saved JP master snapshot. One initial-cultivation factory fixture; incomplete account and Unity lifecycle. Active online IFix unconfirmed.",
+  "caseSha256": "2e6f6c7d95a0270392003abf955ade79576e0129701989c54b0cd031faae3e9e",
+  "rawReportSha256": "b60d1f024f574830a6f28b971d47c3765e773e8267b2bc8bb5338c36b49391b4",
+  "rawReportLocalPath": "work/deck-improve-20261001/helpers/native-pilot-prep/local-factory-native-gekisou-luck-source-result.json",
+  "bindingRecordsSha256": "97050f8adda97a9c35ac925924e565b7af56ea5a39f507f8ba97dcf28bf392e6",
+  "calls": {
+    "returned": 455,
+    "attempted": 455,
+    "independentWholeLiveTraces": 0,
+    "scope": "Calls in this final capture, including repeated setup/readback. Previous pilot calls are not added as distinct inputs."
+  },
+  "requiredSourceFiles": {
+    "count": 49,
+    "tables": {
+      "MasterMemberCard": {
+        "rawBinSha256": "c779a86e8babad6bf20e2146ff26761888598936abb104720696869e3678d937",
+        "decodedJsonSha256": "3b827e14ddcdafa6af13f6e9f69c1d9c02c07757964c2429a537b568b89ef999",
+        "rows": 63
+      },
+      "MasterMemberCardLevel": {
+        "rawBinSha256": "150710372d8dadac7c8267de8ab4640c85678cdc52113b30a84c8d0135a0681c",
+        "decodedJsonSha256": "fbd6fb9b9f7490cbc0bdbdb60a896d761b84695d6861124e2cf4c36fb415f480",
+        "rows": 330
+      },
+      "MasterMemberCardAwake": {
+        "rawBinSha256": "67ff1def325ecbfc95887e1e8cffa279da57b9c41828081d5a836fcf248612bb",
+        "decodedJsonSha256": "bf01e117cd3befba04175afdbad8d75539b6f65312d4f38b866517ac6d51f3ca",
+        "rows": 5
+      },
+      "MasterMemberCardRank": {
+        "rawBinSha256": "4b5f2091b737a57cab91f8d2be58f52106601cfb55c1589ee07d685d2239cdd4",
+        "decodedJsonSha256": "f48e735c28ac988a6a0b17193beb79ac68ebd9ac92abf9a0a77f71a3fba25254",
+        "rows": 5
+      },
+      "MasterMemberCardLevelLimit": {
+        "rawBinSha256": "c018d90d22526473b1698b9f8dd4bc30c803c4fed85d570f68416563f402b8d4",
+        "decodedJsonSha256": "aa79a65069826308d87d0e906e897ccd2e6ca6655b1bb6049a183c35e3394843",
+        "rows": 25
+      },
+      "MasterSupportCard": {
+        "rawBinSha256": "79fc99233336548301f5ff915b2f6fa59c847a2879bc1b16159d7fd20c2cd2e3",
+        "decodedJsonSha256": "fa339e67a9610c2f6931666ec31c92212f311200925db6799a78b1e7cc8f9b99",
+        "rows": 64
+      },
+      "MasterSupportCardLevel": {
+        "rawBinSha256": "518d450103eb38acb1589cecf9e84870011904c4a47a5ada589cec5f03449a03",
+        "decodedJsonSha256": "b0e1fe30d0f7f2c0edc090f3b5e64b7c95331ade5b6657324b165f49b39bd232",
+        "rows": 420
+      },
+      "MasterSupportCardRank": {
+        "rawBinSha256": "0bbea8a73dfbacd52c289bf5008b8da7f66f06dd84f685df510e0db6837d1fe1",
+        "decodedJsonSha256": "81e32ea8e473ed42f64ef540dd54f518990a3b7d7345c99277f168dd0a91f1fb",
+        "rows": 25
+      },
+      "MasterCharacter": {
+        "rawBinSha256": "588826a0a33e91b3df422a70280c1e67ce2d9e5a3b4c335e3c6b45cc9283819e",
+        "decodedJsonSha256": "47fb380283405bd653a75080327055f22552f98d5094b31aa3816dc597926041",
+        "rows": 25
+      },
+      "MasterCharacterRank": {
+        "rawBinSha256": "26670321cd8c6efb240e5d93e431aad5dfdfa6b474eeb6e973a11ae742e28e4c",
+        "decodedJsonSha256": "e6ef8f177d3322e4fb96f3243e34bc2a9495097f79a83bfd136652f33dfe3ced",
+        "rows": 50
+      },
+      "MasterCharacterTotalRank": {
+        "rawBinSha256": "6ad0857e71bfa9e1ef62b3f085b17c986cea1a662a260b0d8d1e442dfd631449",
+        "decodedJsonSha256": "3f02572f7e628bb3408bd30b4960e66a93d4819152d8811379cc31cafba8fa13",
+        "rows": 57
+      },
+      "MasterBand": {
+        "rawBinSha256": "128bf4d0748987954409cd5800f60f21634d868d289c615872c1f717eebf719a",
+        "decodedJsonSha256": "e7ffaac07d7ca8ac2ebd609d129c2e918e749ab78231709f1e16fb99a4830776",
+        "rows": 5
+      },
+      "MasterTag": {
+        "rawBinSha256": "06ff54d2fa7d2e3a197d5c6a3e6b79de34aadd5aa13d1a52e3a41df60b41dea3",
+        "decodedJsonSha256": "5a2df8c9d3518113517ba7d483bf9ab28a411c30f727133db56d4e181e2997be",
+        "rows": 5
+      },
+      "MasterLeaderSkill": {
+        "rawBinSha256": "c97572136d0dee236a86c3c0abb67ccd17341bbfe4819b9425f8e73a75cd8c9a",
+        "decodedJsonSha256": "5c0831f4080f417f73b8b8e9762d3f6cebee944afc33bc4d0e6f23df8e06e532",
+        "rows": 220
+      },
+      "MasterLeaderSkillEffect": {
+        "rawBinSha256": "27025b3e028f3f09759f22e619a6435373aff806e31f63a748ecc324604e24f1",
+        "decodedJsonSha256": "25544b234e4cc968364f23bff7d13a434cf51fdb2be8936300a37e2e5521e281",
+        "rows": 1145
+      },
+      "MasterLiveSkill": {
+        "rawBinSha256": "55e1e2cd712ec38dc2d6a329de35b580c71859ba4b58565d82eb93b96e4aa56c",
+        "decodedJsonSha256": "b91e54c10b9cd8aff87cd6d008b8cf04a7bd63956de2954196b334127657f818",
+        "rows": 8
+      },
+      "MasterLiveSkillEffect": {
+        "rawBinSha256": "d9a994e2d7ef7a5a46a5a8d6da808b4c2875bbdc8c5c7bfbd77d88178c261828",
+        "decodedJsonSha256": "6d752a81f5d172ec7f74916b46fdd338b7db363c0e4826e75213a2ee4e13ca22",
+        "rows": 50
+      },
+      "MasterGekisouSkill": {
+        "rawBinSha256": "028aea5f8a4e03c3ca316e78ef2e2854a72db4a788503c8fef3c3711678d977c",
+        "decodedJsonSha256": "9eb645dfeaf70e0294b7fcd9da83da7d73d260fb2273b6a18a779408c06d1421",
+        "rows": 22
+      },
+      "MasterGekisouSkillEffect": {
+        "rawBinSha256": "56fbc3c2e93359537554f54f40f88bdb602c4e21250f3e1c594531ca6bc1dc17",
+        "decodedJsonSha256": "642fd05ace2e250cf0f3d1ffc633c688986479a65f3a4c381d2002687728941a",
+        "rows": 145
+      },
+      "MasterSupportSkill": {
+        "rawBinSha256": "e54e8b7cc63a4b119aeea82f33ece7c6dd47cef78f6b5a5e605e379c4b83ad44",
+        "decodedJsonSha256": "869efd573736c14ffc5974d2c3da894a988756dcefccdb5f36d44fbfc978734a",
+        "rows": 63
+      },
+      "MasterSupportSkillEffect": {
+        "rawBinSha256": "8e5a1306ebc92a215c4a3bf932a17839befcf80f2ecaef8d6f4f30f1c944dc6f",
+        "decodedJsonSha256": "1c5e14b5ce0a0d863ff8168f4dfd9d42ccb2e5514db64a348c5d51d7dc61b4fb",
+        "rows": 615
+      },
+      "MasterGekisouSupportSkill": {
+        "rawBinSha256": "3612b6d57b0d22507f4945f51202970cf091dd6a2c8eb363ebc0df60cf39bf35",
+        "decodedJsonSha256": "1a605ec222fc56a5c5121417107a5510500d6c2aa1d98941a140c51dce369e82",
+        "rows": 105
+      },
+      "MasterGekisouSupportSkillEffect": {
+        "rawBinSha256": "405a9f510bdfe573f4614f4de73360c71901fb2571983b282bc2f0deba0e9db7",
+        "decodedJsonSha256": "ffd03806a7e140a7a2284d727c061a545735a8cc558c19088effe7a10a65dff7",
+        "rows": 1050
+      },
+      "MasterSkillCondition": {
+        "rawBinSha256": "ca33f2371d21233ddb7f010f246fdb964956400fe40c29613bbdebc9258e4b42",
+        "decodedJsonSha256": "3b367b3870a46c732a103598aaf20e5f02ec0973bb1d9133fe13e50eec8c1556",
+        "rows": 308
+      },
+      "MasterSkillConditionSet": {
+        "rawBinSha256": "d1b8a2f664512b72dabca6c541cf297ac46b81de6f7721f0fa59e6838c80d48a",
+        "decodedJsonSha256": "503591de2eece727b506aedef25e1faf5990a44b12c810a16be1d84a724dc07c",
+        "rows": 417
+      },
+      "MasterSkillCumulativeCondition": {
+        "rawBinSha256": "784406d15486b6fb4b396650d4116f611662c535d5e5bf30e05bb72318868fc8",
+        "decodedJsonSha256": "5a28dcbae16a774be2a41cd7938c43fce6efbaeb8ced9612d6bd61c8f48e4570",
+        "rows": 65
+      },
+      "MasterSkillTarget": {
+        "rawBinSha256": "79edc22feee63af1852b0c51573a581aaeaf8b3e3c828ae5be7a4dc373a2fc2b",
+        "decodedJsonSha256": "3ad190fc733a8befbc41e21f6909cd755e01c9779d4b35a4719a1b56d269c2f3",
+        "rows": 56
+      },
+      "MasterSkillEffectSetting": {
+        "rawBinSha256": "a24268c20cb87e053285d509eb6304a6a467bc1b1f6846ccfeb783772e7e5511",
+        "decodedJsonSha256": "d48176fa92ee8cabb3d179ca796018929e60a3f60f5d7cebb553b847740f29ee",
+        "rows": 42
+      },
+      "MasterLiveSettings": {
+        "rawBinSha256": "96e78bb5c8355a5c37a31cc393df1626d2bfde8a80abbf5e5ad6669cc3e19cb1",
+        "decodedJsonSha256": "8f578a4cb5dc4bc33ae70556e9891e7d64c1102087fbcbd53f525507d82ffff8",
+        "rows": 62
+      },
+      "MasterLiveMusic": {
+        "rawBinSha256": "5c5ef03bc21a39ac117bdb948fc162f624fbf623916becfc7c7923334c1bd79d",
+        "decodedJsonSha256": "071b409c238711630d7c374cad802966861b054b5ecdea397869e4a40da6d1f2",
+        "rows": 85
+      },
+      "MasterLiveMusicScore": {
+        "rawBinSha256": "66fcca8d9a411d924ba34dd394127754ef142eaa3d33bbad297118fa47445374",
+        "decodedJsonSha256": "cd3a30884f91e5a5cdf40ba3caa2347c8333532156d56f1bca87f3645c4d6885",
+        "rows": 340
+      },
+      "MasterLiveScoreRank": {
+        "rawBinSha256": "f9ef0e3fe1a9bd8768529db03f710bf0d6c4d698d0bbff8b2c307e94e4a2b9a5",
+        "decodedJsonSha256": "0acb47cb91c7fdc8d45dd79d5c1d688e9bf67d75e2ce5b60682318c7592c0a51",
+        "rows": 522
+      },
+      "MasterLiveComboScoreBonus": {
+        "rawBinSha256": "9a66942fc7d9f9284e07be19efb48dec21015b2b7599e70f4fdc8587a3efd7bd",
+        "decodedJsonSha256": "b6831f24f6d91383d6f3c4da0169f82cb59a013a24b1a1fdcb48f50f4f125efc",
+        "rows": 90
+      },
+      "MasterLiveJudgementTiming": {
+        "rawBinSha256": "55ea71f9f0020b954dc3811a1c17029bd0df689d69b2f5d0c321857c293c8d5e",
+        "decodedJsonSha256": "59b9cbe536d20e3454d43f1855f304772a1b6dab6f494641e924477e41ba8cbd",
+        "rows": 276
+      },
+      "MasterLiveJudgementParameter": {
+        "rawBinSha256": "562169f6ab8b7d1a86e650e2ddf3bf6edf0c7516799340023216d9ac619a4113",
+        "decodedJsonSha256": "ac4adc4799f308e23acdf811ac53a4e1dc6d3241f848f6688b28905f5e8fda47",
+        "rows": 6
+      },
+      "MasterLiveJudgementAreaOffset": {
+        "rawBinSha256": "720613cd13e983400a9ef6e5655dd3dbb95aac06fddb82649430ee11856afc30",
+        "decodedJsonSha256": "4da300be8b71fed106c8ba8d3bfb42b5a3d9a33f64cd9e7684843b0aadc99897",
+        "rows": 54
+      },
+      "MasterLiveNoteParameter": {
+        "rawBinSha256": "683b91f1c3c2ff64d0b3911bb95573505b92ec70262c32e7816c16c06ff8728c",
+        "decodedJsonSha256": "b43ea82b01344a012106f2f23991f4423b761e95a26a2ed9006c5583b2377717",
+        "rows": 16
+      },
+      "MasterParameter": {
+        "rawBinSha256": "6a4823b6526cea737f8b649050ab3846a0158c72c3e57a23f405e9e74605eb9b",
+        "decodedJsonSha256": "212a21c0edd049390667929cefadf661aaa878edde4c6bc21f33f2fc00d5e71e",
+        "rows": 76
+      },
+      "MasterVip": {
+        "rawBinSha256": "eb503cad1b39517fce8e9e0ffdfc1ee52a0aaf25840282f1d201205ff884b432",
+        "decodedJsonSha256": "d530fa5daf2bc077e9bf020d3cda82b658108256278e083c70be481287a10946",
+        "rows": 21
+      },
+      "MasterBandItem": {
+        "rawBinSha256": "c7707144109535397acf187f490d4e7bb94ff9afa3abe02a293cf95fde752d0e",
+        "decodedJsonSha256": "d29cd2f77e968cc23b0891f09c26da7f03eb6a9c1f1921eb93d608f01176f827",
+        "rows": 25
+      },
+      "MasterBandItemLevel": {
+        "rawBinSha256": "b77b1e7c7aedc861f07e58c4a04610fa34dfa280ed839162da740504d47ccd39",
+        "decodedJsonSha256": "30a81e7ccc9b2ba9c69a76ac905e9731ddd15047987bd9ee05fc65f58fc575c1",
+        "rows": 750
+      },
+      "MasterBandItemSkillEffect": {
+        "rawBinSha256": "f483eba82055305b08c286c82c67a7df3f8b806a1f2b3007b8a3fdeecfc47886",
+        "decodedJsonSha256": "d0dd0db1f02f8bbcb25b7919f9d6f90aa9476514a0a99bd452682f9ab9d658dc",
+        "rows": 1250
+      },
+      "MasterOptionDefault": {
+        "rawBinSha256": "fa7b1e83390a771d5294872fcb2e81ac0b0f8a3c7507ef15c41da95c6aad4fd6",
+        "decodedJsonSha256": "6ba5dbcd771d2cc368ee85be8b94af3f8136578fa5aff515fc3a45ee94dd1a99",
+        "rows": 348
+      },
+      "MasterOptionRange": {
+        "rawBinSha256": "b7edfcd5c94470ed675dc9e9413512dcc4ae5958fc7a15067d4042dade991810",
+        "decodedJsonSha256": "c3364ccdb73b323623e478320b8c3d6dfa1fe1364cc7bc6dd1f172035bbd475a",
+        "rows": 38
+      },
+      "MasterVipRankBonus": {
+        "rawBinSha256": "e2dcc4facbbc9fa781b175f6ad95933e01ea07a0ca954b8f8e3032745d1532ee",
+        "decodedJsonSha256": "fe20103910665f6386874f97fb218b25e3aae4ab7221f597ae5334e70b8f3f18",
+        "rows": 125
+      },
+      "MasterOptionPresetDefault": {
+        "rawBinSha256": "87a57dc5613a32998e985c3edf824da622ca052cf1987ba6047035f8086ae002",
+        "decodedJsonSha256": "b3bd0eebd43e57146123e4b98e31f0057d7c41cd3499929e66d8fbeafc471dd3",
+        "rows": 3
+      },
+      "MasterLiveGekisouRankingScoreBonus": {
+        "rawBinSha256": "5307a57bdd70cc9d6d103f93c1a4f05c518fc9a082a8dab0e8f05ee819abb25d",
+        "decodedJsonSha256": "b27bbfa7609f7bd03ff39d3cb12f08ff6eea0aa98e8f5c67a3a192ced1afa473",
+        "rows": 45
+      },
+      "MasterLiveGekisouLuckBasePoint": {
+        "rawBinSha256": "dabebeb7570c57d86b0c35d08d0ae0bc1352565d3aa20f9c49be47fbcf5b2edd",
+        "decodedJsonSha256": "266d2ff71267ea2b9542c581bd63a54dc0fadb1f8748ba75a133af5ad379db61",
+        "rows": 12
+      },
+      "MasterLiveGekisouLuckBonusLot": {
+        "rawBinSha256": "c0cc9e8b0ff9e4c57de235c9b84625c63974c3d4a78afe6db2279f07f76f661f",
+        "decodedJsonSha256": "1d66c8e7455c7d371e3aa1f32dfd34a3ec4df07b0014437d9ab102ab2f671792",
+        "rows": 20
+      }
+    },
+    "scope": "Input bin/decoded JSON file identities checked against the frozen case; this count does not certify all master rows or serializer semantics."
+  },
+  "harnessSourcesBefore": {
+    "bound_pilot.py": "16ca03692208a0c8f6b79bb37adf84ad8d47fa3b9c649bd3a1af92519a606171",
+    "libc.py": "225f35a0b8afe391f369ff4514f540d6a8cd2f7a74d8c9e6b01f1772a32b57f8",
+    "local_factory_pilot.py": "6d55fa468e8dd6f0a995e7b4f9772c5cbd09ffa504e414ad72aa48d41597e5df",
+    "mrt.py": "672b593f0238b07cc0ce8b747517ad9e0e09e36864a7dcbca9b345d0aaddf19f",
+    "nemu.py": "2549fc23b83ef6d0512ee6f997b9f79c085c7edf6656fe963b7f1bf430c10358",
+    "unity.py": "dae39e72fe10658ad51176cbcfdde8d28f5e2dbc6c5326cf8db914cd75444f6d"
+  },
+  "harnessSourcesAfter": {
+    "bound_pilot.py": "16ca03692208a0c8f6b79bb37adf84ad8d47fa3b9c649bd3a1af92519a606171",
+    "libc.py": "225f35a0b8afe391f369ff4514f540d6a8cd2f7a74d8c9e6b01f1772a32b57f8",
+    "local_factory_pilot.py": "6d55fa468e8dd6f0a995e7b4f9772c5cbd09ffa504e414ad72aa48d41597e5df",
+    "mrt.py": "672b593f0238b07cc0ce8b747517ad9e0e09e36864a7dcbca9b345d0aaddf19f",
+    "nemu.py": "2549fc23b83ef6d0512ee6f997b9f79c085c7edf6656fe963b7f1bf430c10358",
+    "unity.py": "dae39e72fe10658ad51176cbcfdde8d28f5e2dbc6c5326cf8db914cd75444f6d"
+  },
+  "harnessStableDuringRun": true,
+  "gameImageHle": [],
+  "manualVtable": false,
+  "factoryFixture": {
+    "members": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "snaps": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "nativeTotalPower": 59223,
+    "vipRank": 0,
+    "characterTotalRank": 25,
+    "profileQualification": "Constructor VIP rank 0 and total rank 25 observed; not a fully initialized legal account/profile."
+  },
+  "memberPowerMap": {
+    "type": "System.Collections.Generic.Dictionary<System.Int64,App.LiveLogic.Skill.ISkillMemberPower>",
+    "entries": 5,
+    "sameNativePowerObjects": true,
+    "source": "actual native Local.MemberCard.LivePower boxes, passed through original native dictionary constructor/set_Item"
+  },
+  "nativeOptionsInitialization": {
+    "source": "real Player.SetupOptionData and GetOptionData, no hand-written option pointer",
+    "type": "App.Options.OptionData"
+  },
+  "nativeSettings": {
+    "gekisouType": "App.LiveLogic.Gekisou.GekisouLiveSettings",
+    "isMirror": 0,
+    "lifeType": "App.LiveLogic.LiveLifeSettings",
+    "noteType": "App.LiveNoteSettings",
+    "scoreType": "App.LiveLogic.Score.LiveScoreSettings",
+    "slideNoteComboRhythmicUnit": 8
+  },
+  "declaredSettingsControls": {
+    "dictionaryOverride": null,
+    "noteSpeed": 1.0,
+    "scope": "explicit in-range calibration controls; not claimed saved player option values",
+    "timingAdjustmentMs": 0
+  },
+  "nativeParsedScore": {
+    "rawSha256": "d52034d539e10651eeb896d10c0d9ef2e5f5e054d115a920e8d6b0d7bdd52c1d",
+    "source": "real raw chart + actual native note settings rhythmic/mirror getters; startNoteId0 declared calibration input",
+    "type": "FTLiveSimulator.MusicScore"
+  },
+  "nativeMusicMissions": {
+    "collectionType": "App.LiveBase.GekisouMissionType[]",
+    "masterGetterValues": [
+      3,
+      3,
+      3
+    ],
+    "pattern": 1,
+    "source": "original native utility list and separate master getters; pattern is a distinct enum, never substituted for mission array",
+    "values": [
+      3,
+      3,
+      3
+    ]
+  },
+  "nativeRankSource": {
+    "source": "native MasterLiveMusic.GetMasterLiveScoreRanks; enumeration/table construction pending",
+    "type": "System.Collections.Generic.List<App.Master.MasterLiveScoreRank>"
+  },
+  "externalEntropy": {
+    "boundary": "libc open/read/fstat/lseek for the external /dev/urandom device only",
+    "provider": "CNB Linux os.urandom",
+    "readLengths": [
+      16,
+      4,
+      4,
+      4,
+      16
+    ],
+    "recorded": "Length and SHA only; no random bytes persisted",
+    "gameRng": {
+      "operation": "actual LiveRandom.SetSeed; no hand-written RNG state",
+      "root": 0,
+      "source": "declared experimental root from frozen case"
+    },
+    "gameCodeReplacement": false
+  },
+  "elapsedNanoseconds": 23419645570,
+  "peakRssKiB": 830896,
+  "latestExecutionBoundary": "Native options, score/note/life/gekisou settings, chart parser, mission utility, and master rank source returned. Rank table, LiveMusicScore, SkillStatus and executors not yet executed in this capture.",
+  "wholeLiveCertified": false,
+  "newCrossModelNumericComparisons": 0,
+  "pending": [
+    "Actual rank table and LiveMusicScore/ranges construction",
+    "Score/note/life parameter readback beyond rhythmicUnit/mirror",
+    "SkillStatus and SkillExecutor/LiveExecutor enter/frame/trigger/settle",
+    "Snap hit/miss/conditional/cumulative/clock differential coverage",
+    "Complete legal player profile/Unity lifecycle",
+    "Online effective patch/source certification"
+  ]
+}

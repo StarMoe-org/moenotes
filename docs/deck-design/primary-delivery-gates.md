@@ -7,7 +7,7 @@
 | 项目 | 已验证范围 | 仍需完成 |
 |---|---|---|
 | 最新日服原生 | Android 1.0.4 / 10053 的恢复、独立 boot、方法身份与部分数值原语；offline-base、未加载 IFix | 实际生效 patch、同源资源；真实培养与 Local Member/Support factory → LiveSettings → 原生技能容器/SkillExecutor → LiveExecutor 完整轨迹 |
-| JP Local 卡片初始化 | 5 成员、5 Snap 的真实 Master 构造、初始培养读回、Player Add/Get 身份一致；152 次已返回的绑定调用 | formation factory、真实全局 cache、非空 member-power 映射与完整 Live；构造通过不能代替效果或合法域通过 |
+| JP Local 与 Live 初始化 | 一组初始培养的 5 成员/5 Snap，经真实 Player/cache、成员/技能 factory、非空 member-power 映射、options、score/note/life/撃奏 settings、原始 chart parser 与 mission utility；最终 capture 455/455 绑定调用返回 | 真实 rank table / LiveMusicScore / ranges、完整参数读回、SkillStatus 与整局；构造通过不能代替效果或合法域通过 |
 | JP 真实 factory 数值 | 真实 Local/Player/cache、SingletonCalculator、MemberDataContainer 与 SkillDataContainer 已取得；一组初始培养五人/Snap fixture 的整队力与五成员基础力，36 数值字段/10 身份字段与当前 Rust 一致 | VIP/账号/Unity lifecycle 仍不完整；SkillExecutor/LiveExecutor、技能效果、合法账号全域与最新线上认证未通过 |
 | JP Snap 静态清点 | 615 普通/1,050 撃奏 effect 行，非零 condition/target/cumulative 引用无缺失；现有卡直接引用且有声明 rank 映射的行 790 条 | 所有行为的原生对照；另 875 条未被当前 SupportCard 直接引用，保留账本，不计玩家合法 case；19 个结构签名只用于实验排序 |
 | JP CardPower | 948,973 个独立输入、1,950,919 字段零差异，其中真实 member max × level 行对 4,910 个 | 合法玩家全局状态、五槽/Snap/场景组合；大量取整和溢出输入不计为合法队伍数 |
@@ -19,7 +19,9 @@
 
 数字以各自证据域为分母。WASM/x64 一致、候选计分精确、完整卡池最优、与最新游戏一致是不同证明。
 
-Local 初始化的输入与原始报告 SHA、培养读回、14.365 s / 829,036 KiB 单 worker 记录见[独立摘要](latest-native-local-factory-pilot.json)。它尚未执行整场或证明可并行队列。Snap 的表 SHA 与代表行索引见[静态清点](latest-snap-static-inventory.json)，`nativeRuleComparisons = 0`；结构签名不作为等价类、剪枝依据或覆盖通过数。
+Local 初始 152-call 阶段的输入与报告 SHA、培养读回、14.365 s / 829,036 KiB 单 worker 记录见[独立摘要](latest-native-local-factory-pilot.json)。同一培养 fixture 的后续[Live 初始化摘要](latest-native-settings-pilot.json)现有 455/455 已返回的绑定调用，23.420 s / 830,896 KiB，49 份冻结表文件来源校验，六份 harness 源码前后 SHA 一致；这些 setup/readback 不算新增独立队伍或整场轨迹。当前 `wholeLiveCertified = false`，尚不能据此证明大规模完整 Live 队列。Snap 的表 SHA 与代表行索引见[静态清点](latest-snap-static-inventory.json)，`nativeRuleComparisons = 0`；结构签名不作为等价类、剪枝依据或覆盖通过数。
+
+实际 `Player.SetupOptionData/GetOptionData`、LiveSettings factory 及 parser 已返回；原生 `rhythmicUnit = 8` / mirror false 与先前独立 parser 参数一致，startNoteId 0、noteSpeed 1、timingAdjustment 0 仍是显式校准控制，不冒称已保存的玩家配置。原生 mission utility 与三个 master getter 均为 `[3,3,3]`；pattern 是独立枚举值 1，不替代任务数组。外部 `/dev/urandom` 字符设备边界由 CNB Linux 提供；游戏的 RNGCrypto/MessagePack 函数保持原样，LiveRandom 仍经原生 SetSeed 使用声明 root 0。评分窗口、Assist、Life 等参数尚需完整读回后冻结。
 
 [真实 factory 与模型对照](latest-native-factory-model-comparison.json)新增 **1 个 fixture**，不是 36 个队伍：native 整队力 59,223；五成员 `LivePower` 各 10,122，三通道 BP 与四个整数 getter 共 35 字段，加整队力 1 字段，0 差异。新比较阶段复用已捕获的 389-call 原生报告，新增 native 调用 0。角色实读总 Rank 25、VIP ctor rank 0，空 item/memory 状态显式映射；完整可用账号的 VIP 初始化与 Unity 主循环仍需完成。第二 Support 技能的 native null 必须保留，真实 SupportList 是 `Local.SupportCard` 培养对象；不把 master、整队力或模型默认值替换这些对象/数值。
 
