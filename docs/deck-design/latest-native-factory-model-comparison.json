@@ -1,0 +1,97 @@
+{
+  "format": "ournotes.latest-jp-factory-model-comparison/1",
+  "caseCount": 1,
+  "numericFieldsCompared": 36,
+  "identityFieldsCompared": 10,
+  "differences": [],
+  "nativeCallsInComparisonPhase": 0,
+  "scope": "Factory fixture only: VIP ctor rank 0, 25 rank-1 characters, no active item/memory state; incomplete account/Unity lifecycle retained.",
+  "caseSha256": "17508396702fe065d7a64750a6562a053300419ae2382edfee635933155ab5c3",
+  "nativeCaptureSha256": "9bf70be4dfecc1d18d2c68a2b49a44debec580a892042f87965ed2c9188bfdc1",
+  "inputProofSha256": "19eb156a9049ed0d354539ef6a4c1c410b97f83fac6ff5e0305ccb09bfea0560",
+  "modelCliSha256": "276536055b04840015b495a3c4233fa6642eb973be4af807af60e61039136f63",
+  "modelBaseCommit": "4e1f1ce31be60d08dafda149b22fd258c4ca6761",
+  "sourceFilesUntouched": true,
+  "memberProbeSha256": "b364442c29b97c75d312e5084632e6eed9d04e3dc2bab2bb9de171c9377cfbb2",
+  "memberProbeLockSha256": "fe11503bc487760d0eb9a0d1a1fb5c9cb69d77cb10aa1d26d52514066afdb839",
+  "modelResultSha256": "91d0e73781391e0d627a1c175ff723c41d4d0de286571eefe9ee48b5beeea095",
+  "memberProbeResultSha256": "05ce7fa2256dd57c28b02e6d96a740dc7224d1baf875514f8531d539b6b6d881",
+  "wholeLiveCertified": false,
+  "latestOnlineCertified": false,
+  "memberProbeBinarySha256": "bffb6b9472595a2f0c226f46bff529b4a2a48de0d63c0224d4aff52045230e09",
+  "sourceManifestAfterProbeSha256": "f5dd37e162540825b82af740918236c25d60265cd10593d19bdd8957181d3a8c",
+  "probeNativeDependencyVersionsMatch": true,
+  "probeInactiveWasmLockDifferences": [
+    {
+      "name": "js-sys",
+      "coreVersion": "0.3.106",
+      "probeVersion": "0.3.104"
+    },
+    {
+      "name": "wasm-bindgen",
+      "coreVersion": "0.2.129",
+      "probeVersion": "0.2.127"
+    },
+    {
+      "name": "wasm-bindgen-macro",
+      "coreVersion": "0.2.129",
+      "probeVersion": "0.2.127"
+    },
+    {
+      "name": "wasm-bindgen-macro-support",
+      "coreVersion": "0.2.129",
+      "probeVersion": "0.2.127"
+    },
+    {
+      "name": "wasm-bindgen-shared",
+      "coreVersion": "0.2.129",
+      "probeVersion": "0.2.127"
+    }
+  ],
+  "nativeSkillBaseTotals": [
+    10122,
+    10122,
+    10122,
+    10122,
+    10122
+  ],
+  "nativeWholeDeckPower": 59223,
+  "sourceComparisonSha256": "af0e691a3dc6a2631e4f233d5005211b4ff5a22a5995d7481af234f507019e9d",
+  "nativeFactoryScope": "JP Android 1.0.4 / 10053 offline-base + saved JP master; actual Local/Player/cache/member/skill data factory fixture only.",
+  "skillPowerMeaning": "Member LivePower/CardPower basis is 10,122 per member in this fixture. It is not the 59,223 song/leader/Snap aggregate and must not be replaced by an allocated deck total.",
+  "cultivation": {
+    "members": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "snaps": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "exp": 0,
+    "level": 1,
+    "awake": 1,
+    "rank": 1,
+    "ordinarySkillLevel": 1,
+    "gekisouSkillLevel": 1
+  },
+  "nativePlayer": {
+    "characterCount": 25,
+    "allCharacterRanks": 1,
+    "characterTotalRank": 25,
+    "vipRank": 0,
+    "vipCurrentPoint": 0,
+    "bandItemCount": 0,
+    "memoryMemberCount": 0,
+    "memorySupportCount": 0,
+    "memoryMusicGroupCount": 0,
+    "memoryCurrentLevels": "null"
+  },
+  "remaining": "VIP/account profile setup and Unity lifecycle are incomplete; SkillExecutor/LiveExecutor trajectories and legal latest-account/IFix certification are not covered."
+}
