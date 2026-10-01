@@ -52,7 +52,7 @@ Il2CppDumper 锁定 commit `6fd1d13933f9a14a0a927d816720120894da8d96`，SDK `10.
 ## Whole Live / SkillManager 最小下一步
 
 1. 从同一 saved JP manifest 加载歌曲、计分、Assist、combo、skill / target / condition 等实际所需表；每个被读取 bin 保留 manifest hash 和 native 解码 payload 身份。现已通过的三表和 chart projection 不重复采集来增加分母。
-2. 使用最新 MethodInfo / 签名和原生字段 API，构造真实 Local options 与 LiveSettings factory 路径，读取实际 rhythmicUnit / 窗口 / 计分 / Assist 设置。随后用已绑定 chart 构造 LiveMusicScore、LiveExecutor，在普通 Solo / 无技能声明域跑短轨迹，核实实际 note 时间、阶段、life、combo 与分数。
+2. 使用最新 MethodInfo / 签名和原生字段 API，构造真实 Local options 与 LiveSettings factory 路径，读取实际 rhythmicUnit / 窗口 / 计分 / Assist 设置。用已绑定 chart 构造 LiveMusicScore、LiveExecutor，在真实培养的普通 Live 基线保留实际技能，核实 note 时间、阶段、life、combo 与分数。无技能短轨迹仅作为显式实验隔离对照，记录 harness 控制和构造范围；未验证玩家能关闭成员技能前，不将其计为合法玩家动作或完整 factory 认证。
 3. 用户 / power placeholder 必须替换为明确培养状态的 native Local Member / Support 数据，验证真实 factory 的 member / support 配对与 native shuffle 后共享 RNG 状态，再构造 SkillInput / SkillManager 与 ordinary / support / Gekisou 技能。使用真实 JP 卡与技能 level / effect / condition / target 形成覆盖分母；不从构造成功推导 condition / effect 全部正确。
 4. 先以一个单 worker 的短轨迹核实 setup / enter / frame / trigger / settle 的观察阶段和负控制，再增加长谱、边界、重叠、pool 限额、Gekisou 排名和零生命 / 继续 / 重试生命周期。重放同一 capture 或更换运行端不增加独立 native trace 数。
 
