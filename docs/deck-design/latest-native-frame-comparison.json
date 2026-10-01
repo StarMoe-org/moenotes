@@ -1,0 +1,94 @@
+{
+  "format": "ournotes.latest-native-isolated-frame-comparison/1",
+  "version": {
+    "package": "com.bushiroad.sirius",
+    "versionName": "1.0.4",
+    "versionCode": 10053,
+    "restoredNativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+    "decodedMetadataSha256": "8cf963bc5a32262c2ad3e21307dda14d144bcced6fe7731986933718dcf9a91d",
+    "masterVersion": "1.0.0.300/52355a9de56a475f691b10ef58acba58",
+    "masterManifestSha256": "f4534fe8bf340b7a9bd99eb9b43ab384e9e3895a7e1eb3113cbb371e65780735",
+    "activeIfix": "unknown online; not loaded in this experiment"
+  },
+  "scope": "Actual JP offline-base isolated AutoPerfect core, no SkillExecutor/Gekisou/physical touch/whole-live certification.",
+  "coreBaseCommit": "4e1f1ce31be60d08dafda149b22fd258c4ca6761",
+  "researchHead": "67e07a1470f0913f1fdaf5ae7cbd2f9afe2988e1",
+  "sourceManifestSha256": "f5dd37e162540825b82af740918236c25d60265cd10593d19bdd8957181d3a8c",
+  "sourceFilesVerifiedBeforeAfter": 124,
+  "probeSha256": "65b969fa9858f5716b1b27d2a61043b56c268a381c7e900a5c59324f04a62e2c",
+  "nativeArchiveSha256": "042c2faac29e45c1773451d266000aab2ea166b0a5ac0a1573e871186035c0ae",
+  "nativeRetainedFilesVerified": 118,
+  "nativeReturnedCalls": 53056,
+  "nativeStreamReturnedCallsVerified": 52544,
+  "nativeFrames": 5634,
+  "actualJudgementEvents": 364,
+  "observedParams": {
+    "skillTargetMusicType": 4,
+    "totalPower": 59223,
+    "musicLevel": 14,
+    "convertedNoteCount": 233,
+    "musicLengthMs": 90411,
+    "scoreMusicLengthMs": 90411,
+    "assistFactorBits": 1065353216
+  },
+  "observedLastFrame": {
+    "frame": 5633,
+    "timeMs": 89923,
+    "score": 209797,
+    "frameScore": 209797,
+    "life": 1000,
+    "combo": 364
+  },
+  "comparison": {
+    "status": "passed",
+    "chartId": 10000201,
+    "nativeFrameCount": 5634,
+    "rustFrameCount": 5634,
+    "fieldComparisons": 33804,
+    "contract": {
+      "integerFields": [
+        "frame",
+        "timeMs",
+        "score",
+        "frameScore",
+        "life",
+        "combo"
+      ]
+    },
+    "differenceCount": 0,
+    "firstDifference": null,
+    "differences": [],
+    "missingRequestedFields": [],
+    "maxDifferenceUlp": 0,
+    "qualification": "Exact equality for the declared fields and supplied ordered inputs only; no frame shifts, numeric tolerance, or full-game equivalence claim.",
+    "sourceSha256": {
+      "nativeCapture": "f4dde2f0ccd89e7f1d7e427ab174df6f21589a306ff606cbbf3a817b06841631",
+      "rustCapture": "fe98b409dfa8d4481f0abeb63d5f3a50282a1050788e39a9d3aea7716d5a3873",
+      "contract": "14b8584396baf29f043b8326dcc7ee98655c6d02c50022f28dfd5f9b1316abe9"
+    }
+  },
+  "frameIdentityComparisons": 11268,
+  "integerOutputComparisons": 22536,
+  "outputFields": [
+    "score",
+    "frameScore",
+    "life",
+    "combo"
+  ],
+  "inputFileIdentities": {
+    "replay-input.json": {
+      "sha256": "a83f6446c6d200f780a510247833c3a191e0f471ec22ad506dbee47a73d3af2e",
+      "bytes": 431332
+    },
+    "native-frames.json": {
+      "sha256": "f4dde2f0ccd89e7f1d7e427ab174df6f21589a306ff606cbbf3a817b06841631",
+      "bytes": 489010
+    },
+    "frame-contract.json": {
+      "sha256": "14b8584396baf29f043b8326dcc7ee98655c6d02c50022f28dfd5f9b1316abe9",
+      "bytes": 74
+    }
+  },
+  "nativeCallsExecutedInComparison": 0,
+  "wholeLiveCertified": false
+}

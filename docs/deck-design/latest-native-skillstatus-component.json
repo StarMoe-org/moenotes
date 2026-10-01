@@ -1,0 +1,33 @@
+{
+  "format": "ournotes.latest-native-skillstatus-component-summary/1",
+  "nativeReturnedCalls": 509,
+  "sourceFilesStable": 8,
+  "retainedFilesVerified": 115,
+  "archiveSha256": "928e8051480581ef10f2ce71ac73dfa15d3a93505780ec1c499c51bb8076765a",
+  "scope": "Actual fresh latest JP native factory component stage under declared controls. Original managed Localize Awake may be invoked; Cpp scene/prefab/font/application lifecycle and legitimate player-action whole-live are uncertified.",
+  "actualManagedAwakeAndSkillStatusReturned": true,
+  "wholeLiveCertified": false,
+  "localizationCppSceneCertified": false,
+  "pending": [
+    "Normal-driver SkillExecutor/LiveExecutor callbacks and causal clock",
+    "Actual ordinary/Snap/Gekisou conditions, effects and RNG consumption",
+    "Physical touch/micro timing",
+    "Active IFix/latest online source",
+    "Legal account and finish/failure lifecycle"
+  ],
+  "initialSkillExecutorComponent": {
+    "nativeReturnedCalls": 549,
+    "sourceFilesStable": 9,
+    "retainedFilesVerified": 116,
+    "archiveSha256": "ffd7a6d66a49e4ab716caa71844f6eddbaf44126a7e7c96c59f0e46dfdb52cf1",
+    "scope": "Actual fresh latest JP native factory component stage under declared controls. Original managed Localize Awake may be invoked; Cpp scene/prefab/font/application lifecycle and legitimate player-action whole-live are uncertified.",
+    "controls": [
+      "GK false",
+      "Native Clear input musicLength 0",
+      "Native constructor life-query clock 0",
+      "Original normal-node target delegates; no applier or complete normal Enter/Update"
+    ],
+    "normalDriverCertified": false,
+    "wholeLiveCertified": false
+  }
+}

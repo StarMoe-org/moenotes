@@ -65,6 +65,12 @@ Il2CppDumper 锁定 commit `6fd1d13933f9a14a0a927d816720120894da8d96`，SDK `10.
 
 原生隔离执行已补充一条[无技能整谱轨迹](latest-native-isolated-live-trace.json)：真实 AutoPerfect 输入，5,634 帧、364 判定、终分 209,797，29,790 次绑定调用返回，完整调用流和 111 组状态采样已独立审计。这条轨迹没有 SkillExecutor 或撃奏 driver hooks，也未触发完整游戏自动结算；原生长谱执行不能扩大为合法成员/Snap whole-live。
 
+后续重新执行并完整保留每帧 SpanList ID、实际判定时间/enum/raw diff 与 364 条实际 score commands，形成[同输入整谱差分](latest-native-frame-comparison.json)：53,056 次绑定调用返回，118 文件/7 源码独立核验；5,634 帧的 score/frameScore/life/combo 共 22,536 输出与 11,268 frame/time 身份比较，全部一致。输入来自原 native ctor 的 musicLength 90,411 ms、真实 calculator/music/life 原字段与实际判定流，不用 nominal time 补判定时间；所有整数精确比较，无时间平移或误差容忍。它仍是相同 AutoPerfect、无 SkillExecutor/GK/physical touch 的组件隔离场景，不增加新玩家行为覆盖。
+
+当前冻结核心的[随机原语差分](latest-native-random-comparison.json)也已复核：24 派生 seed 加 120 独立事件的 stream-major/interleaved/reset-repeat 三模式，384 结果零差异，Value 按 binary32 原字；本阶段重用已保存原生 golden，新增 native 调用 0。六个边界 root 只验证实现与消费历史，既不证明真实 root 分布，也不解除有技能整场调用链门槛。
+
+真实技能链继续取得[组件证据](latest-native-skillstatus-component.json)：matching engine 的原 callback、managed wrapper 和 Object.cctor 通过后，原 Localize Awake 实际发布 singleton，SkillStatus 工厂和字典为 509/509 绑定返回。后续 SkillExecutor 原工厂、四个 normal-node target 的原 Func delegates、初始 BeginFrame/phase1/phase2/EndFrame/Collect 为 549/549 返回。该 549 阶段明确 GK=false、Clear 后 musicLength 0、native ctor query clock 0、无 applier/正常完整 driver；不能把初始组件返回当作效果、时钟或真实 whole-live。正常 driver 的 life getter 使用自己的查询时钟，需要由原 Update 推进，不能用当前生命 getter 或手填字段替代。
+
 同一来源另有[完整音符输入投影](latest-native-note-input-projection.json)：364 个真实音符的 ID、时间、操作类型和判定类型，2,240 次绑定调用均返回。判定类型全部由真实 updater getter 返回，其中 1/21 各 146 个、10/11 各 36 个；没有按操作类型或旧服模型补值。输入 ID 与实际三个原生字典集合一致，13 个保留文件及 7 份执行源码已独立核验。它补齐输入契约，不能把尚未保留的整谱逐帧事件认定为已观察；下一条隔离轨迹需另存实际 judged-ID 顺序、判定时间和分数命令时间，再对照冻结核心。成员/Snap、撃奏、真实触控微操和活跃 IFix 的门槛继续保留。
 
 1. 从同一 saved JP manifest 加载歌曲、计分、Assist、combo、skill / target / condition 等实际所需表；每个被读取 bin 保留 manifest hash 和 native 解码 payload 身份。现已通过的三表和 chart projection 不重复采集来增加分母。

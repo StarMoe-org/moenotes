@@ -1,0 +1,159 @@
+{
+  "format": "ournotes-deck.search-gate-audit/1",
+  "sourceHead": "67e07a1470f0913f1fdaf5ae7cbd2f9afe2988e1",
+  "designHead": "f9d2e0105f3d43c1c6eed826bbc552bf272254ae",
+  "formalSearchGatePassed": false,
+  "productionSourceChanged": false,
+  "gameNativeExecutions": 0,
+  "experimentDomain": "adversarial synthetic; not latest-JP legal account or native model certification",
+  "machine": "cnb-j3p-1k3s982pu",
+  "maxSimultaneousOwnedCpus": 2,
+  "memoryLimitBytes": 4294967296,
+  "sourceFilesVerified": 132,
+  "registryPackagesVerified": 26,
+  "allOwnedContainersStopped": true,
+  "retainedFilesVerified": 29,
+  "findings": [
+    {
+      "id": "S-ZERO-DEADLINE",
+      "kind": "budget-contract",
+      "source": "src/search/power.rs:257",
+      "observation": {
+        "case": "power-zero-budget",
+        "completion": "Complete",
+        "elapsedNanos": "30069",
+        "nodes": 5,
+        "results": 1
+      },
+      "scope": "Completes real tiny domain despite zero deadline; does not by itself prove wrong ranking"
+    },
+    {
+      "id": "S-ZERO-K",
+      "kind": "public-api-validation",
+      "source": "src/search/topk.rs:52",
+      "observation": {
+        "case": "public-search-zero-k",
+        "panicked": true,
+        "returned": null
+      },
+      "scope": "Lower-level search panic; current recommendation JSON guard rejects K outside 1..100"
+    },
+    {
+      "id": "S-NONFINITE-SKIP",
+      "kind": "admissibility-and-ranking",
+      "source": "src/search/mod.rs:590",
+      "domainObservation": {
+        "adjustmentIsFinite": true,
+        "case": "skip-positive-finite-overflow",
+        "completion": "Complete",
+        "fastScoreAndWide": [
+          -2147483648,
+          -2147483648
+        ],
+        "firstPower": 94037,
+        "firstScore": -2147483648,
+        "results": 1
+      },
+      "rankingObservation": {
+        "adjustmentIsFinite": true,
+        "case": "skip-nonfinite-ranking-counterexample",
+        "oracle": [
+          {
+            "members": [
+              2,
+              3,
+              1,
+              4,
+              5
+            ],
+            "power": 94307,
+            "score": 2147483647
+          },
+          {
+            "members": [
+              2,
+              3,
+              1,
+              4,
+              6
+            ],
+            "power": 947750,
+            "score": -2147483648
+          }
+        ],
+        "oracleDecks": 2,
+        "rankingDiffers": true,
+        "search": {
+          "completion": "Complete",
+          "results": [
+            {
+              "members": [
+                2,
+                3,
+                1,
+                4,
+                6
+              ],
+              "power": 947750,
+              "score": -2147483648
+            }
+          ]
+        },
+        "searchError": null
+      },
+      "scope": "Finite input can produce infinity then MIN; range guard misses it and Complete Top-1 can differ from independent two-deck oracle"
+    }
+  ],
+  "unresolvedContractItems": [
+    "physical None-first vs proposed None-last tie",
+    "StableTarget payoff/power tie vs proposed shortfall/mean-score secondary",
+    "one fixed human stream rather than a joint human/root/external law",
+    "atom-boundary cancellation rather than bounded frame/work checkpoints",
+    "fixed physical slot and paired-Snap constraints",
+    "Candidate member-set sampling/source coverage and multi-member synergy",
+    "micro-policy legality/causality and policy-dependent bounds/classes/cache identity"
+  ],
+  "artifacts": [
+    {
+      "path": "audit.md",
+      "sha256": "5e2879dd20ce98205b4a029a60e926714e51dc903ce7e31213723f4701a3efb5",
+      "size": 21748
+    },
+    {
+      "path": "probe-main.rs",
+      "sha256": "93c232ff6513a019fe05b497c9a504f4bf54f55789f294f247ebb57575dd6643",
+      "size": 3886
+    },
+    {
+      "path": "probe-ranking.rs",
+      "sha256": "afa3a6be35e59115a49b83f62bc28aee4d0fbba3612df58b4510551d7a48a25d",
+      "size": 2739
+    },
+    {
+      "path": "probe-Cargo.toml",
+      "sha256": "08f8542b71bae162ed01b57977ca14987da87aee06fce0b9be5b8da9e94e7b72",
+      "size": 241
+    },
+    {
+      "path": "independent-local-readback.json",
+      "sha256": "65d47cd9f9461c0fee449010bd919eecaa0fdd035a271715b792ba10cec7792d",
+      "size": 986
+    },
+    {
+      "path": "independent-ranking-readback.json",
+      "sha256": "5a3f4482d52cdde78a3a22b20dfdbd99d2e36519a383245d05801fabf753fa7b",
+      "size": 1271
+    },
+    {
+      "path": "sealed-probe.tgz",
+      "sha256": "521e755d7f3f9b1f41cca17e06079d11dfb77ad6473afd877da129336353c603",
+      "size": 1172404
+    },
+    {
+      "path": "sealed-ranking.tgz",
+      "sha256": "da12b6e16fbee4e981fdbe54911e478bcfc7e4615241e4780209cdf093091dad",
+      "size": 1175528
+    }
+  ],
+  "rootIndependentRetainedFilesVerified": 29
+}

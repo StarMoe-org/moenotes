@@ -2,6 +2,8 @@
 
 状态：2026-10-01，Draft。最终玩家路径是网页选择截图 → 识别与校对真实持有卡池 → 按目标搜索 → 可照摆的五槽队伍与配对留影。最新计分建模与搜索策略验收先于正式接入。当前 UI、歌曲数据发布和素材不解除这两项门槛。
 
+2026-10-02 的共同开发范围与现状见[协作说明](collaboration-brief.md)，外部协作者主任务是[真实触控与微操](collaborator-microtiming-scope.md)。M/S/B 的未通过状态不变。
+
 ## 现有证据分别证明什么
 
 | 项目 | 已验证范围 | 仍需完成 |
@@ -10,13 +12,15 @@
 | JP Local 与 Live 初始化 | 一组初始培养的 5 成员/5 Snap，经真实 Player/cache、成员/技能 factory、非空 member-power 映射、options、score/note/life/撃奏 settings、原始 chart parser 与 mission utility；最终 capture 455/455 绑定调用返回 | 真实 rank table / LiveMusicScore / ranges、完整参数读回、SkillStatus 与整局；构造通过不能代替效果或合法域通过 |
 | JP 真实 factory 数值 | 真实 Local/Player/cache、SingletonCalculator、MemberDataContainer 与 SkillDataContainer 已取得；一组初始培养五人/Snap fixture 的整队力与五成员基础力，36 数值字段/10 身份字段与当前 Rust 一致 | VIP/账号/Unity lifecycle 仍不完整；SkillExecutor/LiveExecutor、技能效果、合法账号全域与最新线上认证未通过 |
 | JP 计分设置 | 同源实际 factory 的两个 f32 原字、16 条音符倍率与 6 条判定倍率，24 数值字段/22 键身份与当前 Rust 一致；独立 CNB probe，124 源文件前后未变 | 完整 note/life/Assist/撃奏输入契约与时钟；设置一致不代表逐帧得分或 Snap 行为一致 |
-| JP 无技能原生长谱 | 真实 timestamped input + AutoPerfect 隔离控制，29,790 返回调用、5,634 帧、364 判定、终分 209,797；源/原始流/采样独立审计 | 共享模型同输入差分、实际成员/Snap/撃奏 hooks、真实触控微操及自动结算；不得当作合法玩家 whole-live |
+| JP 无技能原生长谱 | 首条轨迹 29,790 返回调用；补录完整事件的新轨迹 53,056 返回调用、5,634 帧/364 实际事件；同输入 33,804 字段比较零差异（含 22,536 score/frameScore/life/combo 输出和 11,268 frame/time 身份），终分 209,797 | 实际成员/Snap/撃奏 hooks、真实触控微操及自动结算；两次同一隔离场景不扩大为合法玩家 whole-live |
+| JP 随机原语 | 保存原生 golden 的 24 派生 seed、120 独立事件在三种调用模式下与当前冻结核心比较，共 384 结果零差异；f32 按原字 | 真实整局每条流的消费历史与玩家 root 分布，不能用边界 seed 案例代表实战分布 |
 | JP 完整音符输入投影 | 同源 chart 的 364 个实际音符 ID/时间/操作类型/判定类型；2,240/2,240 绑定调用返回，全部判定类型来自真实 updater getter，13 文件/7 源码独立审计 | 逐帧实际判定事件和模型同输入对照；输入投影不计新增 whole-live 轨迹或真实触控认证 |
 | JP Snap 静态清点 | 615 普通/1,050 撃奏 effect 行，非零 condition/target/cumulative 引用无缺失；现有卡直接引用且有声明 rank 映射的行 790 条 | 所有行为的原生对照；另 875 条未被当前 SupportCard 直接引用，保留账本，不计玩家合法 case；19 个结构签名只用于实验排序 |
 | JP CardPower | 948,973 个独立输入、1,950,919 字段零差异，其中真实 member max × level 行对 4,910 个 | 合法玩家全局状态、五槽/Snap/场景组合；大量取整和溢出输入不计为合法队伍数 |
 | JP 原始谱面与洗牌 | 一份真实 chart 的 id/time/op 三列 1,092 字段；六个 root 的成员洗牌与后续随机状态 | 真实 parser settings、判定/fever/技能事件；无 Snap、注入 75,038 power 的构造证据不能认证完整配对 |
 | Snap 歌曲排行 | `standard-skill-profile`、声明综合力/打法/种子/顺序下的 WASM 逐歌复算与界面 | 真实持有与培养的 DeckSearch；普通/撃奏 Snap 全依赖、共同随机流与完整 Live 原生差分 |
 | CNB 组卡研究编译 | 基于 current-core `4e1f1ce` 的 locked CLI/WASM release、274 项测试与 28 组合成 UTF-8 浏览器对拍；124 源文件前后 SHA 一致、126 产物独立回收核验 | 最新原生认证、正式 GoalSpec/roster resolver、step/resume、真实截图和手机性能；不升级为正式全域 v1 |
+| 搜索契约审计 | CNB 的独立合成案例确认零预算、底层 K=0 panic 与 Skip 中间非有限值造成错误 Complete Top-1；29 个文件逐 SHA 核验 | 修复或严格拒绝不支持域，冻结排序/合法约束/预算/取消契约并用独立 oracle 验证；这些不是原生 JP 玩家案例 |
 | 浏览器识别 | 两份 ONNX 权重的合成张量 batch 1/8 算子/形状对照 | 真实截图定位、裁切、检索、字段、拒识、跨图合并和浏览器准确率 |
 | 截图到结果 PoC | 八项宿主 HTTP 路径验收；约两秒调用宿主 Rust solver | 全浏览器识别与搜索、手机性能；宿主 Rust 不等于 ARM64 游戏原生执行 |
 

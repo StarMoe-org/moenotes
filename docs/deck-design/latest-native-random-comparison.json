@@ -1,0 +1,37 @@
+{
+  "comparisons": 384,
+  "differenceCount": 0,
+  "differences": [],
+  "format": "ournotes.frozen-core-native-random-comparison/1",
+  "newNativeCalls": 0,
+  "scope": "Saved latest JP offline-base roots and operation histories only; no real seed distribution or member+Snap whole-live claim.",
+  "wholeLiveCertified": false,
+  "nativeSource": {
+    "raw_native_sha256": "b1600689ee83c435b4a3eaa1ef0709b1ed27783eeda90dace814515a54e0a7ce",
+    "raw_metadata_sha256": "bbf82e20b16ac39ad14c6d3547250efb84daa6ae2c754e46ae9bae5270f9386c",
+    "native_sha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+    "metadata_sha256": "8cf963bc5a32262c2ad3e21307dda14d144bcced6fe7731986933718dcf9a91d"
+  },
+  "nativeGoldenSha256": "2de9f5ed1801697bb40ab5c359a4051700865dbf8febe84ce5a9fb8cd19cb607",
+  "roots": [
+    0,
+    1,
+    -1,
+    7,
+    -2147483648,
+    2147483647
+  ],
+  "streamsPerRoot": 4,
+  "uniqueEventInputs": 120,
+  "derivedSeedComparisons": 24,
+  "eventComparisonsAcrossThreeModes": 360,
+  "nativeHistoricalBoundCalls": 420,
+  "newNativeCallsInComparison": 0,
+  "coreBaseCommit": "4e1f1ce31be60d08dafda149b22fd258c4ca6761",
+  "researchHead": "67e07a1470f0913f1fdaf5ae7cbd2f9afe2988e1",
+  "sourceManifestSha256": "f5dd37e162540825b82af740918236c25d60265cd10593d19bdd8957181d3a8c",
+  "rngSourceSha256": "ff2246732504b7de7aee0303e46db1c0df476e285bf06bbec11a34fec85f5734",
+  "numericHelperSourceSha256": "ef27242c5cebd987e223e03f2e10a257297a5634bed6929b6f3b001d31ca91a4",
+  "modelResultSha256": "7ccb783a6023b4ea0909dab52b52db4d9649d48df1340290be5bb9bdebffefd4",
+  "realPlayerRootDistributionCertified": false
+}

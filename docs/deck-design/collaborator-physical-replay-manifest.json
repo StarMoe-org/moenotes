@@ -1,0 +1,64 @@
+{
+  "format": "ournotes.collaborator-physical-replay-handoff/1",
+  "source": {
+    "package": "com.bushiroad.sirius",
+    "versionName": "1.0.4",
+    "versionCode": 10053,
+    "restoredNativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+    "decodedMetadataSha256": "8cf963bc5a32262c2ad3e21307dda14d144bcced6fe7731986933718dcf9a91d",
+    "masterVersion": "1.0.0.300/52355a9de56a475f691b10ef58acba58",
+    "masterManifestSha256": "f4534fe8bf340b7a9bd99eb9b43ab384e9e3895a7e1eb3113cbb371e65780735",
+    "activeIfix": "unknown online; not loaded in this experiment"
+  },
+  "scope": "Ready AutoPerfect no-skill component baseline; not physical touch, full NativeSkillContext or whole-live delivery. Private payload references below require repository artifact access.",
+  "available": {
+    "rawChart": {
+      "name": "10000201.bytes",
+      "sha256": "d52034d539e10651eeb896d10c0d9ef2e5f5e054d115a920e8d6b0d7bdd52c1d",
+      "bytes": 1277
+    },
+    "noteGraph": {
+      "name": "native-note-input-compact.json",
+      "sha256": "da3125f080c0363360ea3cb621c7c729723fe0ff96d00be0dd8cb60c2d82cc53",
+      "notes": 364,
+      "fieldBindings": 54,
+      "scope": "Actual native IDs/time/op/judgementType/observed note-line relations; unexpanded relationships remain explicit"
+    },
+    "harnessSources": {
+      "bound_pilot.py": "16ca03692208a0c8f6b79bb37adf84ad8d47fa3b9c649bd3a1af92519a606171",
+      "libc.py": "225f35a0b8afe391f369ff4514f540d6a8cd2f7a74d8c9e6b01f1772a32b57f8",
+      "local_factory_pilot.py": "87cfe323078522c23de2932bf9ee74686e210d53b58bc63048445b30a72fa0ba",
+      "mrt.py": "672b593f0238b07cc0ce8b747517ad9e0e09e36864a7dcbca9b345d0aaddf19f",
+      "native_observe.py": "40a398e89ba8377b00e4e8b17bca2757f1624fec518ca968745300149fe95835",
+      "nemu.py": "2549fc23b83ef6d0512ee6f997b9f79c085c7edf6656fe963b7f1bf430c10358",
+      "unity.py": "dae39e72fe10658ad51176cbcfdde8d28f5e2dbc6c5326cf8db914cd75444f6d"
+    },
+    "bindingRecordsSha256": "2d258c6c7ecfa1f3dd0d242f65ab610b18abefd4af6511ee82869fdbb6a22d3d",
+    "nativeFrameStreamSha256": "af38cf17c6400e9841076c1ad68ee4c5bce122eb1dd6841f841ce263e7883960",
+    "rawScoreCommandsSha256": "f93f8fe748743d2a89b4a396e70d749d521c23a801db238cc715a5dc099fc09e",
+    "nativeArchiveSha256": "042c2faac29e45c1773451d266000aab2ea166b0a5ac0a1573e871186035c0ae",
+    "frameCount": 5634,
+    "eventCount": 364
+  },
+  "nativeInputRoute": {
+    "regularInput": "Original LiveSimulateInput ctor + timestamp setters",
+    "autoControl": "Original DefaultLiveSimulateAutoInput(enabled=true,Perfect5,override=false,diff0)",
+    "scope": "No external touch provider in this baseline; disabled-auto calibration does not prove a functioning physical input route"
+  },
+  "params": {
+    "skillTargetMusicType": 4,
+    "totalPower": 59223,
+    "musicLevel": 14,
+    "convertedNoteCount": 233,
+    "musicLengthMs": 90411,
+    "scoreMusicLengthMs": 90411,
+    "assistFactorBits": 1065353216
+  },
+  "notYetDelivered": [
+    "Physical down/move/up/flick construction/geometry/clock replay",
+    "ObservationBoundary for dynamic TimingPolicy",
+    "Complete NativeSkillContext with ordinary/Snap/GK normal driver",
+    "Legal account/finish/failure/active IFix certification"
+  ],
+  "productionGatePassed": false
+}
