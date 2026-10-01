@@ -80,7 +80,7 @@ export function ScenarioPanel({ ctx, rooms = false, missions = null }: { ctx: Ch
       </div>
       {battle ? (
         <div className="mn-cd-field">
-          <span>{tr("scenario.ranks")}</span>
+          <span title={tr("scenario.best")}>{tr("scenario.ranks")}</span>
           {[...Array(RANGES).keys()].map((i) => (
             <span key={i} className="mn-cd-rk-pick">
               <small>{rangeLabel(i)}</small>
@@ -97,7 +97,7 @@ export function ScenarioPanel({ ctx, rooms = false, missions = null }: { ctx: Ch
         </div>
       ) : null}
       <div className="mn-cd-field">
-        <span>{tr("scenario.accuracy")}</span>
+        <span title={tr(battle ? "scenario.accNote" : "scenario.accNoteFree")}>{tr("scenario.accuracy")}</span>
         <AccuracySlider label={tr("scenario.great")} value={state.great} onValue={great => update({ great })} />
         {battle ? <AccuracySlider label={tr("scenario.just")} value={state.just} disabled={!support.just} onValue={just => update({ just })} /> : null}
         <abbr className="mn-cd-note" title={tr(battle ? "scenario.accNote" : "scenario.accNoteFree")}>{tr("referenceEstimate")}</abbr>

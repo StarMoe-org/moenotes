@@ -1,11 +1,13 @@
 import { Fragment, useState } from "react";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import { getCardFrameUrl, getCardRankIconUrl, getCardThumbnailUrl, getCharacterFaceIconUrl } from "@/lib/cards/assets";
 import { levelFromExp, type DeckCardLookup, type RankingDeckCard, type RankingRow } from "@/lib/game-api/music-ranking";
 import { buildDynamicPath, findRouteById } from "@/lib/route/registry";
 import { getSupportCardFrameUrl, getSupportCardRankIconUrl, getSupportCardThumbnailUrl } from "@/lib/support-cards/assets";
+import PlayerNamecard from "@/components/music/PlayerNamecard";
 
 export type AssetUrl = (url: string | undefined | null) => string;
 
@@ -17,6 +19,8 @@ interface Props {
   assetUrl: AssetUrl;
   /** Ranks after which a dashed cut-off line is drawn (reward band ends). */
   boundaries?: readonly number[];
+  /** Server for fetching player namecards. */
+  server: GameServer;
 }
 
 const COLLAPSED_ROWS = 20;
@@ -25,7 +29,7 @@ const COLLAPSED_ROWS = 20;
  * Ranking rows (place, player, score, deck) with the deck opening under its row: song rankings and event challenge
  * boards share it. Shows the top 20 until expanded.
  */
-export default function RankingList({ locale, rows, cards, assetUrl, boundaries = [] }: Props) {
+export default function RankingList({ locale, rows, cards, assetUrl, boundaries = [], server }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [openRow, setOpenRow] = useState<string | null>(null);
   const shown = expanded ? rows : rows.slice(0, COLLAPSED_ROWS);
@@ -51,6 +55,7 @@ export default function RankingList({ locale, rows, cards, assetUrl, boundaries 
               numbers={numbers}
               open={openRow === row.uid}
               onToggle={() => setOpenRow((current) => (current === row.uid ? null : row.uid))}
+              server={server}
             />
             {cutoffs.has(row.rank) && index < shown.length - 1 && (
               <li aria-hidden="true" className="flex items-center gap-2 px-2 py-1 text-[10px] font-black tracking-wider text-[var(--mn-accent-deep)]">
@@ -77,7 +82,7 @@ export default function RankingList({ locale, rows, cards, assetUrl, boundaries 
   );
 }
 
-function RankingRowItem({ locale, row, cards, assetUrl, numbers, open, onToggle }: {
+function RankingRowItem({ locale, row, cards, assetUrl, numbers, open, onToggle, server }: {
   locale: AppLocale;
   row: RankingRow;
   cards: DeckCardLookup;
@@ -85,8 +90,11 @@ function RankingRowItem({ locale, row, cards, assetUrl, numbers, open, onToggle 
   numbers: Intl.NumberFormat;
   open: boolean;
   onToggle: () => void;
+  server: GameServer;
 }) {
   const podium = row.rank <= 3 ? "text-[var(--mn-accent-deep)]" : "text-[var(--mn-text)]";
+  const hasNamecard = row.profileCard && row.profileCard.images > 0;
+
   return (
     <li>
       <button
@@ -99,13 +107,25 @@ function RankingRowItem({ locale, row, cards, assetUrl, numbers, open, onToggle 
           {row.rank}
           {row.tied && <span className="ml-0.5 align-top text-[9px] font-bold text-[var(--mn-text-muted)]" title={t(locale, "music.ranking.tied")}>=</span>}
         </span>
-        <span className="min-w-0">
-          <span className="block truncate text-sm font-bold text-[var(--mn-text)]">{row.name}</span>
-          {row.totalPower !== null && (
-            <span className="block truncate text-[10px] font-semibold text-[var(--mn-text-muted)]">
-              {t(locale, "music.ranking.power", { power: numbers.format(row.totalPower) })}
-            </span>
+        <span className="flex min-w-0 items-center gap-2">
+          {hasNamecard && (
+            <PlayerNamecard
+              server={server}
+              profileId={row.profileId}
+              images={row.profileCard.images}
+              playerName={row.name}
+              variant="thumbnail"
+              useRankingApi={true}
+            />
           )}
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-bold text-[var(--mn-text)]">{row.name}</span>
+            {row.totalPower !== null && (
+              <span className="block truncate text-[10px] font-semibold text-[var(--mn-text-muted)]">
+                {t(locale, "music.ranking.power", { power: numbers.format(row.totalPower) })}
+              </span>
+            )}
+          </span>
         </span>
         <span className="text-right font-mono text-sm font-black text-[var(--mn-text)]">{numbers.format(row.score)}</span>
         <span className="hidden grid-cols-5 gap-1 md:grid" aria-hidden="true">

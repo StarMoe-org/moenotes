@@ -57,7 +57,15 @@ export interface PointRankingRow {
   part?: string;
   /** Several rows share this rank. */
   dup?: boolean;
-  profile?: { id?: string; name?: string; profileId?: string };
+  profile?: {
+    id?: string;
+    name?: string;
+    profileId?: string;
+    profileCard?: {
+      name?: string;
+      thumbnailUrl?: string[];
+    };
+  };
 }
 
 /** Whether the event has a point ranking at all (a disabled one hides only that ranking, not the event). */
