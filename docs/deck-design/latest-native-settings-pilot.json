@@ -383,6 +383,13 @@
   "latestExecutionBoundary": "Native options, score/note/life/gekisou settings, chart parser, mission utility, and master rank source returned. Rank table, LiveMusicScore, SkillStatus and executors not yet executed in this capture.",
   "wholeLiveCertified": false,
   "newCrossModelNumericComparisons": 0,
+  "proofRetention": {
+    "sealedCaptureArchiveSha256": "6861ec785bb32b9c74216bfd57098e751265b0d42945ab5c3a9e237a0cc629e9",
+    "retained": "Complete 455 capture, actual six executed harness sources, method records and case bytes retained with their original hashes.",
+    "limitation": "Three original external JSON adapter contract full files were not retained before CNB platform reclamation. Their original hashes/source/negative-control summaries remain in the capture; they cannot be presented as fully retained proof bytes.",
+    "recovery": "All three adapter contracts were actually re-executed from the identity-bound fresh JP snapshot, and new captures reference those newly retained proof bytes. Old proofs were not reconstructed from summaries.",
+    "additionalNativeRuleCoverageFromAdapterRepeats": 0
+  },
   "pending": [
     "Actual rank table and LiveMusicScore/ranges construction",
     "Score/note/life parameter readback beyond rhythmicUnit/mirror",

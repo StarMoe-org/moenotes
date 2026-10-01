@@ -1,0 +1,209 @@
+{
+  "format": "ournotes.latest-jp-native-score-settings-comparison/1",
+  "scope": "One saved-JP offline-base factory fixture. Compares two f32 words and 22 dictionary values from actual native factory fields. No gameplay, skill, account or online-patch certification.",
+  "version": {
+    "package": "com.bushiroad.sirius",
+    "versionName": "1.0.4",
+    "versionCode": 10053,
+    "restoredNativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+    "decodedMetadataSha256": "8cf963bc5a32262c2ad3e21307dda14d144bcced6fe7731986933718dcf9a91d",
+    "masterVersion": "1.0.0.300/52355a9de56a475f691b10ef58acba58",
+    "masterManifestSha256": "f4534fe8bf340b7a9bd99eb9b43ab384e9e3895a7e1eb3113cbb371e65780735",
+    "activeIfix": "unknown online; not loaded in this experiment"
+  },
+  "nativeCaptureSha256": "9c0a43bd4002521146941c8e66aa69000870e33d2246974728a038a3ff20a97a",
+  "nativeCaseSha256": "2e6f6c7d95a0270392003abf955ade79576e0129701989c54b0cd031faae3e9e",
+  "nativeCaptureStatus": "blocked-or-failed",
+  "nativeCapturePhase": "native-skill-status-factory",
+  "boundCallStatusCounts": {
+    "exception-or-harness-error": 1,
+    "returned": 498
+  },
+  "modelBaseCommit": "4e1f1ce31be60d08dafda149b22fd258c4ca6761",
+  "modelSourceManifestSha256": "f5dd37e162540825b82af740918236c25d60265cd10593d19bdd8957181d3a8c",
+  "modelSourceFilesUnchangedBeforeAfterProbe": 124,
+  "modelInputSha256": "333391fbdde7ee0950da6507d3115ebfa984f5bb0de69f502954b488a529887c",
+  "modelMasterTableSourceMatchesNativeCaseSubset": 45,
+  "probeSourceSha256": "b65f51337df318b308b088467693b72e59ecbbe5de16dd0701082c5cabbede64",
+  "probeCargoLockSha256": "fe11503bc487760d0eb9a0d1a1fb5c9cb69d77cb10aa1d26d52514066afdb839",
+  "probeBinarySha256": "8d363881da4786281b3160c1a24474274d846fe06df6c47cbac6b4a3fb5cfcc6",
+  "probeResultSha256": "8812bab976a204703b17d428f11d16712fa8f8aaf718aacfe8530271afbda2a1",
+  "probeBuildLogSha256": "45766228d2a4deb6d6cca27a70d1a934a181bc232675efd1fa9ac3af677f3120",
+  "qualification": "Probe reuses the previously verified native-target dependency lock. Inactive WASM lock entries are not an identical-lock claim; original core source and lock bytes are unchanged.",
+  "numericFields": 24,
+  "dictionaryKeyIdentities": 22,
+  "differences": [],
+  "fields": [
+    {
+      "path": "scoreAdjustmentFactor",
+      "native": "00004040",
+      "model": "00004040",
+      "domain": "f32 little-endian raw bits; JSON display decimals are not compared as f64",
+      "equal": true
+    },
+    {
+      "path": "lifeOnusFactor",
+      "native": "9a99993e",
+      "model": "9a99993e",
+      "domain": "f32 little-endian raw bits; JSON display decimals are not compared as f64",
+      "equal": true
+    },
+    {
+      "path": "noteFactorPercent[1]",
+      "native": 100,
+      "model": 100,
+      "domain": "i32",
+      "equal": true
+    },
+    {
+      "path": "noteFactorPercent[20]",
+      "native": 100,
+      "model": 100,
+      "domain": "i32",
+      "equal": true
+    },
+    {
+      "path": "noteFactorPercent[21]",
+      "native": 10,
+      "model": 10,
+      "domain": "i32",
+      "equal": true
+    },
+    {
+      "path": "noteFactorPercent[22]",
+      "native": 100,
+      "model": 100,
+      "domain": "i32",
+      "equal": true
+    },
+    {
+      "path": "noteFactorPercent[40]",
+      "native": 100,
+      "model": 100,
+      "domain": "i32",
+      "equal": true
+    },
+    {
+      "path": "noteFactorPercent[41]",
+      "native": 100,
+      "model": 100,
+      "domain": "i32",
+      "equal": true
+    },
+    {
+      "path": "noteFactorPercent[42]",
+      "native": 100,
+      "model": 100,
+      "domain": "i32",
+      "equal": true
+    },
+    {
+      "path": "noteFactorPercent[60]",
+      "native": 10,
+      "model": 10,
+      "domain": "i32",
+      "equal": true
+    },
+    {
+      "path": "noteFactorPercent[61]",
+      "native": 10,
+      "model": 10,
+      "domain": "i32",
+      "equal": true
+    },
+    {
+      "path": "noteFactorPercent[62]",
+      "native": 10,
+      "model": 10,
+      "domain": "i32",
+      "equal": true
+    },
+    {
+      "path": "noteFactorPercent[63]",
+      "native": 10,
+      "model": 10,
+      "domain": "i32",
+      "equal": true
+    },
+    {
+      "path": "noteFactorPercent[101]",
+      "native": 100,
+      "model": 100,
+      "domain": "i32",
+      "equal": true
+    },
+    {
+      "path": "noteFactorPercent[102]",
+      "native": 100,
+      "model": 100,
+      "domain": "i32",
+      "equal": true
+    },
+    {
+      "path": "noteFactorPercent[104]",
+      "native": 10,
+      "model": 10,
+      "domain": "i32",
+      "equal": true
+    },
+    {
+      "path": "noteFactorPercent[105]",
+      "native": 10,
+      "model": 10,
+      "domain": "i32",
+      "equal": true
+    },
+    {
+      "path": "noteFactorPercent[120]",
+      "native": 10,
+      "model": 10,
+      "domain": "i32",
+      "equal": true
+    },
+    {
+      "path": "judgementScoreFactorPercent[1]",
+      "native": 230,
+      "model": 230,
+      "domain": "i32",
+      "equal": true
+    },
+    {
+      "path": "judgementScoreFactorPercent[2]",
+      "native": 100,
+      "model": 100,
+      "domain": "i32",
+      "equal": true
+    },
+    {
+      "path": "judgementScoreFactorPercent[3]",
+      "native": 80,
+      "model": 80,
+      "domain": "i32",
+      "equal": true
+    },
+    {
+      "path": "judgementScoreFactorPercent[4]",
+      "native": 50,
+      "model": 50,
+      "domain": "i32",
+      "equal": true
+    },
+    {
+      "path": "judgementScoreFactorPercent[5]",
+      "native": 0,
+      "model": 0,
+      "domain": "i32",
+      "equal": true
+    },
+    {
+      "path": "judgementScoreFactorPercent[6]",
+      "native": 0,
+      "model": 0,
+      "domain": "i32",
+      "equal": true
+    }
+  ],
+  "newNativeCallsInComparisonPhase": 0,
+  "independentWholeLiveTraces": 0,
+  "wholeLiveCertified": false
+}

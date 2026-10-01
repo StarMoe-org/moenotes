@@ -53,6 +53,12 @@ Il2CppDumper 锁定 commit `6fd1d13933f9a14a0a927d816720120894da8d96`，SDK `10.
 
 在 options 初始化中先前观察到的 native Crypto 异常来自外部字符设备 `/dev/urandom` 不存在。恢复明确的 libc open/read/fstat/lseek 外部边界后，实际 RNGCrypto/MessagePack 链成功；只记录每次 entropy read 的长度与 SHA，不保存随机字节、不替换游戏 image 函数。游戏 LiveRandom 使用原生 SetSeed(root 0)，与这些外部 serializer entropy 分开。options/settings 返回不等于所有窗口、Assist、Life 参数已认证，完整参数读回仍在下一步。
 
+恢复机后续已通过真实 `MasterLiveScoreRankBox.GetScoresByRank` → `LiveScoreRankTable` 及六档 threshold getter，直接原生 LiveMusicScore 七参 ctor 读回 24 lanes、364 判定 notes、converted count 233 与三个实际撃奏 range。完整 `MusicScoreLoadUtility.CreateLiveMusicScore` 仍在 Unity.Object 的外部 icall 初始化处抛异常；直接 ctor 路径没有冒称完整 utility 已通过。真实五成员、五 Snap、五个 native CardPower 与范围已输入 SkillStatus，但本地化 manager 的初始化尚未完成，SkillStatus 构造异常保留。
+
+由上述 factory 的实际 IL2CPP fields/type/array 读回形成[计分设置独立对照](latest-native-score-settings-comparison.json)：两个 f32 原字、16 个音符倍率、6 个判定倍率，共 24 数值字段和 22 键身份，0 差异。capture 的 499 次 bound attempts 为 498 返回/1 异常；比较阶段新增 native 调用 0。只读 Rust probe 复用 current-core `4e1f1ce` 与此前已验证的 native-target 依赖 lock，独占目录的 124 源文件前后 SHA 一致；37.49 s 的 release 编译在 CNB 完成，校验容器已停。它只验证设置转换，不认证整局、命中/未命中或累计技能。
+
+455 capture 的完整字节、六份实际执行源码、method records 与 case 已封存；三份旧外部 JSON adapter 合同的完整 proof 未在回收前保存，原 SHA/源码/负控制摘要仍在 capture。恢复机实际重跑三份合同并保存新 proof，新 capture 引用新 SHA；不会从摘要仿造旧 proof。这个保留缺口单列在[初始化摘要](latest-native-settings-pilot.json)中，不影响已明确保存的原生返回字节，也不解除 external adapter 的独立验证边界。
+
 另有[JP Snap 静态依赖清点](latest-snap-static-inventory.json)：615 条普通、1,050 条撃奏 effect；19 个结构签名仅为排序研究队列，不能折叠真实行或证明搜索等价。790 行被当前 SupportCard 直接引用且有声明 rank 映射；875 行没有该直接引用，保留数据覆盖义务。所有非零 condition/target/cumulative 引用可解析，但培养合法性、AND/OR/释放/累计语义、命中与未命中、时钟及整场行为仍需实际原生对照；静态清点的原生规则比较数为 0。
 
 ## Whole Live / 原生技能容器与 SkillExecutor 最小下一步
