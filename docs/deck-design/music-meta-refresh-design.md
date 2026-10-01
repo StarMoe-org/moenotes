@@ -4,7 +4,9 @@
 
 ## 源与观察边界
 
-当前线上 music-data 为 TW、客户端 1.0.1/25、master `0b21c9f4a3911370d5f981fb894c7544`，文件 SHA-256 `983896151d3ed69d9dfe26044225907e33be037e4b74589e110ded64780f8738`，85 首歌。
+本轮刷新前的回归基线为 TW、客户端 1.0.1/25、master `0b21c9f4a3911370d5f981fb894c7544`，文件 SHA-256 `983896151d3ed69d9dfe26044225907e33be037e4b74589e110ded64780f8738`，85 首歌。
+
+2026-10-01 的[真实发布](https://github.com/StarMoe-org/nnnotes/actions/runs/36863987470)已把 TW 正式入口更新为 master `74639bc3f98486a22b1232f232213def`、86 首歌/344 谱面/同源 13 表；decoded music-data SHA 为 `55d26592adc9c6224f883f38fdd25e16523ec99080689ab4c97ac121186cbd49`。公网 JSON 声明 gzip，主文件 `13,188,423 B → 1,545,841 B`，解压后身份保持不变。该数据刷新不是最新 JP 计分/IFix 的认证。
 
 唯一 force/dry-run [36817548100](https://github.com/StarMoe-org/nnnotes/actions/runs/36817548100) 已完成 success，验证 main `c5f39f8` 的按源 resource version 固定 catalog 修复，未写生产。该任务读取 TW master `74639bc3f98486a22b1232f232213def`、241 文件。随后使用相同元数据服务与请求头读取 index、MasterManifest 和三张歌曲表；每个 decoded 文件 SHA 都与冻结 index 一致，manifest version 与 entry 一致。这是 **metadata 服务的已验证快照**，不是游戏 API Version 直接观察；最新 JP Version 查询仍不能据此标成成功。
 
@@ -27,6 +29,6 @@
 
 ## 自动刷新与评分接入
 
-[nnnotes Draft #7](https://github.com/StarMoe-org/nnnotes/pull/7) 以 manifest、decoded 文件映射、resource、客户端、模型/exporter 与消费端 pin 触发重建，默认独立检查 TW/JP；发布前复核源，避免过期结果覆盖新源。最新验证 **183 passed / 5 skipped**，workflow actionlint 通过。新的 rank 参数可按原始源导出并检查，不应等待完全无关的原生语义认证，也不应手工降低两曲排名。
+[nnnotes #7](https://github.com/StarMoe-org/nnnotes/pull/7) 已合入 dev，以 manifest、decoded 文件映射、resource、客户端、模型/exporter 与消费端 pin 触发重建，默认独立检查 TW/JP；发布前复核源，避免过期结果覆盖新源。后续[管线修复 #10](https://github.com/StarMoe-org/nnnotes/pull/10)补齐真实 Bucket 契约、gzip/读回、共享页面发布锁与动态 UI 数据输入，实际发布已成功。新的 rank 参数按原始源导出并核对，不手工降低两曲排名，也不等待无关的原生语义认证。
 
-[nnnotes Draft #8](https://github.com/StarMoe-org/nnnotes/pull/8) 增加 `nnnotes.replay-labels/1` 的 13 表标签资源与 manifest SHA 指针，使普通/撃奏技能、实际等级描述、条件目标与卡图编号随同源快照更新。它没有评分公式；两曲、五个 Snap 与任意技能 profile 的分数均交给同一个 Rust whole-live evaluator。最新客户端/新增效果语义的原生 gate 仍独立，标签、数据新鲜度、评分正确性不能互相替代。
+[nnnotes #8](https://github.com/StarMoe-org/nnnotes/pull/8) 已合入 dev，增加 `nnnotes.replay-labels/1` 的 13 表标签资源与 manifest SHA 指针，使普通/撃奏技能、实际等级描述、条件目标与卡图编号随同源快照更新。标签不包含评分公式；支持范围内的 Snap/profile 复算交给同一 Rust whole-live evaluator。最新客户端/新增效果语义的原生 gate 仍独立，标签、数据新鲜度、评分正确性不能互相替代。

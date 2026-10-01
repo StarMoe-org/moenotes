@@ -6,7 +6,7 @@
 
 | 门禁 | 当前状态 | 已核实的事实 | 现实缺口与解除条件 |
 |---|---|---|---|
-| G1：目标客户端、平台与运行时 patch 身份 | **PARTIAL：1.0.4 / 10053 已恢复及独立执行，base/ARM64 内容签名通过；活跃 patch 与完整语义未通过** | [来源绑定](latest-native-source-binding.json)核实包内 APK/SO/metadata；[签名检查](apk-signature-verification.json)验证 base、ARM64 split 的 v2/v3。[证书记录](latest-apk-certificates.json)的 SHA 为 `34fd32c2860f454dd320930f6ba0876ea8cc8e60a3d8320b3277aa761072508e`。[原生摘要](latest-native-gate-summary.md)记录恢复、独立 boot 和数值 pilot。iOS 商店记录独立于 Android 原生证据。 | Unity asset split 内容签名、source stamp、官方 Play delivery 对照仍有范围限制；冻结生效 IFix 或证明指定实例无 patch。真实培养/Snap/LiveSettings/SkillManager 到完整 Live 的原生语义尚未验收。 |
+| G1：目标客户端、平台与运行时 patch 身份 | **PARTIAL：1.0.4 / 10053 已恢复及独立执行，base/ARM64 内容签名通过；活跃 patch 与完整语义未通过** | [来源绑定](latest-native-source-binding.json)核实包内 APK/SO/metadata；[签名检查](apk-signature-verification.json)验证 base、ARM64 split 的 v2/v3。[证书记录](latest-apk-certificates.json)的 SHA 为 `34fd32c2860f454dd320930f6ba0876ea8cc8e60a3d8320b3277aa761072508e`。[原生摘要](latest-native-gate-summary.md)记录恢复、独立 boot 和数值 pilot。iOS 商店记录独立于 Android 原生证据。 | Unity asset split 内容签名、source stamp、官方 Play delivery 对照仍有范围限制；冻结生效 IFix 或证明指定实例无 patch。真实培养/Snap/LiveSettings/技能容器与 SkillExecutor 到完整 Live 的原生语义尚未验收。 |
 | G2：当前 JP master / resource 的新鲜度与一致快照 | **PARTIAL：已有一次 Windows 成功 Version 观察；完整资源/活跃 patch 绑定未通过** | [补充脱敏观察](latest-version-observations.json)按源报告 SHA 记录客户端 `1.0.4`、master `1.0.0.300/52355…`、resource `1.0.0.300/223330…`；CNB 单次同版本请求为 `PERMISSION_DENIED`。早期 [UNAVAILABLE 记录](latest-game-read.json)保留历史，不再描述为唯一现状。 | 取得明确查询时间/来源并核验对应 manifest、规则表、谱面、音频和实际生效 patch。成功 Version 观察不等于全资源一致或线上完整模型认证；云端拒绝原因尚未确定。 |
 
 两个门禁独立：读取到新 master 不会补齐客户端机器码证据；取得新 APK 也不会自动证明使用的是它在当前区服实际加载的 master、资源和 patch。**老 native + 新 master 只是一种明确的混合输入实验，不能代替最新客户端建模。**

@@ -6,7 +6,7 @@
 
 | 项目 | 已验证范围 | 仍需完成 |
 |---|---|---|
-| 最新日服原生 | Android 1.0.4 / 10053 的恢复、独立 boot、方法身份与部分数值原语；offline-base、未加载 IFix | 实际生效 patch、同源资源；真实培养与 Local Member/Support factory → LiveSettings → SkillManager → LiveExecutor 完整轨迹 |
+| 最新日服原生 | Android 1.0.4 / 10053 的恢复、独立 boot、方法身份与部分数值原语；offline-base、未加载 IFix | 实际生效 patch、同源资源；真实培养与 Local Member/Support factory → LiveSettings → 原生技能容器/SkillExecutor → LiveExecutor 完整轨迹 |
 | JP CardPower | 948,973 个独立输入、1,950,919 字段零差异，其中真实 member max × level 行对 4,910 个 | 合法玩家全局状态、五槽/Snap/场景组合；大量取整和溢出输入不计为合法队伍数 |
 | JP 原始谱面与洗牌 | 一份真实 chart 的 id/time/op 三列 1,092 字段；六个 root 的成员洗牌与后续随机状态 | 真实 parser settings、判定/fever/技能事件；无 Snap、注入 75,038 power 的构造证据不能认证完整配对 |
 | Snap 歌曲排行 | `standard-skill-profile`、声明综合力/打法/种子/顺序下的 WASM 逐歌复算与界面 | 真实持有与培养的 DeckSearch；普通/撃奏 Snap 全依赖、共同随机流与完整 Live 原生差分 |

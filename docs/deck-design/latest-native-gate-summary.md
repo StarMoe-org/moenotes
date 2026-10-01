@@ -49,11 +49,11 @@ Il2CppDumper 锁定 commit `6fd1d13933f9a14a0a927d816720120894da8d96`，SDK `10.
 - 原始 JP chart：从 JP9/30 专用缓存中解析已绑定 SHA 的官方 catalog，核实 addressable key `Live/MusicScore/0002/0002_01` 及唯一 bundle dependency；提取 `10000201` 的原始 TextAsset 1,277 B，SHA `d52034d539e10651eeb896d10c0d9ef2e5f5e054d115a920e8d6b0d7bdd52c1d` 与 saved JP export 的 asset SHA 逐字一致。cache bundle 为解密后 UnityFS，cache SHA 不能当成加密 CDN 字节 SHA。没有默认采用 TW cache。
 - 最新原生 chart parser：实际调用本版本 `App.Live.MusicScoreLoadUtility.ParseMusicScoreBytes`（新 entry `0x5a1ad8c`），取得 24 lanes / 364 notes；ID、timeMs、operateType 三列逐 note 与独立 saved JP export 对照，1,092 / 1,092 字段一致。Unity JSON bridge 调用为 0、game image HLE 为 0。当前声明 parser 参数 startNoteId 0、slideNoteComboRhythmicUnit 8、mirror false；未核实真实 LiveSettings factory 的参数选择，也未认证 lanes / judgement types、fever、skill events 或完整 gameplay。
 
-## Whole Live / SkillManager 最小下一步
+## Whole Live / 原生技能容器与 SkillExecutor 最小下一步
 
 1. 从同一 saved JP manifest 加载歌曲、计分、Assist、combo、skill / target / condition 等实际所需表；每个被读取 bin 保留 manifest hash 和 native 解码 payload 身份。现已通过的三表和 chart projection 不重复采集来增加分母。
 2. 使用最新 MethodInfo / 签名和原生字段 API，构造真实 Local options 与 LiveSettings factory 路径，读取实际 rhythmicUnit / 窗口 / 计分 / Assist 设置。用已绑定 chart 构造 LiveMusicScore、LiveExecutor，在真实培养的普通 Live 基线保留实际技能，核实 note 时间、阶段、life、combo 与分数。无技能短轨迹仅作为显式实验隔离对照，记录 harness 控制和构造范围；未验证玩家能关闭成员技能前，不将其计为合法玩家动作或完整 factory 认证。
-3. 用户 / power placeholder 必须替换为明确培养状态的 native Local Member / Support 数据，验证真实 factory 的 member / support 配对与 native shuffle 后共享 RNG 状态，再构造 SkillInput / SkillManager 与 ordinary / support / Gekisou 技能。使用真实 JP 卡与技能 level / effect / condition / target 形成覆盖分母；不从构造成功推导 condition / effect 全部正确。
+3. 用户 / power placeholder 必须替换为明确培养状态的 native Local Member / Support 数据，验证真实 factory 的 member / support 配对与 native shuffle 后共享 RNG 状态，再按最新 metadata 绑定技能 data 容器、SkillStatus / SkillExecutor 与 ordinary / support / Gekisou 技能。共享模型中的 SkillManager 是概念/实现名，不当作已找到的原生类。使用真实 JP 卡与技能 level / effect / condition / target 形成覆盖分母；不从构造成功推导 condition / effect 全部正确。
 4. 先以一个单 worker 的短轨迹核实 setup / enter / frame / trigger / settle 的观察阶段和负控制，再增加长谱、边界、重叠、pool 限额、Gekisou 排名和零生命 / 继续 / 重试生命周期。重放同一 capture 或更换运行端不增加独立 native trace 数。
 
 当前实验阻断已经从“缺少最新包 / 原始 JP chart”转为**最新合法 gameplay / skill 上下文与调用边界尚未完成绑定和验收**：旧 capture 的 TW VA、硬字段、generic display-name 与手工 vtable 不能直接套用。C++ / managed 异常路径须区分 harness 退出与游戏规则结果。现有 APK、metadata、saved JP 三表与真实 chart 已足够继续 offline-base 研究。已有[Windows 成功 Version 观察](latest-version-observations.json)，但完整资源与活跃 IFix 尚未绑定，仍不能扩大为最新线上完整认证；后续实验与浏览器接入门槛见[主线记录](primary-delivery-gates.md)。
