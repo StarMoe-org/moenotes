@@ -26,6 +26,23 @@
     "mobileDocumentOverflow": false,
     "pageErrors": []
   },
+  "devIntegration": {
+    "baseCommit": "9be87d787d9a8219e67b4c12f90948b11c702acc",
+    "environment": "Windows headed Codex browser, Astro development server",
+    "sameSourceAndUiProfile": true,
+    "tests": 187,
+    "assertions": 679,
+    "typescriptVersion": "5.9.3",
+    "selectedSlots": 5,
+    "coverButtons": 0,
+    "chartsCompleted": 85,
+    "youthScore": 4469543,
+    "aveScore": 2866889,
+    "detailThresholdColumns": 2,
+    "detailLegacyWeights": 0,
+    "detailIndependentEditor": 0,
+    "easySibling": { "scoreId": 10002100, "score": 3391762, "baselineScore": 3355940, "delta": 35822 }
+  },
   "productionWorker": {
     "build": "Vite production ES-module Worker",
     "profileDifferenceFromUi": { "seed":0,"pairedGekisouLevels":[1,1,1,1,1] },

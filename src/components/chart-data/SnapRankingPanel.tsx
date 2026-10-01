@@ -1,4 +1,6 @@
 import { useMemo } from "react";
+import { isGameServer, PRIMARY_SERVER } from "@/config/servers";
+import { ContentServerProvider } from "@/lib/servers/use-content-server";
 import { snapProfileKey, snapSourceKey, type SnapRankingCatalogue, type SnapRankingState } from "@/lib/chart-data/snap-client";
 import { buildSnapSourceCards, labelSnapRankingCatalogue } from "@/lib/chart-data/snap-source-vms";
 import { replaceSnapSlot } from "@/lib/chart-data/snap-query";
@@ -17,6 +19,8 @@ export default function SnapRankingPanel({ ctx, catalogue, measurement, loading,
   onOpen: () => void;
 }) {
   const { locale, tr, state, update } = ctx;
+  const region = ctx.data.provenance?.region;
+  const server = isGameServer(region) ? region : PRIMARY_SERVER;
   const cards = useMemo(() => catalogue ? buildSnapSourceCards(catalogue.data, ctx.data, catalogue.labelSource, locale) : null, [catalogue, ctx.data, locale]);
   const choices = useMemo(() => catalogue ? labelSnapRankingCatalogue(catalogue.choices, catalogue.data, ctx.data, catalogue.labelSource, locale) : [], [catalogue, ctx.data, locale]);
   const active = state.snapSkills.some(Boolean);
@@ -26,7 +30,7 @@ export default function SnapRankingPanel({ ctx, catalogue, measurement, loading,
   const catalogueStatus = !available ? "loadUnavailable" : catalogueError ? "calculationError" : null;
   const status = invalidMembers.length ? "invalidMember" : catalogueStatus ?? (current && measurement.status === "error" ? "calculationError"
     : current && measurement.status === "needs-context" ? "needsContext" : current && measurement.status === "unsupported" ? "unsupportedScenario" : null);
-  return <div className="mn-cd-snap-area">
+  return <ContentServerProvider server={server} servers={[server]}><div className="mn-cd-snap-area">
     <SnapSkillPicker locale={locale} choices={choices} selections={state.snapSkills} cards={cards?.snaps}
       loading={loading && !catalogueStatus} error={catalogueStatus ? tr(`snap.${catalogueStatus}`) : null} onOpen={onOpen}
       onSelect={(slot, selection) => update({ snapSkills: replaceSnapSlot(state.snapSkills, slot, selection) })}
@@ -46,5 +50,5 @@ export default function SnapRankingPanel({ ctx, catalogue, measurement, loading,
       </p>
       {current && measurement.total > 0 && measurement.status === "running" ? <progress value={measurement.done} max={measurement.total} aria-label={tr("snap.calculating", { done: measurement.done, total: measurement.total })} /> : null}
     </div> : null}
-  </div>;
+  </div></ContentServerProvider>;
 }

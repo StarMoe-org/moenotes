@@ -61,7 +61,8 @@ test("all None preserves the exact existing RankView markup", () => {
   const withNone = renderToStaticMarkup(<RankView ctx={ctx} />);
   const { snap: _, ...plain } = ctx;
   expect(withNone).toBe(renderToStaticMarkup(<RankView ctx={plain} />));
-  expect(withNone).toContain("rankHint.efficiency");
+  expect(withNone).toContain('class="c-rate');
+  expect(withNone).toContain('class="c-dom');
   expect(withNone).not.toContain("snap.measurementHint");
   expect(withNone).not.toContain(measured.toLocaleString());
 });
@@ -69,6 +70,7 @@ test("all None preserves the exact existing RankView markup", () => {
 test("Snap detail reuses the same point and raw solo thresholds without linear power or chance", () => {
   const ctx = context(), row = ctx.rows[0]!;
   row.scoreRanks = [{ rank: "SS", requiredScore: 7777777, battleRequiredScore: 9999999 }];
+  ctx.data.replay = source.reference;
   ctx.eff = () => { throw new Error("Legacy linear scoring must not run for an active Snap detail"); };
   const html = renderToStaticMarkup(<ChartDetail ctx={ctx} row={row} />);
   expect(html).toContain(measured.toLocaleString());
@@ -79,4 +81,6 @@ test("Snap detail reuses the same point and raw solo thresholds without linear p
   expect(html).not.toContain("scenario.roomHint");
   expect(html).not.toContain("col.rate");
   expect(html).toContain("snap.timelineHint");
+  expect(html).not.toContain('class="mn-cd-replay"');
+  expect(html).not.toContain("detail.measures");
 });
