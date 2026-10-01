@@ -6,7 +6,7 @@
 
 StarMoe nnnotes 已有 `music-data.yml`：接收 `masterdata-updated`，每日补扫，并允许手动强制重建。它比较 master/resource/client 版本、resource hash、Deck/nnnotes commit 和 recipe，构建后运行 schema、来源、谱面、统计、音乐长度与消费端 smoke 检查。已有归档、发布开关和上传读回校验，应在此基础上修复。
 
-截至本轮检查，[最近一次定时任务](https://github.com/StarMoe-org/nnnotes/actions/runs/36699637364)的 plan 成功、Build 步骤失败；之前三次 dispatch 也失败。具体失败原因由发布仓库修复 PR 记录。需要恢复成功的源读取、构建和检查，添加定时器本身不会解除故障。
+截至本轮检查，[最近一次定时任务](https://github.com/StarMoe-org/nnnotes/actions/runs/36699637364)的 plan 成功、Build 步骤失败；之前三次 dispatch 也失败。实际错误是谱面 `10010900` 的资产不存在，涉及 catalog 与源快照不一致。当前发布仓库 main `c5f39f8` 已加入按 snapshot resource version 选择 catalog、核对 hash 并禁止回退到不匹配 catalog 的修复；需要新的完整 dry run 验证，不重复复制已有修复。添加定时器本身不会解除此故障。
 
 MoeNotes 当前客户端直接读取 `music-data.json`。默认线上文件在本轮读取时为 TW、客户端 `1.0.1/25`、master `0b21c9f4a3911370d5f981fb894c7544`，SHA-256 为 `983896151d3ed69d9dfe26044225907e33be037e4b74589e110ded64780f8738`。这份文件含 85 首歌；网页能读取文件，不证明它仍是对应区服的当前版本。
 

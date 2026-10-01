@@ -285,7 +285,7 @@ frontier/缓存保持有界：选择DFS可低内存，但需要证明整个前�
 
 ## 11. 已证明域与PoC证据如何使用
 
-当前本地材料：[旧搜索证明](../../bdon-pipeline-20261001/solver/pr-core/docs/search.md)、[推荐契约PoC](../../bdon-pipeline-20261001/solver/pr-core/docs/recommendation-contract.md)、[范围说明](../../bdon-pipeline-20261001/solver/pr-core/docs/recommendation-coverage.md)、[模型审计](../../bdon-pipeline-20261001/solver/pr-core/docs/model-audit-2026-10-01.md)。
+已发布基线材料：[旧搜索证明](https://github.com/empty-sekai/ournotes-deck/blob/f755c9c0138b0de841f432b8103a2ec02c9ce27d/docs/search.md)、[推荐契约](https://github.com/empty-sekai/ournotes-deck/blob/f755c9c0138b0de841f432b8103a2ec02c9ce27d/docs/recommendation-contract.md)、[范围说明](https://github.com/empty-sekai/ournotes-deck/blob/f755c9c0138b0de841f432b8103a2ec02c9ce27d/docs/recommendation-coverage.md)。本轮模型审计与当前门禁见[验证矩阵](model-validation.md)，未发布的PoC回归保留实验身份。
 
 - 旧Power/Skip上界与canonicalTop-K有独立穷举和域证明材料，前提绑定当时模型/数据/非负无wrap域。
 - 旧有限root物理oracle保留原生洗牌与共同随机状态；其Complete仅证明给定law、轨迹和支持域。
