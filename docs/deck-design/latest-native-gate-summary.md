@@ -63,6 +63,10 @@ Il2CppDumper 锁定 commit `6fd1d13933f9a14a0a927d816720120894da8d96`，SDK `10.
 
 ## Whole Live / 原生技能容器与 SkillExecutor 最小下一步
 
+原生隔离执行已补充一条[无技能整谱轨迹](latest-native-isolated-live-trace.json)：真实 AutoPerfect 输入，5,634 帧、364 判定、终分 209,797，29,790 次绑定调用返回，完整调用流和 111 组状态采样已独立审计。这条轨迹没有 SkillExecutor 或撃奏 driver hooks，也未触发完整游戏自动结算；原生长谱执行不能扩大为合法成员/Snap whole-live。
+
+同一来源另有[完整音符输入投影](latest-native-note-input-projection.json)：364 个真实音符的 ID、时间、操作类型和判定类型，2,240 次绑定调用均返回。判定类型全部由真实 updater getter 返回，其中 1/21 各 146 个、10/11 各 36 个；没有按操作类型或旧服模型补值。输入 ID 与实际三个原生字典集合一致，13 个保留文件及 7 份执行源码已独立核验。它补齐输入契约，不能把尚未保留的整谱逐帧事件认定为已观察；下一条隔离轨迹需另存实际 judged-ID 顺序、判定时间和分数命令时间，再对照冻结核心。成员/Snap、撃奏、真实触控微操和活跃 IFix 的门槛继续保留。
+
 1. 从同一 saved JP manifest 加载歌曲、计分、Assist、combo、skill / target / condition 等实际所需表；每个被读取 bin 保留 manifest hash 和 native 解码 payload 身份。现已通过的三表和 chart projection 不重复采集来增加分母。
 2. 使用最新 MethodInfo / 签名和原生字段 API，构造真实 Local options 与 LiveSettings factory 路径，读取实际 rhythmicUnit / 窗口 / 计分 / Assist 设置。用已绑定 chart 构造 LiveMusicScore、LiveExecutor，在真实培养的普通 Live 基线保留实际技能，核实 note 时间、阶段、life、combo 与分数。无技能短轨迹仅作为显式实验隔离对照，记录 harness 控制和构造范围；未验证玩家能关闭成员技能前，不将其计为合法玩家动作或完整 factory 认证。
 3. 用户 / power placeholder 必须替换为明确培养状态的 native Local Member / Support 数据，验证真实 factory 的 member / support 配对与 native shuffle 后共享 RNG 状态，再按最新 metadata 绑定技能 data 容器、SkillStatus / SkillExecutor 与 ordinary / support / Gekisou 技能。共享模型中的 SkillManager 是概念/实现名，不当作已找到的原生类。使用真实 JP 卡与技能 level / effect / condition / target 形成覆盖分母；不从构造成功推导 condition / effect 全部正确。

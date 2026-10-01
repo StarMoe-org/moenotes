@@ -1,0 +1,43 @@
+{
+  "format": "ournotes.native-note-projection-independent-audit/1",
+  "version": {
+    "package": "com.bushiroad.sirius",
+    "versionName": "1.0.4",
+    "versionCode": 10053,
+    "restoredNativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+    "decodedMetadataSha256": "8cf963bc5a32262c2ad3e21307dda14d144bcced6fe7731986933718dcf9a91d",
+    "masterVersion": "1.0.0.300/52355a9de56a475f691b10ef58acba58",
+    "masterManifestSha256": "f4534fe8bf340b7a9bd99eb9b43ab384e9e3895a7e1eb3113cbb371e65780735",
+    "activeIfix": "unknown online; not loaded in this experiment"
+  },
+  "scope": "Latest JP same original offline-base/IFix not loaded. Complete native evaluator note input projection, not extra whole-live trajectory or player-micro-operation proof",
+  "archiveSha256": "83acbda93f920917f74744329d881e3faa58e99cb49a4e70e3d23d417630d5cf",
+  "reportSha256": "df85ed5de0f1a00059fdc59f93d8f0cd0fb505454926ccb99c4c19d679198c20",
+  "compactSha256": "da3125f080c0363360ea3cb621c7c729723fe0ff96d00be0dd8cb60c2d82cc53",
+  "fullProjectionSha256": "56c3f5189c2136c4796202a80e20f953cbc2bdedfd83515bff83fc26d493fdc5",
+  "retainedFilesVerified": 13,
+  "sourceFilesVerified": 7,
+  "boundCallsReturned": 2240,
+  "notes": 364,
+  "actualJudgementTypeGetterReturns": 364,
+  "judgementTypeCounts": {
+    "1": 146,
+    "10": 36,
+    "11": 36,
+    "21": 146
+  },
+  "noteTypes": {
+    "FTLiveSimulator.ConnectionNote": 13,
+    "FTLiveSimulator.NormalNote": 146,
+    "FTLiveSimulator.SlideBeginNote": 36,
+    "FTLiveSimulator.SlideComboNote": 133,
+    "FTLiveSimulator.SlideEndNote": 36
+  },
+  "fieldBindings": 54,
+  "methodBindings": 12,
+  "idSetMatchesNativeDictionary": true,
+  "newNativeCallsInAudit": 0,
+  "wholeLiveCertified": false,
+  "physicalTouchTimingCertified": false,
+  "crossModelComparisonNotYetRun": true
+}
