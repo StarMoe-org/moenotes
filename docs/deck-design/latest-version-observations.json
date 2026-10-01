@@ -1,0 +1,33 @@
+{
+  "schema": "ournotes.latest-version-observations/1",
+  "collectedDate": "2026-10-01",
+  "observationTime": "Not recorded by these source reports; collection date is not query time.",
+  "observations": [
+    {
+      "environment": "Windows",
+      "sourceReport": "helpers/jp-version-client-read.json",
+      "sourceReportSha256": "d1b00e42e700c085d86125d087cbfcf2b29cd437c5e7f304c8965208ad824525",
+      "snapshotClientVersion": "1.0.4",
+      "actualApkClientVersion": "1.0.4",
+      "requestClientVersion": "1.0.4",
+      "status": "success",
+      "masterVersion": "1.0.0.300/52355a9de56a475f691b10ef58acba58",
+      "resourceVersion": "1.0.0.300",
+      "resourceHash": "223330d93bcef18aa092c73dbe3ac64d"
+    },
+    {
+      "environment": "CNB",
+      "sourceReport": "helpers/cnb64-evidence/jp-preflight-evidence.json",
+      "sourceReportSha256": "13dc17d144cbcf0badf2f9061e9f7ce657d945ef2dc6f29da60a537a2c630e23",
+      "clientVersion": "1.0.4",
+      "clientBuildEvidence": 10053,
+      "snapshotClientVersion": "1.0.4",
+      "status": "refused",
+      "errorType": "GameApiError",
+      "errorCode": "PERMISSION_DENIED",
+      "requestCount": 1,
+      "networkCredentialsPersisted": false
+    }
+  ],
+  "scope": "Sanitized Version observations, not a current whole-resource or active-IFix attestation; the differing results do not establish the cause of refusal."
+}

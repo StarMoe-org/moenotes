@@ -8,12 +8,14 @@ MoeNotes 是玩家入口。`ournotes-boxlens` 负责截图中的身份与可见�
 
 | 门槛 | 必须形成的结论 | 当前状态 |
 |---|---|---|
-| 最新版本建模 | 按区服冻结客户端/构建/签名、ELF/metadata、master/资源/谱面与激活补丁身份；核对关键规则、所有生效技能类型与模式；最新原生逐单元和逐帧差分，未验证内容显式列出 | **未通过**。日服 Android 1.0.4 / build 10053 完整包已找到，APK 与原生库/metadata 已按哈希绑定；仍需最新原生恢复/执行、patch 状态和语义对照。既有原生证明仍是 TW 1.0.1-25。今天的在线 Version 读取尚未成功，不能把 9/30 的 master 快照重标为当前 |
+| 最新版本建模 | 按区服冻结客户端/构建/签名、ELF/metadata、master/资源/谱面与激活补丁身份；核对关键规则、所有生效技能类型与模式；最新原生逐单元和逐帧差分，未验证内容显式列出 | **未通过**。JP 1.0.4 / 10053 已恢复、独立启动并完成部分数值原语；base/ARM64 split 内容签名通过。Windows 已有一次成功 Version 观察，CNB/GHA 查询仍被拒绝。真实培养/Snap factory 到完整 Live、活跃 IFix 与同源资源绑定尚未闭合；既有 TW 整场证明保留其版本范围 |
 | 搜索策略定稿 | 玩家真实目标→目标函数/约束；人类打法与随机/网络条件；物理队伍身份和 tie；精确搜索的合法域/上界/穷举证明；候选搜索的覆盖、质量、预算与可解释限制 | **未通过**。现有 finite-root/单条打法 PoC 能精确算条件值，尚未证明真实种子总体、人类失误分布、大池全局最优或全部最新规则；快速基准只作为策略样本 |
 
 日服 iOS 版本的原始来源为 [官方 App Store](https://apps.apple.com/jp/app/id6771716739) 与 Apple Lookup，发布日期 `2026-09-29T11:38:20Z`。这不是 Android ELF、运行时 IFix 或线上 master 已完成认证的证据。版本更新日志写了“修复”也不能替代对应逻辑对照。
 
 前置材料为 [最新模型验证矩阵](deck-design/model-validation.md)、[玩家目标与输入依赖](deck-design/player-objectives.md)、[搜索数学与质量门槛](deck-design/search-design.md)、[共享计算与 Snap 数据契约](deck-design/shared-evaluation-and-data.md)及[自动更新设计](deck-design/data-update.md)。先按这些材料补证、确定模型和策略，再选择 SDK 包装和页面实现；WASM 能跑、组件能渲染、mock 链路能完成都不能代替这两项。
+
+当前主线范围、证据分母、下一轮原生实验和四层接口汇总见[交付门槛](deck-design/primary-delivery-gates.md)。最新 Version 观察见[脱敏记录](deck-design/latest-version-observations.json)；成功观察不自动放行完整线上规则。
 
 ## 歌曲计算、组卡与留影效果共用模型
 

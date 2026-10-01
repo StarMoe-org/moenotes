@@ -5,9 +5,9 @@
 ## 当前实际调查状态
 
 - 完整日服 APK 对应 1.0.4、versionCode 10053，原生条目已按内容哈希绑定，见[来源记录](latest-native-source-binding.json)。是否可执行为 latest-native oracle 由模型线检查，不能仅凭文件名通过原生 gate。
-- 当前 nnnotes 源码真实支持 JP provider；本次研究配置尚需补齐日服配置，不能把配置缺项解释为“不支持日服”。
-- 按当前 `nnnotes.jp.Session.observe` 实际匿名调用 Version 返回 `UNAVAILABLE`，没有取得本次有效版本。错误类别已匿名记录；不是借用旧文件标成最新，也不是模型结果。
-- 2026-09-30 保存的日服数据是 master `1.0.0.300/52355a9de56a475f691b10ef58acba58`、资源版本 `1.0.0.300`。在新的 Version / manifest 确認前，它只能标为“已保存快照”。
+- 当前 nnnotes 源码真实支持 JP provider。配置错误和服务端拒绝分开记账，不能解释为“不支持日服”。
+- [补充 Version 观察](latest-version-observations.json)包含 Windows 使用实际客户端 `1.0.4` 的一次成功报告；CNB 使用同版本进行一次普通请求仍返回 `PERMISSION_DENIED`。两项源报告按 SHA 绑定，不记录动态 credential；原始报告没有查询时间，不能用收集日期冒充查询时间或断言拒绝原因。
+- 成功报告指向 master `1.0.0.300/52355a9de56a475f691b10ef58acba58`、资源版本 `1.0.0.300`、resource hash `223330d93bcef18aa092c73dbe3ac64d`，与 9/30 保存版本一致。完整 manifest、实际资源与活跃 IFix 的一致绑定仍未验收；不是完整线上规则认证。
 
 正确链路是 `Config(provider=jp) → Session.observe → Version body + response metadata → 同一快照的 master / catalog / asset`。实际 request metadata 是 `x-platform=android`、`x-client-version`，不是自行猜测的 `x-client-platform`。CDN credential 仅保留在 Session 内存，配置地址保留私有目录，公开清单只含版本、哈希与状态。
 
@@ -97,4 +97,4 @@ FixedDeck:   只评估用户给定物理编成
 
 ## 依据
 
-本轮已只读核查 nnnotes `src/nnnotes/{jp.py,gameapi.py,deckdata.py,musicdata.py}` 与 `docs/music-data.md`，MoeNotes `src/lib/chart-data/{ranking.ts,scenario.ts,types.ts,client.ts}`、`src/lib/music/data.ts`。尚未观察到本次成功的匿名最新 Version；也尚未将现有歌曲权重模型扩展为 Snap 全场模型。所有实现与最新对照必须在前述 gate 后继续。
+本轮已只读核查 nnnotes `src/nnnotes/{jp.py,gameapi.py,deckdata.py,musicdata.py}` 与 `docs/music-data.md`，MoeNotes `src/lib/chart-data/{ranking.ts,scenario.ts,types.ts,client.ts}`、`src/lib/music/data.ts`。已有补充成功 Version 观察，完整快照/活跃 patch 和真实持有 Snap 全场认证仍未通过；标准 profile 的逐歌 WASM 求值与真实账号 DeckSearch 分开。后续模型/搜索/接入按[主线交付门槛](primary-delivery-gates.md)继续。

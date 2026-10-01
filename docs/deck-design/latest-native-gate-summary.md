@@ -27,7 +27,7 @@ Il2CppDumper 锁定 commit `6fd1d13933f9a14a0a927d816720120894da8d96`，SDK `10.
 
 一次先前使用 Unicorn 内部时间片的 boot 在 runtime allocator 路径失败。通过移除共享内部计时、在进程外设置 timeout 后，上述两次无时间片执行独立通过；失败没有算入通过分母。批量规则执行也须维持无内部时间片与外部 deadline。
 
-通过最新原生 C API 实际取得 10 个目标 class 的字段 offset / type / flags、方法参数和返回类型。190/190 个方法的运行时 MethodInfo 首字 code pointer 与最新 dump 中相应 method entry 精确匹配，0 个 class unresolved。CardPower 的值类型大小与对齐另由 native `il2cpp_class_value_size` 读取。每个匹配 entry 附 64 字节代码前缀 SHA；它是明确长度的 entry 身份证据，不是完整函数语义 SHA。
+通过最新原生 C API 实际取得字段 offset / type / flags、方法参数和返回类型。补充 `native-class-layout.json`（SHA `c38742bc7079c1c19450fdab82a18dbbd4a9c3f895997f2eb8f63ff76b6239cc`）现有 11 类、199/199 个 MethodInfo 首字 code pointer 与最新 dump entry 一致，0 unresolved；早期 10 类/190 方法是先前范围。CardPower 大小与对齐另由 native `il2cpp_class_value_size` 读取。每个匹配 entry 附 64 字节代码前缀 SHA；它是明确长度的 entry 身份证据，不是完整函数语义 SHA。
 
 这些分母分别是恢复区、字面量 offset、runtime boot、目标 class 与方法身份。**它们都不是已通过的计分、技能、击奏或失败生命周期用例数**。这些机制继续按 [模型矩阵](model-validation.md)逐项验证，并绑定单独的输入与观察字段分母。
 
@@ -56,4 +56,4 @@ Il2CppDumper 锁定 commit `6fd1d13933f9a14a0a927d816720120894da8d96`，SDK `10.
 3. 用户 / power placeholder 必须替换为明确培养状态的 native Local Member / Support 数据，验证真实 factory 的 member / support 配对与 native shuffle 后共享 RNG 状态，再构造 SkillInput / SkillManager 与 ordinary / support / Gekisou 技能。使用真实 JP 卡与技能 level / effect / condition / target 形成覆盖分母；不从构造成功推导 condition / effect 全部正确。
 4. 先以一个单 worker 的短轨迹核实 setup / enter / frame / trigger / settle 的观察阶段和负控制，再增加长谱、边界、重叠、pool 限额、Gekisou 排名和零生命 / 继续 / 重试生命周期。重放同一 capture 或更换运行端不增加独立 native trace 数。
 
-当前实验阻断已经从“缺少最新包 / 原始 JP chart”转为**最新合法 gameplay / skill 上下文与调用边界尚未完成绑定和验收**：旧 capture 的数十个 TW VA、硬字段、generic display-name 选择与手工 vtable 不能直接套用；fresh adapter 当前拒绝未验证的手工 vtable 入口。C++ / managed 异常路径的 harness 支持也须在区分用例中明确，不能把 harness 退出当作游戏规则结果。现有 APK、metadata、saved JP 三表及真实 chart 已足够继续受控研究，当前在线 Version / IFix 缺口不会阻止这个离线域；它们仍阻止扩大为最新线上完整认证。
+当前实验阻断已经从“缺少最新包 / 原始 JP chart”转为**最新合法 gameplay / skill 上下文与调用边界尚未完成绑定和验收**：旧 capture 的 TW VA、硬字段、generic display-name 与手工 vtable 不能直接套用。C++ / managed 异常路径须区分 harness 退出与游戏规则结果。现有 APK、metadata、saved JP 三表与真实 chart 已足够继续 offline-base 研究。已有[Windows 成功 Version 观察](latest-version-observations.json)，但完整资源与活跃 IFix 尚未绑定，仍不能扩大为最新线上完整认证；后续实验与浏览器接入门槛见[主线记录](primary-delivery-gates.md)。

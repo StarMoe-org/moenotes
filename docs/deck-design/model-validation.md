@@ -6,8 +6,8 @@
 
 | 门禁 | 当前状态 | 已核实的事实 | 现实缺口与解除条件 |
 |---|---|---|---|
-| G1：目标客户端、平台与运行时 patch 身份 | **PARTIAL：Android 1.0.4 / build 10053 APK 与 SO / metadata 已绑定；恢复、签名完整验证、patch 与语义尚待验证** | [来源绑定](latest-native-source-binding.json)核实 APKPure 的完整 `10053` 包：XAPK manifest 和 AndroidManifest 一致为 `com.bushiroad.sirius`、`1.0.4` / `10053`；APK 文件 SHA 与 manifest 一致，SO / metadata 与下表逐项匹配。[证书记录](latest-apk-certificates.json)读取三个 split 的 v2/v3 证书，SHA 一致为 `34fd32c2860f454dd320930f6ba0876ea8cc8e60a3d8320b3277aa761072508e`，尚未完成 APK 内容签名密码学验证。[Apple 官方读取](official-store-read.json)另证明日本 iOS 商店 `1.0.4`，App ID `6771716739`，发布日期 `2026-09-29T11:38:20Z`；两平台证据独立。 | 对已绑定的最新 ARM64 SO 恢复保护区并校验 CRC、metadata、注册关系和原生执行；完成内容签名验证或保持明确限制；冻结实际生效 IFix 集合/哈希/加载条件，或证明指定实例没有生效 patch。取得完整 APK 解除了“没有最新包”的身份阻断，但未解除最新规则认证门禁。 |
-| G2：当前 JP master / resource 的新鲜度与一致快照 | **UNAVAILABLE：当前版本未重新确认；最后可信快照可用于离线研究** | 本轮 Windows 与 CNB 的匿名 `MasterdataService/Version` 查询均返回 `UNAVAILABLE`；[读取记录](latest-game-read.json)不是有效 Version 响应。最后可信 2026-09-30 快照来自 `runtime-data/provenance.json`，版本见下表。 | 成功取得官方 Version 响应及其时间/来源，下载或核验对应 master/resource manifest 和所需文件哈希。将规则表、谱面、音频长度、活动上下文绑定同一个快照。未解除前不得把 `1.0.0.300` 描述为“2026-10-01 当前最新版”。 |
+| G1：目标客户端、平台与运行时 patch 身份 | **PARTIAL：1.0.4 / 10053 已恢复及独立执行，base/ARM64 内容签名通过；活跃 patch 与完整语义未通过** | [来源绑定](latest-native-source-binding.json)核实包内 APK/SO/metadata；[签名检查](apk-signature-verification.json)验证 base、ARM64 split 的 v2/v3。[证书记录](latest-apk-certificates.json)的 SHA 为 `34fd32c2860f454dd320930f6ba0876ea8cc8e60a3d8320b3277aa761072508e`。[原生摘要](latest-native-gate-summary.md)记录恢复、独立 boot 和数值 pilot。iOS 商店记录独立于 Android 原生证据。 | Unity asset split 内容签名、source stamp、官方 Play delivery 对照仍有范围限制；冻结生效 IFix 或证明指定实例无 patch。真实培养/Snap/LiveSettings/SkillManager 到完整 Live 的原生语义尚未验收。 |
+| G2：当前 JP master / resource 的新鲜度与一致快照 | **PARTIAL：已有一次 Windows 成功 Version 观察；完整资源/活跃 patch 绑定未通过** | [补充脱敏观察](latest-version-observations.json)按源报告 SHA 记录客户端 `1.0.4`、master `1.0.0.300/52355…`、resource `1.0.0.300/223330…`；CNB 单次同版本请求为 `PERMISSION_DENIED`。早期 [UNAVAILABLE 记录](latest-game-read.json)保留历史，不再描述为唯一现状。 | 取得明确查询时间/来源并核验对应 manifest、规则表、谱面、音频和实际生效 patch。成功 Version 观察不等于全资源一致或线上完整模型认证；云端拒绝原因尚未确定。 |
 
 两个门禁独立：读取到新 master 不会补齐客户端机器码证据；取得新 APK 也不会自动证明使用的是它在当前区服实际加载的 master、资源和 patch。**老 native + 新 master 只是一种明确的混合输入实验，不能代替最新客户端建模。**
 
@@ -15,7 +15,7 @@
 
 [APK 内容签名检查](apk-signature-verification.json)另确认 `base.apk` 与 `split_config.arm64_v8a.apk` 的 apksigner 返回码为 0，v2/v3 均通过，signer certificate SHA 与证书记录一致。Unity 数据 split 的密码学检查尚未执行；SourceStamp 未通过验证，官方 Play delivery 字节比较也未建立。因此不将两个 split 的成功扩大成完整来源链或最新规则认证。
 
-[最新原生执行门禁摘要](latest-native-gate-summary.md)进一步记录两次独立启动成功，以及最新 C API 解析的 10 个目标 class、190/190 个 MethodInfo code pointer 与 dump entry 一致、0 unresolved。字段 offset、参数与返回类型从最新原生 API 读取。当前可开始 `offline-base + saved JP snapshot` 的真实数值 pilot；线上 patch 和当前源新鲜度不从这些结构证据继承认证。
+[最新原生执行门禁摘要](latest-native-gate-summary.md)记录两次独立启动成功。补充 `native-class-layout.json`（SHA `c38742bc7079c1c19450fdab82a18dbbd4a9c3f895997f2eb8f63ff76b6239cc`）现为 11 类、199/199 个 MethodInfo，0 unresolved；字段/参数/返回类型来自最新原生 API。它们仍是方法身份而非计分通过数。部分数值 pilot 已完成，范围与下一步见[交付门槛](primary-delivery-gates.md)。
 
 最后可信 JP 快照（来源为本轮 `runtime.tar` 内的 `runtime-data/provenance.json`，不是本轮成功的在线 Version 读取）：
 
@@ -92,4 +92,4 @@
 3. 确定玩家目标、输入与合法域，冻结搜索策略、可采纳上界与结束条件；小池独立 oracle 和必要差分通过。
 4. 才开始正式浏览器 SDK / Worker / UI 接入；原生与 WASM 的同源对拍证明运行端移植，不新增最新游戏原生证明。性能与首组候选时限是另一个验收项。
 
-当前待解除的是**最新已绑定 APK 的原生恢复、规则与运行时 patch 认证，以及当前 master 新鲜度核验**。已授权在 CNB 进行最新原生恢复、最小执行和大规模差分；每阶段通过自身门禁后才扩大实验。未验收 PoC 和旧版实测保留各自身份，不推进 SDK 安装、编译或新的浏览器组卡验收。
+当前待解除的是**合法真实培养/Snap 到完整 Live 的最新原生对照、活跃 patch/同源资源绑定，以及玩家目标与搜索策略验收**。原生恢复和部分 pilot 已通过，各自分母保留。已授权在 CNB 进行原生差分；先验收单 worker 的合法上下文和负控制，再扩大独立 case queue。未验收 PoC 不放行正式模型、搜索 SDK 或网页组卡。
