@@ -1,0 +1,40 @@
+{
+  "schema": "ournotes.apk-certificate-read/1",
+  "scope": "APK v2/v3 signing block certificate fingerprints read and size framing checked; no cryptographic APK content signature verification performed",
+  "files": [
+    {
+      "file": "base.apk",
+      "signingSchemes": [
+        "0x7109871a",
+        "0xf05368c0"
+      ],
+      "certificateSha256": [
+        "34fd32c2860f454dd320930f6ba0876ea8cc8e60a3d8320b3277aa761072508e"
+      ],
+      "cryptographicSignatureVerified": false
+    },
+    {
+      "file": "split_config.arm64_v8a.apk",
+      "signingSchemes": [
+        "0x7109871a",
+        "0xf05368c0"
+      ],
+      "certificateSha256": [
+        "34fd32c2860f454dd320930f6ba0876ea8cc8e60a3d8320b3277aa761072508e"
+      ],
+      "cryptographicSignatureVerified": false
+    },
+    {
+      "file": "split_UnityDataAssetPack.apk",
+      "signingSchemes": [
+        "0x7109871a",
+        "0xf05368c0"
+      ],
+      "certificateSha256": [
+        "34fd32c2860f454dd320930f6ba0876ea8cc8e60a3d8320b3277aa761072508e"
+      ],
+      "cryptographicSignatureVerified": false
+    }
+  ],
+  "sameCertificateAcrossSplits": true
+}
