@@ -20,7 +20,10 @@ function context(): ChartDataContext {
   const rows = chartRows(data).map((row) => ({ ...row, base: 1, weights: [1, 1, 1, 1, 1] }));
   const support = { battle: true, free: true, ranks: true, just: true };
   const state = parseChartDataQuery("?oh=0", { hasStats: true, support });
-  return { locale: "en-US", tr: (key) => key, data, rows, pool: rows, byScore: new Map(rows.map((row) => [row.scoreId, row])), bands: new Map(),
+  return { locale: "en-US", tr: (key, values) => key === "snap.measurementRow"
+    ? `${key}: ${values!.score} / ${values!.baseline} / ${values!.delta}`
+    : key === "snap.normalizedMeasurementHint" ? `${key}: ${values!.power}` : key,
+    data, rows, pool: rows, byScore: new Map(rows.map((row) => [row.scoreId, row])), bands: new Map(),
     hasStats: true, support, state, update: () => {}, skills: [1, 1, 1, 1, 1], title: (row) => String(row.musicId), bandName: () => "", bandColor: () => "", jacketUrl: () => null,
     songHref: () => "#", previewHref: () => "#", lengthOf: (row) => row.chartMs, eff: () => ({ rate: null, perMinute: null }), openChart: () => {},
     snap: { active: true, profile, source, measurement: { ...emptySnapRanking(snapProfileKey(profile), 1), sourceKey: snapSourceKey(source), status: "complete", done: 1, total: 2,
@@ -28,23 +31,63 @@ function context(): ChartDataContext {
       rows: new Map([[10, { scoreId: 10, score: measured, baselineScore: 1000000, delta: 234567, life: 1000, combo: 200, randomDraws: 4, convertedJudgements: 0 }]]) } } };
 }
 
-test("Snap event view shows fixed measurements without linear need, chance, frontier or room controls", () => {
+test("Snap efficiency preserves the existing columns using only the declared-power ratio", () => {
+  const ctx = context();
+  ctx.state.frontier = true;
+  ctx.state.overhead = 30;
+  for (const row of ctx.rows) row.weights = new Proxy(row.weights!, { get(target, key, receiver) {
+    if (/^\d+$/.test(String(key))) throw new Error("Legacy linear weights must not be read for Snap ranking");
+    return Reflect.get(target, key, receiver);
+  } });
+  const html = renderToStaticMarkup(<RankView ctx={ctx} />);
+  expect(html).toContain("snap.normalizedMeasurementHint: 300,000");
+  expect(html).toContain('class="num c-rate">4.115');
+  expect(html).toContain('class="num c-perMinute hi"><span class="mn-cd-bar" style="--w:100%">2.743');
+  expect(html).toContain('class="num dim c-relative">100.0%');
+  expect(html).toContain('class=" c-dom">–');
+  expect(html).toContain('title="snap.measurementRow: 1,234,567 / 1,000,000 / +234,567"');
+  expect(html).toContain('class="num c-rate">–');
+  expect(html).not.toContain('class="c-score');
+  expect(html).not.toContain("mn-cd-spread");
+  expect(html).not.toContain("snap.fixedGekisou");
+  expect(html).toContain("scenario.battle");
+  expect(html).toContain('title="snap.frontierUnavailable"');
+  expect(html).toContain('type="checkbox" disabled=""');
+  const ordinary = context(); ordinary.snap!.active = false;
+  expect(html.match(/<thead>.*?<\/thead>/)?.[0]).toBe(renderToStaticMarkup(<RankView ctx={ordinary} />).match(/<thead>.*?<\/thead>/)?.[0]);
+});
+test("Snap event preserves pending event columns without deriving linear need, chance or dominance", () => {
   const ctx = context();
   ctx.state.rankBy = "event";
   ctx.state.frontier = true;
+  ctx.state.power = 250000;
+  for (const row of ctx.rows) {
+    row.scoreRanks = [{ rank: "SS", requiredScore: 1000000, battleRequiredScore: 1000000 }];
+    row.weights = new Proxy(row.weights!, { get(target, key, receiver) {
+      if (/^\d+$/.test(String(key))) throw new Error("Legacy event model must not read linear weights for Snap ranking");
+      return Reflect.get(target, key, receiver);
+    } });
+  }
   const html = renderToStaticMarkup(<RankView ctx={ctx} />);
   expect(html).toContain(measured.toLocaleString());
   expect(html).toContain("snap.eventMeasurementHint");
-  expect(html).toContain("snap.delta");
-  expect(html).toContain("snap.perMinute");
-  expect(html).not.toContain('class="c-need');
-  expect(html).not.toContain('class="c-chance');
-  expect(html).not.toContain('class="c-dom');
+  expect(html).toContain('class="num c-need">–');
+  expect(html).toContain('class="num c-chance">–');
+  expect(html).toContain('class=" c-dom">–');
+  expect(html).toContain('class="num c-goal hi"><span class="mn-cd-bar" style="--w:0%">–');
+  expect(html).toContain('class="num c-perHour">60.0');
+  expect(html).toContain('class="num c-perHour">30.0');
   expect(html).not.toContain("scenario.roomHint");
-  expect(html).not.toContain('aria-label="target"');
+  expect(html).toContain('aria-label="target"');
   expect(html).toContain("chartsCount");
   // The missing second result remains missing; synthetic linear weights do not fill it.
-  expect((html.match(/c-score/g) ?? []).length).toBe(3);
+  expect((html.match(/snap.measurementRow:/g) ?? []).length).toBe(1);
+  expect(html).not.toContain('class="c-score');
+  expect(html).not.toContain('class="c-delta');
+  expect(html).not.toContain("mn-cd-beaten");
+  const ordinary = context(); ordinary.snap!.active = false; ordinary.state.rankBy = "event"; ordinary.state.power = ctx.state.power;
+  for (const row of ordinary.rows) row.scoreRanks = [{ rank: "SS", requiredScore: 1000000, battleRequiredScore: 1000000 }];
+  expect(html.match(/<thead>.*?<\/thead>/)?.[0]).toBe(renderToStaticMarkup(<RankView ctx={ordinary} />).match(/<thead>.*?<\/thead>/)?.[0]);
 });
 test("profile or source change hides old values before the next effect/Worker response", () => {
   const ctx = context();

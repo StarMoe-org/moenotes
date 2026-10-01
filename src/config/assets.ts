@@ -27,6 +27,13 @@ export const assetConfig = {
    * story site. A new file needs no rebuild of this site.
    */
   musicDataSite: (import.meta.env.PUBLIC_MUSIC_DATA_SITE || "https://storage.bdon.moe/moenotes/music-data").replace(/\/+$/, ""),
+  /** Region-specific nnnotes prefab libraries. Keep the game files outside the application source repository. */
+  gameUiLibraries: {
+    tw: import.meta.env.PUBLIC_GAME_UI_LIBRARY_TW || "",
+    jp: import.meta.env.PUBLIC_GAME_UI_LIBRARY_JP || "",
+    kr: import.meta.env.PUBLIC_GAME_UI_LIBRARY_KR || "",
+    en: import.meta.env.PUBLIC_GAME_UI_LIBRARY_EN || "",
+  },
   /** Shared song-page modules; published at the storage site's root, beside the music-data directory. */
   musicPlayerSite: (import.meta.env.PUBLIC_MUSIC_PLAYER_SITE || import.meta.env.PUBLIC_STORY_SITE || "https://storage.bdon.moe/moenotes").replace(/\/+$/, ""),
   /**

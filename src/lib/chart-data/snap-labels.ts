@@ -56,7 +56,11 @@ export function buildSnapReferenceCards(data: SnapDeckData, source: SnapLabelSou
   checkSource(data, source, ["MasterMemberCard", "MasterSupportCard", "MasterCharacter", "MasterBand", "MasterText"]);
   const characters = sourceRows<RawCharacter>(source, "MasterCharacter"), bands = sourceRows<RawBand>(source, "MasterBand"), texts = sourceRows<RawText>(source, "MasterText");
   return {
-    members: normalizeCards(sourceRows<RawMemberCard>(source, "MasterMemberCard"), characters, bands, texts, locale),
+    members: normalizeCards(sourceRows<RawMemberCard>(source, "MasterMemberCard"), characters, bands, texts, locale).map(card => {
+      const background = card.rarity === 2 ? bands.find(band => band.id === card.bandId)?.memberRarityRBackgroundAssetPath
+        : `MemberCard/${card.assetId}/member_background[formation]`;
+      return { ...card, ...(background ? { formationBackgroundKey: background } : {}) };
+    }),
     snaps: normalizeSupportCards(sourceRows<RawSupportCard>(source, "MasterSupportCard"), characters, bands, texts, locale),
   };
 }

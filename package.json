@@ -27,7 +27,7 @@
     "@tailwindcss/vite": "^4.1.18",
     "astro": "7.3.5",
     "framer-motion": "^12.40.0",
-    "ournotes-player": "0.1.5",
+    "ournotes-player": "0.1.6",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "tailwindcss": "^4.1.18"
@@ -39,6 +39,6 @@
     "typescript": "^5.9.3"
   },
   "patchedDependencies": {
-    "ournotes-player@0.1.5": "patches/ournotes-player@0.1.5.patch"
+    "ournotes-player@0.1.6": "patches/ournotes-player@0.1.6.patch"
   }
 }

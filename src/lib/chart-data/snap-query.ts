@@ -12,9 +12,11 @@ const integer = (value: string | undefined): number | null => value && /^\d+$/.t
 export function parseSnapQuery(query: URLSearchParams): SnapQueryState {
   const skills = (query.get("ss") ?? "").split(","), members = (query.get("sm") ?? "").split(",");
   const snapSkills = [0, 1, 2, 3, 4].map((i) => {
-    const [kind, id, level, extra] = (skills[i] ?? "").split(":");
+    const [kind, id, level, card, extra] = (skills[i] ?? "").split(":");
     const skillId = integer(id), skillLevel = integer(level);
-    return (kind === "support" || kind === "gekisou-support") && skillId && skillLevel && extra === undefined ? { kind, skillId, level: skillLevel } : null;
+    const cardId = integer(card);
+    return (kind === "support" || kind === "gekisou-support") && skillId && skillLevel && extra === undefined && (card === undefined || cardId !== null)
+      ? { kind, skillId, level: skillLevel, ...(cardId !== null ? { cardId } : {}) } : null;
   }) as unknown as FiveSlots<SnapSkillSelection | null>;
   const snapMembers = [0, 1, 2, 3, 4].map((i) => {
     const [id, level, extra] = (members[i] ?? "").split(":");
@@ -26,7 +28,7 @@ export function parseSnapQuery(query: URLSearchParams): SnapQueryState {
 }
 
 export function writeSnapQuery(query: URLSearchParams, state: SnapQueryState): void {
-  if (state.snapSkills.some(Boolean)) query.set("ss", state.snapSkills.map((skill) => skill ? `${skill.kind}:${skill.skillId}:${skill.level}` : "0").join(","));
+  if (state.snapSkills.some(Boolean)) query.set("ss", state.snapSkills.map((skill) => skill ? `${skill.kind}:${skill.skillId}:${skill.level}${skill.cardId !== undefined ? `:${skill.cardId}` : ""}` : "0").join(","));
   if (state.snapMembers.some(Boolean)) query.set("sm", state.snapMembers.map((member) => member ? `${member.memberId}:${member.gekisouLevel ?? 0}` : "0").join(","));
   if (state.snapPower !== 300000) query.set("mp", String(state.snapPower));
 }

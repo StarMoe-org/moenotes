@@ -73,11 +73,10 @@ export function ScenarioPanel({ ctx, rooms = false, missions = null }: { ctx: Ch
           value={state.mode}
           onPick={(mode) => update({ mode })}
           options={[
-            { value: "battle", label: tr(ctx.snap?.active ? "snap.fixedGekisou" : "scenario.battle") },
+            { value: "battle", label: tr("scenario.battle") },
             { value: "free", label: support.free ? tr("scenario.free") : `${tr("scenario.free")} · ${tr("scenario.pending")}`, disabled: !support.free },
           ]}
         />
-        {battle && ctx.snap?.active ? <small className="mn-cd-note">{tr("snap.fixedGekisouHint")}</small> : null}
       </div>
       {battle ? (
         <div className="mn-cd-field">
@@ -151,8 +150,8 @@ export default function SettingsPanel({ ctx, event = false, frontier = false, ap
         </>
       ) : null}
       {frontier ? (
-        <label className="mn-cd-check">
-          <input type="checkbox" checked={state.frontier} onChange={(e) => update({ frontier: e.target.checked })} />
+        <label className="mn-cd-check" title={ctx.snap?.active ? tr("snap.frontierUnavailable") : undefined}>
+          <input type="checkbox" checked={state.frontier} disabled={ctx.snap?.active} onChange={(e) => update({ frontier: e.target.checked })} />
           {tr("frontier")}
         </label>
       ) : null}
