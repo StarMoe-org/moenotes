@@ -12,6 +12,7 @@
 | JP CardPower | 948,973 个独立输入、1,950,919 字段零差异，其中真实 member max × level 行对 4,910 个 | 合法玩家全局状态、五槽/Snap/场景组合；大量取整和溢出输入不计为合法队伍数 |
 | JP 原始谱面与洗牌 | 一份真实 chart 的 id/time/op 三列 1,092 字段；六个 root 的成员洗牌与后续随机状态 | 真实 parser settings、判定/fever/技能事件；无 Snap、注入 75,038 power 的构造证据不能认证完整配对 |
 | Snap 歌曲排行 | `standard-skill-profile`、声明综合力/打法/种子/顺序下的 WASM 逐歌复算与界面 | 真实持有与培养的 DeckSearch；普通/撃奏 Snap 全依赖、共同随机流与完整 Live 原生差分 |
+| CNB 组卡研究编译 | 基于 current-core `4e1f1ce` 的 locked CLI/WASM release、274 项测试与 28 组合成 UTF-8 浏览器对拍；124 源文件前后 SHA 一致、126 产物独立回收核验 | 最新原生认证、正式 GoalSpec/roster resolver、step/resume、真实截图和手机性能；不升级为正式全域 v1 |
 | 浏览器识别 | 两份 ONNX 权重的合成张量 batch 1/8 算子/形状对照 | 真实截图定位、裁切、检索、字段、拒识、跨图合并和浏览器准确率 |
 | 截图到结果 PoC | 八项宿主 HTTP 路径验收；约两秒调用宿主 Rust solver | 全浏览器识别与搜索、手机性能；宿主 Rust 不等于 ARM64 游戏原生执行 |
 
@@ -67,3 +68,5 @@ Local 初始化的输入与原始报告 SHA、培养读回、14.365 s / 829,036 
 先完成 M/S，再实施 B。所有模型、搜索与接入 PR 保持 Draft；已获得单独合并授权的数据修复/自动管线按其独立验证处理。
 
 用户后续已授权在 CNB 验证与编译组卡。基于当前数值核心的薄 CLI/WASM 适配研究可以继续，需绑定 base commit、源码差分、lock 与实际产物；未经认证的 network/finished 生命周期必须明确拒绝，不得省略后返回成功。编译或运行端一致性不解除 M/S，也不将同步调用升级为可分片、可恢复的正式浏览器搜索。
+
+已完成的构建与独立回收记录见 [OurNotes Deck Draft #5](https://github.com/empty-sekai/ournotes-deck/pull/5) 和其中的 [CNB 验证摘要](https://github.com/nichinichisou0609/ournotes-deck/blob/67e07a1470f0913f1fdaf5ae7cbd2f9afe2988e1/docs/research/cnb-wasm-2026-10-01/build-summary.json)。报告声明 synthetic current-core；network/finished 的任何显式输入被拒绝，deadline 仅保留完整候选，硬取消终止整个 Worker。旧共享源码目录的证明已失效；当前包由独占目录重建，source manifest SHA `f5dd37e162540825b82af740918236c25d60265cd10593d19bdd8957181d3a8c`，artifact bundle SHA `019fcb29eb0218d784f08172d831603b7fa5e5439760051adfcc94c2750c67b6`。不认证任意 roster 输入的合法性，也不包含浏览器 OCR。
