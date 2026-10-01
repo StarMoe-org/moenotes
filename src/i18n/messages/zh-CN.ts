@@ -851,6 +851,7 @@ export const zhCN = {
       power: "综合力 {power}",
       columns: {
         rank: "名次",
+        namecard: "名片",
         player: "玩家",
         score: "分数",
         deck: "队伍",

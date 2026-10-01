@@ -813,6 +813,7 @@ export const enUS = {
       power: "Deck power {power}",
       columns: {
         rank: "#",
+        namecard: "Card",
         player: "Player",
         score: "Score",
         deck: "Deck",

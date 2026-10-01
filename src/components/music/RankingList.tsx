@@ -38,8 +38,9 @@ export default function RankingList({ locale, rows, cards, assetUrl, boundaries 
 
   return (
     <>
-      <div className="hidden grid-cols-[3rem_minmax(0,1fr)_7rem] gap-3 border-b border-dashed border-[var(--mn-border)]/60 px-2 pb-2 text-[10px] font-black uppercase tracking-wider text-[var(--mn-text-muted)] sm:grid md:grid-cols-[3rem_minmax(0,1fr)_7rem_12.5rem]">
+      <div className="hidden grid-cols-[3rem_minmax(0,1fr)_7rem] gap-3 border-b border-dashed border-[var(--mn-border)]/60 px-2 pb-2 text-[10px] font-black uppercase tracking-wider text-[var(--mn-text-muted)] sm:grid md:grid-cols-[3rem_3rem_minmax(0,1fr)_7rem_12.5rem]">
         <span>{t(locale, "music.ranking.columns.rank")}</span>
+        <span className="hidden md:block" aria-label={t(locale, "music.ranking.columns.namecard")} />
         <span>{t(locale, "music.ranking.columns.player")}</span>
         <span className="text-right">{t(locale, "music.ranking.columns.score")}</span>
         <span className="hidden md:block">{t(locale, "music.ranking.columns.deck")}</span>
@@ -101,13 +102,14 @@ function RankingRowItem({ locale, row, cards, assetUrl, numbers, open, onToggle,
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        className="mn-focus grid w-full grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-[var(--mn-cream-deep)] sm:grid-cols-[3rem_minmax(0,1fr)_7rem] md:grid-cols-[3rem_minmax(0,1fr)_7rem_12.5rem]"
+        className="mn-focus grid w-full grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-[var(--mn-cream-deep)] sm:grid-cols-[3rem_minmax(0,1fr)_7rem] md:grid-cols-[3rem_3rem_minmax(0,1fr)_7rem_12.5rem]"
       >
         <span className={`font-mono text-base font-black ${podium}`}>
           {row.rank}
           {row.tied && <span className="ml-0.5 align-top text-[9px] font-bold text-[var(--mn-text-muted)]" title={t(locale, "music.ranking.tied")}>=</span>}
         </span>
-        <span className="flex min-w-0 items-center gap-2">
+        {/* Desktop: always show namecard slot (empty if no card) */}
+        <span className="hidden md:block">
           {hasNamecard && (
             <PlayerNamecard
               server={server}
@@ -118,33 +120,66 @@ function RankingRowItem({ locale, row, cards, assetUrl, numbers, open, onToggle,
               useRankingApi={true}
             />
           )}
-          <span className="min-w-0">
-            <span className="block truncate text-sm font-bold text-[var(--mn-text)]">{row.name}</span>
-            {row.totalPower !== null && (
-              <span className="block truncate text-[10px] font-semibold text-[var(--mn-text-muted)]">
-                {t(locale, "music.ranking.power", { power: numbers.format(row.totalPower) })}
-              </span>
-            )}
-          </span>
         </span>
-        <span className="text-right font-mono text-sm font-black text-[var(--mn-text)]">{numbers.format(row.score)}</span>
+        {/* Mobile: horizontally scrollable player info (ID + power), fixed rank and score */}
+        <div className="min-w-0 overflow-x-auto scrollbar-none md:overflow-visible">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="min-w-0 flex-shrink-0">
+              <span className="block truncate text-sm font-bold text-[var(--mn-text)]">{row.name}</span>
+              {row.totalPower !== null && (
+                <span className="block whitespace-nowrap text-[10px] font-semibold text-[var(--mn-text-muted)]">
+                  {t(locale, "music.ranking.power", { power: numbers.format(row.totalPower) })}
+                </span>
+              )}
+            </span>
+          </div>
+        </div>
+        <span className="flex-shrink-0 text-right font-mono text-sm font-black text-[var(--mn-text)]">{numbers.format(row.score)}</span>
         <span className="hidden grid-cols-5 gap-1 md:grid" aria-hidden="true">
           {row.cards.slice(0, 5).map((card) => <MemberThumb key={card.slot} card={card} cards={cards} assetUrl={assetUrl} locale={locale} compact />)}
         </span>
       </button>
-      {open && <DeckDetail locale={locale} row={row} cards={cards} assetUrl={assetUrl} numbers={numbers} />}
+      {open && <DeckDetail locale={locale} row={row} cards={cards} assetUrl={assetUrl} numbers={numbers} server={server} profileId={row.profileId} profileCard={row.profileCard} />}
     </li>
   );
 }
 
-function DeckDetail({ locale, row, cards, assetUrl, numbers }: { locale: AppLocale; row: RankingRow; cards: DeckCardLookup; assetUrl: AssetUrl; numbers: Intl.NumberFormat }) {
+function DeckDetail({ locale, row, cards, assetUrl, numbers, server, profileId, profileCard }: {
+  locale: AppLocale;
+  row: RankingRow;
+  cards: DeckCardLookup;
+  assetUrl: AssetUrl;
+  numbers: Intl.NumberFormat;
+  server: GameServer;
+  profileId: string | null;
+  profileCard: { name: string | null; images: number } | null;
+}) {
   const cardRoute = findRouteById("card-detail");
   const supportRoute = findRouteById("support-card-detail");
   const href = (route: typeof cardRoute, id: number | null) =>
     route && id !== null ? localizePath(buildDynamicPath(route.pattern ?? route.path, { id: String(id) }), locale) : undefined;
+  const hasNamecard = profileCard && profileCard.images > 0;
 
   return (
     <div className="mx-2 mb-3 rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-surface)] p-3 sm:p-4">
+      {hasNamecard && profileId && (
+        <div className="mb-4 flex items-center gap-3">
+          <PlayerNamecard
+            server={server}
+            profileId={profileId}
+            images={profileCard.images}
+            playerName={row.name}
+            variant="thumbnail"
+            useRankingApi={true}
+          />
+          <div className="min-w-0">
+            <div className="truncate text-sm font-bold text-[var(--mn-text)]">{row.name}</div>
+            {profileCard.name && (
+              <div className="truncate text-xs text-[var(--mn-text-muted)]">{profileCard.name}</div>
+            )}
+          </div>
+        </div>
+      )}
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 text-[11px] font-semibold text-[var(--mn-text-muted)]">
         <span className="font-bold text-[var(--mn-text)]">{row.deckName || t(locale, "music.ranking.columns.deck")}</span>
         {row.totalPower !== null && <span>{t(locale, "music.ranking.power", { power: numbers.format(row.totalPower) })}</span>}

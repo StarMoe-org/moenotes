@@ -845,6 +845,7 @@ export const jaJP = {
       power: "総合力 {power}",
       columns: {
         rank: "順位",
+        namecard: "名刺",
         player: "プレイヤー",
         score: "スコア",
         deck: "編成",

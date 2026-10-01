@@ -813,6 +813,7 @@ export const koKR = {
       power: "종합력 {power}",
       columns: {
         rank: "순위",
+        namecard: "명함",
         player: "플레이어",
         score: "점수",
         deck: "덱",
