@@ -22,6 +22,9 @@
       },
     },
   },
+  "patchedDependencies": {
+    "ournotes-player@0.1.5": "patches/ournotes-player@0.1.5.patch",
+  },
   "packages": {
     "@astrojs/check": ["@astrojs/check@0.9.10", "https://registry.npmmirror.com/@astrojs/check/-/check-0.9.10.tgz", { "dependencies": { "@astrojs/language-server": "^2.16.7", "chokidar": "^4.0.3", "kleur": "^4.1.5", "yargs": "^18.0.0" }, "peerDependencies": { "typescript": "^5.0.0 || ^6.0.0" }, "bin": { "astro-check": "./bin/astro-check.js" } }, "sha512-zgx/UQMozdjOa3bOxjgeCFdtpE3c9rRX6xHwa+2QXvy8z8Akifu2AtubHyv/zzC2znO8dl8fFWL4K+Ba9kS8HQ=="],
 

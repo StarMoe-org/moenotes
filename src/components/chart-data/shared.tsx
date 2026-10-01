@@ -4,6 +4,8 @@ import type { ChartRow } from "@/lib/chart-data/catalog";
 import type { ChartDataState } from "@/lib/chart-data/query";
 import type { ScenarioSupport } from "@/lib/chart-data/scenario";
 import type { DataBand, MusicData } from "@/lib/chart-data/types";
+import type { SnapRankingSource, SnapRankingState } from "@/lib/chart-data/snap-client";
+import type { SnapEvaluationProfile } from "@/lib/chart-data/snap-types";
 import { DIFFICULTY_SHORT_LABELS, isMusicDifficulty } from "@/lib/music/difficulty";
 
 /** Everything the views share: the data, the choices and the text helpers. */
@@ -34,6 +36,7 @@ export interface ChartDataContext {
   openChart: (scoreId: number) => void;
   /** The rows the band and difficulty filters leave. */
   pool: ChartRow[];
+  snap?: { active: boolean; profile: SnapEvaluationProfile; measurement: SnapRankingState; source: SnapRankingSource | null } | undefined;
 }
 
 export const fmt = (v: number | null | undefined, d = 2) => (v === null || v === undefined || !Number.isFinite(v) ? "–" : v.toFixed(d));

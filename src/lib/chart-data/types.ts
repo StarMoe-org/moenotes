@@ -210,10 +210,19 @@ export interface CatalogSkill {
   description?: DataText | null;
 }
 
-/** The Gekisou skill names (top-level `gekisouCatalog`). */
+/** Same-snapshot member and Snap card labels used when the full replay label sidecar is absent. */
+export interface CatalogCard {
+  id: number;
+  name?: DataText | null;
+  subtitle?: DataText | null;
+}
+
+/** The Gekisou skill names and optional source card labels (top-level `gekisouCatalog`). */
 export interface GekisouCatalog {
   skills?: readonly CatalogSkill[];
   supportSkills?: readonly CatalogSkill[];
+  members?: readonly CatalogCard[];
+  snaps?: readonly CatalogCard[];
 }
 
 export interface DataChart {
@@ -275,6 +284,7 @@ export interface DataProvenance {
 
 export interface MusicData {
   format?: string;
+  /** Resources belong to this music-data snapshot and are SHA-verified before replay. */
   replay?: ReplayReference;
   provenance?: DataProvenance;
   languages?: readonly string[];

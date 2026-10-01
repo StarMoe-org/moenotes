@@ -37,7 +37,7 @@ import type { DeckCardLookup } from "@/lib/game-api/music-ranking";
 import { buildSupportCardGrowth, type RawSupportCardRank, type SupportCardGrowth } from "@/lib/support-cards/growth";
 import { normalizeCharacters, type CharacterViewModel, type RawCharacter as RawCharacterDetail } from "@/lib/characters/data";
 import { normalizeSupportCards, type RawSupportCard, type SupportCardViewModel } from "@/lib/support-cards/data";
-import { normalizeSupportSkill, type RawSupportSkillEffect } from "@/lib/support-cards/skills";
+import { normalizeSupportSkill, supportSkillTargetNames, type RawSupportSkillEffect, type RawSupportSkillTarget } from "@/lib/support-cards/skills";
 import {
   normalizeMusic,
   type MusicViewModel,
@@ -705,7 +705,7 @@ const EMPTY_SUPPORT_CARD_DETAIL: SupportCardDetailData = { card: null, skills: [
 
 function supportCardDetailOn(server: GameServer, locale: AppLocale, cardId: number): Promise<SupportCardDetailData | null> {
   return memo(`support-card-detail:${server}:${locale}:${cardId}`, async () => {
-    const [cards, rawCards, levels, ranks, supportSkills, supportEffects, gekisouSkills, gekisouEffects, icons, conditionSets, conditions, cumulativeConditions, textTable, characters] = await Promise.all([
+    const [cards, rawCards, levels, ranks, supportSkills, supportEffects, gekisouSkills, gekisouEffects, icons, conditionSets, conditions, cumulativeConditions, textTable, characters, bands, targets] = await Promise.all([
       supportCardsOn(server, locale),
       table<RawSupportCard>("MasterSupportCard.json", server),
       table<RawCardLevel>("MasterSupportCardLevel.json", server),
@@ -720,15 +720,18 @@ function supportCardDetailOn(server: GameServer, locale: AppLocale, cardId: numb
       table<RawSkillCumulativeCondition>("MasterSkillCumulativeCondition.json", server),
       texts(server),
       table<RawCharacter>("MasterCharacter.json", server),
+      table<RawBand>("MasterBand.json", server),
+      table<RawSupportSkillTarget>("MasterSkillTarget.json", server),
     ]);
     const card = cards.find((entry) => entry.id === cardId) ?? null;
     const rawCard = rawCards._allData.find((entry) => entry.id === cardId);
     if (!card || !rawCard) return null;
     const growth = buildSupportCardGrowth(rawCard, levels._allData, ranks._allData);
     const characterMap = new Map(characters._allData.map((entry) => [entry.id, entry]));
+    const targetNames = supportSkillTargetNames(targets._allData, characters._allData, bands._allData, textTable._allData, locale);
     const skills = [
-      normalizeSupportSkill("support", card.supportSkillId01, supportSkills._allData, supportEffects._allData, icons._allData, textTable._allData, locale, conditionSets._allData, conditions._allData, cumulativeConditions._allData, characterMap),
-      normalizeSupportSkill("gekisou-support", card.gekisouSupportSkillId01, gekisouSkills._allData, gekisouEffects._allData, icons._allData, textTable._allData, locale, conditionSets._allData, conditions._allData, cumulativeConditions._allData, characterMap),
+      normalizeSupportSkill("support", card.supportSkillId01, supportSkills._allData, supportEffects._allData, icons._allData, textTable._allData, locale, conditionSets._allData, conditions._allData, cumulativeConditions._allData, characterMap, targetNames),
+      normalizeSupportSkill("gekisou-support", card.gekisouSupportSkillId01, gekisouSkills._allData, gekisouEffects._allData, icons._allData, textTable._allData, locale, conditionSets._allData, conditions._allData, cumulativeConditions._allData, characterMap, targetNames),
     ].filter((entry): entry is SkillViewModel => entry !== null);
     return { card, skills, growth };
   });
