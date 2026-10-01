@@ -37,5 +37,8 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "typescript": "^5.9.3"
+  },
+  "patchedDependencies": {
+    "ournotes-player@0.1.5": "patches/ournotes-player@0.1.5.patch"
   }
 }

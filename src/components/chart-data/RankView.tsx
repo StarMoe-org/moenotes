@@ -2,11 +2,12 @@ import { useMemo, type ReactNode } from "react";
 import { matches, sortBy, type ChartRow } from "@/lib/chart-data/catalog";
 import { EFF_RANKS, RANKS, SPEEDS, roomSize, type RankBy } from "@/lib/chart-data/query";
 import { X_MAX, eventDominance, formatLength, lengthMs, orderRates, rank, rankThreshold, reachChance, requiredPower } from "@/lib/chart-data/ranking";
+import { snapProfileKey, snapSourceKey } from "@/lib/chart-data/snap-client";
 import SettingsPanel, { ScenarioPanel } from "./SettingsPanel";
 import { Icon, LevelBadge, Seg, SongCell, fmt, fmtInt, type ChartDataContext } from "./shared";
 
 type Col = "rank" | "song" | "level" | "time" | "bpm" | "notes" | "density" | "rate" | "perMinute" | "relative" | "dom"
-  | "need" | "chance" | "perHour" | "goal" | "skip";
+  | "need" | "chance" | "perHour" | "goal" | "skip" | "score" | "delta";
 
 interface Listed extends ChartRow {
   rate?: number;
@@ -17,6 +18,18 @@ interface Listed extends ChartRow {
   goal?: number | null;
   dominatedBy?: number[];
   frontier?: boolean;
+  score?: number | null;
+  baselineScore?: number | null;
+  delta?: number | null;
+}
+
+const snapActive = (ctx: ChartDataContext) => !!ctx.snap?.active && (ctx.state.rankBy === "efficiency" || ctx.state.rankBy === "event");
+function currentMeasurement(ctx: ChartDataContext) {
+  const snap = ctx.snap;
+  if (!snap?.source || snap.measurement.profileKey !== snapProfileKey(snap.profile)
+    || snap.measurement.sourceKey !== snapSourceKey(snap.source)) return null;
+  if (snap.measurement.source && snap.measurement.source.manifestSha256 !== snap.source.reference.sha256) return null;
+  return snap.measurement;
 }
 
 /** The ranking of the pool by the chosen measure, as ournotes-player's chart data page ranks it. */
@@ -27,7 +40,19 @@ function useRanking(ctx: ChartDataContext) {
     let hi: Col | "" = "";
     let unsorted: Listed[] | null = null;                                    // the list the dominance indexes refer to
     const cols: Col[] = ["rank", "song", "level", "time", "bpm", "notes", "density"];
-    if (state.rankBy === "efficiency") {
+    if (snapActive(ctx)) {
+      const measured = currentMeasurement(ctx);
+      list = pool.map((row) => {
+        const result = measured?.rows.get(row.scoreId);
+        const duration = ctx.lengthOf(row);
+        const time = duration === null ? null : duration + state.overhead * 1000;
+        return { ...row, score: result?.score ?? null, baselineScore: result?.baselineScore ?? null, delta: result?.delta ?? null,
+          perMinute: result && time !== null && time > 0 ? result.score * 60000 / time : null };
+      });
+      list = sortBy(list, (row) => row.perMinute);
+      cols.push("score", "delta", "perMinute", ...(state.rankBy === "efficiency" ? ["relative" as const] : []));
+      hi = "perMinute";
+    } else if (state.rankBy === "efficiency") {
       unsorted = list.filter((r) => r.weights);
       list = rank(unsorted as Array<ChartRow & { base: number; weights: number[] }>, { skills, source: state.len, overheadMs: state.overhead * 1000 });
       cols.push("rate", "perMinute", "relative", "dom");
@@ -79,12 +104,15 @@ function useRanking(ctx: ChartDataContext) {
 
 export default function RankView({ ctx }: { ctx: ChartDataContext }) {
   const { tr, state, update, hasStats } = ctx;
-  const tabs = RANKS.filter((k) => hasStats || !EFF_RANKS.has(k)).map((k) => ({ value: k, label: tr(`rankBy.${k}`) }));
+  const active = snapActive(ctx);
+  const measurement = active ? currentMeasurement(ctx) : null;
+  const tabs = RANKS.filter((k) => hasStats || (!!ctx.snap?.active && (k === "efficiency" || k === "event")) || !EFF_RANKS.has(k)).map((k) => ({ value: k, label: tr(`rankBy.${k}`) }));
   return (
     <>
       <div className="mn-cd-rank-head">
         <Seg<RankBy> variant="tabs" label={tr("views.rank")} value={state.rankBy} onPick={(rankBy) => update({ rankBy })} options={tabs} />
       </div>
+      {active ? <p className="mn-cd-hint">{tr(state.rankBy === "event" ? "snap.eventMeasurementHint" : "snap.measurementHint")}</p> : null}
         {state.rankBy === "speed" ? (
           <div className="mn-cd-hint">
           <Seg label={tr("rankBy.speed")} value={state.speedBy} onPick={(speedBy) => update({ speedBy })} options={SPEEDS.map((k) => ({ value: k, label: tr(`speedBy.${k}`) }))} />
@@ -92,11 +120,20 @@ export default function RankView({ ctx }: { ctx: ChartDataContext }) {
         ) : null}
       {state.rankBy === "efficiency" || state.rankBy === "event" ? (
         <>
-          <ScenarioPanel ctx={ctx} rooms={state.rankBy === "event"} />
-          <SettingsPanel ctx={ctx} event={state.rankBy === "event"} frontier />
+          <ScenarioPanel ctx={ctx} rooms={state.rankBy === "event" && !active} />
+          <SettingsPanel ctx={ctx} event={state.rankBy === "event" && !active} frontier={!active} />
         </>
       ) : null}
-      {!hasStats ? <p className="mn-cd-hint warn">{tr("noStats")}</p> : null}
+      {!hasStats && !active ? <p className="mn-cd-hint warn">{tr("noStats")}</p> : null}
+      {active ? (
+        <p className={`mn-cd-snap-state${measurement?.error ? " warn" : ""}`} role={measurement?.error ? "alert" : "status"}>
+          {measurement?.status === "complete" ? tr("snap.ready", { n: measurement.done })
+            : measurement?.status === "needs-context" ? tr("snap.needsContext")
+            : measurement?.status === "unsupported" ? tr("snap.unsupportedScenario")
+            : measurement?.status === "error" ? tr("snap.calculationError")
+            : tr("snap.calculating", { done: measurement?.done ?? 0, total: measurement?.total ?? ctx.pool.length })}
+        </p>
+      ) : null}
       <RankTable ctx={ctx} />
     </>
   );
@@ -112,7 +149,9 @@ function RankTable({ ctx }: { ctx: ChartDataContext }) {
     <span className="mn-cd-bar" style={{ ["--w" as string]: `${barMax && typeof v === "number" ? Math.max(0, Math.min(100, (100 * v) / barMax)) : 0}%` }}>{text}</span>
   );
   const clear = () => ctx.update({ band: "", search: "", frontier: false, diffs: ["easy", "normal", "hard", "expert"] });
-  const head = (k: Col) => (k === "bpm" && state.rankBy === "speed" && state.speedBy === "bpmMax" ? tr("speedBy.bpmMax") : tr(`col.${k}`));
+  const head = (k: Col) => k === "score" || k === "delta" ? tr(`snap.${k}`)
+    : k === "perMinute" && snapActive(ctx) ? tr("snap.perMinute")
+    : k === "bpm" && state.rankBy === "speed" && state.speedBy === "bpmMax" ? tr("speedBy.bpmMax") : tr(`col.${k}`);
   const names = (r: Listed) => (r.dominatedBy ?? []).map((j) => unsorted?.[j]).filter((x): x is Listed => !!x)
     .map((x) => `${ctx.title(x)} ${tr(`difficulties.${x.difficulty}`)}`).join(tr("listSeparator"));
 
@@ -128,6 +167,8 @@ function RankTable({ ctx }: { ctx: ChartDataContext }) {
         return hi === "bpm" ? bar(main, text) : text;
       }
       case "notes": return hi === "notes" ? bar(r.notes, fmtInt(r.notes)) : fmtInt(r.notes);
+      case "score": return <span title={typeof r.baselineScore === "number" ? `${tr("snap.baseline")}: ${fmtInt(r.baselineScore)}` : undefined}>{fmtInt(r.score)}</span>;
+      case "delta": return typeof r.delta === "number" ? <span title={`${tr("snap.baseline")}: ${fmtInt(r.baselineScore)}`}>{r.delta > 0 ? "+" : ""}{fmtInt(r.delta)}</span> : "–";
       case "density": return hi === "density" ? bar(r.density, fmt(r.density)) : fmt(r.density);
       case "rate": {
         if (!r.weights) return fmt(r.rate, 3);
@@ -147,7 +188,7 @@ function RankTable({ ctx }: { ctx: ChartDataContext }) {
       case "skip": return bar(r.skip, fmt(r.skip, 3));
     }
   };
-  const tdClass = (k: Col) => ["num", "level", "time", "bpm", "notes", "density", "rate", "need", "chance", "perHour", "goal", "perMinute", "relative", "skip"].includes(k)
+  const tdClass = (k: Col) => ["num", "level", "time", "bpm", "notes", "density", "rate", "need", "chance", "perHour", "goal", "perMinute", "relative", "skip", "score", "delta"].includes(k)
     ? `num${k === "relative" ? " dim" : ""}` : k === "song" ? "song-td" : k === "rank" ? "rank" : "";
 
   return (
@@ -167,6 +208,7 @@ function RankTable({ ctx }: { ctx: ChartDataContext }) {
                 {list.map((r, i) => (
                   <tr
                     key={r.scoreId}
+                    data-score-id={r.scoreId}
                     className={r.frontier && unsorted ? "on-front" : undefined}
                     tabIndex={0}
                     onClick={() => ctx.openChart(r.scoreId)}

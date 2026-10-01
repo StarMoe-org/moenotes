@@ -20,3 +20,10 @@ export async function fetchMusicData(signal?: AbortSignal): Promise<MusicData> {
   if (typeof data.format === "string" && data.format !== MUSIC_DATA_FORMAT) throw new MusicDataError(`music-data.json: format ${data.format}`);
   return data;
 }
+
+/** Transport only. The replay bridge verifies the exact manifest SHA, size and snapshot identity. */
+export async function fetchMusicReplayResource(url: string, signal?: AbortSignal): Promise<ArrayBuffer> {
+  const response = await fetch(url, { credentials: "omit", signal: signal ?? null });
+  if (!response.ok) throw new MusicDataError(`Replay resource: HTTP ${response.status}`);
+  return response.arrayBuffer();
+}

@@ -1,6 +1,7 @@
 import { DIFFICULTIES, SCORE_RANKS, type Difficulty, type LengthSource, type ScoreRank } from "./ranking";
 import { BEST_RANKS, RANK_MAX, formatRanks, parseRanks, type Scenario, type ScenarioId, type ScenarioSupport } from "./scenario";
 import { axisGoal } from "./pareto";
+import { parseSnapQuery, writeSnapQuery, type SnapQueryState } from "./snap-query";
 
 /**
  * The chart data tool's choices live in the query, as on ournotes-player's chart data page (the page's language is
@@ -30,7 +31,7 @@ export const EFF_AXES: ReadonlySet<Axis> = new Set(["perMinute", "rate", "base",
 export const SKILL_SLOTS = 5;
 const DEFAULT_SKILLS = "100,100,100,100,100";
 
-export interface ChartDataState {
+export interface ChartDataState extends SnapQueryState {
   view: View;
   band: string;
   diffs: Difficulty[];
@@ -94,6 +95,7 @@ export function parseChartDataQuery(search: string, ctx: QueryContext): ChartDat
   const parsedAx = oneOf(AXES, ax) ? ax : "displayLevel";
   const parsedAy = oneOf(AXES, ay) ? ay : defaultY(ctx);
   return {
+    ...parseSnapQuery(q),
     view: oneOf(VIEWS, view) ? view : "rank",
     band: q.get("band") || "",
     diffs: (q.get("d") || "expert").split(",").filter((d): d is Difficulty => oneOf(DIFFICULTIES, d)),
@@ -146,6 +148,7 @@ export function serializeChartDataQuery(state: ChartDataState, ctx: QueryContext
   put("xg", state.xGoal, axisGoal(state.ax));
   put("yg", state.yGoal, axisGoal(state.ay));
   put("c", state.chart, null);
+  writeSnapQuery(p, state);
   let text = p.toString();
   if (state.frontier) text += `${text ? "&" : ""}frontier`;
   return text;

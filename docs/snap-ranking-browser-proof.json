@@ -1,0 +1,37 @@
+{
+  "observedAt": "2026-10-01",
+  "scope": "CNB Chromium, existing Rust WASM and a SHA-bound saved TW snapshot; not latest JP runtime certification",
+  "source": {
+    "region": "tw",
+    "masterVersion": "0b21c9f4a3911370d5f981fb894c7544",
+    "modelCommit": "dbd9cf01a4854808dceb6aedcd4041af372faeee",
+    "fixtureManifestSha256": "27cc19ec2cc30594984e1db02f717221d8977e7b40ec5a505b8695ed8e2b388d",
+    "deckDataSha256": "589e5631cc4595bb4da12bc15841b6c87cedc8662cfb48342c1d6a0f703ef8a4",
+    "labelsSha256": "a27d19c14b286f1263c2aef5f369b23cae799c9e4f600ee0a60512bbf4257984"
+  },
+  "ui": {
+    "defaultSlots": 5,
+    "defaultSelected": 0,
+    "defaultReplayRequests": 0,
+    "profile": { "memberSkillPercent": [100,100,100,100,100], "power": 300000, "greatFraction": 0.4, "justFraction": 1, "mode": "fixedSoloGekisou", "ranks": [1,1,1], "seed": 1, "fps": 60, "skillOrder": [0,1,2,3,4] },
+    "skill": { "kind": "support", "skillId": 31, "level": 1 },
+    "oneSlot": { "memberIds": [1,null,null,null,null], "gekisouLevels": [null,null,null,null,null], "chartsCompleted": 85, "youth": { "score":4459467,"delta":5124 }, "ave": { "score":2850116,"delta":1320 } },
+    "fiveSlots": { "memberIds": [1,2,3,4,5], "gekisouLevels": [null,null,null,null,null], "chartsCompleted": 85, "youth": { "score":4469543,"delta":15200 }, "ave": { "score":2866889,"delta":18093 } },
+    "urlReloadSameResult": true,
+    "needsContextCanReopenPicker": true,
+    "resetSelected": 0,
+    "resetRemovesSelectionQuery": true,
+    "mobileViewport": [390,844],
+    "mobileDocumentOverflow": false,
+    "pageErrors": []
+  },
+  "productionWorker": {
+    "build": "Vite production ES-module Worker",
+    "profileDifferenceFromUi": { "seed":0,"pairedGekisouLevels":[1,1,1,1,1] },
+    "matchesIndependentSameInputWasmProbe": true,
+    "rows": [
+      { "scoreId":10002103,"score":4469543,"baselineScore":4454343,"delta":15200,"convertedJudgements":15 },
+      { "scoreId":10002603,"score":2900352,"baselineScore":2882211,"delta":18141,"convertedJudgements":15 }
+    ]
+  }
+}

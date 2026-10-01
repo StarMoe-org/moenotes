@@ -282,4 +282,12 @@ export interface MusicData {
   deck?: { model?: { power?: number } | null; kinds?: readonly DeckKind[]; gekisouAptitude?: FileAptitude | null } | null;
   gekisouCatalog?: GekisouCatalog | null;
   songs?: readonly DataSong[];
+  /** Resources belong to this music-data snapshot and are SHA-verified before replay. */
+  replay?: import("./snap-types").SnapReplayReference;
+  gekisouCatalog?: {
+    skills?: readonly { id: number; name?: DataText | null; description?: DataText | null }[];
+    supportSkills?: readonly { id: number; name?: DataText | null; description?: DataText | null }[];
+    members?: readonly { id: number; name?: DataText | null; subtitle?: DataText | null }[];
+    snaps?: readonly { id: number; name?: DataText | null; subtitle?: DataText | null }[];
+  };
 }

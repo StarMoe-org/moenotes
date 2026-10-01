@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import type { AppLocale } from "@/config/locales";
+import { assetConfig } from "@/config/assets";
 import { t } from "@/i18n";
 import type { ChartDataGuide } from "@/i18n/guides/chart-data";
 import { localizePath } from "@/i18n/routing";
@@ -12,6 +13,8 @@ import { parseChartDataQuery, playScenario, serializeChartDataQuery, VIEWS, type
 import { scenarioSupport } from "@/lib/chart-data/scenario";
 import { localizeDataText } from "@/lib/chart-data/text";
 import type { MusicData } from "@/lib/chart-data/types";
+import { chartSnapProfile, snapDisplayedMeasurement } from "@/lib/chart-data/snap-profile";
+import { emptySnapRanking, type SnapRankingCatalogue, type SnapRankingSource, type SnapRankingState } from "@/lib/chart-data/snap-client";
 import { getChartPreviewHref } from "@/lib/music/chart-preview";
 import { getMusicJacketUrl } from "@/lib/music/data";
 import { isMusicDifficulty } from "@/lib/music/difficulty";
@@ -20,6 +23,8 @@ import ChartDetail from "./ChartDetail";
 import ChartsView from "./ChartsView";
 import GuideView from "./GuideView";
 import RankView from "./RankView";
+import SnapRankingController from "./SnapRankingController";
+import SnapRankingPanel from "./SnapRankingPanel";
 import { Icon, diffShort, type ChartDataContext } from "./shared";
 
 interface Props {
@@ -44,6 +49,11 @@ export default function ChartDataTool({ locale, guide }: Props) {
   const [view, setView] = useState<View>("rank");
   const [restored, setRestored] = useState(false);
   const [state, setState] = useState<ChartDataState | null>(null);
+  const [snapRequested, setSnapRequested] = useState(false);
+  const [snapCatalogue, setSnapCatalogue] = useState<SnapRankingCatalogue | null>(null);
+  const [snapCatalogueError, setSnapCatalogueError] = useState(false);
+  const [snapAttempt, setSnapAttempt] = useState(0);
+  const [snapMeasurement, setSnapMeasurement] = useState<SnapRankingState>(emptySnapRanking);
 
   useEffect(() => {
     const v = new URLSearchParams(window.location.search).get("v");
@@ -61,6 +71,7 @@ export default function ChartDataTool({ locale, guide }: Props) {
   }, [attempt]);
 
   const data = load.status === "ready" ? load.data : null;
+  useEffect(() => { setSnapCatalogue(null); setSnapCatalogueError(false); }, [data]);
   const support = useMemo(() => scenarioSupport(data), [data]);
   const hasStats = support.battle || support.free;
   const queryContext = useMemo<QueryContext>(() => ({ hasStats, support }), [hasStats, support]);
@@ -102,6 +113,14 @@ export default function ChartDataTool({ locale, guide }: Props) {
   const mode = state?.mode, ranks = state?.ranks, great = state?.great, just = state?.just;
   const scenario = useMemo(() => (mode && ranks && great !== undefined && just !== undefined ? playScenario({ mode, ranks, great, just }) : null), [mode, ranks, great, just]);
   const rows = useMemo(() => (data && scenario ? chartRows(data, scenario) : []), [data, scenario]);
+  const snapActive = current?.snapSkills.some(Boolean) ?? false;
+  const snapEvaluation = useMemo(() => current ? chartSnapProfile(current, snapCatalogue?.data) : null, [current, snapCatalogue]);
+  const snapSource = useMemo<SnapRankingSource | null>(() => {
+    const region = data?.provenance?.region, masterVersion = data?.provenance?.master?.version, modelCommit = data?.provenance?.deck?.commit;
+    return data?.replay && region && masterVersion && modelCommit && (snapRequested || snapActive)
+      ? { site: assetConfig.musicDataSite, reference: data.replay, expected: { region, masterVersion, modelCommit } } : null;
+  }, [data, snapRequested, snapActive]);
+  const snapScoreIds = useMemo(() => rows.filter((r) => current?.diffs.includes(r.difficulty as typeof DIFFICULTIES[number]) && (!current.band || r.bandIds.map(String).includes(current.band))).map((r) => r.scoreId), [rows, current?.diffs, current?.band]);
   const ctx = useMemo<ChartDataContext | null>(() => {
     if (!data || !current) return null;
     const bands = new Map((data.bands ?? []).map((b) => [String(b.id), b]));
@@ -133,8 +152,9 @@ export default function ChartDataTool({ locale, guide }: Props) {
         : { rate: null, perMinute: null }),
       openChart: (scoreId) => update({ chart: scoreId }),
       pool: rows.filter((r) => current.diffs.includes(r.difficulty as typeof DIFFICULTIES[number]) && (!current.band || r.bandIds.map(String).includes(current.band))),
+      snap: snapEvaluation ? { active: snapActive, profile: snapEvaluation.profile, measurement: snapDisplayedMeasurement(snapEvaluation, snapSource, snapMeasurement), source: snapSource } : undefined,
     };
-  }, [data, current, rows, locale, tr, hasStats, support, update]);
+  }, [data, current, rows, locale, tr, hasStats, support, update, snapEvaluation, snapActive, snapMeasurement, snapSource]);
 
   const detail = ctx && current?.chart ? ctx.byScore.get(current.chart) ?? null : null;
 
@@ -162,12 +182,20 @@ export default function ChartDataTool({ locale, guide }: Props) {
                 <small>{load.message}</small>
                 <button type="button" className="mn-cd-ghost" onClick={() => setAttempt((n) => n + 1)}>{tr("retry")}</button>
               </div>
-            ) : ctx && view === "rank" ? <BackgroundRankView ctx={ctx} /> : ctx ? <BackgroundChartsView ctx={ctx} /> : null}
+            ) : ctx && view === "rank" ? <>
+              <SnapRankingPanel ctx={ctx} catalogue={snapCatalogue} measurement={snapMeasurement}
+                loading={!!snapSource && !snapCatalogue} invalidMembers={snapEvaluation?.invalidMembers ?? []}
+                available={!!data?.replay} catalogueError={snapCatalogueError} onOpen={() => { setSnapRequested(true); if (snapCatalogueError) { setSnapCatalogueError(false); setSnapAttempt((value) => value + 1); } }} />
+              <BackgroundRankView ctx={ctx} />
+            </> : ctx ? <BackgroundChartsView ctx={ctx} /> : null}
           </main>
         </>
       )}
 
       {data ? <Footer locale={locale} data={data} /> : null}
+      {snapEvaluation ? <SnapRankingController key={snapAttempt} source={snapSource} profile={snapEvaluation.profile} scoreIds={snapScoreIds}
+        enabled={snapActive && view === "rank" && snapEvaluation.invalidMembers.length === 0} locale={locale}
+        onState={setSnapMeasurement} onCatalogue={setSnapCatalogue} onCatalogueError={() => setSnapCatalogueError(true)} /> : null}
 
       {ctx ? (
         <Modal
@@ -228,14 +256,15 @@ function Footer({ locale, data }: { locale: AppLocale; data: MusicData }) {
   const c = p.client ?? {};
   const d = p.deck ?? null;
   const development = p.developmentSample;
-  // the data is the same on every server as far as we know; the region and versions it was taken from go in the hint
+  // Region snapshots can differ in score ranks and skills; always name the actual data source.
   const client = c.versionName ? `${c.versionName}${c.versionCode ? ` (${c.versionCode})` : ""}` : "?";
   const master = m.version ?? "?";
+  const region = p.region && ["tw", "jp", "en", "kr"].includes(p.region) ? t(locale, `gameServer.names.${p.region}`) : p.region ?? "?";
   const tr = (key: string, values?: Record<string, string | number>) => t(locale, `chartData.${key}`, values);
   return (
     <footer className="mn-cd-foot">
       <span>
-        <span title={tr("sourceHint", { region: p.region ?? "?", master, client })}>{tr("source", { version: /^[0-9a-f]{32}$/i.test(master) ? master.slice(0, 8) : master })}</span>
+        <span title={tr("sourceHint", { region: p.region ?? "?", master, client })}>{tr("source", { region, version: /^[0-9a-f]{32}$/i.test(master) ? master.slice(0, 8) : master })}</span>
         {d?.source && d.commit ? (
           <>
             {` · ${tr("deckModel")} `}
