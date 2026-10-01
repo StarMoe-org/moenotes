@@ -1,14 +1,17 @@
 {
   "schema": "ournotes.latest-game-read/1",
-  "observedAtUtc": "2026-10-01T04:12:06.443472+00:00",
+  "collectedAtUtc": "2026-10-01T05:00:10.1314729Z",
+  "observationTime": "not recorded by source report; collection time is not query time",
   "region": "jp",
   "requestClientVersion": "1.0.4",
-  "source": "unvalidated client-extracted URL candidate, anonymous Version attempt",
-  "sourceSha256": "ca6c84247d398e0d839afd7b29d424ec2b4c041128e27768a1a13042df9c87e7",
-  "candidateCount": 1,
-  "serviceUrlValidation": "not established for this early attempt; it is not evidence that the configured official endpoint is unavailable",
-  "nativeEquivalence": "not established",
-  "status": "candidate-read-failed",
+  "source": "nnnotes.jp.Session.observe with client service URI index 2; sanitized CNB report",
+  "reportSha256": "286096821a95c5a6194df7244e0ad0d4b72ad5ed9e74a11535def333bd18fc03",
+  "inputApiCandidateIndex": 2,
+  "status": "query-failed",
   "errorType": "GameApiError",
-  "error": "game API call Version to the API root failed: UNAVAILABLE (server unreachable)"
+  "diagnosticCategories": [
+    "UNAVAILABLE"
+  ],
+  "responseVersion": null,
+  "nativeEquivalence": "not established"
 }

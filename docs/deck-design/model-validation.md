@@ -11,7 +11,9 @@
 
 两个门禁独立：读取到新 master 不会补齐客户端机器码证据；取得新 APK 也不会自动证明使用的是它在当前区服实际加载的 master、资源和 patch。**老 native + 新 master 只是一种明确的混合输入实验，不能代替最新客户端建模。**
 
-本轮原生恢复进展：最新保护区的三个 CRC 已逐项匹配，错误候选均失败；loader 的 275 个轮转与 1,096 个编码符号，已在最新 ARM64 对应函数中执行并与恢复结果比较一致。metadata 已校验 31 个表区和全部 47,081 个 string offsets 的单调性及边界，并修正恢复工具在头部 XOR 终点的错误。当前正在执行首次完整运行时启动验证。上述计数属于恢复与结构检查，**不是新增计分/技能原生用例**；完整启动、对象布局、激活 patch 及游戏语义仍须独立通过。
+本轮原生恢复进展：最新保护区的三个 CRC 已逐项匹配，错误候选均失败；loader 的 275 个轮转与 1,096 个编码符号，已在最新 ARM64 对应函数中执行并与恢复结果比较一致。metadata 已校验 31 个表区和全部 47,081 个 string offsets 的单调性及边界，并修正恢复工具在头部 XOR 终点的错误。首次全新运行时启动已返回 `il2cpp_init=1`、218 个 assemblies，包含 `App.Runtime.dll`；没有加载旧 snapshot，也没有 game-image HLE。启动稳定性复核、最新类/函数 ABI 和字段布局映射仍在进行。上述计数属于恢复、结构与启动检查，**不是新增计分/技能原生用例**；激活 patch 及游戏语义仍须独立通过。
+
+[APK 内容签名检查](apk-signature-verification.json)另确认 `base.apk` 与 `split_config.arm64_v8a.apk` 的 apksigner 返回码为 0，v2/v3 均通过，signer certificate SHA 与证书记录一致。Unity 数据 split 的密码学检查尚未执行；SourceStamp 未通过验证，官方 Play delivery 字节比较也未建立。因此不将两个 split 的成功扩大成完整来源链或最新规则认证。
 
 最后可信 JP 快照（来源为本轮 `runtime.tar` 内的 `runtime-data/provenance.json`，不是本轮成功的在线 Version 读取）：
 
