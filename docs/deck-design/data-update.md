@@ -2,19 +2,19 @@
 
 状态：2026-10-01，Draft 设计。修复既有数据发布流程可先进行；最新游戏建模和搜索策略的验收仍是正式组卡功能的前置条件。本文件不表示自动更新修复已部署。
 
-发布仓库已形成 [nnnotes Draft PR #7](https://github.com/StarMoe-org/nnnotes/pull/7)：默认 TW/JP 独立矩阵、内容/消费端身份触发、manifest 一致性、发布前两次源复核、同区服普通/prebuilt 发布锁，以及逐首核对原始单人/房间门槛。验证为 177 passed、5 项可选环境测试 skipped，三份 workflow 通过 actionlint（未运行 shellcheck）；TW 与已保存 JP 数据各 85 首的真实源门槛核对通过。
+发布仓库已形成 [nnnotes Draft PR #7](https://github.com/StarMoe-org/nnnotes/pull/7)：默认 TW/JP 独立矩阵、内容/消费端身份触发、manifest 一致性、发布前两次源复核、同区服普通/prebuilt 发布锁，以及逐首核对原始单人/房间门槛。验证为 183 passed、5 项可选环境测试 skipped，三份 workflow 通过 actionlint（未运行 shellcheck）；TW 与已保存 JP 数据各 85 首的真实源门槛核对通过。
 
-该 Draft 没有部署新矩阵，也没有实现下文的多资源原子 manifest 消费协议或任意 Snap 动态求值。当前 main 的 catalog 修复单独使用 [dry run](https://github.com/StarMoe-org/nnnotes/actions/runs/36817548100) 验证，不写生产数据；其完整结果仍待结束。
+该 Draft 没有部署新矩阵，也没有实现下文的多资源原子 manifest 消费协议或任意 Snap 动态求值。当前 main 的 catalog 修复单独使用 [dry run](https://github.com/StarMoe-org/nnnotes/actions/runs/36817548100) 验证，不写生产数据；其完整 build/gates/dry-publish 已成功。
 
 ## 当前实际链路与故障
 
 StarMoe nnnotes 已有 `music-data.yml`：接收 `masterdata-updated`，每日补扫，并允许手动强制重建。它比较 master/resource/client 版本、resource hash、Deck/nnnotes commit 和 recipe，构建后运行 schema、来源、谱面、统计、音乐长度与消费端 smoke 检查。已有归档、发布开关和上传读回校验，应在此基础上修复。
 
-截至本轮检查，[最近一次定时任务](https://github.com/StarMoe-org/nnnotes/actions/runs/36699637364)的 plan 成功、Build 步骤失败；之前三次 dispatch 也失败。实际错误是谱面 `10010900` 的资产不存在，涉及 catalog 与源快照不一致。当前发布仓库 main `c5f39f8` 已加入按 snapshot resource version 选择 catalog、核对 hash 并禁止回退到不匹配 catalog 的修复；需要新的完整 dry run 验证，不重复复制已有修复。添加定时器本身不会解除此故障。
+截至本轮检查，[最近一次定时任务](https://github.com/StarMoe-org/nnnotes/actions/runs/36699637364)的 plan 成功、Build 步骤失败；之前三次 dispatch 也失败。实际错误是谱面 `10010900` 的资产不存在，涉及 catalog 与源快照不一致。当前发布仓库 main `c5f39f8` 已加入按 snapshot resource version 选择 catalog、核对 hash 并禁止回退到不匹配 catalog 的修复；本轮唯一完整 force/dry-run 已成功，不重复复制已有修复。添加定时器本身不会解除此故障。
 
 MoeNotes 当前客户端直接读取 `music-data.json`。默认线上文件在本轮读取时为 TW、客户端 `1.0.1/25`、master `0b21c9f4a3911370d5f981fb894c7544`，SHA-256 为 `983896151d3ed69d9dfe26044225907e33be037e4b74589e110ded64780f8738`。这份文件含 85 首歌；网页能读取文件，不证明它仍是对应区服的当前版本。
 
-用户提供的两张门槛截图分别与《青春コンプレックス》（`100021`）的上述 TW 门槛及既有 JP 快照的 `requiredScore` 完全相符。JP 的 `battleRequiredScore` 又是另一组值。回归必须保留区服和字段单位，不能将两张图直接解释为同一版本的算法修复。
+用户提供的第二套单人门槛此前只能与已保存 JP 表对应。新的严格 TW 源核对确认 master `74639bc3f98486a22b1232f232213def` 同样已采用该组单人门槛，并将房间门槛更新为另一组值；不能继续只解释为区服差异。两曲 MasterLiveMusic 与各四个 MasterLiveMusicScore 行无字段差分；尚无新版谱面原始字节对照，不能声称 note-score 公式或谱面 bug 已复现。完整原始门槛 old→new 与 metadata/direct-GameAPI 观察边界见[两曲源表回归](music-meta-refresh-design.md)。
 
 ## 更新单元
 
