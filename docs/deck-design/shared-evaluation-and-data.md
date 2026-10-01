@@ -6,8 +6,8 @@
 
 - 完整日服 APK 对应 1.0.4、versionCode 10053，原生条目已按内容哈希绑定，见[来源记录](latest-native-source-binding.json)。是否可执行为 latest-native oracle 由模型线检查，不能仅凭文件名通过原生 gate。
 - 当前 nnnotes 源码真实支持 JP provider。配置错误和服务端拒绝分开记账，不能解释为“不支持日服”。
-- [补充 Version 观察](latest-version-observations.json)包含 Windows 使用实际客户端 `1.0.4` 的一次成功报告；CNB 使用同版本进行一次普通请求仍返回 `PERMISSION_DENIED`。两项源报告按 SHA 绑定，不记录动态 credential；原始报告没有查询时间，不能用收集日期冒充查询时间或断言拒绝原因。
-- 成功报告指向 master `1.0.0.300/52355a9de56a475f691b10ef58acba58`、资源版本 `1.0.0.300`、resource hash `223330d93bcef18aa092c73dbe3ac64d`，与 9/30 保存版本一致。完整 manifest、实际资源与活跃 IFix 的一致绑定仍未验收；不是完整线上规则认证。
+- [补充 Version 观察](latest-version-observations.json)保留早期 Windows 成功/CNB 拒绝的源报告，并新增 `2026-10-01T13:46:58.119Z` 的一次普通 Windows 请求成功，绑定真实 APK `1.0.4/10053`。每项按源 SHA 绑定，动态 credential 不保存；早期报告无查询时间，不用文件日期替代。拒绝原因仍未确定。
+- 新观察仍指向 master `1.0.0.300/52355a9de56a475f691b10ef58acba58`、资源版本 `1.0.0.300`、resource hash `223330d93bcef18aa092c73dbe3ac64d`；同源 catalog `3,135,645 B`、SHA `409e188690ab1147fbdfbe69b15729d8f86e76f815388c06fef9a33072f0975e` 与 saved JP 一致。已确认当前 Version/catalog 身份；所有所需 manifest/表/谱面/音频及活跃 IFix 的完整绑定仍需验收。目录未发现明确补丁名字不证明运行时无补丁。
 
 正确链路是 `Config(provider=jp) → Session.observe → Version body + response metadata → 同一快照的 master / catalog / asset`。实际 request metadata 是 `x-platform=android`、`x-client-version`，不是自行猜测的 `x-client-platform`。CDN credential 仅保留在 Session 内存，配置地址保留私有目录，公开清单只含版本、哈希与状态。
 

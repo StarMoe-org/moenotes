@@ -1,7 +1,7 @@
 {
   "schema": "ournotes.latest-version-observations/1",
   "collectedDate": "2026-10-01",
-  "observationTime": "Not recorded by these source reports; collection date is not query time.",
+  "observationTime": "Earlier reports did not record query time; the later Windows entry records its actual observedAtUtc. Collection date is not query time.",
   "observations": [
     {
       "environment": "Windows",
@@ -14,6 +14,32 @@
       "masterVersion": "1.0.0.300/52355a9de56a475f691b10ef58acba58",
       "resourceVersion": "1.0.0.300",
       "resourceHash": "223330d93bcef18aa092c73dbe3ac64d"
+    },
+    {
+      "environment": "Windows",
+      "sourceReport": "helpers/g2-jp-source/observation.json",
+      "sourceReportSha256": "4016cd2db9a1c320d45e5ddaea668ae432f59925396a2441cc56d2da4f139cbb",
+      "observedAtUtc": "2026-10-01T13:46:58.119Z",
+      "observationAttempts": 1,
+      "clientApk": {
+        "package": "com.bushiroad.sirius",
+        "versionName": "1.0.4",
+        "versionCode": 10053,
+        "sha256": "4a095057b6cdc473b7ff67d82e88198507ae9c3a5f4114786d5cd2ad5f340d44"
+      },
+      "requestClientVersion": "1.0.4",
+      "status": "success",
+      "masterVersion": "1.0.0.300/52355a9de56a475f691b10ef58acba58",
+      "resourceVersion": "1.0.0.300",
+      "resourceHash": "223330d93bcef18aa092c73dbe3ac64d",
+      "catalog": {
+        "sha256": "409e188690ab1147fbdfbe69b15729d8f86e76f815388c06fef9a33072f0975e",
+        "bytes": 3135645,
+        "keyCount": 30609,
+        "locationCount": 32771
+      },
+      "networkCredentialsPersisted": false,
+      "activePatchState": "unconfirmed"
     },
     {
       "environment": "CNB",
