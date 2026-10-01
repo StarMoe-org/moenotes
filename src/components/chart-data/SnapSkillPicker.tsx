@@ -20,7 +20,7 @@ interface Props {
   onOpen?: () => void;
   onSelect: (slot: number, selection: SnapSkillSelection | null) => void;
   onReset: () => void;
-  renderContext?: (slot: number, choice: SnapSkillChoice) => ReactNode;
+  renderContext?: (slot: number, choice: SnapSkillChoice | undefined) => ReactNode;
 }
 
 /** Five paired effect slots. Artwork, filters and accessible dialog come from the site's component library. */
@@ -44,7 +44,7 @@ export default function SnapSkillPicker({ locale, choices, selections, cards, lo
   };
   const art = (choice: SnapSkillChoice, className: string) => {
     const card = choice.cardIds.map((id) => cards?.get(id)).find(Boolean);
-    return card ? <SupportCardArtwork assetId={card.assetId} characterIds={card.characterIds} rarity={card.rarity}
+    return card ? <SupportCardArtwork key={`${card.id}:${card.assetId}`} assetId={card.assetId} characterIds={card.characterIds} rarity={card.rarity}
       cardType={card.cardType} alt="" attributeLabel={t(locale, `cards.attributes.${card.cardType}`)} fallbackLabel={card.name} className={className} />
       : <span className={`mn-cd-snap-symbol ${className}`} aria-hidden="true"><Icon name="star" /></span>;
   };
@@ -58,6 +58,7 @@ export default function SnapSkillPicker({ locale, choices, selections, cards, lo
       <div className="mn-cd-snap-slots">
         {selections.map((selection, index) => {
           const choice = selectedChoice(selection);
+          const context = renderContext?.(index, choice);
           return (
             <div key={index} data-snap-slot={index} className={`mn-cd-snap-slot${selection ? " selected" : ""}`}>
               <button type="button" className="mn-cd-snap-slot-button" aria-haspopup="dialog" aria-expanded={slot === index}
@@ -67,7 +68,7 @@ export default function SnapSkillPicker({ locale, choices, selections, cards, lo
                 <span className="mn-cd-snap-slot-name">{choice ? title(choice) : selection ? tr("unavailable") : tr("none")}</span>
                 <span className="mn-cd-snap-slot-meta">{choice ? `${tr(`kind.${choice.kind}`)} · ${tr("level", { n: choice.level })}` : tr("choose")}</span>
               </button>
-              {choice && renderContext ? <div className="mn-cd-snap-context">{renderContext(index, choice)}</div> : null}
+              {context ? <div className="mn-cd-snap-context">{context}</div> : null}
               {selection ? <button type="button" className="mn-cd-snap-remove" aria-label={tr("removeSlot", { n: index + 1 })} onClick={() => onSelect(index, null)}>×</button> : null}
             </div>
           );

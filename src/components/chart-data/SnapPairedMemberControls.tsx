@@ -17,7 +17,7 @@ export default function SnapPairedMemberControls({ locale, members, value, onCha
   const member = members.find((entry) => entry.id === value?.memberId);
   const vm = member?.vm;
   return <div className="mn-cd-snap-paired">
-    {vm ? <MemberCardArtwork assetId={vm.assetId} characterId={vm.characterId} rarity={vm.rarity} cardType={vm.cardType}
+    {vm ? <MemberCardArtwork key={`${vm.id}:${vm.assetId}`} assetId={vm.assetId} characterId={vm.characterId} rarity={vm.rarity} cardType={vm.cardType}
       alt="" attributeLabel={t(locale, `cards.attributes.${vm.cardType}`)} fallbackLabel={member!.name} className="mn-cd-snap-member-art" /> : null}
     <label><span>{tr("pairedMember")}</span><select value={value?.memberId ?? ""} onChange={(event) => onChange(event.target.value ? { memberId: Number(event.target.value), gekisouLevel: null } : null)}>
       <option value="">{tr("chooseMember")}</option>

@@ -1,6 +1,7 @@
 import type { AppLocale } from "@/config/locales";
 import type { SnapLabelSource } from "./snap-labels";
 import type { SnapDeckData, SnapEvaluationProfile, SnapReplayReference, SnapSkillChoice } from "./snap-types";
+import type { MusicData } from "./types";
 
 export interface SnapRankingSource {
   site: string;
@@ -14,6 +15,15 @@ export interface SnapRankingCatalogue {
   data: SnapDeckData;
   labelSource?: SnapLabelSource;
   source: SnapMeasurementSource;
+}
+
+/** Reject late catalogue projections before invoking source-bound view model builders. */
+export function isCurrentSnapCatalogue(catalogue: SnapRankingCatalogue | null, music: MusicData | null): catalogue is SnapRankingCatalogue {
+  const master = catalogue?.data.provenance.master as { version?: string } | undefined;
+  const model = catalogue?.data.provenance.deck as { commit?: string } | undefined;
+  return !!catalogue && !!music?.replay && catalogue.source.manifestSha256 === music.replay.sha256
+    && catalogue.data.provenance.region === music.provenance?.region
+    && master?.version === music.provenance?.master?.version && model?.commit === music.provenance?.deck?.commit;
 }
 export interface SnapMeasuredRow {
   scoreId: number;
@@ -51,6 +61,11 @@ export type SnapWorkerResponse =
 /** Conservative identity: changes in any declared input invalidate displayed rows. */
 export const snapProfileKey = (profile: SnapEvaluationProfile): string => JSON.stringify(profile);
 export const snapSourceKey = (source: SnapRankingSource): string => JSON.stringify(source);
+export function currentSnapRanking(profile: SnapEvaluationProfile, source: SnapRankingSource | null, measurement: SnapRankingState): SnapRankingState | null {
+  if (!source || measurement.profileKey !== snapProfileKey(profile) || measurement.sourceKey !== snapSourceKey(source)
+    || (measurement.source && measurement.source.manifestSha256 !== source.reference.sha256)) return null;
+  return measurement;
+}
 export const emptySnapRanking = (profileKey = "", revision = 0): SnapRankingState => ({ status: "idle", revision, profileKey, sourceKey: "", done: 0, total: 0, rows: new Map() });
 
 export interface SnapWorkerPort {

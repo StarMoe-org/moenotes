@@ -5,6 +5,7 @@ import { SCORE_RANKS, chartFigures, formatLength, modelPower, orderRates, plainK
 import { FREE } from "@/lib/chart-data/scenario";
 import AptitudeDetail from "./AptitudeDetail";
 import ReplayDetail from "./ReplayDetail";
+import { currentSnapRanking } from "@/lib/chart-data/snap-client";
 import { MISSIONS, ScenarioPanel } from "./SettingsPanel";
 import { Heading, Icon, Jacket, fmt, fmtInt, diffShort, SongLink, type ChartDataContext } from "./shared";
 
@@ -55,8 +56,8 @@ function Timeline({ ctx, row }: { ctx: ChartDataContext; row: ChartRow }) {
         );
       })}
       {(c.skillEventsMs ?? []).map((ms, i) => {
-        const wEnd = Math.min(ms + 5000, row.chartMs || ms + 5000);
-        const w = eventW(i);
+        const wEnd = ctx.snap?.active ? ms : Math.min(ms + 5000, row.chartMs || ms + 5000);
+        const w = ctx.snap?.active ? null : eventW(i);
         const op = w !== null && maxW ? 0.35 + (0.65 * w) / maxW : 0.8;
         return (
           <g key={`s${i}`}>
@@ -200,9 +201,13 @@ function RanksTable({ ctx, row }: { ctx: ChartDataContext; row: Figured }) {
 export default function ChartDetail({ ctx, row }: { ctx: ChartDataContext; row: ChartRow }) {
   const { tr, state } = ctx;
   const siblings = ctx.rows.filter((x) => x.musicId === row.musicId);
-  const e = ctx.eff(row);
   const c = row.chart;
-  const figured = row.weights ? (row as Figured) : null;
+  const snap = ctx.snap?.active ? ctx.snap : null;
+  const e = snap ? { rate: null, perMinute: null } : ctx.eff(row);
+  const measured = snap ? currentSnapRanking(snap.profile, snap.source, snap.measurement)?.rows.get(row.scoreId) : null;
+  const duration = ctx.lengthOf(row);
+  const measuredPerMinute = measured && duration !== null && duration + state.overhead * 1000 > 0 ? measured.score * 60000 / (duration + state.overhead * 1000) : null;
+  const figured = !snap && row.weights ? (row as Figured) : null;
   const orders = figured ? orderRates(figured, ctx.skills) : null;
   const battle = state.mode === "battle";
   // Free Live's score per power at the Great share chosen (the one Gekisou Live keeps as the song's best score)
@@ -245,10 +250,16 @@ export default function ChartDetail({ ctx, row }: { ctx: ChartDataContext; row: 
         {ctx.hasStats ? (
           <>
             <Heading level={3} title={tr("detail.score")} />
-            <ScenarioPanel ctx={ctx} rooms missions={row.song.gekisouMissions ?? null} />
+            <ScenarioPanel ctx={ctx} rooms={!snap} missions={row.song.gekisouMissions ?? null} />
           </>
         ) : null}
         <div className="mn-cd-tiles">
+          {snap ? <>
+            <Tile label={tr("snap.score")} value={fmtInt(measured?.score)} sub={tr("snap.measurementHint")} />
+            <Tile label={tr("snap.baseline")} value={fmtInt(measured?.baselineScore)} />
+            <Tile label={tr("snap.delta")} value={measured ? `${measured.delta > 0 ? "+" : ""}${fmtInt(measured.delta)}` : "–"} />
+            <Tile label={tr("snap.perMinute")} value={fmt(measuredPerMinute, 3)} />
+          </> : null}
           {figured && orders ? (
             <Tile
               label={tr("col.rate")}
@@ -273,11 +284,12 @@ export default function ChartDetail({ ctx, row }: { ctx: ChartDataContext; row: 
           {battle && row.unplayable ? (
             <Tile label={tr("detail.unplayable")} value="–" sub={`${tr("detail.unplayableHint")}${ctx.support.free ? tr("detail.unplayableFree") : ""}`} />
           ) : null}
-          {!figured && !(battle && row.unplayable) && row.stats ? <Tile label={tr("detail.noFigures")} value="–" sub={tr("scenario.pending")} /> : null}
+          {!snap && !figured && !(battle && row.unplayable) && row.stats ? <Tile label={tr("detail.noFigures")} value="–" sub={tr("scenario.pending")} /> : null}
         </div>
         {battle ? <Measures ctx={ctx} row={row} /> : null}
         <Heading level={3} title={tr("detail.timeline")} />
         <div className="mn-cd-tl-scroll"><Timeline ctx={ctx} row={row} /></div>
+        {snap ? <p className="mn-cd-hint">{tr("snap.timelineHint")}</p> : null}
         <div className="mn-cd-grid2">
           <section><Heading level={3} title={tr("detail.composition")} /><Composition ctx={ctx} row={row} /></section>
           {figured ? (
@@ -288,11 +300,16 @@ export default function ChartDetail({ ctx, row }: { ctx: ChartDataContext; row: 
             </section>
           ) : null}
         </div>
-        {figured && row.scoreRanks.length ? (
+        {(figured || snap) && row.scoreRanks.length ? (
           <section>
             <Heading level={3} title={tr("detail.ranks")} />
-            <RanksTable ctx={ctx} row={figured} />
-            <p className="mn-cd-hint">{roomSize(state) ? tr("detail.ranksHintRoom", { n: state.room }) : tr("detail.ranksHint")}</p>
+            {snap ? <div className="mn-cd-table-scroll"><table className="mn-cd-ranks">
+              <thead><tr><th>{tr("detail.rank")}</th><th>{tr("detail.required")}</th></tr></thead>
+              <tbody>{SCORE_RANKS.filter((rank) => rankThreshold(row, rank, 0) !== null).reverse().map((rank) => <tr key={rank}>
+                <td><span className={`mn-cd-rk rk-${rank}`}>{rank}</span></td><td className="num">{fmtInt(rankThreshold(row, rank, 0))}</td>
+              </tr>)}</tbody>
+            </table></div> : figured ? <RanksTable ctx={ctx} row={figured} /> : null}
+            <p className="mn-cd-hint">{snap ? tr("snap.eventMeasurementHint") : roomSize(state) ? tr("detail.ranksHintRoom", { n: state.room }) : tr("detail.ranksHint")}</p>
           </section>
         ) : null}
         <p className="mn-cd-ids">{`${tr("detail.musicId")} ${row.musicId} · ${tr("detail.scoreId")} ${row.scoreId} · ${tr("detail.musicType")} ${row.song.musicType ?? "–"}`}</p>
