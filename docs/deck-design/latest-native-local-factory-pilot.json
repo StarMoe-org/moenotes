@@ -1,0 +1,127 @@
+{
+  "schema": "ournotes.latest-native-local-factory-summary/1",
+  "scope": "offline-base/IFix-not-loaded + saved-JP2026-09-30; experiment fixture, not actual player ownership",
+  "version": {
+    "package": "com.bushiroad.sirius",
+    "versionName": "1.0.4",
+    "versionCode": 10053,
+    "restoredNativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+    "decodedMetadataSha256": "8cf963bc5a32262c2ad3e21307dda14d144bcced6fe7731986933718dcf9a91d",
+    "masterVersion": "1.0.0.300/52355a9de56a475f691b10ef58acba58",
+    "masterManifestSha256": "f4534fe8bf340b7a9bd99eb9b43ab384e9e3895a7e1eb3113cbb371e65780735",
+    "activeIfix": "unknown online; not loaded in this experiment"
+  },
+  "sourceReport": "helpers/native-local-factory-proof/pilot-152.json",
+  "sourceReportSha256": "9cd0e5aafaae91719e10a5789c9a61e6ee00a38f878ed9ad00a7805e9ce9fb6f",
+  "caseSha256": "0deba3333f6b2e80f607945e61bf17efc9cc99f582e59498b745b64a3909c16a",
+  "status": "local-objects-and-player-registration-verified",
+  "phase": "global-cache-instance-binding-pending",
+  "nativeCalls": 152,
+  "requiredMasterTables": 44,
+  "memberInitialState": [
+    {
+      "awakeCount": 1,
+      "exp": 0,
+      "gekisouSkillLevel": 1,
+      "id": 1,
+      "level": 1,
+      "liveSkillLevel": 1,
+      "rank": 1
+    },
+    {
+      "awakeCount": 1,
+      "exp": 0,
+      "gekisouSkillLevel": 1,
+      "id": 2,
+      "level": 1,
+      "liveSkillLevel": 1,
+      "rank": 1
+    },
+    {
+      "awakeCount": 1,
+      "exp": 0,
+      "gekisouSkillLevel": 1,
+      "id": 3,
+      "level": 1,
+      "liveSkillLevel": 1,
+      "rank": 1
+    },
+    {
+      "awakeCount": 1,
+      "exp": 0,
+      "gekisouSkillLevel": 1,
+      "id": 4,
+      "level": 1,
+      "liveSkillLevel": 1,
+      "rank": 1
+    },
+    {
+      "awakeCount": 1,
+      "exp": 0,
+      "gekisouSkillLevel": 1,
+      "id": 5,
+      "level": 1,
+      "liveSkillLevel": 1,
+      "rank": 1
+    }
+  ],
+  "supportInitialState": [
+    {
+      "exp": 0,
+      "id": 1,
+      "level": 1,
+      "rank": 1
+    },
+    {
+      "exp": 0,
+      "id": 2,
+      "level": 1,
+      "rank": 1
+    },
+    {
+      "exp": 0,
+      "id": 3,
+      "level": 1,
+      "rank": 1
+    },
+    {
+      "exp": 0,
+      "id": 4,
+      "level": 1,
+      "rank": 1
+    },
+    {
+      "exp": 0,
+      "id": 5,
+      "level": 1,
+      "rank": 1
+    }
+  ],
+  "registrationProof": "Native Player AddMemberCard/AddSupportCard followed by public GetMemberCard/GetSupportCard returning the exact registered object.",
+  "externalJsonBridgeContracts": [
+    {
+      "type": "App.Master.MasterCharacter",
+      "field": "_isNonPlayable",
+      "proofSha256": "dff01ef18f2e7fecfa16849d8db6d004780d16bca6896d5cb46922d3310c8fc3",
+      "scope": "Documented external service adapter with latest native metadata/field reads; no libunity serializer execution or game-rule equality claim"
+    },
+    {
+      "type": "App.Master.MasterLiveSkill",
+      "field": "_displaySkillCategories",
+      "proofSha256": "db01ad4761ea4733800bcb4b4c3993d519b2a20a32ff9826771b0e0ed9a51ee4",
+      "scope": "Documented external service adapter with latest native metadata/field reads; no libunity serializer execution or game-rule equality claim"
+    },
+    {
+      "type": "App.Master.MasterGekisouSkill",
+      "field": "_displaySkillCategories",
+      "proofSha256": "a902b4571f2bbac0803da22a736e03ee32987889f6917a5dfc33938b1795e7b3",
+      "scope": "Documented external service adapter with latest native metadata/field reads; no libunity serializer execution or game-rule equality claim"
+    }
+  ],
+  "gameImageHleCount": 0,
+  "manualVtable": false,
+  "wholeLiveCertified": false,
+  "elapsedNanoseconds": 14364728616,
+  "peakRssKiB": 829036,
+  "qualification": "Actual Local constructors and Player Add/Get route only. Global cache/MemberDataContainer/SkillExecutor/LiveExecutor not yet certified."
+}

@@ -1,0 +1,649 @@
+{
+  "schema": "ournotes.latest-jp-snap-static-summary/1",
+  "version": {
+    "package": "com.bushiroad.sirius",
+    "versionName": "1.0.4",
+    "versionCode": 10053,
+    "restoredNativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+    "decodedMetadataSha256": "8cf963bc5a32262c2ad3e21307dda14d144bcced6fe7731986933718dcf9a91d",
+    "masterVersion": "1.0.0.300/52355a9de56a475f691b10ef58acba58",
+    "masterManifestSha256": "f4534fe8bf340b7a9bd99eb9b43ab384e9e3895a7e1eb3113cbb371e65780735",
+    "activeIfix": "unknown online; not loaded in this experiment"
+  },
+  "sourceScope": "Saved JP master input; not a fresh master-download or active-IFix certificate.",
+  "sourceReport": "helpers/latest-snap-coverage/inventory.json",
+  "sourceReportSha256": "0e0c2ba8f9e7ff693df88917d4fa16062f35df38b65822808f9c3a46f7b29a64",
+  "generatorSha256": "18420b830d7d3950c54d06d48a0648b8fb1f611ea9b0354aa1f6375d57d020ad",
+  "status": "references-pass",
+  "sourceTables": {
+    "MasterSupportCard": {
+      "sha256": "fa339e67a9610c2f6931666ec31c92212f311200925db6799a78b1e7cc8f9b99",
+      "rows": 64
+    },
+    "MasterSupportCardRank": {
+      "sha256": "81e32ea8e473ed42f64ef540dd54f518990a3b7d7345c99277f168dd0a91f1fb",
+      "rows": 25
+    },
+    "MasterMemberCard": {
+      "sha256": "3b827e14ddcdafa6af13f6e9f69c1d9c02c07757964c2429a537b568b89ef999",
+      "rows": 63
+    },
+    "MasterSupportSkill": {
+      "sha256": "869efd573736c14ffc5974d2c3da894a988756dcefccdb5f36d44fbfc978734a",
+      "rows": 63
+    },
+    "MasterSupportSkillEffect": {
+      "sha256": "1c5e14b5ce0a0d863ff8168f4dfd9d42ccb2e5514db64a348c5d51d7dc61b4fb",
+      "rows": 615
+    },
+    "MasterGekisouSupportSkill": {
+      "sha256": "1a605ec222fc56a5c5121417107a5510500d6c2aa1d98941a140c51dce369e82",
+      "rows": 105
+    },
+    "MasterGekisouSupportSkillEffect": {
+      "sha256": "ffd03806a7e140a7a2284d727c061a545735a8cc558c19088effe7a10a65dff7",
+      "rows": 1050
+    },
+    "MasterSkillConditionSet": {
+      "sha256": "503591de2eece727b506aedef25e1faf5990a44b12c810a16be1d84a724dc07c",
+      "rows": 417
+    },
+    "MasterSkillCondition": {
+      "sha256": "3b367b3870a46c732a103598aaf20e5f02ec0973bb1d9133fe13e50eec8c1556",
+      "rows": 308
+    },
+    "MasterSkillCumulativeCondition": {
+      "sha256": "5a28dcbae16a774be2a41cd7938c43fce6efbaeb8ced9612d6bd61c8f48e4570",
+      "rows": 65
+    },
+    "MasterSkillTarget": {
+      "sha256": "3ad190fc733a8befbc41e21f6909cd755e01c9779d4b35a4719a1b56d269c2f3",
+      "rows": 56
+    },
+    "MasterSkillEffectSetting": {
+      "sha256": "d48176fa92ee8cabb3d179ca796018929e60a3f60f5d7cebb553b847740f29ee",
+      "rows": 42
+    }
+  },
+  "effectRows": 1665,
+  "cardReferencedRows": 790,
+  "rowsWithDeclaredRankMapping": 790,
+  "unreferencedByCurrentSupportCards": 875,
+  "structuralQueueSignatures": 19,
+  "effectTypeCounts": {
+    "MasterSupportSkillEffect": {
+      "2000": 150,
+      "3001": 105,
+      "3003": 100,
+      "12006": 105,
+      "15000": 155
+    },
+    "MasterGekisouSupportSkillEffect": {
+      "2000": 150,
+      "2001": 300,
+      "4004": 100,
+      "11003": 100,
+      "11005": 100,
+      "12004": 100,
+      "12006": 100,
+      "13005": 100
+    }
+  },
+  "missingReferences": 0,
+  "nativeRuleComparisons": 0,
+  "qualification": "Static dependency and representative inventory; constructors, rank legality, condition semantics, full Live and search equivalence require native evidence.",
+  "representatives": [
+    {
+      "signatureSha256": "2182924fd8c2967237a135cc9c80d6d2ea86a93426c4deb9b81f2749db3ee7a4",
+      "representative": {
+        "table": "MasterGekisouSupportSkillEffect",
+        "id": 981
+      },
+      "rows": 100,
+      "signature": {
+        "table": "MasterGekisouSupportSkillEffect",
+        "effectType": 11003,
+        "triggerType": 1,
+        "conditionTypes": [
+          5000,
+          7000,
+          7013
+        ],
+        "targetTypes": [
+          3
+        ],
+        "cumulativeType": null,
+        "hasRelease": true,
+        "hasReset": true,
+        "hasTime": false,
+        "hasEffectLimit": false,
+        "hasExecuteLimit": true,
+        "hasMaxEffect": false
+      },
+      "qualification": "Queue ordering only; every original row remains a separate coverage obligation."
+    },
+    {
+      "signatureSha256": "31770a9b5626012bd6c0cbd272a82cb38a9bb3d37e947f18b84003191ceea193",
+      "representative": {
+        "table": "MasterGekisouSupportSkillEffect",
+        "id": 751
+      },
+      "rows": 100,
+      "signature": {
+        "table": "MasterGekisouSupportSkillEffect",
+        "effectType": 13005,
+        "triggerType": 1,
+        "conditionTypes": [
+          1030,
+          5000,
+          7010,
+          7013,
+          7020
+        ],
+        "targetTypes": [
+          3,
+          4,
+          5
+        ],
+        "cumulativeType": null,
+        "hasRelease": true,
+        "hasReset": true,
+        "hasTime": true,
+        "hasEffectLimit": true,
+        "hasExecuteLimit": true,
+        "hasMaxEffect": false
+      },
+      "qualification": "Queue ordering only; every original row remains a separate coverage obligation."
+    },
+    {
+      "signatureSha256": "346f04f00507a3e957c03ba7880390c126215765f872cda6e8a3da86730b5b0f",
+      "representative": {
+        "table": "MasterGekisouSupportSkillEffect",
+        "id": 461
+      },
+      "rows": 80,
+      "signature": {
+        "table": "MasterGekisouSupportSkillEffect",
+        "effectType": 4004,
+        "triggerType": 1,
+        "conditionTypes": [
+          5000,
+          7010
+        ],
+        "targetTypes": [
+          3,
+          4,
+          5
+        ],
+        "cumulativeType": null,
+        "hasRelease": false,
+        "hasReset": false,
+        "hasTime": true,
+        "hasEffectLimit": false,
+        "hasExecuteLimit": false,
+        "hasMaxEffect": false
+      },
+      "qualification": "Queue ordering only; every original row remains a separate coverage obligation."
+    },
+    {
+      "signatureSha256": "547c6875d8b7f12f2333f24f9848bea716a2fc912fab3f4391a9c59f9bbba0dd",
+      "representative": {
+        "table": "MasterGekisouSupportSkillEffect",
+        "id": 861
+      },
+      "rows": 80,
+      "signature": {
+        "table": "MasterGekisouSupportSkillEffect",
+        "effectType": 12004,
+        "triggerType": 1,
+        "conditionTypes": [
+          5000,
+          7010,
+          7013
+        ],
+        "targetTypes": [
+          3,
+          4,
+          5
+        ],
+        "cumulativeType": null,
+        "hasRelease": true,
+        "hasReset": false,
+        "hasTime": true,
+        "hasEffectLimit": true,
+        "hasExecuteLimit": false,
+        "hasMaxEffect": false
+      },
+      "qualification": "Queue ordering only; every original row remains a separate coverage obligation."
+    },
+    {
+      "signatureSha256": "599eb11b416a48bddccb760be522a928165c3fbd3ae16e5016d170d7e75ffe80",
+      "representative": {
+        "table": "MasterGekisouSupportSkillEffect",
+        "id": 465
+      },
+      "rows": 20,
+      "signature": {
+        "table": "MasterGekisouSupportSkillEffect",
+        "effectType": 4004,
+        "triggerType": 2,
+        "conditionTypes": [
+          5000,
+          7020
+        ],
+        "targetTypes": [
+          3,
+          4,
+          5
+        ],
+        "cumulativeType": null,
+        "hasRelease": false,
+        "hasReset": false,
+        "hasTime": false,
+        "hasEffectLimit": false,
+        "hasExecuteLimit": false,
+        "hasMaxEffect": false
+      },
+      "qualification": "Queue ordering only; every original row remains a separate coverage obligation."
+    },
+    {
+      "signatureSha256": "6a5f3389fccf48e3c270c439ea61fd6fcbc39e2a3e1f71272702a8a1f7fb9470",
+      "representative": {
+        "table": "MasterSupportSkillEffect",
+        "id": 706
+      },
+      "rows": 5,
+      "signature": {
+        "table": "MasterSupportSkillEffect",
+        "effectType": 12006,
+        "triggerType": 1,
+        "conditionTypes": [
+          4010
+        ],
+        "targetTypes": [
+          4
+        ],
+        "cumulativeType": null,
+        "hasRelease": false,
+        "hasReset": false,
+        "hasTime": true,
+        "hasEffectLimit": true,
+        "hasExecuteLimit": false,
+        "hasMaxEffect": false
+      },
+      "qualification": "Queue ordering only; every original row remains a separate coverage obligation."
+    },
+    {
+      "signatureSha256": "728202ae92228af2403f18d5a64b3568e3da93050d4df36802caa2dba4c62fd6",
+      "representative": {
+        "table": "MasterGekisouSupportSkillEffect",
+        "id": 551
+      },
+      "rows": 100,
+      "signature": {
+        "table": "MasterGekisouSupportSkillEffect",
+        "effectType": 12006,
+        "triggerType": 2,
+        "conditionTypes": [
+          5000,
+          7020
+        ],
+        "targetTypes": [
+          3,
+          4,
+          5
+        ],
+        "cumulativeType": null,
+        "hasRelease": false,
+        "hasReset": false,
+        "hasTime": false,
+        "hasEffectLimit": true,
+        "hasExecuteLimit": false,
+        "hasMaxEffect": false
+      },
+      "qualification": "Queue ordering only; every original row remains a separate coverage obligation."
+    },
+    {
+      "signatureSha256": "8a5e76ceb2b00f6efeb528d249b5426de004e804d132014211148dd8e22f2108",
+      "representative": {
+        "table": "MasterSupportSkillEffect",
+        "id": 601
+      },
+      "rows": 100,
+      "signature": {
+        "table": "MasterSupportSkillEffect",
+        "effectType": 3003,
+        "triggerType": 1,
+        "conditionTypes": [
+          2003,
+          5000
+        ],
+        "targetTypes": [
+          3
+        ],
+        "cumulativeType": null,
+        "hasRelease": false,
+        "hasReset": false,
+        "hasTime": true,
+        "hasEffectLimit": true,
+        "hasExecuteLimit": false,
+        "hasMaxEffect": false
+      },
+      "qualification": "Queue ordering only; every original row remains a separate coverage obligation."
+    },
+    {
+      "signatureSha256": "9c8fa4aef1e8d1b8040a6ef9ef9d95a7cca6e8cf5e88f29b69dba4bae6214644",
+      "representative": {
+        "table": "MasterGekisouSupportSkillEffect",
+        "id": 301
+      },
+      "rows": 150,
+      "signature": {
+        "table": "MasterGekisouSupportSkillEffect",
+        "effectType": 2000,
+        "triggerType": 2,
+        "conditionTypes": [
+          5000,
+          7021
+        ],
+        "targetTypes": [
+          3
+        ],
+        "cumulativeType": null,
+        "hasRelease": false,
+        "hasReset": false,
+        "hasTime": false,
+        "hasEffectLimit": false,
+        "hasExecuteLimit": false,
+        "hasMaxEffect": false
+      },
+      "qualification": "Queue ordering only; every original row remains a separate coverage obligation."
+    },
+    {
+      "signatureSha256": "af2dd12e16d57da6d63a4168990f7675016aed88e693914a5108115e5069756c",
+      "representative": {
+        "table": "MasterGekisouSupportSkillEffect",
+        "id": 151
+      },
+      "rows": 150,
+      "signature": {
+        "table": "MasterGekisouSupportSkillEffect",
+        "effectType": 2001,
+        "triggerType": 1,
+        "conditionTypes": [
+          5000,
+          7010,
+          7013
+        ],
+        "targetTypes": [
+          3,
+          5
+        ],
+        "cumulativeType": 7001,
+        "hasRelease": true,
+        "hasReset": false,
+        "hasTime": false,
+        "hasEffectLimit": false,
+        "hasExecuteLimit": false,
+        "hasMaxEffect": true
+      },
+      "qualification": "Queue ordering only; every original row remains a separate coverage obligation."
+    },
+    {
+      "signatureSha256": "bb1a456f851ebb7fbd562a7612ec58b449b2df2cfd861be7cc39870d4a8fc8f8",
+      "representative": {
+        "table": "MasterSupportSkillEffect",
+        "id": 711
+      },
+      "rows": 5,
+      "signature": {
+        "table": "MasterSupportSkillEffect",
+        "effectType": 3001,
+        "triggerType": 1,
+        "conditionTypes": [
+          4010
+        ],
+        "targetTypes": [],
+        "cumulativeType": null,
+        "hasRelease": false,
+        "hasReset": false,
+        "hasTime": false,
+        "hasEffectLimit": false,
+        "hasExecuteLimit": false,
+        "hasMaxEffect": false
+      },
+      "qualification": "Queue ordering only; every original row remains a separate coverage obligation."
+    },
+    {
+      "signatureSha256": "cae635a237e8a3fab031f02a7911e6a90fdfbbd890dba81ec5ac002fbb177295",
+      "representative": {
+        "table": "MasterSupportSkillEffect",
+        "id": 1
+      },
+      "rows": 150,
+      "signature": {
+        "table": "MasterSupportSkillEffect",
+        "effectType": 15000,
+        "triggerType": 1,
+        "conditionTypes": [
+          4010,
+          5000
+        ],
+        "targetTypes": [
+          3
+        ],
+        "cumulativeType": null,
+        "hasRelease": false,
+        "hasReset": false,
+        "hasTime": false,
+        "hasEffectLimit": false,
+        "hasExecuteLimit": false,
+        "hasMaxEffect": false
+      },
+      "qualification": "Queue ordering only; every original row remains a separate coverage obligation."
+    },
+    {
+      "signatureSha256": "cd2a099f8d689f3aac95e4c69a2483082b74adc627d00506587a8f025ecc530e",
+      "representative": {
+        "table": "MasterGekisouSupportSkillEffect",
+        "id": 1
+      },
+      "rows": 150,
+      "signature": {
+        "table": "MasterGekisouSupportSkillEffect",
+        "effectType": 2001,
+        "triggerType": 1,
+        "conditionTypes": [
+          5000,
+          7010,
+          7013
+        ],
+        "targetTypes": [
+          3,
+          4,
+          5
+        ],
+        "cumulativeType": 1000,
+        "hasRelease": true,
+        "hasReset": false,
+        "hasTime": false,
+        "hasEffectLimit": false,
+        "hasExecuteLimit": false,
+        "hasMaxEffect": true
+      },
+      "qualification": "Queue ordering only; every original row remains a separate coverage obligation."
+    },
+    {
+      "signatureSha256": "d2c2ea51fb0a7a0c917d3a3f796fa475bca55e746193c2d61b430678a9bf55a4",
+      "representative": {
+        "table": "MasterSupportSkillEffect",
+        "id": 151
+      },
+      "rows": 150,
+      "signature": {
+        "table": "MasterSupportSkillEffect",
+        "effectType": 2000,
+        "triggerType": 1,
+        "conditionTypes": [
+          5000,
+          8000
+        ],
+        "targetTypes": [
+          3
+        ],
+        "cumulativeType": null,
+        "hasRelease": false,
+        "hasReset": false,
+        "hasTime": true,
+        "hasEffectLimit": false,
+        "hasExecuteLimit": false,
+        "hasMaxEffect": false
+      },
+      "qualification": "Queue ordering only; every original row remains a separate coverage obligation."
+    },
+    {
+      "signatureSha256": "e1c910c419431d0ba2d1369d6d6d5f04163bac7baff13660c9b69aa1ef15e8d3",
+      "representative": {
+        "table": "MasterSupportSkillEffect",
+        "id": 501
+      },
+      "rows": 100,
+      "signature": {
+        "table": "MasterSupportSkillEffect",
+        "effectType": 3001,
+        "triggerType": 1,
+        "conditionTypes": [
+          4010,
+          5000
+        ],
+        "targetTypes": [
+          3
+        ],
+        "cumulativeType": null,
+        "hasRelease": false,
+        "hasReset": false,
+        "hasTime": false,
+        "hasEffectLimit": false,
+        "hasExecuteLimit": false,
+        "hasMaxEffect": false
+      },
+      "qualification": "Queue ordering only; every original row remains a separate coverage obligation."
+    },
+    {
+      "signatureSha256": "e7961e0d212e5316e8c79efdc885aa3fa0808807bda81bf00f6e96acf1e12b9f",
+      "representative": {
+        "table": "MasterGekisouSupportSkillEffect",
+        "id": 865
+      },
+      "rows": 20,
+      "signature": {
+        "table": "MasterGekisouSupportSkillEffect",
+        "effectType": 12004,
+        "triggerType": 2,
+        "conditionTypes": [
+          5000,
+          7013,
+          7020
+        ],
+        "targetTypes": [
+          3,
+          4,
+          5
+        ],
+        "cumulativeType": null,
+        "hasRelease": true,
+        "hasReset": false,
+        "hasTime": false,
+        "hasEffectLimit": true,
+        "hasExecuteLimit": false,
+        "hasMaxEffect": false
+      },
+      "qualification": "Queue ordering only; every original row remains a separate coverage obligation."
+    },
+    {
+      "signatureSha256": "e862bd18091dd66b1f02f2c2ebd5c1a93aa7a64fd229f1df22208d32a4407130",
+      "representative": {
+        "table": "MasterGekisouSupportSkillEffect",
+        "id": 671
+      },
+      "rows": 100,
+      "signature": {
+        "table": "MasterGekisouSupportSkillEffect",
+        "effectType": 11005,
+        "triggerType": 1,
+        "conditionTypes": [
+          4011,
+          5000,
+          7010,
+          7013
+        ],
+        "targetTypes": [
+          3,
+          5
+        ],
+        "cumulativeType": null,
+        "hasRelease": true,
+        "hasReset": false,
+        "hasTime": false,
+        "hasEffectLimit": true,
+        "hasExecuteLimit": false,
+        "hasMaxEffect": false
+      },
+      "qualification": "Queue ordering only; every original row remains a separate coverage obligation."
+    },
+    {
+      "signatureSha256": "f249d6bcb44465ce534dee73e5c67ec27832ba4bd7ddeae2181c8dc240cd5bd2",
+      "representative": {
+        "table": "MasterSupportSkillEffect",
+        "id": 301
+      },
+      "rows": 100,
+      "signature": {
+        "table": "MasterSupportSkillEffect",
+        "effectType": 12006,
+        "triggerType": 1,
+        "conditionTypes": [
+          4010,
+          5000
+        ],
+        "targetTypes": [
+          3,
+          4
+        ],
+        "cumulativeType": null,
+        "hasRelease": false,
+        "hasReset": false,
+        "hasTime": true,
+        "hasEffectLimit": true,
+        "hasExecuteLimit": false,
+        "hasMaxEffect": false
+      },
+      "qualification": "Queue ordering only; every original row remains a separate coverage obligation."
+    },
+    {
+      "signatureSha256": "f60abb5cee284ca89c94b84e0431529a26fc5bfef015f1d46ff3259d6532aabb",
+      "representative": {
+        "table": "MasterSupportSkillEffect",
+        "id": 701
+      },
+      "rows": 5,
+      "signature": {
+        "table": "MasterSupportSkillEffect",
+        "effectType": 15000,
+        "triggerType": 1,
+        "conditionTypes": [
+          4010
+        ],
+        "targetTypes": [],
+        "cumulativeType": null,
+        "hasRelease": false,
+        "hasReset": false,
+        "hasTime": false,
+        "hasEffectLimit": false,
+        "hasExecuteLimit": false,
+        "hasMaxEffect": false
+      },
+      "qualification": "Queue ordering only; every original row remains a separate coverage obligation."
+    }
+  ]
+}
