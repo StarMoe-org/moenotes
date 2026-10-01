@@ -1,0 +1,199 @@
+diff --git a/node_modules/ournotes-player/examples/songs/replay-preset.js b/examples/songs/replay-preset.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..d4b99b0d30086c432219398cecbb56a0dd278b8f
+--- /dev/null
++++ b/examples/songs/replay-preset.js
+@@ -0,0 +1,151 @@
++// Declared input plans only. Rust owns conversion, state updates and scoring.
++
++/** Read Just capability from a caller-verified nnnotes.deck-data/1 document. */
++export function parseJustJudgementTypes(deckDataJSON) {
++  const data = typeof deckDataJSON === "string" ? JSON.parse(deckDataJSON) : deckDataJSON;
++  if (data?.format !== "nnnotes.deck-data/1") throw new Error("Unsupported replay data format");
++  const table = data.master?.MasterLiveJudgementTiming;
++  if (!Array.isArray(table?.columns) || !Array.isArray(table.rows)) throw new Error("Missing judgement timing table");
++  const type = table.columns.indexOf("_noteJudgementType");
++  const grade = table.columns.indexOf("_noteSimulateJudgement");
++  if (type < 0 || grade < 0) throw new Error("Missing judgement timing columns");
++  const found = new Set();
++  for (const row of table.rows) {
++    if (!Array.isArray(row) || !Number.isInteger(row[type]) || !Number.isInteger(row[grade])) {
++      throw new Error("Invalid judgement timing row");
++    }
++    if (row[grade] === 6) found.add(row[type]);
++  }
++  return [...found];
++}
++
++// Exactly count positions, spread evenly over the existing order. The prefix count differs
++// from prefixLength * count / length by less than one. No shuffle or scoring formula.
++function chooseEvenly(items, count, set) {
++  let remainder = 0;
++  for (const item of items) {
++    remainder += count;
++    if (remainder >= items.length) {
++      remainder -= items.length;
++      set(item);
++    }
++  }
++}
++
++/**
++ * Replace only input grades, after validating the entire plan. Pass and frame/note order stay intact.
++ * Great covers all judged inputs; Just covers the remaining Just-capable inputs in enabled frames.
++ * Fractions choose rounded counts in one deterministic plan, not an expectation over plans.
++ */
++function preparePlan(request, description, justTypes) {
++  if (request?.format !== "ournotes.replay/1" || !Array.isArray(request.frames) || !Array.isArray(description?.notes)) {
++    throw new Error("Invalid replay plan");
++  }
++  if (request.rawRuntime != null) throw new Error("Accuracy presets require a judgement template without raw results");
++  if (!Array.isArray(justTypes) && !(justTypes instanceof Set)) throw new Error("Missing Just judgement types");
++  const types = new Set(justTypes);
++  if ([...types].some(n => !Number.isInteger(n))) throw new Error("Invalid Just judgement type");
++  const mode = request.mode?.kind;
++  if (!["normal", "soloGekisou", "fixedSoloGekisou", "externalGekisou"].includes(mode)) {
++    throw new Error("Unsupported replay mode");
++  }
++  const byId = new Map(description.notes.map(note => [note.noteId, note]));
++  if (byId.size !== description.notes.length) throw new Error("Duplicate chart note id");
++  const inputs = [], seen = new Set();
++  for (let f = 0; f < request.frames.length; f++) {
++    const frame = request.frames[f];
++    if (!Number.isInteger(frame.timeMs) || !Array.isArray(frame.judgements)) throw new Error("Invalid replay frame");
++    for (const judgement of frame.judgements) {
++      if (judgement.rawResult != null) throw new Error("Accuracy presets require a judgement template without raw results");
++      const note = byId.get(judgement.noteId);
++      if (!note || seen.has(judgement.noteId)) throw new Error("Unknown or duplicate replay note");
++      seen.add(judgement.noteId);
++      if (note.defaultJudgement === 7 || judgement.judgement === 7) continue;
++      inputs.push({ judgement, note, frame: f, grade: 5 });
++    }
++  }
++  const windows = [];
++  if (mode !== "normal") {
++    if (!Array.isArray(description.fevers) || !Array.isArray(description.missions)) throw new Error("Missing Gekisou ranges");
++    for (let i = 0; i < description.fevers.length; i++) {
++      const fever = description.fevers[i];
++      if (!Array.isArray(fever) || fever.length !== 2 || !fever.every(Number.isInteger)) throw new Error("Invalid fever range");
++      if (description.missions[i] !== 3) continue;
++      const first = request.frames.findIndex(frame => frame.timeMs >= fever[0]);
++      if (first < 0) continue;
++      let stop = first + 1;
++      while (stop < request.frames.length && request.frames[stop].timeMs < fever[1]) stop++;
++      windows.push([first, stop]);
++    }
++  }
++  return { inputs, canJust: input => types.has(input.note.judgementType)
++    && windows.some(([first, stop]) => first <= input.frame && input.frame < stop) };
++}
++
++export function applyAccuracyPreset(request, description, justTypes, greatFraction, justFraction) {
++  if (![greatFraction, justFraction].every(n => typeof n === "number" && Number.isFinite(n) && n >= 0 && n <= 1)) {
++    throw new Error("Accuracy fractions must be between 0 and 1");
++  }
++  const { inputs, canJust } = preparePlan(request, description, justTypes);
++  const great = Math.round(inputs.length * greatFraction);
++  chooseEvenly(inputs, great, input => { input.grade = 4; });
++  const eligible = inputs.filter(input => input.grade !== 4 && canJust(input));
++  const just = Math.round(eligible.length * justFraction);
++  chooseEvenly(eligible, just, input => { input.grade = 6; });
++  // No validation or operation that can throw remains after the first input write.
++  for (const input of inputs) input.judgement.judgement = input.grade;
++  return { great, just, perfect: inputs.length - great - just, total: inputs.length, justEligible: eligible.length };
++}
++
++/**
++ * Generate one seeded, explicit input stream. The first segment is the whole-song default;
++ * later [startMs,endMs) segments override earlier ones by chart noteMs.
++ * Input PRNG: LCG32, x <- 1664525*x + 1013904223 modulo 2^32; uniform x/2^32.
++ * Exactly two draws per judged input, including inputs outside Just windows. Pass consumes none.
++ * This plan seed is independent of request.seed, the game's skill/luck seed.
++ */
++export function applySegmentPreset(request, description, justTypes, segments, planSeed) {
++  if (!Number.isInteger(planSeed) || planSeed < 0 || planSeed > 0xffffffff) throw new Error("Plan seed must be a uint32 integer");
++  if (!Array.isArray(segments) || segments.length === 0) throw new Error("A whole-song default segment is required");
++  const rules = segments.map((segment, i) => {
++    if (!segment || (i === 0 ? segment.startMs !== null || segment.endMs !== null
++      : !Number.isInteger(segment.startMs) || !Number.isInteger(segment.endMs) || segment.startMs >= segment.endMs)) {
++      throw new Error("Segment zero must cover the song; later segments need integer startMs < endMs");
++    }
++    const p = [segment.great, segment.good, segment.bad, segment.miss, segment.just];
++    if (!p.every(n => typeof n === "number" && Number.isFinite(n) && n >= 0 && n <= 1)) {
++      throw new Error("Segment probabilities must be between 0 and 1");
++    }
++    if (p.slice(0, 4).reduce((a, b) => a + b, 0) > 1 + 4 * Number.EPSILON) {
++      throw new Error("Great + Good + Bad + Miss probabilities must not exceed 1");
++    }
++    return { ...segment };
++  });
++  const { inputs, canJust } = preparePlan(request, description, justTypes);
++  if (inputs.some(input => !Number.isInteger(input.note.noteMs))) throw new Error("Segment plans require chart noteMs");
++  let state = planSeed >>> 0;
++  const random = () => {
++    state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
++    return state / 0x100000000;
++  };
++  const counts = { great: 0, good: 0, bad: 0, miss: 0, just: 0, perfect: 0, total: inputs.length };
++  for (const input of inputs) {
++    let rule = rules[0];
++    for (let i = 1; i < rules.length; i++) {
++      if (rules[i].startMs <= input.note.noteMs && input.note.noteMs < rules[i].endMs) rule = rules[i];
++    }
++    const gradeDraw = random(), justDraw = random();
++    let limit = 0, selected = "perfect";
++    for (const [name, grade] of [["great", 4], ["good", 3], ["bad", 2], ["miss", 1]]) {
++      limit += rule[name];
++      if (gradeDraw < limit) { selected = name; input.grade = grade; break; }
++    }
++    if (selected === "perfect" && canJust(input) && justDraw < rule.just) {
++      selected = "just"; input.grade = 6;
++    }
++    counts[selected]++;
++  }
++  // Everything is validated and all draws resolved before mutating the caller's stream.
++  for (const input of inputs) input.judgement.judgement = input.grade;
++  return counts;
++}
+diff --git a/package.json b/package.json
+index d7061ce0d1d2dfafaa54c5984e9ba85b22eefdb2..e302f9fd76b7f5f2af49f3f884d43e333c04234c 100644
+--- a/package.json
++++ b/package.json
+@@ -53,7 +53,11 @@
+     },
+     "./dist/*": "./dist/*",
+     "./schema/*": "./schema/*",
+-    "./package.json": "./package.json"
++    "./package.json": "./package.json",
++    "./replay/preset": {
++      "types": "./types/replay-preset.d.ts",
++      "default": "./examples/songs/replay-preset.js"
++    }
+   },
+   "sideEffects": [
+     "./src/element.js",
+@@ -81,7 +85,8 @@
+     "examples/story/",
+     "examples/story-list/",
+     "LICENSE",
+-    "LICENSE-EXCEPTION"
++    "LICENSE-EXCEPTION",
++    "examples/songs/replay-preset.js"
+   ],
+   "engines": {
+     "node": ">=20"
+diff --git a/node_modules/ournotes-player/types/replay-preset.d.ts b/types/replay-preset.d.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..2f695a7005384d3f116cea115b73c2a936a8ddcb
+--- /dev/null
++++ b/types/replay-preset.d.ts
+@@ -0,0 +1,9 @@
++/** Declared input plans; the Rust replay retains conversion, state updates and scoring. */
++export function parseJustJudgementTypes(deckData: string | Record<string, unknown>): number[];
++export function applyAccuracyPreset(
++  request: Record<string, unknown>,
++  description: Record<string, unknown>,
++  justTypes: readonly number[] | Set<number>,
++  greatFraction: number,
++  justFraction: number,
++): Record<string, unknown>;

@@ -1,6 +1,6 @@
 import type { AppLocale } from "@/config/locales";
 import { getSkillIconUrl } from "@/lib/cards/assets";
-import type { RawText, RawCharacter } from "@/lib/cards/data";
+import type { RawText, RawCharacter, RawBand } from "@/lib/cards/data";
 import { localizeMasterText } from "@/lib/masterdata/localize-text";
 import {
   groupEffectsByLevel,
@@ -24,6 +24,22 @@ export interface RawSupportSkillEffect extends RawSkillEffect {
 
 export type SupportSkillKind = "support" | "gekisou-support";
 
+export interface RawSupportSkillTarget { id: number; characterID?: number; bandID?: number }
+
+/** MasterSkillTarget IDs are not character IDs. Resolve the actual named predicates for descriptions. */
+export function supportSkillTargetNames(targets: RawSupportSkillTarget[], characters: RawCharacter[], bands: RawBand[], texts: RawText[], locale: AppLocale): ReadonlyMap<number, string> {
+  const charactersById = new Map(characters.map((row) => [row.id, row]));
+  const bandsById = new Map(bands.map((row) => [row.id, row]));
+  const textById = new Map(texts.map((row) => [row.id, row]));
+  const result = new Map<number, string>();
+  for (const target of targets) {
+    const character = charactersById.get(target.characterID ?? 0), band = bandsById.get(target.bandID ?? 0);
+    const names = [character ? localizeText(textById.get(character.nameTextID), locale) : "", band ? localizeText(textById.get(band.nameTextID), locale) : ""].filter(Boolean);
+    if (names.length) result.set(target.id, names.join(" / "));
+  }
+  return result;
+}
+
 export function normalizeSupportSkill(
   kind: SupportSkillKind,
   skillId: number,
@@ -36,6 +52,7 @@ export function normalizeSupportSkill(
   conditions: RawSkillCondition[],
   cumulativeConditions: RawSkillCumulativeCondition[],
   characterMap: Map<number, RawCharacter>,
+  targetNames?: ReadonlyMap<number, string>,
 ): SkillViewModel | null {
   const definition = definitions.find((entry) => entry.id === skillId);
   if (!definition) return null;
@@ -63,6 +80,7 @@ export function normalizeSupportSkill(
         cumulativeConditions,
         characterMap,
         resolveText,
+        targetNames,
       ),
       effects: levelEffects.map(toSkillEffectViewModel),
     })),
@@ -82,12 +100,14 @@ function formatDescription(
   cumulativeConditions: RawSkillCumulativeCondition[],
   characterMap: Map<number, RawCharacter>,
   resolveText: (id: string) => string,
+  targetNames?: ReadonlyMap<number, string>,
 ): string {
   if (!template) return "";
   const conditionMap = new Map(conditions.map((entry) => [entry.id, entry]));
   const setsByGroup = new Map<number, RawSkillConditionSet[]>();
   conditionSets.forEach((entry) => setsByGroup.set(entry.group, [...(setsByGroup.get(entry.group) ?? []), entry]));
   const cumulativeMap = new Map(cumulativeConditions.map((entry) => [entry.id, entry]));
+  let unresolvedTarget = false;
 
   let ternaryParsed = template;
   const ternaryRegex = /\{([^{}]+?)\?([^{}]+?):([^{}]+?)\}/g;
@@ -137,12 +157,16 @@ function formatDescription(
     })
     // 4. Targets name resolution:
     // e.g. {effects[1].con[0][0].targets[0].name} or {effects[1].targets[0].name}
-    .replace(/\{effects\[(\d+)\]\.(?:con\[\d+\](?:\[\d+\])?\.)?targets\[(\d+)\]\.name\}/g, (_, effectIndex, targetIndex) => {
+    .replace(/\{effects\[(\d+)\]\.(?:(con|tCon)\[(\d+)\](?:\[(\d+)\])?\.)?targets\[(\d+)\]\.name\}/g, (_, effectIndex, conditionKind, setIndex, conditionIndex, targetIndex) => {
       const effect = Math.max(0, Number(effectIndex)) < effects.length ? effects[Number(effectIndex)] : undefined;
-      const targetId = effect?.skillTargetIDs?.[Number(targetIndex)];
-      if (targetId === undefined) return "";
-      const char = characterMap.get(targetId);
-      return char ? resolveText(char.nameTextID) : "";
+      const group = conditionKind === "tCon" ? effect?.skillTriggerConditionGroup : effect?.skillConditionGroup;
+      const conditionId = conditionKind ? setsByGroup.get(group ?? 0)?.[Number(setIndex)]?.conditionIds[Number(conditionIndex ?? 0)] : undefined;
+      const targetId = (conditionKind ? conditionMap.get(conditionId ?? -1)?.conditionTargetIDs : effect?.skillTargetIDs)?.[Number(targetIndex)];
+      // A condition's targets and an effect's targets are separate MasterSkillTarget references.
+      const name = targetId === undefined ? undefined : targetNames?.get(targetId);
+      if (name) return name;
+      unresolvedTarget = true;
+      return "";
     })
     // 5. Cumulative max count:
     // e.g. {effects[0].cCon.maxCount}
@@ -177,7 +201,7 @@ function formatDescription(
     .replace(/\\n/g, "\n")
     .trim();
 
-  return formatted.includes("{effects[") ? "" : formatted;
+  return unresolvedTarget || formatted.includes("{effects[") ? "" : formatted;
 }
 
 function formatNumber(value: number | undefined, digits?: string): string {

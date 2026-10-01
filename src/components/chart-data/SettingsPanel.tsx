@@ -73,10 +73,11 @@ export function ScenarioPanel({ ctx, rooms = false, missions = null }: { ctx: Ch
           value={state.mode}
           onPick={(mode) => update({ mode })}
           options={[
-            { value: "battle", label: tr("scenario.battle") },
+            { value: "battle", label: tr(ctx.snap?.active ? "snap.fixedGekisou" : "scenario.battle") },
             { value: "free", label: support.free ? tr("scenario.free") : `${tr("scenario.free")} · ${tr("scenario.pending")}`, disabled: !support.free },
           ]}
         />
+        {battle && ctx.snap?.active ? <small className="mn-cd-note">{tr("snap.fixedGekisouHint")}</small> : null}
       </div>
       {battle ? (
         <div className="mn-cd-field">

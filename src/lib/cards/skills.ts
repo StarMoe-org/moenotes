@@ -41,6 +41,7 @@ export interface RawSkillConditionSet {
 export interface RawSkillCondition {
   id: number;
   conditionValues: number[];
+  conditionTargetIDs?: number[];
 }
 
 export interface RawSkillCumulativeCondition {
