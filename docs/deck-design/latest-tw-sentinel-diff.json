@@ -1,0 +1,264 @@
+{
+  "format": "ournotes.source-master-diff/1",
+  "collectedAt": "2026-10-01T06:10:30.967900+00:00",
+  "region": "tw",
+  "masterdataRegion": "hk-tw-mo",
+  "status": "metadata-snapshot-sha-verified-not-direct-gameapi-observation",
+  "indexSha256": "9c0083913f6189cda5c25eae2b6e4da8f5d39ced58bed692c8549083cd5d88c8",
+  "old": {
+    "masterVersion": "0b21c9f4a3911370d5f981fb894c7544",
+    "publishedMusicDataSha256": "983896151d3ed69d9dfe26044225907e33be037e4b74589e110ded64780f8738"
+  },
+  "new": {
+    "masterVersion": "74639bc3f98486a22b1232f232213def",
+    "clientVersion": "1.0.1",
+    "resourceVersion": "1.0.0.201",
+    "resourceHash": null,
+    "manifestSha256": "5955c092fd1991f2996aad38bca6eea799e831907e7dee9c739895a03f7a587e",
+    "decodedFilesSha256": "ce42c57606a197ff9d37ba8a2bbaffd61250eb2e8e3f92ca397f5cc55c5503cb",
+    "tables": {
+      "MasterLiveMusic.json": {
+        "decodedSha256": "ebcdc732f40a7e0a4941a13591e26fc62cf27a1abadfa441b3b621df60b660a6",
+        "servedSha256": "fccbcb89680d5c5aaafc7fb6d2efc95eba5ffe773e45fc90bc9def8e27fff3f3"
+      },
+      "MasterLiveScoreRank.json": {
+        "decodedSha256": "fd1a9eba69b1d78536fe42f7f08f11e7386988289b6b15cf7ed32b2f78ec3b96",
+        "servedSha256": "0b5789d9cc7f3184830da9c09a3ca67a8bf10e7c13b42be825187a9964312af2"
+      },
+      "MasterLiveMusicScore.json": {
+        "decodedSha256": "b398406de414a17cc097a2f293b264a9208155b93e0b172d92a628aa4d8ebbd6",
+        "servedSha256": "8d390eae63ba6206b3a2adba7eac3c355e69ce9d805c344cccdcf95b5157e68c"
+      }
+    }
+  },
+  "songCounts": {
+    "old": 85,
+    "new": 86,
+    "added": [
+      100109
+    ],
+    "removed": []
+  },
+  "sentinels": [
+    {
+      "musicId": 100021,
+      "musicChanges": {},
+      "oldRanks": [
+        {
+          "_id": 121,
+          "_group": 1100021,
+          "_liveScoreRank": 2,
+          "_requiredScore": 0,
+          "_battleLiveRequiredScore": 0
+        },
+        {
+          "_id": 122,
+          "_group": 1100021,
+          "_liveScoreRank": 3,
+          "_requiredScore": 415687,
+          "_battleLiveRequiredScore": 415687
+        },
+        {
+          "_id": 123,
+          "_group": 1100021,
+          "_liveScoreRank": 4,
+          "_requiredScore": 1204973,
+          "_battleLiveRequiredScore": 1204973
+        },
+        {
+          "_id": 124,
+          "_group": 1100021,
+          "_liveScoreRank": 5,
+          "_requiredScore": 3429867,
+          "_battleLiveRequiredScore": 3429867
+        },
+        {
+          "_id": 125,
+          "_group": 1100021,
+          "_liveScoreRank": 6,
+          "_requiredScore": 4638937,
+          "_battleLiveRequiredScore": 4638937
+        },
+        {
+          "_id": 126,
+          "_group": 1100021,
+          "_liveScoreRank": 7,
+          "_requiredScore": 5637904,
+          "_battleLiveRequiredScore": 5637904
+        }
+      ],
+      "newRanks": [
+        {
+          "_id": 121,
+          "_group": 1100021,
+          "_liveScoreRank": 2,
+          "_requiredScore": 0,
+          "_battleLiveRequiredScore": 0
+        },
+        {
+          "_id": 122,
+          "_group": 1100021,
+          "_liveScoreRank": 3,
+          "_requiredScore": 495117,
+          "_battleLiveRequiredScore": 879019
+        },
+        {
+          "_id": 123,
+          "_group": 1100021,
+          "_liveScoreRank": 4,
+          "_requiredScore": 1731771,
+          "_battleLiveRequiredScore": 3064079
+        },
+        {
+          "_id": 124,
+          "_group": 1100021,
+          "_liveScoreRank": 5,
+          "_requiredScore": 4389644,
+          "_battleLiveRequiredScore": 8031441
+        },
+        {
+          "_id": 125,
+          "_group": 1100021,
+          "_liveScoreRank": 6,
+          "_requiredScore": 6133727,
+          "_battleLiveRequiredScore": 11405008
+        },
+        {
+          "_id": 126,
+          "_group": 1100021,
+          "_liveScoreRank": 7,
+          "_requiredScore": 7577522,
+          "_battleLiveRequiredScore": 14303737
+        }
+      ],
+      "charts": [
+        {
+          "scoreId": 10002100,
+          "masterScoreChanges": {}
+        },
+        {
+          "scoreId": 10002101,
+          "masterScoreChanges": {}
+        },
+        {
+          "scoreId": 10002102,
+          "masterScoreChanges": {}
+        },
+        {
+          "scoreId": 10002103,
+          "masterScoreChanges": {}
+        }
+      ]
+    },
+    {
+      "musicId": 100026,
+      "musicChanges": {},
+      "oldRanks": [
+        {
+          "_id": 151,
+          "_group": 1100026,
+          "_liveScoreRank": 2,
+          "_requiredScore": 0,
+          "_battleLiveRequiredScore": 0
+        },
+        {
+          "_id": 152,
+          "_group": 1100026,
+          "_liveScoreRank": 3,
+          "_requiredScore": 432065,
+          "_battleLiveRequiredScore": 432065
+        },
+        {
+          "_id": 153,
+          "_group": 1100026,
+          "_liveScoreRank": 4,
+          "_requiredScore": 1174499,
+          "_battleLiveRequiredScore": 1174499
+        },
+        {
+          "_id": 154,
+          "_group": 1100026,
+          "_liveScoreRank": 5,
+          "_requiredScore": 3210324,
+          "_battleLiveRequiredScore": 3210324
+        },
+        {
+          "_id": 155,
+          "_group": 1100026,
+          "_liveScoreRank": 6,
+          "_requiredScore": 4318471,
+          "_battleLiveRequiredScore": 4318471
+        },
+        {
+          "_id": 156,
+          "_group": 1100026,
+          "_liveScoreRank": 7,
+          "_requiredScore": 5660978,
+          "_battleLiveRequiredScore": 5660978
+        }
+      ],
+      "newRanks": [
+        {
+          "_id": 151,
+          "_group": 1100026,
+          "_liveScoreRank": 2,
+          "_requiredScore": 0,
+          "_battleLiveRequiredScore": 0
+        },
+        {
+          "_id": 152,
+          "_group": 1100026,
+          "_liveScoreRank": 3,
+          "_requiredScore": 553488,
+          "_battleLiveRequiredScore": 863848
+        },
+        {
+          "_id": 153,
+          "_group": 1100026,
+          "_liveScoreRank": 4,
+          "_requiredScore": 1919628,
+          "_battleLiveRequiredScore": 3208525
+        },
+        {
+          "_id": 154,
+          "_group": 1100026,
+          "_liveScoreRank": 5,
+          "_requiredScore": 4468859,
+          "_battleLiveRequiredScore": 8108416
+        },
+        {
+          "_id": 155,
+          "_group": 1100026,
+          "_liveScoreRank": 6,
+          "_requiredScore": 6270852,
+          "_battleLiveRequiredScore": 11897425
+        },
+        {
+          "_id": 156,
+          "_group": 1100026,
+          "_liveScoreRank": 7,
+          "_requiredScore": 7778519,
+          "_battleLiveRequiredScore": 14630714
+        }
+      ],
+      "charts": [
+        {
+          "scoreId": 10002600,
+          "masterScoreChanges": {}
+        },
+        {
+          "scoreId": 10002601,
+          "masterScoreChanges": {}
+        },
+        {
+          "scoreId": 10002602,
+          "masterScoreChanges": {}
+        },
+        {
+          "scoreId": 10002603,
+          "masterScoreChanges": {}
+        }
+      ]
+    }
+  ]
+}
