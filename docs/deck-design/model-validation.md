@@ -15,6 +15,8 @@
 
 [APK 内容签名检查](apk-signature-verification.json)另确认 `base.apk` 与 `split_config.arm64_v8a.apk` 的 apksigner 返回码为 0，v2/v3 均通过，signer certificate SHA 与证书记录一致。Unity 数据 split 的密码学检查尚未执行；SourceStamp 未通过验证，官方 Play delivery 字节比较也未建立。因此不将两个 split 的成功扩大成完整来源链或最新规则认证。
 
+[最新原生执行门禁摘要](latest-native-gate-summary.md)进一步记录两次独立启动成功，以及最新 C API 解析的 10 个目标 class、190/190 个 MethodInfo code pointer 与 dump entry 一致、0 unresolved。字段 offset、参数与返回类型从最新原生 API 读取。当前可开始 `offline-base + saved JP snapshot` 的真实数值 pilot；线上 patch 和当前源新鲜度不从这些结构证据继承认证。
+
 最后可信 JP 快照（来源为本轮 `runtime.tar` 内的 `runtime-data/provenance.json`，不是本轮成功的在线 Version 读取）：
 
 | 输入 | 冻结值 |
