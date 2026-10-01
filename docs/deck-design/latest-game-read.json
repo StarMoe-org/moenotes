@@ -1,0 +1,17 @@
+{
+  "schema": "ournotes.latest-game-read/1",
+  "collectedAtUtc": "2026-10-01T05:00:10.1314729Z",
+  "observationTime": "not recorded by source report; collection time is not query time",
+  "region": "jp",
+  "requestClientVersion": "1.0.4",
+  "source": "nnnotes.jp.Session.observe with client service URI index 2; sanitized CNB report",
+  "reportSha256": "286096821a95c5a6194df7244e0ad0d4b72ad5ed9e74a11535def333bd18fc03",
+  "inputApiCandidateIndex": 2,
+  "status": "query-failed",
+  "errorType": "GameApiError",
+  "diagnosticCategories": [
+    "UNAVAILABLE"
+  ],
+  "responseVersion": null,
+  "nativeEquivalence": "not established"
+}
