@@ -73,15 +73,14 @@ export function ScenarioPanel({ ctx, rooms = false, missions = null }: { ctx: Ch
           value={state.mode}
           onPick={(mode) => update({ mode })}
           options={[
-            { value: "battle", label: tr(ctx.snap?.active ? "snap.fixedGekisou" : "scenario.battle") },
+            { value: "battle", label: tr("scenario.battle") },
             { value: "free", label: support.free ? tr("scenario.free") : `${tr("scenario.free")} · ${tr("scenario.pending")}`, disabled: !support.free },
           ]}
         />
-        {battle && ctx.snap?.active ? <small className="mn-cd-note">{tr("snap.fixedGekisouHint")}</small> : null}
       </div>
       {battle ? (
         <div className="mn-cd-field">
-          <span>{tr("scenario.ranks")}</span>
+          <span title={tr("scenario.best")}>{tr("scenario.ranks")}</span>
           {[...Array(RANGES).keys()].map((i) => (
             <span key={i} className="mn-cd-rk-pick">
               <small>{rangeLabel(i)}</small>
@@ -94,14 +93,15 @@ export function ScenarioPanel({ ctx, rooms = false, missions = null }: { ctx: Ch
               />
             </span>
           ))}
+          <small className="mn-cd-note mn-cd-scenario-note">{tr("scenario.best")}</small>
           {!support.ranks ? <small className="mn-cd-note">{tr("scenario.ranksPending")}</small> : null}
         </div>
       ) : null}
       <div className="mn-cd-field">
-        <span>{tr("scenario.accuracy")}</span>
+        <span title={tr(battle ? "scenario.accNote" : "scenario.accNoteFree")}>{tr("scenario.accuracy")}</span>
         <AccuracySlider label={tr("scenario.great")} value={state.great} onValue={great => update({ great })} />
         {battle ? <AccuracySlider label={tr("scenario.just")} value={state.just} disabled={!support.just} onValue={just => update({ just })} /> : null}
-        <abbr className="mn-cd-note" title={tr(battle ? "scenario.accNote" : "scenario.accNoteFree")}>{tr("referenceEstimate")}</abbr>
+        <small className="mn-cd-note mn-cd-scenario-note">{tr(battle ? "scenario.accNote" : "scenario.accNoteFree")}</small>
       </div>
       {rooms && battle ? (
         <div className="mn-cd-field">
@@ -126,17 +126,22 @@ export default function SettingsPanel({ ctx, event = false, frontier = false, ap
       </div>
       <AccuracySlider label={tr("overhead")} value={state.overhead} max={180} step={5} onValue={overhead => update({ overhead })} format={v => tr("seconds", { n: v })} />
       </> : null}
-      <div className="mn-cd-field">
+      <div className="mn-cd-field mn-cd-skill-baseline">
         <span>{tr("skills")}</span>
         <div className="mn-cd-skills">
           {state.skills.slice(0, SKILL_SLOTS).map((x, i) => (
-            <NumberInput key={i} className="skill" value={x} max={100 * X_MAX} step={5} label={tr("skillSlot", { n: i + 1 })} onValue={(v) => setSkill(i, v)} />
+            <label key={i} className="mn-cd-skill-entry">
+              <span className="mn-cd-skill-no" aria-hidden="true">{i + 1}</span>
+              <NumberInput className="skill" value={x} max={100 * X_MAX} step={5} label={tr("skillSlot", { n: i + 1 })} onValue={(v) => setSkill(i, v)} />
+              <span className="mn-cd-skill-unit" aria-hidden="true">%</span>
+            </label>
           ))}
           <output className="mn-cd-mean">{tr("meanSkill", { v: Math.round(100 * meanSkill(ctx.skills, SKILL_SLOTS)) })}</output>
           {PRESETS.map(([key, v]) => (
             <button key={key} type="button" className="mn-cd-ghost" onClick={() => update({ skills: Array(SKILL_SLOTS).fill(v) })}>{tr(`presets.${key}`)}</button>
           ))}
         </div>
+        <small className="mn-cd-note mn-cd-scenario-note">{tr("skillsHint")}</small>
       </div>
       {event || aptitude ? (
         <>
@@ -151,8 +156,8 @@ export default function SettingsPanel({ ctx, event = false, frontier = false, ap
         </>
       ) : null}
       {frontier ? (
-        <label className="mn-cd-check">
-          <input type="checkbox" checked={state.frontier} onChange={(e) => update({ frontier: e.target.checked })} />
+        <label className="mn-cd-check" title={ctx.snap?.active ? tr("snap.frontierUnavailable") : undefined}>
+          <input type="checkbox" checked={state.frontier} disabled={ctx.snap?.active} onChange={(e) => update({ frontier: e.target.checked })} />
           {tr("frontier")}
         </label>
       ) : null}

@@ -56,7 +56,7 @@ const exploreLinks = [
         </ul>
       </div>
 
-      {/* Column 3: Sister Sites */}
+      {/* Column 3: Sister Sites & Friendly Sites */}
       <div>
         <h3 class="mb-4 font-[var(--mn-font-display)] text-sm font-black tracking-wider text-[var(--mn-accent)] uppercase">
           {t(locale, "footer.sister")}
@@ -76,6 +76,29 @@ const exploreLinks = [
             </li>
           ))}
         </ul>
+
+        {siteConfig.friendlySites && siteConfig.friendlySites.length > 0 && (
+          <div class="mt-6">
+            <h3 class="mb-4 font-[var(--mn-font-display)] text-sm font-black tracking-wider text-[var(--mn-accent)] uppercase">
+              {t(locale, "footer.friendly")}
+            </h3>
+            <ul class="flex flex-col gap-2.5">
+              {siteConfig.friendlySites.map((link) => (
+                <li>
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="group flex items-center gap-2 text-sm font-bold text-[var(--mn-text-muted)] transition-colors hover:text-[var(--mn-accent-deep)]"
+                  >
+                    <span class="inline-block transition-transform duration-200 group-hover:translate-x-1">→</span>
+                    <span>{link.label}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
       {/* Column 4: Contact */}

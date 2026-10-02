@@ -2,6 +2,7 @@
 import StoryPlayerTool from "@/components/tools/StoryPlayerTool";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
+import { PRIMARY_SERVER } from "@/config/servers";
 import { getBuildStories } from "@/lib/masterdata/build-data";
 import { storyEpisodeLabel } from "@/lib/story/labels";
 import type { StoryPickerStory } from "@/lib/story/player-data";
@@ -15,6 +16,7 @@ const { locale } = Astro.props;
 // (stories.json of the story site), so newly published stories need no rebuild.
 const stories: StoryPickerStory[] = (await getBuildStories(locale)).map((story) => ({
   advId: story.advId,
+  assetServer: story.servers[0] ?? PRIMARY_SERVER,
   category: story.category,
   title: story.title,
   groupId: story.groupId,

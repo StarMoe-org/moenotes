@@ -16,3 +16,12 @@ export { GAME_SERVERS, type GameServer };
 export const GAME_SERVER_TIME_ZONES: Record<GameServer, string> = Object.fromEntries(
   GAME_SERVERS.map((server) => [server, GAME_SERVER_PROFILES[server].timeZone]),
 ) as Record<GameServer, string>;
+
+/**
+ * Profile card image from the ranking service cache: rankd proxies moenotes-api's authenticated card endpoint
+ * with long-term caching, so public ranking pages can show cards without user auth.
+ * Page is 1-based (the game API's convention).
+ */
+export function rankingProfileCardUrl(server: GameServer, profileId: string, page: number): string {
+  return `${gameApiConfig.base}/${server}/ranking/profile/${encodeURIComponent(profileId)}/card/${page}`;
+}

@@ -14,6 +14,7 @@ export interface SiteConfig {
     xhtml: string;
   };
   sisterSites: Array<{ label: string; url: string }>;
+  friendlySites: Array<{ label: string; url: string }>;
   community: {
     discord: { name: string; url: string };
     qq: { name: string; number: string; url: string };
@@ -48,6 +49,9 @@ export const siteConfig: SiteConfig = {
   },
   sisterSites: [
     { label: "pjsk.moe (MoeSekai)", url: "https://pjsk.moe" },
+  ],
+  friendlySites: [
+    { label: "羽丘（haneoka.org）", url: "https://haneoka.org" },
   ],
   community: {
     discord: { name: "StarMoe", url: "https://discord.gg/6JQMVQ2Mku" },

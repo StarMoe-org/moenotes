@@ -14,6 +14,7 @@ import { scenarioSupport } from "@/lib/chart-data/scenario";
 import { localizeDataText } from "@/lib/chart-data/text";
 import type { MusicData } from "@/lib/chart-data/types";
 import { chartSnapProfile, snapDisplayedMeasurement } from "@/lib/chart-data/snap-profile";
+import { createSnapLegalityContext } from "@/lib/chart-data/snap-legality";
 import { emptySnapRanking, isCurrentSnapCatalogue, type SnapRankingCatalogue, type SnapRankingSource, type SnapRankingState } from "@/lib/chart-data/snap-client";
 import { getChartPreviewHref } from "@/lib/music/chart-preview";
 import { getMusicJacketUrl } from "@/lib/music/data";
@@ -72,7 +73,8 @@ export default function ChartDataTool({ locale, guide }: Props) {
 
   const data = load.status === "ready" ? load.data : null;
   const currentSnapCatalogue = useMemo(() => isCurrentSnapCatalogue(snapCatalogue, data) ? snapCatalogue : null, [snapCatalogue, data]);
-  useEffect(() => { setSnapCatalogue(null); setSnapCatalogueError(false); }, [data]);
+  // A new data object for the same verified snapshot keeps its already loaded card choices.
+  useEffect(() => { setSnapCatalogue(previous => isCurrentSnapCatalogue(previous, data) ? previous : null); setSnapCatalogueError(false); }, [data]);
   const support = useMemo(() => scenarioSupport(data), [data]);
   const hasStats = support.battle || support.free;
   const queryContext = useMemo<QueryContext>(() => ({ hasStats, support }), [hasStats, support]);
@@ -115,7 +117,8 @@ export default function ChartDataTool({ locale, guide }: Props) {
   const scenario = useMemo(() => (mode && ranks && great !== undefined && just !== undefined ? playScenario({ mode, ranks, great, just }) : null), [mode, ranks, great, just]);
   const rows = useMemo(() => (data && scenario ? chartRows(data, scenario) : []), [data, scenario]);
   const snapActive = current?.snapSkills.some(Boolean) ?? false;
-  const snapEvaluation = useMemo(() => current ? chartSnapProfile(current, currentSnapCatalogue?.data) : null, [current, currentSnapCatalogue]);
+  const snapLegality = useMemo(() => currentSnapCatalogue ? createSnapLegalityContext(currentSnapCatalogue.data, currentSnapCatalogue.choices) : undefined, [currentSnapCatalogue]);
+  const snapEvaluation = useMemo(() => current ? chartSnapProfile(current, currentSnapCatalogue?.data, snapLegality) : null, [current, currentSnapCatalogue, snapLegality]);
   const snapSource = useMemo<SnapRankingSource | null>(() => {
     const region = data?.provenance?.region, masterVersion = data?.provenance?.master?.version, modelCommit = data?.provenance?.deck?.commit;
     return data?.replay && region && masterVersion && modelCommit && (snapRequested || snapActive)
@@ -190,6 +193,7 @@ export default function ChartDataTool({ locale, guide }: Props) {
             ) : ctx && view === "rank" ? <>
               <SnapRankingPanel ctx={ctx} catalogue={currentSnapCatalogue} measurement={snapMeasurement}
                 loading={!!snapSource && !currentSnapCatalogue} invalidMembers={snapEvaluation?.invalidMembers ?? []}
+                legality={snapLegality} issues={snapEvaluation?.issues ?? []}
                 available={!!data?.replay} catalogueError={snapCatalogueError} onOpen={() => { setSnapRequested(true); if (snapCatalogueError) { setSnapCatalogueError(false); setSnapAttempt((value) => value + 1); } }} />
               <BackgroundRankView ctx={ctx} />
             </> : ctx ? <BackgroundChartsView ctx={ctx} /> : null}
@@ -199,7 +203,7 @@ export default function ChartDataTool({ locale, guide }: Props) {
 
       {data ? <Footer locale={locale} data={data} /> : null}
       {snapEvaluation ? <SnapRankingController key={snapAttempt} source={snapSource} profile={snapEvaluation.profile} scoreIds={snapScoreIds}
-        enabled={snapActive && snapScoreIds.length > 0 && !!currentSnapCatalogue && snapEvaluation.invalidMembers.length === 0} locale={locale}
+        enabled={snapActive && snapScoreIds.length > 0 && !!currentSnapCatalogue && snapEvaluation.invalidMembers.length === 0 && snapEvaluation.issues.length === 0} locale={locale}
         onState={setSnapMeasurement} onCatalogue={setSnapCatalogue} onCatalogueError={() => setSnapCatalogueError(true)} /> : null}
 
       {ctx ? (

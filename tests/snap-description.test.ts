@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { normalizeSupportSkill, supportSkillTargetNames, type RawSupportSkillEffect } from "../src/lib/support-cards/skills";
+import { normalizeSupportSkill, type RawSupportSkillEffect } from "../src/lib/support-cards/skills";
 import type { RawBand, RawCharacter, RawText } from "../src/lib/cards/data";
 
 const texts = [
@@ -13,12 +13,15 @@ const conditions = [{ id: 3, conditionValues: [], conditionTargetIDs: [11] }];
 const sets = [{ id: 8, group: 5, conditionIds: [3] }];
 
 test("support descriptions resolve separate condition and effect targets at the selected level", () => {
-  const names = supportSkillTargetNames([{ id: 11, bandID: 7 }, { id: 14, characterID: 3 }], [{ id: 3, nameTextID: "character" }] as RawCharacter[], [{ id: 7, nameTextID: "band" }] as RawBand[], texts, "en-US");
-  const skill = normalizeSupportSkill("support", 31, definitions, effects, [], texts, "en-US", sets, conditions, [], new Map(), names)!;
+  const characterMap = new Map([[3, { id: 3, nameTextID: "character" } as RawCharacter]]);
+  const bandMap = new Map([[7, { id: 7, nameTextID: "band" } as RawBand]]);
+  const targets = [{ id: 11, bandID: 7 }, { id: 14, characterID: 3 }];
+  const skill = normalizeSupportSkill("support", 31, definitions, effects, [], texts, "en-US", sets, conditions, [], characterMap, bandMap, targets)!;
   expect(skill.levels.map((level) => level.description)).toEqual(["If Ave Mujica, give 10% to Mutsumi", "If Ave Mujica, give 20% to Mutsumi"]);
 });
 
 test("an unresolved predicate omits the description instead of inventing an unconditional effect", () => {
-  const skill = normalizeSupportSkill("support", 31, definitions, effects, [], texts, "en-US", sets, conditions, [], new Map(), new Map([[14, "Mutsumi"]]))!;
+  const characterMap = new Map([[3, { id: 3, nameTextID: "character" } as RawCharacter]]);
+  const skill = normalizeSupportSkill("support", 31, definitions, effects, [], texts, "en-US", sets, conditions, [], characterMap, new Map(), [{ id: 14, characterID: 3 }])!;
   expect(skill.levels.every((level) => level.description === "")).toBe(true);
 });

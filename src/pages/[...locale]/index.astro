@@ -17,6 +17,7 @@ import AccountPage from "@/components/account/AccountPage.astro";
 import PlayerPage from "@/components/account/PlayerPage.astro";
 import NewsPage from "@/components/news/NewsPage.astro";
 import NewsDetailPage from "@/components/news/NewsDetailPage.astro";
+import EventTrackerPage from "@/components/events/EventTrackerPage.astro";
 import HomePage from "@/components/home/HomePage.astro";
 import MusicPage from "@/components/music/MusicPage.astro";
 import MusicDetailPage from "@/components/music/MusicDetailPage.astro";
@@ -138,6 +139,8 @@ const component = match.item.component ?? "page";
     <NewsPage locale={locale} />
   ) : component === "news-detail" ? (
     <NewsDetailPage locale={locale} />
+  ) : component === "event-tracker" ? (
+    <EventTrackerPage locale={locale} />
   ) : (
     <PageLayout locale={locale} titleKey={match.item.seo.titleKey} descriptionKey={match.item.seo.descriptionKey}>
       {match.isGroupLanding ? (

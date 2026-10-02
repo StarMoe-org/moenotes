@@ -1,7 +1,7 @@
 import type { AppLocale } from "@/config/locales";
 import { normalizeCards, validateMasterTable, type RawBand, type RawCharacter, type RawMemberCard, type RawText } from "@/lib/cards/data";
-import type { RawSkillCondition, RawSkillConditionSet, RawSkillCumulativeCondition, RawSkillDefinition, RawSkillIcon } from "@/lib/cards/skills";
-import { normalizeSupportSkill, supportSkillTargetNames, type RawSupportSkillEffect, type RawSupportSkillTarget } from "@/lib/support-cards/skills";
+import type { RawSkillCondition, RawSkillConditionSet, RawSkillCumulativeCondition, RawSkillDefinition, RawSkillIcon, RawSkillTarget } from "@/lib/cards/skills";
+import { normalizeSupportSkill, type RawSupportSkillEffect } from "@/lib/support-cards/skills";
 import { normalizeSupportCards, type RawSupportCard } from "@/lib/support-cards/data";
 import type { SnapLabeler } from "./snap-catalogue";
 import type { SnapDeckData } from "./snap-types";
@@ -36,7 +36,7 @@ export function buildSnapLabeler(data: SnapDeckData, source: SnapLabelSource, lo
     icons.push(...sourceRows<RawSkillIcon>(source, "MasterSkillIcon"));
   }
   const characterMap = new Map(rows<RawCharacter>("MasterCharacter").map((row) => [row.id, row]));
-  const targetNames = supportSkillTargetNames(rows<RawSupportSkillTarget>("MasterSkillTarget"), rows<RawCharacter>("MasterCharacter"), rows<RawBand>("MasterBand"), rows<RawText>("MasterText"), locale);
+  const bandMap = new Map(rows<RawBand>("MasterBand").map((row) => [row.id, row]));
   const cache = new Map<string, ReturnType<typeof normalizeSupportSkill>>();
   return (kind, skillId, level) => {
     const key = `${kind}:${skillId}`;
@@ -45,7 +45,7 @@ export function buildSnapLabeler(data: SnapDeckData, source: SnapLabelSource, lo
       rows<RawSupportSkillEffect>(kind === "support" ? "MasterSupportSkillEffect" : "MasterGekisouSupportSkillEffect"),
       icons, rows<RawText>("MasterText"), locale,
       rows<RawSkillConditionSet>("MasterSkillConditionSet"), rows<RawSkillCondition>("MasterSkillCondition"),
-      rows<RawSkillCumulativeCondition>("MasterSkillCumulativeCondition"), characterMap, targetNames));
+      rows<RawSkillCumulativeCondition>("MasterSkillCumulativeCondition"), characterMap, bandMap, rows<RawSkillTarget>("MasterSkillTarget")));
     const skill = cache.get(key), effectLevel = skill?.levels.find((row) => row.level === level);
     return skill && effectLevel ? { name: skill.name, description: effectLevel.description, iconUrl: skill.iconUrl } : undefined;
   };
@@ -56,7 +56,11 @@ export function buildSnapReferenceCards(data: SnapDeckData, source: SnapLabelSou
   checkSource(data, source, ["MasterMemberCard", "MasterSupportCard", "MasterCharacter", "MasterBand", "MasterText"]);
   const characters = sourceRows<RawCharacter>(source, "MasterCharacter"), bands = sourceRows<RawBand>(source, "MasterBand"), texts = sourceRows<RawText>(source, "MasterText");
   return {
-    members: normalizeCards(sourceRows<RawMemberCard>(source, "MasterMemberCard"), characters, bands, texts, locale),
+    members: normalizeCards(sourceRows<RawMemberCard>(source, "MasterMemberCard"), characters, bands, texts, locale).map(card => {
+      const background = card.rarity === 2 ? bands.find(band => band.id === card.bandId)?.memberRarityRBackgroundAssetPath
+        : `MemberCard/${card.assetId}/member_background[formation]`;
+      return { ...card, ...(background ? { formationBackgroundKey: background } : {}) };
+    }),
     snaps: normalizeSupportCards(sourceRows<RawSupportCard>(source, "MasterSupportCard"), characters, bands, texts, locale),
   };
 }

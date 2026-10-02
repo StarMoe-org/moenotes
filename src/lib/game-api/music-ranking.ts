@@ -8,8 +8,27 @@ export interface MusicRanking {
 
 export interface RankingPlayer {
   score?: number;
-  playerData?: { id?: string; name?: string; profileId?: string; rankExp?: number };
+  playerData?: {
+    id?: string;
+    name?: string;
+    profileId?: string;
+    rankExp?: number;
+    profileCard?: {
+      name?: string;
+      slot?: number;
+      thumbnailUrl?: string[];
+    };
+  };
   highScoreDeck?: { id?: number; name?: string; totalPower?: number; cards?: RankingDeckSlot[] };
+  profile?: {
+    id?: string;
+    name?: string;
+    profileId?: string;
+    profileCard?: {
+      name?: string;
+      thumbnailUrl?: string[];
+    };
+  };
 }
 
 export interface RankingDeckSlot {
@@ -39,6 +58,9 @@ export interface RankingRow {
   deckName: string;
   totalPower: number | null;
   cards: RankingDeckCard[];
+  /** Profile card information when available from the ranking data. */
+  profileCard?: { name: string | null; images: number } | null;
+  profileId?: string | null;
 }
 
 /**
@@ -61,24 +83,38 @@ export function levelFromExp(levelExp: readonly number[] | undefined, exp: numbe
   return Math.max(level, 1);
 }
 
-export function toRankingRows(ranking: MusicRanking): RankingRow[] {
+/**
+ * `by: "score"` (song rankings) sorts by score and gives tied scores the better place. `by: "response"` (event
+ * challenge boards) keeps the game's order and numbers rows `index + 1`: there the earlier of two equal scores
+ * ranks first, so rows are never reordered or merged.
+ */
+export function toRankingRows(ranking: MusicRanking, by: "score" | "response" = "score"): RankingRow[] {
   const players = (Array.isArray(ranking.players) ? ranking.players : [])
-    .map((player, index) => ({ player, index, score: typeof player.score === "number" ? player.score : 0 }))
-    .sort((a, b) => b.score - a.score || a.index - b.index);
+    .map((player, index) => ({ player, index, score: typeof player.score === "number" ? player.score : 0 }));
+  if (by === "score") players.sort((a, b) => b.score - a.score || a.index - b.index);
   const counts = new Map<number, number>();
   for (const { score } of players) counts.set(score, (counts.get(score) ?? 0) + 1);
 
   let rank = 0;
   let previous: number | null = null;
+  const seen = new Set<string>();
   return players.map(({ player, index, score }, position) => {
-    if (score !== previous) rank = position + 1;
+    if (by === "response" || score !== previous) rank = position + 1;
     previous = score;
     const deck = player.highScoreDeck;
+    const profile = player.profile;
+    // profileCard can be in either playerData (new API) or profile (old API)
+    const profileCard = player.playerData?.profileCard ?? profile?.profileCard;
+    const cardImages = Array.isArray(profileCard?.thumbnailUrl) ? profileCard.thumbnailUrl.length : 0;
+    // Boards keep repeated players as the game sent them; the key still has to be unique.
+    let uid = player.playerData?.id ?? String(index);
+    if (seen.has(uid)) uid = `${uid}#${index}`;
+    seen.add(uid);
     return {
       rank,
-      tied: (counts.get(score) ?? 0) > 1,
-      uid: player.playerData?.id ?? String(index),
-      name: player.playerData?.name ?? "",
+      tied: by === "score" && (counts.get(score) ?? 0) > 1,
+      uid,
+      name: player.playerData?.name ?? profile?.name ?? "",
       score,
       deckName: deck?.name ?? "",
       totalPower: typeof deck?.totalPower === "number" ? deck.totalPower : null,
@@ -93,6 +129,8 @@ export function toRankingRows(ranking: MusicRanking): RankingRow[] {
           supportRank: slot.supportCard?.rank ?? null,
         }))
         .sort((a, b) => a.slot - b.slot),
+      profileCard: cardImages > 0 ? { name: typeof profileCard?.name === "string" && profileCard.name ? profileCard.name : null, images: cardImages } : null,
+      profileId: typeof profile?.profileId === "string" ? profile.profileId : (typeof player.playerData?.profileId === "string" ? player.playerData.profileId : null),
     };
   });
 }

@@ -3,9 +3,8 @@ import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import Modal from "@/components/shared/Modal";
 import { FilterButton } from "@/components/shared/BaseFilters";
-import { getAssetUrl } from "@/lib/assets/url";
 import type { StoryEpisodeKind } from "@/lib/story/data";
-import { STORY_SECTIONS, type StoryPlayerEntry, type StorySection } from "@/lib/story/player-data";
+import { getStoryPlayerArtworkUrl, STORY_SECTIONS, type StoryPlayerEntry, type StorySection } from "@/lib/story/player-data";
 
 interface StoryPickerDialogProps {
   locale: AppLocale;
@@ -174,7 +173,7 @@ function EpisodeGroup({ locale, group, currentId, onPick }: { locale: AppLocale;
       .map((kind) => ({ kind, entries: group.entries.filter((entry) => (entry.episodeKind ?? "main") === kind) }))
       .filter((run) => run.entries.length > 0)
     : [{ kind: "main" as StoryEpisodeKind, entries: group.entries }];
-  const imageUrl = group.image ? getAssetUrl({ path: `${group.image}.png`, type: "raw", locale }) : "";
+  const imageUrl = getStoryPlayerArtworkUrl(group.image, locale, group.entries[0]!.assetServer);
 
   return (
     <section className="overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-sm)]">
@@ -208,7 +207,7 @@ function EpisodeGroup({ locale, group, currentId, onPick }: { locale: AppLocale;
 }
 
 function EpisodeOption({ locale, entry, current, onPick }: { locale: AppLocale; entry: StoryPlayerEntry; current: boolean; onPick: () => void }) {
-  const imageUrl = entry.image ? getAssetUrl({ path: `${entry.image}.png`, type: "raw", locale }) : "";
+  const imageUrl = getStoryPlayerArtworkUrl(entry.image, locale, entry.assetServer);
   // The other talks are listed by type: their spot or cast names them (the site's own episodes, their id).
   const label = entry.section === "other"
     ? entry.category === "other" ? `ADV ${entry.advId}` : entry.groupTitle

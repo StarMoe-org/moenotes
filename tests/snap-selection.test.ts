@@ -6,6 +6,7 @@ import { parseChartDataQuery, serializeChartDataQuery } from "../src/lib/chart-d
 import { scenarioSupport } from "../src/lib/chart-data/scenario";
 import { chartSnapProfile, snapDisplayedMeasurement } from "../src/lib/chart-data/snap-profile";
 import { emptySnapRanking, snapProfileKey } from "../src/lib/chart-data/snap-client";
+import type { SnapLegalityContext } from "../src/lib/chart-data/snap-legality";
 
 const choice = (id: number, level: number, extras: Partial<SnapSkillChoice> = {}): SnapSkillChoice => ({
   kind: "support", skillId: id, level, key: `support:${id}:${level}`, name: "技能 ABC", description: "Great 转换",
@@ -28,7 +29,7 @@ describe("five optional Snap selections", () => {
     expect(parseChartDataQuery(serializeChartDataQuery(state, ctx), ctx)).toEqual(state);
   });
   test("untrusted URL cannot inject malformed IDs, levels or out-of-range power", () => {
-    const state = parseSnapQuery(new URLSearchParams("ss=support:1:2:3,unknown:1:2,support:-1:2,support:1:NaN,support:9007199254740993:1&sm=2:0:9,1:4,0:1&mp=20000001"));
+    const state = parseSnapQuery(new URLSearchParams("ss=support:1:2:3:4,unknown:1:2,support:-1:2,support:1:NaN,support:9007199254740993:1&sm=2:0:9,1:4,0:1&mp=20000001"));
     expect(state.snapSkills).toEqual([null, null, null, null, null]);
     expect(state.snapMembers[0]).toBeNull();
     expect(state.snapMembers[1]).toEqual({ memberId: 1, gekisouLevel: 4 });
@@ -45,6 +46,18 @@ describe("five optional Snap selections", () => {
     expect(evaluation.invalidMembers).toEqual([0]);
     expect(shown.status).toBe("needs-context");
     expect(shown.rows.size).toBe(0);
+    expect(previous.rows.size).toBe(1);
+  });
+  test("a duplicate-character URL clears displayed scores before a Worker effect can run", () => {
+    const state = parseChartDataQuery("ss=support:31:1:17&sm=1:0,2:0", { hasStats: false, support: scenarioSupport(null) });
+    const legality: SnapLegalityContext = { members: new Map([[1, { id: 1, characterId: 7, gkLevels: [] }], [2, { id: 2, characterId: 7, gkLevels: [] }]]),
+      supportCardIds: new Set([17]), choices: [choice(31, 1, { rankBindings: [{ cardId: 17, rank: 0, binding: 1 }] })] };
+    const evaluation = chartSnapProfile(state, undefined, legality);
+    const previous = { ...emptySnapRanking(snapProfileKey(evaluation.profile)), status: "complete" as const,
+      rows: new Map([[1, { scoreId: 1, score: 100, baselineScore: 99, delta: 1, life: 1000, combo: 1, randomDraws: 0, convertedJudgements: 0 }]]) };
+    expect(evaluation.invalidMembers).toEqual([]);
+    expect(evaluation.issues.map(issue => issue.code)).toEqual(["duplicate-character", "duplicate-character"]);
+    expect(snapDisplayedMeasurement(evaluation, null, previous).rows.size).toBe(0);
     expect(previous.rows.size).toBe(1);
   });
 });

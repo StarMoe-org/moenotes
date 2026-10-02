@@ -8,7 +8,7 @@ export const deDE = {
     date: "Veröffentlichungsdatum",
     rarity: "Seltenheit",
     ascending: "Aufsteigend",
-    descending: "Absteigend",
+    descending: "Absteigend"
   },
   assetBrowser: {
     noLanguages: "Bislang sind keine Inhaltssprachen verfügbar.",
@@ -36,7 +36,7 @@ export const deDE = {
       audio: "Audio",
       video: "Video",
       text: "Text",
-      other: "Datei",
+      other: "Datei"
     },
     sorts: { name: "Name A–Z", nameDescending: "Name Z–A", size: "Größte zuerst" },
     title: "Asset-Browser",
@@ -103,6 +103,15 @@ export const deDE = {
     copy: "Pfad kopieren",
     copied: "Pfad kopiert",
     copyError: "Kopieren fehlgeschlagen; bitte erneut versuchen",
+    folders: "Ordner",
+    subfolders: "Unterordner",
+    toggleTree: "Verzeichnisstruktur umschalten",
+    directoryTree: "Verzeichnisstruktur",
+    copyBundle: "Bundle-Schlüssel kopieren",
+    bundleCopied: "Bundle-Schlüssel kopiert",
+    noFilesHere: "Keine Dateien direkt in diesem Ordner.",
+    preview: "Vorschau",
+    openImage: "Originalbild öffnen"
   },
   notFound: {
     metaTitle: "Seite nicht gefunden",
@@ -110,16 +119,24 @@ export const deDE = {
     description: "Die Adresse hat sich möglicherweise geändert oder diese Seite wird noch vorbereitet. Kehre zur Startseite zurück, um weiter zu erkunden.",
     note: "Wenn dieser Link funktionieren sollte, melde ihn den Entwicklern, damit wir das Signal wiederfinden können.",
     home: "Zurück zur Startseite",
-    feedback: "Diesen Link melden",
+    feedback: "Diesen Link melden"
   },
   nav: {
     home: "Startseite",
-    groups: { database: "Datenbank", story: "Story", tools: "Tools", community: "Über uns" },
+    groups: {
+      database: "Datenbank",
+      music: "Musik",
+      events: "Events",
+      story: "Story",
+      tools: "Tools",
+      community: "Über uns"
+    },
     items: {
       characters: "Charaktere",
       cards: "Karten",
       supportCards: "Support-Karten",
       music: "Musik",
+      eventList: "Event-Liste",
       gacha: "Gacha",
       rewards: "Missionen & Belohnungen",
       titles: "Titel",
@@ -136,7 +153,14 @@ export const deDE = {
       tutorialStory: "Tutorial-Stories",
       assetViewer: "Asset-Viewer",
       designSystem: "Designsystem",
-    },
+      chartPreview: "Chart-Vorschau",
+      live2dViewer: "Live2D-Viewer",
+      storyPlayer: "Story-Player",
+      news: "Neuigkeiten",
+      eventTracker: "Event-Tracker",
+      musicRanking: "Song-Rangliste",
+      chartData: "Song-Meta"
+    }
   },
   shell: {
     openSidebar: "Seitenleiste öffnen",
@@ -148,21 +172,164 @@ export const deDE = {
     breadcrumbExpandItems: "Geschwisterseiten ausklappen",
     commandPlaceholder: "Seiten oder Funktionen suchen...",
     noCommandResults: "Keine Ergebnisse",
-    shortcuts: "Tastenkürzel",
+    shortcuts: "Tastenkürzel"
+  },
+  account: {
+    signIn: "Anmelden",
+    signOut: "Abmelden",
+    menu: "Konto-Menü",
+    passport: "StarMoe-Passport",
+    title: "Mein Konto",
+    description: "Dein StarMoe-Passport auf Moenotes.",
+    manage: "Mein Konto",
+    loading: "Konto wird geladen…",
+    unavailable: "Die Kontofunktion ist derzeit nicht verfügbar. Bitte versuche es später noch einmal.",
+    signedOutHint: "Melde dich mit deinem StarMoe-Passport an, um dein Profil einzurichten.",
+    changeAvatar: "Profilbild ändern",
+    avatarHint: "Wähle einen Charakter, der dich auf Moenotes repräsentiert.",
+    avatarDefault: "Passport-Profilbild verwenden",
+    saving: "Wird gespeichert…",
+    saveFailed: "Speichern fehlgeschlagen. Bitte versuche es erneut.",
+    securityTitle: "Passport-Sicherheit",
+    securityHint: "Diese Einstellungen werden in deinem StarMoe-Passport gespeichert und gelten für alle StarMoe-Websites.",
+    password: "Passwort",
+    passwordHint: "Lege dein Anmeldepasswort fest oder ändere es.",
+    email: "E-Mail",
+    emailHint: "Füge eine Anmelde-E-Mail hinzu oder ändere sie.",
+    securityCenter: "Sicherheitscenter",
+    securityCenterHint: "Zweistufige Verifizierung, verknüpfte Konten und angemeldete Geräte. Öffnet in einem neuen Tab.",
+    change: "Ändern",
+    open: "Öffnen",
+    comingSoonTitle: "Our Notes-Decks",
+    comingSoonBadge: "In Entwicklung",
+    comingSoonBody: "Der Deckbau befindet sich in der Entwicklung. Bleib dran!",
+    games: {
+      title: "Spielkonten",
+      hint: "Deine Our Notes-Konten. Ein neues Konto ist zunächst nicht verifiziert; trage den Bestätigungscode kurz in deinen Spielnamen ein, um es zu verifizieren.",
+      loadFailed: "Deine Spielkonten konnten nicht geladen werden. Bitte lade die Seite neu.",
+      unavailable: "Die Spielkontofunktion ist derzeit nicht verfügbar. Bitte versuche es später noch einmal.",
+      servers: { tw: "HK/MO/TW", jp: "Japan", en: "Englisch", kr: "Korea" },
+      add: "Spielkonto hinzufügen",
+      addAnother: "Anderes Konto hinzufügen",
+      server: "Server",
+      profileId: "Spieler-ID",
+      profileIdHint: "Die 11-stellige ID in deinem In-Game-Profil.",
+      profileIdHintJp: "Die ID in deinem In-Game-Profil.",
+      addButton: "Hinzufügen",
+      checking: "Wird geprüft…",
+      verified: "Verifiziert",
+      unverified: "Nicht verifiziert",
+      verifiedMeta: "ID {id} · verifiziert am {date}",
+      unverifiedMeta: "ID {id} · noch nicht verifiziert",
+      startVerify: "Verifizieren",
+      hideVerify: "Einklappen",
+      stepRename: "Ändere im Spiel deinen Namen so, dass er den unten stehenden Code enthält. Der Rest des Namens kann bleiben.",
+      stepVerify: "Kehre hierher zurück und klicke auf Prüfen. Es kann etwa 15 Sekunden dauern, bis ein neuer Name erkannt wird.",
+      stepRestore: "Nach der Verifizierung kannst du deinen Namen wieder zurückändern.",
+      codeLabel: "Bestätigungscode",
+      copy: "Kopieren",
+      copied: "Kopiert",
+      refreshCode: "Neuer Code",
+      refreshHint: "Das Spiel akzeptiert diesen Code im Namen nicht (z. B. wegen Wortfiltern)? Generiere einen neuen.",
+      codeRefreshed: "Hier ist ein neuer Code. Der alte ist nicht mehr gültig.",
+      verify: "Prüfen",
+      nameMismatch: "Noch nicht: Das Spiel zeigt noch den Namen „{name}“. Warte nach der Umbenennung ein paar Sekunden und versuche es erneut.",
+      addedNotice: "{name} hinzugefügt. Trage den Code in deinen Spielnamen ein, um ihn zu verifizieren.",
+      verifiedNotice: "{name} ist verifiziert. Du kannst deinen Namen jetzt wieder zurückändern.",
+      unnamed: "(kein Name)",
+      remove: "Entfernen",
+      removeConfirm: "Entfernen bestätigen",
+      keep: "Behalten",
+      errors: {
+        invalidAccount: "Diese ID existiert auf dem ausgewählten Server nicht. Bitte überprüfe Server und ID.",
+        playerNotFound: "Kein Spieler mit dieser ID auf dem ausgewählten Server gefunden.",
+        alreadyAdded: "Du hast dieses Konto bereits hinzugefügt.",
+        tooManyAccounts: "Du kannst bis zu 10 Spielkonten hinzufügen.",
+        alreadyVerified: "Dieses Konto ist bereits verifiziert.",
+        notFound: "Dieses Konto ist nicht mehr in deiner Liste. Bitte lade die Seite neu.",
+        notVerified: "Bitte verifiziere dieses Konto zuerst.",
+        tooSoon: "Zu schnell. Bitte warte ein paar Sekunden und versuche es erneut.",
+        gameUnavailable: "Das Spiel ist derzeit nicht erreichbar (Wartungsarbeiten oder Netzwerkfehler). Bitte versuche es später noch einmal.",
+        generic: "Etwas ist schiefgelaufen. Bitte versuche es erneut."
+      }
+    },
+    profile: {
+      show: "Profil",
+      loading: "Profil wird geladen…",
+      level: "Level",
+      favorites: "Favorisiert von",
+      favoriteCard: "Vorzeigekarte: {title} ({character})",
+      fetchedAt: "Profil aktualisiert: {time}",
+      refresh: "Profil aktualisieren",
+      public: "Öffentliche Profilseite",
+      publicOn: "Ein: Jeder mit dem Link kann dieses Profil ansehen.",
+      publicOff: "Aus: Nur du kannst dieses Profil ansehen.",
+      copyLink: "Link kopieren",
+      openPage: "Öffnen",
+      profileCard: "Profilkarte",
+      profileCardNamed: "Profilkarte: {name}",
+      profileCardAlt: "Profilkarte von {name}, Bild {index}"
+    },
+    share: {
+      button: "Bild teilen",
+      title: "Bild teilen",
+      rendering: "Bild wird erstellt…",
+      failed: "Das Bild konnte nicht erstellt werden. Bitte versuche es erneut.",
+      retry: "Erneut versuchen",
+      hint: "Wird im Browser generiert; es wird nichts hochgeladen.",
+      alt: "Geteiltes Bild von {name}",
+      download: "Herunterladen",
+      copy: "Bild kopieren",
+      copied: "Kopiert",
+      share: "Teilen"
+    }
+  },
+  player: {
+    title: "Spielerprofil",
+    description: "Öffentliches Profil eines Our Notes-Spielers, verifiziert mit StarMoe-Passport.",
+    documentTitle: "{name}",
+    loading: "Profil wird geladen…",
+    invalid: "Dieser Link verweist nicht auf ein Spielerprofil.",
+    notFound: "Dieses Profil existiert nicht oder wurde von seinem Besitzer noch nicht öffentlich gemacht.",
+    unavailable: "Das Profil kann derzeit nicht geladen werden. Bitte versuche es später noch einmal.",
+    verified: "Mit StarMoe-Passport verifiziert",
+    cta: "Du spielst auch Our Notes? Verknüpfe dein Konto unter „Mein Konto“ und mache dein Profil öffentlich.",
+    ctaButton: "Mein Konto verknüpfen"
   },
   settings: {
     title: "Einstellungen",
     language: "语言 / Language",
     machineTranslationNotice: "Einige Sprachen verwenden maschinelle Übersetzung und können Ungenauigkeiten enthalten.",
     colorScheme: "Design",
+    gameServer: "Standard-Server",
+    gameServerAuto: "Automatisch ({server})",
     options: { system: "System", light: "Hell", dark: "Dunkel" },
+    tabs: { label: "Einstellungskategorien", general: "Allgemein", data: "Daten" },
+    data: {
+      cacheTitle: "Download-Cache",
+      total: "Zwischengespeichert",
+      fileCount: "{count} Dateien",
+      categories: { live2d: "Live2D-Modelle", images: "Bilder", audio: "Audio", chart: "3D-Charts", data: "Daten" },
+      categoryHints: {
+        live2d: "Charaktere des Live2D-Viewers und der Stories",
+        images: "Bilder auf den Seiten sowie Hintergründe und Illustrationen der Stories",
+        audio: "Stimmen, Musik und Soundeffekte der Stories sowie Audio auf den Seiten",
+        chart: "Songs, Bühnen und Effekte der 3D-Chart-Vorschau",
+        data: "Schriftarten, UI und Skripte der Stories sowie die von den Seiten gelesenen Spieldaten"
+      },
+      calculating: "Wird berechnet…",
+      clear: "Löschen",
+      clearAll: "Gesamten Cache leeren",
+      clearing: "Wird geleert…",
+      unavailable: "Dieser Browser erlaubt der Website nicht, Dateien zu speichern (kann durch privates Surfen blockiert werden), daher werden sie jedes Mal neu heruntergeladen."
+    }
   },
   actions: {
     close: "Schließen",
     clearCache: "Cache leeren",
     refresh: "Aktualisieren",
     open: "Öffnen",
-    viewGroup: "Gruppe ansehen",
+    viewGroup: "Gruppe ansehen"
   },
   home: {
     heading: "BanG Dream! Our Notes Datenbank",
@@ -180,7 +347,7 @@ export const deDE = {
       live: "Musik-Event",
       mission: "Zeitlich begrenzte Missionen",
       loginBonus: "Login-Bonus",
-      seasonPass: "Saisonpass",
+      seasonPass: "Saisonpass"
     },
     viewGacha: "Gacha-Details ansehen",
     viewMusic: "Songs ansehen",
@@ -212,13 +379,13 @@ export const deDE = {
       items: "Items",
       itemsDesc: "Sieh detaillierte Infos zu allen Ingame-Items, Verbrauchsgütern und Materialien.",
       assetViewer: "Asset-Viewer",
-      assetViewerDesc: "Suche und Vorschau statischer Assets (Bilder, Audio, JSON) im Projekt-Bucket.",
-    },
+      assetViewerDesc: "Suche und Vorschau statischer Assets (Bilder, Audio, JSON) im Projekt-Bucket."
+    }
   },
   page: {
     groupIntro: "Seiten dieser Gruppe stammen aus einem gemeinsamen Routenregister und halten Sidebar, Breadcrumbs, Befehlspalette und SEO synchron.",
     placeholderTitle: "Die Seitengrundlage ist bereit",
-    placeholderDescription: "Sobald die echte Datenform von Our Notes bekannt ist, können Fachkomponenten ohne Neubau der Basis angebunden werden.",
+    placeholderDescription: "Sobald die echte Datenform von Our Notes bekannt ist, können Fachkomponenten ohne Neubau der Basis angebunden werden."
   },
   cards: {
     searchPlaceholder: "Titel, Charaktere oder Bands suchen...",
@@ -273,17 +440,11 @@ export const deDE = {
       copyStates: {
         image: "Bild kopiert. Du kannst es jetzt einfügen.",
         link: "Bild konnte nicht kopiert werden; die Asset-URL wurde kopiert.",
-        error: "Kopieren fehlgeschlagen. Stattdessen Original öffnen.",
-      },
+        error: "Kopieren fehlgeschlagen. Stattdessen Original öffnen."
+      }
     },
     rarities: { "2": "R", "3": "SR", "4": "SSR", "10": "Spezial" },
-    attributes: {
-      "1": "Rot",
-      "2": "Blau",
-      "3": "Grün",
-      "4": "Gelb",
-      "5": "Lila",
-    },
+    attributes: { "1": "Rot", "2": "Blau", "3": "Grün", "4": "Gelb", "5": "Lila" },
     growth: {
       level: "Stufe",
       levelValue: "St.{level} / {limit}",
@@ -294,8 +455,8 @@ export const deDE = {
       awaken: "Erwecken",
       power: "Gesamtkraft",
       skillLevel: "Skill-Stufe",
-      leaderSkillHint: "Die Leader-Skill-Stufe ist an die Anzahl der Erweckungen gekoppelt; eine Änderung passt auch die Erweckung an.",
-    },
+      leaderSkillHint: "Die Leader-Skill-Stufe ist an die Anzahl der Erweckungen gekoppelt; eine Änderung passt auch die Erweckung an."
+    }
   },
   supportCards: {
     searchPlaceholder: "Titel, Charaktere suchen...",
@@ -316,8 +477,55 @@ export const deDE = {
     diaryTitle: "Tagebuch",
     growth: {
       limitBreak: "Limit Break",
-      skillLevelHint: "Mit dem Limit Break entfalten sich die Hingabe und die im Kartenmotiv ruhenden Fähigkeiten noch heller.",
-    },
+      skillLevelHint: "Mit dem Limit Break entfalten sich die Hingabe und die im Kartenmotiv ruhenden Fähigkeiten noch heller."
+    }
+  },
+  events: {
+    filterTitle: "Events filtern",
+    searchPlaceholder: "Events, Charaktere oder Songs suchen…",
+    status: "Status",
+    band: "Bonus-Band",
+    openDetail: "Event ansehen: {name}",
+    emptyTitle: "Keine passenden Events",
+    emptyDescription: "Kein Event entspricht den aktuellen Filtern. Setze die Filter zurück, um alle laufenden und vergangenen Events zu sehen.",
+    reset: "Alle anzeigen",
+    noneOnServer: "Auf {server} wurden bisher noch keine Events veranstaltet.",
+    showServer: "{server} ansehen",
+    period: "Event-Zeitraum",
+    displayUntil: "Event-Seite geöffnet bis",
+    eventId: "Event-ID",
+    eventItem: "Event-Item",
+    song: "Event-Song",
+    rankings: "Ranglisten",
+    rankingKinds: { score: "Score-Rangliste", music: "Song-Rangliste", totalMusic: "Gesamt-Song-Rangliste" },
+    rankingOff: "Keine",
+    cards: "Event-Karten",
+    bonus: "Event-Bonus",
+    bonusRank: "Rang {rank}",
+    bonusRankLabel: "Kartenrang",
+    bonusNote: "Rang bezeichnet die Erweckungen einer Mitgliedskarte bzw. die Limit-Breaks einer Support-Karte. Boni sind stapelbar: Erfüllt eine Karte mehrere Bedingungen, werden alle addiert.",
+    bonusCardKinds: { member: "Mitgliedskarten", support: "Support-Karten" },
+    bonusTarget: "Bedingung",
+    bonusParameter: "Parameter",
+    bonusEventItem: "Event-Items",
+    bonusValue: "+{value}%",
+    bonusTargets: { attribute: "{name}-Karten", tag: "Tag #{id}", any: "Beliebige Karte" },
+    story: "Event-Story",
+    storyUnlock: "Wird bei {count} pt freigeschaltet",
+    pointRewards: "Event-Punkte-Belohnungen",
+    points: "{count} pt",
+    loopReward: "Nach {from} pt alle {every} pt",
+    liveRewards: "Live-Belohnungen",
+    liveNote: "Punkte und Items, die pro Live je nach Score-Rang erhalten werden.",
+    liveKinds: { live: "Live", challenge: "Challenge-Live" },
+    scoreRank: "Score-Rang",
+    livePoints: "pt",
+    liveItems: "Items",
+    probability: "{rate} % Chance",
+    bannerAlt: "Banner: {name}",
+    backToList: "Zurück zur Event-Liste",
+    notFoundTitle: "Event nicht gefunden",
+    notFoundDescription: "Für dieses Event ist der Vorhang entweder längst gefallen oder er hat sich noch gar nicht gehoben. Kehre zur Event-Liste zurück, um eine andere Bühne zu finden."
   },
   gacha: {
     searchPlaceholder: "Nach Gacha-Namen, Pickup-Charakteren oder Kartentiteln suchen...",
@@ -362,8 +570,8 @@ export const deDE = {
       pickups: "{count} Pickup",
       idle: "Tippe auf Einzel- oder 10er-Ziehung, um dem Sternenlicht in deinem Herzen zu begegnen; Erinnerungen verweilen nur auf dieser Seite.",
       guarantee: "Die letzten {count} einer 10er-Ziehung garantieren mindestens {rarity}.",
-      note: "Jede Berührung deiner Fingerspitzen ist ein zartes Wunder aus Sternenlicht und Zufall. Nur zur Unterhaltung; mögen deine Wünsche in Erfüllung gehen!",
-    },
+      note: "Jede Berührung deiner Fingerspitzen ist ein zartes Wunder aus Sternenlicht und Zufall. Nur zur Unterhaltung; mögen deine Wünsche in Erfüllung gehen!"
+    }
   },
   schedule: {
     ongoing: "Laufend",
@@ -376,17 +584,13 @@ export const deDE = {
     startsInHours: "Beginnt in {count}Std.",
     range: "{start} – {end}",
     from: "Ab {start}",
-    until: "Bis {end}",
+    until: "Bis {end}"
   },
   rewards: {
     searchPlaceholder: "Namen oder Belohnungen suchen...",
     filterTitle: "Missionen & Belohnungen filtern",
     kind: "Typ",
-    kinds: {
-      seasonPass: "Saisonpass",
-      loginBonus: "Login-Bonus",
-      mission: "Zeitlich begrenzte Missionen",
-    },
+    kinds: { seasonPass: "Saisonpass", loginBonus: "Login-Bonus", mission: "Zeitlich begrenzte Missionen" },
     status: "Status",
     openDetail: "Anzeigen: {title}",
     emptyTitle: "Keine passenden Versprechen gefunden",
@@ -427,10 +631,10 @@ export const deDE = {
       stamp: "Sticker",
       degree: "Titel",
       spot: "Startbereich",
-      other: "Sonstiges",
+      other: "Sonstiges"
     },
     unknownReward: "{kind} #{id}",
-    count: "×{count}",
+    count: "×{count}"
   },
   titles: {
     searchPlaceholder: "Titel, Charaktere oder Freischaltbedingungen suchen...",
@@ -441,7 +645,7 @@ export const deDE = {
     openPreview: "Titel anzeigen: {name}",
     emptyTitle: "Keine passenden Titel gefunden",
     emptyDescription: "Keine Embleme oder Schwüre entsprechen deinen Filtern. Zurücksetzen, um jede den Mädchen verliehene Ehre zu betrachten.",
-    reset: "Alle Titel anzeigen",
+    reset: "Alle Titel anzeigen"
   },
   backgrounds: {
     searchPlaceholder: "Hintergründe suchen...",
@@ -452,7 +656,195 @@ export const deDE = {
     openOriginal: "Original öffnen",
     emptyTitle: "Keine passende Szene gefunden",
     emptyDescription: "Keine Szenen stimmen mit dieser Ansicht überein. Filter zurücksetzen, um durch weitere Straßen und Bühnen voller Erinnerungen zu wandeln.",
-    reset: "Alle Hintergründe anzeigen",
+    reset: "Alle Hintergründe anzeigen"
+  },
+  chartPreview3d: {
+    credit: "emptysekai by StarMoe",
+    stageLabel: "3D-Chart-Ansicht",
+    difficulty: "Schwierigkeit",
+    chooseSong: "Song auswählen",
+    changeSong: "Song wechseln",
+    preparing: "Bühne wird vorbereitet…",
+    loading: "Chart wird geladen…",
+    emptyTitle: "Wähle einen Song, um die Bühne zu erleuchten",
+    emptyDescription: "Öffne die Songauswahl, filtere die Liste und wähle eine Schwierigkeit – hier wird das automatische Spiel in 3D nachempfunden.",
+    fullscreen: "Vollbild",
+    exitFullscreen: "Vollbild beenden",
+    lock: "Bildschirm sperren",
+    unlock: "Entsperren",
+    loadErrorTitle: "Die Bühne konnte nicht erleuchtet werden",
+    loadErrorDescription: "Die Chart-Daten konnten nicht geladen werden. Möglicherweise ist das Netzwerk unterbrochen oder die Chart-Website vorübergehend nicht erreichbar. Bitte versuche es später erneut.",
+    missingDescription: "Für diesen Chart sind noch keine 3D-Daten verfügbar. Probiere einen anderen Song oder eine andere Schwierigkeit.",
+    retry: "Neu laden",
+    unsupportedTitle: "Dieser Browser kann keine 3D-Charts anzeigen",
+    unsupportedDescription: "Die Chart-Vorschau erfordert WebGL2 und WebAudio. Bitte verwende einen aktuellen Desktop- oder Mobilbrowser."
+  },
+  storyPlayer: {
+    stageLabel: "Story-Bildschirm",
+    preparing: "Story-Player wird vorbereitet…",
+    loading: "Story wird geladen…",
+    retry: "Erneut versuchen",
+    fullscreen: "Vollbild",
+    exitFullscreen: "Vollbild beenden",
+    errorTitle: "Die Story konnte nicht abgespielt werden",
+    errorDescription: "Die Story-Daten oder Live2D Cubism Core konnten nicht geladen werden, oder der Player wurde angehalten. Möglicherweise ist das Netzwerk unterbrochen oder der Story-Dienst vorübergehend nicht erreichbar. Bitte versuche es später noch einmal.",
+    unsupportedTitle: "Dieser Browser kann keine Stories abspielen",
+    unsupportedDescription: "Der Story-Player erfordert WebGL2. Bitte verwende einen aktuellen Desktop- oder Mobilbrowser.",
+    refusedTitle: "Diese Story kann derzeit nicht abgespielt werden",
+    refusedDescription: "Sie verwendet Elemente des Story-Bildschirms, die der Player noch nicht unterstützt; um Darstellungsfehler zu vermeiden, wird sie nicht abgespielt. Du kannst den Text weiterhin auf der Story-Seite lesen.",
+    language: "Sprache",
+    languages: { ja: "日本語", en: "English", "zh-Hant": "繁體中文", "zh-Hans": "简体中文", ko: "한국어" },
+    previous: "Vorherige Episode",
+    next: "Nächste Episode",
+    readText: "Text lesen",
+    noMotionSync: "Lippensynchronisation (Live2D MotionSync) ist auf dieser Website nicht verfügbar: Charaktere, die diese Funktion nutzen, bewegen beim Sprechen den Mund nicht.",
+    motionSyncLicense: "Die Stimmen-Lippensynchronisation nutzt Live2D Cubism MotionSync Core © Live2D Inc., das auf dieser Website unverändert unter der Live2D-Lizenz bereitgestellt wird. Es ist nicht Teil des Open-Source-Codes dieser Website; die Lizenz verbietet die Vervielfältigung für andere Zwecke oder Reverse Engineering.",
+    motionSyncLicenseLink: "Live2D Proprietary Software License Agreement",
+    noMatches: "Keine Stories entsprechen dem Filter.",
+    notice: "Stories werden direkt im Browser anhand der Spieldaten wiedergegeben; die Darstellung spiegelt nicht die finale Qualität des Spiels wider. Eine Episode lädt mehrere Dutzend bis Hunderte MB herunter – achte bei mobilen Datenverbindungen auf deinen Datenverbrauch.",
+    listLoading: "Story-Liste wird geladen…",
+    listError: "Die Story-Liste konnte nicht geladen werden.",
+    listEmpty: "Es wurden noch keine Stories veröffentlicht.",
+    emptyTitle: "Wähle eine Story",
+    emptyDescription: "Wähle eine Episode aus der Story-Liste aus, um zu beginnen.",
+    chooseStory: "Story auswählen",
+    sections: "Story-Kategorien",
+    playing: "Wiedergabe",
+    searchPlaceholder: "Titel, Kapitel, Charaktere oder ADV-IDs suchen…",
+    categoryTitle: "Typ",
+    otherEpisodes: "Andere Episoden",
+    openInPlayer: "Mit Live2D abspielen",
+    controls: {
+      play: "Abspielen",
+      pause: "Pausieren",
+      next: "Nächste Zeile",
+      auto: "Auto",
+      fastForward: "Vorspulen",
+      skip: "Überspringen",
+      skipConfirm: "Den Rest dieser Episode überspringen?",
+      cancel: "Abbrechen",
+      settings: "Einstellungen",
+      position: "Position",
+      video: "Videoposition",
+      start: "Starten",
+      replay: "Erneut abspielen",
+      ended: "Ende der Episode",
+      nextEpisode: "Nächste Episode",
+      show: "Bedienelemente anzeigen",
+      speed: "Vorspul-Geschwindigkeit",
+      speedHint: "Eine Geschwindigkeit über 1× aktiviert den Auto-Modus; wird Auto deaktiviert, kehrt sie zu 1× zurück."
+    },
+    volume: {
+      title: "Lautstärke",
+      Bgm: "BGM",
+      Se: "Soundeffekte",
+      Voice: "Stimmen",
+      Movie: "Videos",
+      mute: "{name} stummschalten",
+      unmute: "Stummschaltung von {name} aufheben"
+    },
+    info: {
+      title: "Bedienungsanleitung",
+      controls: "Steuerung",
+      shortcuts: "Tastenkürzel",
+      about: "Über den Story-Player",
+      legend: {
+        play: { name: "Wiedergabe / Pause", description: "Beim Pausieren stoppen Bild, Ton und Videos gemeinsam" },
+        next: { name: "Nächste Zeile", description: "Entspricht dem Klicken auf den Story-Bildschirm" },
+        auto: {
+          name: "Auto",
+          description: "Springt automatisch zur nächsten Zeile, sobald die aktuelle Zeile beendet ist"
+        },
+        fastForward: { name: "Vorspulen", description: "Wechselt durch 1× → 1,5× → 1,7× → 2×" },
+        skip: { name: "Überspringen", description: "Überspringt nach Bestätigung den Rest der Episode" },
+        settings: {
+          name: "Einstellungen",
+          description: "Lautstärke für Musik, Effekte, Stimmen und Videos sowie Vorspul-Geschwindigkeit"
+        },
+        fullscreen: { name: "Vollbild", description: "Zeigt den Story-Bildschirm im Vollbild an" }
+      }
+    },
+    credit: "Live2D Cubism Core / MotionSync Core © Live2D Inc. · emptysekai by StarMoe"
+  },
+  live2d: {
+    stageLabel: "Live2D-Bühne",
+    preparing: "Live2D-Laufzeitumgebung wird vorbereitet…",
+    loading: "Modell wird geladen…",
+    loadErrorTitle: "Das Modell konnte nicht angezeigt werden",
+    loadErrorDescription: "Die Modelldaten oder Live2D Cubism Core konnten nicht geladen werden. Möglicherweise liegt ein Netzwerkfehler vor oder der Server ist vorübergehend nicht erreichbar. Bitte versuche es später noch einmal.",
+    retry: "Erneut versuchen",
+    unsupportedTitle: "Dieser Browser kann keine Live2D-Modelle anzeigen",
+    unsupportedDescription: "Der Live2D-Viewer erfordert WebGL2. Bitte verwende einen aktuellen Desktop- oder Mobilbrowser.",
+    fullscreen: "Vollbild",
+    exitFullscreen: "Vollbild beenden",
+    zoomIn: "Vergrößern",
+    zoomOut: "Verkleinern",
+    zoomReset: "Zoom zurücksetzen",
+    filterTitle: "Modelle filtern",
+    searchPlaceholder: "Charaktere, Kostüme oder Modell-IDs suchen…",
+    kindTitle: "Typ",
+    showLowQuality: "Versionen mit niedriger Qualität anzeigen",
+    sideCharacters: "Andere Charaktere",
+    chooseCharacter: "Charakter auswählen",
+    costumes: "Kostüme",
+    listLoading: "Modell-Liste wird geladen…",
+    listError: "Die Modell-Liste konnte nicht geladen werden.",
+    listEmpty: "Es wurden noch keine Live2D-Modelle veröffentlicht.",
+    emptyTitle: "Wähle einen Charakter",
+    emptyDescription: "Öffne den Filter, um einen Charakter nach Band auszuwählen. Kostüme, Motionen und Gesichtsausdrücke findest du im Bereich neben dem Modell.",
+    credit: "Live2D Cubism Core © Live2D Inc. · emptysekai by StarMoe",
+    noticeTitle: "Über die Modelldaten",
+    notice: "moenotes bildet die Inhalte der Spieldatenpakete originalgetreu nach: Jedes Modell, jede Motion und jeder Gesichtsausdruck stammt aus dem Spiel selbst, und die Darstellung im Browser entspricht nicht der finalen Qualität des Spiels. Wir bieten keine freie Bearbeitung von Modellparametern an: Manuell veränderte Modelle können stark verzerrt dargestellt werden und spiegeln nicht das Aussehen im Spiel wider; bitte verbreite solche Darstellungen nicht als offizielle Inhalte.",
+    controls: "Modell-Steuerung",
+    controlsWaiting: "Die Steuerung wird verfügbar, sobald das Modell geladen ist.",
+    motions: "Motionen",
+    expressions: "Gesichtsausdrücke",
+    noExpressions: "Dieses Modell hat keine Gesichtsausdrücke.",
+    loop: "Motion in Schleife abspielen",
+    options: "Optionen",
+    physics: "Physik",
+    breath: "Atmung",
+    pause: "Pausieren",
+    resume: "Fortsetzen",
+    reset: "Zurück zur Ruhepose",
+    lowQuality: "Niedrige Qualität",
+    costumeDefault: "Standard",
+    kind: { story: "Story", live: "Live", side: "Nebencharaktere" },
+    costume: {
+      casual: "Freizeitkleidung",
+      spring: "Frühling",
+      summer: "Sommer",
+      winter: "Winter",
+      school: "Schuluniform",
+      hs: "Oberschule",
+      jhs: "Mittelschule",
+      grade1: "1. Jahrgang",
+      grade2: "2. Jahrgang",
+      grade3: "3. Jahrgang",
+      live: "Bühnenoutfit",
+      roomwear: "Hauskleidung",
+      arbeit: "Nebenjob",
+      livehouse: "Live House",
+      ring: "RiNG",
+      caretaker: "Pfleger",
+      child: "Kindheit",
+      detective: "Detektiv",
+      idol: "Idol",
+      virtual: "Virtuell",
+      soundonly: "Nur Audio",
+      suits: "Anzug",
+      sweat: "Trainingsanzug",
+      maid: "Dienstmädchen",
+      still: "Standbild",
+      mask: "Maske",
+      silhouette: "Silhouette",
+      glasses: "Brille",
+      noseGlasses: "Scherzbrille",
+      sunglasses: "Sonnenbrille",
+      hat: "Hut",
+      hairdown: "Offene Haare",
+      twintails: "Zöpfe"
+    }
   },
   music: {
     audio: {
@@ -464,10 +856,18 @@ export const deDE = {
       seek: "Wiedergabeposition",
       download: "{kind} herunterladen",
       unavailableTitle: "Die Melodie wird noch komponiert",
-      unavailableDescription: "Die Noten wandern noch durch den Nachthimmel. Sobald sie gesammelt sind, wird diese berührende Melodie hier erwachen.",
+      unavailableDescription: "Die Noten wandern noch durch den Nachthimmel. Sobald sie gesammelt sind, wird diese berührende Melodie hier erwachen."
     },
     searchPlaceholder: "Titel, Autoren, Bands oder Sänger suchen...",
     filterTitle: "Musik filtern",
+    filters: {
+      bandOther: "Andere",
+      difficulty: "Schwierigkeit",
+      level: "Level",
+      levelMin: "Mindestlevel",
+      levelMax: "Höchstlevel",
+      levelRange: "Lv {min}–{max}"
+    },
     results: "{count} Songs",
     loading: "Musikdaten werden geladen...",
     loadErrorTitle: "Musikdaten sind nicht verfügbar",
@@ -482,8 +882,42 @@ export const deDE = {
     backToList: "Zurück zum Musikkatalog",
     songInfoTitle: "Songdetails",
     difficultiesTitle: "Schwierigkeits-Charts",
+    ranking: {
+      title: "Highscore-Rangliste",
+      loading: "Rangliste wird aus dem Spiel abgerufen…",
+      updatedAgo: "Aktualisiert {time}",
+      level: "Lv.{level}",
+      refreshing: "Wird im Hintergrund aktualisiert",
+      empty: "Auf diesem Server hat noch niemand einen Score erzielt.",
+      retry: "Erneut versuchen",
+      showAll: "Alle {count} anzeigen",
+      showLess: "Top 20 anzeigen",
+      tied: "Gleichstand",
+      power: "Deck-Kraft {power}",
+      columns: { rank: "#", player: "Spieler", score: "Score", deck: "Deck" },
+      errors: {
+        pending: "Rangliste wird noch abgerufen",
+        pendingHint: "Die Anfrage ist in der Warteschlange hinter anderen Songs dieses Servers eingereiht. Bitte versuche es in wenigen Sekunden erneut.",
+        upstream: "Der Spielserver kann derzeit nicht erreicht werden",
+        upstreamHint: "Möglicherweise finden Wartungsarbeiten statt. Die Rangliste steht wieder zur Verfügung, sobald das Spiel erreichbar ist.",
+        failed: "Die Rangliste konnte nicht geladen werden",
+        failedHint: "Überprüfe deine Verbindung und versuche es erneut."
+      }
+    },
     difficultyLevels: { easy: "EASY", normal: "NORMAL", hard: "HARD", expert: "EXPERT" },
     notesCount: "Noten: {count}",
+    preview2d: "2D-Vorschau",
+    preview2dLabel: "{difficulty}-Chart in 2D als Vorschau ansehen",
+    preview3d: "3D-Vorschau",
+    preview3dLabel: "{difficulty}-Chart in 3D als Vorschau ansehen",
+    picker: {
+      title: "Song auswählen",
+      songHint: "Klicke auf ein Cover, um den Song auszuwählen.",
+      hint: "Klicke auf eine Schwierigkeit, um diesen Chart auszuwählen, oder auf das Cover, um die aktuelle Schwierigkeit beizubehalten.",
+      pickSong: "{title} auswählen",
+      pickDifficulty: "{title} ({difficulty}) auswählen",
+      listLabel: "Songliste"
+    },
     composer: "Komponist",
     lyricist: "Texter",
     arranger: "Arrangeur",
@@ -496,8 +930,37 @@ export const deDE = {
       description: "Hochauflösendes Album-Jacket ansehen und vorschauen.",
       jacket: "Album-Jacket",
       jacketDesc: "Jacket-Bild (Image/Jacket)",
-      previewFull: "Jacket vorschauen",
+      previewFull: "Jacket vorschauen"
     },
+    chartPreview: {
+      title: "Chart-Vorschau",
+      difficultyLabel: "Schwierigkeit",
+      themeLabel: "Farbschema",
+      themes: { white: "Hell", black: "Dunkel" },
+      draw: "Chart erstellen",
+      idleHint: "Erstelle die vollständige Notenübersicht der gewählten Schwierigkeit; die Spalten werden von unten nach oben und von links nach rechts gelesen. Beim ersten Chart wird der Renderer heruntergeladen und läuft danach direkt im Browser.",
+      fetching: "Chart wird abgerufen…",
+      fetchingHint: "Notendatei und Cover werden vom Asset-Server geladen.",
+      rendering: "Chart wird gezeichnet…",
+      renderingHint: "Der Renderer platziert jede Note auf diesem Gerät. Bei langen Charts kann dies einige Sekunden dauern.",
+      openViewer: "In voller Größe anzeigen",
+      download: "PNG herunterladen",
+      imageAlt: "Notenübersicht für {title} ({difficulty})",
+      missingTitle: "Dieser Chart wurde noch nicht veröffentlicht",
+      missingDescription: "Die Notendatei für diese Schwierigkeit ist noch nicht auf dem Asset-Server verfügbar. Probiere eine andere Schwierigkeit oder schaue nach dem nächsten Asset-Update wieder vorbei.",
+      failedTitle: "Der Chart konnte nicht gezeichnet werden",
+      failedDescription: "Beim Abrufen oder Zeichnen des Charts ist ein Fehler aufgetreten. Bitte versuche es erneut; falls der Fehler weiterhin besteht, wähle eine andere Schwierigkeit oder einen anderen Browser.",
+      unsupportedTitle: "Dieser Browser kann keine Charts zeichnen",
+      unsupportedDescription: "Chart-Vorschauen erfordern WebAssembly und Modul-Worker. Bitte öffne diese Seite in einer aktuellen Version von Chrome, Edge, Firefox oder Safari.",
+      retry: "Erneut versuchen",
+      viewerHint: "Ziehen zum Verschieben · Scrollen oder Auf-/Zuziehen zum Zoomen · Doppelklick zum Vergrößern · Pfeiltasten, +/- und 0 funktionieren ebenfalls",
+      zoomIn: "Vergrößern",
+      zoomOut: "Verkleinern",
+      fit: "An Fenster anpassen",
+      credit: "Notenübersichten werden vom moenotes-Chart-Renderer (WebAssembly) direkt im Browser gezeichnet. Die Darstellung ist eine Vorschau im Entwicklungsstadium und entspricht nicht dem Aussehen im Spiel.",
+      sourceLink: "Quellcode & Lizenzen",
+      sheetCredit: "{label}: {value}"
+    }
   },
   characters: {
     searchPlaceholder: "Charaktere, Synchronsprecher, Bands suchen...",
@@ -535,17 +998,18 @@ export const deDE = {
       faceDesc: "Kleine Gesicht-Icon-Ebene",
       board: "Board",
       boardDesc: "Hintergrund-Board-Icon",
-      bio: "Bio",
-    },
+      bio: "Bio"
+    }
   },
   story: {
     categories: {
       main: "Hauptstory",
+      event: "Event-Story",
       friendship: "Bond-Stories",
       liveResult: "Post-Live-Gespräche",
       home: "Home-Stories",
       tutorial: "Tutorial-Stories",
-      other: "Andere Stories",
+      other: "Andere Stories"
     },
     ui: {
       searchPlaceholder: "Titel, Charakter, Kapitel oder ADV-ID",
@@ -564,140 +1028,601 @@ export const deDE = {
       parsing: "Script und Stimmen werden analysiert…",
       autoplay: "Autoplay",
       narration: "Erzählung",
+      speakerMasked: "??? ({name})",
+      speakerHidden: "({name})",
       playing: "STIMME WIRD ABGESPIELT",
       paused: "WIEDERGABE PAUSIERT",
       line: "Dialogzeile {current} / {total}",
+      clip: "Story-Clip",
+      clipUnavailable: "Dieser Clip wurde noch nicht veröffentlicht",
+      chat: "Nachrichten",
+      showBackgrounds: "Hintergründe anzeigen",
+      scene: "Szene {n}",
+      subtitles: "Untertitel",
+      episode: "EPISODE {n}",
+      anotherEpisode: "ANOTHER {n}",
+      extraEpisode: "EXTRA {n}",
+      anotherStories: "Weitere Episoden",
+      extraStories: "Extra-Episoden",
+      previousEpisode: "Vorherige Episode",
+      nextEpisode: "Nächste Episode",
+      showSubtitleList: "Untertitel anzeigen ({count})",
+      hideSubtitleList: "Untertitel ausblenden"
+    }
+  },
+  eventTracker: {
+    eventLabel: "Event",
+    currentEvent: "Aktuelles Event",
+    eventFallback: "Event #{id}",
+    songFallback: "Song #{id}",
+    loading: "Event auf dem Server wird geprüft…",
+    noEvent: "Derzeit kein Event auf diesem Server",
+    noEventHint: "Der Tracker startet, sobald der Server das nächste Event ankündigt.",
+    notFound: "Dieses Event gibt es auf diesem Server nicht",
+    notFoundHint: "Der Link verweist möglicherweise auf das Event eines anderen Servers. Öffne stattdessen das aktuelle Event.",
+    openEvent: "Event-Details",
+    openTracker: "Ranglisten-Tracker öffnen",
+    stale: "Aktualisierung überfällig",
+    eventStatus: {
+      feature: "Demnächst",
+      nowOn: "Läuft",
+      aggregation: "Ergebnisse werden ausgewertet",
+      result: "Ergebnisse veröffentlicht",
+      end: "Beendet"
     },
+    collect: {
+      unknown: "Unbekannt",
+      disabled: "Keine Rangliste",
+      pending: "Nicht begonnen",
+      collecting: "Wird getrackt",
+      finalizing: "Endplatzierungen werden bestätigt",
+      archiving: "Wird archiviert",
+      archived: "Abgeschlossen",
+      missed: "Nicht erfasst"
+    },
+    countdown: {
+      startsIn: "Beginnt in",
+      endsIn: "Endet in",
+      countingEndsIn: "Ergebnisse in",
+      daysClock: "{days}d {clock}"
+    },
+    cutoff: "Top {rank}",
+    challenges: {
+      title: "Challenge-Song-Ranglisten",
+      songs: "Challenge-Songs",
+      songNumber: "SONG {n}",
+      none: "Dieses Event hat keine Challenge-Songs.",
+      lastSeen: "Datenerfassung beendet; dies ist der zuletzt gelesene Stand, keine bestätigte Endplatzierung."
+    },
+    board: {
+      unknown: "Das Spiel gibt nicht an, ob dieser Song eine Rangliste hat",
+      disabled: "Dieser Song hat keine Rangliste",
+      pending: "Die Rangliste dieses Songs hat noch nicht begonnen",
+      missed: "Diese Rangliste wurde nicht erfasst",
+      startsAt: "Öffnet um {time}"
+    },
+    points: {
+      title: "Event-Punkte-Rangliste",
+      disabled: "Dieses Event hat keine Punkte-Rangliste. Nur die obigen Challenge-Song-Ranglisten werden gewertet.",
+      interrupted: "Erfassung unterbrochen, Daten möglicherweise veraltet",
+      frozen: "Auswertung läuft, Punkte eingefroren",
+      tied: "Gleichstand",
+      notReturned: "Diesmal nicht zurückgegeben: {ranks}"
+    }
+  },
+  musicRanking: {
+    changeSong: "Song wechseln",
+    chooseSong: "Song auswählen",
+    emptyTitle: "Wähle einen Song, um seine Rangliste zu sehen",
+    emptyDescription: "Jeder Song hat auf jedem Server eine eigene Highscore-Rangliste. Wähle einen aus, um die besten Spieler, ihre Scores und Decks zu sehen."
+  },
+  chartData: {
+    referenceEstimate: "Referenzschätzung",
+    replay: {
+      title: "Einzel-Live-Berechnung",
+      loading: "Modell wird geladen…",
+      hint: "Lege die Wertungen vor der Skill-Umwandlung fest. Standardmäßig keine Skills; Ergebnisse enthalten die umgewandelten Wertungen.",
+      power: "Gesamtkraft",
+      seed: "Seed",
+      clock: "Bildrate",
+      mode: "Modus",
+      free: "Free Live",
+      fixedRanks: "Gekisou · Feste Ränge",
+      reset: "Wertungen zurücksetzen",
+      run: "Berechnen",
+      export: "JSON exportieren",
+      advanced: "Import / Export",
+      advancedHint: "JSON speichert Notenzeitpunkte, Frame-Reihenfolge, Skills und Rangbestätigungen. Importierte Daten werden mit Rust validiert.",
+      import: "JSON importieren",
+      error: "Berechnung fehlgeschlagen",
+      ready: "Bereit",
+      calculating: "Wird berechnet…",
+      score: "Endergebnis",
+      frameScore: "Anzeige im letzten Frame",
+      life: "Leben",
+      combo: "Combo",
+      note: "Note",
+      time: "Zeit",
+      type: "Typ",
+      judgement: "Wertung",
+      range: "Bereich",
+      just: "Just",
+      luck: "Glückspunkte",
+      complete: "Berechnet",
+      wrongChart: "Die Datei enthält einen anderen Chart oder ein nicht unterstütztes Format.",
+      importedMode: "Importierter Modus",
+      incomplete: "Unvollständige Eingaben können nicht als Ergebnis eines gesamten Lives angezeigt werden.",
+      importedClock: "Importierte Taktrate",
+      exactPlan: "Berechnung pro Note",
+      greatShare: "Great-Wahrscheinlichkeit",
+      justShare: "Just-Rate",
+      presetHint: "Die verbleibende Wahrscheinlichkeit entfällt auf Perfect; Just gilt nur für zulässige Noten. Segmente überschreiben die Einstellungen für den gesamten Song; spätere Zeilen haben Vorrang. Der Seed generiert einen reproduzierbaren Spieldurchlauf, keinen Durchschnittswert.",
+      rawPreset: "Setze die Rohdaten zurück, bevor du diese Schieberegler verwendest.",
+      probabilityTotal: "Die Wahrscheinlichkeiten für Great, Good, Bad und Miss dürfen zusammen maximal 100 % ergeben.",
+      remove: "Entfernen",
+      end: "Ende (s)",
+      start: "Start (s)",
+      customSegment: "Benutzerdefiniertes Segment",
+      segment: "Segment",
+      editNotes: "Einzelne Noten anzeigen / bearbeiten",
+      generate: "Wertungen generieren",
+      planSeed: "Wertungs-Seed",
+      wholeSong: "Gesamter Song"
+    },
+    beta: "Beta",
+    developmentData: "Lokale Entwicklungsdaten",
+    uncommittedModel: "Nicht übernommene Modelländerungen",
+    betaHint: "Rust-Modellberechnungen; siehe Anleitung für native ARM64-Prüfungen und Noten-Replays.",
+    views: { rank: "Ranglisten", charts: "Graphen", guide: "Anleitung" },
+    lead: {
+      rank: "Effizienz, Event-Ränge, Geschwindigkeit, Level und Länge von {songs} Songs und {charts} Charts. Die Punktzahlen basieren auf dem gewählten Spielszenario: standardmäßig Gekisou Live auf Rang 1 in allen drei Abschnitten (bester Fall) oder Free Live ohne Gekisou; siehe Anleitung. Öffne eine Zeile für Chart-Details; Mitwirkende, Audio und Chart-Vorschauen befinden sich auf der jeweiligen Songseite.",
+      charts: "Verteilung von {songs} Songs und {charts} Charts. Wähle zwei Kennzahlen für das Streudiagramm; klicke auf einen Punkt für Chart-Details."
+    },
+    loading: "Chart-Daten werden geladen…",
+    loadError: "Die Chart-Daten konnten nicht geladen werden. Möglicherweise besteht keine Netzwerkverbindung; bitte versuche es später erneut.",
+    retry: "Erneut versuchen",
+    all: "Alle",
+    search: "Titel, Lesung, Mitwirkende suchen…",
+    chartsCount: "{n} Charts",
+    jackets: "Cover",
+    jacketsHint: "Cover anzeigen oder ausblenden",
+    swap: "Achsen vertauschen",
+    band: "Band",
+    difficulty: "Schwierigkeit",
+    empty: "Keine passenden Charts gefunden",
+    emptyHint: "Band, Schwierigkeitsgrade, Suchbegriff oder „Nur Frontier“ schließen alle Charts aus.",
+    clear: "Filter zurücksetzen",
+    difficulties: { easy: "Easy", normal: "Normal", hard: "Hard", expert: "Expert" },
+    rankBy: {
+      efficiency: "Effizienz",
+      event: "Event · Rang",
+      speed: "Schnellste",
+      level: "Höchstes Level",
+      notes: "Meiste Noten",
+      long: "Längste",
+      short: "Kürzeste",
+      skip: "Skip-Punkte"
+    },
+    speedBy: { density: "Notendichte", bpmMax: "Max. BPM", bpm: "Haupt-BPM" },
+    rankHint: {
+      efficiency: "Erwartete Punktzahl pro Minute pro Kraftpunkt. Die Skill-Reihenfolge wird bei jedem Live neu ermittelt, daher hängt der Erwartungswert nur vom durchschnittlichen Skill-Wert ab; die Spanne zeigt das Min–Max über alle 120 Reihenfolgen.",
+      event: "Event-Punkte hängen nur vom Rang ab. Ohne angegebene Kraft: die für den Zielrang erforderliche Kraft (aufsteigend); mit Kraft: Durchläufe pro Stunde mit Zielrang.",
+      speed: "Nach Notendichte oder BPM.",
+      level: "Nach angezeigtem Level (mit Dezimalstellen), dann nach Notenanzahl.",
+      notes: "Gewertete Noten, d. h. die Combo bei Full Combo.",
+      long: "Nach BGM-Länge sortiert.",
+      short: "Nach BGM-Länge, kürzeste zuerst.",
+      skip: "Punkte pro Kraftpunkt bei übersprungenem Live; Länge und Skills spielen keine Rolle."
+    },
+    scenario: {
+      title: "Szenario",
+      battle: "Gekisou Live",
+      free: "Free Live",
+      battleHint: "Mehrspieler (bis zu 5), Gekisou an",
+      freeHint: "Solo, Gekisou aus",
+      ranks: "Rang",
+      range: "Bereich {n}",
+      rangeMission: "Bereich {n} · {mission}",
+      best: "Rang 1 ist der Bestfall",
+      ranksPending: "Ränge 2–5: Daten noch ausstehend",
+      accuracy: "Genauigkeit",
+      great: "Great-Anteil",
+      just: "Just-Rate",
+      accNote: "Näherungswert, ohne Combo-Brüche; Great-Anteil gilt für jede Note, Just-Rate nur für Just-Missionsbereiche",
+      accNoteFree: "Näherungswert, ohne Combo-Brüche; Great-Anteil gilt für jede Note",
+      pending: "Daten ausstehend",
+      room: "Spieler",
+      roomHint: "Die Gesamtpunktzahl des Raums wird gewertet; erzielen alle Spieler dieselbe Punktzahl wie du, benötigst du √(5/n) × Gekisou-Live-Schwellenwert",
+      soloRanks: "Free Live nutzt die Solo-Rangschwellenwerte"
+    },
+    length: "Länge",
+    bgm: "BGM",
+    chart: "Chart",
+    overhead: "Zusätzliche Zeit pro Spiel",
+    seconds: "{n} s",
+    skills: "Skill-Punktebonus %",
+    skillSlot: "Skill {n}",
+    meanSkill: "Durchschnitt {v}%",
+    presets: { all150: "Alle 150", all100: "Alle 100", none: "Keine" },
+    target: "Zielrang",
+    power: "Gesamtkraft",
+    powerHint: "Leer lassen für nur erforderliche Gesamtkraft",
+    frontier: "Nur Frontier",
+    allColumns: "Alle Spalten",
+    allColumnsHint: "Seitlich scrollen zum Vergleichen",
+    col: {
+      rank: "#",
+      song: "Song",
+      level: "Level",
+      time: "Zeit",
+      bpm: "BPM",
+      notes: "Noten",
+      density: "N/s",
+      rate: "Score/Kraft",
+      perMinute: "Score/Kraft/min",
+      relative: "Rel.",
+      dom: "Dominiert",
+      skip: "Skip",
+      base: "Basis",
+      need: "Benötigte Kraft",
+      chance: "Chance",
+      perHour: "Spiele/h",
+      goal: "Ziel/h"
+    },
+    onFrontier: "Frontier",
+    dominatedBy: "Von {n}",
+    tipDom: "Bei keinem Skill-Mittelwert von 0–150 % und keiner Zusatzzeit besser in der erwarteten Effizienz als: {charts}",
+    tipDomEvent: "Erfordert für keinen Rang bei beliebigem Skill-Mittelwert von 0–150 % weniger Kraft und ist nicht kürzer als: {charts}",
+    tipSpread: "Min–Max über alle 120 Skill-Reihenfolgen",
+    listSeparator: ", ",
+    noStats: "Diese music-data.json enthält keine Deck-Statistiken (erstellt mit --no-deck): Die Punktzahlen sind nicht verfügbar.",
+    axes: {
+      displayLevel: "Level",
+      density: "Dichte N/s",
+      bpm: "Haupt-BPM",
+      bpmMax: "Max. BPM",
+      notes: "Noten",
+      bgmMs: "BGM-Länge (s)",
+      perMinute: "Score/Kraft/min",
+      rate: "Score/Kraft",
+      base: "Basis",
+      skip: "Skip"
+    },
+    scatter: "Streudiagramm",
+    pareto: "Pareto-Front",
+    approximateShort: "Näherung",
+    paretoHelp: "Über diese Front",
+    lowerBetter: "Niedriger ist besser",
+    higherBetter: "Höher ist besser",
+    xGoal: "X-Zielwert",
+    yGoal: "Y-Zielwert",
+    plotted: "{n} Kandidaten-Charts",
+    paretoCount: "{n} auf der Front",
+    paretoHint: "Die Front basiert auf den aktuellen Filtern, Parametern und den beiden Zielwerten. Verbindungslinien verknüpfen diskrete Kandidaten und implizieren keine Zwischen-Charts. Dies unterscheidet sich von der Ranglisten-Dominanz über alle Skill-Mittelwerte und Zusatzzeiten hinweg.",
+    x: "X",
+    y: "Y",
+    levelDist: "Level-Verteilung",
+    bandShare: "Songs pro Band",
+    levelBar: "Lv {level} {difficulty}: {n}",
+    songPage: "Song-Seite",
+    songPageHint: "Mitwirkende, Gesang, Audio, Cover und Chart-Vorschauen auf der Song-Seite",
+    preview3d: "3D-Vorschau",
+    missions: { combo: "Combo", luck: "Glück", just: "Just" },
+    detail: {
+      musicType: "Song-Typ",
+      bgm: "BGM",
+      musicId: "Song-ID",
+      scoreId: "Chart-ID",
+      notes: "Noten",
+      fullCombo: "Full Combo",
+      density: "Dichte",
+      bpm: "BPM",
+      bpmChanges: "{n} Wechsel",
+      span: "Notenspanne",
+      musicLength: "Chart-Länge",
+      timeline: "Zeitleiste",
+      fever: "Fever",
+      skill: "Skill",
+      mission: "Gekisou-Mission",
+      composition: "Noten nach Typ",
+      weights: "Gewichtung der Skill-Positionen",
+      weightsHint: "Die zusätzlichen Punkte, die ein gewöhnlicher +100%-Score-Up-Skill des Mitglieds auf Position k über das gesamte Live pro Kraftpunkt einbringt (Gesamtsimulation: Zeitfenster, Frames und Combo berücksichtigt; in Gekisou Live auch Just und die Boni der gewählten Ränge), gemittelt über alle Seeds und skaliert nach Genauigkeit; sowie der Anteil an W. Welches Mitglied auf welcher Position landet, wird bei jedem Live zufällig bestimmt, daher nutzt der Erwartungswert nur W.",
+      seeds: "{n} Seeds",
+      unplayable: "In Gekisou Live nicht spielbar",
+      unplayableHint: "Mehr als 3 Fever: Laut dekompiliertem Code unterstützt das Spiel maximal drei Gekisou-Bereiche und bricht ab, wenn ein viertes Fever beginnt",
+      unplayableFree: "; Free Live hat kein Gekisou und kann normal gespielt werden: Wechsle zu Free Live für die entsprechenden Zahlen",
+      score: "Score (aktuelles Szenario)",
+      noFigures: "Score",
+      twoScores: "Die zwei Scores in Gekisou Live (pro Kraftpunkt)",
+      twoScoresHint: "Gekisou Live übermittelt zwei Scores: der erste mit Gekisou (dieses Szenario); der zweite ohne Gekisou, gespeichert als Bestwert des Songs, entspricht ungefähr dem Free-Live-Score",
+      orders: "Reihenfolge-Bereich",
+      sameOrder: "Identische Skills: Die Reihenfolge spielt keine Rolle",
+      ranks: "Score-Ränge",
+      rank: "Rang",
+      required: "Benötigter Score",
+      requiredRoom: "Score (Raum mit {n}, pro Spieler)",
+      needPower: "Kraft (erwartet)",
+      needRange: "Kraft (Reihenfolge-Bereich)",
+      chanceAt: "Chance bei {power}",
+      ranksHint: "Die Schwellenwerte gelten für den Song über alle Schwierigkeitsgrade hinweg; Free Live nutzt die Solo-Schwellenwerte. Benötigte Kraft = Schwellenwert ÷ erwarteter Score pro Kraft (inkl. Genauigkeit).",
+      ranksHintRoom: "Die Schwellenwerte gelten für den Song über alle Schwierigkeitsgrade hinweg. Gekisou Live wertet die Gesamtpunktzahl des Raums; bei einem Raum mit {n} Spielern, die alle dieselbe Punktzahl erzielen: Du benötigst √(5/{n}) × Gekisou-Live-Schwellenwert. Benötigte Kraft = dieser Score ÷ erwarteter Score pro Kraft (inkl. Genauigkeit).",
+      close: "Schließen",
+      measures: "Rang-Kennzahlen pro Bereich",
+      measureRange: "Bereich",
+      measureCompared: "Gewertet nach",
+      measure: { maxCombo: "Max. Gekisou-Combo", justCount: "Just-Anzahl", luckPoints: "Glückspunkte" },
+      measuresHint: "In jedem Bereich von Gekisou Live wird der Raum nach der Kennzahl seiner Mission gewertet: Combo-Missionen nach der maximalen Gekisou-Combo, Glücks-Missionen nach den Glückspunkten, Just-Missionen nach der Just-Anzahl (fettgedruckte Zelle). Nach diesem Modell basieren die Werte auf dem theoretischen Bestspiel ohne Gekisou-Skills (Seed-Mittelwert, in Klammern Min–Max; „–“ bedeutet Daten ausstehend). Diese Seite simuliert keine Gegner; die Ränge werden von dir gewählt und nicht aus diesen Kennzahlen abgeleitet."
+    },
+    aptitude: {
+      ratio: "Relativ zur Basis ohne Standard-Skills",
+      crossSeeds: "Kreuzterme: {n} Seeds",
+      rawPerfect: "Roher All-Perfect-Score-Gewinn (Mittelwert ± SE)",
+      missingCross: "Kreuzterme fehlen; vollständiger Gewinn nicht verfügbar",
+      noPlain: "Gewinn im aktuellen Szenario ohne Standard-Skills / Kraft",
+      missingPerfectCross: "Perfect-Kreuzterme nicht erfasst; vollständiger Gewinn nicht verfügbar",
+      crossAtRank1: "Kreuzterme verbleiben auf Rang 1; nur zur Referenz",
+      zero: { none: "Kein Score-Gewinn bei theoretisch bestem Spiel", measures: "Nur Rang-Kennzahlen" },
+      title: "Gekisou-Skill-Eignung",
+      hint: "Jede Zeile betrachtet einen einzelnen Gekisou-Skill oder Gekisou-Support-Skill isoliert, während die anderen Slots leer bleiben. Dies vergleicht einen Skill auf diesem Chart (nicht Karten oder Formationen) und lässt die Ranglisten-Basis unverändert. Gewinne verschiedener Skills können nicht addiert werden.",
+      power: "Score-Gewinne bei Kraft {n}; Standard-Skill-Werte folgen den obigen Einstellungen.",
+      skill: "Skill",
+      band: "Band-Bedingung",
+      gain: "Gewinn / Kraft",
+      score: "Score-Gewinn",
+      seeds: "Seeds",
+      details: "Bereichsänderungen",
+      support: "Gekisou-Support-Skill",
+      member: "Mitglieds-Gekisou-Skill",
+      level: "Lv {n}",
+      noCondition: "Keine",
+      match: "Erfüllt",
+      mismatch: "Nicht erfüllt",
+      deterministic: "Deterministisch",
+      targetUnmet: "SE-Ziel nicht erreicht",
+      baseSe: "Roher Rang-1-, All-Just-, Kein-Great-Gewinn ohne Standard-Skills / Kraft (Mittelwert ± SE)",
+      converted: "Zusätzliche Wertungsumwandlungen",
+      metricsHint: "Bereichs-Kennzahlen sind Gewinn-Mittelwerte ± Standardfehler bei All-Just, Kein-Great; Genauigkeits-Schieberegler skalieren sie nicht.",
+      empty: "Keine Skill-Eignung passt zu den Missionen dieses Charts.",
+      approximation: "Deterministische Gewinne ohne Standard-Skills sind Durchläufe über das gesamte Live; Zufallswerte sind Seed-Mittelwerte, keine Erwartungswerte des Spiels. Rangwechsel unterliegen Rundungsfehlern; Standard-Skill-Kreuzterme und Genauigkeit sind Näherungswerte. Standardfehler beschreiben Stichprobenrauschen, keine Modellfehler, und dürfen nicht als unabhängige Größen addiert werden.",
+      factors: "Chart-Faktoren",
+      factor: {
+        judgedNotes: "Gewertete Noten im Bereich",
+        justNotes: "Just-Noten",
+        perfectNotes: "Perfect-Noten in Just-Bereichen",
+        tailNotes: "Nachlauf-Noten",
+        comboAtStart: "Start-Combo",
+        lotteries: "Auslosungen ohne Skill"
+      },
+      factorsHint: "Bereichsnoten liegen zwischen Start und dem End-Score-Frame; der Nachlauf liegt zwischen End und Complete und zählt nicht zum Bereichsscore. Einige Wertungstypen in Just-Bereichen haben keine Just-Zeile und können nur Perfect sein. Auslosungen sind Basis-Seed-Mittelwerte ± Standardfehler."
+    },
+    kinds: { tap: "Tap", flick: "Flick", slide: "Slide", trace: "Trace", combo: "Combo-Tick" },
+    source: "Daten: Global / Japan · Version {version}",
+    sourceHint: "Extrahiert aus Region {region} · Master {master} · Client {client}",
+    deckModel: "Score-Modell",
+    caveat: "Die Werte stammen aus dem dekompilierten Spiel-Client: Wir bemühen uns um Genauigkeit, können diese jedoch nicht garantieren; im Zweifelsfall gelten andere Quellen"
+  },
+  gameServer: {
+    inZone: "{time} ({zone})",
+    onlyOn: "Nur {servers}",
+    notOnServer: "Noch nicht auf {server} verfügbar; Inhalte entsprechen {source}.",
+    schedules: "Zeitplan nach Server",
+    timesIn: "Zeiten in {zone}",
+    localTimesIn: "Zeiten in deiner Ortszeit ({zone})",
+    label: "Spielserver",
+    short: { tw: "TW", jp: "JP", kr: "KR", en: "EN" },
+    names: {
+      tw: "Traditionelles Chinesisch",
+      jp: "Japanischer Server",
+      kr: "Koreanischer Server",
+      en: "Globaler (Englischer) Server"
+    }
+  },
+  news: {
+    detailTitle: "Ankündigung",
+    categoryLabel: "Kategorie",
+    category: {
+      all: "Alle",
+      maintenance: "Wartung",
+      bug: "Bekannte Probleme",
+      campaign: "Kampagnen",
+      update: "Updates",
+      gacha: "Gacha",
+      other: "Sonstiges"
+    },
+    checkedAgo: "Liste geprüft: {time}",
+    loading: "Ankündigungen werden geladen…",
+    empty: "Auf diesem Server gibt es derzeit keine Ankündigungen.",
+    retry: "Erneut versuchen",
+    updated: "Aktualisiert",
+    backToList: "Zurück zu den Ankündigungen",
+    notFound: "Diese Ankündigung konnte nicht gefunden werden",
+    notFoundHint: "Der Link ist möglicherweise unvollständig oder die Ankündigung wurde nicht erfasst. Öffne die Liste, um die aktuellen Ankündigungen des Servers zu sehen.",
+    errors: {
+      pending: "Ankündigung wird noch geladen",
+      pendingHint: "Die Anfrage befindet sich in der Warteschlange. Bitte versuche es in wenigen Sekunden erneut.",
+      upstream: "Der Spielserver kann derzeit nicht erreicht werden",
+      upstreamHint: "Möglicherweise finden Wartungsarbeiten statt. Bitte versuche es später noch einmal.",
+      failed: "Ankündigungen konnten nicht geladen werden",
+      failedHint: "Überprüfe deine Verbindung und versuche es erneut."
+    },
+    period: "Zeitraum",
+    lastUpdated: "Zuletzt aktualisiert",
+    withdrawn: "Im Spiel entfernt",
+    olderVersion: "Frühere Version",
+    history: "Version",
+    latestRevision: "{time} (aktuell)",
+    noBody: "Diese Ankündigung enthält keinen Text."
   },
   seo: {
+    events: {
+      title: "In-Game-Events",
+      description: "In-Game-Events, Ankündigungen, Gacha-Pools, Missionen und Belohnungen aller Server von BanG Dream! Our Notes."
+    },
+    eventTracker: {
+      title: "Event-Tracker",
+      description: "Live-Ranglisten des aktuellen BanG Dream! Our Notes-Events auf allen Servern: Challenge-Song-Ranglisten mit Decks, Belohnungs-Grenzwerte, Event-Punkte-Rangliste und verbleibende Zeit."
+    },
+    musicRanking: {
+      title: "Song-Ranglisten",
+      description: "Die Highscore-Rangliste jedes Songs auf allen Servern von BanG Dream! Our Notes: Spieler, Scores und Decks."
+    },
+    news: {
+      title: "Spiel-Ankündigungen",
+      description: "Wartungen, bekannte Probleme, Kampagnen und Updates: die In-Game-Ankündigungen aller Server von BanG Dream! Our Notes."
+    },
+    newsDetail: { title: "Ankündigung", description: "Eine In-Game-Ankündigung von BanG Dream! Our Notes." },
     home: {
       title: "BanG Dream! Our Notes Datenbank & Viewer",
-      description: "Entdecke Charaktere, Karten, Songs, Stories, Comics, Sticker und Assets von BanG Dream! Our Notes in der mehrsprachigen Fan-Datenbank von StarMoe.",
+      description: "Entdecke Charaktere, Karten, Songs, Stories, Comics, Sticker und Assets von BanG Dream! Our Notes in der mehrsprachigen Fan-Datenbank von StarMoe."
     },
     database: {
       title: "BanG Dream! Our Notes Datenbank",
-      description: "Durchsuche Charakterprofile, Kartenkunst, Support-Karten, Songs, Stories, Comics, Sticker, Items und Spiel-Assets von Our Notes.",
+      description: "Durchsuche Charakterprofile, Kartenkunst, Support-Karten, Songs, Stories, Comics, Sticker, Items und Spiel-Assets von Our Notes."
     },
     characters: {
       title: "Our Notes Charakterdatenbank",
-      description: "Entdecke BanG Dream! Our Notes Charaktere nach Band und sieh Profile, Parts, Geburtstage, Sternzeichen, Artwork und hervorgehobene Karten.",
+      description: "Entdecke BanG Dream! Our Notes Charaktere nach Band und sieh Profile, Parts, Geburtstage, Sternzeichen, Artwork und hervorgehobene Karten."
     },
     characterDetail: {
       title: "Charakterdetail",
-      description: "Sieh Details zu BanG Dream! Our Notes Charakteren, inklusive Vollsprites, Bios und hervorgehobenen Karten.",
+      description: "Sieh Details zu BanG Dream! Our Notes Charakteren, inklusive Vollsprites, Bios und hervorgehobenen Karten."
     },
     cards: {
       title: "Our Notes Kartendatenbank",
-      description: "Entdecke BanG Dream! Our Notes Kartenkunst und filtere die Liste nach Charakter, Seltenheit, Attribut oder Band.",
+      description: "Entdecke BanG Dream! Our Notes Kartenkunst und filtere die Liste nach Charakter, Seltenheit, Attribut oder Band."
     },
     stamps: {
       title: "Our Notes Sticker-Datenbank",
-      description: "Durchsuche Charakter-Sticker, Ausdrücke und hochwertige Emoji-Kunst von BanG Dream! Our Notes.",
+      description: "Durchsuche Charakter-Sticker, Ausdrücke und hochwertige Emoji-Kunst von BanG Dream! Our Notes."
     },
     comics: {
       title: "Our Notes Comic-Datenbank",
-      description: "Lies und durchsuche BanG Dream! Our Notes Ladebildschirm-Comics und ihre originalen Manga-Illustrationen.",
+      description: "Lies und durchsuche BanG Dream! Our Notes Ladebildschirm-Comics und ihre originalen Manga-Illustrationen."
     },
     items: {
       title: "Our Notes Item-Datenbank",
-      description: "Durchsuche Items, Materialien, Inventar-Artwork und Beschreibungen von BanG Dream! Our Notes in einer durchsuchbaren Liste.",
+      description: "Durchsuche Items, Materialien, Inventar-Artwork und Beschreibungen von BanG Dream! Our Notes in einer durchsuchbaren Liste."
     },
     cardDetail: {
       title: "Kartendetail",
-      description: "Sieh Artwork, Charakter, Attribut, Seltenheit und Basiswerte der Our Notes Karten.",
+      description: "Sieh Artwork, Charakter, Attribut, Seltenheit und Basiswerte der Our Notes Karten."
     },
     supportCards: {
       title: "Our Notes Support-Karten-Datenbank",
-      description: "Entdecke BanG Dream! Our Notes Support-Kartenkunst und filtere nach Charakter, Seltenheit, Attribut oder Band.",
+      description: "Entdecke BanG Dream! Our Notes Support-Kartenkunst und filtere nach Charakter, Seltenheit, Attribut oder Band."
     },
     supportCardDetail: {
       title: "Support-Kartendetail",
-      description: "Sieh Artwork, Charakter, Attribut, Seltenheit und Basiswerte der Our Notes Support-Karten.",
+      description: "Sieh Artwork, Charakter, Attribut, Seltenheit und Basiswerte der Our Notes Support-Karten."
     },
     music: {
       title: "Our Notes Song- & Musikdatenbank",
-      description: "Durchsuche die BanG Dream! Our Notes Songliste mit Vokalisten, Textern, Komponisten, Arrangeuren, Schwierigkeiten und Notenzahlen.",
+      description: "Durchsuche die BanG Dream! Our Notes Songliste mit Vokalisten, Textern, Komponisten, Arrangeuren, Schwierigkeiten und Notenzahlen."
+    },
+    musics: {
+      title: "BanG Dream! Our Notes Musik & Charts",
+      description: "Entdecke alle Songs, Chart-Metadaten, 3D-Chart-Vorschauen und Song-Ranglisten in BanG Dream! Our Notes unter einem funkelnden Sternenhimmel voller Musik."
     },
     gacha: {
       title: "Our Notes Rekrutierungs-Kompendium",
-      description: "Erlebe jede berührende Begegnung im Scheinwerferlicht neu. Durchstöbere BanG Dream! Our Notes Rekrutierungen, Zeitpläne, Pickup-Mitglieder und den Sternen-Simulator.",
+      description: "Erlebe jede berührende Begegnung im Scheinwerferlicht neu. Durchstöbere BanG Dream! Our Notes Rekrutierungen, Zeitpläne, Pickup-Mitglieder und den Sternen-Simulator."
+    },
+    eventList: {
+      title: "Event-Liste",
+      description: "Alle In-Game-Events von BanG Dream! Our Notes: Zeitplan, Bonus-Mitglieder und -Attribute, Event-Karten, Event-Stories, Punkte-Belohnungen und Live-Belohnungen für jeden Server."
+    },
+    eventDetail: {
+      title: "Event-Details",
+      description: "Zeitplan, Boni, Karten und Songs eines Events, die für die Story-Freischaltung erforderlichen Event-Punkte sowie Punkte- und Live-Belohnungen. Jedes Versprechen der Reise, hier festgehalten."
     },
     gachaDetail: {
       title: "Rekrutierungsdetails",
-      description: "Entdecke den funkelnden Moment im Scheinwerferlicht. Sieh dir Zeitpläne für Our Notes, Pickup-Karten und die vollständige Liste der Begegnungen an.",
+      description: "Entdecke den funkelnden Moment im Scheinwerferlicht. Sieh dir Zeitpläne für Our Notes, Pickup-Karten und die vollständige Liste der Begegnungen an."
     },
     rewards: {
       title: "Our Notes Missionen & Belohnungen",
-      description: "Schlage unsere dem Sternenhimmel gegebenen Versprechen auf. Entdecke BanG Dream! Our Notes Saisonpässe, Event-Ziele und tägliche Login-Geschenke.",
+      description: "Schlage unsere dem Sternenhimmel gegebenen Versprechen auf. Entdecke BanG Dream! Our Notes Saisonpässe, Event-Ziele und tägliche Login-Geschenke."
     },
     rewardDetail: {
       title: "Details zu Missionen & Belohnungen",
-      description: "Zähle die Freuden und Ernten entlang der Reise. Sieh dir die Stufenbelohnungen des Our Notes Passes, zeitlich begrenzte Ziele und tägliche Login-Aufmerksamkeiten an.",
+      description: "Zähle die Freuden und Ernten entlang der Reise. Sieh dir die Stufenbelohnungen des Our Notes Passes, zeitlich begrenzte Ziele und tägliche Login-Aufmerksamkeiten an."
     },
     titles: {
       title: "Our Notes Titel-Kompendium",
-      description: "Halte jeden Meilenstein und jede leuchtende Erinnerung fest. Durchstöbere das BanG Dream! Our Notes Titeljournal nach Abzeichen, Emblemen und Schwüren jeder Band.",
+      description: "Halte jeden Meilenstein und jede leuchtende Erinnerung fest. Durchstöbere das BanG Dream! Our Notes Titeljournal nach Abzeichen, Emblemen und Schwüren jeder Band."
     },
     backgrounds: {
       title: "Our Notes Profilhintergründe",
-      description: "Spaziere durch sanft leuchtende Straßen und Bühnen. Durchstöbere BanG Dream! Our Notes Profilhintergründe und wähle Kulissen für deine Erinnerungen.",
+      description: "Spaziere durch sanft leuchtende Straßen und Bühnen. Durchstöbere BanG Dream! Our Notes Profilhintergründe und wähle Kulissen für deine Erinnerungen."
     },
     songDetail: {
       title: "Songdetail",
-      description: "Sieh Our Notes Songdetails inklusive Jacket, Autoren, Vokalisten und Chart-Konstanten.",
+      description: "Sieh Our Notes Songdetails inklusive Jacket, Autoren, Vokalisten und Chart-Konstanten."
     },
     story: {
       title: "Our Notes Story-Archiv",
-      description: "Entdecke Hauptstories, Bond-Stories, Post-Live-Gespräche, Home-Gespräche und vertonte Transkripte von BanG Dream! Our Notes.",
+      description: "Entdecke Hauptstories, Bond-Stories, Post-Live-Gespräche, Home-Gespräche und vertonte Transkripte von BanG Dream! Our Notes."
     },
     mainStory: {
       title: "Our Notes Hauptstory",
-      description: "Durchsuche BanG Dream! Our Notes Hauptstory-Kapitel, lies Transkripte und höre die Charakterstimmen.",
+      description: "Durchsuche BanG Dream! Our Notes Hauptstory-Kapitel, lies Transkripte und höre die Charakterstimmen."
     },
     friendshipStory: {
       title: "Our Notes Bond-Stories",
-      description: "Entdecke BanG Dream! Our Notes Bond-Stories über Beziehungen zwischen Charakteren, mit Transkripten und Stimmen.",
+      description: "Entdecke BanG Dream! Our Notes Bond-Stories über Beziehungen zwischen Charakteren, mit Transkripten und Stimmen."
     },
     otherStory: {
       title: "Gespräche & andere Stories Our Notes",
-      description: "Durchsuche Post-Live-Gespräche, Home-Gespräche, Ortsvorstellungen und Tutorial-Szenen von BanG Dream! Our Notes.",
+      description: "Durchsuche Post-Live-Gespräche, Home-Gespräche, Ortsvorstellungen und Tutorial-Szenen von BanG Dream! Our Notes."
     },
     storyDetail: {
       title: "Storydetail",
-      description: "Lies das Story-Transkript und spiele die Charakterstimmen ab.",
+      description: "Lies das Story-Transkript und spiele die Charakterstimmen ab."
     },
     liveResultStory: {
       title: "Post-Live-Gespräche",
-      description: "Durchsuche Charaktergespräche nach einer Live-Aufführung.",
+      description: "Durchsuche Charaktergespräche nach einer Live-Aufführung."
     },
-    homeStory: {
-      title: "Home-Stories",
-      description: "Durchsuche Home-Ortseinführungen und Tap-Gespräche.",
-    },
-    tutorialStory: {
-      title: "Tutorial-Stories",
-      description: "Durchsuche Story-Szenen aus dem Spieltutorial.",
-    },
-    eventStory: {
-      title: "Event-Story",
-      description: "Durchsuche BanG Dream! Our Notes Event-Stories.",
-    },
+    homeStory: { title: "Home-Stories", description: "Durchsuche Home-Ortseinführungen und Tap-Gespräche." },
+    tutorialStory: { title: "Tutorial-Stories", description: "Durchsuche Story-Szenen aus dem Spieltutorial." },
+    eventStory: { title: "Event-Story", description: "Durchsuche BanG Dream! Our Notes Event-Stories." },
     tools: {
       title: "Our Notes Datenbank-Tools",
-      description: "Nutze Moenotes-Tools zum Erkunden von BanG Dream! Our Notes Daten und öffentlichen Spiel-Assets.",
+      description: "Nutze Moenotes-Tools zum Erkunden von BanG Dream! Our Notes Daten und öffentlichen Spiel-Assets."
+    },
+    chartPreview: {
+      title: "Our Notes 3D-Chart-Vorschau",
+      description: "Wähle einen Song und eine Schwierigkeit, um den Chart von Our Notes in 3D direkt im Browser anzusehen: Bahnen, Noten und Treffereffekte werden synchron zur Musik abgespielt, inklusive Pause, Vor-/Zurückspulen und Geschwindigkeitssteuerung."
+    },
+    live2dViewer: {
+      title: "Our Notes Live2D-Viewer",
+      description: "Durchstöbere alle Live2D-Modelle von BanG Dream! Our Notes nach Charakter und Kostüm direkt im Browser: Ruhepose, Blinzeln, Atmung und Physik wie in der Story, mit allen Motionen und Gesichtsausdrücken auf Abruf."
+    },
+    storyPlayer: {
+      title: "Our Notes Story-Player",
+      description: "Erlebe die Stories von BanG Dream! Our Notes direkt im Browser genau wie im Spiel: Live2D-Charaktere, Bühnen, Kamera und Effekte, Textfenster, Musik, Soundeffekte und Stimmen auf Japanisch, Englisch, Chinesisch oder Koreanisch."
+    },
+    chartData: {
+      title: "Our Notes Song-Meta",
+      description: "Ranglisten aller Charts von BanG Dream! Our Notes nach Punkteffizienz, für Event-Ränge erforderlicher Kraft, Geschwindigkeit, Level und Länge, mit Streudiagrammen, Chart-Details und Definitionen des Score-Modells; basierend auf dem dekompilierten Spiel-Client."
     },
     assetViewer: {
       title: "Our Notes Spiel-Asset-Viewer",
-      description: "Suche und durchsuche BanG Dream! Our Notes Assets inklusive Kartenkunst, Jackets, Charakterbildern und anderen öffentlichen Dateien.",
+      description: "Suche und durchsuche BanG Dream! Our Notes Assets inklusive Kartenkunst, Jackets, Charakterbildern und anderen öffentlichen Dateien."
     },
     about: {
       title: "Über Moenotes & StarMoe",
-      description: "Erfahre mehr über Moenotes, die mehrsprachige Fan-Datenbank und den Viewer von StarMoe für Charaktere, Musik, Karten und Stories von BanG Dream! Our Notes.",
+      description: "Erfahre mehr über Moenotes, die mehrsprachige Fan-Datenbank und den Viewer von StarMoe für Charaktere, Musik, Karten und Stories von BanG Dream! Our Notes."
     },
+    account: {
+      title: "Mein Konto",
+      description: "Dein StarMoe-Passport auf Moenotes: Wähle den Charakter, der dich repräsentiert."
+    },
+    player: { title: "Spielerprofil", description: "Ein öffentliches Our Notes-Spielerprofil auf Moenotes." },
     designSystem: {
       title: "Designsystem",
-      description: "Referenz der visuellen Sprache und Komponentenbibliothek von Moenotes.",
-    },
+      description: "Referenz der visuellen Sprache und Komponentenbibliothek von Moenotes."
+    }
   },
   designSystem: {
     sirius: {
@@ -707,7 +1632,7 @@ export const deDE = {
       grid: "Koordinaten",
       card: "Inhaltsbereich",
       raised: "Erhabenes Panel",
-      surface: "Ruhige Fläche",
+      surface: "Ruhige Fläche"
     },
     title: "Designsystem",
     subtitle: "Referenz der visuellen Sprache von Moenotes — Farben, Typografie, Komponenten und Interaktionen.",
@@ -717,7 +1642,7 @@ export const deDE = {
       components: "Komponenten",
       modals: "Modale",
       filters: "Filter",
-      animations: "Animationen",
+      animations: "Animationen"
     },
     colors: {
       accent: "Akzent",
@@ -740,13 +1665,13 @@ export const deDE = {
       surface: "Oberfläche",
       border: "Rahmen",
       text: "Text",
-      muted: "Gedämpft",
+      muted: "Gedämpft"
     },
     typography: {
       display: "Display-Schrift",
       body: "Fließtext-Schrift",
       hand: "Handschrift",
-      note: "Notiz-Schrift",
+      note: "Notiz-Schrift"
     },
     components: {
       buttons: "Buttons",
@@ -763,7 +1688,7 @@ export const deDE = {
       selectPlaceholder: "Option wählen...",
       optA: "Option A",
       optB: "Option B",
-      optC: "Option C",
+      optC: "Option C"
     },
     modals: {
       openSm: "Kleines Modal",
@@ -776,7 +1701,7 @@ export const deDE = {
       copyModal: "Kopier-Modal",
       copyModalTitle: "Bildvorschau",
       copy: "Kopieren",
-      save: "Speichern",
+      save: "Speichern"
     },
     filters: {
       title: "Filter-Demo",
@@ -792,7 +1717,7 @@ export const deDE = {
       date: "Datum",
       level: "Level",
       onlyComplete: "Nur Abgeschlossene",
-      reset: "Zurücksetzen",
+      reset: "Zurücksetzen"
     },
     animations: {
       spring: "Spring-Interaktion",
@@ -802,8 +1727,8 @@ export const deDE = {
       stagger: "Staffel-Animation",
       staggerDesc: "Gestaffeltes Einblenden — Listenelemente erscheinen nacheinander",
       wobble: "Wobble-Effekt",
-      wobbleDesc: "Wackeln beim Hover — Sticker-Stil",
-    },
+      wobbleDesc: "Wackeln beim Hover — Sticker-Stil"
+    }
   },
   filter: {
     title: "Filter",
@@ -816,19 +1741,33 @@ export const deDE = {
     openQuickFilter: "Filter öffnen",
     drawerHintTitle: "Filter in die Seitenleiste verschoben",
     drawerHintBody: "Klicken Sie auf den linken Reiter, um die Filter jederzeit ein- oder auszuklappen.",
-    drawerHintDismiss: "Verstanden",
+    drawerHintDismiss: "Verstanden"
+  },
+  browserNotice: {
+    title: "Dieser Browser kann die Website möglicherweise nicht fehlerfrei anzeigen",
+    description: "In-App-Browser und Browser mit veralteten Engines können Layout, Audio und Chart-Vorschauen beeinträchtigen.",
+    inAppHint: "Tippe oben rechts auf das Menü ··· und wähle „Im Browser öffnen“.",
+    ios: "Alle Browser auf iPhone und iPad nutzen die Safari-Engine, die mit iOS aktualisiert wird. Aktualisiere auf die neueste iOS-Version unter Einstellungen › Allgemein › Softwareupdate.",
+    android: "Für die optimale Darstellung öffne diese Website bitte in Chrome oder Edge.",
+    desktop: "Für die optimale Darstellung öffne diese Website bitte in Edge oder Chrome.",
+    download: "{name} herunterladen",
+    dismiss: "Schließen"
   },
   modal: { close: "Schließen" },
   footer: {
     desc: "Ein Next-Gen-Viewer für BanG Dream! Our Notes.",
     explore: "Entdecken",
     sister: "Schwesterseiten",
+    friendly: "Partnerseiten",
     contact: "Kontakt & Feedback",
     feedback: "Feedback / Beitrag senden",
     bugReport: "Fehler melden",
+    discord: "Discord-Community ({name})",
+    qq: "{name} QQ-Gruppe ({number})",
+    github: "Quellcode auf GitHub",
     email: "Email mail@exmeaning.com",
     disclaimer: "Diese Seite zeigt nur Materialien. Die Spielrechte liegen bei Bushiroad / Craft Egg / Ishimori. Dies ist eine Fan-Seite, eine Doujin-Datenbank nur zu Forschungszwecken.",
-    copyright: "© 2026 Moenotes · Inoffizielle Fan-Seite",
+    copyright: "© 2026 Moenotes · Inoffizielle Fan-Seite"
   },
   stamps: {
     fallbackNameNoChar: "Sticker #{id}",
@@ -845,7 +1784,7 @@ export const deDE = {
     quickFilter: "Schnellfilter öffnen",
     stickerImageAlt: "{name} Sticker",
     copiedImage: "Sticker in die Zwischenablage kopiert.",
-    copiedLink: "Sticker-Asset-Link kopiert.",
+    copiedLink: "Sticker-Asset-Link kopiert."
   },
   comics: {
     loadingName: "Ladebildschirm-Comic #{id}",
@@ -861,7 +1800,7 @@ export const deDE = {
     quickFilter: "Schnellfilter öffnen",
     comicImageAlt: "{name} Comic",
     copiedImage: "Comic in die Zwischenablage kopiert.",
-    copiedLink: "Comic-Asset-Link kopiert.",
+    copiedLink: "Comic-Asset-Link kopiert."
   },
   items: {
     searchPlaceholder: "Itemname oder Beschreibung suchen...",
@@ -872,7 +1811,7 @@ export const deDE = {
       "1": "Erholung/Tickets",
       "2": "Materialien/Prismen",
       "3": "Charakterteile",
-      "4": "Umtauschtickets & Punkte",
+      "4": "Umtauschtickets & Punkte"
     },
     results: "{count} Items",
     loading: "Itemdaten werden geladen...",
@@ -882,7 +1821,7 @@ export const deDE = {
     emptyTitle: "Keine Items passen zu diesen Filtern",
     emptyDescription: "Diese Filterkombination liefert keine Ergebnisse. Filter zurücksetzen, um alle Items zu sehen.",
     reset: "Alle Items anzeigen",
-    quickFilter: "Schnellfilter öffnen",
+    quickFilter: "Schnellfilter öffnen"
   },
   about: {
     teamIntro: "wir sind ein kleines Team von <a href=\"https://github.com/moe-sekai\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-[var(--mn-accent-deep)] underline decoration-2 decoration-[var(--mn-accent)] underline-offset-4 hover:text-[var(--mn-accent)]\">StarMoe</a>. In den zwei Jahren beim Aufbau von <em>MoeSekai</em> haben wir uns gefragt: Wie sollte ein gutes Wiki eigentlich aussehen?",
@@ -894,10 +1833,14 @@ export const deDE = {
     openSourceTitle: "Open-Source-Lizenz",
     openSourceDesc: "Das Frontend des Projekts ist unter der Lizenz <strong>AGPL v3</strong> open source. Wir setzen auf offene, transparente Zusammenarbeit und freuen uns über Beiträge.",
     openSourceLink: "GitHub-Repository",
+    communityTitle: "Tritt der Community bei",
+    communityDesc: "Tausche dich mit uns auf dem {name}-Discord aus, melde Probleme oder verfolge die Entwicklung auf GitHub.",
+    discordLink: "Discord beitreten",
+    githubLink: "GitHub",
     assetsTitle: "Copyright & Assets",
     assetsDesc: "Spiel-Assets (Kunst, Audio usw.) unterliegen dem Copyright von <strong>Bushiroad / Craft Egg / Ishimori</strong>. Selbst erstellte kompatible Assets stehen unter <strong>CC BY-NC 4.0</strong>.",
     assetsLink: "CC BY-NC 4.0 Lizenz",
     techStackTitle: "Technologie-Stack",
-    techStackDesc: "Gebaut mit einem modernen, leichten und performanten Stack für schnelle Ladezeiten und ein flüssiges Notizbuch-Erlebnis.",
-  },
+    techStackDesc: "Gebaut mit einem modernen, leichten und performanten Stack für schnelle Ladezeiten und ein flüssiges Notizbuch-Erlebnis."
+  }
 } as const satisfies MessageTree;

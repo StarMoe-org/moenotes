@@ -1,6 +1,6 @@
 /** Inputs to the shared Rust replay. These types contain no scoring rules. */
 export type SnapSkillKind = "support" | "gekisou-support";
-export interface SnapSkillSelection { kind: SnapSkillKind; skillId: number; level: number }
+export interface SnapSkillSelection { kind: SnapSkillKind; skillId: number; level: number; cardId?: number }
 export type FiveSlots<T> = readonly [T, T, T, T, T];
 export type SnapRequirement = "paired-member" | "gekisou-mode" | "paired-gekisou-skill" | "raw-timing" | "missing-dependency";
 export interface SnapSkillChoice extends SnapSkillSelection {

@@ -1,0 +1,22 @@
+---
+import EventTracker, { type TrackerSong } from "@/components/events/EventTracker";
+import PageLayout from "@/layouts/PageLayout.astro";
+import type { AppLocale } from "@/config/locales";
+import { getBuildDeckCardLookup, getBuildEvents, getBuildMusic } from "@/lib/masterdata/build-data";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
+
+interface Props {
+  locale: AppLocale;
+}
+
+const { locale } = Astro.props;
+const [events, music, deckCards, servers] = await Promise.all([getBuildEvents(locale), getBuildMusic(locale), getBuildDeckCardLookup(locale), getBuildServers()]);
+// Boards name challenge songs by id at run time; ship only what the tabs and headers show.
+const songs: Record<string, TrackerSong> = Object.fromEntries(
+  music.map((song) => [String(song.id), { title: song.title, jacketUrl: song.jacketUrl, bandName: song.bandName, servers: song.servers }]),
+);
+---
+
+<PageLayout locale={locale} titleKey="seo.eventTracker.title" descriptionKey="seo.eventTracker.description">
+  <EventTracker client:load locale={locale} events={events} songs={songs} deckCards={deckCards} servers={servers} />
+</PageLayout>

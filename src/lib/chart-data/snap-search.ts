@@ -31,3 +31,21 @@ export function groupSnapSkills(choices: readonly SnapSkillChoice[]): SnapSkillC
   return [...groups.values()].map((group) => group.sort((a, b) => a.level - b.level))
     .sort((a, b) => Number(a[0]!.kind === "gekisou-support") - Number(b[0]!.kind === "gekisou-support") || a[0]!.skillId - b[0]!.skillId);
 }
+
+export interface SnapCardSkillChoice extends SnapSkillChoice { cardId: number }
+
+/** Physical Snap identity stays explicit even when several cards share one native skill. */
+export function groupSnapSkillCards(choices: readonly SnapSkillChoice[]): SnapCardSkillChoice[][] {
+  const groups = new Map<string, SnapCardSkillChoice[]>();
+  for (const choice of choices) for (const cardId of new Set(choice.rankBindings.map((binding) => binding.cardId))) {
+    if (!choice.cardIds.includes(cardId)) continue;
+    const key = `${choice.kind}:${cardId}:${choice.skillId}`;
+    const group = groups.get(key) ?? [];
+    if (!group.some((entry) => entry.level === choice.level)) group.push({ ...choice, cardId,
+      cardIds: [cardId], rankBindings: choice.rankBindings.filter((binding) => binding.cardId === cardId) });
+    groups.set(key, group);
+  }
+  return [...groups.values()].map((group) => group.sort((a, b) => a.level - b.level))
+    .sort((a, b) => Number(a[0]!.kind === "gekisou-support") - Number(b[0]!.kind === "gekisou-support")
+      || a[0]!.cardId - b[0]!.cardId || a[0]!.skillId - b[0]!.skillId);
+}

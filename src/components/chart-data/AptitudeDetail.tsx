@@ -25,7 +25,6 @@ export default function AptitudeDetail({ ctx, row }: { ctx: ChartDataContext; ro
   return (
     <section>
       <Heading level={3} title={<>{tr("aptitude.title")} <small className="mn-cd-note">{tr("beta")}</small></>} />
-      <p className="mn-cd-hint">{tr("betaHint")}</p>
       {!rows ? <p className="mn-cd-hint">{tr("scenario.pending")}</p> : (
         <>
           <p className="mn-cd-hint">{tr("aptitude.hint")}</p>
@@ -60,9 +59,9 @@ export default function AptitudeDetail({ ctx, row }: { ctx: ChartDataContext; ro
                         <p>{tr("aptitude.rawPerfect")}: {sample(r.variant.scorePerfect)}</p>
                         <p>{tr("aptitude.noPlain")}: {signed(r.delta?.base ?? null)}</p>
                         <p>{tr("aptitude.converted")}: {sample(r.converted)}</p>
-                        <table className="mn-cd-ranks"><thead><tr><th>{tr("detail.measureRange")}</th>{MEASURES.map((m) => <th key={m}>{tr(`detail.measure.${m}`)}</th>)}</tr></thead>
+                        <div className="mn-cd-table-scroll"><table className="mn-cd-ranks"><thead><tr><th>{tr("detail.measureRange")}</th>{MEASURES.map((m) => <th key={m}>{tr(`detail.measure.${m}`)}</th>)}</tr></thead>
                           <tbody>{r.measures.map((m, i) => <tr key={i}><td>{rangeLabel(i, row.stats?.ranges?.[i]?.mission ?? null)}</td>{MEASURES.map((k) => <td key={k}>{sample(m[k])}</td>)}</tr>)}</tbody>
-                        </table>
+                        </table></div>
                         <p className="mn-cd-hint">{tr("aptitude.metricsHint")}</p>
                       </details>
                     </td>

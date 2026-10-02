@@ -1,5 +1,6 @@
 import { gameApiConfig, type GameServer } from "@/config/game-api";
 import type { Announcement, AnnouncementList } from "@/lib/game-api/announcements";
+import type { PointRankingLatest, RankdEvent } from "@/lib/game-api/events";
 import type { MusicRanking } from "@/lib/game-api/music-ranking";
 
 /**
@@ -19,6 +20,10 @@ export interface GameApiResponse<T> {
   revision: string | null;
   /** False once an announcement has left the game's list (`X-Listed: 0`). */
   listed: boolean;
+  /** A challenge song board's collection state, `X-Collect-Status`. */
+  collectStatus: string | null;
+  /** `lastSeen` once a challenge song board's collection window closed: the last copy, not a confirmed final ranking. */
+  finalQuality: string | null;
 }
 
 /**
@@ -45,6 +50,31 @@ export function fetchMusicRanking(server: GameServer, musicId: number, signal?: 
 
 export function fetchAnnouncements(server: GameServer, signal?: AbortSignal): Promise<GameApiResponse<AnnouncementList>> {
   return getJson(`${gameApiConfig.base}/${server}/announcements`, signal);
+}
+
+/** Every event rankd knows on the server, newest first. */
+export async function fetchEvents(server: GameServer, signal?: AbortSignal): Promise<RankdEvent[]> {
+  const response = await getJson<{ events?: unknown }>(`${gameApiConfig.base}/${server}/events`, signal);
+  return Array.isArray(response.data.events) ? (response.data.events as RankdEvent[]) : [];
+}
+
+/** The event most worth showing now (running, then counting, then the last one); 404 `not_found` when none. */
+export function fetchCurrentEvent(server: GameServer, signal?: AbortSignal): Promise<GameApiResponse<RankdEvent>> {
+  return getJson(`${gameApiConfig.base}/${server}/events/current`, signal);
+}
+
+export function fetchEvent(server: GameServer, eventId: string, signal?: AbortSignal): Promise<GameApiResponse<RankdEvent>> {
+  return getJson(`${gameApiConfig.base}/${server}/events/${encodeURIComponent(eventId)}`, signal);
+}
+
+/** The point ranking's latest merged snapshot. */
+export function fetchPointRankingLatest(server: GameServer, eventId: string, signal?: AbortSignal): Promise<GameApiResponse<PointRankingLatest>> {
+  return getJson(`${gameApiConfig.base}/${server}/events/${encodeURIComponent(eventId)}/latest`, signal);
+}
+
+/** One challenge song's board: the game API's JSON as is, shaped like a song ranking. */
+export function fetchChallengeRanking(server: GameServer, eventId: string, challengeMusicId: string, signal?: AbortSignal): Promise<GameApiResponse<MusicRanking>> {
+  return getJson(`${gameApiConfig.base}/${server}/events/${encodeURIComponent(eventId)}/challenges/${encodeURIComponent(challengeMusicId)}/ranking`, signal);
 }
 
 /** The latest version, or the one whose `lastUpdatedAt` is `revision`. */
@@ -81,6 +111,8 @@ async function getJson<T>(url: string, signal?: AbortSignal): Promise<GameApiRes
     stale: response.headers.get("X-Stale") === "1",
     revision: response.headers.get("X-Revision"),
     listed: response.headers.get("X-Listed") !== "0",
+    collectStatus: response.headers.get("X-Collect-Status"),
+    finalQuality: response.headers.get("X-Final-Quality"),
   };
 }
 

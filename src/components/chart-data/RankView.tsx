@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { matches, sortBy, type ChartRow } from "@/lib/chart-data/catalog";
 import { EFF_RANKS, RANKS, SPEEDS, roomSize, type RankBy } from "@/lib/chart-data/query";
 import { X_MAX, eventDominance, formatLength, lengthMs, orderRates, rank, rankThreshold, reachChance, requiredPower } from "@/lib/chart-data/ranking";
@@ -10,7 +10,7 @@ type Col = "rank" | "song" | "level" | "time" | "bpm" | "notes" | "density" | "r
   | "need" | "chance" | "perHour" | "goal" | "skip" | "score" | "delta";
 
 interface Listed extends ChartRow {
-  rate?: number;
+  rate?: number | null;
   perMinute?: number | null;
   need?: number | null;
   chance?: number | null;
@@ -42,16 +42,28 @@ function useRanking(ctx: ChartDataContext) {
     const cols: Col[] = ["rank", "song", "level", "time", "bpm", "notes", "density"];
     if (snapActive(ctx)) {
       const measured = currentMeasurement(ctx);
+      const power = ctx.snap!.profile.power;
       list = pool.map((row) => {
         const result = measured?.rows.get(row.scoreId);
         const duration = ctx.lengthOf(row);
         const time = duration === null ? null : duration + state.overhead * 1000;
+        const ratio = result && Number.isFinite(power) && power > 0 ? result.score / power : null;
         return { ...row, score: result?.score ?? null, baselineScore: result?.baselineScore ?? null, delta: result?.delta ?? null,
-          perMinute: result && time !== null && time > 0 ? result.score * 60000 / time : null };
+          rate: ratio, perMinute: ratio !== null && time !== null && time > 0 ? ratio * 60000 / time : null,
+          perHour: time !== null && time > 0 ? 3600000 / time : null };
       });
-      list = sortBy(list, (row) => row.perMinute);
-      cols.push("score", "delta", "perMinute", ...(state.rankBy === "efficiency" ? ["relative" as const] : []));
-      hi = "perMinute";
+      if (state.rankBy === "efficiency") {
+        list = sortBy(list, (row) => row.perMinute);
+        cols.push("rate", "perMinute", "relative", "dom");
+        hi = "perMinute";
+      } else {
+        // Keep the event table's established columns. Point measurements do not provide a
+        // required-power inverse, a probability model or a dominance certificate.
+        list = sortBy(list, (row) => row.score);
+        cols.splice(4, 3);
+        cols.push("need", ...(state.power ? ["chance" as const] : []), "perHour", ...(state.power ? ["goal" as const] : []), "dom");
+        hi = state.power ? "goal" : "need";
+      }
     } else if (state.rankBy === "efficiency") {
       unsorted = list.filter((r) => r.weights);
       list = rank(unsorted as Array<ChartRow & { base: number; weights: number[] }>, { skills, source: state.len, overheadMs: state.overhead * 1000 });
@@ -95,6 +107,9 @@ function useRanking(ctx: ChartDataContext) {
     const byPool = state.rankBy === "efficiency" ? list : null;
     list = list.filter((r) => matches(r, state.search) && (!state.frontier || !unsorted || r.frontier));
     const top = hi === "perMinute" && byPool && byPool.length ? byPool[0]!.perMinute ?? null : null;
+    // Keep the selected measure beside the song, including in the narrow view.
+    const primary = cols.indexOf(hi as Col);
+    if (primary > 2) cols.splice(2, 0, ...cols.splice(primary, 1));
     return { list, all, hi, cols, unsorted, top };
   }, [ctx, state, pool, skills]);
 }
@@ -109,7 +124,7 @@ export default function RankView({ ctx }: { ctx: ChartDataContext }) {
       <div className="mn-cd-rank-head">
         <Seg<RankBy> variant="tabs" label={tr("views.rank")} value={state.rankBy} onPick={(rankBy) => update({ rankBy })} options={tabs} />
       </div>
-      {active ? <p className="mn-cd-hint">{tr(state.rankBy === "event" ? "snap.eventMeasurementHint" : "snap.measurementHint")}</p> : null}
+      {active ? <p className="mn-cd-hint">{tr(state.rankBy === "event" ? "snap.eventMeasurementHint" : "snap.normalizedMeasurementHint", { power: fmtInt(ctx.snap!.profile.power) })}</p> : null}
         {state.rankBy === "speed" ? (
           <div className="mn-cd-hint">
           <Seg label={tr("rankBy.speed")} value={state.speedBy} onPick={(speedBy) => update({ speedBy })} options={SPEEDS.map((k) => ({ value: k, label: tr(`speedBy.${k}`) }))} />
@@ -118,13 +133,14 @@ export default function RankView({ ctx }: { ctx: ChartDataContext }) {
       {state.rankBy === "efficiency" || state.rankBy === "event" ? (
         <>
           <ScenarioPanel ctx={ctx} rooms={state.rankBy === "event" && !active} />
-          <SettingsPanel ctx={ctx} event={state.rankBy === "event" && !active} frontier={!active} />
+          <SettingsPanel ctx={ctx} event={state.rankBy === "event"} frontier />
         </>
       ) : null}
       {!hasStats && !active ? <p className="mn-cd-hint warn">{tr("noStats")}</p> : null}
       {active ? (
         <p className={`mn-cd-snap-state${measurement?.error ? " warn" : ""}`} role={measurement?.error ? "alert" : "status"}>
-          {measurement?.status === "complete" ? tr("snap.ready", { n: measurement.done })
+          {measurement?.error?.code === "invalid-selection" ? tr("snap.invalidSelection")
+            : measurement?.status === "complete" ? tr("snap.ready", { n: measurement.done })
             : measurement?.status === "needs-context" ? tr("snap.needsContext")
             : measurement?.status === "unsupported" ? tr("snap.unsupportedScenario")
             : measurement?.status === "error" ? tr("snap.calculationError")
@@ -138,7 +154,6 @@ export default function RankView({ ctx }: { ctx: ChartDataContext }) {
 
 function RankTable({ ctx }: { ctx: ChartDataContext }) {
   const { tr, state } = ctx;
-  const [allColumns, setAllColumns] = useState(false);
   const { list, all, hi, cols, unsorted, top } = useRanking(ctx);
   const barValue = (r: Listed): number | null | undefined => (hi === "time" ? ctx.lengthOf(r) : hi === "level" ? r.displayLevel : hi === "bpm" ? r[state.speedBy]
     : hi ? (r[hi as keyof Listed] as number | null | undefined) : null);
@@ -148,7 +163,6 @@ function RankTable({ ctx }: { ctx: ChartDataContext }) {
   );
   const clear = () => ctx.update({ band: "", search: "", frontier: false, diffs: ["easy", "normal", "hard", "expert"] });
   const head = (k: Col) => k === "score" || k === "delta" ? tr(`snap.${k}`)
-    : k === "perMinute" && snapActive(ctx) ? tr("snap.perMinute")
     : k === "bpm" && state.rankBy === "speed" && state.speedBy === "bpmMax" ? tr("speedBy.bpmMax") : tr(`col.${k}`);
   const names = (r: Listed) => (r.dominatedBy ?? []).map((j) => unsorted?.[j]).filter((x): x is Listed => !!x)
     .map((x) => `${ctx.title(x)} ${tr(`difficulties.${x.difficulty}`)}`).join(tr("listSeparator"));
@@ -169,6 +183,7 @@ function RankTable({ ctx }: { ctx: ChartDataContext }) {
       case "delta": return typeof r.delta === "number" ? <span title={`${tr("snap.baseline")}: ${fmtInt(r.baselineScore)}`}>{r.delta > 0 ? "+" : ""}{fmtInt(r.delta)}</span> : "–";
       case "density": return hi === "density" ? bar(r.density, fmt(r.density)) : fmt(r.density);
       case "rate": {
+        if (snapActive(ctx)) return fmt(r.rate, 3);
         if (!r.weights) return fmt(r.rate, 3);
         const v = orderRates(r as ChartRow & { base: number }, ctx.skills);
         return <>{fmt(r.rate, 3)}{v[0] === v[v.length - 1] ? null : <small className="mn-cd-spread" title={tr("tipSpread")}>{` ${fmt(v[0], 3)}–${fmt(v[v.length - 1], 3)}`}</small>}</>;
@@ -180,7 +195,7 @@ function RankTable({ ctx }: { ctx: ChartDataContext }) {
       case "goal": return bar(r.goal, fmt(r.goal, 2));
       case "perMinute": return bar(r.perMinute, fmt(r.perMinute, 3));
       case "relative": return top && typeof r.perMinute === "number" ? `${((100 * r.perMinute) / top).toFixed(1)}%` : "";
-      case "dom": return r.frontier
+      case "dom": return snapActive(ctx) ? "–" : r.frontier
         ? <span className="mn-cd-front"><Icon name="star" />{tr("onFrontier")}</span>
         : <span className="mn-cd-beaten" title={tr(state.rankBy === "event" ? "tipDomEvent" : "tipDom", { charts: names(r) })}>{tr("dominatedBy", { n: (r.dominatedBy ?? []).length })}</span>;
       case "skip": return bar(r.skip, fmt(r.skip, 3));
@@ -193,12 +208,12 @@ function RankTable({ ctx }: { ctx: ChartDataContext }) {
     <div className="mn-cd-table-box">
       <div className="mn-cd-table-toolbar">
         <div className="mn-cd-count">{`${tr("chartsCount", { n: list.length })}${list.length !== all ? ` / ${all}` : ""}`}</div>
-        <label className="mn-cd-check mn-cd-columns-toggle"><input type="checkbox" checked={allColumns} onChange={(e) => setAllColumns(e.target.checked)} />{tr("allColumns")}{allColumns ? <small>{tr("allColumnsHint")}</small> : null}</label>
+        <span className="mn-cd-scroll-hint">{tr("allColumnsHint")}</span>
       </div>
       <div className="mn-cd-table-card mn-cd-glass">
         {list.length ? (
-          <div className="mn-cd-table-scroll">
-            <table className="mn-cd-rank-table" data-rank-by={state.rankBy} data-columns={allColumns ? "all" : "auto"}>
+          <div className="mn-cd-table-scroll" tabIndex={0} role="region" aria-label={tr("views.rank")}>
+            <table className="mn-cd-rank-table" data-rank-by={state.rankBy}>
               <thead>
                 <tr>{cols.map((k) => <th key={k} className={`c-${k}${k === hi ? " hi" : ""}`}>{head(k)}</th>)}</tr>
               </thead>
@@ -207,6 +222,9 @@ function RankTable({ ctx }: { ctx: ChartDataContext }) {
                   <tr
                     key={r.scoreId}
                     data-score-id={r.scoreId}
+                    title={snapActive(ctx) && typeof r.score === "number" ? tr("snap.measurementRow", {
+                      score: fmtInt(r.score), baseline: fmtInt(r.baselineScore), delta: `${typeof r.delta === "number" && r.delta > 0 ? "+" : ""}${fmtInt(r.delta)}`,
+                    }) : undefined}
                     className={r.frontier && unsorted ? "on-front" : undefined}
                     tabIndex={0}
                     onClick={() => ctx.openChart(r.scoreId)}

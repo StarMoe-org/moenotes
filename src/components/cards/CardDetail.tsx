@@ -525,7 +525,6 @@ function CardDetailView({ locale, data }: { locale: AppLocale; data: DetailData 
                       label={t(locale, "cards.growth.training")}
                       value={build.awakeCount}
                       options={growth.awakeSteps.map((step) => step.awakeCount)}
-                      formatOption={(_, index) => String(index)}
                       onChange={setAwakeCount}
                     />
                   )}
@@ -534,7 +533,6 @@ function CardDetailView({ locale, data }: { locale: AppLocale; data: DetailData 
                       label={t(locale, "cards.growth.awaken")}
                       value={build.rank}
                       options={growth.rankSteps.map((step) => step.rank)}
-                      formatOption={(_, index) => String(index)}
                       onChange={(rank) => setBuild((current) => ({ ...current, rank }))}
                     />
                   )}

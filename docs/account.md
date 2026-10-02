@@ -33,7 +33,7 @@ browser ── bdon.moe ── server/main.ts ── static build
 
 - **Game accounts.** `src/components/account/GameAccounts.tsx` on the account page binds Our Notes accounts
   through starmoe-api (`/api/me/game-accounts`, client in `src/lib/account/game-accounts.ts`; its README,
-  "Game accounts"). The user picks a server (`GAME_SERVERS` in `src/config/account.ts`: `tw` = HMT, `jp`, `en`,
+  "Game accounts"). The user picks a server (`GAME_SERVERS` in `src/config/players.ts`: `tw` = HMT, `jp`, `en`,
   `kr`) and a player ID, gets a one-time code, puts it in their in-game name and presses Verify; starmoe-api reads
   the public profile through the game gateway to see it. Once bound they can rename back. `isGameProfileId`
   mirrors the API's ID check so obvious typos never leave the page. Accounts are unverified (with a code the user
@@ -66,6 +66,49 @@ Set `MOENOTES_API_INTERNAL` on the site service to starmoe-api's origin, includi
 
 A value without a scheme (`api.star.moe`) is refused and logged at startup, and `/api/*` stays off. The site and
 the API deploy independently.
+
+### Enable game account binding
+
+The website proxy and the game gateway are two separate connections:
+
+```text
+browser -> moenotes /api/* -> starmoe-api -> moenotes-api /v1/{server}/*
+           MOENOTES_API_INTERNAL          GAME_API_URL + GAME_API_KEY
+```
+
+On the **starmoe-api service**, set `GAME_API_URL` to the moenotes-api origin, with its scheme and port and
+without `/v1`, and `GAME_API_KEY` to the gateway's HTTP bearer key. Prefer the gateway's in-cluster service
+address when both services share a cluster. Keep the key in backend deployment secrets; it is neither a game
+password nor a browser setting. Save these variables in the deployment platform's persistent configuration
+and redeploy starmoe-api so it reads them. `PUBLIC_ORIGIN` stays `https://bdon.moe`. Game account binding does
+not require `OPEN_PLATFORM_ENABLED`, which controls the separate developer API.
+
+The existing backend client uses the following gateway contract:
+
+| Purpose | Gateway GET route | Data used |
+| --- | --- | --- |
+| Add an account and verify its name | `/v1/{server}/profile/{profileId}` | `playerProfile.name` |
+| Player level and internal player ID | `/v1/{server}/profiles/{profileId}` | `players[0].level`, `players[0].playerId` |
+| Favorites | `/v1/{server}/player/{playerId}/favorites` | `totalFavorite` |
+| Profile card image | `/v1/{server}/profile/{profileId}/card/{page}` | PNG; gateway pages start at 1, website indexes at 0 |
+
+All gateway calls carry `Authorization: Bearer ...` from starmoe-api. They use explicit `tw`, `en`, `kr` or `jp`
+paths. Keep IDs as decimal strings: international profile IDs are 11 digits starting with 2, 3 or 4 respectively;
+JP accepts 1 through 9223372036854775807 without leading zeroes. Favorite queries use the returned `playerId`.
+Use a gateway version with the four-region card route (alpha.11 or later) for the complete profile UI.
+
+### Diagnose an unavailable game account panel
+
+- `GET /api/me/game-accounts` succeeds with `available: false`: starmoe-api has no `GAME_API_URL` configured.
+  The panel shows `account.games.unavailable` and hides the add form. Waiting or rebuilding the frontend cannot
+  enable it; configure the backend connection above.
+- The same endpoint returns 401 `signed_out`: sign in through Passport first. An anonymous request cannot
+  report whether binding is configured.
+- `/api/*` returns 404 or 502: check `MOENOTES_API_INTERNAL` and the website-to-starmoe-api connection.
+- The list returns `available: true`, but adding or verifying returns 502 `game_unavailable`: check the gateway
+  key, connectivity and regional readiness. `available` indicates configuration, not a live health probe.
+- Verification returns 409 `name_mismatch`: the gateway's observed nickname does not contain the current code.
+  After renaming in game, allow about 15 seconds for its profile cache to expire before retrying.
 
 ## Local development
 
