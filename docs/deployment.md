@@ -11,6 +11,10 @@ A failed build never replaces the live one: the site keeps serving the previous 
 retried later. On Zeabur every commit produces a new image; the restarted container serves the previous
 build as soon as it listens and rebuilds with the new code behind it.
 
+The dependency layer copies `patches/` alongside `package.json` and `bun.lock` before the frozen Bun
+install. The player patch is part of the deployable application; copying it only with the later source
+layer would leave installation without the referenced patch file.
+
 ```bash
 docker build -t moenotes .
 docker run -p 8080:80 -v moenotes-data:/data \

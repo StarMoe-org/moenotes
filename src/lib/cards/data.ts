@@ -39,6 +39,7 @@ export interface RawBand {
   id: number;
   nameTextID: string;
   mainColorCode: string;
+  memberRarityRBackgroundAssetPath?: string;
 }
 
 export type RawText = MasterTextRow;
@@ -64,6 +65,8 @@ export interface CardViewModel {
   leaderSkillId: number;
   gekisouSkillId: number;
   searchText: string;
+  /** The game's exact Addressables key, including its formation Sprite label. */
+  formationBackgroundKey?: string;
 }
 
 export function validateMasterTable<T>(raw: unknown): MasterTable<T> {

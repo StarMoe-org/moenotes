@@ -94,7 +94,8 @@ function RankingRowItem({ locale, row, cards, assetUrl, numbers, open, onToggle,
   server: GameServer;
 }) {
   const podium = row.rank <= 3 ? "text-[var(--mn-accent-deep)]" : "text-[var(--mn-text)]";
-  const hasNamecard = row.profileCard && row.profileCard.images > 0;
+  const namecardImages = row.profileCard?.images ?? 0;
+  const hasNamecard = namecardImages > 0;
 
   return (
     <li>
@@ -114,7 +115,7 @@ function RankingRowItem({ locale, row, cards, assetUrl, numbers, open, onToggle,
             <PlayerNamecard
               server={server}
               profileId={row.profileId}
-              images={row.profileCard.images}
+              images={namecardImages}
               playerName={row.name}
               variant="thumbnail"
               useRankingApi={true}
@@ -139,7 +140,7 @@ function RankingRowItem({ locale, row, cards, assetUrl, numbers, open, onToggle,
           {row.cards.slice(0, 5).map((card) => <MemberThumb key={card.slot} card={card} cards={cards} assetUrl={assetUrl} locale={locale} compact />)}
         </span>
       </button>
-      {open && <DeckDetail locale={locale} row={row} cards={cards} assetUrl={assetUrl} numbers={numbers} server={server} profileId={row.profileId} profileCard={row.profileCard} />}
+      {open && <DeckDetail locale={locale} row={row} cards={cards} assetUrl={assetUrl} numbers={numbers} server={server} profileId={row.profileId ?? null} profileCard={row.profileCard ?? null} />}
     </li>
   );
 }

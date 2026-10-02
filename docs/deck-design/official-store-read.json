@@ -1,0 +1,16 @@
+{
+  "schema": "ournotes.official-store-read/1",
+  "source": "https://itunes.apple.com/lookup?bundleId=com.bushiroad.sirius&country=jp",
+  "observedAtUtc": "2026-10-01T04:14:16.763244+00:00",
+  "resultCount": 1,
+  "results": [
+    {
+      "bundleId": "com.bushiroad.sirius",
+      "version": "1.0.4",
+      "currentVersionReleaseDate": "2026-09-29T11:38:20Z",
+      "trackId": 6771716739,
+      "trackViewUrl": "https://apps.apple.com/jp/app/%E3%83%90%E3%83%B3%E3%83%89%E3%83%AA-%E3%82%A2%E3%83%AF%E3%83%BC%E3%83%8E%E3%83%BC%E3%83%84/id6771716739?uo=4",
+      "sellerName": "Bushiroad Inc."
+    }
+  ]
+}

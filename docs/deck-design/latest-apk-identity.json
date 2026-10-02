@@ -1,0 +1,29 @@
+{
+  "schema": "ournotes.latest-apk-identity/1",
+  "app": {
+    "package": "com.bushiroad.sirius",
+    "version_name": "1.0.4",
+    "version_code": 10053
+  },
+  "sourceSha256": "c4b8119a9115d0fadcf07bc32316e22cb11d10cdd39ca803d2b298513bc41534",
+  "sourceProvider": "APKPure",
+  "GooglePlayDeliveryVerified": false,
+  "files": [
+    {
+      "file": "base.apk",
+      "sha256": "4a095057b6cdc473b7ff67d82e88198507ae9c3a5f4114786d5cd2ad5f340d44",
+      "manifestMatches": true
+    },
+    {
+      "file": "split_UnityDataAssetPack.apk",
+      "sha256": "8396375d0a3990805cbbc0151feb3b13e966c93cfff4a848313cd11b5c76ddd2",
+      "manifestMatches": true
+    },
+    {
+      "file": "split_config.arm64_v8a.apk",
+      "sha256": "940b70c049e32cdff488608bca8cd40b716e6bec80763b480a191904e7b2e237",
+      "manifestMatches": true
+    }
+  ],
+  "signatureVerification": "pending"
+}

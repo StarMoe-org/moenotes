@@ -1,0 +1,198 @@
+{
+  "format": "boxlens.onnx-wasm-feasibility/1",
+  "status": "passed",
+  "scope": "Synthetic deterministic normalized-range float32 tensors shared byte-for-byte between Python CPU and actual Chromium ONNX Runtime Web WASM. This is operator/shape/runtime feasibility, not screenshot preprocessing, retrieval/classification accuracy, full BoxLens portability, WebGPU feasibility or mobile performance.",
+  "versions": {
+    "pythonOrt": "1.30.0",
+    "onnxruntimeWeb": "1.30.0",
+    "npmIntegrity": "sha512-q0y+JrrtukXSzsBWEMccVfqX25LRmosXHF+CaRJmg8pZClzcV7svNc4rKY3jL02Vb7QmRMDs1SigqR4CXAfKYQ==",
+    "chromium": "153.0.8010.12",
+    "python": "3.11.16"
+  },
+  "tolerance": {
+    "atol": 1e-05,
+    "rtol": 0.0001
+  },
+  "browser": {
+    "executionProvider": "wasm",
+    "threads": 1,
+    "crossOriginIsolated": false,
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+    "onnxruntimeWebVersion": "1.30.0"
+  },
+  "models": [
+    {
+      "name": "encoder",
+      "input": "image",
+      "output": "output",
+      "modelBytes": 4898068,
+      "modelSha256": "a0a64115241a0eb22e2aab3b151ee3a3f57dc317d88524c027aaa443d051efa1",
+      "metadataInputs": [
+        {
+          "name": "image",
+          "shape": [
+            "batch",
+            3,
+            160,
+            128
+          ],
+          "type": "tensor(float)"
+        }
+      ],
+      "metadataOutputs": [
+        {
+          "name": "output",
+          "shape": [
+            "batch",
+            128
+          ],
+          "type": "tensor(float)"
+        }
+      ],
+      "cpuLoadMs": 23.462798912078142
+    },
+    {
+      "name": "fields",
+      "input": "image",
+      "output": "output",
+      "modelBytes": 1356782,
+      "modelSha256": "768889db7b475dce28ed949299d2e7a624faa3ee18f3c28bb22deac2bcdd1a8d",
+      "metadataInputs": [
+        {
+          "name": "image",
+          "shape": [
+            "batch",
+            3,
+            56,
+            144
+          ],
+          "type": "tensor(float)"
+        }
+      ],
+      "metadataOutputs": [
+        {
+          "name": "output",
+          "shape": [
+            "batch",
+            106
+          ],
+          "type": "tensor(float)"
+        }
+      ],
+      "cpuLoadMs": 5.2393360529094934
+    }
+  ],
+  "comparisons": [
+    {
+      "model": "encoder",
+      "batch": 1,
+      "shape": [
+        1,
+        128
+      ],
+      "loadMs": 517.3999998569489,
+      "firstInferenceMs": 47.89999985694885,
+      "warmInferenceMs": [
+        7,
+        6.1000001430511475,
+        5.700000047683716
+      ],
+      "elements": 128,
+      "maxAbsError": 2.7567148208618164e-07,
+      "meanAbsError": 7.091443876561243e-08,
+      "maxRelativeErrorAbove1e-6": 0.0003364417634173316,
+      "nonFiniteElements": 0,
+      "mismatchedElementsAtTolerance": 0,
+      "top1Matches": 1,
+      "passed": true
+    },
+    {
+      "model": "encoder",
+      "batch": 8,
+      "shape": [
+        8,
+        128
+      ],
+      "loadMs": 517.3999998569489,
+      "firstInferenceMs": 42.700000047683716,
+      "warmInferenceMs": [
+        38.5,
+        36.09999990463257,
+        39.09999990463257
+      ],
+      "elements": 1024,
+      "maxAbsError": 4.991888999938965e-07,
+      "meanAbsError": 8.42149958657501e-08,
+      "maxRelativeErrorAbove1e-6": 0.00046617381848724885,
+      "nonFiniteElements": 0,
+      "mismatchedElementsAtTolerance": 0,
+      "top1Matches": 8,
+      "passed": true
+    },
+    {
+      "model": "fields",
+      "batch": 1,
+      "shape": [
+        1,
+        106
+      ],
+      "loadMs": 11.700000047683716,
+      "firstInferenceMs": 7.099999904632568,
+      "warmInferenceMs": [
+        3.5,
+        3.6000001430511475,
+        3.5999999046325684
+      ],
+      "elements": 106,
+      "maxAbsError": 1.1444091796875e-05,
+      "meanAbsError": 2.8520260217054834e-06,
+      "maxRelativeErrorAbove1e-6": 2.5544655154499504e-07,
+      "nonFiniteElements": 0,
+      "mismatchedElementsAtTolerance": 0,
+      "top1Matches": 1,
+      "passed": true
+    },
+    {
+      "model": "fields",
+      "batch": 8,
+      "shape": [
+        8,
+        106
+      ],
+      "loadMs": 11.700000047683716,
+      "firstInferenceMs": 27,
+      "warmInferenceMs": [
+        26.200000047683716,
+        26,
+        26.100000143051147
+      ],
+      "elements": 848,
+      "maxAbsError": 1.52587890625e-05,
+      "meanAbsError": 3.3041216292471255e-06,
+      "maxRelativeErrorAbove1e-6": 3.552802686131999e-07,
+      "nonFiniteElements": 0,
+      "mismatchedElementsAtTolerance": 0,
+      "top1Matches": 8,
+      "passed": true
+    }
+  ],
+  "samples": {
+    "models": 2,
+    "batchShapesPerModel": [
+      1,
+      8
+    ],
+    "inferencesPerShape": 4,
+    "timingQualification": "One first-run and three warm samples on one cloud Chromium CPU, not p50/p95 or mobile speed."
+  },
+  "sourceSha256": {
+    "run_probe.py": "1838b9ae2c299237cacc76102d4fd537c524752f72c472f26f2edb7fbc9dc6bd",
+    "probe.html": "43a9eebf5f2d313f9c94cdeb3504466a3bbb3ebcf3aa042ee095217629ba3258",
+    "package.json": "ce4490b5ff5e2ab9bc693ecdba1b18b12e6624583235328ffb14b65f8d298847",
+    "package-lock.json": "580b3d773f40b7631aa1934f4aa94ac6477c905e9058cad8bfe641991893d493"
+  },
+  "officialDocs": [
+    "https://onnxruntime.ai/docs/tutorials/web/",
+    "https://onnxruntime.ai/docs/api/js/interfaces/InferenceSession.SessionOptions.html"
+  ]
+}

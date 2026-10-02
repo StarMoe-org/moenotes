@@ -547,7 +547,8 @@ function PointRankingPanel({ locale, server, event, servers }: { locale: AppLoca
             <ol className="divide-y divide-dashed divide-[var(--mn-border)]/50">
               {rows.map((row, index) => {
                 const profile = row.profile;
-                const hasNamecard = profile?.profileCard && Array.isArray(profile.profileCard.thumbnailUrl) && profile.profileCard.thumbnailUrl.length > 0;
+                const thumbnails = profile?.profileCard?.thumbnailUrl;
+                const namecardImages = Array.isArray(thumbnails) ? thumbnails.length : 0;
                 return (
                   <li key={`${row.rank}:${profile?.id ?? index}`} className="grid grid-cols-[3.5rem_minmax(0,1fr)_auto] items-center gap-3 px-2 py-2">
                     <span className={`font-mono text-base font-black ${row.rank <= 3 ? "text-[var(--mn-accent-deep)]" : "text-[var(--mn-text)]"}`}>
@@ -555,11 +556,11 @@ function PointRankingPanel({ locale, server, event, servers }: { locale: AppLoca
                       {row.dup && <span className="ml-0.5 align-top text-[9px] font-bold text-[var(--mn-text-muted)]" title={t(locale, "eventTracker.points.tied")}>=</span>}
                     </span>
                     <span className="flex min-w-0 items-center gap-2">
-                      {hasNamecard && (
+                      {profile && namecardImages > 0 && (
                         <PlayerNamecard
                           server={server}
                           profileId={profile.profileId}
-                          images={profile.profileCard.thumbnailUrl.length}
+                          images={namecardImages}
                           playerName={profile.name ?? ""}
                           variant="thumbnail"
                           useRankingApi={true}

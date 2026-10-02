@@ -9,7 +9,7 @@
         "@tailwindcss/vite": "^4.1.18",
         "astro": "7.3.5",
         "framer-motion": "^12.40.0",
-        "ournotes-player": "0.1.5",
+        "ournotes-player": "0.1.6",
         "react": "^19.2.3",
         "react-dom": "^19.2.3",
         "tailwindcss": "^4.1.18",
@@ -21,6 +21,9 @@
         "typescript": "^5.9.3",
       },
     },
+  },
+  "patchedDependencies": {
+    "ournotes-player@0.1.6": "patches/ournotes-player@0.1.6.patch",
   },
   "packages": {
     "@astrojs/check": ["@astrojs/check@0.9.10", "https://registry.npmmirror.com/@astrojs/check/-/check-0.9.10.tgz", { "dependencies": { "@astrojs/language-server": "^2.16.7", "chokidar": "^4.0.3", "kleur": "^4.1.5", "yargs": "^18.0.0" }, "peerDependencies": { "typescript": "^5.0.0 || ^6.0.0" }, "bin": { "astro-check": "./bin/astro-check.js" } }, "sha512-zgx/UQMozdjOa3bOxjgeCFdtpE3c9rRX6xHwa+2QXvy8z8Akifu2AtubHyv/zzC2znO8dl8fFWL4K+Ba9kS8HQ=="],
@@ -595,7 +598,7 @@
 
     "oniguruma-to-es": ["oniguruma-to-es@4.3.6", "https://registry.npmmirror.com/oniguruma-to-es/-/oniguruma-to-es-4.3.6.tgz", { "dependencies": { "oniguruma-parser": "^0.12.2", "regex": "^6.1.0", "regex-recursion": "^6.0.2" } }, "sha512-csuQ9x3Yr0cEIs/Zgx/OEt9iBw9vqIunAPQkx19R/fiMq2oGVTgcMqO/V3Ybqefr1TBvosI6jU539ksaBULJyA=="],
 
-    "ournotes-player": ["ournotes-player@0.1.5", "https://registry.npmmirror.com/ournotes-player/-/ournotes-player-0.1.5.tgz", {}, "sha512-33JBVteNCHc4W3supENfvn+FTG6qY8x49U9y8T0ByPUMLkQOxRYekUOeYs7QIo6f5s8JlXP4KIVeSRC7Nxj3Kw=="],
+    "ournotes-player": ["ournotes-player@0.1.6", "", {}, "sha512-UwSPfz5AfXc6nyATHNzuKOFenuP/Qb9fjCyhNw6BYOzALwS5kO3AppHBjm5rbnUnM5nzk/1qunrQ7eRif0AT2A=="],
 
     "p-limit": ["p-limit@7.3.0", "https://registry.npmmirror.com/p-limit/-/p-limit-7.3.0.tgz", { "dependencies": { "yocto-queue": "^1.2.1" } }, "sha512-7cIXg/Z0M5WZRblrsOla88S4wAK+zOQQWeBYfV3qJuJXMr+LnbYjaadrFaS0JILfEDPVqHyKnZ1Z/1d6J9VVUw=="],
 

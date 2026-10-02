@@ -191,9 +191,10 @@ export function formatSkillDescription(
   });
   const cumulativeMap = new Map((cumulativeConditions || []).map((entry) => [entry.id, entry]));
   const targetMap = new Map((skillTargets || []).map((entry) => [entry.id, entry]));
+  let unresolvedTarget = false;
 
   const resolveTargetName = (targetId: number | undefined): string => {
-    if (targetId === undefined) return "";
+    if (targetId === undefined) { unresolvedTarget = true; return ""; }
     const target = targetMap.get(targetId);
     if (target) {
       if (target.bandID && bandMap?.has(target.bandID)) {
@@ -205,12 +206,15 @@ export function formatSkillDescription(
         return char ? resolveText(char.nameTextID) : "";
       }
     }
-    if (characterMap?.has(targetId)) {
+    // With a target table, IDs are MasterSkillTarget IDs, never character/band IDs.
+    // Retain the legacy direct-ID path only for callers without a target table.
+    if (skillTargets === undefined && characterMap?.has(targetId)) {
       return resolveText(characterMap.get(targetId)!.nameTextID);
     }
-    if (bandMap?.has(targetId)) {
+    if (skillTargets === undefined && bandMap?.has(targetId)) {
       return resolveText(bandMap.get(targetId)!.nameTextID);
     }
+    unresolvedTarget = true;
     return "";
   };
 
@@ -253,7 +257,7 @@ export function formatSkillDescription(
           const set = setsByGroup.get(groupId)?.[Number(setIndex)];
           const conditionId = set?.conditionIds[Number(conditionIndex)];
           const condition = conditionId !== undefined ? conditionMap.get(conditionId) : undefined;
-          const targetId = condition?.conditionTargetIDs?.[Number(targetIndex)] ?? effect.skillTargetIDs?.[Number(targetIndex)];
+          const targetId = condition?.conditionTargetIDs?.[Number(targetIndex)];
           return resolveTargetName(targetId);
         }
         const targetId = effect.skillTargetIDs?.[Number(targetIndex)];
@@ -336,7 +340,7 @@ export function formatSkillDescription(
     .replace(/\\n/g, "\n")
     .trim();
 
-  return formatted.includes("{effects[") ? "" : formatted;
+  return unresolvedTarget || formatted.includes("{effects[") ? "" : formatted;
 }
 
 /** Backwards-compatible export */

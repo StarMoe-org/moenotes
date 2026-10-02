@@ -1,252 +1,290 @@
 import type { ChartDataGuide } from "./index";
 
+// Web adaptation of the V9 narration; native validation records retain their original scope.
 export const enUS: ChartDataGuide = {
-  "title": "Definitions, Derivations, and Methodology",
-  "lead": "Rankings and aptitude show statistical references for theoretical optimal play. Chart details also support simulating individual live runs based on custom note judgements and skills. Complete calculation rules and definitions are detailed below.",
+  "title": "How scoring works, and how to choose your cards and songs",
+  "lead": "A practical guide to note scores, Gekiso missions, member and Snap pairing, event farming and the Song Meta controls. Worked examples follow our score-explainer video; the limits of the model are stated alongside them.",
+  "reminder": {
+    "title": "Beta model and research scope",
+    "priority": "Use in-game results as the reference.",
+    "text": "This guide comes from client reverse engineering and our own recalculations. Native comparisons use international client 1.0.1; the video's worked examples use JP 1.0.4 data. Those are different scopes. Physical touch judgements and online server settlement are outside the checks, and the examples do not certify the latest game rules."
+  },
+  "method": {
+    "title": "Using Song Meta",
+    "text": "Choose a mode and difficulty, then enter the five ordinary skill baseline percentages and time between plays. Efficiency compares score per power and per minute; Event grades compares the power needed for SS/S/A/B. Section placements 1–5 set Gekiso bonuses, separately from score grades. Adding a Snap enables replay at your entered power; reference members supply conditions without replacing the manual skills or power. Open a row for the timeline and score details."
+  },
+  "contentsLabel": "Contents",
+  "methodsLabel": "Validation details",
   "sections": [
     {
-      "title": "Score Model",
+      "title": "What was checked against the game",
       "body": [
-        "Rankings and charts are computed using a theoretical optimal baseline for the selected scenario: when Gekiso mode is enabled, notes within Just mission sections are treated as JUST, all other notes as PERFECT, and all three sections assume 1st place by default. Free Live disables Gekiso mode and assumes PERFECT throughout. The baseline assumes a Full Combo, non-zero life, and no card Gekiso skills. The single-live calculator in chart details allows testing explicit note judgements, skill orders, and seeds (see Section 6). The standard team model assumes five unconditional +100% score-up skills (5-second duration, all members, no activation conditions). Total live score is expressed as:"
-      ],
-      "math": [
-        "S = P · ( base + Σ_k x_{π(k)} · w_k )",
-        "base = score / P₀,   w_k = (score with a factor-1 skill at position k − score) / P₀,   P₀ = 300000"
-      ],
-      "after": [
-        "Here, score is the simulated score without skills (including section placement bonuses in Gekiso Live), w_k is the score added over the entire live when member k carries a factor-1 skill (+100% bonus), and both values are normalized per unit of measurement power P₀. Floor operations match the game client's internal rounding. Every chart has been cross-checked across multiple power levels and random seeds to confirm mathematical consistency.",
-        "Each song features three Gekiso missions (Combo, Luck, or Just, defined per song and shared across all difficulties), mapped sequentially to the chart's three Fever sections. JUST judgements are available exclusively within Just mission sections. Songs without a Just mission (41 of 85 songs) contain no Just notes anywhere in the live; 27 songs feature three Just missions, and 17 songs feature one of each mission type.",
-        "Under this model, Gekiso mode substantially increases scoring: compared to Free Live, no-skill scores on Expert charts are 1.6×–4.7× higher (median 2.4×). The largest component is the section placement bonus: completing each section awards a percentage bonus of the section score based on your placement (defaulting to 1st place). Songs where all three missions are identical (68 of 85) award 250% per section, while songs with three distinct missions (17 songs) award 370%. In multiplayer, even 5th place earns 100%. At 1st place, this bonus accounts for 36%–69% (median 53%) of an Expert chart's base score. The second major factor is JUST notes (230% score multiplier vs. 100% for PERFECT): charts with long Just sections and high Just note counts benefit most. Skills activating during a Gekiso section amplify the section bonus as well, giving those skill positions significantly higher weight.",
-        "Luck mission sections draw their lottery ticks and luck rushes from the live's pseudo-random seed. For charts containing luck sections (148 of 340), figures display the average across public seeds, with the min–max range shown in chart details (typically varying by 1.3% at the median, up to 4.2%)."
+        "For the video's native comparisons, the game's original machine code and our model received the same formation and judgement sequence. An illustrated 7,500-frame play of Hekiten Bansou matched frame by frame and ended at 704,741 on both sides. Two initial cases matched 506,414 compared values, including score, combo, life, skill factors, Gekiso state, Luck and random-draw counts.",
+        "The wider capture set covered seven charts, 35 runs, 240,347 frames and 83,538,849 comparisons. It varied difficulty, 30/60/120 fps, mixed judgements, zero life and real Gekiso and Snap skills. No differences were found in the declared comparisons. Deliberately breaking the random-stream handling or member/Snap pairing produced thousands of mismatches, showing that the checks can detect those mistakes.",
+        "These are checks of specific inputs and fields in international client 1.0.1, not every possible play. The note and event examples below use a separate JP 1.0.4 data snapshot. A model example on newer data is not a new native validation. The appendix keeps the detailed historical check records."
       ]
     },
     {
-      "title": "Play Scenarios and Section Placements",
+      "title": "One note's score, from power to the final integer",
       "body": [
-        "In Gekiso Live, each of the three Fever sections awards a score bonus based on the mission objective (Combo, Luck points, or Just count) and your section placement (1st to 5th place). By default, rankings and aptitude calculations assume 1st place in all three sections (the optimal theoretical case). Placements can be adjusted from 1st to 5th place using the formula below:",
-        "Single-live replay allows specifying custom section placements or importing JSON records with confirmed placements and timestamps. The model does not simulate live opponent matchmaking, latency, or server-side arbitration."
+        "Start with three times total power, multiply by difficulty, note weight, judgement, the current combo and skill factors, and Luck. Divide by the converted note count. Floor that result first; then apply the mode's extra score factor, life and assist, and floor again. The engine uses float32 arithmetic and its original operation order; the formula below is a readable summary.",
+        "In the video's 壱雫空 example, power is 412,557 and the scoring level is 27, so the difficulty factor is 1.11. The base term is about 1,948.67. With every other factor at 1, the first note gives 1,948. Keep the unrounded base when applying later factors: multiplying it by a 1.06 combo factor gives 2,065 after flooring. Flooring the base too early would lose a point.",
+        "The denominator is a weighted count, not the 809 judged notes shown by the full-combo counter. This chart has 693 full-weight notes and 116 intermediate long-note ticks at one tenth each: ceil(693 + 116 × 0.1) = 705. In the shown skill window, a full-weight note gives 4,170 while an intermediate tick gives 417. Raw note count alone therefore does not rank a chart's score efficiency.",
+        "After the first floor, the illustrated 2,065-point note becomes 619 at zero life (30%), or 1,858 with the demonstrated assist factor (90%). The mode score factor E is 1 in this ordinary example. It is separate from the event-point bonus discussed later."
       ],
       "math": [
-        "base_r = ( score − Σ_i B_i + Σ_i trunc( RS_i · p_i(r_i) / 100 ) ) / P₀",
-        "w_r[k] = w[k] + Σ_i ( p_i(r_i) − p_i(1) ) / 100 · u_i[k]"
+        "D = 1 + 0.005 × (scoring level − 5)",
+        "N = ceil(sum of judged note weights)",
+        "q = 3P × D × weight × judgement × combo × skill × Luck / N",
+        "note score = floor(floor(q) × E × life × assist)"
       ],
       "after": [
-        "RS_i is the score achieved in section i, p_i(r) is the bonus percentage for placement r, B_i is the 1st-place bonus, and u_i[k] is the extra score added to section i by the skill at position k (per unit of power P₀). Section bonuses are credited as a lump sum at the end of each section without altering note multipliers for subsequent notes. Under this model, achieving 1st place in all three sections yields 1.25×–1.65× higher no-skill score than finishing 5th place (median 1.46× across 340 charts).",
-        "Free Live figures are computed via a separate simulation with Gekiso mode disabled, rather than simply subtracting Gekiso bonuses: without Gekiso mode, there are no Just notes, Gekiso combo multipliers, or luck rushes. Charts with more than three Fevers (which cannot be played in Gekiso mode) can be played normally in Free Live.",
-        "In Gekiso Live, the game client reports two distinct scores: the primary score with all Gekiso bonuses included (shown in this scenario), and a secondary score excluding Gekiso bonuses, which is recorded as the song's personal high score and closely matches Free Live scoring. Chart details display both figures."
+        "The displayed chart level can differ from the integer scoring level. 壱雫空 displays 27.5 but uses 27 in this calculation. In the illustrated non-Gekiso play, all 809 note scores sum to 2,174,667; that total belongs to the shown formation and inputs."
       ]
     },
     {
-      "title": "Random Skill Activation Order",
+      "title": "COMBO, skills, Fever and judgement timing",
       "body": [
-        "At the start of each live, the game shuffles the team's skill activation order across the 5 member positions (5! = 120 possible permutations). Each skill activation event sequentially triggers the skill of the member assigned to that slot. Because team slot order does not determine activation order, skill order is treated as a uniformly distributed random variable over all 120 permutations."
-      ],
-      "math": [
-        "E[S] / P = base + x̄ · W,   x̄ = (1/n) Σ_i x_i,   W = Σ_k W_k",
-        "Var[S / P] = (1/(n−1)) · Σ_i (x_i − x̄)² · Σ_k (W_k − W̄)²"
-      ],
-      "after": [
-        "Key takeaway 1: Expected score depends solely on the team's average skill bonus (x̄), regardless of which member holds which skill. Placing your highest-value skill in the heaviest-weighted slot represents the best-case permutation (an upper bound), not the average expectation.",
-        "Key takeaway 2: Score variance depends on the product of skill value spread and slot weight spread. When all 5 members have identical skill values, every order yields the exact same score. On Expert charts with a skill distribution like [140, 100, 60, 30, 0]%, the gap between best and worst orders averages 15.4% (up to 29.2%). This guide displays expected score, the min–max range across all 120 permutations, and the 10th percentile (P10).",
-        "Single-live simulation does not average permutations; it allows setting a specific skill activation order or testing individual reproducible runs."
-      ]
-    },
-    {
-      "title": "Score Efficiency and Pareto Dominance",
-      "body": [
-        "Total time per live is T = L + c, where L is song duration (either audio duration or chart length to the final note), and c represents transition and menu overhead between lives. Efficiency is evaluated as expected score per unit of power per unit of time:"
-      ],
-      "math": [
-        "efficiency = E[S] / (P · T) = (base + x̄ W) / (L + c)",
-        "a ≻ b  ⇔  ∀ x̄ ∈ [0, x_max], ∀ c ≥ 0:  S_a(x̄)/(L_a + c) ≥ S_b(x̄)/(L_b + c), strictly somewhere"
-      ],
-      "after": [
-        "Chart A strictly dominates Chart B if its efficiency is equal or superior across all realistic skill averages (x̄ up to 150%) and any transition overhead c ≥ 0. Charts that are never dominated by any other chart form the Pareto Frontier (optimal efficiency candidates).",
-        "Frontier comparisons assume identical team power across both songs. If card genre bonuses (musicType) or event tag bonuses alter team power for a specific song, compare total score directly (P_a · S_a vs P_b · S_b)."
-      ]
-    },
-    {
-      "title": "Event Score Ranks and Required Power",
-      "body": [
-        "Score rank thresholds (SS, S, A, etc.) are defined per song and shared across all difficulties. Free Live evaluates your personal score against solo thresholds. Gekiso Live evaluates the total room score against multiplayer thresholds; assuming equal contribution in an n-player room, each player's required score is approximately √(5/n) × the Gekiso threshold.",
-        "Event points scale primarily with score rank achieved, team event bonus percentage, and live boost multiplier:"
-      ],
-      "math": [
-        "points = trunc( (10000 + bonus) · rate · v(event, rank) / 10000 )",
-        "by time:  max_s  Σ_r v(r) · Pr_s(rank = r) / (L_s + c)",
-        "a ≻_event b  ⇔  L_a ≤ L_b  and  ∀ r, ∀ x̄ ∈ [0, x_max]:  S_a(x̄)/R_a(r) ≥ S_b(x̄)/R_b(r)"
-      ],
-      "after": [
-        "Because event points depend on the score rank reached rather than raw score, event efficiency differs from pure score efficiency. Shorter songs that reliably achieve your target rank yield more event points per hour.",
-        "Success rate indicates the percentage of the 120 skill activation orders that successfully reach the target rank at a given team power. On certain songs, reaching SS is actually easier on Hard difficulty than on Expert due to differing note distributions and density."
-      ]
-    },
-    {
-      "title": "Note Judgements and Single-Live Replay",
-      "body": [
-        "Judgement score multipliers are Perfect 100%, Great 80%, Good 50%, Bad/Miss 0% (Bad and Miss break combo). Just notes award 230% and appear within Just mission sections in Gekiso mode. Different note judgements affect overall score based on where they occur relative to skill activation windows.",
-        "The accuracy sliders provide quick estimates: GREAT % scales the overall score (with all other notes treated as 100% PERFECT), and JUST % scales eligible notes within Just mission sections. For precise note-by-note analysis with combo breaks and skill conversions, use the single-live calculator in chart details."
-      ],
-      "math": [
-        "Perfect 100% · Great 80% · Good 50% · Bad / Miss 0% · Just 230%"
-      ],
-      "after": [
-        "The chart detail view provides a per-note simulation tool defaulting to Full Combo Perfect. You can customize individual note judgements, or export/import JSON configurations with custom skill triggers, random seeds, and section placements.",
-        "Calculations are executed client-side via WebAssembly, modeling note judgements, combo scaling, life bars, and skill timings. Results display final score, maximum combo, and section mission metrics."
-      ]
-    },
-    {
-      "title": "Gekiso Skills and Aptitude",
-      "body": [
-        "Member cards and paired support cards can carry Gekiso skills that activate exclusively during Gekiso mode. Each Gekiso skill corresponds to a specific mission type (Combo, Luck, or Just) and activates only during sections matching that mission.",
-        "Skill effects include Gekiso combo bonuses, luck gauge acceleration, luck points, Just count bonuses, rush score boosts, and judgement conversion / protection. The simulation evaluates these effects across each section.",
-        "Aptitude measures the isolated contribution of a single Gekiso skill on the selected chart compared to a no-Gekiso baseline. Because different skill effects interact non-linearly (for example, combo bonuses saturate and conversion skills affect subsequent scoring), individual skill gains cannot be directly added together to evaluate a full team."
+        "The ordinary combo bonus rises by 1% per ten combo up to 100 combo, then by 0.5% per ten up to 500, where it caps at +30%. Use the combo before the judgement. In the video's simultaneous pair, both notes use 69 combo and give 4,131 each; the next note uses 71 and gives 4,170. Gekiso skills can also affect the total combo factor.",
+        "A skill changes the score factor while its conditions and active window apply. The first illustrated +100% skill starts at 11.7 seconds and doubles eligible note scores for five seconds. A PERFECT-only skill contributes its extra bonus only to qualifying judgements. The engine combines the active score-up effects into one effective skill factor for that judgement.",
+        "Fever bars locate the chart's sections on the timeline. In Gekiso Live, the three sections carry the song's missions and their placement bonuses. The video's note breakdown has no separate fixed Fever multiplier: note modifiers and the end-of-section Gekiso bonus are calculated in their respective steps. The timeline helps you see which high-value notes fall inside skill and mission sections.",
+        "Judgement timing depends on the note type. The video uses the following extracted, assist-off window examples. They explain the classified inputs; this browser model does not independently reproduce physical touch classification on a phone."
       ],
       "defs": [
         [
-          "Probability-based activation",
-          "Certain luck skills trigger probabilistically. In simulation, single runs evaluate a specific random seed, while aptitude values report seed averages and sample standard errors."
+          "Judgement score factors",
+          "PERFECT is 100%, GREAT 80%, GOOD 50%, BAD/MISS 0% and JUST 230%. BAD and MISS break combo. JUST normally exists only for eligible notes in a JUST mission."
+        ],
+        [
+          "Ordinary tap window",
+          "The demonstrated offsets are ±2 ms for JUST, ±50 ms for PERFECT, ±83 ms for GREAT, ±100 ms for GOOD and ±125 ms for BAD. In the example, +50 ms is still PERFECT; +60 ms is GREAT and loses 20% of the ordinary judgement score."
+        ],
+        [
+          "Other note types",
+          "The demonstrated flick PERFECT window is −83 to +67 ms, with no early-side GREAT window. Long-note tails have no JUST; dragged intermediate ticks distinguish PERFECT from MISS."
+        ],
+        [
+          "Assist",
+          "In the examined tap rules, assist widens GOOD and BAD windows while leaving PERFECT and GREAT unchanged. The scoring assist factor is a separate part of the final note calculation."
         ]
       ]
     },
     {
-      "title": "Scope of Statistical References",
+      "title": "Gekiso missions, section placements and score grades",
+      "body": [
+        "Gekiso runs in Gekiso Live; the video's Free and Challenge examples have it disabled. A song has three Gekiso sections, each assigned COMBO, JUST or LUCK. Member and Gekiso support skills belong to a mission type and matter when that mission matches the song.",
+        "At a section's end, its placement adds a percentage of the score earned in that section. The demonstrated table spans +100% to +370%, depending on the mission pattern and placement. In the native example, 41,341 section points receive a first-place +250% bonus: floor(41,341 × 2.5) = 103,352 extra points. At that rate, points earned within the section contribute about 3.5 times in total; a +100% bonus doubles them.",
+        "Section 1, 2 and 3 on this page are the three mission sections. Set each placement from 1st to 5th; all default to 1st. They determine section bonuses. The final SS/S/A/B score grade is a different result, based on score thresholds. The page accepts your section placements as inputs and does not predict opponents' mission measures or server ranking."
+      ],
+      "math": [
+        "section bonus = floor(section score × placement bonus % / 100)"
+      ],
       "defs": [
         [
-          "Skill types",
-          "Standard rankings model unconditional score-up skills. Complex combinations involving cumulative scoring, conditional buffs, and support cards can be evaluated through the single-live simulation in chart details."
+          "COMBO",
+          "The mission ranks by its combo measure. Ordinary combo scoring and the Gekiso mission's combo effects are distinct parts of the model; a matching card skill may change the latter."
         ],
         [
-          "Multiplayer opponents",
-          "Section placements are configured as user-selected assumptions (1st to 5th place) rather than simulated opponent matchups."
+          "JUST",
+          "Eligible notes judged within the demonstrated ±2 ms JUST window score at 230%, and the mission ranks by JUST count. In the video's same-team example, score rises from about 2.17 million without Gekiso to 4.94 million with Gekiso and all PERFECT, then 9.30 million with 261 JUSTs. These are model results for that setup."
         ],
         [
-          "Transition overhead",
-          "Total live time includes song length plus menu/loading overhead (c). Pareto dominance holds for any non-negative overhead c ≥ 0."
+          "LUCK",
+          "Judged notes fill a gauge: the example gives PERFECT 7, 8 or 9 points randomly, GREAT less, and intermediate ticks 2. Matching skills can amplify gauge growth. Filling 140 triggers a draw: miss 10%, Hit 26%, Super Hit 20%, Critical 44%. Hit grants 5 Luck points; Super Hit and Critical grant 10."
+        ],
+        [
+          "Rush",
+          "A Critical starts Rush, lowering the gauge cap to 70 and adding 10% to note scoring. The illustrated next Critical chances are 90%, 70%, 50%, then 30%. The native example reaches 190 Luck points after five consecutive Criticals; the mission ranks by Luck points. One seed is one outcome, not a measured in-game probability distribution."
         ]
       ]
     },
     {
-      "title": "Chart Metrics and Definitions",
+      "title": "Choosing members, pairing Snaps and upgrading skills",
+      "body": [
+        "Skill times come from the chart, but the client shuffles the five members at the start of a play. Formation slot order does not choose activation order. Evaluate a member across the five times rather than assuming the strongest skill will land in one chosen window. The video's non-Gekiso team differs by only 8,385 points across all 120 orders, under 0.4%; that small spread is specific to the example, not every formation or Gekiso chart.",
+        "In the examined skill family, a PERFECT-only bonus is 20 percentage points higher than the comparable ordinary score bonus. A GREAT removes that note's PERFECT-only bonus, while an ordinary bonus still scores at the GREAT factor. The video's break-even GREAT share is about 16–26% inside the skill window, depending on level. Use your accuracy in those windows, not the whole-song GREAT % alone, when comparing the two skill types.",
+        "Ordinary live Snap effects follow their paired member through the shuffle and operate within that member's skill window. In the native example, a GREAT at 47 seconds converts to PERFECT with the correct pair; a wrong pair moves the window to 28 seconds and loses 350 points over the run. Converted PERFECTs can also receive the member's PERFECT-only bonus. Pair a conversion Snap with a suitable PERFECT-only member skill. Gekiso support effects instead follow their mission rules.",
+        "For the illustrated skill family, levels 1–4 rise by 10 percentage points per step, while level 4→5 rises by 30. Upgrading Anon from 3→4 adds an average 9,705 points in the shown team; 4→5 adds 29,125. Prioritize the actual upgrade gain for your cards and charts rather than treating every level as equal.",
+        "A single MISS can cost very different amounts depending on position. In the example, a break near the start or end costs little; at note 367 it loses 6.9%. The five skill windows contain only 29% of the notes but provide 45% of the score. Protecting accuracy and combo around valuable windows can matter more than the same overall judgement count elsewhere.",
+        "For Gekiso, match the card's COMBO/JUST/LUCK mission to the song. Section bonuses can make those sections especially valuable. Individual skill gains cannot simply be added: conversions, combo saturation, Luck gauge growth and Rush can interact. Use a complete replay to evaluate a concrete combination."
+      ],
+      "after": [
+        "The video's follow-up audit also separates the constant same-attribute member/Snap power bonus from temporary support effects: the examined Snap Rank 1–5 bonuses are 5/10/15/20/25% to the paired member's power. Song Meta still uses the total power you enter; reference-member selection does not reconstruct owned-card growth or all formation power bonuses."
+      ]
+    },
+    {
+      "title": "Event strategy: score rankings, points and badges",
+      "body": [
+        "Choose the event goal before choosing the team. The following is the video's historical JP 1.0.4 event case, not a description of the currently running event. It has three separate challenge-song score rankings and no cumulative event-point ranking. Reward thresholds, bonuses and ranking types must be read from the event you are playing.",
+        "Ordinary plays earn Challenge Points (CP), and Challenge plays spend them. In this case, spending 200/400/800/1,600 CP gives reward multipliers 1/2/4/8. Reward per CP is unchanged; higher spending saves repetitions. The event-point formula is the score grade's base reward times the spend multiplier and one plus the member bonus, with integer truncation.",
+        "The example's matching Rank-1 bonuses add within each card: event SSR +30%, the 夢限大 group +20%, blue attribute +10%, up to +60% for one fully matching card. The matching Rank-5 example reaches +100% for one card; the initial five-card bonus team totals +225%. These percentages belong to that historical event and its card conditions. Member bonuses affect event points, while Snap bonuses affect badges.",
+        "A higher grade raises the example's base reward by at least 20%, whereas another 10 bonus percentage points at a total bonus above +200% adds only about 3% to the final reward. Clear a reliable grade threshold first, then compare bonus and time. A high-bonus team can still outperform a higher-scoring team when it keeps enough reward bonus."
+      ],
+      "math": [
+        "event pt = floor(grade base reward × spend multiplier × (1 + member bonus))",
+        "historical EASY B: floor(2,550 × 3.25) = 8,287 pt per 200 CP",
+        "historical Expert A: 3,250 × 2.4 = 7,800 pt per 200 CP"
+      ],
+      "after": [
+        "In that example, the +225% team reliably reaches B on the shortest song's Easy chart and earns 8,287 points per 200 CP, compared with 7,800 for the score team's Expert A. B gives the same base reward at every difficulty, so the shortest reliably cleared Easy is the farming choice for that setup. This is not a universal claim that Easy is always best or a prediction for a different event."
+      ],
       "defs": [
         [
-          "Level",
-          "Display level (with decimal precision) and internal integer difficulty level."
+          "Score rankings",
+          "Maximize absolute score on the ranked songs. Use a score formation and compare the actual chart and skill combination."
         ],
         [
-          "Notes",
-          "Total judged notes (full combo count). Note composition categorizes notes into Tap, Flick, Slide, Trace, and Combo ticks."
+          "Event points",
+          "Reach a reliable score grade, then maximize the relevant member bonus and reward per unit time. The historical rewards grant SR Ritsu copies at 100,000, 150,000, 200,000, 300,000 and 675,000 points."
         ],
         [
-          "Main BPM and Density",
-          "Main BPM is the tempo active for the longest duration between the first and last judged note. Note density is total judged notes divided by that active duration (Notes/second)."
+          "Badges",
+          "Use the relevant Snap bonus for exchange rewards. In the historical case, 100,000 badges exchange for one Snap."
         ],
         [
-          "Base, Weight (W), and Skip",
-          "Base represents score per power without skills under the selected scenario. Weight (W) represents the total score increase per power from team skills. Skip factor reflects score per power when using live skip."
+          "Switching teams",
+          "Use a score team in ordinary plays when a higher grade earns more CP. Switch to the appropriate member-bonus or Snap-bonus team for Challenge farming. Score ranking, point farming and badge farming can require three different formations."
         ]
       ]
     },
     {
-      "title": "Engine Verification and Benchmark Checks",
+      "title": "Reading and using the Song Meta controls",
+      "body": [
+        "Choose Gekiso Live or Free Live and a difficulty you can play consistently. The standard baseline uses full combo, positive life and ordinary, unconditional five-second score-up skills; card Gekiso skills are excluded. Gekiso defaults to first place in all three sections, JUST on eligible JUST-mission notes and PERFECT elsewhere. Free Live uses PERFECT throughout and no Gekiso effects.",
+        "The five visible fields are the sole ordinary skill baseline in every mode: manual percentages for five-second, unconditional score-up skills. 100 means +100%, or a 2× note factor during that window. Selecting a reference member never replaces its slot's percentage with the card's original live skill or recalculates your entered power. Clear all only removes member and Snap selections, keeping these five values and power. Without a Snap selected, member selection alone does not activate replay or the member's Gekiso skill.",
+        "In the linear summary below, divide the entered percentage by 100: 140% becomes u = 1.4. The standard ranking averages the 120 activation orders, so its expected score depends on the five bonuses' mean and the chart's activation weights. The summary has rounding limits; the full replay handles each integer note score. Equal standard skills remove order variation; Luck seeds can still vary the result. A chart's displayed level, BPM or density alone does not determine its scoring efficiency.",
+        "GREAT % estimates GREAT judgements across the chart. With no GOOD, BAD, MISS or combo breaks assumed, 0% GREAT means 100% PERFECT before the separate JUST adjustment. The standard score is scaled by 1 − 0.2 × GREAT % / 100. JUST % blends the all-PERFECT and all-JUST baselines only for eligible notes in JUST mission sections, recomputing section bonuses and adjusting relevant skill weights. It is not the JUST share of the whole song. These are statistical approximations, not a replay of exact note positions.",
+        "Score / power compares expected score at equal power; Score / power / min also includes play time. Duration can use BGM length or chart length (last note plus one second). Add your results/loading time as overhead. Relative compares efficiency with the best value in the current table. Hide dominated charts keeps the standard model's frontier across mean bonuses 0–150% and nonnegative overhead; Snap measurements do not offer this dominance guarantee.",
+        "Event grades compares the power needed for your target SS/S/A/B grade. Grade thresholds belong to each song and are shared across difficulties. Free Live uses solo thresholds. Gekiso uses room total score; the page's selected player count assumes equal scores from every connected player. Grade chance counts the successful standard skill orders, not your personal chance of playing accurately."
+      ],
+      "math": [
+        "u = entered skill bonus (%) / 100",
+        "standard score / P = base + sum(u at activation k × weight k)",
+        "expected score / P = base + mean(u) × sum of activation weights",
+        "efficiency = expected score / (power × (duration + overhead))"
+      ],
+      "after": [
+        "Open a chart row for the skill/Fever timeline, mission measures, activation weights and grade thresholds. Notes count judged notes; Main BPM is the tempo lasting longest between the first and last judged notes; density is judged notes divided by that interval. Song-specific power bonuses can change the power of the same formation between songs, so enter comparable power when interpreting the rankings."
+      ]
+    },
+    {
+      "title": "Single-play simulation, Snap profiles and remaining limits",
+      "body": [
+        "The single-play calculator uses the same Rust engine as the data tools, compiled to WASM in the browser. It replays explicit judgements frame by frame, including combo, life, skills, conversion and Gekiso settlement. It starts with no skills and PERFECT on judged notes; unscored nodes keep Pass. Export/import JSON for supported skill IDs and levels, member attributes, order, seed, placements and timing. Unknown notes, missing or duplicate results and invalid clocks are rejected.",
+        "Selecting at least one Snap runs a fixed profile on top of the five manual ordinary skill percentages and entered power: seed 1, 60 fps, order 1–5, the chosen judgement preset and fixed Solo Gekiso placements. While this replay is active, paired members supply condition attributes and the explicitly chosen supported Gekiso level. Their original live skills and growth power do not replace the manual baseline or power. Supported Snap effects apply when their conditions hold; they are evaluated by the complete replay. The GREAT/JUST settings generate one reproducible note input plan. Clearing members and Snaps returns to ordinary ranking with the same manual baseline and power retained.",
+        "Snap score / power is that profile's simulated score divided by its entered power, not a general linear coefficient for every effect. Its event table can compare score and plays per hour; required power, grade chance, target plays/h and dominance need separate searches and remain unavailable. This feature compares declared profiles; it is not an automatic search of your owned collection.",
+        "Gekiso aptitude measures one skill against a no-skill comparison on the same seeds. It can explain which charts benefit, but individual gains do not predict a combined formation. Missing weights or endpoints remain unavailable rather than becoming zero. Standard error measures uncertainty in a sampled mean, not the accuracy of the game model. The game's random-seed distribution is unknown, so a sample mean is not a measured in-game expectation.",
+        "A complete replay is needed for combo breaks, judgement positions and interacting conversion or cumulative effects. Raw-touch window effects need original result metadata. The default frame clock is 60 Hz, with 30/120 Hz also supported; clock timing can affect activation and settlement. Frame display score, settled score and sampled maximum combo are distinct outputs. Results do not independently classify phone touch inputs or reproduce opponents, network delays, the full results flow or server rewards."
+      ]
+    },
+    {
+      "title": "Validation against native client code",
       "body": [],
       "table": {
         "headers": [
-          "Benchmark case",
-          "Scope of verification",
+          "Test case and inputs",
+          "Checks performed",
           "Result",
-          "Notes"
+          "Limits of this check"
         ],
         "rows": [
           [
-            "Standard live; 300,000 power; no skills; Free Live",
-            "5,500 frames, 13 state fields, 71,500 comparisons; 364 note events",
-            "0 difference; float32 scoring factors match bit-for-bit",
-            "Verified baseline scoring engine"
+            "10000201; power 300000; no skills; Gekiso off",
+            "5500 frames, 13 fields, 71500 comparisons; 364 judgement events",
+            "No differences; six float32 factor states match by bits",
+            "Fresh run without rewinding; the simulator's sampled max combo is distinct from the protected live max-combo value"
           ],
           [
-            "5-member team with standard skills; Perfect and mixed judgements",
-            "5,500 frames per case; 253,000 core checks; skill trigger and application",
-            "0 difference; maximum float32 ULP: 0",
-            "Covers standard score-up skill families"
+            "Five members with ordinary skill 1; all Perfect and mixed Perfect/Great/Good/Bad/Miss",
+            "5500 frames per case; 253000 core comparisons per case; native SkillExecutor trigger/pool/phases and applier dispatch",
+            "No differences; maximum float32 difference: 0 ULP",
+            "Only the unconditional effect-2000 family; the elapsed-time mirror is excluded, and the complete game lifecycle was not tested"
           ],
           [
-            "Multi-skill team with varied timings; 30 / 60 / 120 fps",
-            "57,750 frames across 9 benchmark configurations; 18,826,500 core checks",
-            "0 difference; maximum float32 ULP: 0",
-            "Verifies frame rate independence and event ordering"
+            "Real skills 1/4/6/7/5; high/medium/low accuracy × 30/60/120 fps",
+            "Nine cases: 57750 frames; 35 effect-pool instances; 18826500 core comparisons; chart events and converted judgements in order",
+            "No differences; maximum float32 difference: 0 ULP",
+            "Selected target and life-condition effects; not all skills or input windows"
           ],
           [
-            "Non-zero note timing offsets and mixed judgements",
-            "Real note stream: P274 / Great58 / Good32; 1,793,000 core checks",
-            "0 difference; maximum float32 ULP: 0",
-            "Verifies timing classification and combo transitions"
+            "Nonzero per-note timing offsets",
+            "Native judgements: 274 Perfect / 58 Great / 32 Good; 5500 frames and 1793000 core comparisons",
+            "No differences; maximum float32 difference: 0 ULP",
+            "The native client classifies the automatic input; Rust consumes those judgements rather than independently replaying touch input"
           ],
           [
-            "Life threshold boundaries (700 → 600)",
-            "5,500 frames; 2,288,000 core checks",
-            "0 difference; maximum float32 ULP: 0",
-            "Verifies conditional skill state persistence"
+            "Life condition boundary 700→600",
+            "5500 frames; 45 effect-pool instances; 2288000 core comparisons",
+            "No differences; maximum float32 difference: 0 ULP",
+            "The high-life effect is selected at 700 and continues at 600; the active effect does not switch to the low-life branch"
           ],
           [
-            "Max-level skills (Level 5)",
-            "5,500 frames; 1,545,500 core checks including floating-point factors",
-            "0 difference; maximum float32 ULP: 0",
-            "Verifies high-multiplier floating point precision"
+            "Real skills 3/5/1/2/7 at level 5",
+            "5500 frames; 1545500 core comparisons, including actual float32 skill factors",
+            "No differences; compared maximum float32 difference: 0 ULP",
+            "This skill combination only; value 13000 converts to 1.29999…, not a hand-entered 1.3"
           ],
           [
-            "Gekiso and support skills; varied accuracy at 30 / 60 / 120 fps",
-            "48,750 frames; 35,777,250 checks: rush, luck gauge, Just bonuses",
-            "0 difference; float32 bits identical",
-            "Verifies Gekiso mechanics across frame clocks"
+            "Real card Gekiso and support skills; eight high/medium/low accuracy and 30/60/120 fps cases",
+            "48750 frames, 35777250 checks: pools, converted results, combo protection, cumulative Just, luck gauge and rush",
+            "Zero differences in declared fields; bit-for-bit float32 match",
+            "Specified card and support configurations only; power-dependent effects and complete failure/result transitions need separate checks"
           ],
           [
-            "Dynamic Just timing windows",
-            "1,600 frames; 9 window configurations, 451,200 total checks",
-            "0 difference; window activation and bounds match",
-            "Verifies Just window logic"
+            "Dynamic Just windows through the published model’s public API",
+            "1600-frame native capture; 9 window types, 39 units; 388800 window and 62400 core checks",
+            "451200 checks, zero differences; enable state and window widths match",
+            "Window states and widths, scoring, life and current combo; consumes classified judgements"
           ],
           [
-            "Probabilistic activation skills (Condition 4011)",
-            "15,000 frames; 10,680,000 checks across threshold branches",
-            "0 difference; identical final scores",
-            "Verifies pseudo-random stream and activation thresholds"
+            "Probability condition 4011; member card 43 / support 66; high life and life 600 with 4 Misses",
+            "Two cases: 15000 frames, 10680000 core checks; 72 random-value, threshold and boolean checks",
+            "Zero differences; final scores 2835163 / 2760861",
+            "Seed 14 was selected to cover 5% success; fixed-input checks do not measure the probability distribution"
           ],
           [
-            "Solo Gekiso mode: Combo / Just / Luck missions",
-            "19,000 frames; 646,000 integer state comparisons",
-            "0 difference across score, life, combo, and mission states",
-            "Verifies all three mission types"
+            "Solo Gekiso combo / Just / luck; no card skills",
+            "10000103 / 10000201 / 10000303; 19000 frames; 646000 integer comparisons",
+            "No differences in the listed score channels, life, combo, random count and range states",
+            "Some section counters and float32 fields still lack equivalent comparison fields; the observed frame score is separate from score()"
           ],
           [
-            "Multiplayer Gekiso mode: Mixed judgements and life depletion",
-            "19,000 frames; 646,000 core comparisons",
-            "0 difference across all simulation metrics",
-            "Verifies multiplayer scoring and failure handling"
+            "Offline multiplayer combo / Just / luck; actual mixed judgements and life zero",
+            "19000 frames; 646000 core comparisons; 76000 ranking-derived comparisons listed separately",
+            "No differences; 431 native random draws in the luck case",
+            "Excludes card skills, independent touch-window classification, full failure transitions and server rewards; derived ranking values are not direct production observations"
           ],
           [
-            "Multiplayer placement calculation",
-            "572 test cases including ties and missing inputs",
-            "15,259 exact comparisons; 0 difference",
-            "Verifies ranking tiebreakers and room scoring"
+            "Native multiplayer ranking",
+            "572 invocation cases, including ties, secondary measures, missing inputs and error boundaries",
+            "15259 exact comparisons, No differences",
+            "A subsystem test, not 572 complete plays; the Rust API does not promise the original member order within tied groups"
+          ],
+          [
+            "Challenge: None / FullCombo / AllPerfect assists; actual mixed grades",
+            "Three cases, 5858 frames and 1382503 core checks; native Enter/Update/Exit",
+            "Declared fields match; native Bad/Good retry branches also observed",
+            "Retry decisions were observed on the native side; animations completed immediately, and the full result screen and server were not checked"
+          ],
+          [
+            "Mission / Solo Gekiso; mixed judgements, combo breaks and zero life",
+            "5502 frames, 1469049 core checks; 22008 derived ranking checks listed separately",
+            "Zero differences; final score 439015; frame display and calculator scores checked separately",
+            "The full result screen and server were not checked; derived ranks are not independent production observations"
+          ],
+          [
+            "Free / Solo Gekiso / challenge / mission / battle / arena / tutorial",
+            "Seven native setup entries and chart/bootstrap branches executed",
+            "Entry evidence only; full mode coverage pending",
+            "Entering a mode does not validate a full play; live event/Arena data and the server lifecycle need separate checks"
           ]
         ],
-        "caption": "Client 1.0.1 · Benchmark test suite verified"
+        "caption": "Client 1.0.1-25 · Checked 2026-09-30"
       },
       "after": [
-        "Scoring calculations match the game client bit-for-bit across benchmark test suites, with identical float32 precision and zero integer deviations."
+        "These records concern client 1.0.1-25 and the checks dated 2026-09-30. All compared integers matched, and the compared float32 values matched bit for bit. The model also passed 272 regression tests, and per-note Rust and WASM results matched across the documented 340 charts. Matching two builds of the model is a consistency check; it is not additional proof against the game.",
+        "The table describes specific inputs and fields, not blanket certification of every skill, touch pattern, mode or game update. It does not certify the latest JP client or online patches, physical touch replay, the complete results flow or server rewards. The page is a tool for comparing scenarios and investigating score differences within those limits."
       ]
     }
-  ],
-  "reminder": {
-    "title": "When other results disagree",
-    "text": "When comparing against other sources, please ensure game version, chart, scenario, power, and skill setups match. If discrepancies arise, refer to in-game results.",
-    "priority": "When you find a disagreement with other sources, the other sources are correct."
-  },
-  "contentsLabel": "Contents",
-  "methodsLabel": "Methodology and scope",
-  "method": {
-    "title": "Sources and verification",
-    "text": "Charts and game data are extracted from game resources, and figures are calculated via our score simulation model, verified across multiple benchmark setups against game logic. Provided for team building and song selection reference."
-  }
+  ]
 };
