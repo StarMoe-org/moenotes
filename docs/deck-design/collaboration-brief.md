@@ -24,7 +24,7 @@ FixedDeck、DeckSearch、SongRanking 共用同一数据、状态机和 Evaluate�
 
 | 部分 | 已有证据 | 还不能声称的能力 |
 |---|---|---|
-| 最新来源 | JP Android 1.0.4 / 10053、已恢复 ARM64 原代码与 metadata；冻结 2026-09-30 JP master；2026-10-02 官方只读 Version 观察的 master/resource/catalog 与冻结源一致 | 活跃 IFix 和实际已加载规则尚未认证；原生实验目前是 offline-base |
+| 最新来源 | JP Android 1.0.4 / 10053、已恢复 ARM64 原代码与 metadata；冻结 2026-09-30 JP master；2026-10-02 官方只读 Version 观察的 master/resource 与冻结源一致 | 活跃 IFix 和实际已加载规则尚未认证；原生实验目前是 offline-base |
 | 实际成员与 Snap | 一组初始培养五成员/五 Snap，真实 factory 的 36 数值/10 身份字段与 Rust 一致；总力 59,223 | 任意合法账号、培养全域和完整 Unity/player lifecycle |
 | 计分参数 | 实际 factory 的 24 数值字段/22 键身份与冻结核心一致，f32 按原字比较 | 所有判定、回血、失败、条件和累计行为 |
 | 随机原语 | 当前核心对保存 JP 原生 golden：24 派生 seed、120 独立事件的三种调用模式，共 384 比较零差异 | 六个测试 root 不是玩家 root 分布；整局调用历史还需核对，不能挑幸运种子当推荐 |
