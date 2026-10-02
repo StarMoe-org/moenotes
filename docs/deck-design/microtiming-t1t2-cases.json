@@ -1,0 +1,828 @@
+{
+ "format": "ournotes.microtiming-t1t2-cases/1",
+ "status": "Draft pilot; lane-level replay route only",
+ "identity": {
+  "region": "JP",
+  "versionName": "1.0.4",
+  "versionCode": 10053,
+  "restoredNativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+  "decodedMetadataSha256": "8cf963bc5a32262c2ad3e21307dda14d144bcced6fe7731986933718dcf9a91d",
+  "scriptJsonSha256": "42ee86e50e9b87f19b6007cd352f68aff8d4d0feb39cd6832110ced3e03210ec",
+  "chart": {
+   "id": 10000201,
+   "difficulty": "Normal",
+   "rawChartSha256": "d52034d539e10651eeb896d10c0d9ef2e5f5e054d115a920e8d6b0d7bdd52c1d",
+   "noteProjectionSha256": "da3125f080c0363360ea3cb621c7c729723fe0ff96d00be0dd8cb60c2d82cc53"
+  },
+  "pilotCaseSha256": "2e6f6c7d95a0270392003abf955ade79576e0129701989c54b0cd031faae3e9e",
+  "judgementTimingTap": {
+   "Just(6)": 2,
+   "Perfect(5)": 50,
+   "Great(4)": 83,
+   "Good(3)": 100,
+   "Bad(2)": 125,
+   "Miss(1)": 130
+  },
+  "judgementScorePercent": {
+   "Just(6)": 230,
+   "Perfect(5)": 100,
+   "Great(4)": 80,
+   "Good(3)": 50,
+   "Bad(2)": 0,
+   "Miss(1)": 0
+  },
+  "judgementDamage": {
+   "Bad(2)": 50,
+   "Miss(1)": 100
+  }
+ },
+ "harness": {
+  "route": "sealed 53056 local_factory_pilot.py (87cfe323...) + 12 counted exact replacements -> physical_replay_pilot.py",
+  "sources": {
+   "sealed_local_factory_pilot.py": "87cfe323078522c23de2932bf9ee74686e210d53b58bc63048445b30a72fa0ba",
+   "physical_replay_pilot.py": "452a4dd95c2f932dfa2dd486733eabe564a1e135affedbadcb8c19cd694c0e4c",
+   "make_physical_replay_pilot.py": "7826f1c6f0577cc202de382f837b69dac08bf5b8c5cae9a54151c39a2a2ce444",
+   "build_replay_method_records.py": "9e86f900ae5eadd480046261791138a54a502d5e1ceb74c9c411d51636ad3e96",
+   "run_cases.sh": "f67113ca9f01c1359a966ab06846bb8d98d9d757f6ee9fdca0aac71fdbfd0059",
+   "summarize_replay.py": "18cc0c3335d2caefc5ee41c698d007b7c6840929f714f1868ebbcab0f1510519",
+   "gen_t2_pilot.py": "505cf974d0110d3887b8fd43e904a6622df9a2da274b93b3bce20a760295ac6c",
+   "bound_pilot.py": "16ca03692208a0c8f6b79bb37adf84ad8d47fa3b9c649bd3a1af92519a606171",
+   "unity.py": "dae39e72fe10658ad51176cbcfdde8d28f5e2dbc6c5326cf8db914cd75444f6d",
+   "mrt.py": "672b593f0238b07cc0ce8b747517ad9e0e09e36864a7dcbca9b345d0aaddf19f",
+   "libc.py": "225f35a0b8afe391f369ff4514f540d6a8cd2f7a74d8c9e6b01f1772a32b57f8",
+   "nemu.py": "2549fc23b83ef6d0512ee6f997b9f79c085c7edf6656fe963b7f1bf430c10358",
+   "native_observe.py": "40a398e89ba8377b00e4e8b17bca2757f1624fec518ca968745300149fe95835"
+  },
+  "methodRecordsSupplementSha256": "1e3a2ecf5f3e9005141075782196157f5477933ebe87dc510fa254575abf3679",
+  "nativeCalls": {
+   "LiveAutoSettings..ctor(bool,NoteSimulateJudgement,bool,int)": "0x5970F08",
+   "InputPlayer..ctor(string,int,IReadOnlyLiveAutoSettings,bool)": "0x54F300C",
+   "InputPlayer.Update(int,float)": "0x54F387C",
+   "LiveSimulateInput.get_InputStateArray": "0x62299F0",
+   "LiveSimulateInput.get_CurrentFrameFlickStateArray": "0x62299F8",
+   "LiveExecutor.ResetFrameResult": "0x54F8D58",
+   "LiveExecutor.UpdateFever": "0x54F79C4",
+   "LiveExecutor.Update": "0x54F7A08"
+  },
+  "servedIcall": "UnityEngine.Time::get_realtimeSinceStartupAsDouble() from declared schedule, fail-closed outside InputPlayer.Update",
+  "notExercised": [
+   "ScreenTouchInputProvider / EnhancedTouch device projection",
+   "SkillExecutor / NativeSkillContext / Gekisou ranges",
+   "OnBeforeUpdateGekisou",
+   "flick/hold/slide",
+   "same-frame and multi-touch batches"
+  ],
+  "sealedArchiveSha256": "d2d048cc1897baaed8769714a0797c6f65615567161e2f52d615cf12e516fa94",
+  "payloadLocation": "private ignored dir; not in this repository"
+ },
+ "cases": [
+  {
+   "caseId": "mt-p001-tap-boundaries",
+   "purpose": "Judgement time/diff/grade and score-command time for early/late taps at window edges; frame grid 16 ms",
+   "frames": 579,
+   "scheduleSteps": [
+    16
+   ],
+   "realtimeBaseSeconds": 37.0003,
+   "deviceClockQueriesPerFrame": [
+    1
+   ],
+   "finalScore": 5096,
+   "taps": [
+    {
+     "noteId": 1,
+     "nominalMs": 2352,
+     "offsetMs": 0,
+     "touchMs": 2352,
+     "touchLane": 8.0,
+     "preRegisteredGrade": "Perfect(5)",
+     "observed": {
+      "judgedFrameClockMs": 2352,
+      "judgementTimeMs": 2352,
+      "judgementDiffMs": 0,
+      "convertedJudgement": 6,
+      "originJudgement": 6,
+      "timing": 0,
+      "offsetJudgementTimeMs": 0
+     },
+     "scoreCommand": {
+      "timeMs": 2352,
+      "scoreType": 1,
+      "addedScore": 1832,
+      "comboBefore": 0,
+      "lifeBefore": 1000
+     }
+    },
+    {
+     "noteId": 2,
+     "nominalMs": 3529,
+     "offsetMs": -50,
+     "touchMs": 3479,
+     "touchLane": 16.0,
+     "preRegisteredGrade": "Perfect(5)",
+     "observed": {
+      "judgedFrameClockMs": 3488,
+      "judgementTimeMs": 3479,
+      "judgementDiffMs": -50,
+      "convertedJudgement": 5,
+      "originJudgement": 5,
+      "timing": 1,
+      "offsetJudgementTimeMs": -41
+     },
+     "scoreCommand": {
+      "timeMs": 3529,
+      "scoreType": 2,
+      "addedScore": 796,
+      "comboBefore": 1,
+      "lifeBefore": 1000
+     }
+    },
+    {
+     "noteId": 3,
+     "nominalMs": 4705,
+     "offsetMs": 51,
+     "touchMs": 4756,
+     "touchLane": 4.0,
+     "preRegisteredGrade": "Great(4)",
+     "observed": {
+      "judgedFrameClockMs": 4768,
+      "judgementTimeMs": 4756,
+      "judgementDiffMs": 51,
+      "convertedJudgement": 4,
+      "originJudgement": 4,
+      "timing": 2,
+      "offsetJudgementTimeMs": 63
+     },
+     "scoreCommand": {
+      "timeMs": 4705,
+      "scoreType": 3,
+      "addedScore": 637,
+      "comboBefore": 2,
+      "lifeBefore": 1000
+     }
+    },
+    {
+     "noteId": 4,
+     "nominalMs": 5882,
+     "offsetMs": -83,
+     "touchMs": 5799,
+     "touchLane": 20.0,
+     "preRegisteredGrade": "Great(4)",
+     "observed": {
+      "judgedFrameClockMs": 5808,
+      "judgementTimeMs": 5799,
+      "judgementDiffMs": -83,
+      "convertedJudgement": 4,
+      "originJudgement": 4,
+      "timing": 1,
+      "offsetJudgementTimeMs": -74
+     },
+     "scoreCommand": {
+      "timeMs": 5882,
+      "scoreType": 3,
+      "addedScore": 637,
+      "comboBefore": 3,
+      "lifeBefore": 1000
+     }
+    },
+    {
+     "noteId": 5,
+     "nominalMs": 7058,
+     "offsetMs": 84,
+     "touchMs": 7142,
+     "touchLane": 9.0,
+     "preRegisteredGrade": "Good(3)",
+     "observed": {
+      "judgedFrameClockMs": 7152,
+      "judgementTimeMs": 7142,
+      "judgementDiffMs": 84,
+      "convertedJudgement": 3,
+      "originJudgement": 3,
+      "timing": 2,
+      "offsetJudgementTimeMs": 94
+     },
+     "scoreCommand": {
+      "timeMs": 7058,
+      "scoreType": 4,
+      "addedScore": 398,
+      "comboBefore": 4,
+      "lifeBefore": 1000
+     }
+    },
+    {
+     "noteId": 6,
+     "nominalMs": 7647,
+     "offsetMs": -130,
+     "touchMs": 7517,
+     "touchLane": 9.0,
+     "preRegisteredGrade": "Miss(1)",
+     "observed": {
+      "judgedFrameClockMs": 7520,
+      "judgementTimeMs": 7517,
+      "judgementDiffMs": -130,
+      "convertedJudgement": 1,
+      "originJudgement": 1,
+      "timing": 1,
+      "offsetJudgementTimeMs": -127
+     },
+     "scoreCommand": {
+      "timeMs": 7647,
+      "scoreType": 6,
+      "addedScore": 0,
+      "comboBefore": 5,
+      "lifeBefore": 900
+     }
+    },
+    {
+     "noteId": 7,
+     "nominalMs": 8235,
+     "offsetMs": 20,
+     "touchMs": 8255,
+     "touchLane": 15.0,
+     "preRegisteredGrade": "Perfect(5)",
+     "observed": {
+      "judgedFrameClockMs": 8256,
+      "judgementTimeMs": 8255,
+      "judgementDiffMs": 20,
+      "convertedJudgement": 5,
+      "originJudgement": 5,
+      "timing": 2,
+      "offsetJudgementTimeMs": 21
+     },
+     "scoreCommand": {
+      "timeMs": 8235,
+      "scoreType": 2,
+      "addedScore": 796,
+      "comboBefore": 0,
+      "lifeBefore": 900
+     }
+    },
+    {
+     "noteId": 8,
+     "nominalMs": 8823,
+     "offsetMs": -131,
+     "touchMs": 8692,
+     "touchLane": 15.0,
+     "preRegisteredGrade": "outside-window",
+     "observed": {
+      "judgedFrameClockMs": 9248,
+      "judgementTimeMs": 9248,
+      "judgementDiffMs": 2147483647,
+      "convertedJudgement": 1,
+      "originJudgement": 1,
+      "timing": 5,
+      "offsetJudgementTimeMs": 409
+     },
+     "scoreCommand": {
+      "timeMs": 8823,
+      "scoreType": 6,
+      "addedScore": 0,
+      "comboBefore": 1,
+      "lifeBefore": 800
+     }
+    }
+   ],
+   "params": {
+    "caseId": "mt-p001-tap-boundaries",
+    "startedUtc": "2026-10-02T00:21:26Z",
+    "endedUtc": "2026-10-02T00:22:18Z",
+    "exitCode": 0,
+    "worker": "single docker exec in workspace-pilot-1"
+   },
+   "sealedFiles": {
+    "input/case.json": "4c7633b0546729fe412743a36fc59fc69799daf1d0f4fdedd3034393f7901d1b",
+    "input/input-record.json": "f486903ae17ec462c64901fc9b3a52e7e7d89a7b4606c8b3b997e20c535cb3d4",
+    "input/latest-method-records.json": "9779caa5f6255820d0f0fd9e75b981fc2ca186e5e8f38a03ffe513ef79487a46",
+    "input/physical-replay-method-records.json": "1e3a2ecf5f3e9005141075782196157f5477933ebe87dc510fa254575abf3679",
+    "input/pilot-input-gekisou-luck.json": "2e6f6c7d95a0270392003abf955ade79576e0129701989c54b0cd031faae3e9e",
+    "input/schedule.json": "bc9cda34d8dff9f2f1f9727f1ef513f548527e71c955d4f7e8085fa2febc4a8f",
+    "params.json": "829c5872dd888a5478a77b9881e41c310f72ad482033fd093d88f80b18d9dd3f",
+    "results/native-isolated-continuous-physical-452a4dd95c2f.jsonl": "f06415d5b5b514a2dfedae91ef5fe347f304374a01a582f3cc51ae0da94c03ff",
+    "results/native-judgement-frames-physical-452a4dd95c2f.jsonl": "52dacda5fa69fd4a1111afc0cbce09d1f9e4b25077ca0b4d8651c395e798134e",
+    "results/native-note-score-commands-physical-452a4dd95c2f.json": "1d1de0182135c1359b6015b25c275a1d7b203c0e4984ceeb5985aa8cdf8e14c6",
+    "results/physical-replay-pilot.json": "6085b768b22e9c9d9929ac3d7b6527d69a3c0ff5d34fc8647ed5b51a5eed284f",
+    "summary.json": "40413a640b1a09f917c7eeff8077b838069d5d1d6984c56db922bd2b712571c1"
+   }
+  },
+  {
+   "caseId": "mt-p002-clock-negative-control",
+   "purpose": "Same record as p001 with a different device-clock base and variable f32 dt; judgement/command times and final score must not change",
+   "frames": 537,
+   "scheduleSteps": [
+    16,
+    17,
+    16,
+    17,
+    33,
+    8,
+    16,
+    15
+   ],
+   "realtimeBaseSeconds": 1234.5678,
+   "deviceClockQueriesPerFrame": [
+    1
+   ],
+   "finalScore": 5096,
+   "taps": [
+    {
+     "noteId": 1,
+     "nominalMs": 2352,
+     "offsetMs": 0,
+     "touchMs": 2352,
+     "touchLane": 8.0,
+     "preRegisteredGrade": "Perfect(5)",
+     "observed": {
+      "judgedFrameClockMs": 2362,
+      "judgementTimeMs": 2352,
+      "judgementDiffMs": 0,
+      "convertedJudgement": 6,
+      "originJudgement": 6,
+      "timing": 0,
+      "offsetJudgementTimeMs": 10
+     },
+     "scoreCommand": {
+      "timeMs": 2352,
+      "scoreType": 1,
+      "addedScore": 1832,
+      "comboBefore": 0,
+      "lifeBefore": 1000
+     }
+    },
+    {
+     "noteId": 2,
+     "nominalMs": 3529,
+     "offsetMs": -50,
+     "touchMs": 3479,
+     "touchLane": 16.0,
+     "preRegisteredGrade": "Perfect(5)",
+     "observed": {
+      "judgedFrameClockMs": 3483,
+      "judgementTimeMs": 3479,
+      "judgementDiffMs": -50,
+      "convertedJudgement": 5,
+      "originJudgement": 5,
+      "timing": 1,
+      "offsetJudgementTimeMs": -46
+     },
+     "scoreCommand": {
+      "timeMs": 3529,
+      "scoreType": 2,
+      "addedScore": 796,
+      "comboBefore": 1,
+      "lifeBefore": 1000
+     }
+    },
+    {
+     "noteId": 3,
+     "nominalMs": 4705,
+     "offsetMs": 51,
+     "touchMs": 4756,
+     "touchLane": 4.0,
+     "preRegisteredGrade": "Great(4)",
+     "observed": {
+      "judgedFrameClockMs": 4758,
+      "judgementTimeMs": 4756,
+      "judgementDiffMs": 51,
+      "convertedJudgement": 4,
+      "originJudgement": 4,
+      "timing": 2,
+      "offsetJudgementTimeMs": 53
+     },
+     "scoreCommand": {
+      "timeMs": 4705,
+      "scoreType": 3,
+      "addedScore": 637,
+      "comboBefore": 2,
+      "lifeBefore": 1000
+     }
+    },
+    {
+     "noteId": 4,
+     "nominalMs": 5882,
+     "offsetMs": -83,
+     "touchMs": 5799,
+     "touchLane": 20.0,
+     "preRegisteredGrade": "Great(4)",
+     "observed": {
+      "judgedFrameClockMs": 5812,
+      "judgementTimeMs": 5799,
+      "judgementDiffMs": -83,
+      "convertedJudgement": 4,
+      "originJudgement": 4,
+      "timing": 1,
+      "offsetJudgementTimeMs": -70
+     },
+     "scoreCommand": {
+      "timeMs": 5882,
+      "scoreType": 3,
+      "addedScore": 637,
+      "comboBefore": 3,
+      "lifeBefore": 1000
+     }
+    },
+    {
+     "noteId": 5,
+     "nominalMs": 7058,
+     "offsetMs": 84,
+     "touchMs": 7142,
+     "touchLane": 9.0,
+     "preRegisteredGrade": "Good(3)",
+     "observed": {
+      "judgedFrameClockMs": 7145,
+      "judgementTimeMs": 7142,
+      "judgementDiffMs": 84,
+      "convertedJudgement": 3,
+      "originJudgement": 3,
+      "timing": 2,
+      "offsetJudgementTimeMs": 87
+     },
+     "scoreCommand": {
+      "timeMs": 7058,
+      "scoreType": 4,
+      "addedScore": 398,
+      "comboBefore": 4,
+      "lifeBefore": 1000
+     }
+    },
+    {
+     "noteId": 6,
+     "nominalMs": 7647,
+     "offsetMs": -130,
+     "touchMs": 7517,
+     "touchLane": 9.0,
+     "preRegisteredGrade": "Miss(1)",
+     "observed": {
+      "judgedFrameClockMs": 7518,
+      "judgementTimeMs": 7517,
+      "judgementDiffMs": -130,
+      "convertedJudgement": 1,
+      "originJudgement": 1,
+      "timing": 1,
+      "offsetJudgementTimeMs": -129
+     },
+     "scoreCommand": {
+      "timeMs": 7647,
+      "scoreType": 6,
+      "addedScore": 0,
+      "comboBefore": 5,
+      "lifeBefore": 900
+     }
+    },
+    {
+     "noteId": 7,
+     "nominalMs": 8235,
+     "offsetMs": 20,
+     "touchMs": 8255,
+     "touchLane": 15.0,
+     "preRegisteredGrade": "Perfect(5)",
+     "observed": {
+      "judgedFrameClockMs": 8265,
+      "judgementTimeMs": 8255,
+      "judgementDiffMs": 20,
+      "convertedJudgement": 5,
+      "originJudgement": 5,
+      "timing": 2,
+      "offsetJudgementTimeMs": 30
+     },
+     "scoreCommand": {
+      "timeMs": 8235,
+      "scoreType": 2,
+      "addedScore": 796,
+      "comboBefore": 0,
+      "lifeBefore": 900
+     }
+    },
+    {
+     "noteId": 8,
+     "nominalMs": 8823,
+     "offsetMs": -131,
+     "touchMs": 8692,
+     "touchLane": 15.0,
+     "preRegisteredGrade": "outside-window",
+     "observed": {
+      "judgedFrameClockMs": 9246,
+      "judgementTimeMs": 9246,
+      "judgementDiffMs": 2147483647,
+      "convertedJudgement": 1,
+      "originJudgement": 1,
+      "timing": 5,
+      "offsetJudgementTimeMs": 408
+     },
+     "scoreCommand": {
+      "timeMs": 8823,
+      "scoreType": 6,
+      "addedScore": 0,
+      "comboBefore": 1,
+      "lifeBefore": 800
+     }
+    }
+   ],
+   "params": {
+    "caseId": "mt-p002-clock-negative-control",
+    "startedUtc": "2026-10-02T00:22:18Z",
+    "endedUtc": "2026-10-02T00:23:08Z",
+    "exitCode": 0,
+    "worker": "single docker exec in workspace-pilot-1"
+   },
+   "sealedFiles": {
+    "input/case.json": "4b4afbcddc7bf109eede5e2fb6ef1fdd78eef71d8792f03e22a29e7e3a9a00b1",
+    "input/input-record.json": "f486903ae17ec462c64901fc9b3a52e7e7d89a7b4606c8b3b997e20c535cb3d4",
+    "input/latest-method-records.json": "9779caa5f6255820d0f0fd9e75b981fc2ca186e5e8f38a03ffe513ef79487a46",
+    "input/physical-replay-method-records.json": "1e3a2ecf5f3e9005141075782196157f5477933ebe87dc510fa254575abf3679",
+    "input/pilot-input-gekisou-luck.json": "2e6f6c7d95a0270392003abf955ade79576e0129701989c54b0cd031faae3e9e",
+    "input/schedule.json": "adace8f79697591f552b28e85c94d10f44a24a637146b962add5a939fe4d2927",
+    "params.json": "60cadb293255f94ff28371b37c1dbb6761d81e3c37637efec1097c427ce34d2e",
+    "results/native-isolated-continuous-physical-452a4dd95c2f.jsonl": "5679f7408b7c73367b4ba1ebb781bfda3698f595fa3412b612f23f9ff92a1593",
+    "results/native-judgement-frames-physical-452a4dd95c2f.jsonl": "646b1826a9116946be52b21d833398ef3d81485df52e640ae0f82eb47162d3fe",
+    "results/native-note-score-commands-physical-452a4dd95c2f.json": "1d1de0182135c1359b6015b25c275a1d7b203c0e4984ceeb5985aa8cdf8e14c6",
+    "results/physical-replay-pilot.json": "c1662ee307c4c1a0f0d5fb05114ae03d4f3c6181e54e7cca4ab7b721aab0ddbf",
+    "summary.json": "37fcbf5d3f51977a27f6d7651fe10b1a272f5fb65d5abc60320d9cb4e75773c9"
+   }
+  },
+  {
+   "caseId": "mt-p003-zero-offset-vs-auto",
+   "purpose": "Physical taps at nominal time; per-note judgement and score must match the sealed AutoPerfect trace for these notes",
+   "frames": 579,
+   "scheduleSteps": [
+    16
+   ],
+   "realtimeBaseSeconds": 37.0003,
+   "deviceClockQueriesPerFrame": [
+    1
+   ],
+   "finalScore": 14656,
+   "taps": [
+    {
+     "noteId": 1,
+     "nominalMs": 2352,
+     "offsetMs": 0,
+     "touchMs": 2352,
+     "touchLane": 8.0,
+     "preRegisteredGrade": "Perfect(5)",
+     "observed": {
+      "judgedFrameClockMs": 2352,
+      "judgementTimeMs": 2352,
+      "judgementDiffMs": 0,
+      "convertedJudgement": 6,
+      "originJudgement": 6,
+      "timing": 0,
+      "offsetJudgementTimeMs": 0
+     },
+     "scoreCommand": {
+      "timeMs": 2352,
+      "scoreType": 1,
+      "addedScore": 1832,
+      "comboBefore": 0,
+      "lifeBefore": 1000
+     }
+    },
+    {
+     "noteId": 2,
+     "nominalMs": 3529,
+     "offsetMs": 0,
+     "touchMs": 3529,
+     "touchLane": 16.0,
+     "preRegisteredGrade": "Perfect(5)",
+     "observed": {
+      "judgedFrameClockMs": 3536,
+      "judgementTimeMs": 3529,
+      "judgementDiffMs": 0,
+      "convertedJudgement": 6,
+      "originJudgement": 6,
+      "timing": 0,
+      "offsetJudgementTimeMs": 7
+     },
+     "scoreCommand": {
+      "timeMs": 3529,
+      "scoreType": 1,
+      "addedScore": 1832,
+      "comboBefore": 1,
+      "lifeBefore": 1000
+     }
+    },
+    {
+     "noteId": 3,
+     "nominalMs": 4705,
+     "offsetMs": 0,
+     "touchMs": 4705,
+     "touchLane": 4.0,
+     "preRegisteredGrade": "Perfect(5)",
+     "observed": {
+      "judgedFrameClockMs": 4720,
+      "judgementTimeMs": 4705,
+      "judgementDiffMs": 0,
+      "convertedJudgement": 6,
+      "originJudgement": 6,
+      "timing": 0,
+      "offsetJudgementTimeMs": 15
+     },
+     "scoreCommand": {
+      "timeMs": 4705,
+      "scoreType": 1,
+      "addedScore": 1832,
+      "comboBefore": 2,
+      "lifeBefore": 1000
+     }
+    },
+    {
+     "noteId": 4,
+     "nominalMs": 5882,
+     "offsetMs": 0,
+     "touchMs": 5882,
+     "touchLane": 20.0,
+     "preRegisteredGrade": "Perfect(5)",
+     "observed": {
+      "judgedFrameClockMs": 5888,
+      "judgementTimeMs": 5882,
+      "judgementDiffMs": 0,
+      "convertedJudgement": 6,
+      "originJudgement": 6,
+      "timing": 0,
+      "offsetJudgementTimeMs": 6
+     },
+     "scoreCommand": {
+      "timeMs": 5882,
+      "scoreType": 1,
+      "addedScore": 1832,
+      "comboBefore": 3,
+      "lifeBefore": 1000
+     }
+    },
+    {
+     "noteId": 5,
+     "nominalMs": 7058,
+     "offsetMs": 0,
+     "touchMs": 7058,
+     "touchLane": 9.0,
+     "preRegisteredGrade": "Perfect(5)",
+     "observed": {
+      "judgedFrameClockMs": 7072,
+      "judgementTimeMs": 7058,
+      "judgementDiffMs": 0,
+      "convertedJudgement": 6,
+      "originJudgement": 6,
+      "timing": 0,
+      "offsetJudgementTimeMs": 14
+     },
+     "scoreCommand": {
+      "timeMs": 7058,
+      "scoreType": 1,
+      "addedScore": 1832,
+      "comboBefore": 4,
+      "lifeBefore": 1000
+     }
+    },
+    {
+     "noteId": 6,
+     "nominalMs": 7647,
+     "offsetMs": 0,
+     "touchMs": 7647,
+     "touchLane": 9.0,
+     "preRegisteredGrade": "Perfect(5)",
+     "observed": {
+      "judgedFrameClockMs": 7648,
+      "judgementTimeMs": 7647,
+      "judgementDiffMs": 0,
+      "convertedJudgement": 6,
+      "originJudgement": 6,
+      "timing": 0,
+      "offsetJudgementTimeMs": 1
+     },
+     "scoreCommand": {
+      "timeMs": 7647,
+      "scoreType": 1,
+      "addedScore": 1832,
+      "comboBefore": 5,
+      "lifeBefore": 1000
+     }
+    },
+    {
+     "noteId": 7,
+     "nominalMs": 8235,
+     "offsetMs": 0,
+     "touchMs": 8235,
+     "touchLane": 15.0,
+     "preRegisteredGrade": "Perfect(5)",
+     "observed": {
+      "judgedFrameClockMs": 8240,
+      "judgementTimeMs": 8235,
+      "judgementDiffMs": 0,
+      "convertedJudgement": 6,
+      "originJudgement": 6,
+      "timing": 0,
+      "offsetJudgementTimeMs": 5
+     },
+     "scoreCommand": {
+      "timeMs": 8235,
+      "scoreType": 1,
+      "addedScore": 1832,
+      "comboBefore": 6,
+      "lifeBefore": 1000
+     }
+    },
+    {
+     "noteId": 8,
+     "nominalMs": 8823,
+     "offsetMs": 0,
+     "touchMs": 8823,
+     "touchLane": 15.0,
+     "preRegisteredGrade": "Perfect(5)",
+     "observed": {
+      "judgedFrameClockMs": 8832,
+      "judgementTimeMs": 8823,
+      "judgementDiffMs": 0,
+      "convertedJudgement": 6,
+      "originJudgement": 6,
+      "timing": 0,
+      "offsetJudgementTimeMs": 9
+     },
+     "scoreCommand": {
+      "timeMs": 8823,
+      "scoreType": 1,
+      "addedScore": 1832,
+      "comboBefore": 7,
+      "lifeBefore": 1000
+     }
+    }
+   ],
+   "params": {
+    "caseId": "mt-p003-zero-offset-vs-auto",
+    "startedUtc": "2026-10-02T00:23:08Z",
+    "endedUtc": "2026-10-02T00:24:00Z",
+    "exitCode": 0,
+    "worker": "single docker exec in workspace-pilot-1"
+   },
+   "sealedFiles": {
+    "input/case.json": "4cdebc3206a42ad71748c595d8f24454b3ed7c1447a401109e748db30e672a1f",
+    "input/input-record.json": "c12e76443df50a619564d9cbae6a67c3ab4b30b869a8652abf127b357dae20cc",
+    "input/latest-method-records.json": "9779caa5f6255820d0f0fd9e75b981fc2ca186e5e8f38a03ffe513ef79487a46",
+    "input/physical-replay-method-records.json": "1e3a2ecf5f3e9005141075782196157f5477933ebe87dc510fa254575abf3679",
+    "input/pilot-input-gekisou-luck.json": "2e6f6c7d95a0270392003abf955ade79576e0129701989c54b0cd031faae3e9e",
+    "input/schedule.json": "c7b1845e0d061ae1ddba8d8d4c7aae28b67e28becfed62f0a78a7825b29db3a9",
+    "params.json": "565e5e89736f1da0bacadcf1eee8ce9cb5a30a32aa9e75a9eb095e9b7f2050a4",
+    "results/native-isolated-continuous-physical-452a4dd95c2f.jsonl": "9646a06d2b619ede925139e2b3b85af12cf6fe169dc0e8bb175e36e8471865d8",
+    "results/native-judgement-frames-physical-452a4dd95c2f.jsonl": "194ac909f9a6d3ceada0d6859b843a36637bb906a358feb651ae5450355ec91a",
+    "results/native-note-score-commands-physical-452a4dd95c2f.json": "068c4fed33467fdb02ac75eec81c85f26c47f392a3aff6190893d850da1ecf41",
+    "results/physical-replay-pilot.json": "4d93c7989d3d6b89d9da598704feeb2e52636353505061413979dccb58b7452d",
+    "summary.json": "77237c241600b9ef997087f62d32eb9ce9fafcc248380ed8ee1799071afe9b91"
+   }
+  }
+ ],
+ "queue": [
+  {
+   "caseId": "mt-q004-just-edges",
+   "route": "InputPlayer",
+   "what": "offsets -3,-2,-1,+1,+2,+3 and -51,+50,+83,-84,+100,-101,+125,-126 on notes 1-8 (two runs)",
+   "observe": "grade edges inclusive/exclusive, Just enablement",
+   "dependsOn": []
+  },
+  {
+   "caseId": "mt-q005-same-frame-tap",
+   "route": "InputPlayer",
+   "what": "Enter and Exit of one finger inside one frame; two fingers on one note in one frame",
+   "observe": "ApplyTouches overwrite (Enter lost?), which unit judges",
+   "dependsOn": []
+  },
+  {
+   "caseId": "mt-q006-wrong-lane-and-held",
+   "route": "InputPlayer",
+   "what": "touch outside note lanes; Press held through the window without Enter; touch with no Exit",
+   "observe": "negative controls: no judgement, expired Miss time",
+   "dependsOn": []
+  },
+  {
+   "caseId": "mt-q007-expiry-vs-fps",
+   "route": "InputPlayer",
+   "what": "untouched taps under 16/33/8 ms steps",
+   "observe": "expired-Miss frame (progress > 1.1 observed at +409 ms) vs frame grid and note speed",
+   "dependsOn": []
+  },
+  {
+   "caseId": "mt-q008-flick-hold-slide",
+   "route": "InputPlayer",
+   "what": "flick vectors, hold release early/late, slide trajectories on later notes of 10000201",
+   "observe": "parent/child chain, combo/life, illegal trajectories rejected",
+   "dependsOn": [
+    "line graph projection"
+   ]
+  },
+  {
+   "caseId": "mt-q009-skill-boundary",
+   "route": "InputPlayer + NativeSkillContext",
+   "what": "same-judgement and changed-judgement taps on notes just before/after a live skill start/end, 40 ms command frame edges, variable fps",
+   "observe": "factor command times, which command frame each note lands in, score delta (expected zero for same-judgement if command time stays nominal)",
+   "dependsOn": [
+    "NativeSkillContext"
+   ]
+  },
+  {
+   "caseId": "mt-q010-screen-touch",
+   "route": "ScreenTouchInputProvider",
+   "what": "EnhancedTouch phases, positions, inputOffsetMs, UI blocker",
+   "observe": "screen->lane mapping and touch.time -> InputTimeMs",
+   "dependsOn": [
+    "InputSystem state route (T1b)"
+   ]
+  }
+ ]
+}
