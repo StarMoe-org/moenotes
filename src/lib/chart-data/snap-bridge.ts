@@ -126,11 +126,12 @@ export async function loadSnapReplayRuntime(site: string, reference: SnapReplayR
   const manifest = JSON.parse(new TextDecoder().decode(await verified(manifestUrl, reference, signal))) as SnapReplayManifest;
   if (manifest.format !== reference.format || manifest.engine?.requestFormat !== "ournotes.replay/1" || manifest.engine.model.commit !== expected.modelCommit) throw new SnapReplayError("identity", "Replay engine does not match the music data model");
   const resource = (item: SnapReplayResource) => verified(new URL(item.url, manifestUrl).href, item, signal);
-  const [input, js, wasm] = await Promise.all([resource(manifest.deckData), resource(manifest.engine.js), resource(manifest.engine.wasm)]);
+  const [input, js, wasm, labels] = await Promise.all([resource(manifest.deckData), resource(manifest.engine.js), resource(manifest.engine.wasm),
+    manifest.snapLabels ? resource(manifest.snapLabels) : undefined]);
   const data = JSON.parse(new TextDecoder().decode(input)) as SnapDeckData;
   const master = data.provenance.master as { version?: string } | undefined, model = data.provenance.deck as { commit?: string } | undefined;
   if (data.format !== "nnnotes.deck-data/1" || data.provenance.region !== expected.region || master?.version !== expected.masterVersion || model?.commit !== expected.modelCommit) throw new SnapReplayError("identity", "Replay inputs do not match the selected music-data snapshot");
-  const labelSource = manifest.snapLabels ? JSON.parse(new TextDecoder().decode(await resource(manifest.snapLabels))) as SnapLabelSource : undefined;
+  const labelSource = labels ? JSON.parse(new TextDecoder().decode(labels)) as SnapLabelSource : undefined;
   const moduleUrl = URL.createObjectURL(new Blob([js], { type: "text/javascript" }));
   try {
     const engine = await import(/* @vite-ignore */ moduleUrl) as { default(options: { module_or_path: ArrayBuffer }): Promise<void>; ReplaySession: new (input: string) => SnapReplayEngine };

@@ -12,6 +12,15 @@ Storage or service workers every file simply downloads again.
 | Images | Cache Storage `moenotes-images-v1`, filled by the service worker `public/sw.js` (`src/lib/cache/images.ts`) | The pages' images from the asset service (`<img>`, CSS backgrounds) | `cacheConfig.images` (256 MB), kept longest ago out first |
 | Release assets | IndexedDB `assets` (`src/lib/cache/asset-cache.ts`, `cached-fetch.ts`) | `fetch()` answers of the asset service: JSON, and images and audio fetched by script | `cacheConfig.assets` (150 MB, 300 entries), 7 days fresh |
 
+The chart-data tool also keeps the complete `music-data.json` response in the existing `assets` store, under a
+separate key for its source URL. This mutable file is fresh for **five minutes**, with no stale-on-error fallback;
+reloads within that window reuse its Blob rather than downloading it again. Its provenance and replay reference
+remain part of that same validated snapshot. The parsed object is reused in memory, and concurrent reads share one
+load. A reader's abort rejects only its own wait; the shared load may finish and warm the cache. Corrupt, incompatible
+or expired cache entries fall back to a fresh request. Writes run in the background, and unavailable storage falls
+back to memory and network. The developer cache-bypass switch skips this cache too. This does not change the release
+assets' seven-day policy or add caching to replay JSON/WASM resources.
+
 ## Categories
 
 Each player file is stored with its **kind**, what it is. The player file fetch learns it from the manifests it fetches
