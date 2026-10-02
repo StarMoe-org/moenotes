@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test";
-import { getAssetUrl, getImageAssetUrl } from "../src/lib/assets/url";
+import { getAssetUrl, getAudioAssetUrl, getImageAssetUrl } from "../src/lib/assets/url";
 import { assetLanguage } from "../src/lib/assets/release";
+import { getCostumeIconUrl } from "../src/lib/assets/costume";
+import { getVoiceAudioUrl } from "../src/lib/assets/voice";
 import { getStoryBackgroundUrl, getStoryBgmUrl, getStoryScriptTableUrl, getStoryStillUrl, getStoryVoiceUrl } from "../src/lib/story/assets";
 import { getMusicAudioUrl } from "../src/lib/music/data";
 import { isManagedAssetUrl } from "../src/lib/cache/cached-fetch";
@@ -12,6 +14,29 @@ test("release files are addressed by asset path, not by ID", () => {
   expect(getAssetUrl({ path: "Character/Image/11/character_face_icon.png" }))
     .toBe(`${api}/zh-Hans/Character/Image/11/character_face_icon/character_face_icon.webp`);
   expect(getAssetUrl({ path: "Cri/Sound/MusicScore/A_AveMujica.wav" })).toBe("");
+});
+
+test("audio requests resolve a cue sheet's published m4a", () => {
+  expect(getAssetUrl({ type: "audio", path: "A_Abracadabra" })).toBe(`${api}/zh-Hans/Cri/Sound/A_Abracadabra/A_Abracadabra.m4a`);
+  expect(getAssetUrl({ type: "audio", path: "Cri/Sound/MusicScore/A_AveMujica.acb", locale: "ja-JP" }))
+    .toBe(`${api}/ja/Cri/Sound/MusicScore/A_AveMujica/A_AveMujica.m4a`);
+  expect(getAudioAssetUrl("sound_bgm_adv_cafe_time", "en-US")).toBe(`${api}/en/Cri/Sound/sound_bgm_adv_cafe_time/sound_bgm_adv_cafe_time.m4a`);
+  expect(getAssetUrl({ type: "audio", path: " " })).toBe("");
+});
+
+test("json requests pass through as published", () => {
+  expect(getAssetUrl({ type: "json", path: "Assets/AddressableResources/scores/expert/MySong" }))
+    .toBe(`${api}/Assets/AddressableResources/scores/expert/MySong.json`);
+  expect(getAssetUrl({ type: "json", path: " " })).toBe("");
+});
+
+test("character voices resolve by their cue sheet", () => {
+  expect(getVoiceAudioUrl(42, "live_voice_kasumi_001", "live_voice_kasumi", "ko-KR"))
+    .toBe(`${api}/ko/Cri/Sound/live_voice_kasumi/live_voice_kasumi.m4a`);
+});
+
+test("costume icons follow the image release layout", () => {
+  expect(getCostumeIconUrl("live2d/icon/icon_costume_001", "ja-JP")).toBe(`${api}/ja/live2d/icon/icon_costume_001/icon_costume_001.webp`);
 });
 
 test("card textures use their named output rather than a crop", () => {

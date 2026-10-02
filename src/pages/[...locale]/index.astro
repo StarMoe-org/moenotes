@@ -24,8 +24,10 @@ import MusicDetailPage from "@/components/music/MusicDetailPage.astro";
 import StampsPage from "@/components/stamps/StampsPage.astro";
 import ComicsPage from "@/components/comics/ComicsPage.astro";
 import ItemsPage from "@/components/items/ItemsPage.astro";
+import BandItemsPage from "@/components/band-items/BandItemsPage.astro";
 import GachaPage from "@/components/gacha/GachaPage.astro";
 import GachaDetailPage from "@/components/gacha/GachaDetailPage.astro";
+import ExchangePage from "@/components/exchange/ExchangePage.astro";
 import RewardsPage from "@/components/rewards/RewardsPage.astro";
 import RewardDetailPage from "@/components/rewards/RewardDetailPage.astro";
 import EventsPage from "@/components/events/EventsPage.astro";
@@ -88,10 +90,14 @@ const component = match.item.component ?? "page";
     <ComicsPage locale={locale} />
   ) : component === "items" ? (
     <ItemsPage locale={locale} />
+  ) : component === "band-items" ? (
+    <BandItemsPage locale={locale} />
   ) : component === "gacha" ? (
     <GachaPage locale={locale} />
   ) : component === "gacha-detail" ? (
     <GachaDetailPage locale={locale} gachaId={Number(match.params.id)} />
+  ) : component === "exchange" ? (
+    <ExchangePage locale={locale} />
   ) : component === "rewards" ? (
     <RewardsPage locale={locale} />
   ) : component === "reward-detail" ? (

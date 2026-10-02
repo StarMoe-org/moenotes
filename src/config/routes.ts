@@ -219,6 +219,21 @@ export const routeRegistry = [
         searchable: true,
         keywords: ["items", "possessions", "materials", "inventory"],
       },
+      {
+        id: "band-items",
+        path: "/band-items",
+        labelKey: "nav.items.bandItems",
+        component: "band-items",
+        seo: {
+          titleKey: "seo.bandItems.title",
+          descriptionKey: "seo.bandItems.description",
+          keywords: ["BanG Dream! Our Notes band items", "Our Notes band equipment", "band gear", "band items", "band stat boost"],
+          sitemap: { priority: 0.8 },
+        },
+        nav: { order: 27, icon: "archive" },
+        searchable: true,
+        keywords: ["band items", "equipment", "band gear"],
+      },
     ],
   },
   {
@@ -398,6 +413,22 @@ export const routeRegistry = [
             staticParams: async () => (await import("@/lib/route/masterdata-params")).getMasterdataRewardParams(),
           },
         ],
+      },
+      {
+        // The exchange shop (MasterExchange / MasterExchangeCategory / MasterExchangeProduct).
+        id: "exchange",
+        path: "/events/exchange",
+        labelKey: "nav.items.exchange",
+        component: "exchange",
+        seo: {
+          titleKey: "seo.exchange.title",
+          descriptionKey: "seo.exchange.description",
+          keywords: ["BanG Dream! Our Notes exchange shop", "Our Notes exchange", "event shop", "seal shop", "star exchange"],
+          sitemap: { priority: 0.7, changefreq: "daily" },
+        },
+        nav: { order: 25, icon: "calendar" },
+        searchable: true,
+        keywords: ["exchange", "shop", "trade"],
       },
       {
         id: "gacha",

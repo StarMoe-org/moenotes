@@ -1,0 +1,19 @@
+---
+import BandItemsExplorer from "@/components/band-items/BandItemsExplorer";
+import PageLayout from "@/layouts/PageLayout.astro";
+import type { AppLocale } from "@/config/locales";
+import { getBuildBandItems, getBuildBandNames } from "@/lib/masterdata/build-data";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
+
+interface Props {
+  locale: AppLocale;
+}
+
+const { locale } = Astro.props;
+const [bandItems, bandNames] = await Promise.all([getBuildBandItems(locale), getBuildBandNames(locale)]);
+const servers = await getBuildServers();
+---
+
+<PageLayout locale={locale} titleKey="seo.bandItems.title" descriptionKey="seo.bandItems.description">
+  <BandItemsExplorer client:load servers={servers} locale={locale} initialItems={bandItems} initialBandNames={bandNames} />
+</PageLayout>

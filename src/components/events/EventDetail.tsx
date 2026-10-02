@@ -13,7 +13,8 @@ import SupportCardItem from "@/components/support-cards/SupportCardItem";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import { moveReleaseUrls } from "@/lib/assets/release";
-import type { EventBonus, EventBonusGroup, EventBonusTarget, EventDetailViewModel, EventLiveRow, EventStoryEpisode } from "@/lib/events/data";
+import type { EventBonus, EventBonusGroup, EventBonusTarget, EventBoxGachaBox, EventBoxGachaItem, EventChallengeLive, EventDetailViewModel, EventLiveRow, EventMissionRow, EventRankingTier, EventStoryEpisode } from "@/lib/events/data";
+import { formatCompactCount } from "@/lib/format/compact-count";
 import { getEventTrackerHref } from "@/lib/game-api/links";
 import type { MusicViewModel } from "@/lib/music/data";
 import { getRoutePathById } from "@/lib/route/registry";
@@ -116,7 +117,11 @@ function EventDetailView({ locale, server, event, schedules }: { locale: AppLoca
           )}
 
           {event.story.length > 0 && <StoryPanel locale={locale} event={event} />}
+          {event.missions.length > 0 && <MissionsPanel locale={locale} missions={event.missions} />}
           {event.pointRewards.length > 0 && <PointRewardsPanel locale={locale} event={event} />}
+          {event.boxGacha && <BoxGachaPanel locale={locale} boxGacha={event.boxGacha} />}
+          {event.rankingRewards.length > 0 && <RankingRewardsPanel locale={locale} tiers={event.rankingRewards} />}
+          {event.challengeMusic && <ChallengeMusicPanel locale={locale} detail={event.challengeMusic} />}
           {event.live.length + event.challengeLive.length > 0 && <LiveRewardsPanel locale={locale} event={event} />}
 
           <div className="flex justify-start">
@@ -335,6 +340,173 @@ function LiveRewardsPanel({ locale, event }: { locale: AppLocale; event: EventDe
       </div>
       <p className="mt-4 border-t border-[var(--mn-glass-border)] pt-3 text-xs leading-6 text-[var(--mn-text-muted)]">{t(locale, "events.liveNote")}</p>
     </Panel>
+  );
+}
+
+function MissionsPanel({ locale, missions }: { locale: AppLocale; missions: EventMissionRow[] }) {
+  return (
+    <Panel title={t(locale, "events.missions")}>
+      <ol className="divide-y divide-dashed divide-[var(--mn-border)]/60">
+        {missions.map((mission) => (
+          <li key={mission.id} className="flex min-w-0 items-center justify-between gap-4 py-3">
+            <span className="min-w-0 flex-1 text-sm font-bold leading-6 text-[var(--mn-text)]">{mission.description || `#${mission.id}`}</span>
+            <span className="flex shrink-0 flex-wrap justify-end gap-2">
+              {mission.rewards.map((reward, index) => <RewardChip key={`${reward.kind}:${reward.id}:${index}`} reward={reward} locale={locale} variant="icon" />)}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </Panel>
+  );
+}
+
+function BoxGachaPanel({ locale, boxGacha }: { locale: AppLocale; boxGacha: NonNullable<EventDetailViewModel["boxGacha"]> }) {
+  return (
+    <Panel title={t(locale, "events.boxGacha")}>
+      <div className="space-y-6">
+        {boxGacha.item && (
+          <p className="text-sm font-semibold text-[var(--mn-text-muted)]">{t(locale, "events.boxGachaCost", { count: boxGacha.item.count.toLocaleString(locale) })}</p>
+        )}
+        {boxGacha.boxes.map((box) => (
+          <section key={box.tier} className="min-w-0">
+            <h4 className="mb-2 flex items-center justify-between gap-3 text-sm font-black text-[var(--mn-accent-deep)]">
+              <span>{t(locale, "events.boxGachaBox", { n: box.tier })}</span>
+              <span className="text-xs font-semibold text-[var(--mn-text-muted)]">{t(locale, "events.boxGachaCost", { count: box.cost.toLocaleString(locale) })}</span>
+            </h4>
+            <BoxGachaTable locale={locale} items={box.items} />
+          </section>
+        ))}
+        {boxGacha.loop && (
+          <section className="min-w-0">
+            <h4 className="mb-2 text-sm font-black text-[var(--mn-accent-deep)]">{t(locale, "events.boxGachaLoop", { n: boxGacha.loop.tier })}</h4>
+            <BoxGachaTable locale={locale} items={boxGacha.loop.items} />
+          </section>
+        )}
+        <p className="border-t border-[var(--mn-glass-border)] pt-3 text-xs leading-6 text-[var(--mn-text-muted)]">{t(locale, "events.boxGachaNote")}</p>
+      </div>
+    </Panel>
+  );
+}
+
+function BoxGachaTable({ locale, items }: { locale: AppLocale; items: EventBoxGachaItem[] }) {
+  return (
+    <ol className="grid gap-x-6 sm:grid-cols-2">
+      {items.map((item, index) => (
+        <li key={`${item.kind}:${item.id}:${index}`} className="flex min-w-0 items-center justify-between gap-3 border-b border-dashed border-[var(--mn-border)]/60 py-2">
+          <span className="flex min-w-0 flex-1 items-center"><RewardChip reward={item} locale={locale} variant="icon" /></span>
+          <span className="shrink-0 whitespace-nowrap text-xs font-mono tabular-nums text-[var(--mn-text-muted)]">
+            {t(locale, "events.boxGachaCount", { count: formatCompactCount(item.count) })}
+            {item.probability < 100 && <span className="ml-2">{t(locale, "events.probability", { rate: item.probability })}</span>}
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function RankingRewardsPanel({ locale, tiers }: { locale: AppLocale; tiers: EventRankingTier[] }) {
+  return (
+    <Panel title={t(locale, "events.rankingRewards")}>
+      <ol className="grid gap-x-6 sm:grid-cols-2">
+        {tiers.map((tier, index) => (
+          <li key={`${tier.rankStart}:${tier.rankEnd}:${index}`} className="flex min-w-0 items-center justify-between gap-3 border-b border-dashed border-[var(--mn-border)]/60 py-2.5">
+            <span className="shrink-0 font-mono text-sm font-bold tabular-nums text-[var(--mn-text)]">
+              {tier.rankStart === tier.rankEnd ? t(locale, "events.rankSingle", { start: tier.rankStart.toLocaleString(locale) }) : t(locale, "events.rankRange", { start: tier.rankStart.toLocaleString(locale), end: tier.rankEnd.toLocaleString(locale) })}
+            </span>
+            <span className="flex min-w-0 flex-wrap justify-end gap-2">
+              {tier.rewards.map((reward, rewardIndex) => <RewardChip key={`${reward.kind}:${reward.id}:${rewardIndex}`} reward={reward} locale={locale} variant="icon" />)}
+            </span>
+          </li>
+        ))}
+      </ol>
+      <p className="mt-4 border-t border-[var(--mn-glass-border)] pt-3 text-xs leading-6 text-[var(--mn-text-muted)]">{t(locale, "events.rankingRewardsNote")}</p>
+    </Panel>
+  );
+}
+
+function ChallengeMusicPanel({ locale, detail }: { locale: AppLocale; detail: EventChallengeLive }) {
+  return (
+    <Panel title={t(locale, "events.challengeLive")}>
+      <p className="mb-4 whitespace-pre-line text-sm leading-7 text-[var(--mn-text-muted)]">{t(locale, "events.challengeLiveNote")}</p>
+      {detail.songs.map((song) => (
+        <section key={song.id} className="mb-6 min-w-0 last:mb-0">
+          {song.music && (
+            <a href={localizePath(`${getRoutePathById("music")}/${song.music.id}`, locale)} className="mn-focus group mb-3 flex items-center gap-4">
+              <SongJacket locale={locale} music={song.music} />
+              <span className="min-w-0">
+                <span className="block truncate text-base font-black text-[var(--mn-text)] group-hover:text-[var(--mn-accent-deep)]">{song.music.title}</span>
+                {song.music.bandName && <span className="mt-0.5 block truncate text-xs font-medium text-[var(--mn-text-muted)]">{song.music.bandName}</span>}
+              </span>
+            </a>
+          )}
+          {song.missions.length > 0 && (
+            <div className="mb-3">
+              <h4 className="mb-1.5 text-sm font-black text-[var(--mn-accent-deep)]">{t(locale, "events.challengeMissions")}</h4>
+              <p className="flex flex-wrap gap-2 text-sm font-semibold text-[var(--mn-text)]">
+                {song.missions.map((value, index) => (
+                  <span key={index} className="rounded-full bg-[var(--mn-accent-soft)] px-2.5 py-0.5 font-mono tabular-nums text-[var(--mn-accent-deep)]">{t(locale, "events.challengeMissionValue", { count: value.toLocaleString(locale) })}</span>
+                ))}
+              </p>
+            </div>
+          )}
+          {song.ranking.length > 0 && (
+            <div>
+              <h4 className="mb-1.5 text-sm font-black text-[var(--mn-accent-deep)]">{t(locale, "events.challengeRanking")}</h4>
+              <MiniRanking locale={locale} tiers={song.ranking} />
+            </div>
+          )}
+        </section>
+      ))}
+      {detail.boosts.length > 0 && <ChallengeBoostTable locale={locale} boosts={detail.boosts} />}
+    </Panel>
+  );
+}
+
+function SongJacket({ locale, music }: { locale: AppLocale; music: NonNullable<EventChallengeLive["songs"][number]["music"]> }) {
+  const assetUrl = useAssetUrl();
+  return <img className="h-14 w-14 shrink-0 rounded-xl border border-[var(--mn-glass-border)] bg-[var(--mn-cream-deep)] object-cover" src={assetUrl(music.jacketUrl)} alt="" loading="lazy" />;
+}
+
+function MiniRanking({ locale, tiers }: { locale: AppLocale; tiers: EventRankingTier[] }) {
+  return (
+    <ol className="grid gap-x-6 sm:grid-cols-2">
+      {tiers.map((tier, index) => (
+        <li key={`${tier.rankStart}:${tier.rankEnd}:${index}`} className="flex min-w-0 items-center justify-between gap-3 border-b border-dashed border-[var(--mn-border)]/60 py-2">
+          <span className="shrink-0 font-mono text-sm font-bold tabular-nums text-[var(--mn-text)]">
+            {tier.rankStart === tier.rankEnd ? t(locale, "events.rankSingle", { start: tier.rankStart.toLocaleString(locale) }) : t(locale, "events.rankRange", { start: tier.rankStart.toLocaleString(locale), end: tier.rankEnd.toLocaleString(locale) })}
+          </span>
+          <span className="flex min-w-0 flex-wrap justify-end gap-2">
+            {tier.rewards.map((reward, rewardIndex) => <RewardChip key={`${reward.kind}:${reward.id}:${rewardIndex}`} reward={reward} locale={locale} variant="icon" />)}
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function ChallengeBoostTable({ locale, boosts }: { locale: AppLocale; boosts: EventChallengeLive["boosts"] }) {
+  return (
+    <div className="mt-2">
+      <h4 className="mb-1.5 text-sm font-black text-[var(--mn-accent-deep)]">{t(locale, "events.challengeBoosts")}</h4>
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-[var(--mn-glass-border)] text-left text-xs font-bold text-[var(--mn-text-muted)]">
+            <th className="py-2 pr-3 font-bold">{t(locale, "events.challengePointHeader")}</th>
+            <th className="py-2 text-right font-bold">{t(locale, "events.challengeEventPointHeader")}</th>
+            <th className="py-2 text-right font-bold">{t(locale, "events.challengeRewardRateHeader")}</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-dashed divide-[var(--mn-border)]/60">
+          {boosts.map((boost, index) => (
+            <tr key={`${boost.challengePoint}:${index}`}>
+              <td className="py-2.5 pr-3 font-mono font-bold tabular-nums text-[var(--mn-text)]">{boost.challengePoint.toLocaleString(locale)}</td>
+              <td className="py-2.5 text-right font-mono font-bold tabular-nums text-[var(--mn-text)]">×{boost.eventPointRate}</td>
+              <td className="py-2.5 text-right font-mono font-bold tabular-nums text-[var(--mn-accent-deep)]">×{boost.rewardRate}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

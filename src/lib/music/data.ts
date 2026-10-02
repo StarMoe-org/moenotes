@@ -28,6 +28,54 @@ export interface RawMusic {
   expertID: number;
   musicSoundID: number;
   jingleSoundID: number;
+  /** MasterLiveMusicCategory ids, e.g. original / cover / virtual-singer buckets. */
+  musicCategories: number[];
+  /** Group key into MasterLiveScoreRank for this song's score-rank thresholds. */
+  liveScoreRankGroup: number;
+  /** Alternate-vocal song ids offered for this track. */
+  anotherVocalIDs: number[];
+  /** MasterReward.id entries paid per achieved score rank (D has none). */
+  scoreCLiveMusicRewardID: number;
+  scoreBLiveMusicRewardID: number;
+  scoreALiveMusicRewardID: number;
+  scoreSLiveMusicRewardID: number;
+  scoreSSLiveMusicRewardID: number;
+  /** MasterReward.id entries paid per difficulty's full-combo reward. */
+  comboEasyLiveMusicRewardID: number;
+  comboNormalLiveMusicRewardID: number;
+  comboHardLiveMusicRewardID: number;
+  comboExpertLiveMusicRewardID: number;
+}
+
+/** MasterLiveMusicCategory row: the bucket a song belongs to and the text key naming it. */
+export interface RawLiveMusicCategory {
+  id: number;
+  musicCategories: number[];
+  textKey: string;
+}
+
+/** MasterLiveScoreRank row: one rank's thresholds inside a group's ladder. */
+export interface RawLiveScoreRank {
+  id: number;
+  group: number;
+  liveScoreRank: number; // 2=D, 3=C, 4=B, 5=A, 6=S, 7=SS
+  requiredScore: number;
+  battleLiveRequiredScore: number;
+}
+
+/** MasterLiveMusicAnotherVocal row: an alternate vocalist offered for a song. */
+export interface RawLiveMusicAnotherVocal {
+  id: number;
+  musicId: number;
+  characterId: number;
+}
+
+/** Shared shape of MasterReward rows the music reward ids point at. */
+export interface RawLiveMusicRewardRow {
+  id: number;
+  resourceType: number;
+  resourceId: number;
+  resourceCount: number;
 }
 
 export interface RawMusicScore {
@@ -92,6 +140,107 @@ export interface MusicSoundCue {
   cueName: string;
   cueSheetName: string;
 }
+
+/** MasterLiveScoreRank.liveScoreRank 2–7, matching the D–SS rank icons. */
+export const SCORE_RANK_LABELS: Record<number, string> = { 2: "D", 3: "C", 4: "B", 5: "A", 6: "S", 7: "SS" };
+
+/** A named category the song is filed under (original / cover / virtual-singer …). */
+export interface MusicCategoryModel {
+  id: number;
+  name: string;
+}
+
+/** One rung of the song's score-rank ladder, both the solo and the Gekisou-room threshold. */
+export interface MusicScoreRankModel {
+  /** "C" | "B" | "A" | "S" | "SS" */
+  rank: string;
+  liveScoreRank: number;
+  requiredScore: number;
+  battleLiveRequiredScore: number;
+}
+
+/** An alternate vocalist the track can be sung by (character id + resolved name, like `vocalists`). */
+export interface MusicAnotherVocalModel {
+  characterId: number;
+  name: string;
+}
+
+/** Live-system extras of the music detail page, joined from the MasterLiveMusic* tables. */
+export interface MusicLiveDetail {
+  categories: MusicCategoryModel[];
+  scoreRanks: MusicScoreRankModel[];
+  anotherVocals: MusicAnotherVocalModel[];
+  /**
+   * Reward ids (into MasterReward) paid for each difficulty's full combo and for each achieved
+   * score rank; resolved to names / icons by the caller, which has the full reward sources.
+   */
+  comboRewardIds: Array<{ difficulty: SongDifficultyModel["difficulty"]; rewardId: number }>;
+  scoreRewardIds: Array<{ rank: string; liveScoreRank: number; rewardId: number }>;
+}
+
+/** Raw inputs the live detail is built from (all already-normalized tables). */
+export interface MusicLiveSources {
+  categories: RawLiveMusicCategory[];
+  scoreRanks: RawLiveScoreRank[];
+}
+
+/**
+ * Reads the song's live-system extras out of its raw row and the shared tables. The reward rows
+ * stay as MasterReward ids; the build layer resolves them against items / cards / … because the
+ * reward resolver needs every reward source (and through them the music list itself).
+ */
+export function buildMusicLiveDetail(
+  music: RawMusic,
+  sources: MusicLiveSources,
+  texts: RawText[],
+  characters: RawCharacter[],
+  locale: AppLocale,
+): MusicLiveDetail {
+  const textMap = new Map(texts.map((entry) => [entry.id, entry]));
+  const characterMap = new Map(characters.map((entry) => [entry.id, entry]));
+  const resolveText = (id: string) => localizeMasterText(textMap.get(id), locale) || id;
+
+  const categoryNameById = new Map(
+    sources.categories.map((category) => [category.id, resolveText(category.textKey)]),
+  );
+  const categories: MusicCategoryModel[] = (music.musicCategories ?? [])
+    .map((id) => ({ id, name: categoryNameById.get(id) ?? `#${id}` }));
+
+  const scoreRanks: MusicScoreRankModel[] = sources.scoreRanks
+    .filter((row) => row.group === music.liveScoreRankGroup)
+    .sort((a, b) => a.liveScoreRank - b.liveScoreRank)
+    .map((row) => ({
+      rank: SCORE_RANK_LABELS[row.liveScoreRank] ?? String(row.liveScoreRank),
+      liveScoreRank: row.liveScoreRank,
+      requiredScore: row.requiredScore,
+      battleLiveRequiredScore: row.battleLiveRequiredScore,
+    }));
+
+  const anotherVocals: MusicAnotherVocalModel[] = (music.anotherVocalIDs ?? []).map((characterId) => {
+    const character = characterMap.get(characterId);
+    return { characterId, name: character ? resolveText(character.nameTextID) : `Char #${characterId}` };
+  });
+
+  const comboRewardIds: MusicLiveDetail["comboRewardIds"] = (
+    [
+      { difficulty: "easy", rewardId: music.comboEasyLiveMusicRewardID },
+      { difficulty: "normal", rewardId: music.comboNormalLiveMusicRewardID },
+      { difficulty: "hard", rewardId: music.comboHardLiveMusicRewardID },
+      { difficulty: "expert", rewardId: music.comboExpertLiveMusicRewardID },
+    ] as const
+  ).filter((entry) => entry.rewardId > 0) as MusicLiveDetail["comboRewardIds"];
+
+  const scoreRewardIds: MusicLiveDetail["scoreRewardIds"] = [
+    { rank: "C", liveScoreRank: 3, rewardId: music.scoreCLiveMusicRewardID },
+    { rank: "B", liveScoreRank: 4, rewardId: music.scoreBLiveMusicRewardID },
+    { rank: "A", liveScoreRank: 5, rewardId: music.scoreALiveMusicRewardID },
+    { rank: "S", liveScoreRank: 6, rewardId: music.scoreSLiveMusicRewardID },
+    { rank: "SS", liveScoreRank: 7, rewardId: music.scoreSSLiveMusicRewardID },
+  ].filter((entry) => entry.rewardId > 0);
+
+  return { categories, scoreRanks, anotherVocals, comboRewardIds, scoreRewardIds };
+}
+
 
 export function validateMasterTable<T>(raw: unknown): MasterTable<T> {
   const rows = Array.isArray(raw)
