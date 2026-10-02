@@ -64,6 +64,11 @@
 ## 对微操理论的含义（范围受限）
 
 - 在本批证据范围内，提前或延后**不会**移动音符的计分时间：command 时间按名义时间归入 40 ms 计分帧（`ScoreCalculationUtility.GetFrame = floor(ms/40)`）。
+- 原生（1.0.1 反编译）`FTLiveSimulator.SkillEventUpdater.Update(position, input)`（`0x6A57ACC`）的逻辑：
+  - 只比较谱面 `SkillEvent` 的乐谱位置时间和当前帧位置；条件满足且尚未触发时回调一次，回调参数是事件索引和**事件自身时间**。
+  - `input` 参数没有被读取。
+  - 所以帧率只决定回调发生在哪一帧，不改变传出的时间。
+  - 1.0.4 中同名方法的机器码尚未逐字比对。
 - 核心（`live/full/engine.rs`）中，成员技能的起点 `execute_ms` 取自谱面技能事件时间，与玩家输入和帧无关。
 - 按时长结束的技能，终点是 `execute_ms + ceil(时长)`，也与帧无关；只有被条件解除或在 live 结束时收尾的效果才取当帧时间。
 - 因此，“放弃 Perfect、把窗口外的音符挪进技能区间”在原生中预期**没有收益**，只会损失判定分。这一点要等 q009 带 NativeSkillContext 实测确认后才能定为结论；确认前是“未证实”，不是“已证明无收益”。
