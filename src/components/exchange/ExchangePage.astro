@@ -1,0 +1,19 @@
+---
+import ExchangeExplorer from "@/components/exchange/ExchangeExplorer";
+import PageLayout from "@/layouts/PageLayout.astro";
+import type { AppLocale } from "@/config/locales";
+import { getBuildExchange } from "@/lib/masterdata/build-data";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
+
+interface Props {
+  locale: AppLocale;
+}
+
+const { locale } = Astro.props;
+const categories = await getBuildExchange(locale);
+const servers = await getBuildServers();
+---
+
+<PageLayout locale={locale} titleKey="seo.exchange.title" descriptionKey="seo.exchange.description">
+  <ExchangeExplorer client:load servers={servers} locale={locale} initialCategories={categories} />
+</PageLayout>

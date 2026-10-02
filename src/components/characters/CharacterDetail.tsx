@@ -7,6 +7,7 @@ import { moveReleaseUrls } from "@/lib/assets/release";
 import { entityServer, valueForServer, type ServerFacetedValue } from "@/lib/servers/facets";
 import { useAssetUrl, useContentServer } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
+import { getImageAssetUrl } from "@/lib/assets/url";
 import { localizePath } from "@/i18n/routing";
 import { getRoutePathById } from "@/lib/route/registry";
 import Modal from "@/components/shared/Modal";
@@ -24,13 +25,17 @@ import {
   type CardViewModel,
 } from "@/lib/cards/data";
 import {
+  type CharacterProgressionData,
   type CharacterViewModel,
+  type CostumeViewModel,
+  type VoiceViewModel,
 } from "@/lib/characters/data";
 
 interface Props {
   locale: AppLocale;
   characterId: number;
   initialData: ServerFacetedValue<DetailData>;
+  progressionData: CharacterProgressionData | null;
   servers: GameServer[];
 }
 

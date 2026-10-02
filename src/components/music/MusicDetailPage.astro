@@ -2,7 +2,7 @@
 import MusicDetail from "@/components/music/MusicDetail";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
-import { getBuildMusicDetail } from "@/lib/masterdata/build-data";
+import { getBuildMusicDetail, getBuildMusicDetailData } from "@/lib/masterdata/build-data";
 import { getBuildServers } from "@/lib/masterdata/build-servers";
 
 interface Props {
@@ -11,10 +11,10 @@ interface Props {
 }
 
 const { locale, songId } = Astro.props;
-const song = await getBuildMusicDetail(locale, songId);
+const [song, detail] = await Promise.all([getBuildMusicDetail(locale, songId), getBuildMusicDetailData(locale, songId)]);
 const servers = await getBuildServers();
 ---
 
 <PageLayout locale={locale} titleKey="seo.songDetail.title" descriptionKey="seo.songDetail.description">
-  <MusicDetail client:load servers={servers} locale={locale} songId={songId} initialSong={song} />
+  <MusicDetail client:load servers={servers} locale={locale} songId={songId} initialSong={song} liveDetail={detail?.value ?? null} />
 </PageLayout>

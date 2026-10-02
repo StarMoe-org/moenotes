@@ -19,6 +19,8 @@ import {
   type MusicViewModel,
   type SongDifficultyModel,
 } from "@/lib/music/data";
+import type { MusicDetailData } from "@/lib/masterdata/build-data";
+import { rewardName } from "@/components/shared/RewardChip";
 import {
   getCardTypeIconUrl,
   getBandSmallIconUrl,
@@ -33,6 +35,8 @@ interface Props {
   locale: AppLocale;
   songId: number;
   initialSong: ServerFaceted<MusicViewModel> | null;
+  /** Live-system extras joined from MasterLiveMusic*; per the first server in the merged list. */
+  liveDetail?: MusicDetailData | null;
   servers: GameServer[];
 }
 
@@ -41,17 +45,17 @@ interface DetailData {
 }
 
 /** The song as the page's server has it (docs/servers.md). */
-export default function MusicDetail({ locale, initialSong, servers }: Props) {
+export default function MusicDetail({ locale, initialSong, liveDetail, servers }: Props) {
   const [server, pickServer] = useContentServer(locale, servers);
   const song = useMemo(() => initialSong && moveReleaseUrls(forServer(initialSong, server), entityServer(initialSong, server)), [initialSong, server]);
   return (
     <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer} entityServers={initialSong?.servers ?? []}>
-      <MusicDetailView locale={locale} song={song} />
+      <MusicDetailView locale={locale} song={song} liveDetail={liveDetail ?? null} />
     </ServerScope>
   );
 }
 
-function MusicDetailView({ locale, song: initial }: { locale: AppLocale; song: MusicViewModel | null }) {
+function MusicDetailView({ locale, song: initial, liveDetail }: { locale: AppLocale; song: MusicViewModel | null; liveDetail: MusicDetailData | null }) {
   const assetUrl = useAssetUrl();
   const timeZone = useDisplayTimeZone();
   const data: DetailData = { song: initial };
@@ -378,6 +382,8 @@ function MusicDetailView({ locale, song: initial }: { locale: AppLocale; song: M
             </div>
           </div>
 
+          {liveDetail && <LiveSystemSections locale={locale} detail={liveDetail} />}
+
           <a
             href={getMusicRankingHref(locale, song.id)}
             className="mn-paper mn-focus group flex items-center justify-between gap-4 px-6 py-4 transition hover:-translate-y-0.5 sm:px-8"
@@ -425,6 +431,112 @@ function DetailRow({ label, value }: { label: string; value: ReactNode }) {
     <div className="flex items-center justify-between py-3.5 text-sm">
       <span className="font-semibold text-[var(--mn-text-muted)]">{label}</span>
       <span className="font-semibold text-[var(--mn-text)] text-right">{value}</span>
+    </div>
+  );
+}
+
+/** Renders the MasterLiveMusic* extras of the song: categories, score-rank ladder, alternate vocals and live rewards. */
+function LiveSystemSections({ locale, detail }: { locale: AppLocale; detail: MusicDetailData }) {
+  const { live, comboRewards, scoreRewards } = detail;
+  if (!live) return null;
+  const hasScoreRanks = live.scoreRanks.length > 0;
+  const hasCombo = comboRewards.length > 0;
+  const hasScore = scoreRewards.length > 0;
+  if (!hasScoreRanks && !hasCombo && !hasScore && live.categories.length === 0 && live.anotherVocals.length === 0) return null;
+
+  return (
+    <div className="mn-paper overflow-hidden">
+      <div className="border-b border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_6%,transparent)] to-transparent px-6 py-4 sm:px-8">
+        <h3 className="font-[var(--mn-font-display)] text-xl text-[var(--mn-text)] sm:text-2xl">{t(locale, "music.live.title")}</h3>
+      </div>
+      <div className="p-6 sm:p-8 space-y-6">
+        {live.categories.length > 0 && (
+          <section>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--mn-text-muted)]">{t(locale, "music.live.categories")}</h4>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {live.categories.map((category) => (
+                <span key={category.id} className="inline-flex items-center rounded-full border border-[var(--mn-border)] bg-[var(--mn-cream-deep)] px-2.5 py-1 text-xs font-bold text-[var(--mn-text)]">
+                  {category.name}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {live.anotherVocals.length > 0 && (
+          <section>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--mn-text-muted)]">{t(locale, "music.live.anotherVocals")}</h4>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {live.anotherVocals.map((vocal) => (
+                <a
+                  key={vocal.characterId}
+                  href={localizePath(`/characters/${vocal.characterId}`, locale)}
+                  className="mn-focus mn-stamp-press inline-flex items-center gap-1.5 rounded-full border border-[var(--mn-border)] bg-[var(--mn-cream-deep)] px-2 py-0.5 text-xs font-bold text-[var(--mn-text)] shadow-sm transition-all hover:bg-[var(--mn-accent)] hover:text-white"
+                >
+                  {vocal.name}
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {hasScoreRanks && (
+          <section>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--mn-text-muted)]">{t(locale, "music.live.scoreRanks")}</h4>
+            <div className="mt-2 overflow-x-auto rounded-xl border border-[var(--mn-border)]">
+              <table className="min-w-full divide-y divide-[var(--mn-border)] text-sm">
+                <thead className="bg-[var(--mn-surface)] text-left text-[11px] font-bold uppercase tracking-wider text-[var(--mn-text-muted)]">
+                  <tr>
+                    <th className="px-3 py-2">{t(locale, "music.live.rank")}</th>
+                    <th className="px-3 py-2 text-right">{t(locale, "music.live.requiredScore")}</th>
+                    <th className="px-3 py-2 text-right">{t(locale, "music.live.battleScore")}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-dashed divide-[var(--mn-border)]/50 bg-[var(--mn-paper)]">
+                  {live.scoreRanks.filter((row) => row.requiredScore > 0).map((row) => (
+                    <tr key={row.liveScoreRank}>
+                      <td className="px-3 py-2 font-black text-[var(--mn-accent-deep)]">{row.rank}</td>
+                      <td className="px-3 py-2 text-right font-mono font-semibold text-[var(--mn-text)]">{row.requiredScore.toLocaleString(locale)}</td>
+                      <td className="px-3 py-2 text-right font-mono text-[var(--mn-text-muted)]">{row.battleLiveRequiredScore > 0 ? row.battleLiveRequiredScore.toLocaleString(locale) : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        {(hasCombo || hasScore) && (
+          <section className="grid gap-6 lg:grid-cols-2">
+            {hasScore && (
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--mn-text-muted)]">{t(locale, "music.live.scoreRewards")}</h4>
+                <ul className="mt-2 space-y-2">
+                  {scoreRewards.map((entry) => (
+                    <li key={entry.liveScoreRank} className="flex items-center justify-between gap-3 rounded-xl border border-[var(--mn-border)] bg-[var(--mn-paper)] px-3 py-2">
+                      <span className="font-black text-[var(--mn-accent-deep)]">{entry.rank}</span>
+                      <span className="min-w-0 flex-1 truncate text-right text-sm font-semibold text-[var(--mn-text)]">{rewardName(entry.reward, locale)}<span className="ml-1.5 font-mono text-xs text-[var(--mn-text-muted)]">×{entry.reward.count.toLocaleString(locale)}</span></span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {hasCombo && (
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--mn-text-muted)]">{t(locale, "music.live.comboRewards")}</h4>
+                <ul className="mt-2 space-y-2">
+                  {comboRewards.map((entry) => (
+                    <li key={entry.difficulty} className="flex items-center justify-between gap-3 rounded-xl border border-[var(--mn-border)] bg-[var(--mn-paper)] px-3 py-2">
+                      <span className="text-[11px] font-black uppercase tracking-wider text-[var(--mn-accent-deep)]">{t(locale, `music.difficultyLevels.${entry.difficulty}`)}</span>
+                      <span className="min-w-0 flex-1 truncate text-right text-sm font-semibold text-[var(--mn-text)]">{rewardName(entry.reward, locale)}<span className="ml-1.5 font-mono text-xs text-[var(--mn-text-muted)]">×{entry.reward.count.toLocaleString(locale)}</span></span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+        )}
+      </div>
     </div>
   );
 }

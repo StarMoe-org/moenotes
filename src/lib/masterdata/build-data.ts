@@ -1,6 +1,7 @@
 import { DEFAULT_LOCALE, type AppLocale } from "@/config/locales";
 import { GAME_SERVER_PROFILES, PRIMARY_SERVER, type GameServer } from "@/config/servers";
 import { serverReleaseFetcher } from "@/lib/assets/release";
+import { getVoiceAudioUrl } from "@/lib/assets/voice";
 import { buildFetch } from "@/lib/build/fetch";
 import { getBuildMasterData, getBuildTableKey } from "@/lib/masterdata/build-snapshot";
 import { getBuildServers } from "@/lib/masterdata/build-servers";
@@ -36,18 +37,45 @@ import {
 } from "@/lib/cards/growth";
 import type { DeckCardLookup } from "@/lib/game-api/music-ranking";
 import { buildSupportCardGrowth, type RawSupportCardRank, type SupportCardGrowth } from "@/lib/support-cards/growth";
-import { normalizeCharacters, type CharacterViewModel, type RawCharacter as RawCharacterDetail } from "@/lib/characters/data";
+import { assetConfig } from "@/config/assets";
+import {
+  normalizeCharacterCostumes,
+  normalizeCharacters,
+  normalizeCharacterVoices,
+  normalizeRankRewards,
+  type CharacterProgressionData,
+  type CharacterViewModel,
+  type RawCharacterCostume,
+  type RawCharacterCostumeGroup,
+  type RawCharacterFriendshipRank,
+  type RawCharacterFriendshipRankReward,
+  type RawCharacterRank,
+  type RawCharacterRankReward,
+  type RawCharacterVoice,
+  type RawCharacter as RawCharacterDetail,
+} from "@/lib/characters/data";
 import { normalizeSupportCards, type RawSupportCard, type SupportCardViewModel } from "@/lib/support-cards/data";
 import { normalizeSupportSkill, type RawSupportSkillEffect } from "@/lib/support-cards/skills";
 import {
+  buildMusicLiveDetail,
   normalizeMusic,
+  type MusicLiveDetail,
   type MusicViewModel,
   type RawBand as RawMusicBand,
   type RawCharacter as RawMusicCharacter,
+  type RawLiveMusicCategory,
+  type RawLiveScoreRank,
   type RawMusic,
   type RawMusicScore,
 } from "@/lib/music/data";
 import { normalizeItems, type ItemViewModel, type RawItem } from "@/lib/items/data";
+import {
+  normalizeBandItems,
+  type BandItemViewModel,
+  type RawBandItem,
+  type RawBandItemLevel,
+  type RawBandItemSkillEffect,
+} from "@/lib/band-items/data";
 import { normalizeStamps, type RawStamp, type StampViewModel } from "@/lib/stamps/data";
 import { normalizeComics, type ComicViewModel, type RawComic } from "@/lib/comics/data";
 import { MASTER_TEXT_FIELDS, isUsableMasterText, localizeMasterText, masterTextFieldOrder, type LocalizableMasterText } from "@/lib/masterdata/localize-text";
@@ -77,15 +105,20 @@ import {
   type GachaDetailViewModel,
   type GachaViewModel,
   type RawGacha,
+  type RawGachaBonus,
+  type RawGachaBonusLot,
+  type RawGachaGimmick,
   type RawGachaLot,
   type RawGachaPrize,
   type RawGachaProduct,
+  type RawGachaStepUp,
   type RawGachaView,
+  type RawGachaViewLabel,
 } from "@/lib/gacha/data";
 import { buildHomeData, type HomeData, type RawHomeBanner } from "@/lib/home/data";
 import { normalizeDegrees, type DegreeViewModel, type RawDegree } from "@/lib/degrees/data";
 import { normalizeBackgrounds, type BackgroundViewModel, type RawBackground } from "@/lib/backgrounds/data";
-import { createRewardResolver, type RawHomeSpot as RawRewardHomeSpot, type RewardResolver } from "@/lib/rewards/resources";
+import { createRewardResolver, type RawHomeSpot as RawRewardHomeSpot, type RewardResolver, type RewardViewModel } from "@/lib/rewards/resources";
 import {
   normalizeRewardEntries,
   rewardEntrySlug,
@@ -107,15 +140,30 @@ import {
   normalizeEvents,
   toEventSummary,
   type EventDetailViewModel,
+  type EventMissionLookups,
   type EventViewModel,
+  type RawChallengeMusic,
+  type RawChallengeMusicBoostBonus,
+  type RawChallengeMusicRankingReward,
   type RawEvent,
   type RawEventAchievementLoopReward,
   type RawEventAchievementReward,
+  type RawEventBoxGacha,
+  type RawEventBoxGachaReward,
   type RawEventEffect,
+  type RawEventMission,
   type RawEventPickUpCard,
+  type RawEventRankingReward,
   type RawLiveEventPoint,
   type RawLiveEventReward,
 } from "@/lib/events/data";
+import {
+  normalizeExchanges,
+  type ExchangeCategoryViewModel,
+  type RawExchange,
+  type RawExchangeCategory,
+  type RawExchangeProduct,
+} from "@/lib/exchange/data";
 
 /*
  * Build-time view models of the merged catalog (docs/servers.md). Every `…On(server, locale)` selector computes one
@@ -273,6 +321,87 @@ export function getBuildCards(locale: AppLocale): Promise<ServerFaceted<CardView
   return mergedList(`cards:${locale}`, (server) => cardsOn(server, locale), (card) => card.id);
 }
 
+/**
+ * Character progression: costumes, voices, rank / friendship rewards, from the
+ * MasterCharacterCostume / MasterCharacterVoice / MasterCharacterRank / MasterCharacterFriendshipRank tables.
+ */
+function characterProgressionOn(server: GameServer, locale: AppLocale): Promise<Map<number, CharacterProgressionData>> {
+  return memo(`character-progression:${server}:${locale}`, async () => {
+    const [
+      costumeTable,
+      costumeGroupTable,
+      voiceTable,
+      rankTable,
+      rankRewardTable,
+      friendshipRankTable,
+      friendshipRewardTable,
+      soundTable,
+      cueSheetTable,
+      textTable,
+      resolve,
+      characters,
+    ] = await Promise.all([
+      table<RawCharacterCostume>("MasterCharacterCostume.json", server),
+      table<RawCharacterCostumeGroup>("MasterCharacterCostumeGroup.json", server),
+      table<RawCharacterVoice>("MasterCharacterVoice.json", server),
+      table<RawCharacterRank>("MasterCharacterRank.json", server),
+      table<RawCharacterRankReward>("MasterCharacterRankReward.json", server),
+      table<RawCharacterFriendshipRank>("MasterCharacterFriendshipRank.json", server),
+      table<RawCharacterFriendshipRankReward>("MasterCharacterFriendshipRankReward.json", server),
+      table<{ id: number; cueName: string; soundCueSheetID: number }>("MasterSound.json", server),
+      table<{ id: number; cueSheetName: string }>("MasterSoundCueSheet.json", server),
+      texts(server),
+      rewardResolverOn(server, locale),
+      table<RawCharacterDetail>("MasterCharacter.json", server),
+    ]);
+
+    const sheetNames = new Map(cueSheetTable._allData.map((sheet) => [sheet.id, sheet.cueSheetName]));
+    const soundMap = new Map(soundTable._allData.map((sound) => [sound.id, sound]));
+    const soundUrlOf = (soundId: number): string => {
+      const sound = soundMap.get(soundId);
+      if (!sound) return "";
+      const cueSheetName = sheetNames.get(sound.soundCueSheetID) ?? "";
+      if (!cueSheetName || !sound.cueName) return "";
+      return getVoiceAudioUrl(soundId, sound.cueName, cueSheetName, locale);
+    };
+
+    const byCharacter = new Map<number, CharacterProgressionData>();
+
+    for (const char of characters._allData) {
+      const charId = char.id;
+
+      const costumes = normalizeCharacterCostumes(
+        costumeTable._allData.filter((entry) => entry.characterId === charId),
+        costumeGroupTable._allData.filter((entry) => entry.characterId === charId),
+        textTable._allData,
+        locale,
+      );
+
+      const voices = normalizeCharacterVoices(
+        voiceTable._allData.filter((entry) => entry.characterId === charId),
+        textTable._allData,
+        locale,
+        soundUrlOf,
+      );
+
+      const rankRewards = normalizeRankRewards(rankRewardTable._allData, charId, resolve);
+      const friendshipRewards = normalizeRankRewards(friendshipRewardTable._allData, charId, resolve);
+
+      byCharacter.set(charId, { costumes, voices, rankRewards, friendshipRewards });
+    }
+
+    return byCharacter;
+  });
+}
+
+export async function getBuildCharacterProgression(locale: AppLocale, characterId: number): Promise<CharacterProgressionData | null> {
+  const merged = await mergedValue(`character-progression:${locale}:${characterId}`, async (server) => {
+    const map = await characterProgressionOn(server, locale);
+    return map.get(characterId) ?? null;
+  });
+  return merged?.value ?? null;
+}
+
 function supportCardsOn(server: GameServer, locale: AppLocale): Promise<SupportCardViewModel[]> {
   return memo(`support-cards:${server}:${locale}`, async () => {
     const [cards, characters, bands, textTable] = await Promise.all([
@@ -354,9 +483,26 @@ export function getBuildItems(locale: AppLocale): Promise<ServerFaceted<ItemView
   return mergedList(`items:${locale}`, (server) => itemsOn(server, locale), (item) => item.id);
 }
 
+function bandItemsOn(server: GameServer, locale: AppLocale): Promise<BandItemViewModel[]> {
+  return memo(`band-items:${server}:${locale}`, async () => {
+    const [items, levels, skillEffects, bands, textTable] = await Promise.all([
+      table<RawBandItem>("MasterBandItem.json", server),
+      table<RawBandItemLevel>("MasterBandItemLevel.json", server),
+      table<RawBandItemSkillEffect>("MasterBandItemSkillEffect.json", server),
+      table<RawBand>("MasterBand.json", server),
+      texts(server),
+    ]);
+    return normalizeBandItems(items._allData, levels._allData, skillEffects._allData, bands._allData, textTable._allData, locale);
+  });
+}
+
+export function getBuildBandItems(locale: AppLocale): Promise<ServerFaceted<BandItemViewModel>[]> {
+  return mergedList(`band-items:${locale}`, (server) => bandItemsOn(server, locale), (item) => item.id);
+}
+
 function gachaDetailsOn(server: GameServer, locale: AppLocale): Promise<GachaDetailViewModel[]> {
   return memo(`gacha-details:${server}:${locale}`, async () => {
-    const [gachas, lots, prizes, views, products, cards, supportCards, items, textTable] = await Promise.all([
+    const [gachas, lots, prizes, views, products, cards, supportCards, items, textTable, bonuses, bonusLots, stepUps, gimmicks, viewLabels, resolveReward] = await Promise.all([
       table<RawGacha>("MasterGacha.json", server),
       table<RawGachaLot>("MasterGachaLot.json", server),
       table<RawGachaPrize>("MasterGachaPrize.json", server),
@@ -366,8 +512,21 @@ function gachaDetailsOn(server: GameServer, locale: AppLocale): Promise<GachaDet
       supportCardsOn(server, locale),
       itemsOn(server, locale),
       texts(server),
+      table<RawGachaBonus>("MasterGachaBonus.json", server),
+      table<RawGachaBonusLot>("MasterGachaBonusLot.json", server),
+      table<RawGachaStepUp>("MasterGachaStepUp.json", server),
+      table<RawGachaGimmick>("MasterGachaGimmick.json", server),
+      table<RawGachaViewLabel>("MasterGachaViewLabel.json", server),
+      rewardResolverOn(server, locale),
     ]);
-    return normalizeGachas(gachas._allData, lots._allData, prizes._allData, views._allData, products._allData, cards, supportCards, items, textTable._allData, locale);
+    return normalizeGachas(gachas._allData, lots._allData, prizes._allData, views._allData, products._allData, cards, supportCards, items, textTable._allData, locale, {
+      bonuses: bonuses._allData,
+      bonusLots: bonusLots._allData,
+      stepUps: stepUps._allData,
+      gimmicks: gimmicks._allData,
+      viewLabels: viewLabels._allData,
+      resolveReward,
+    });
   });
 }
 
@@ -515,6 +674,7 @@ function eventDetailsOn(server: GameServer, locale: AppLocale): Promise<EventDet
   return memo(`event-details:${server}:${locale}`, async () => {
     const [
       events, effects, pickUpCards, achievementRewards, loopRewards, livePoints, liveRewards, challengePoints, challengeRewards, rewards,
+      eventMissions, exchanges, chapters, episodesRaw, advs, boxGachas, boxGachaRewards, rankingRewards, challengeMusic, challengeBoosts, challengeMusicRanking,
       characters, bands, textTable, resolve, cards, supportCards, music, stories,
     ] = await Promise.all([
       table<RawEvent>("MasterEvent.json", server),
@@ -527,6 +687,17 @@ function eventDetailsOn(server: GameServer, locale: AppLocale): Promise<EventDet
       table<RawLiveEventPoint>("MasterChallengeLiveEventPoint.json", server),
       table<RawLiveEventReward>("MasterChallengeLiveEventReward.json", server),
       table<RawRewardRow>("MasterReward.json", server),
+      table<RawEventMission>("MasterEventMission.json", server),
+      table<RawExchange>("MasterExchange.json", server),
+      table<RawStoryChapter>("MasterStoryChapter.json", server),
+      table<RawStoryEpisode>("MasterStoryEpisode.json", server),
+      table<RawAdv>("MasterAdv.json", server),
+      table<RawEventBoxGacha>("MasterEventBoxGacha.json", server),
+      table<RawEventBoxGachaReward>("MasterEventBoxGachaReward.json", server),
+      table<RawEventRankingReward>("MasterEventRankingReward.json", server),
+      table<RawChallengeMusic>("MasterChallengeMusic.json", server),
+      table<RawChallengeMusicBoostBonus>("MasterChallengeMusicBoostBonus.json", server),
+      table<RawChallengeMusicRankingReward>("MasterChallengeMusicRankingReward.json", server),
       table<RawCharacter>("MasterCharacter.json", server),
       table<RawBand>("MasterBand.json", server),
       texts(server),
@@ -536,6 +707,12 @@ function eventDetailsOn(server: GameServer, locale: AppLocale): Promise<EventDet
       musicOn(server, locale),
       storiesOn(server, locale),
     ]);
+    const missionLookups: EventMissionLookups = {
+      exchanges: exchanges._allData,
+      chapters: chapters._allData,
+      episodes: episodesRaw._allData,
+      advs: advs._allData.map((adv) => ({ id: adv.id, nameTextId: adv.titleTextId })),
+    };
     return normalizeEvents({
       events: events._allData,
       effects: effects._allData,
@@ -546,6 +723,14 @@ function eventDetailsOn(server: GameServer, locale: AppLocale): Promise<EventDet
       liveRewards: liveRewards._allData,
       challengePoints: challengePoints._allData,
       challengeRewards: challengeRewards._allData,
+      eventMissions: eventMissions._allData,
+      missionLookups,
+      boxGachas: boxGachas._allData,
+      boxGachaRewards: boxGachaRewards._allData,
+      rankingRewards: rankingRewards._allData,
+      challengeMusic: challengeMusic._allData,
+      challengeBoostBonuses: challengeBoosts._allData,
+      challengeMusicRankingRewards: challengeMusicRanking._allData,
       rewards: rewards._allData,
       characters: characters._allData,
       bands: bands._allData,
@@ -579,6 +764,41 @@ function stampsOn(server: GameServer, locale: AppLocale): Promise<StampViewModel
 
 export function getBuildStamps(locale: AppLocale): Promise<ServerFaceted<StampViewModel>[]> {
   return mergedList(`stamps:${locale}`, (server) => stampsOn(server, locale), (stamp) => stamp.id);
+}
+
+function exchangesOn(server: GameServer, locale: AppLocale): Promise<ExchangeCategoryViewModel[]> {
+  return memo(`exchanges:${server}:${locale}`, async () => {
+    const [exchanges, categories, products, items, cards, supportCards, music, stamps, degrees, resolve, textTable] = await Promise.all([
+      table<RawExchange>("MasterExchange.json", server),
+      table<RawExchangeCategory>("MasterExchangeCategory.json", server),
+      table<RawExchangeProduct>("MasterExchangeProduct.json", server),
+      itemsOn(server, locale),
+      cardsOn(server, locale),
+      supportCardsOn(server, locale),
+      musicOn(server, locale),
+      stampsOn(server, locale),
+      degreesOn(server, locale),
+      rewardResolverOn(server, locale),
+      texts(server),
+    ]);
+    return normalizeExchanges({
+      exchanges: exchanges._allData,
+      categories: categories._allData,
+      products: products._allData,
+      items,
+      cards,
+      supportCards,
+      music,
+      stamps,
+      degrees,
+      texts: textTable._allData,
+      resolve,
+    }, locale);
+  });
+}
+
+export function getBuildExchange(locale: AppLocale): Promise<ServerFaceted<ExchangeCategoryViewModel>[]> {
+  return mergedList(`exchanges:${locale}`, (server) => exchangesOn(server, locale), (category) => category.id);
 }
 
 function comicsOn(server: GameServer, locale: AppLocale): Promise<ComicViewModel[]> {
@@ -798,6 +1018,61 @@ export async function getBuildCharacterDetail(locale: AppLocale, characterId: nu
 
 export async function getBuildMusicDetail(locale: AppLocale, songId: number): Promise<ServerFaceted<MusicViewModel> | null> {
   return (await getBuildMusic(locale)).find((entry) => entry.id === songId) ?? null;
+}
+
+export interface MusicDetailData {
+  /** The song as one server has it (per-server view, not merged). */
+  song: MusicViewModel;
+  /** Live-system extras of the song's row on that server. */
+  live: MusicLiveDetail;
+  /** Rewards paid for each difficulty's full combo, resolved to names and icons. */
+  comboRewards: Array<{ difficulty: "easy" | "normal" | "hard" | "expert"; reward: RewardViewModel }>;
+  /** Rewards paid for each achieved score rank (C–SS), resolved to names and icons. */
+  scoreRewards: Array<{ rank: string; liveScoreRank: number; reward: RewardViewModel }>;
+}
+
+function musicDetailOn(server: GameServer, locale: AppLocale, songId: number): Promise<MusicDetailData | null> {
+  return memo(`music-detail:${server}:${locale}:${songId}`, async () => {
+    const [songs, rawMusic, categories, scoreRankTable, rewardTable, textTable, characterTable, resolve] = await Promise.all([
+      musicOn(server, locale),
+      table<RawMusic>("MasterLiveMusic.json", server),
+      table<RawLiveMusicCategory>("MasterLiveMusicCategory.json", server),
+      table<RawLiveScoreRank>("MasterLiveScoreRank.json", server),
+      table<RawRewardRow>("MasterReward.json", server),
+      texts(server),
+      table<RawMusicCharacter>("MasterCharacter.json", server),
+      rewardResolverOn(server, locale),
+    ]);
+    const song = songs.find((entry) => entry.id === songId) ?? null;
+    const raw = rawMusic._allData.find((entry) => entry.id === songId);
+    if (!song || !raw) return null;
+    const detail = buildMusicLiveDetail(
+      raw,
+      { categories: categories._allData, scoreRanks: scoreRankTable._allData },
+      textTable._allData,
+      characterTable._allData,
+      locale,
+    );
+    const rewardMap = new Map(rewardTable._allData.map((row) => [row.id, row]));
+    const comboRewards = detail.comboRewardIds.flatMap(({ difficulty, rewardId }) => {
+      const row = rewardMap.get(rewardId);
+      return row ? [{ difficulty, reward: resolve(row) }] : [];
+    });
+    const scoreRewards = detail.scoreRewardIds.flatMap(({ rank, liveScoreRank, rewardId }) => {
+      const row = rewardMap.get(rewardId);
+      return row ? [{ rank, liveScoreRank, reward: resolve(row) }] : [];
+    });
+    return { song, live: detail, comboRewards, scoreRewards };
+  });
+}
+
+/**
+ * The music detail page's data: the song as the merged catalog has it, plus the live-system extras
+ * read from its row on the server that lists it (MasterLiveMusic* / MasterReward). Null when no
+ * server has the song.
+ */
+export async function getBuildMusicDetailData(locale: AppLocale, songId: number): Promise<ServerFacetedValue<MusicDetailData> | null> {
+  return mergedValue(`music-detail:${locale}:${songId}`, (server) => musicDetailOn(server, locale, songId));
 }
 
 function deckCardLookupOn(server: GameServer, locale: AppLocale): Promise<DeckCardLookup> {

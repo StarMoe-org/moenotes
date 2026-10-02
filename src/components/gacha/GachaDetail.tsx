@@ -15,11 +15,12 @@ import LimitedChip from "@/components/gacha/LimitedChip";
 import BannerImage from "@/components/shared/BannerImage";
 import { RarityFilter } from "@/components/shared/BaseFilters";
 import Modal from "@/components/shared/Modal";
+import RewardChip from "@/components/shared/RewardChip";
 import ScheduleBadge from "@/components/shared/ScheduleBadge";
 import SupportCardItem from "@/components/support-cards/SupportCardItem";
 import { getImageAssetUrl } from "@/lib/assets/url";
 import { getRarityIconUrl, type CardRarity } from "@/lib/cards/assets";
-import type { GachaDetailViewModel, GachaPool } from "@/lib/gacha/data";
+import type { GachaBonusRule, GachaDetailViewModel, GachaGimmickEntry, GachaPool, GachaStepUpChain } from "@/lib/gacha/data";
 import { formatCompactCount } from "@/lib/format/compact-count";
 import { getItemIconUrl } from "@/lib/items/assets";
 import { getRoutePathById } from "@/lib/route/registry";
@@ -78,7 +79,7 @@ function GachaDetailView({ locale, gacha, schedules }: { locale: AppLocale; gach
       <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(22rem,2fr)_3fr] lg:items-start">
         {/* Left column: banner and rates stay in view while the pool is browsed. */}
         <aside className="flex w-full flex-col gap-6 lg:sticky lg:top-24">
-          <div className="rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)] p-4 shadow-[var(--mn-shadow-stamp-lg)]">
+          <div className="relative rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)] p-4 shadow-[var(--mn-shadow-stamp-lg)]">
             <BannerImage
               eager
               className="rounded-xl border border-[var(--mn-glass-border)]"
@@ -86,6 +87,9 @@ function GachaDetailView({ locale, gacha, schedules }: { locale: AppLocale; gach
               alt={t(locale, "gacha.bannerAlt", { name: gacha.name })}
               fallback={gacha.name}
             />
+            {gacha.viewLabel && (
+              <span className="absolute left-6 top-6 rounded-full bg-[var(--mn-accent-deep)] px-3 py-1 text-xs font-black uppercase tracking-wide text-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]">{gacha.viewLabel}</span>
+            )}
           </div>
           {gacha.pools.length > 0 && <div className="hidden lg:block"><RatePanel locale={locale} pools={gacha.pools} /></div>}
         </aside>
@@ -112,6 +116,12 @@ function GachaDetailView({ locale, gacha, schedules }: { locale: AppLocale; gach
           </div>
 
           <GachaSimulator locale={locale} gacha={gacha} />
+
+          {gacha.stepUp && gacha.stepUp.steps.length > 0 && <StepUpPanel locale={locale} chain={gacha.stepUp} />}
+
+          {gacha.bonusRewards.some((rules) => rules.length > 0) && <BonusPanel locale={locale} bonusRewards={gacha.bonusRewards} />}
+
+          {gacha.gimmicks.length > 0 && <GimmickPanel locale={locale} gimmicks={gacha.gimmicks} />}
 
           {/* Narrow screens read the name before the rates; wide screens keep the rates in the sticky column. */}
           {gacha.pools.length > 0 && <div className="lg:hidden"><RatePanel locale={locale} pools={gacha.pools} /></div>}
@@ -334,6 +344,94 @@ function PoolModal({ locale, kind, gacha, pickupMembers, pickupSupports, onClose
     <Modal isOpen={kind !== null} onClose={onClose} title={title} closeLabel={t(locale, "actions.close")} size="xl">
       {body}
     </Modal>
+  );
+}
+
+function StepUpPanel({ locale, chain }: { locale: AppLocale; chain: GachaStepUpChain }) {
+  return (
+    <Panel title={chain.name || t(locale, "gacha.stepUp.title")}>
+      <ol className="divide-y divide-dashed divide-[var(--mn-border)]/60">
+        {chain.steps.map((step) => {
+          const guaranteed = step.ensuredCount > 0 && step.ensuredRarity > 0
+            ? t(locale, "gacha.stepUp.guaranteed", { count: step.ensuredCount, rarity: t(locale, `cards.rarities.${step.ensuredRarity}`) })
+            : "";
+          return (
+            <li key={step.step} className="flex flex-wrap items-center justify-between gap-3 py-3.5 text-sm">
+              <span className="flex min-w-0 items-center gap-3">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--mn-accent-deep)] font-mono text-sm font-black text-[var(--mn-paper)]">{step.step}</span>
+                <span className="min-w-0 font-semibold text-[var(--mn-text)]">{t(locale, "gacha.stepUp.draws", { count: step.drawCount })}</span>
+              </span>
+              <span className="flex shrink-0 flex-col items-end gap-0.5 text-right">
+                <span className="font-mono font-black tabular-nums text-[var(--mn-accent-deep)]">{step.cost > 0 ? t(locale, "gacha.stepUp.cost", { cost: step.cost }) : t(locale, "gacha.stepUp.free")}</span>
+                {guaranteed && <span className="text-xs font-semibold text-[var(--mn-text-muted)]">{guaranteed}</span>}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </Panel>
+  );
+}
+
+function BonusPanel({ locale, bonusRewards }: { locale: AppLocale; bonusRewards: GachaBonusRule[][] }) {
+  const productLabels = [t(locale, "gacha.bonuses.product1"), t(locale, "gacha.bonuses.product2"), t(locale, "gacha.bonuses.product3"), t(locale, "gacha.bonuses.product4")];
+  return (
+    <Panel title={t(locale, "gacha.bonuses.title")}>
+      <div className="divide-y divide-dashed divide-[var(--mn-border)]/60">
+        {bonusRewards.map((rules, index) => {
+          if (!rules.length) return null;
+          return (
+            <div key={index} className="py-3.5">
+              <p className="text-sm font-semibold text-[var(--mn-text-muted)]">{productLabels[index]}</p>
+              <ul className="mt-3 space-y-3">
+                {rules.map((rule) => (
+                  <li key={rule.id}>
+                    <p className="text-xs font-semibold text-[var(--mn-text-muted)]">
+                      {t(locale, "gacha.bonuses.rule", { count: rule.requiredDrawCount, bonus: rule.bonusDrawCount })}
+                    </p>
+                    <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+                      {rule.rewards.map((entry) => (
+                        <li key={entry.id} className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--mn-glass-border)] bg-[var(--mn-surface)] p-2.5">
+                          <RewardChip reward={entry.reward} locale={locale} />
+                          <span className="shrink-0 font-mono text-xs font-bold tabular-nums text-[var(--mn-accent-deep)]">{entry.rate.toFixed(1)}%</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
+    </Panel>
+  );
+}
+
+function GimmickPanel({ locale, gimmicks }: { locale: AppLocale; gimmicks: GachaGimmickEntry[] }) {
+  const totalNormal = gimmicks.reduce((sum, gimmick) => sum + Math.max(0, gimmick.normalWeight), 0);
+  const totalSsr = gimmicks.reduce((sum, gimmick) => sum + Math.max(0, gimmick.ssrWeight), 0);
+  return (
+    <Panel title={t(locale, "gacha.gimmicks.title")}>
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-[var(--mn-border)] text-left text-xs font-semibold uppercase tracking-wide text-[var(--mn-text-muted)]">
+            <th scope="col" className="py-2 pr-3">{t(locale, "gacha.gimmicks.branch")}</th>
+            <th scope="col" className="py-2 pr-3 text-right">{t(locale, "gacha.gimmicks.normalRate")}</th>
+            <th scope="col" className="py-2 text-right">{t(locale, "gacha.gimmicks.ssrRate")}</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-dashed divide-[var(--mn-border)]/60">
+          {gimmicks.map((gimmick) => (
+            <tr key={gimmick.id}>
+              <td className="py-2.5 pr-3 font-semibold text-[var(--mn-text)]">{gimmick.branchName} #{gimmick.branchEntry}</td>
+              <td className="py-2.5 pr-3 text-right font-mono tabular-nums text-[var(--mn-text)]">{totalNormal ? ((Math.max(0, gimmick.normalWeight) / totalNormal) * 100).toFixed(1) : "0.0"}%</td>
+              <td className="py-2.5 text-right font-mono tabular-nums text-[var(--mn-text)]">{totalSsr ? ((Math.max(0, gimmick.ssrWeight) / totalSsr) * 100).toFixed(1) : "0.0"}%</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </Panel>
   );
 }
 

@@ -113,6 +113,186 @@ export function normalizeCharacters(
 }
 
 
+// ---- Character progression (rank, friendship, voice, costume) ----
+
+export interface RawCharacterRank {
+  rank: number;
+  exp: number;
+  bonus: number;
+}
+
+export interface RawCharacterRankReward {
+  characterId: number;
+  rank: number;
+  resourceType: number;
+  resourceId: number;
+  resourceCount: number;
+}
+
+export interface RawCharacterFriendshipRank {
+  rank: number;
+  exp: number;
+  bonus: number;
+}
+
+export interface RawCharacterFriendshipRankReward {
+  characterId: number;
+  rank: number;
+  resourceType: number;
+  resourceId: number;
+  resourceCount: number;
+}
+
+export interface RawCharacterVoice {
+  id: number;
+  characterId: number;
+  type: number;
+  textId: string;
+  soundId: number;
+  scoreRank: number;
+  startAt: string;
+}
+
+export interface RawCharacterCostume {
+  id: number;
+  characterId: number;
+  groupId: number;
+  costumeType: number;
+  costumeId: number;
+  isDefault: boolean;
+  live2dPath: string;
+}
+
+export interface RawCharacterCostumeGroup {
+  id: number;
+  characterId: number;
+  costumeNameTextId: string;
+  iconPath: string;
+  isInitial: boolean;
+  isChangeable: boolean;
+  specialConditionMemberCardId: number;
+  startAt: string;
+}
+
+export interface CostumeViewModel {
+  id: number;
+  groupId: number;
+  name: string;
+  iconPath: string;
+  isDefault: boolean;
+  isInitial: boolean;
+  live2dPath: string;
+  costumeType: number;
+}
+
+export interface VoiceViewModel {
+  id: number;
+  type: number;
+  typeName: string;
+  text: string;
+  soundUrl: string;
+  scoreRank: number;
+  startAt: string;
+}
+
+export interface RankRewardGroup {
+  rank: number;
+  rewards: Array<{ kind: string; id: number; count: number; name: string; imageUrl: string; link?: { routeId: string; detailId?: number } }>;
+}
+
+export interface CharacterProgressionData {
+  costumes: CostumeViewModel[];
+  voices: VoiceViewModel[];
+  rankRewards: RankRewardGroup[];
+  friendshipRewards: RankRewardGroup[];
+}
+
+const VOICE_TYPE_NAMES: Record<number, string> = {
+  1: "greeting",
+  2: "home",
+  3: "live_start",
+  4: "live_end",
+  5: "skill",
+  6: "full_combo",
+  7: "all_perfect",
+  8: "result_success",
+  9: "result_failure",
+  10: "level_up",
+  11: "rank_up",
+  12: "story",
+  13: "gacha",
+  14: "friendship",
+  15: "birthday",
+  16: "seasonal",
+  17: "event",
+};
+
+export function getVoiceTypeName(type: number): string {
+  return VOICE_TYPE_NAMES[type] ?? `type_${type}`;
+}
+
+export function normalizeCharacterCostumes(
+  costumes: RawCharacterCostume[],
+  groups: RawCharacterCostumeGroup[],
+  texts: RawText[],
+  locale: AppLocale,
+): CostumeViewModel[] {
+  const textMap = new Map(texts.map((entry) => [entry.id, entry]));
+  const groupMap = new Map(groups.map((entry) => [entry.id, entry]));
+
+  return costumes.map((costume) => {
+    const group = groupMap.get(costume.groupId);
+    const name = group ? localizeMasterText(textMap.get(group.costumeNameTextId), locale) || group.costumeNameTextId : `Costume ${costume.id}`;
+    return {
+      id: costume.id,
+      groupId: costume.groupId,
+      name,
+      iconPath: group?.iconPath ?? "",
+      isDefault: costume.isDefault,
+      isInitial: group?.isInitial ?? false,
+      live2dPath: costume.live2dPath ?? "",
+      costumeType: costume.costumeType,
+    };
+  });
+}
+
+export function normalizeCharacterVoices(
+  voices: RawCharacterVoice[],
+  texts: RawText[],
+  locale: AppLocale,
+  soundUrlOf: (soundId: number) => string,
+): VoiceViewModel[] {
+  const textMap = new Map(texts.map((entry) => [entry.id, entry]));
+
+  return voices.map((voice) => ({
+    id: voice.id,
+    type: voice.type,
+    typeName: getVoiceTypeName(voice.type),
+    text: localizeMasterText(textMap.get(voice.textId), locale) || voice.textId,
+    soundUrl: soundUrlOf(voice.soundId),
+    scoreRank: voice.scoreRank,
+    startAt: voice.startAt,
+  }));
+}
+
+export function normalizeRankRewards(
+  rewards: RawCharacterRankReward[] | RawCharacterFriendshipRankReward[],
+  characterId: number,
+  resolve: (resource: { resourceType: number; resourceId: number; resourceCount: number }) => { kind: string; id: number; count: number; name: string; imageUrl: string; link?: { routeId: string; detailId?: number } },
+): RankRewardGroup[] {
+
+  const filtered = rewards.filter((entry) => entry.characterId === 0 || entry.characterId === characterId);
+  if (filtered.length === 0) return [];
+
+  const rankSet = new Set(filtered.map((entry) => entry.rank));
+  return [...rankSet].sort((a, b) => a - b).map((rank) => ({
+    rank,
+    rewards: filtered
+      .filter((entry) => entry.rank === rank)
+      .map((entry) => resolve(entry)),
+  }));
+}
+
 function formatBirthday(month: number, day: number, locale: AppLocale): string {
   // Use a fixed non-leap year so month/day formatting is stable across engines.
   const date = new Date(Date.UTC(2024, month - 1, day));

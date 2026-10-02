@@ -2,6 +2,7 @@ import type { AppLocale } from "@/config/locales";
 import { getImageAssetUrl, getAssetUrl } from "@/lib/assets/url";
 import { getBandLogoUrl, getCardThumbnailUrl, getCardTypeIconUrl, getCharacterFaceIconUrl, type CardType } from "@/lib/cards/assets";
 import type { CardViewModel, RawBand, RawCharacter, RawText } from "@/lib/cards/data";
+import { t } from "@/i18n";
 import { localizeMasterText } from "@/lib/masterdata/localize-text";
 import type { MusicViewModel } from "@/lib/music/data";
 import { scoreRankLabel, type RawRewardRow } from "@/lib/rewards/data";
@@ -90,6 +91,93 @@ export interface RawLiveEventReward extends RawResource {
   probability: number;
 }
 
+/** MasterEventMission: one event screen mission (played with event items) and its reward rows. */
+export interface RawEventMission {
+  id: number;
+  eventMissionGroupId: number;
+  descriptionTextId: string;
+  missionType: number;
+  achievementCount: number;
+  value: number;
+  characterId: number;
+  bandId: number;
+  musicId: number;
+  musicDifficulty: number;
+  scoreRank: number;
+  cardType: number;
+  storyChapterId: number;
+  episodeId: number;
+  exchangeId: number;
+  priority: number;
+  missionRewardIds: number[];
+}
+
+/** Raw lookup rows the event missions' description placeholders borrow from other tables. */
+export interface EventMissionLookups {
+  exchanges: Array<{ id: number; nameTextId: string }>;
+  chapters: Array<{ id: number; nameTextId: string }>;
+  episodes: Array<{ id: number; episodeNumber: number; advId: number }>;
+  advs: Array<{ id: number; nameTextId: string }>;
+}
+
+/** MasterEventBoxGacha: an event's box gacha (each draw costs event items). */
+export interface RawEventBoxGacha {
+  id: number;
+  eventId: number;
+  eventBoxGachaType: number;
+  eventItemCost: number;
+}
+
+/** MasterEventBoxGachaReward: a tier (or loop tier) of a box gacha's rewards. */
+export interface RawEventBoxGachaReward {
+  id: number;
+  eventBoxGachaId: number;
+  eventBoxGachaTier: number;
+  eventBoxGachaRewardCount: number;
+  eventBoxGachaRewardProbability: number;
+  rewardIds: number[];
+}
+
+/** MasterEventRankingReward: what an event ranking tier (rankStart..rankEnd) earns. */
+export interface RawEventRankingReward {
+  id: number;
+  eventId: number;
+  rankStart: number;
+  rankEnd: number;
+  rewardIds: number[];
+}
+
+/** MasterChallengeMusic: a song an event's Challenge Live ranks separately. */
+export interface RawChallengeMusic {
+  id: number;
+  eventId: number;
+  /** MasterLiveMusic id. */
+  liveMusicId: number;
+  musicType: number;
+  /** Gekisou (rush) mission targets, 0 when the table leaves them unset. */
+  gekisouMission1: number;
+  gekisouMission2: number;
+  gekisouMission3: number;
+  rankingRewardGroup: number;
+}
+
+/** MasterChallengeMusicBoostBonus: challenge point spend multipliers, shown on the Challenge Live page. */
+export interface RawChallengeMusicBoostBonus {
+  id: number;
+  consumedChallengePointCount: number;
+  eventPointRate: number;
+  liveMusicRewardRate: number;
+}
+
+/** MasterChallengeMusicRankingReward: what one Challenge Live song ranking tier earns. */
+export interface RawChallengeMusicRankingReward {
+  id: number;
+  group: number;
+  rankStart: number;
+  rankEnd: number;
+  rewardIds: number[];
+}
+
 export interface EventMasterData {
   events: RawEvent[];
   effects: RawEventEffect[];
@@ -100,6 +188,14 @@ export interface EventMasterData {
   liveRewards: RawLiveEventReward[];
   challengePoints: RawLiveEventPoint[];
   challengeRewards: RawLiveEventReward[];
+  eventMissions: RawEventMission[];
+  missionLookups: EventMissionLookups;
+  boxGachas: RawEventBoxGacha[];
+  boxGachaRewards: RawEventBoxGachaReward[];
+  rankingRewards: RawEventRankingReward[];
+  challengeMusic: RawChallengeMusic[];
+  challengeBoostBonuses: RawChallengeMusicBoostBonus[];
+  challengeMusicRankingRewards: RawChallengeMusicRankingReward[];
   rewards: RawRewardRow[];
   characters: RawCharacter[];
   bands: RawBand[];
@@ -189,6 +285,53 @@ export interface EventLiveRow {
   rewards: Array<RewardViewModel & { probability: number }>;
 }
 
+/** One event mission row of the "Event missions" panel. */
+export interface EventMissionRow {
+  id: number;
+  description: string;
+  rewards: RewardViewModel[];
+}
+
+/** One reward in a box gacha tier, resolved; `count` is copies in the box, `probability` their combined weight (percent). */
+export type EventBoxGachaItem = RewardViewModel & { count: number; probability: number };
+
+export interface EventBoxGachaTier {
+  tier: number;
+  items: EventBoxGachaItem[];
+}
+
+export interface EventBoxGachaBox extends EventBoxGachaTier {
+  cost: number;
+}
+
+export interface EventBoxGachaSection {
+  /** Reward of the event item pulls cost, so the UI can name it; null when cost is 0. */
+  item: RewardViewModel | null;
+  boxes: EventBoxGachaBox[];
+  loop: EventBoxGachaTier | null;
+}
+
+/** One ranking tier (event score ranking, or one Challenge Live song's ranking). */
+export interface EventRankingTier {
+  rankStart: number;
+  rankEnd: number;
+  rewards: RewardViewModel[];
+}
+
+export interface EventChallengeSong {
+  id: number;
+  musicType: number;
+  music: MusicViewModel | null;
+  /** Gekisou mission targets, [] when the table leaves them at 0. */
+  missions: number[];
+  ranking: EventRankingTier[];
+}
+
+export interface EventChallengeLive {
+  boosts: Array<{ challengePoint: number; eventPointRate: number; rewardRate: number }>;
+  songs: EventChallengeSong[];
+}
+
 export interface EventDetailViewModel extends EventViewModel {
   eventItem: RewardViewModel | null;
   music: MusicViewModel | null;
@@ -204,6 +347,10 @@ export interface EventDetailViewModel extends EventViewModel {
   live: EventLiveRow[];
   challengeLive: EventLiveRow[];
   rankings: { score: boolean; music: boolean; totalMusic: boolean };
+  missions: EventMissionRow[];
+  boxGacha: EventBoxGachaSection | null;
+  rankingRewards: EventRankingTier[];
+  challengeMusic: EventChallengeLive | null;
 }
 
 // MasterEventEffect.resourceTypeConstraint and MasterEventPickUpCard.resourceType (MasterData resourceType).
@@ -212,6 +359,8 @@ const RESOURCE_SUPPORT = 3;
 const RESOURCE_ITEM = 1;
 // MasterEventEffect.eventBonusType: 0 member parameters, 1 support card parameters, 2 event items.
 const BONUS_EVENT_ITEM = 2;
+// MasterEventBoxGacha.eventBoxGachaType 1 is the never-empty loop box after the numbered boxes.
+const LOOP_BOX_GACHA_TYPE = 1;
 
 function groupBy<T, K>(rows: readonly T[], key: (row: T) => K): Map<K, T[]> {
   const groups = new Map<K, T[]>();
@@ -250,6 +399,44 @@ export function normalizeEvents(data: EventMasterData, sources: EventSources, re
   const achievementsByEvent = groupBy(data.achievementRewards, (reward) => reward.eventId);
   const loopsByEvent = new Map(data.loopRewards.map((reward) => [reward.eventId, reward]));
   const storiesByChapter = groupBy(sources.stories.filter((story) => story.category === "main" && story.chapterId !== null), (story) => story.chapterId);
+  const missionsByGroup = groupBy(data.eventMissions, (row) => row.eventMissionGroupId);
+  const boxGachasByEvent = groupBy(data.boxGachas, (row) => row.eventId);
+  const boxRewardsByGacha = groupBy(data.boxGachaRewards, (row) => row.eventBoxGachaId);
+  const rankingRewardsByEvent = groupBy(data.rankingRewards, (row) => row.eventId);
+  const challengeMusicByEvent = groupBy(data.challengeMusic, (row) => row.eventId);
+  const challengeRankingByGroup = groupBy(data.challengeMusicRankingRewards, (row) => row.group);
+
+  // Event missions word their target by placeholder ({AchievementCount}, {MusicId}, …), like rewards/data.ts describe does.
+  const missionLookups = data.missionLookups;
+  const missionNames = (rows: Array<{ id: number; nameTextId?: string; nameTextID?: string }>) =>
+    new Map(rows.map((row) => [row.id, text(row.nameTextId ?? row.nameTextID ?? "")]));
+  const missionExchanges = missionNames(missionLookups.exchanges);
+  const missionChapters = missionNames(missionLookups.chapters);
+  const missionBands = new Map(data.bands.map((band) => [band.id, text(band.nameTextID)]));
+  const missionCharacters = new Map(data.characters.map((character) => [character.id, text(character.nameTextID)]));
+  const missionEpisodes = new Map(missionLookups.episodes.map((episode) => [episode.id, episode]));
+  const missionAdvs = new Map(missionLookups.advs.map((adv) => [adv.id, text(adv.nameTextId)]));
+  const missionMusic = new Map(sources.music.map((song) => [song.id, song.title]));
+  const missionDifficulty = [1, 2, 3, 4].map((value) => t(locale, `music.difficulties.${value}`));
+  const describeMission = (mission: RawEventMission): string => {
+    const episode = missionEpisodes.get(mission.episodeId);
+    const values: Record<string, string> = {
+      AchievementCount: mission.achievementCount.toLocaleString(locale),
+      Value: String(mission.value),
+      ExchangeId: missionExchanges.get(mission.exchangeId) ?? "",
+      StoryChapterId: missionChapters.get(mission.storyChapterId) ?? "",
+      EpisodeId: episode ? (missionAdvs.get(episode.advId) ?? "") : "",
+      "EpisodeId.Value": episode ? String(episode.episodeNumber) : "",
+      BandId: missionBands.get(mission.bandId) ?? "",
+      CharacterId: missionCharacters.get(mission.characterId) ?? "",
+      MusicId: missionMusic.get(mission.musicId) ?? "",
+      MusicDifficulty: missionDifficulty[mission.musicDifficulty - 1] ?? "",
+      ScoreRank: scoreRankLabel(mission.scoreRank),
+      CardType: mission.cardType ? t(locale, `cards.attributes.${mission.cardType}`) : "",
+    };
+    // Unknown placeholders drop out; the sentence still reads naturally.
+    return text(mission.descriptionTextId).replace(/\{([^}]+)\}/g, (_, key: string) => values[key] ?? "").replace(/[ \t]{2,}/g, " ").trim();
+  };
 
   const rewardsOf = (ids: number[]) => ids.flatMap((id) => {
     const row = rewardRows.get(id);
@@ -308,6 +495,36 @@ export function normalizeEvents(data: EventMasterData, sources: EventSources, re
       }));
   };
 
+  const rankingTier = (rows: Array<{ rankStart: number; rankEnd: number; rewardIds: number[] }>): EventRankingTier[] =>
+    rows
+      .slice()
+      .sort((a, b) => a.rankStart - b.rankStart || a.rankEnd - b.rankEnd || a.rewardIds[0]! - b.rewardIds[0]!)
+      .map((row) => ({ rankStart: row.rankStart, rankEnd: row.rankEnd, rewards: rewardsOf(row.rewardIds) }));
+
+  const boxGachaSection = (event: RawEvent, gachas: RawEventBoxGacha[]): EventBoxGachaSection | null => {
+    const boxes: EventBoxGachaBox[] = [];
+    let loop: EventBoxGachaTier | null = null;
+    let cost = 0;
+    for (const gacha of gachas.slice().sort((a, b) => (a.eventBoxGachaType - b.eventBoxGachaType) || (a.id - b.id))) {
+      cost ||= gacha.eventItemCost;
+      const items = (boxRewardsByGacha.get(gacha.id) ?? [])
+        .slice()
+        .sort((a, b) => a.eventBoxGachaTier - b.eventBoxGachaTier)
+        .flatMap((row) => rewardsOf(row.rewardIds).flatMap((item) => {
+          const probability = row.eventBoxGachaRewardProbability / 100;
+          return row.eventBoxGachaRewardCount > 0 && probability > 0 ? [{ ...item, count: row.eventBoxGachaRewardCount, probability }] : [];
+        }));
+      if (!items.length) continue;
+      if (gacha.eventBoxGachaType === LOOP_BOX_GACHA_TYPE) {
+        (loop ??= { tier: boxes.length + 1, items: [] }).items.push(...items);
+      } else {
+        boxes.push({ tier: boxes.length + 1, cost: gacha.eventItemCost, items });
+      }
+    }
+    if (!boxes.length && !loop) return null;
+    return { item: cost ? resolve({ resourceType: RESOURCE_ITEM, resourceId: event.eventItemId, resourceCount: cost }) : null, boxes, loop };
+  };
+
   return data.events
     .map((event): EventDetailViewModel => {
       const effects = effectsByEvent.get(event.id) ?? [];
@@ -331,6 +548,22 @@ export function normalizeEvents(data: EventMasterData, sources: EventSources, re
       const name = text(event.nameTextId) || chapter?.chapterName || `#${event.id}`;
       const song = music.get(event.musicId) ?? null;
       const loop = loopsByEvent.get(event.id);
+      const eventMissions = (missionsByGroup.get(event.id) ?? []).sort((a, b) => a.priority - b.priority || a.id - b.id);
+      const eventRankingRewards = rankingRewardsByEvent.get(event.id) ?? [];
+      const challengeSongs = (challengeMusicByEvent.get(event.id) ?? [])
+        .slice()
+        .sort((a, b) => a.id - b.id)
+        .map((row): EventChallengeSong => ({
+          id: row.id,
+          musicType: row.musicType,
+          music: music.get(row.liveMusicId) ?? null,
+          missions: [row.gekisouMission1, row.gekisouMission2, row.gekisouMission3].filter((value) => value > 0),
+          ranking: rankingTier(challengeRankingByGroup.get(row.rankingRewardGroup) ?? []),
+        }));
+      const challengeBoosts = data.challengeBoostBonuses
+        .slice()
+        .sort((a, b) => a.consumedChallengePointCount - b.consumedChallengePointCount || a.id - b.id)
+        .map((row) => ({ challengePoint: row.consumedChallengePointCount, eventPointRate: row.eventPointRate, rewardRate: row.liveMusicRewardRate }));
 
       return {
         id: event.id,
@@ -366,6 +599,10 @@ export function normalizeEvents(data: EventMasterData, sources: EventSources, re
         live: liveRows(data.livePoints, data.liveRewards, event.liveEventPointGroup, event.liveEventRewardGroup),
         challengeLive: liveRows(data.challengePoints, data.challengeRewards, event.challengeLiveEventPointGroup, event.challengeLiveEventRewardGroup),
         rankings: { score: !event.isRankingDisabled, music: !event.isMusicRankingDisabled, totalMusic: !event.isTotalMusicRankingDisabled },
+        missions: eventMissions.map((mission) => ({ id: mission.id, description: describeMission(mission), rewards: rewardsOf(mission.missionRewardIds) })),
+        boxGacha: boxGachaSection(event, boxGachasByEvent.get(event.id) ?? []),
+        rankingRewards: rankingTier(eventRankingRewards),
+        challengeMusic: challengeSongs.length ? { boosts: challengeBoosts, songs: challengeSongs } : null,
       };
     })
     .sort((a, b) => b.id - a.id);

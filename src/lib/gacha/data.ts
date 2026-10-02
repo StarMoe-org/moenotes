@@ -2,6 +2,7 @@ import type { AppLocale } from "@/config/locales";
 import type { CardViewModel, RawText } from "@/lib/cards/data";
 import type { ItemViewModel } from "@/lib/items/data";
 import { localizeMasterText } from "@/lib/masterdata/localize-text";
+import type { RewardResolver, RewardViewModel } from "@/lib/rewards/resources";
 import type { SupportCardViewModel } from "@/lib/support-cards/data";
 
 export interface RawGacha {
@@ -19,6 +20,71 @@ export interface RawGacha {
   productId2?: number;
   productId3?: number;
   productId4?: number;
+  /** MasterGachaBonus ids granted on top of product 1–4. */
+  gachaBonusIds1?: number[];
+  gachaBonusIds2?: number[];
+  gachaBonusIds3?: number[];
+  gachaBonusIds4?: number[];
+  /** Step-up chain id (0 or missing when the gacha is not a step-up). */
+  stepUpId?: number;
+  /** Group id linking to MasterGachaGimmick rows (0 = no gimmick). */
+  gimmickGroupId?: number;
+  /** View label id (0 = none); the label lives in MasterGachaViewLabel. */
+  viewLabelId?: number;
+}
+
+export interface RawGachaBonus {
+  id: number;
+  /** 1 = granted after each draw, 2 = granted after the draw count is reached. */
+  bonusDrawTiming: number;
+  requiredGachaDrawCount: number;
+  bonusDrawCount: number;
+}
+
+export interface RawGachaBonusLot {
+  id: number;
+  gachaBonusId: number;
+  /** Same space as MasterGachaPrize.resourceType (1=item, 2=member, 3=support). */
+  bonusPrizeType: number;
+  bonusPrizeId: number;
+  bonusPrizeCount: number;
+  weight: number;
+}
+
+export interface RawGachaStepUpStep {
+  id: number;
+  stepUpId: number;
+  /** 1-based position in the chain. */
+  step: number;
+  /** Star / paid-star cost of this step; 0 means free. */
+  cost?: number;
+  drawCount: number;
+  ensuredCount?: number;
+  ensuredRarity?: number;
+}
+
+export interface RawGachaStepUp {
+  id: number;
+  /** Optional display name (MasterText key); some builds carry only steps. */
+  nameTextId?: string;
+  steps?: RawGachaStepUpStep[];
+}
+
+export interface RawGachaGimmick {
+  id: number;
+  groupId: number;
+  /** Internal mechanic name; kept verbatim for display. */
+  branchName: string;
+  branchEntry: number;
+  normalWeight: number;
+  ssrWeight: number;
+}
+
+export interface RawGachaViewLabel {
+  id: number;
+  /** MasterText key of the badge on the banner. */
+  nameTextId?: string;
+  labelTextId?: string;
 }
 
 export interface RawGachaProduct {
@@ -56,6 +122,54 @@ export interface RawGachaView {
 const RESOURCE_ITEM = 1;
 const RESOURCE_MEMBER = 2;
 const RESOURCE_SUPPORT = 3;
+
+/** Per-product bonus pools (each draw of that product grants one of the lots, weighted). */
+function bonusRewardsFor(
+  gachaBonusIds: number[] | undefined,
+  bonusMap: Map<number, RawGachaBonus>,
+  bonusLotsById: Map<number, RawGachaBonusLot[]>,
+  resolveReward: RewardResolver | undefined,
+): GachaBonusRule[] {
+  if (!gachaBonusIds?.length) return [];
+  const rules: GachaBonusRule[] = [];
+  for (const id of gachaBonusIds) {
+    const bonus = bonusMap.get(id);
+    if (!bonus) continue;
+    const lots = bonusLotsById.get(id) ?? [];
+    const totalWeight = lots.reduce((sum, lot) => sum + Math.max(0, lot.weight), 0);
+    rules.push({
+      id: bonus.id,
+      timing: bonus.bonusDrawTiming,
+      requiredDrawCount: bonus.requiredGachaDrawCount,
+      bonusDrawCount: bonus.bonusDrawCount,
+      rewards: lots.map((lot) => ({
+        id: lot.id,
+        rate: totalWeight ? (Math.max(0, lot.weight) / totalWeight) * 100 : 0,
+        reward: resolveReward
+          ? resolveReward({ resourceType: lot.bonusPrizeType, resourceId: lot.bonusPrizeId, resourceCount: lot.bonusPrizeCount })
+          : { kind: "other", id: lot.bonusPrizeId, count: lot.bonusPrizeCount, name: "", imageUrl: "" },
+      })),
+    });
+  }
+  return rules;
+}
+
+function normalizeStepUp(stepUpId: number | undefined, chains: Map<number, RawGachaStepUp>, textOf: (id: string | undefined) => string): GachaStepUpChain | null {
+  if (!stepUpId) return null;
+  const chain = chains.get(stepUpId);
+  if (!chain) return null;
+  const steps = (chain.steps ?? [])
+    .filter((step) => step.step > 0)
+    .sort((a, b) => a.step - b.step)
+    .map((step) => ({
+      step: step.step,
+      cost: Math.max(0, step.cost ?? 0),
+      drawCount: Math.max(0, step.drawCount),
+      ensuredCount: Math.max(0, step.ensuredCount ?? 0),
+      ensuredRarity: Math.max(0, step.ensuredRarity ?? 0),
+    }));
+  return { id: chain.id, name: textOf(chain.nameTextId), steps };
+}
 // Rate-up prizes; ordinary entries use pickUpType 1.
 const PICKUP_RATE_UP = 2;
 
@@ -120,6 +234,45 @@ export interface GachaViewModel {
   searchText: string;
 }
 
+export interface GachaBonusRewardEntry {
+  id: number;
+  /** Share of the bonus lot, in percent, across the lot's rows. */
+  rate: number;
+  /** Resolved display (icon, name, link); kind "other" without name/image when the resource is unknown. */
+  reward: RewardViewModel;
+}
+
+export interface GachaBonusRule {
+  id: number;
+  /** 1 = granted after each draw, 2 = granted after the draw count is reached. */
+  timing: number;
+  requiredDrawCount: number;
+  bonusDrawCount: number;
+  rewards: GachaBonusRewardEntry[];
+}
+
+export interface GachaStepUpStepEntry {
+  step: number;
+  cost: number;
+  drawCount: number;
+  ensuredCount: number;
+  ensuredRarity: number;
+}
+
+export interface GachaStepUpChain {
+  id: number;
+  name: string;
+  steps: GachaStepUpStepEntry[];
+}
+
+export interface GachaGimmickEntry {
+  id: number;
+  branchName: string;
+  branchEntry: number;
+  normalWeight: number;
+  ssrWeight: number;
+}
+
 export interface GachaDetailViewModel extends GachaViewModel {
   logoPath: string;
   pools: GachaPool[];
@@ -130,6 +283,14 @@ export interface GachaDetailViewModel extends GachaViewModel {
   pickupSupportIds: number[];
   draws: GachaDrawEntry[];
   drawPlans: { single: GachaDrawPlan; ten: GachaDrawPlan };
+  /** Per-product bonus rewards (index matches productId1–4); empty when the gacha grants no extras. */
+  bonusRewards: GachaBonusRule[][];
+  /** Step-up chain when the gacha is a step-up banner. */
+  stepUp: GachaStepUpChain | null;
+  /** Special mechanic branches (e.g. Weather weight shifts); empty when no gimmick. */
+  gimmicks: GachaGimmickEntry[];
+  /** Extra banner label point set on top of the banner (already localized; "" when none). */
+  viewLabel: string;
 }
 
 const poolKindOrder: Record<GachaPoolKind, number> = { member: 0, support: 1, item: 2 };
@@ -183,6 +344,16 @@ function drawPlan(products: RawGachaProduct[], count: number): GachaDrawPlan {
   return plans.sort((a, b) => b.guaranteeRarity - a.guaranteeRarity || b.guaranteeCount - a.guaranteeCount)[0] ?? { count, guaranteeCount: 0, guaranteeRarity: 0 };
 }
 
+export interface GachaDetailTables {
+  bonuses?: RawGachaBonus[];
+  bonusLots?: RawGachaBonusLot[];
+  stepUps?: RawGachaStepUp[];
+  gimmicks?: RawGachaGimmick[];
+  viewLabels?: RawGachaViewLabel[];
+  /** Resolves a bonus lot row to its display model; omit to skip name/icon resolution. */
+  resolveReward?: RewardResolver;
+}
+
 export function normalizeGachas(
   gachas: RawGacha[],
   lots: RawGachaLot[],
@@ -194,6 +365,7 @@ export function normalizeGachas(
   items: ItemViewModel[],
   texts: RawText[],
   locale: AppLocale,
+  detail: GachaDetailTables = {},
 ): GachaDetailViewModel[] {
   const textMap = new Map(texts.map((row) => [row.id, row]));
   const cardMap = new Map(cards.map((card) => [card.id, card]));
@@ -203,6 +375,12 @@ export function normalizeGachas(
   const prizesByGroup = groupBy(prizes, (prize) => prize.groupId);
   const viewsByGacha = groupBy(views, (view) => view.gachaId);
   const productMap = new Map(products.map((product) => [product.id, product]));
+  const bonusMap = new Map((detail.bonuses ?? []).map((bonus) => [bonus.id, bonus]));
+  const bonusLotsById = groupBy(detail.bonusLots ?? [], (lot) => lot.gachaBonusId);
+  const stepUpMap = new Map((detail.stepUps ?? []).map((chain) => [chain.id, chain]));
+  const gimmicksByGroup = groupBy(detail.gimmicks ?? [], (gimmick) => gimmick.groupId);
+  const viewLabelMap = new Map((detail.viewLabels ?? []).map((label) => [label.id, label]));
+  const textOf = (id: string | undefined) => (id ? localizeMasterText(textMap.get(id), locale) : "");
 
   return [...gachas]
     .sort((a, b) => b.priority - a.priority || a.id - b.id)
@@ -301,6 +479,21 @@ export function normalizeGachas(
         // Prizes missing from the card/item tables cannot be shown, so they are not drawn either.
         draws: draws.filter((entry) => entry.weight > 0 && (entry.kind === "member" ? cardMap.has(entry.id) : entry.kind === "support" ? supportMap.has(entry.id) : itemMap.has(entry.id))),
         drawPlans: { single: drawPlan(gachaProducts, 1), ten: drawPlan(gachaProducts, 10) },
+        bonusRewards: [
+          bonusRewardsFor(gacha.gachaBonusIds1, bonusMap, bonusLotsById, detail.resolveReward),
+          bonusRewardsFor(gacha.gachaBonusIds2, bonusMap, bonusLotsById, detail.resolveReward),
+          bonusRewardsFor(gacha.gachaBonusIds3, bonusMap, bonusLotsById, detail.resolveReward),
+          bonusRewardsFor(gacha.gachaBonusIds4, bonusMap, bonusLotsById, detail.resolveReward),
+        ],
+        stepUp: normalizeStepUp(gacha.stepUpId, stepUpMap, textOf),
+        gimmicks: (gimmicksByGroup.get(gacha.gimmickGroupId ?? 0) ?? []).map((gimmick) => ({
+          id: gimmick.id,
+          branchName: gimmick.branchName,
+          branchEntry: gimmick.branchEntry,
+          normalWeight: gimmick.normalWeight,
+          ssrWeight: gimmick.ssrWeight,
+        })),
+        viewLabel: textOf(viewLabelMap.get(gacha.viewLabelId ?? 0)?.labelTextId ?? viewLabelMap.get(gacha.viewLabelId ?? 0)?.nameTextId),
       };
     });
 }
