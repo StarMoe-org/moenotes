@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>组卡：技能等级</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.mn{--mn-bg:#EEF2FA;--mn-surface:rgba(247,250,255,.92);--mn-surface-strong:#F7FAFF;--mn-glass:rgba(247,250,255,.7);--mn-glass-border:rgba(163,183,219,.52);--mn-text:#202E4C;--mn-ink-soft:#3D506F;--mn-muted:#596B87;--mn-border:#C5D1E6;--mn-cream-deep:#E3EAF7;--mn-accent:#5475BC;--mn-accent-deep:#395EA8;--mn-accent-soft:#E1EAFB;--mn-on-accent:#FFFFFF;--mn-pink:#C3B8EC;--mn-pink-soft:#EEE9FA;--mn-cyan:#A0DDEA;--mn-amber:#EAD0A6;--mn-peach:#F8D3B8;--mn-yellow:#F7E9AD;--mn-mint:#B9D5B1;--mn-mint-deep:#3F5740;--mn-mint-soft:#E4EBDD;--mn-warn-soft:#FBF1DC;--mn-warn-ink:#6E4A12;--mn-shadow:0 12px 36px rgba(48,72,122,.09);--mn-dot:rgba(39,62,112,.06);--mn-font:"Inter","PingFang SC","Microsoft YaHei",ui-sans-serif,system-ui,sans-serif;--mn-mono:"SFMono-Regular",Consolas,monospace}
+.mn[data-theme="dark"]{--mn-bg:#080F21;--mn-surface:rgba(16,27,49,.92);--mn-surface-strong:#17243E;--mn-glass:rgba(13,23,43,.78);--mn-glass-border:rgba(146,182,233,.22);--mn-text:#EAF1FF;--mn-ink-soft:#D2DDF3;--mn-muted:#A0B0CD;--mn-border:#2C3D5E;--mn-cream-deep:#17243F;--mn-accent:#9ACBFA;--mn-accent-deep:#B2D8FF;--mn-accent-soft:#1C3453;--mn-on-accent:#080F21;--mn-pink:#C4BAF1;--mn-pink-soft:#29233F;--mn-cyan:#9ADAE9;--mn-amber:#EDCE95;--mn-peach:#F0C4A4;--mn-yellow:#F6E79E;--mn-mint:#94C78B;--mn-mint-deep:#99D3B1;--mn-mint-soft:#182F32;--mn-warn-soft:#3A2E17;--mn-warn-ink:#F3D9A4;--mn-shadow:0 16px 44px rgba(0,5,20,.28);--mn-dot:rgba(175,206,255,.12)}
+a{color:var(--mn-accent-deep)}a:hover{color:var(--mn-accent)}
+.mn-two{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:start}
+.mn-row{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:16px;align-items:center}
+@media (max-width:1080px){.mn-two{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:720px){.mn-row{grid-template-columns:48px minmax(0,1fr)}.mn-row>.mn-pick{grid-column:1 / -1}}
+</style>
+</helmet>
+<div class="mn" data-theme="{{theme}}" style="min-height: 100vh; background-color: var(--mn-bg); background-image: radial-gradient(var(--mn-dot) 1px, transparent 1px); background-size: 22px 22px; color: var(--mn-text); font-family: var(--mn-font); font-size: 14px; line-height: 1.55">
+
+<header style="height: 60px; display: flex; align-items: center; gap: 28px; padding: 0 32px; border-bottom: 1px solid var(--mn-glass-border); background: var(--mn-glass)">
+<div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 17px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 2l2 8 8 2-8 2-2 8-2-8-8-2 8-2z"/></svg><span>MoeNotes</span></div>
+<nav aria-label="主导航" style="display: flex; gap: 22px">
+<a href="#" style="color: var(--mn-muted); text-decoration: none">歌曲</a>
+<a href="#" style="color: var(--mn-muted); text-decoration: none">活动</a>
+<a href="#" style="color: var(--mn-muted); text-decoration: none">谱面数据</a>
+<a href="#" aria-current="page" style="color: var(--mn-text); text-decoration: none; font-weight: 600; border-bottom: 2px solid var(--mn-accent); padding-bottom: 2px">组卡</a>
+</nav>
+<div style="flex-grow: 1"></div>
+<span style="font-size: 12px; padding: 3px 10px; border-radius: 999px; background: var(--mn-warn-soft); color: var(--mn-warn-ink)">示例数据</span>
+</header>
+
+<main style="max-width: 1360px; margin: 0 auto; padding: 24px 32px 48px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+
+<div style="display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap">
+<div style="flex-grow: 1">
+<a href="Goal.dc.html" style="font-size: 13px; text-decoration: none">← 目标与歌曲</a>
+<h1 style="margin: 4px 0 0; font-size: 24px; font-weight: 700">这次组卡还需要确认几项</h1>
+<p style="margin: 4px 0 0; color: var(--mn-muted); max-width: 760px">你的卡池里已有 21 张的技能等级。剩下的卡我们分别按 Lv1 和 Lv5 算了一遍，只有这几张会影响推荐；其余卡即使满级也进不了。填的等级会存进卡池，下次不再问。</p>
+</div>
+<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
+<span style="font-size: 13px; color: var(--mn-muted)">已填 {{filled}} / {{count}}</span>
+<div style="width: 200px; height: 6px; border-radius: 999px; background: var(--mn-cream-deep); overflow: hidden"><div style="height: 100%; width: {{pct}}%; background: var(--mn-accent-deep); border-radius: 999px"></div></div>
+</div>
+</div>
+
+<section aria-labelledby="h-id" style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 12px 16px; border-radius: 3px 20px 3px 20px; background: var(--mn-warn-soft); color: var(--mn-warn-ink)">
+<span style="width: 40px; height: 40px; border-radius: 4px 12px 4px 12px; background: var(--mn-peach); flex-shrink: 0"></span>
+<div style="flex-grow: 1; min-width: 0"><h2 id="h-id" style="margin: 0; font-size: 14px; font-weight: 650">还有 1 张没认准，而且会影响这次推荐</h2><div style="font-size: 13px">识别为“角色 E · [卡名]”，置信度低。其余 2 张待确认的卡不影响结果，先不管。</div></div>
+<button type="button" style="min-height: 40px; padding: 0 14px; border-radius: 10px; border: 0; background: var(--mn-warn-ink); color: var(--mn-warn-soft); font: inherit; font-weight: 600; cursor: pointer">对的</button>
+<button type="button" style="min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--mn-warn-ink); background: transparent; color: var(--mn-warn-ink); font: inherit; cursor: pointer">不对，改一下</button>
+</section>
+
+<div class="mn-two">
+
+<section aria-labelledby="h-list" style="padding: 18px 22px 8px; border-radius: 3px 24px 3px 24px; background: var(--mn-surface); border: 1px solid var(--mn-glass-border); box-shadow: var(--mn-shadow); min-width: 0">
+<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px">
+<h2 id="h-list" style="margin: 0 12px 0 0; font-size: 15px; font-weight: 650">按影响从大到小</h2>
+<span style="font-size: 13px; color: var(--mn-muted)">一键填：</span>
+<button type="button" onClick="{{fill1}}" style="min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--mn-border); background: var(--mn-surface-strong); color: var(--mn-text); font: inherit; font-size: 13px; cursor: pointer">全部 Lv1</button>
+<button type="button" onClick="{{fill5}}" style="min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--mn-border); background: var(--mn-surface-strong); color: var(--mn-text); font: inherit; font-size: 13px; cursor: pointer">全部 Lv5</button>
+<button type="button" onClick="{{clear}}" style="min-height: 36px; padding: 0 12px; border-radius: 999px; border: 0; background: transparent; color: var(--mn-accent-deep); font: inherit; font-size: 13px; cursor: pointer">清空</button>
+<span style="flex-grow: 1"></span>
+<label style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer"><input type="checkbox" checked="{{same}}" onChange="{{toggleSame}}" style="width: 18px; height: 18px; accent-color: var(--mn-accent-deep)">撃奏技能与普通相同</label>
+</div>
+
+<sc-for list="{{cards}}" as="c" hint-placeholder-count="9">
+<div class="mn-row" style="padding: 12px 0; border-top: 1px solid var(--mn-border)">
+<span style="width: 56px; height: 56px; border-radius: 4px 14px 4px 14px; background: {{c.fill}}; display: grid; place-items: end start; padding: 4px 6px; box-sizing: border-box; font-size: 11px; color: #202E4C">{{c.rarity}}</span>
+<div style="min-width: 0">
+<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap"><span style="font-weight: 600">{{c.name}}</span><span style="font-size: 12px; color: var(--mn-muted)">{{c.card}}</span>
+</div>
+<div style="font-size: 12px; color: var(--mn-muted)">Lv1 与 Lv5 相差约 {{c.impact}} 分</div>
+</div>
+<div class="mn-pick" style="display: flex; flex-direction: column; gap: 6px">
+<div role="radiogroup" aria-label="{{c.name}} 普通技能等级" style="display: flex; align-items: center; gap: 4px">
+<span style="width: 34px; font-size: 12px; color: var(--mn-muted)">普通</span>
+<sc-for list="{{c.live}}" as="b" hint-placeholder-count="5">
+<button type="button" role="radio" aria-checked="{{b.on}}" onClick="{{b.pick}}" style="width: 44px; height: 40px; border-radius: 8px; border: {{b.border}}; background: {{b.bg}}; color: {{b.fg}}; font: inherit; font-weight: 600; cursor: pointer">{{b.n}}</button>
+</sc-for>
+</div>
+<sc-if value="{{showGk}}" hint-placeholder-val="{{false}}">
+<div role="radiogroup" aria-label="{{c.name}} 撃奏技能等级" style="display: flex; align-items: center; gap: 4px">
+<span style="width: 34px; font-size: 12px; color: var(--mn-muted)">撃奏</span>
+<sc-for list="{{c.gk}}" as="b" hint-placeholder-count="5">
+<button type="button" role="radio" aria-checked="{{b.on}}" onClick="{{b.pick}}" style="width: 44px; height: 40px; border-radius: 8px; border: {{b.border}}; background: {{b.bg}}; color: {{b.fg}}; font: inherit; font-weight: 600; cursor: pointer">{{b.n}}</button>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</div>
+</sc-for>
+</section>
+
+<aside style="display: flex; flex-direction: column; gap: 16px; min-width: 0">
+<section aria-labelledby="h-where" style="padding: 18px 20px; border-radius: 3px 24px 3px 24px; background: var(--mn-surface); border: 1px solid var(--mn-glass-border); box-shadow: var(--mn-shadow)">
+<h2 id="h-where" style="margin: 0 0 8px; font-size: 15px; font-weight: 650">在游戏里哪看</h2>
+<p style="margin: 0; font-size: 13px; color: var(--mn-ink-soft)">打开卡片详情的技能强化页，普通技能和撃奏技能的 Lv 都在那里。技能用金币和技能券升级，没升过的卡就是 Lv1。</p>
+<p style="margin: 8px 0 0; font-size: 12px; color: var(--mn-muted)">卡池列表的排序和显示都不带技能等级，所以只能逐张看，这也是这里只问必要的几张的原因。</p>
+</section>
+
+<section aria-labelledby="h-how" style="padding: 18px 20px; border-radius: 3px 24px 3px 24px; background: var(--mn-glass); border: 1px solid var(--mn-glass-border); font-size: 13px; color: var(--mn-ink-soft)">
+<h2 id="h-how" style="margin: 0 0 8px; font-size: 15px; font-weight: 650; color: var(--mn-text)">不填会怎样</h2>
+<ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px">
+<li>可以直接看结果。没填的卡会同时按 Lv1 和 Lv5 计算，结果显示成分数区间，并标出是哪几张卡造成的。</li>
+<li>填完后若有别的卡变得关键，会再问你一两张，通常不超过一轮。</li>
+<li>填的等级存进你的卡池，也可以随时在“我的卡池”里改。</li>
+</ul>
+</section>
+
+<a href="Main.dc.html" style="display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border-radius: 12px; background: var(--mn-accent-deep); color: var(--mn-on-accent); text-decoration: none; font-weight: 600">{{cta}}
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+<sc-if value="{{hasMissing}}" hint-placeholder-val="{{true}}">
+<p style="margin: -6px 0 0; font-size: 12px; color: var(--mn-muted); text-align: center">还有 {{missing}} 张没填，结果会是区间</p>
+</sc-if>
+</aside>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"battle":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":1340}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var defs = [
+      { id: 'c', name: '角色 C', card: '[卡名]', rarity: '★4', fill: 'var(--mn-amber)', impact: '41,300' },
+      { id: 'b', name: '角色 B', card: '[卡名]', rarity: '★4', fill: 'var(--mn-cyan)', impact: '36,900' },
+      { id: 'g', name: '角色 G', card: '[卡名]', rarity: '★4', fill: 'var(--mn-pink-soft)', impact: '33,100' },
+      { id: 'd', name: '角色 D', card: '[卡名]', rarity: '★4', fill: 'var(--mn-mint)', impact: '28,400' },
+      { id: 'a', name: '角色 A', card: '[卡名]', rarity: '★3', fill: 'var(--mn-pink)', impact: '22,700' },
+      { id: 'f', name: '角色 F', card: '[卡名]', rarity: '★3', fill: 'var(--mn-yellow)', impact: '19,800' },
+      { id: 'e', name: '角色 E', card: '[卡名]', rarity: '★3', fill: 'var(--mn-peach)', impact: '17,200' },
+      { id: 'h', name: '角色 H', card: '[卡名]', rarity: '★3', fill: 'var(--mn-cyan)', impact: '12,600' },
+      { id: 'i', name: '角色 I', card: '[卡名]', rarity: '★2', fill: 'var(--mn-amber)', impact: '9,400' }
+    ];
+    var lv = this.state.lv;
+    if (!lv) { lv = {}; defs.forEach(function (d) { if (d.prev) lv[d.id] = d.prev; }); }
+    var gk = this.state.gk || {};
+    var same = this.state.same !== false;
+    var battle = this.props.battle !== false;
+    var showGk = battle && !same;
+    var set = function (key, id, n) {
+      var next = Object.assign({}, key === 'lv' ? lv : gk); next[id] = n;
+      var patch = {}; patch[key] = next; self.setState(patch);
+    };
+    var btns = function (key, id, cur) {
+      return [1, 2, 3, 4, 5].map(function (n) {
+        var on = cur === n;
+        return {
+          n: n, on: on,
+          border: on ? '2px solid var(--mn-accent-deep)' : '1px solid var(--mn-border)',
+          bg: on ? 'var(--mn-accent-deep)' : 'var(--mn-surface-strong)',
+          fg: on ? 'var(--mn-on-accent)' : 'var(--mn-text)',
+          pick: function () { set(key, id, n); }
+        };
+      });
+    };
+    var filled = 0;
+    var cards = defs.map(function (d) {
+      var l = lv[d.id];
+      var g = same ? l : gk[d.id];
+      if (l && (!showGk || g)) filled += 1;
+      return Object.assign({}, d, {
+        known: !!d.prev && lv[d.id] === d.prev,
+        live: btns('lv', d.id, l),
+        gk: btns('gk', d.id, g)
+      });
+    });
+    var all = function (n) {
+      var o = {}; defs.forEach(function (d) { o[d.id] = n; });
+      self.setState({ lv: o, gk: Object.assign({}, o) });
+    };
+    var missing = defs.length - filled;
+    return {
+      theme: this.props.theme || 'light',
+      cards: cards, count: defs.length, filled: filled,
+      pct: Math.round(filled / defs.length * 100),
+      missing: missing, hasMissing: missing > 0,
+      cta: missing > 0 ? '先看结果' : '完成，看结果',
+      same: same, showGk: showGk,
+      toggleSame: function () { self.setState({ same: !same }); },
+      fill1: function () { all(1); },
+      fill5: function () { all(5); },
+      clear: function () { self.setState({ lv: {}, gk: {} }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

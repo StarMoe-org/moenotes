@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>组卡：选目标与歌曲</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.mn{--mn-bg:#EEF2FA;--mn-surface:rgba(247,250,255,.92);--mn-surface-strong:#F7FAFF;--mn-glass:rgba(247,250,255,.7);--mn-glass-border:rgba(163,183,219,.52);--mn-text:#202E4C;--mn-ink-soft:#3D506F;--mn-muted:#596B87;--mn-border:#C5D1E6;--mn-cream-deep:#E3EAF7;--mn-accent:#5475BC;--mn-accent-deep:#395EA8;--mn-accent-soft:#E1EAFB;--mn-on-accent:#FFFFFF;--mn-mint-deep:#3F5740;--mn-mint-soft:#E4EBDD;--mn-warn-soft:#FBF1DC;--mn-warn-ink:#6E4A12;--mn-shadow:0 12px 36px rgba(48,72,122,.09);--mn-dot:rgba(39,62,112,.06);--mn-font:"Inter","PingFang SC","Microsoft YaHei",ui-sans-serif,system-ui,sans-serif;--mn-mono:"SFMono-Regular",Consolas,monospace}
+.mn[data-theme="dark"]{--mn-bg:#080F21;--mn-surface:rgba(16,27,49,.92);--mn-surface-strong:#17243E;--mn-glass:rgba(13,23,43,.78);--mn-glass-border:rgba(146,182,233,.22);--mn-text:#EAF1FF;--mn-ink-soft:#D2DDF3;--mn-muted:#A0B0CD;--mn-border:#2C3D5E;--mn-cream-deep:#17243F;--mn-accent:#9ACBFA;--mn-accent-deep:#B2D8FF;--mn-accent-soft:#1C3453;--mn-on-accent:#080F21;--mn-mint-deep:#99D3B1;--mn-mint-soft:#182F32;--mn-warn-soft:#3A2E17;--mn-warn-ink:#F3D9A4;--mn-shadow:0 16px 44px rgba(0,5,20,.28);--mn-dot:rgba(175,206,255,.12)}
+a{color:var(--mn-accent-deep)}a:hover{color:var(--mn-accent)}
+.mn-goals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.mn-two{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:24px;align-items:start}
+@media (max-width:1080px){.mn-two{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:760px){.mn-goals{grid-template-columns:minmax(0,1fr)}}
+</style>
+</helmet>
+<div class="mn" data-theme="{{theme}}" style="min-height: 100vh; background-color: var(--mn-bg); background-image: radial-gradient(var(--mn-dot) 1px, transparent 1px); background-size: 22px 22px; color: var(--mn-text); font-family: var(--mn-font); font-size: 14px; line-height: 1.55">
+
+<header style="height: 60px; display: flex; align-items: center; gap: 28px; padding: 0 32px; border-bottom: 1px solid var(--mn-glass-border); background: var(--mn-glass)">
+<div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 17px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 2l2 8 8 2-8 2-2 8-2-8-8-2 8-2z"/></svg><span>MoeNotes</span></div>
+<nav aria-label="主导航" style="display: flex; gap: 22px">
+<a href="#" style="color: var(--mn-muted); text-decoration: none">歌曲</a>
+<a href="#" style="color: var(--mn-muted); text-decoration: none">活动</a>
+<a href="#" style="color: var(--mn-muted); text-decoration: none">谱面数据</a>
+<a href="#" aria-current="page" style="color: var(--mn-text); text-decoration: none; font-weight: 600; border-bottom: 2px solid var(--mn-accent); padding-bottom: 2px">组卡</a>
+</nav>
+</header>
+
+<main style="max-width: 1360px; margin: 0 auto; padding: 28px 32px 48px; box-sizing: border-box; display: flex; flex-direction: column; gap: 22px">
+
+<div>
+<h1 style="margin: 0; font-size: 26px; font-weight: 700">你想用这队做什么？</h1>
+<p style="margin: 6px 0 0; color: var(--mn-muted)">不同目标要的输入和给出的结果都不一样。先选目标，下一步只会让你补这个目标真正用得到的信息。</p>
+</div>
+
+<div class="mn-two">
+
+<section aria-label="目标" class="mn-goals">
+<sc-for list="{{goals}}" as="g" hint-placeholder-count="6">
+<button type="button" aria-pressed="{{g.on}}" disabled="{{g.off}}" onClick="{{g.pick}}" style="text-align: left; display: flex; flex-direction: column; gap: 8px; padding: 18px; min-height: 176px; border-radius: 3px 20px 3px 20px; border: {{g.border}}; background: {{g.bg}}; color: var(--mn-text); font: inherit; cursor: {{g.cursor}}; opacity: {{g.opacity}}; box-shadow: var(--mn-shadow)">
+<span style="display: flex; align-items: center; gap: 8px; width: 100%">
+<span style="font-size: 16px; font-weight: 650">{{g.title}}</span>
+<span style="flex-grow: 1"></span>
+<span style="font-size: 11px; padding: 2px 8px; border-radius: 999px; background: {{g.badgeBg}}; color: {{g.badgeFg}}; white-space: nowrap">{{g.badge}}</span>
+</span>
+<span style="font-size: 13px; color: var(--mn-ink-soft)">{{g.what}}</span>
+<span style="font-size: 12px; color: var(--mn-muted); margin-top: auto">需要：{{g.need}}</span>
+</button>
+</sc-for>
+</section>
+
+<section aria-labelledby="h-song" style="padding: 22px 24px; border-radius: 3px 24px 3px 24px; background: var(--mn-surface); border: 1px solid var(--mn-glass-border); box-shadow: var(--mn-shadow); display: flex; flex-direction: column; gap: 18px">
+<h2 id="h-song" style="margin: 0; font-size: 17px; font-weight: 650">卡池、歌曲与场景</h2>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 13px; font-weight: 600">卡池</span>
+
+<sc-if value="{{st.signedOut}}" hint-placeholder-val="{{false}}">
+<div style="padding: 14px; border-radius: 12px; border: 1.5px dashed var(--mn-accent); display: flex; flex-direction: column; gap: 10px">
+<span style="font-weight: 600">不登录也能用</span>
+<span style="font-size: 13px; color: var(--mn-muted)">上传截图建立卡池，存在这个浏览器里，下次打开还在。登录后可以存进账号，换设备也能用。</span>
+<div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center">
+<a href="BoxSetup.dc.html" style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 10px; background: var(--mn-accent-deep); color: var(--mn-on-accent); text-decoration: none; font-weight: 600">上传截图建立卡池</a>
+<a href="#" style="font-size: 13px; padding: 0 6px">登录</a>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{st.noGameAccount}}" hint-placeholder-val="{{false}}">
+<div style="padding: 14px; border-radius: 12px; border: 1.5px dashed var(--mn-border); display: flex; flex-direction: column; gap: 10px">
+<span style="font-weight: 600">还没有绑定游戏账号</span>
+<span style="font-size: 13px; color: var(--mn-muted)">卡池在账号里按游戏账号保存。填玩家 ID 就能添加；也可以先把卡池存在这个浏览器里。</span>
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<a href="#" style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 10px; background: var(--mn-accent-deep); color: var(--mn-on-accent); text-decoration: none; font-weight: 600">添加游戏账号</a>
+<a href="BoxSetup.dc.html" style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--mn-border); color: var(--mn-text); text-decoration: none">先存在本机</a>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{st.noBox}}" hint-placeholder-val="{{false}}">
+<div style="padding: 14px; border-radius: 12px; border: 1.5px dashed var(--mn-accent); display: flex; flex-direction: column; gap: 10px">
+<span style="display: flex; align-items: center; gap: 8px"><span style="font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--mn-cream-deep)">JP</span><span style="font-weight: 600">[玩家名] 还没有卡池</span></span>
+<span style="font-size: 13px; color: var(--mn-muted)">上传几张卡池截图就能建好，大约一分钟。建好后直接回到这里继续。</span>
+<a href="BoxSetup.dc.html" style="align-self: flex-start; display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 10px; background: var(--mn-accent-deep); color: var(--mn-on-accent); text-decoration: none; font-weight: 600">上传截图建立卡池</a>
+</div>
+</sc-if>
+
+<sc-if value="{{st.hasBox}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--mn-accent-soft)">
+<span style="font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--mn-surface-strong)">{{st.tag}}</span>
+<span style="flex-grow: 1; min-width: 0"><span style="display: block; font-weight: 600">{{st.title}}</span><span style="display: block; font-size: 12px; color: var(--mn-muted)">{{st.sub}}</span></span>
+<a href="{{st.manage}}" style="font-size: 13px">{{st.manageLabel}}</a>
+</div>
+<sc-if value="{{st.local}}" hint-placeholder-val="{{false}}">
+<div style="font-size: 12px; padding: 8px 10px; border-radius: 8px; background: var(--mn-cream-deep); color: var(--mn-ink-soft)">只存在这个浏览器；清除浏览器数据或换设备就没了。<a href="#">登录后存进账号</a></div>
+</sc-if>
+<sc-if value="{{st.stale}}" hint-placeholder-val="{{false}}">
+<div style="font-size: 12px; padding: 8px 10px; border-radius: 8px; background: var(--mn-warn-soft); color: var(--mn-warn-ink)">卡池 32 天没更新，之后新抽到的卡不会被考虑。可以先组卡，也可以 <a href="Box.dc.html" style="color: inherit">先更新</a>。</div>
+</sc-if>
+<a href="Constraints.dc.html" style="display: flex; align-items: center; justify-content: space-between; min-height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--mn-border); background: var(--mn-surface-strong); color: var(--mn-text); text-decoration: none; font-size: 13px">更多选项<span style="color: var(--mn-muted)">对比队伍 · 不用的卡 · 必须上场</span></a>
+</sc-if>
+</div>
+
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="song" style="font-size: 13px; font-weight: 600">歌曲</label>
+<input id="song" type="search" placeholder="搜索曲名或乐队" style="min-height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--mn-border); background: var(--mn-surface-strong); color: var(--mn-text); font: inherit">
+</div>
+
+<div role="group" aria-label="难度" style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; font-weight: 600">难度</span>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px">
+<button type="button" style="min-height: 40px; border-radius: 8px; border: 1px solid var(--mn-border); background: transparent; color: var(--mn-text); font: inherit; cursor: pointer">EZ</button>
+<button type="button" style="min-height: 40px; border-radius: 8px; border: 1px solid var(--mn-border); background: transparent; color: var(--mn-text); font: inherit; cursor: pointer">NM</button>
+<button type="button" style="min-height: 40px; border-radius: 8px; border: 1px solid var(--mn-border); background: transparent; color: var(--mn-text); font: inherit; cursor: pointer">HD</button>
+<button type="button" aria-pressed="true" style="min-height: 40px; border-radius: 8px; border: 0; background: #BE123C; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer">EX</button>
+</div>
+</div>
+
+<div role="group" aria-label="场景" style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; font-weight: 600">场景</span>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+<button type="button" aria-pressed="true" style="min-height: 44px; border-radius: 8px; border: 0; background: var(--mn-accent-deep); color: var(--mn-on-accent); font: inherit; font-weight: 600; cursor: pointer">撃奏ライブ</button>
+<button type="button" style="min-height: 44px; border-radius: 8px; border: 1px solid var(--mn-border); background: transparent; color: var(--mn-text); font: inherit; cursor: pointer">自由 Live</button>
+</div>
+<span style="font-size: 12px; color: var(--mn-muted)">只有撃奏ライブ有激走。名次是你给的假设，不是预测。</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="rank" style="font-size: 13px; font-weight: 600">每个区间的名次</label>
+<select id="rank" style="min-height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--mn-border); background: var(--mn-surface-strong); color: var(--mn-text); font: inherit">
+<option>全部第 1（最佳情况）</option>
+<option>全部第 3</option>
+<option>逐区间设置…</option>
+</select>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 13px; font-weight: 600">你的打法</span>
+<label for="just" style="display: grid; grid-template-columns: 72px minmax(0, 1fr) 48px; gap: 10px; align-items: center; font-size: 13px">Just 率<input id="just" type="range" min="0" max="100" value="60" style="width: 100%; accent-color: var(--mn-accent-deep)"><span style="font-family: var(--mn-mono); text-align: right">60%</span></label>
+<label for="great" style="display: grid; grid-template-columns: 72px minmax(0, 1fr) 48px; gap: 10px; align-items: center; font-size: 13px">Great<input id="great" type="range" min="0" max="20" value="2" style="width: 100%; accent-color: var(--mn-accent-deep)"><span style="font-family: var(--mn-mono); text-align: right">2%</span></label>
+<span style="font-size: 12px; color: var(--mn-muted)">不确定就保持默认。结果会标注“按这个打法计算”。</span>
+</div>
+
+<sc-if value="{{st.hasBox}}" hint-placeholder-val="{{true}}">
+<a href="Skills.dc.html" style="display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; border-radius: 12px; background: var(--mn-accent-deep); color: var(--mn-on-accent); text-decoration: none; font-weight: 600">开始组卡
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+</sc-if>
+<sc-if value="{{st.noUsableBox}}" hint-placeholder-val="{{false}}">
+<button type="button" disabled style="min-height: 48px; border-radius: 12px; border: 0; background: var(--mn-cream-deep); color: var(--mn-ink-soft); font: inherit; font-weight: 600; cursor: not-allowed">开始组卡（先准备卡池）</button>
+</sc-if>
+</section>
+</div>
+
+<p style="margin: 0; font-size: 13px; color: var(--mn-muted)">卡池里还缺的技能等级，下一步只问会影响结果的几张。培养建议（按材料预算推荐升级哪张）暂不提供：成本与升级规则还没核对完。</p>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"boxState":{"editor":"enum","options":["ready","stale","local","temporary","signedOut","noGameAccount","noBox"],"default":"ready"},"$preview":{"width":1440,"height":1260}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var pick = this.state.goal || 'daily';
+    var ok = { bg: 'var(--mn-mint-soft)', fg: 'var(--mn-mint-deep)' };
+    var part = { bg: 'var(--mn-accent-soft)', fg: 'var(--mn-accent-deep)' };
+    var wait = { bg: 'var(--mn-warn-soft)', fg: 'var(--mn-warn-ink)' };
+    var list = [
+      { id: 'daily', title: '冲分', badge: '可用 · 启发式', t: part, what: '指定歌曲的期望分最高。也可改看较差局（P10）。', need: '卡池、普通技能等级' },
+      { id: 'battle', title: '撃奏ライブ', badge: '可用 · 启发式', t: part, what: '含激走的最终分数，名次按你给的假设。', need: '卡池、普通与撃奏技能等级' },
+      { id: 'safe', title: '稳定过线', badge: '可用', t: part, what: '达到你给的分数线的机会最大。', need: '分数线、卡池、技能等级' },
+      { id: 'skip', title: '跳过演出', badge: '可用 · 精确', t: ok, what: '跳过时的分数与评级，不看技能顺序。', need: '卡池（不需要技能等级）' },
+      { id: 'power', title: '只看综合力', badge: '可用 · 精确', t: ok, what: '这首歌加成下的综合力最高。', need: '卡池' },
+      { id: 'event', title: '活动歌曲排名', badge: '规则待核', t: wait, what: '与榜单登记的歌曲分数一致。榜单规则核对前不开放。', need: '活动、榜单规则', off: true }
+    ];
+    var goals = list.map(function (g) {
+      var on = g.id === pick;
+      return {
+        title: g.title, badge: g.badge, what: g.what, need: g.need,
+        badgeBg: g.t.bg, badgeFg: g.t.fg,
+        on: on, off: !!g.off,
+        border: on ? '2px solid var(--mn-accent-deep)' : '1px solid var(--mn-glass-border)',
+        bg: on ? 'var(--mn-accent-soft)' : 'var(--mn-surface)',
+        cursor: g.off ? 'not-allowed' : 'pointer',
+        opacity: g.off ? 0.62 : 1,
+        pick: function () { if (!g.off) self.setState({ goal: g.id }); }
+      };
+    });
+    var bs = this.props.boxState || 'ready';
+    var hasBox = bs === 'ready' || bs === 'stale' || bs === 'local' || bs === 'temporary';
+    var info = {
+      ready: ['JP', '[玩家名] 的卡池', '成员 132 · Snap 64 · 更新于 2026-09-30', 'Box.dc.html', '管理'],
+      stale: ['JP', '[玩家名] 的卡池', '成员 132 · Snap 64 · 更新于 2026-08-31', 'Box.dc.html', '管理'],
+      local: ['本机', '本机卡池 · JP', '成员 132 · Snap 64 · 更新于 2026-09-30', 'Box.dc.html', '管理'],
+      temporary: ['临时', '临时卡池 · JP', '成员 132 · Snap 64 · 关闭页面后丢失', 'BoxSetup.dc.html', '存到本机']
+    }[bs] || ['', '', '', '#', ''];
+    var st = {
+      signedOut: bs === 'signedOut', noGameAccount: bs === 'noGameAccount', noBox: bs === 'noBox',
+      hasBox: hasBox, noUsableBox: !hasBox, stale: bs === 'stale', local: bs === 'local',
+      tag: info[0], title: info[1], sub: info[2], manage: info[3], manageLabel: info[4]
+    };
+    return { theme: this.props.theme || 'light', goals: goals, st: st };
+  }
+}
+</script>
+</body>
+</html>

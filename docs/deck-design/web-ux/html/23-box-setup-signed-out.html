@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN"><head><style>
+    .sc-placeholder{background:color-mix(in srgb,currentColor 8%,transparent);
+      border:1px solid color-mix(in srgb,currentColor 50%,transparent);
+      border-radius:2px;box-sizing:border-box;overflow:hidden}
+    @keyframes sc-shine{0%{background-position:100% 50%}100%{background-position:0% 50%}}
+    html.sc-dc-streaming .sc-placeholder,
+    html.sc-dc-streaming .sc-interp.sc-missing{position:relative;
+      background:color-mix(in srgb,currentColor 5%,transparent);
+      border-color:transparent}
+    html.sc-dc-streaming .sc-placeholder::before,
+    html.sc-dc-streaming .sc-interp.sc-missing::before{content:'';
+      position:absolute;inset:0;pointer-events:none;
+      background:linear-gradient(90deg,rgba(217,119,87,0) 25%,rgba(247,225,211,.95) 37%,rgba(217,119,87,0) 63%);
+      background-size:400% 100%;animation:sc-shine 1.4s ease infinite}
+    html.sc-dc-streaming .sc-placeholder:nth-child(n+9 of .sc-placeholder)::before,
+    html.sc-dc-streaming .sc-interp.sc-missing:nth-child(n+9 of .sc-interp.sc-missing)::before{animation:none;
+      background:color-mix(in srgb,currentColor 8%,transparent)}
+    .sc-placeholder-error{padding:4px 8px;font:11px/1.4 ui-monospace,monospace;
+      color:color-mix(in srgb,currentColor 70%,transparent);word-break:break-word}
+    .sc-interp.sc-missing{display:inline-block;width:2em;height:1em;overflow:hidden;
+      vertical-align:text-bottom;background:rgba(255,255,255,.3);border:1px solid rgba(0,0,0,.5);
+      border-radius:2px;box-sizing:border-box;color:transparent;
+      user-select:none}
+    .sc-interp.sc-unresolved{font-family:ui-monospace,monospace;font-size:.85em;
+      color:color-mix(in srgb,currentColor 50%,transparent);
+      background:color-mix(in srgb,currentColor 10%,transparent);border-radius:3px;
+      padding:0 3px}
+    .sc-host.sc-has-error{position:relative}
+    .sc-logic-error{position:absolute;top:8px;left:8px;z-index:2147483647;max-width:60ch;
+      padding:6px 10px;background:#b00020;color:#fff;font:12px/1.4 ui-monospace,monospace;
+      border-radius:4px;white-space:pre-wrap;pointer-events:none}
+    /* Mirrors PRINT_BASELINE_CSS in apps/web deck-stage-export.ts — keep both
+       in sync until dc-runtime regains a build step. */
+    @media print {
+      @page { margin: 0.5cm; }
+      figure, table { break-inside: avoid; }
+      #dc-root, #dc-root > .sc-host { height: auto; }
+      *, *::before, *::after {
+        print-color-adjust: exact; -webkit-print-color-adjust: exact;
+        backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+        animation-delay: -99s !important; animation-duration: .001s !important;
+        animation-iteration-count: 1 !important; animation-fill-mode: both !important;
+        animation-play-state: running !important; transition-duration: 0s !important;
+      }
+    }
+  </style>
+<meta charset="utf-8">
+<title>组卡：首次建立卡池</title>
+<style>x-dc{display:none!important}</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" data-dc-tpl="1"><style data-dc-tpl="2">
+body{margin:0}
+.mn{--mn-bg:#EEF2FA;--mn-surface:rgba(247,250,255,.92);--mn-surface-strong:#F7FAFF;--mn-glass-border:rgba(163,183,219,.52);--mn-text:#202E4C;--mn-ink-soft:#3D506F;--mn-muted:#596B87;--mn-border:#C5D1E6;--mn-cream-deep:#E3EAF7;--mn-accent:#5475BC;--mn-accent-deep:#395EA8;--mn-accent-soft:#E1EAFB;--mn-on-accent:#FFFFFF;--mn-mint-deep:#3F5740;--mn-mint-soft:#E4EBDD;--mn-warn-soft:#FBF1DC;--mn-warn-ink:#6E4A12;--mn-scrim:rgba(20,30,52,.42);--mn-shadow:0 24px 64px rgba(20,34,70,.24);--mn-font:"Inter","PingFang SC","Microsoft YaHei",ui-sans-serif,system-ui,sans-serif;--mn-mono:"SFMono-Regular",Consolas,monospace}
+.mn[data-theme="dark"]{--mn-bg:#080F21;--mn-surface:rgba(16,27,49,.96);--mn-surface-strong:#17243E;--mn-glass-border:rgba(146,182,233,.22);--mn-text:#EAF1FF;--mn-ink-soft:#D2DDF3;--mn-muted:#A0B0CD;--mn-border:#2C3D5E;--mn-cream-deep:#17243F;--mn-accent:#9ACBFA;--mn-accent-deep:#B2D8FF;--mn-accent-soft:#1C3453;--mn-on-accent:#080F21;--mn-mint-deep:#99D3B1;--mn-mint-soft:#182F32;--mn-warn-soft:#3A2E17;--mn-warn-ink:#F3D9A4;--mn-scrim:rgba(0,4,14,.6);--mn-shadow:0 24px 64px rgba(0,0,0,.5)}
+a{color:var(--mn-accent-deep)}a:hover{color:var(--mn-accent)}
+.mn-views{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:640px){.mn-views{grid-template-columns:minmax(0,1fr)}}
+.mn{display:flow-root}
+</style></head>
+<body>
+<div id="dc-root"><div class="sc-host" data-sc-name="23-box-setup-signed-out"><div data-dc-tpl="3" class="mn" data-theme="light" style="min-height: 100vh; background: var(--mn-bg); color: var(--mn-text); font-family: var(--mn-font); font-size: 14px; line-height: 1.55; position: relative;"><div data-dc-tpl="4" aria-hidden="true" style="position: absolute; inset: 0px; background: var(--mn-scrim);"></div><div data-dc-tpl="5" role="dialog" aria-modal="true" aria-labelledby="h-setup" style="position: relative; max-width: 760px; margin: 56px auto; box-sizing: border-box; padding: 26px 28px 24px; border-radius: 3px 28px; background: var(--mn-surface); border: 1px solid var(--mn-glass-border); box-shadow: var(--mn-shadow); display: flex; flex-direction: column; gap: 18px;"><div data-dc-tpl="6" style="display: flex; align-items: flex-start; gap: 12px;"><div data-dc-tpl="7" style="flex-grow: 1;"><h2 data-dc-tpl="8" id="h-setup" style="margin: 0px; font-size: 22px; font-weight: 700;">建立卡池</h2><p data-dc-tpl="9" style="margin: 4px 0px 0px; color: var(--mn-muted);"><span class="sc-interp">未登录：卡池不会存进账号。建好后直接回到组卡，已选的目标和歌曲不变。</span></p></div><a data-dc-tpl="10" href="Goal.dc.html" aria-label="关闭并回到组卡" style="width: 44px; height: 44px; display: grid; place-items: center; border-radius: 10px; color: var(--mn-text);"><svg data-dc-tpl="11" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path data-dc-tpl="12" d="M6 6l12 12M18 6L6 18"></path></svg></a></div><ol data-dc-tpl="13" aria-label="步骤" style="list-style: none; margin: 0px; padding: 0px; display: flex; gap: 8px; font-size: 13px; flex-wrap: wrap;"><li data-dc-tpl="15" style="padding: 4px 12px; border-radius: 999px; background: var(--mn-accent-deep); color: var(--mn-on-accent);"><span class="sc-interp">1 截图</span></li><li data-dc-tpl="15" style="padding: 4px 12px; border-radius: 999px; background: var(--mn-cream-deep); color: var(--mn-ink-soft);"><span class="sc-interp">2 识别</span></li><li data-dc-tpl="15" style="padding: 4px 12px; border-radius: 999px; background: var(--mn-cream-deep); color: var(--mn-ink-soft);"><span class="sc-interp">3 确认</span></li></ol><div data-dc-tpl="17" role="radiogroup" aria-label="卡池存在哪里" style="display: grid; grid-template-columns: repeat(2, minmax(0px, 1fr)); gap: 10px;"><button data-dc-tpl="19" type="button" role="radio" aria-checked="true" style="text-align: left; display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 12px; border: 2px solid var(--mn-accent-deep); background: var(--mn-accent-soft); color: var(--mn-text); font: inherit; cursor: pointer;"><span data-dc-tpl="20" style="font-weight: 600;"><span class="sc-interp">存在这个浏览器</span></span><span data-dc-tpl="21" style="font-size: 12px; color: var(--mn-muted);"><span class="sc-interp">下次打开还在；登录后可存进账号</span></span></button><button data-dc-tpl="19" type="button" role="radio" aria-checked="false" style="text-align: left; display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--mn-border); background: transparent; color: var(--mn-text); font: inherit; cursor: pointer;"><span data-dc-tpl="20" style="font-weight: 600;"><span class="sc-interp">只用这一次</span></span><span data-dc-tpl="21" style="font-size: 12px; color: var(--mn-muted);"><span class="sc-interp">关闭页面就清除，不留任何数据</span></span></button></div><div data-dc-tpl="23" style="display: flex; flex-direction: column; gap: 14px;"><div data-dc-tpl="24" class="mn-views"><div data-dc-tpl="25" style="padding: 12px; border-radius: 12px; background: var(--mn-cream-deep);"><div data-dc-tpl="26" style="font-weight: 600;">等级视图</div><div data-dc-tpl="27" style="font-size: 12px; color: var(--mn-muted);">卡池列表默认显示，往下滑多截几张，盖住所有卡</div></div><div data-dc-tpl="28" style="padding: 12px; border-radius: 12px; background: var(--mn-cream-deep);"><div data-dc-tpl="29" style="font-weight: 600;">特训视图</div><div data-dc-tpl="30" style="font-size: 12px; color: var(--mn-muted);">切换显示后再截一轮</div></div><div data-dc-tpl="31" style="padding: 12px; border-radius: 12px; background: var(--mn-cream-deep);"><div data-dc-tpl="32" style="font-weight: 600;">Snap 列表</div><div data-dc-tpl="33" style="font-size: 12px; color: var(--mn-muted);">留影的等级与卡阶</div></div></div><button data-dc-tpl="34" type="button" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 150px; border-radius: 14px; border: 1.5px dashed var(--mn-accent); background: transparent; color: var(--mn-accent-deep); font: inherit; cursor: pointer;"><svg data-dc-tpl="35" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path data-dc-tpl="36" d="M12 16V4M7 9l5-5 5 5M4 20h16"></path></svg><span data-dc-tpl="37" style="font-weight: 600;">拖入、粘贴或选择截图</span><span data-dc-tpl="38" style="font-size: 12px; color: var(--mn-muted);">可以一次选多张；截图只在浏览器里识别，不上传</span></button><p data-dc-tpl="39" style="margin: 0px; font-size: 12px; color: var(--mn-muted);">技能等级截图读不到，这里不用管：组卡时只会问影响结果的几张。</p></div><div data-dc-tpl="66" style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; padding-top: 6px; border-top: 1px solid var(--mn-border);"><a data-dc-tpl="73" href="Goal.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0px 16px; border-radius: 12px; color: var(--mn-accent-deep); text-decoration: none;">取消</a></div></div></div></div></div>
+
+
+
+</body></html>

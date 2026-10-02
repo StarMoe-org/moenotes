@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN"><head><style>
+    .sc-placeholder{background:color-mix(in srgb,currentColor 8%,transparent);
+      border:1px solid color-mix(in srgb,currentColor 50%,transparent);
+      border-radius:2px;box-sizing:border-box;overflow:hidden}
+    @keyframes sc-shine{0%{background-position:100% 50%}100%{background-position:0% 50%}}
+    html.sc-dc-streaming .sc-placeholder,
+    html.sc-dc-streaming .sc-interp.sc-missing{position:relative;
+      background:color-mix(in srgb,currentColor 5%,transparent);
+      border-color:transparent}
+    html.sc-dc-streaming .sc-placeholder::before,
+    html.sc-dc-streaming .sc-interp.sc-missing::before{content:'';
+      position:absolute;inset:0;pointer-events:none;
+      background:linear-gradient(90deg,rgba(217,119,87,0) 25%,rgba(247,225,211,.95) 37%,rgba(217,119,87,0) 63%);
+      background-size:400% 100%;animation:sc-shine 1.4s ease infinite}
+    html.sc-dc-streaming .sc-placeholder:nth-child(n+9 of .sc-placeholder)::before,
+    html.sc-dc-streaming .sc-interp.sc-missing:nth-child(n+9 of .sc-interp.sc-missing)::before{animation:none;
+      background:color-mix(in srgb,currentColor 8%,transparent)}
+    .sc-placeholder-error{padding:4px 8px;font:11px/1.4 ui-monospace,monospace;
+      color:color-mix(in srgb,currentColor 70%,transparent);word-break:break-word}
+    .sc-interp.sc-missing{display:inline-block;width:2em;height:1em;overflow:hidden;
+      vertical-align:text-bottom;background:rgba(255,255,255,.3);border:1px solid rgba(0,0,0,.5);
+      border-radius:2px;box-sizing:border-box;color:transparent;
+      user-select:none}
+    .sc-interp.sc-unresolved{font-family:ui-monospace,monospace;font-size:.85em;
+      color:color-mix(in srgb,currentColor 50%,transparent);
+      background:color-mix(in srgb,currentColor 10%,transparent);border-radius:3px;
+      padding:0 3px}
+    .sc-host.sc-has-error{position:relative}
+    .sc-logic-error{position:absolute;top:8px;left:8px;z-index:2147483647;max-width:60ch;
+      padding:6px 10px;background:#b00020;color:#fff;font:12px/1.4 ui-monospace,monospace;
+      border-radius:4px;white-space:pre-wrap;pointer-events:none}
+    /* Mirrors PRINT_BASELINE_CSS in apps/web deck-stage-export.ts — keep both
+       in sync until dc-runtime regains a build step. */
+    @media print {
+      @page { margin: 0.5cm; }
+      figure, table { break-inside: avoid; }
+      #dc-root, #dc-root > .sc-host { height: auto; }
+      *, *::before, *::after {
+        print-color-adjust: exact; -webkit-print-color-adjust: exact;
+        backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+        animation-delay: -99s !important; animation-duration: .001s !important;
+        animation-iteration-count: 1 !important; animation-fill-mode: both !important;
+        animation-play-state: running !important; transition-duration: 0s !important;
+      }
+    }
+  </style>
+<meta charset="utf-8">
+<title>登录后：存进账号</title>
+<style>x-dc{display:none!important}</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" data-dc-tpl="1"><style data-dc-tpl="2">
+body{margin:0}
+.mn{--mn-bg:#EEF2FA;--mn-surface:rgba(247,250,255,.92);--mn-surface-strong:#F7FAFF;--mn-glass:rgba(247,250,255,.7);--mn-glass-border:rgba(163,183,219,.52);--mn-text:#202E4C;--mn-ink-soft:#3D506F;--mn-muted:#596B87;--mn-border:#C5D1E6;--mn-cream-deep:#E3EAF7;--mn-accent:#5475BC;--mn-accent-deep:#395EA8;--mn-accent-soft:#E1EAFB;--mn-on-accent:#FFFFFF;--mn-pink:#C3B8EC;--mn-pink-soft:#EEE9FA;--mn-cyan:#A0DDEA;--mn-amber:#EAD0A6;--mn-peach:#F8D3B8;--mn-yellow:#F7E9AD;--mn-mint:#B9D5B1;--mn-mint-deep:#3F5740;--mn-mint-soft:#E4EBDD;--mn-rose:#B85C6B;--mn-rose-soft:#F6E1E4;--mn-rose-ink:#7A2433;--mn-warn-soft:#FBF1DC;--mn-warn-ink:#6E4A12;--mn-shadow:0 12px 36px rgba(48,72,122,.09);--mn-dot:rgba(39,62,112,.06);--mn-font:"Inter","PingFang SC","Microsoft YaHei",ui-sans-serif,system-ui,sans-serif;--mn-mono:"SFMono-Regular",Consolas,monospace}
+.mn[data-theme="dark"]{--mn-bg:#080F21;--mn-surface:rgba(16,27,49,.92);--mn-surface-strong:#17243E;--mn-glass:rgba(13,23,43,.78);--mn-glass-border:rgba(146,182,233,.22);--mn-text:#EAF1FF;--mn-ink-soft:#D2DDF3;--mn-muted:#A0B0CD;--mn-border:#2C3D5E;--mn-cream-deep:#17243F;--mn-accent:#9ACBFA;--mn-accent-deep:#B2D8FF;--mn-accent-soft:#1C3453;--mn-on-accent:#080F21;--mn-pink:#C4BAF1;--mn-pink-soft:#29233F;--mn-cyan:#9ADAE9;--mn-amber:#EDCE95;--mn-peach:#F0C4A4;--mn-yellow:#F6E79E;--mn-mint:#94C78B;--mn-mint-deep:#99D3B1;--mn-mint-soft:#182F32;--mn-rose:#D47888;--mn-rose-soft:#3A1C24;--mn-rose-ink:#F2B8C2;--mn-warn-soft:#3A2E17;--mn-warn-ink:#F3D9A4;--mn-shadow:0 16px 44px rgba(0,5,20,.28);--mn-dot:rgba(175,206,255,.12)}
+
+.mn{--mn-scrim:rgba(20,30,52,.42)}.mn[data-theme="dark"]{--mn-scrim:rgba(0,4,14,.6)}
+a{color:var(--mn-accent-deep)}a:hover{color:var(--mn-accent)}
+.mn{display:flow-root}
+</style></head>
+<body>
+<div id="dc-root"><div class="sc-host" data-sc-name="27-login-merge"><div data-dc-tpl="3" class="mn" data-theme="light" style="min-height: 100vh; background: var(--mn-bg); color: var(--mn-text); font-family: var(--mn-font); font-size: 14px; line-height: 1.55; position: relative;"><div data-dc-tpl="4" aria-hidden="true" style="position: absolute; inset: 0px; background: var(--mn-scrim);"></div><div data-dc-tpl="5" role="dialog" aria-modal="true" aria-labelledby="h-merge" style="position: relative; max-width: 640px; margin: 64px auto; box-sizing: border-box; padding: 24px 28px; border-radius: 3px 28px; background: var(--mn-surface-strong); border: 1px solid var(--mn-glass-border); box-shadow: rgba(20, 34, 70, 0.24) 0px 24px 64px; display: flex; flex-direction: column; gap: 16px;"><div data-dc-tpl="6"><h2 data-dc-tpl="7" id="h-merge" style="margin: 0px; font-size: 21px; font-weight: 700;">把本机卡池存进账号？</h2><p data-dc-tpl="8" style="margin: 4px 0px 0px; color: var(--mn-muted);">这个浏览器里有一份 JP 卡池（成员 132 · Snap 64 · 更新于 9-30）。存进账号后换设备也能用。</p></div><div data-dc-tpl="9"><div data-dc-tpl="10" style="font-weight: 600; margin-bottom: 6px;">存进哪个游戏账号</div><div data-dc-tpl="11" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--mn-accent-deep); background: var(--mn-accent-soft);"><span data-dc-tpl="12" style="font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--mn-surface-strong);">JP</span><span data-dc-tpl="13" style="flex-grow: 1;">[玩家名] · ID [profileId]</span><span data-dc-tpl="14" style="font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--mn-mint-soft); color: var(--mn-mint-deep);">已验证</span></div><p data-dc-tpl="15" style="margin: 6px 0px 0px; font-size: 12px; color: var(--mn-muted);">只列出同区服的游戏账号。</p></div><div data-dc-tpl="17"><div data-dc-tpl="18" style="font-weight: 600; margin-bottom: 6px;">这个账号里已经有一份卡池</div><div data-dc-tpl="19" style="display: grid; grid-template-columns: repeat(2, minmax(0px, 1fr)); gap: 10px; margin-bottom: 10px; font-size: 13px;"><div data-dc-tpl="20" style="padding: 10px 12px; border-radius: 10px; background: var(--mn-cream-deep);"><div data-dc-tpl="21" style="color: var(--mn-muted);">账号里</div><div data-dc-tpl="22" style="font-weight: 600;">成员 120 · Snap 58</div><div data-dc-tpl="23" style="color: var(--mn-muted);">更新于 9-12</div></div><div data-dc-tpl="24" style="padding: 10px 12px; border-radius: 10px; background: var(--mn-cream-deep);"><div data-dc-tpl="25" style="color: var(--mn-muted);">本机</div><div data-dc-tpl="26" style="font-weight: 600;">成员 132 · Snap 64</div><div data-dc-tpl="27" style="color: var(--mn-muted);">更新于 9-30</div></div></div><div data-dc-tpl="28" role="radiogroup" aria-label="保留哪一份" style="display: flex; flex-direction: column; gap: 6px;"><button data-dc-tpl="30" type="button" role="radio" aria-checked="true" style="text-align: left; display: flex; flex-direction: column; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--mn-accent-deep); background: var(--mn-accent-soft); color: var(--mn-text); font: inherit; cursor: pointer;"><span data-dc-tpl="31" style="font-weight: 600;"><span class="sc-interp">合并（推荐）</span></span><span data-dc-tpl="32" style="font-size: 12px; color: var(--mn-muted);"><span class="sc-interp">每张卡取较新的值；手动改过的值优先。两边都有手动值且不同的，再问你</span></span></button><button data-dc-tpl="30" type="button" role="radio" aria-checked="false" style="text-align: left; display: flex; flex-direction: column; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--mn-border); background: transparent; color: var(--mn-text); font: inherit; cursor: pointer;"><span data-dc-tpl="31" style="font-weight: 600;"><span class="sc-interp">用本机这份</span></span><span data-dc-tpl="32" style="font-size: 12px; color: var(--mn-muted);"><span class="sc-interp">账号里那份会被替换</span></span></button><button data-dc-tpl="30" type="button" role="radio" aria-checked="false" style="text-align: left; display: flex; flex-direction: column; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--mn-border); background: transparent; color: var(--mn-text); font: inherit; cursor: pointer;"><span data-dc-tpl="31" style="font-weight: 600;"><span class="sc-interp">保留账号那份</span></span><span data-dc-tpl="32" style="font-size: 12px; color: var(--mn-muted);"><span class="sc-interp">丢弃本机这份</span></span></button></div></div><div data-dc-tpl="33" style="display: flex; justify-content: flex-end; gap: 10px; padding-top: 12px; border-top: 1px solid var(--mn-border);"><a data-dc-tpl="34" href="Box.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0px 14px; color: var(--mn-accent-deep); text-decoration: none;">以后再说</a><a data-dc-tpl="35" href="Box.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0px 20px; border-radius: 12px; background: var(--mn-accent-deep); color: var(--mn-on-accent); text-decoration: none; font-weight: 600;">存进账号</a></div><p data-dc-tpl="36" style="margin: -6px 0px 0px; font-size: 12px; color: var(--mn-muted); text-align: right;">存好后本机副本会删除，避免两份不同步。</p></div></div></div></div>
+
+
+
+</body></html>

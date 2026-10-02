@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>组卡推荐结果（手机）</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.mn{--mn-bg:#EEF2FA;--mn-surface:rgba(247,250,255,.94);--mn-surface-strong:#F7FAFF;--mn-glass:rgba(247,250,255,.8);--mn-glass-border:rgba(163,183,219,.52);--mn-text:#202E4C;--mn-ink-soft:#3D506F;--mn-muted:#596B87;--mn-border:#C5D1E6;--mn-cream-deep:#E3EAF7;--mn-accent:#5475BC;--mn-accent-deep:#395EA8;--mn-accent-soft:#E1EAFB;--mn-on-accent:#FFFFFF;--mn-pink:#C3B8EC;--mn-cyan:#A0DDEA;--mn-amber:#EAD0A6;--mn-peach:#F8D3B8;--mn-mint:#B9D5B1;--mn-mint-deep:#3F5740;--mn-mint-soft:#E4EBDD;--mn-warn-soft:#FBF1DC;--mn-warn-ink:#6E4A12;--mn-shadow:0 10px 28px rgba(48,72,122,.09);--mn-font:"Inter","PingFang SC","Microsoft YaHei",ui-sans-serif,system-ui,sans-serif;--mn-mono:"SFMono-Regular",Consolas,monospace}
+.mn[data-theme="dark"]{--mn-bg:#080F21;--mn-surface:rgba(16,27,49,.94);--mn-surface-strong:#17243E;--mn-glass:rgba(13,23,43,.85);--mn-glass-border:rgba(146,182,233,.22);--mn-text:#EAF1FF;--mn-ink-soft:#D2DDF3;--mn-muted:#A0B0CD;--mn-border:#2C3D5E;--mn-cream-deep:#17243F;--mn-accent:#9ACBFA;--mn-accent-deep:#B2D8FF;--mn-accent-soft:#1C3453;--mn-on-accent:#080F21;--mn-pink:#C4BAF1;--mn-cyan:#9ADAE9;--mn-amber:#EDCE95;--mn-peach:#F0C4A4;--mn-mint:#94C78B;--mn-mint-deep:#99D3B1;--mn-mint-soft:#182F32;--mn-warn-soft:#3A2E17;--mn-warn-ink:#F3D9A4;--mn-shadow:0 10px 28px rgba(0,5,20,.28)}
+a{color:var(--mn-accent-deep)}a:hover{color:var(--mn-accent)}
+</style>
+</helmet>
+<div class="mn" data-theme="{{theme}}" style="width: 390px; min-height: 1500px; position: relative; background: var(--mn-bg); color: var(--mn-text); font-family: var(--mn-font); font-size: 14px; line-height: 1.5">
+
+<header style="height: 52px; display: flex; align-items: center; gap: 10px; padding: 0 12px; border-bottom: 1px solid var(--mn-glass-border); background: var(--mn-glass)">
+<a href="Skills.dc.html" aria-label="返回技能等级" style="width: 44px; height: 44px; display: grid; place-items: center; color: var(--mn-text)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></a>
+<span style="font-weight: 650">推荐结果</span>
+<span style="flex-grow: 1"></span>
+<span style="font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--mn-warn-soft); color: var(--mn-warn-ink)">示例数据</span>
+</header>
+
+<div style="padding: 14px 16px 120px; display: flex; flex-direction: column; gap: 14px">
+
+<div style="display: flex; gap: 6px; flex-wrap: wrap; font-size: 12px">
+<span style="padding: 3px 10px; border-radius: 999px; background: var(--mn-accent-soft)">[歌曲名]</span>
+<span style="padding: 3px 10px; border-radius: 999px; background: #BE123C; color: #FFFFFF; font-weight: 600">EX 27</span>
+<span style="padding: 3px 10px; border-radius: 999px; background: var(--mn-accent-soft)">撃奏ライブ · 名次 1</span>
+<span style="padding: 3px 10px; border-radius: 999px; background: var(--mn-accent-soft)">Just 60%</span>
+</div>
+
+<section aria-labelledby="m-score" style="padding: 16px 18px; border-radius: 3px 20px 3px 20px; background: var(--mn-surface); border: 1px solid var(--mn-glass-border); box-shadow: var(--mn-shadow)">
+<h2 id="m-score" style="margin: 0; font-size: 12px; font-weight: 500; color: var(--mn-muted)">期望分数</h2>
+<div style="font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums">1,284,560</div>
+<div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12px">
+<span style="padding: 2px 8px; border-radius: 999px; background: var(--mn-mint-soft); color: var(--mn-mint-deep); font-weight: 600">比当前队伍 +42,310</span>
+<span style="color: var(--mn-muted)">P10 1,212,300 · P90 1,361,900</span>
+</div>
+<div style="margin-top: 10px; font-size: 12px; color: var(--mn-warn-ink); background: var(--mn-warn-soft); padding: 8px 10px; border-radius: 8px">启发式结果：复算 1,240 个候选，可能还有更好的队伍。</div>
+</section>
+
+<section aria-labelledby="m-form" style="padding: 16px 12px; border-radius: 3px 20px 3px 20px; background: var(--mn-surface); border: 1px solid var(--mn-glass-border); box-shadow: var(--mn-shadow)">
+<h2 id="m-form" style="margin: 0 6px 12px; font-size: 15px; font-weight: 650">照这样摆</h2>
+<div style="display: flex; gap: 5px; align-items: flex-start">
+<sc-for list="{{members}}" as="m" hint-placeholder-count="5">
+<div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 5px; margin-top: {{m.lift}}px">
+<div style="aspect-ratio: 3 / 4; border-radius: 4px 12px 4px 12px; background: {{m.fill}}; border: {{m.ring}}; display: flex; flex-direction: column; justify-content: space-between; padding: 5px; box-sizing: border-box">
+<span style="align-self: flex-start; font-size: 10px; padding: 0 5px; border-radius: 999px; background: rgba(255,255,255,.85); color: #202E4C">{{m.slot}}</span>
+<span style="font-size: 11px; font-weight: 700; color: #202E4C">{{m.name}}</span>
+</div>
+<span style="font-size: 10px; font-family: var(--mn-mono); color: var(--mn-ink-soft); text-align: center">Lv{{m.lv}} 特{{m.tr}}</span>
+<span style="height: 18px; border-radius: 4px; background: var(--mn-cream-deep); font-size: 10px; display: grid; place-items: center; color: var(--mn-ink-soft)">Snap</span>
+</div>
+</sc-for>
+</div>
+<button type="button" aria-expanded="false" style="margin-top: 12px; width: 100%; min-height: 44px; border-radius: 10px; border: 1px solid var(--mn-border); background: var(--mn-surface-strong); color: var(--mn-text); font: inherit; cursor: pointer">展开每张卡与 Snap 详情</button>
+</section>
+
+<section aria-labelledby="m-alt" style="padding: 14px 14px 10px; border-radius: 3px 20px 3px 20px; background: var(--mn-surface); border: 1px solid var(--mn-glass-border); box-shadow: var(--mn-shadow)">
+<h2 id="m-alt" style="margin: 0 4px 8px; font-size: 15px; font-weight: 650">其他候选</h2>
+<sc-for list="{{alts}}" as="a" hint-placeholder-count="2">
+<button type="button" style="width: 100%; display: flex; justify-content: space-between; align-items: center; min-height: 48px; padding: 0 8px; border: 0; border-top: 1px solid var(--mn-border); background: transparent; color: var(--mn-text); font: inherit; cursor: pointer">
+<span>#{{a.no}} · {{a.change}}</span><span style="font-family: var(--mn-mono); font-size: 12px; color: var(--mn-muted)">{{a.diff}}</span>
+</button>
+</sc-for>
+</section>
+
+<p style="margin: 0; font-size: 11px; color: var(--mn-muted)">数值按本模型计算，以游戏反编译为来源，不保证正确；与其他工具有出入时请以对方为准。</p>
+</div>
+
+<div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 16px 20px; background: var(--mn-glass); border-top: 1px solid var(--mn-glass-border); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<button type="button" style="min-height: 48px; border-radius: 12px; border: 1px solid var(--mn-border); background: var(--mn-surface-strong); color: var(--mn-text); font: inherit; cursor: pointer">复制摆法</button>
+<button type="button" style="min-height: 48px; border-radius: 12px; border: 0; background: var(--mn-accent-deep); color: var(--mn-on-accent); font: inherit; font-weight: 600; cursor: pointer">保存为图片</button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":1500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var lifts = [22, 10, 0, 10, 22];
+    var base = [
+      { name: '角色 A', lv: 60, tr: 5, fill: 'var(--mn-pink)' },
+      { name: '角色 B', lv: 60, tr: 5, fill: 'var(--mn-cyan)' },
+      { name: '角色 C', lv: 60, tr: 5, fill: 'var(--mn-amber)' },
+      { name: '角色 D', lv: 58, tr: 4, fill: 'var(--mn-mint)' },
+      { name: '角色 E', lv: 60, tr: 5, fill: 'var(--mn-peach)' }
+    ];
+    var members = base.map(function (m, i) {
+      return Object.assign({}, m, {
+        lift: lifts[i],
+        slot: i === 2 ? '队长' : String(i + 1),
+        ring: i === 2 ? '2px solid var(--mn-accent-deep)' : '1px solid var(--mn-glass-border)'
+      });
+    });
+    return {
+      theme: this.props.theme || 'light',
+      members: members,
+      alts: [
+        { no: 2, change: '5 号位换角色 F', diff: '−3,120' },
+        { no: 3, change: '2 号位换角色 G', diff: '−5,870' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

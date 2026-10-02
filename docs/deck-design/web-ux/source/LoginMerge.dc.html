@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>登录后：存进账号</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.mn{--mn-bg:#EEF2FA;--mn-surface:rgba(247,250,255,.92);--mn-surface-strong:#F7FAFF;--mn-glass:rgba(247,250,255,.7);--mn-glass-border:rgba(163,183,219,.52);--mn-text:#202E4C;--mn-ink-soft:#3D506F;--mn-muted:#596B87;--mn-border:#C5D1E6;--mn-cream-deep:#E3EAF7;--mn-accent:#5475BC;--mn-accent-deep:#395EA8;--mn-accent-soft:#E1EAFB;--mn-on-accent:#FFFFFF;--mn-pink:#C3B8EC;--mn-pink-soft:#EEE9FA;--mn-cyan:#A0DDEA;--mn-amber:#EAD0A6;--mn-peach:#F8D3B8;--mn-yellow:#F7E9AD;--mn-mint:#B9D5B1;--mn-mint-deep:#3F5740;--mn-mint-soft:#E4EBDD;--mn-rose:#B85C6B;--mn-rose-soft:#F6E1E4;--mn-rose-ink:#7A2433;--mn-warn-soft:#FBF1DC;--mn-warn-ink:#6E4A12;--mn-shadow:0 12px 36px rgba(48,72,122,.09);--mn-dot:rgba(39,62,112,.06);--mn-font:"Inter","PingFang SC","Microsoft YaHei",ui-sans-serif,system-ui,sans-serif;--mn-mono:"SFMono-Regular",Consolas,monospace}
+.mn[data-theme="dark"]{--mn-bg:#080F21;--mn-surface:rgba(16,27,49,.92);--mn-surface-strong:#17243E;--mn-glass:rgba(13,23,43,.78);--mn-glass-border:rgba(146,182,233,.22);--mn-text:#EAF1FF;--mn-ink-soft:#D2DDF3;--mn-muted:#A0B0CD;--mn-border:#2C3D5E;--mn-cream-deep:#17243F;--mn-accent:#9ACBFA;--mn-accent-deep:#B2D8FF;--mn-accent-soft:#1C3453;--mn-on-accent:#080F21;--mn-pink:#C4BAF1;--mn-pink-soft:#29233F;--mn-cyan:#9ADAE9;--mn-amber:#EDCE95;--mn-peach:#F0C4A4;--mn-yellow:#F6E79E;--mn-mint:#94C78B;--mn-mint-deep:#99D3B1;--mn-mint-soft:#182F32;--mn-rose:#D47888;--mn-rose-soft:#3A1C24;--mn-rose-ink:#F2B8C2;--mn-warn-soft:#3A2E17;--mn-warn-ink:#F3D9A4;--mn-shadow:0 16px 44px rgba(0,5,20,.28);--mn-dot:rgba(175,206,255,.12)}
+
+.mn{--mn-scrim:rgba(20,30,52,.42)}.mn[data-theme="dark"]{--mn-scrim:rgba(0,4,14,.6)}
+a{color:var(--mn-accent-deep)}a:hover{color:var(--mn-accent)}
+.mn{display:flow-root}
+</style>
+</helmet>
+<div class="mn" data-theme="{{theme}}" style="min-height: 100vh; background: var(--mn-bg); color: var(--mn-text); font-family: var(--mn-font); font-size: 14px; line-height: 1.55; position: relative">
+<div aria-hidden="true" style="position: absolute; inset: 0; background: var(--mn-scrim)"></div>
+<div role="dialog" aria-modal="true" aria-labelledby="h-merge" style="position: relative; max-width: 640px; margin: 64px auto; box-sizing: border-box; padding: 24px 28px; border-radius: 3px 28px 3px 28px; background: var(--mn-surface-strong); border: 1px solid var(--mn-glass-border); box-shadow: 0 24px 64px rgba(20,34,70,.24); display: flex; flex-direction: column; gap: 16px">
+<div>
+<h2 id="h-merge" style="margin: 0; font-size: 21px; font-weight: 700">把本机卡池存进账号？</h2>
+<p style="margin: 4px 0 0; color: var(--mn-muted)">这个浏览器里有一份 JP 卡池（成员 132 · Snap 64 · 更新于 9-30）。存进账号后换设备也能用。</p>
+</div>
+
+<div>
+<div style="font-weight: 600; margin-bottom: 6px">存进哪个游戏账号</div>
+<div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--mn-accent-deep); background: var(--mn-accent-soft)">
+<span style="font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--mn-surface-strong)">JP</span>
+<span style="flex-grow: 1">[玩家名] · ID [profileId]</span>
+<span style="font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--mn-mint-soft); color: var(--mn-mint-deep)">已验证</span>
+</div>
+<p style="margin: 6px 0 0; font-size: 12px; color: var(--mn-muted)">只列出同区服的游戏账号。</p>
+</div>
+
+<sc-if value="{{conflict}}" hint-placeholder-val="{{true}}">
+<div>
+<div style="font-weight: 600; margin-bottom: 6px">这个账号里已经有一份卡池</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; font-size: 13px">
+<div style="padding: 10px 12px; border-radius: 10px; background: var(--mn-cream-deep)"><div style="color: var(--mn-muted)">账号里</div><div style="font-weight: 600">成员 120 · Snap 58</div><div style="color: var(--mn-muted)">更新于 9-12</div></div>
+<div style="padding: 10px 12px; border-radius: 10px; background: var(--mn-cream-deep)"><div style="color: var(--mn-muted)">本机</div><div style="font-weight: 600">成员 132 · Snap 64</div><div style="color: var(--mn-muted)">更新于 9-30</div></div>
+</div>
+<div role="radiogroup" aria-label="保留哪一份" style="display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{ways}}" as="w" hint-placeholder-count="3">
+<button type="button" role="radio" aria-checked="{{w.on}}" onClick="{{w.pick}}" style="text-align: left; display: flex; flex-direction: column; padding: 10px 12px; border-radius: 10px; border: {{w.border}}; background: {{w.bg}}; color: var(--mn-text); font: inherit; cursor: pointer"><span style="font-weight: 600">{{w.title}}</span><span style="font-size: 12px; color: var(--mn-muted)">{{w.note}}</span></button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<div style="display: flex; justify-content: flex-end; gap: 10px; padding-top: 12px; border-top: 1px solid var(--mn-border)">
+<a href="Box.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; color: var(--mn-accent-deep); text-decoration: none">以后再说</a>
+<a href="Box.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: 12px; background: var(--mn-accent-deep); color: var(--mn-on-accent); text-decoration: none; font-weight: 600">存进账号</a>
+</div>
+<p style="margin: -6px 0 0; font-size: 12px; color: var(--mn-muted); text-align: right">存好后本机副本会删除，避免两份不同步。</p>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"conflict":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var way = this.state.way || 'merge';
+    var ways = [
+      { id: 'merge', title: '合并（推荐）', note: '每张卡取较新的值；手动改过的值优先。两边都有手动值且不同的，再问你' },
+      { id: 'local', title: '用本机这份', note: '账号里那份会被替换' },
+      { id: 'account', title: '保留账号那份', note: '丢弃本机这份' }
+    ].map(function (w) {
+      var on = w.id === way;
+      return { title: w.title, note: w.note, on: on,
+        border: on ? '2px solid var(--mn-accent-deep)' : '1px solid var(--mn-border)',
+        bg: on ? 'var(--mn-accent-soft)' : 'transparent',
+        pick: function () { self.setState({ way: w.id }); } };
+    });
+    return { theme: this.props.theme || 'light', ways: ways, conflict: this.props.conflict !== false };
+  }
+}
+</script>
+</body>
+</html>

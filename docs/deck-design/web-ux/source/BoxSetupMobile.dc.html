@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>建立卡池（手机）</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.mn{--mn-bg:#EEF2FA;--mn-surface:rgba(247,250,255,.92);--mn-surface-strong:#F7FAFF;--mn-glass:rgba(247,250,255,.7);--mn-glass-border:rgba(163,183,219,.52);--mn-text:#202E4C;--mn-ink-soft:#3D506F;--mn-muted:#596B87;--mn-border:#C5D1E6;--mn-cream-deep:#E3EAF7;--mn-accent:#5475BC;--mn-accent-deep:#395EA8;--mn-accent-soft:#E1EAFB;--mn-on-accent:#FFFFFF;--mn-pink:#C3B8EC;--mn-pink-soft:#EEE9FA;--mn-cyan:#A0DDEA;--mn-amber:#EAD0A6;--mn-peach:#F8D3B8;--mn-yellow:#F7E9AD;--mn-mint:#B9D5B1;--mn-mint-deep:#3F5740;--mn-mint-soft:#E4EBDD;--mn-rose:#B85C6B;--mn-rose-soft:#F6E1E4;--mn-rose-ink:#7A2433;--mn-warn-soft:#FBF1DC;--mn-warn-ink:#6E4A12;--mn-shadow:0 12px 36px rgba(48,72,122,.09);--mn-dot:rgba(39,62,112,.06);--mn-font:"Inter","PingFang SC","Microsoft YaHei",ui-sans-serif,system-ui,sans-serif;--mn-mono:"SFMono-Regular",Consolas,monospace}
+.mn[data-theme="dark"]{--mn-bg:#080F21;--mn-surface:rgba(16,27,49,.92);--mn-surface-strong:#17243E;--mn-glass:rgba(13,23,43,.78);--mn-glass-border:rgba(146,182,233,.22);--mn-text:#EAF1FF;--mn-ink-soft:#D2DDF3;--mn-muted:#A0B0CD;--mn-border:#2C3D5E;--mn-cream-deep:#17243F;--mn-accent:#9ACBFA;--mn-accent-deep:#B2D8FF;--mn-accent-soft:#1C3453;--mn-on-accent:#080F21;--mn-pink:#C4BAF1;--mn-pink-soft:#29233F;--mn-cyan:#9ADAE9;--mn-amber:#EDCE95;--mn-peach:#F0C4A4;--mn-yellow:#F6E79E;--mn-mint:#94C78B;--mn-mint-deep:#99D3B1;--mn-mint-soft:#182F32;--mn-rose:#D47888;--mn-rose-soft:#3A1C24;--mn-rose-ink:#F2B8C2;--mn-warn-soft:#3A2E17;--mn-warn-ink:#F3D9A4;--mn-shadow:0 16px 44px rgba(0,5,20,.28);--mn-dot:rgba(175,206,255,.12)}
+
+a{color:var(--mn-accent-deep)}a:hover{color:var(--mn-accent)}
+</style>
+</helmet>
+<div class="mn" data-theme="{{theme}}" style="width: 390px; min-height: 1100px; position: relative; background: var(--mn-bg); color: var(--mn-text); font-family: var(--mn-font); font-size: 14px; line-height: 1.5">
+
+<header style="height: 52px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-bottom: 1px solid var(--mn-glass-border); background: var(--mn-glass)">
+<a href="GoalMobile.dc.html" aria-label="关闭" style="width: 44px; height: 44px; display: grid; place-items: center; color: var(--mn-text)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+<span style="font-weight: 650">建立卡池</span>
+<span style="flex-grow: 1"></span>
+<span style="font-size: 13px; color: var(--mn-muted)">{{stepText}}</span>
+</header>
+
+<div style="padding: 14px 16px 130px; display: flex; flex-direction: column; gap: 14px">
+
+<sc-if value="{{upload}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; flex-direction: column; gap: 14px">
+<div>
+<h1 style="margin: 0; font-size: 20px; font-weight: 700">从相册选截图</h1>
+<p style="margin: 4px 0 0; font-size: 13px; color: var(--mn-muted)">在游戏的成员列表和 Snap 列表里，一屏截一张，滑到底为止。截图只在你的手机上识别，不上传。</p>
+</div>
+<ol style="margin: 0; padding-left: 20px; font-size: 13px; color: var(--mn-ink-soft); display: flex; flex-direction: column; gap: 4px">
+<li>成员一览，每屏一张，一直滑到底</li>
+<li>Snap 一览，同样每屏一张</li>
+<li>不用截技能页；需要时组卡会单独问</li>
+</ol>
+<button type="button" onClick="{{toScan}}" style="min-height: 120px; border-radius: 3px 20px 3px 20px; border: 2px dashed var(--mn-border); background: var(--mn-surface); color: var(--mn-accent-deep); font: inherit; font-weight: 600; cursor: pointer">选择截图</button>
+<sc-if value="{{signedOut}}" hint-placeholder-val="{{true}}">
+<div role="radiogroup" aria-label="保存方式" style="display: flex; flex-direction: column; gap: 6px">
+<div style="font-weight: 600; font-size: 13px">识别完以后</div>
+<sc-for list="{{keeps}}" as="k" hint-placeholder-count="2">
+<button type="button" role="radio" aria-checked="{{k.on}}" onClick="{{k.pick}}" style="text-align: left; padding: 10px 12px; border-radius: 10px; border: {{k.border}}; background: {{k.bg}}; color: var(--mn-text); font: inherit; cursor: pointer"><span style="display: block; font-weight: 600">{{k.title}}</span><span style="display: block; font-size: 12px; color: var(--mn-muted)">{{k.note}}</span></button>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{scan}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<h1 style="margin: 0; font-size: 20px; font-weight: 700">正在识别 7 / 12 张</h1>
+<div role="progressbar" aria-valuenow="58" aria-valuemin="0" aria-valuemax="100" aria-label="识别进度" style="height: 8px; border-radius: 999px; background: var(--mn-cream-deep)"><span style="display: block; width: 58%; height: 100%; border-radius: 999px; background: var(--mn-accent)"></span></div>
+<p style="margin: 0; font-size: 13px; color: var(--mn-muted)">可以继续添加截图。识别慢的话，保持这个页面在前台。</p>
+<button type="button" onClick="{{toDone}}" style="align-self: flex-start; min-height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--mn-border); background: transparent; color: var(--mn-text); font: inherit; cursor: pointer">（演示）跳到完成</button>
+</div>
+</sc-if>
+
+<sc-if value="{{done}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<h1 style="margin: 0; font-size: 20px; font-weight: 700">识别完成</h1>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; text-align: center">
+<div style="padding: 10px 4px; border-radius: 10px; background: var(--mn-surface)"><div style="font-size: 20px; font-weight: 700">132</div><div style="font-size: 12px; color: var(--mn-muted)">成员</div></div>
+<div style="padding: 10px 4px; border-radius: 10px; background: var(--mn-surface)"><div style="font-size: 20px; font-weight: 700">64</div><div style="font-size: 12px; color: var(--mn-muted)">Snap</div></div>
+<div style="padding: 10px 4px; border-radius: 10px; background: var(--mn-warn-soft); color: var(--mn-warn-ink)"><div style="font-size: 20px; font-weight: 700">3</div><div style="font-size: 12px">没认准</div></div>
+</div>
+<p style="margin: 0; font-size: 13px; color: var(--mn-muted)">没认准的 3 张先按最像的算；只有影响推荐时，组卡才会请你确认。</p>
+<label style="display: flex; gap: 10px; align-items: flex-start; font-size: 13px"><input type="checkbox" checked style="width: 20px; height: 20px; margin: 0"> 截图包含了我全部的卡（不勾的话，没截到的卡按“不确定有没有”处理）</label>
+</div>
+</sc-if>
+</div>
+
+<div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 16px 20px; background: var(--mn-glass); border-top: 1px solid var(--mn-glass-border)">
+<sc-if value="{{done}}" hint-placeholder-val="{{false}}">
+<a href="SkillsMobile.dc.html" style="display: flex; align-items: center; justify-content: center; min-height: 50px; border-radius: 12px; background: var(--mn-accent-deep); color: var(--mn-on-accent); text-decoration: none; font-weight: 600">{{cta}}</a>
+</sc-if>
+<sc-if value="{{notDone}}" hint-placeholder-val="{{true}}">
+<span aria-disabled="true" style="display: flex; align-items: center; justify-content: center; min-height: 50px; border-radius: 12px; background: var(--mn-cream-deep); color: var(--mn-muted); font-weight: 600">{{cta}}</span>
+</sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"mode":{"editor":"enum","options":["account","signedOut"],"default":"signedOut"},"phase":{"editor":"enum","options":["upload","scan","done"],"default":"upload"},"$preview":{"width":390,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var phase = this.state.phase || this.props.phase || 'upload';
+    var signedOut = (this.props.mode || 'signedOut') === 'signedOut';
+    var keep = this.state.keep || 'local';
+    var keeps = [
+      { id: 'local', title: '存在这个浏览器', note: '下次打开还在；不登录，不上传' },
+      { id: 'temp', title: '只用这一次', note: '关掉页面就清除' }
+    ].map(function (k) {
+      var on = k.id === keep;
+      return { title: k.title, note: k.note, on: on,
+        border: on ? '2px solid var(--mn-accent-deep)' : '1px solid var(--mn-border)',
+        bg: on ? 'var(--mn-accent-soft)' : 'transparent',
+        pick: function () { self.setState({ keep: k.id }); } };
+    });
+    var cta = !signedOut ? '保存并继续组卡' : (keep === 'local' ? '存到本机并继续组卡' : '继续组卡（不保存）');
+    return {
+      theme: this.props.theme || 'light',
+      upload: phase === 'upload', scan: phase === 'scan', done: phase === 'done', notDone: phase !== 'done',
+      stepText: { upload: '1 / 3', scan: '2 / 3', done: '3 / 3' }[phase],
+      signedOut: signedOut, keeps: keeps, cta: cta,
+      toScan: function () { self.setState({ phase: 'scan' }); },
+      toDone: function () { self.setState({ phase: 'done' }); }
+    };
+  }
+}
+</script>
+</body>
+</html>
