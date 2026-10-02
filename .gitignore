@@ -11,3 +11,5 @@ __pycache__/
 _tmp*
 .*/
 !.github/
+.narrafork/
+.worktrees/
