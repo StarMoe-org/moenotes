@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>账号：我的卡池</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.mn{--mn-bg:#EEF2FA;--mn-surface:rgba(247,250,255,.92);--mn-surface-strong:#F7FAFF;--mn-glass:rgba(247,250,255,.7);--mn-glass-border:rgba(163,183,219,.52);--mn-text:#202E4C;--mn-ink-soft:#3D506F;--mn-muted:#596B87;--mn-border:#C5D1E6;--mn-cream-deep:#E3EAF7;--mn-accent:#5475BC;--mn-accent-deep:#395EA8;--mn-accent-soft:#E1EAFB;--mn-on-accent:#FFFFFF;--mn-pink:#C3B8EC;--mn-pink-soft:#EEE9FA;--mn-cyan:#A0DDEA;--mn-amber:#EAD0A6;--mn-peach:#F8D3B8;--mn-yellow:#F7E9AD;--mn-mint:#B9D5B1;--mn-mint-deep:#3F5740;--mn-mint-soft:#E4EBDD;--mn-rose:#B85C6B;--mn-rose-soft:#F6E1E4;--mn-rose-ink:#7A2433;--mn-warn-soft:#FBF1DC;--mn-warn-ink:#6E4A12;--mn-shadow:0 12px 36px rgba(48,72,122,.09);--mn-dot:rgba(39,62,112,.06);--mn-font:"Inter","PingFang SC","Microsoft YaHei",ui-sans-serif,system-ui,sans-serif;--mn-mono:"SFMono-Regular",Consolas,monospace}
+.mn[data-theme="dark"]{--mn-bg:#080F21;--mn-surface:rgba(16,27,49,.92);--mn-surface-strong:#17243E;--mn-glass:rgba(13,23,43,.78);--mn-glass-border:rgba(146,182,233,.22);--mn-text:#EAF1FF;--mn-ink-soft:#D2DDF3;--mn-muted:#A0B0CD;--mn-border:#2C3D5E;--mn-cream-deep:#17243F;--mn-accent:#9ACBFA;--mn-accent-deep:#B2D8FF;--mn-accent-soft:#1C3453;--mn-on-accent:#080F21;--mn-pink:#C4BAF1;--mn-pink-soft:#29233F;--mn-cyan:#9ADAE9;--mn-amber:#EDCE95;--mn-peach:#F0C4A4;--mn-yellow:#F6E79E;--mn-mint:#94C78B;--mn-mint-deep:#99D3B1;--mn-mint-soft:#182F32;--mn-rose:#D47888;--mn-rose-soft:#3A1C24;--mn-rose-ink:#F2B8C2;--mn-warn-soft:#3A2E17;--mn-warn-ink:#F3D9A4;--mn-shadow:0 16px 44px rgba(0,5,20,.28);--mn-dot:rgba(175,206,255,.12)}
+a{color:var(--mn-accent-deep)}a:hover{color:var(--mn-accent)}
+.mn-three{display:grid;grid-template-columns:290px minmax(0,1fr) 330px;gap:20px;align-items:start}
+.mn-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:1180px){.mn-three{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){.mn-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</helmet>
+<div class="mn" data-theme="{{theme}}" style="min-height: 100vh; background-color: var(--mn-bg); background-image: radial-gradient(var(--mn-dot) 1px, transparent 1px); background-size: 22px 22px; color: var(--mn-text); font-family: var(--mn-font); font-size: 14px; line-height: 1.55">
+
+<header style="height: 60px; display: flex; align-items: center; gap: 28px; padding: 0 32px; border-bottom: 1px solid var(--mn-glass-border); background: var(--mn-glass)">
+<div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 17px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 2l2 8 8 2-8 2-2 8-2-8-8-2 8-2z"/></svg><span>MoeNotes</span></div>
+<nav aria-label="主导航" style="display: flex; gap: 22px">
+<a href="#" style="color: var(--mn-muted); text-decoration: none">歌曲</a>
+<a href="#" style="color: var(--mn-muted); text-decoration: none">活动</a>
+<a href="#" style="color: var(--mn-muted); text-decoration: none">谱面数据</a>
+<a href="Goal.dc.html" style="color: var(--mn-muted); text-decoration: none">组卡</a>
+</nav>
+<div style="flex-grow: 1"></div>
+<sc-if value="{{isAccount}}" hint-placeholder-val="{{true}}"><button type="button" aria-label="账号菜单" style="display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 10px 0 4px; border-radius: 999px; border: 1px solid var(--mn-glass-border); background: var(--mn-surface); color: var(--mn-text); font: inherit; cursor: pointer"><span style="width: 30px; height: 30px; border-radius: 50%; background: var(--mn-pink)"></span>[昵称]</button></sc-if>
+<sc-if value="{{isLocal}}" hint-placeholder-val="{{false}}"><a href="#" style="font-size: 14px">登录</a></sc-if>
+</header>
+
+<main style="max-width: 1360px; margin: 0 auto; padding: 24px 32px 48px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+
+<div style="display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap">
+<div style="flex-grow: 1">
+<h1 style="margin: 2px 0 0; font-size: 24px; font-weight: 700">我的卡池</h1>
+<p style="margin: 2px 0 0; color: var(--mn-muted)">{{intro}}</p>
+</div>
+<a href="Goal.dc.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 12px; background: var(--mn-accent-deep); color: var(--mn-on-accent); text-decoration: none; font-weight: 600">用这个卡池组卡
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+</div>
+
+<div class="mn-three">
+
+<aside style="display: flex; flex-direction: column; gap: 16px; min-width: 0">
+<sc-if value="{{isAccount}}" hint-placeholder-val="{{true}}">
+<section aria-labelledby="h-acct" style="padding: 16px 18px; border-radius: 3px 24px 3px 24px; background: var(--mn-surface); border: 1px solid var(--mn-glass-border); box-shadow: var(--mn-shadow)">
+<h2 id="h-acct" style="margin: 0 0 10px; font-size: 15px; font-weight: 650">游戏账号</h2>
+<div role="radiogroup" aria-label="选择游戏账号" style="display: flex; flex-direction: column; gap: 6px">
+<button type="button" role="radio" aria-checked="true" style="display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 8px 10px; border-radius: 10px; border: 2px solid var(--mn-accent-deep); background: var(--mn-accent-soft); color: var(--mn-text); font: inherit; text-align: left; cursor: pointer">
+<span style="font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--mn-surface-strong)">JP</span>
+<span style="flex-grow: 1; min-width: 0"><span style="display: block; font-weight: 600">[玩家名]</span><span style="display: block; font-size: 12px; color: var(--mn-muted); font-family: var(--mn-mono)">ID [profileId]</span></span>
+<span style="font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--mn-mint-soft); color: var(--mn-mint-deep)">已验证</span>
+</button>
+<button type="button" role="radio" aria-checked="false" style="display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--mn-border); background: transparent; color: var(--mn-text); font: inherit; text-align: left; cursor: pointer">
+<span style="font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--mn-cream-deep)">TW</span>
+<span style="flex-grow: 1; min-width: 0"><span style="display: block; font-weight: 600">[玩家名]</span><span style="display: block; font-size: 12px; color: var(--mn-muted)">还没有卡池</span></span>
+</button>
+</div>
+<a href="#" style="display: inline-block; margin-top: 10px; font-size: 13px">添加游戏账号</a>
+</section>
+</sc-if>
+<sc-if value="{{isLocal}}" hint-placeholder-val="{{false}}">
+<section aria-labelledby="h-local" style="padding: 16px 18px; border-radius: 3px 24px 3px 24px; background: var(--mn-surface); border: 1px solid var(--mn-glass-border); box-shadow: var(--mn-shadow); display: flex; flex-direction: column; gap: 10px">
+<h2 id="h-local" style="margin: 0; font-size: 15px; font-weight: 650">本机卡池 · JP</h2>
+<p style="margin: 0; font-size: 13px; color: var(--mn-ink-soft)">你没有登录，这个卡池只存在这个浏览器里。清除浏览器数据或换设备就没了。</p>
+<a href="#" style="display: flex; align-items: center; justify-content: center; min-height: 44px; border-radius: 10px; background: var(--mn-accent-deep); color: var(--mn-on-accent); text-decoration: none; font-weight: 600">登录并存进账号</a>
+<p style="margin: 0; font-size: 12px; color: var(--mn-muted)">登录后会问你存进哪个游戏账号；那个账号已有卡池时，可以选保留哪一份。</p>
+</section>
+</sc-if>
+
+<section aria-labelledby="h-done" style="padding: 16px 18px; border-radius: 3px 24px 3px 24px; background: var(--mn-surface); border: 1px solid var(--mn-glass-border); box-shadow: var(--mn-shadow)">
+<h2 id="h-done" style="margin: 0 0 2px; font-size: 15px; font-weight: 650">资料完整度</h2>
+<p style="margin: 0 0 10px; font-size: 12px; color: var(--mn-muted)">更新于 2026-09-30 · 成员 132 · Snap 64</p>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{fields}}" as="f" hint-placeholder-count="6">
+<div>
+<div style="display: flex; justify-content: space-between; font-size: 13px"><span>{{f.label}}</span><span style="font-family: var(--mn-mono); color: var(--mn-ink-soft)">{{f.value}}</span></div>
+<sc-if value="{{f.hasBar}}" hint-placeholder-val="{{true}}"><div style="height: 6px; margin-top: 3px; border-radius: 999px; background: var(--mn-cream-deep); overflow: hidden"><div style="height: 100%; width: {{f.pct}}%; border-radius: 999px; background: var(--mn-accent)"></div></div></sc-if>
+<sc-if value="{{f.hasNote}}" hint-placeholder-val="{{false}}"><div style="font-size: 12px; color: var(--mn-muted); margin-top: 2px">{{f.note}}</div></sc-if>
+</div>
+</sc-for>
+</div>
+</section>
+</aside>
+
+<section aria-labelledby="h-pool" style="padding: 18px 20px; border-radius: 3px 24px 3px 24px; background: var(--mn-surface); border: 1px solid var(--mn-glass-border); box-shadow: var(--mn-shadow); display: flex; flex-direction: column; gap: 14px; min-width: 0">
+<div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+<h2 id="h-pool" style="margin: 0; font-size: 15px; font-weight: 650">卡片</h2>
+<div role="tablist" aria-label="筛选" style="display: inline-flex; padding: 3px; border-radius: 999px; background: var(--mn-cream-deep); font-size: 13px">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+<button type="button" role="tab" aria-selected="{{t.on}}" onClick="{{t.pick}}" style="border: 0; font: inherit; cursor: pointer; padding: 4px 12px; border-radius: 999px; background: {{t.bg}}; color: {{t.fg}}">{{t.label}}</button>
+</sc-for>
+</div>
+<span style="flex-grow: 1"></span>
+<label for="q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">搜索卡片</label>
+<input id="q" type="search" placeholder="搜索角色或卡名" style="min-height: 38px; width: 200px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--mn-border); background: var(--mn-surface-strong); color: var(--mn-text); font: inherit">
+</div>
+<div class="mn-cards">
+<sc-for list="{{cards}}" as="c" hint-placeholder-count="8">
+<button type="button" style="text-align: left; display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 10px; border: {{c.border}}; background: var(--mn-surface-strong); color: var(--mn-text); font: inherit; cursor: pointer">
+<span style="aspect-ratio: 4 / 3; border-radius: 4px 12px 4px 12px; background: {{c.fill}}; display: flex; align-items: flex-end; padding: 6px 8px; box-sizing: border-box; font-size: 12px; font-weight: 600; color: #202E4C">{{c.name}}</span>
+<span style="font-size: 12px; font-family: var(--mn-mono); color: var(--mn-ink-soft)">{{c.meta}}</span>
+<span style="font-size: 12px; color: var(--mn-muted)">{{c.skill}}</span>
+<sc-if value="{{c.hasBadge}}" hint-placeholder-val="{{false}}"><span style="align-self: flex-start; font-size: 11px; padding: 1px 8px; border-radius: 999px; background: {{c.bBg}}; color: {{c.bFg}}">{{c.badge}}</span></sc-if>
+</button>
+</sc-for>
+</div>
+<p style="margin: 0; font-size: 12px; color: var(--mn-muted)">点卡片可改身份、等级、特训、卡阶和技能等级；你手动改过的值，以后的截图不会覆盖。</p>
+</section>
+
+<aside style="display: flex; flex-direction: column; gap: 16px; min-width: 0">
+<section aria-labelledby="h-up" style="padding: 18px 20px; border-radius: 3px 24px 3px 24px; background: var(--mn-surface); border: 1px solid var(--mn-glass-border); box-shadow: var(--mn-shadow); display: flex; flex-direction: column; gap: 10px">
+<h2 id="h-up" style="margin: 0; font-size: 15px; font-weight: 650">更新卡池</h2>
+<button type="button" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 120px; border-radius: 12px; border: 1.5px dashed var(--mn-border); background: transparent; color: var(--mn-accent-deep); font: inherit; cursor: pointer">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg>拖入、粘贴或选择截图<span style="font-size: 12px; color: var(--mn-muted)">只截有变化的部分就行</span></button>
+<p style="margin: 0; font-size: 12px; color: var(--mn-muted)">截图在浏览器里识别，不上传图片，只把识别结果存进卡池。新截图只更新有变化的卡；和已有数据冲突时会让你选。</p>
+</section>
+
+<section aria-labelledby="h-last" style="padding: 16px 18px; border-radius: 3px 24px 3px 24px; background: var(--mn-surface); border: 1px solid var(--mn-glass-border); box-shadow: var(--mn-shadow)">
+<h2 id="h-last" style="margin: 0 0 8px; font-size: 15px; font-weight: 650">上次更新的变化</h2>
+<ul style="margin: 0; padding-left: 18px; font-size: 13px; display: flex; flex-direction: column; gap: 4px; color: var(--mn-ink-soft)">
+<li>新增 2 张成员卡、1 张 Snap</li>
+<li>3 张等级提高，1 张卡阶提高</li>
+<li>看板卡的技能等级已从游戏资料自动读取</li>
+</ul>
+<a href="#" style="display: inline-block; margin-top: 8px; font-size: 13px">查看全部历史</a>
+</section>
+
+<section style="padding: 14px 18px; border-radius: 3px 24px 3px 24px; background: var(--mn-glass); border: 1px solid var(--mn-glass-border); font-size: 13px; display: flex; gap: 16px; flex-wrap: wrap">
+<a href="#">导出 JSON</a>
+<a href="#">从文件导入</a>
+<a href="#" style="color: var(--mn-rose)">删除这个卡池</a>
+</section>
+</aside>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"storage":{"editor":"enum","options":["account","local"],"default":"account"},"$preview":{"width":1440,"height":1120}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var tab = this.state.tab || 'member';
+    var warn = { bBg: 'var(--mn-warn-soft)', bFg: 'var(--mn-warn-ink)' };
+    var bad = { bBg: 'var(--mn-rose-soft)', bFg: 'var(--mn-rose-ink)' };
+    var none = { bBg: 'transparent', bFg: 'inherit' };
+    var members = [
+      { name: '角色 A · [卡名]', meta: 'Lv.60 · 特训 5 · 阶 4', skill: '技能 3 · 撃奏 3', t: none, fill: 'var(--mn-pink)', k: 'ok' },
+      { name: '角色 B · [卡名]', meta: 'Lv.60 · 特训 ? · 阶 3', skill: '技能等级未知', badge: '特训未读到', t: warn, fill: 'var(--mn-cyan)', k: 'todo' },
+      { name: '角色 C · [卡名]', meta: 'Lv.58 / 60 · 特训 5', skill: '技能 5 · 撃奏 5', badge: '两张图不一致', t: bad, fill: 'var(--mn-amber)', k: 'todo' },
+      { name: '角色 D · [卡名]', meta: 'Lv.60 · 特训 4 · 阶 4', skill: '技能 4 · 撃奏 4', t: none, fill: 'var(--mn-mint)', k: 'ok' },
+      { name: '角色 E · [卡名]?', meta: 'Lv.52 · 特训 3 · 阶 2', skill: '技能等级未知', badge: '身份待确认', t: warn, fill: 'var(--mn-peach)', k: 'todo' },
+      { name: '角色 F · [卡名]', meta: 'Lv.60 · 特训 3 · 阶 4', skill: '技能等级未知', t: none, fill: 'var(--mn-yellow)', k: 'ok' },
+      { name: '角色 G · [卡名]', meta: 'Lv.55 · 特训 5 · 阶 3', skill: '技能等级未知', t: none, fill: 'var(--mn-pink-soft)', k: 'ok' },
+      { name: '角色 H · [卡名]', meta: 'Lv.40 · 特训 1 · 阶 1', skill: '技能 1 · 撃奏 1', t: none, fill: 'var(--mn-cyan)', k: 'ok' }
+    ];
+    var snaps = [
+      { name: 'Snap · [名]', meta: 'Lv.40 · 阶 3', skill: '', t: none, fill: 'var(--mn-cream-deep)', k: 'snap' },
+      { name: 'Snap · [名]', meta: 'Lv.40 · 阶 2', skill: '', t: none, fill: 'var(--mn-cream-deep)', k: 'snap' },
+      { name: 'Snap · [名]', meta: 'Lv.32 · 阶 1', skill: '', t: none, fill: 'var(--mn-cream-deep)', k: 'snap' },
+      { name: 'Snap · [名]', meta: 'Lv.40 · 阶 4', skill: '', t: none, fill: 'var(--mn-cream-deep)', k: 'snap' }
+    ];
+    var list = tab === 'snap' ? snaps : tab === 'todo' ? members.filter(function (c) { return c.k === 'todo'; }) : members;
+    var cards = list.map(function (c) {
+      return {
+        name: c.name, meta: c.meta, skill: c.skill, fill: c.fill,
+        hasBadge: !!c.badge, badge: c.badge || '', bBg: c.t.bBg, bFg: c.t.bFg,
+        border: c.k === 'todo' ? '1.5px solid var(--mn-rose)' : '1px solid var(--mn-border)'
+      };
+    });
+    var tabs = [['member', '成员 132'], ['snap', 'Snap 64'], ['todo', '要处理 3']].map(function (d) {
+      var on = d[0] === tab;
+      return {
+        label: d[1], on: on,
+        bg: on ? 'var(--mn-accent-deep)' : 'transparent',
+        fg: on ? 'var(--mn-on-accent)' : 'var(--mn-text)',
+        pick: function () { self.setState({ tab: d[0] }); }
+      };
+    });
+    var f = function (label, have, total, note) {
+      return {
+        label: label, value: total ? have + ' / ' + total : have,
+        pct: total ? Math.round(have / total * 100) : 0,
+        hasBar: !!total,
+        hasNote: !!note, note: note || ''
+      };
+    };
+    var fields = [
+      f('卡片身份', 131, 132, '1 张待确认'),
+      f('等级 · 卡阶', 131, 132, '1 张两图不一致'),
+      f('特训次数', 127, 132),
+      f('技能等级', '已知 21 张', 0, '组卡时按需补充：只问会影响那次推荐的卡，填了就存下来。想一次填完也可以点卡片改。'),
+      f('角色等级 · 乐队道具', '未提供', 0, '用到时再填；不填就按你选的试算条件')
+    ];
+    var isLocal = this.props.storage === 'local';
+    return {
+      theme: this.props.theme || 'light', cards: cards, tabs: tabs, fields: fields,
+      isLocal: isLocal, isAccount: !isLocal,
+      intro: isLocal ? '组卡、Snap 排行等工具都直接读取这个卡池，不必每次重新上传。它只在这个浏览器里，不会上传。' : '卡池存在你的账号里，组卡、Snap 排行等工具都直接读取它，不必每次重新上传。仅你自己可见。'
+    };
+  }
+}
+</script>
+</body>
+</html>

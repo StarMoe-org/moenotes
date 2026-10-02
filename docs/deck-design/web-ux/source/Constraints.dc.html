@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>组卡：更多选项</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.mn{--mn-bg:#EEF2FA;--mn-surface:rgba(247,250,255,.92);--mn-surface-strong:#F7FAFF;--mn-glass:rgba(247,250,255,.7);--mn-glass-border:rgba(163,183,219,.52);--mn-text:#202E4C;--mn-ink-soft:#3D506F;--mn-muted:#596B87;--mn-border:#C5D1E6;--mn-cream-deep:#E3EAF7;--mn-accent:#5475BC;--mn-accent-deep:#395EA8;--mn-accent-soft:#E1EAFB;--mn-on-accent:#FFFFFF;--mn-pink:#C3B8EC;--mn-pink-soft:#EEE9FA;--mn-cyan:#A0DDEA;--mn-amber:#EAD0A6;--mn-peach:#F8D3B8;--mn-yellow:#F7E9AD;--mn-mint:#B9D5B1;--mn-mint-deep:#3F5740;--mn-mint-soft:#E4EBDD;--mn-rose:#B85C6B;--mn-rose-soft:#F6E1E4;--mn-rose-ink:#7A2433;--mn-warn-soft:#FBF1DC;--mn-warn-ink:#6E4A12;--mn-shadow:0 12px 36px rgba(48,72,122,.09);--mn-dot:rgba(39,62,112,.06);--mn-font:"Inter","PingFang SC","Microsoft YaHei",ui-sans-serif,system-ui,sans-serif;--mn-mono:"SFMono-Regular",Consolas,monospace}
+.mn[data-theme="dark"]{--mn-bg:#080F21;--mn-surface:rgba(16,27,49,.92);--mn-surface-strong:#17243E;--mn-glass:rgba(13,23,43,.78);--mn-glass-border:rgba(146,182,233,.22);--mn-text:#EAF1FF;--mn-ink-soft:#D2DDF3;--mn-muted:#A0B0CD;--mn-border:#2C3D5E;--mn-cream-deep:#17243F;--mn-accent:#9ACBFA;--mn-accent-deep:#B2D8FF;--mn-accent-soft:#1C3453;--mn-on-accent:#080F21;--mn-pink:#C4BAF1;--mn-pink-soft:#29233F;--mn-cyan:#9ADAE9;--mn-amber:#EDCE95;--mn-peach:#F0C4A4;--mn-yellow:#F6E79E;--mn-mint:#94C78B;--mn-mint-deep:#99D3B1;--mn-mint-soft:#182F32;--mn-rose:#D47888;--mn-rose-soft:#3A1C24;--mn-rose-ink:#F2B8C2;--mn-warn-soft:#3A2E17;--mn-warn-ink:#F3D9A4;--mn-shadow:0 16px 44px rgba(0,5,20,.28);--mn-dot:rgba(175,206,255,.12)}
+
+.mn{--mn-scrim:rgba(20,30,52,.42)}.mn[data-theme="dark"]{--mn-scrim:rgba(0,4,14,.6)}
+a{color:var(--mn-accent-deep)}a:hover{color:var(--mn-accent)}
+.mn-opt{display:grid;grid-template-columns:200px minmax(0,1fr);gap:18px;padding:16px 0;border-top:1px solid var(--mn-border)}
+@media (max-width:720px){.mn-opt{grid-template-columns:minmax(0,1fr);gap:8px}}
+.mn{display:flow-root}
+</style>
+</helmet>
+<div class="mn" data-theme="{{theme}}" style="min-height: 100vh; background: var(--mn-bg); color: var(--mn-text); font-family: var(--mn-font); font-size: 14px; line-height: 1.55; position: relative">
+<div aria-hidden="true" style="position: absolute; inset: 0; background: var(--mn-scrim)"></div>
+<div role="dialog" aria-modal="true" aria-labelledby="h-opt" style="position: relative; max-width: 820px; margin: 48px auto; box-sizing: border-box; padding: 24px 28px; border-radius: 3px 28px 3px 28px; background: var(--mn-surface-strong); border: 1px solid var(--mn-glass-border); box-shadow: 0 24px 64px rgba(20,34,70,.24)">
+<div style="display: flex; align-items: flex-start; gap: 12px">
+<div style="flex-grow: 1"><h2 id="h-opt" style="margin: 0; font-size: 21px; font-weight: 700">更多选项</h2><p style="margin: 4px 0 0; color: var(--mn-muted)">都不改也能组卡。这里的设置只影响这一次搜索，不改动卡池。</p></div>
+<a href="Goal.dc.html" aria-label="关闭" style="width: 44px; height: 44px; display: grid; place-items: center; color: var(--mn-text)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+</div>
+
+<div style="margin-top: 14px">
+<div class="mn-opt">
+<div><div style="font-weight: 600">和哪个队比</div><div style="font-size: 12px; color: var(--mn-muted)">结果里“比当前队伍 +X”的基准</div></div>
+<div role="radiogroup" aria-label="对比对象" style="display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{bases}}" as="b" hint-placeholder-count="3">
+<button type="button" role="radio" aria-checked="{{b.on}}" onClick="{{b.pick}}" style="text-align: left; display: flex; flex-direction: column; padding: 10px 12px; border-radius: 10px; border: {{b.border}}; background: {{b.bg}}; color: var(--mn-text); font: inherit; cursor: pointer"><span style="font-weight: 600">{{b.title}}</span><span style="font-size: 12px; color: var(--mn-muted)">{{b.note}}</span></button>
+</sc-for>
+<sc-if value="{{pickTeam}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; gap: 6px; align-items: center">
+<sc-for list="{{slots}}" as="t" hint-placeholder-count="5"><button type="button" style="width: 54px; height: 70px; border-radius: 4px 12px 4px 12px; border: 1.5px dashed var(--mn-border); background: {{t.fill}}; color: var(--mn-ink-soft); font: inherit; font-size: 11px; cursor: pointer">{{t.label}}</button></sc-for>
+<span style="font-size: 12px; color: var(--mn-muted); margin-left: 6px">选好的编队会存进卡池，下次默认用它</span>
+</div>
+</sc-if>
+</div>
+</div>
+
+<div class="mn-opt">
+<div><div style="font-weight: 600">这次不用的卡</div><div style="font-size: 12px; color: var(--mn-muted)">仍算持有，回忆加成照算</div></div>
+<div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center">
+<span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 12px; border-radius: 999px; background: var(--mn-cream-deep)">角色 G · [卡名]<button type="button" aria-label="移除角色 G" style="width: 28px; height: 28px; border-radius: 50%; border: 0; background: transparent; color: var(--mn-ink-soft); cursor: pointer">×</button></span>
+<button type="button" style="min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px dashed var(--mn-border); background: transparent; color: var(--mn-accent-deep); font: inherit; cursor: pointer">+ 选卡</button>
+</div>
+</div>
+
+<div class="mn-opt">
+<div><div style="font-weight: 600">必须上场</div><div style="font-size: 12px; color: var(--mn-muted)">比如想用刚抽到的卡</div></div>
+<div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center">
+<button type="button" style="min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px dashed var(--mn-border); background: transparent; color: var(--mn-accent-deep); font: inherit; cursor: pointer">+ 选卡</button>
+<span style="font-size: 12px; color: var(--mn-muted)">可以同时指定它坐队长位</span>
+</div>
+</div>
+
+<div class="mn-opt">
+<div><div style="font-weight: 600">搜索多久</div><div style="font-size: 12px; color: var(--mn-muted)">时间越长，越可能找到更好的队</div></div>
+<div role="radiogroup" aria-label="搜索时长" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{budgets}}" as="b" hint-placeholder-count="3">
+<button type="button" role="radio" aria-checked="{{b.on}}" onClick="{{b.pick}}" style="min-height: 52px; border-radius: 10px; border: {{b.border}}; background: {{b.bg}}; color: var(--mn-text); font: inherit; cursor: pointer"><span style="display: block; font-weight: 600">{{b.title}}</span><span style="display: block; font-size: 12px; color: var(--mn-muted)">{{b.note}}</span></button>
+</sc-for>
+</div>
+</div>
+</div>
+
+<div style="display: flex; justify-content: flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid var(--mn-border)">
+<a href="Goal.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; color: var(--mn-accent-deep); text-decoration: none">恢复默认</a>
+<a href="Goal.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: 12px; background: var(--mn-accent-deep); color: var(--mn-on-accent); text-decoration: none; font-weight: 600">完成</a>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var base = this.state.base || 'power';
+    var budget = this.state.budget || 'normal';
+    var pick = function (list, cur, key) {
+      return list.map(function (x) {
+        var on = x.id === cur;
+        return { title: x.title, note: x.note, on: on,
+          border: on ? '2px solid var(--mn-accent-deep)' : '1px solid var(--mn-border)',
+          bg: on ? 'var(--mn-accent-soft)' : 'transparent',
+          pick: function () { var o = {}; o[key] = x.id; self.setState(o); } };
+      });
+    };
+    return {
+      theme: this.props.theme || 'light',
+      bases: pick([
+        { id: 'power', title: '卡池里综合力最高的队（自动）', note: '不用填，适合大多数人' },
+        { id: 'mine', title: '我现在用的队', note: '选 5 张卡和 Snap，和推荐逐张对比' },
+        { id: 'none', title: '不比较', note: '只看推荐本身' }
+      ], base, 'base'),
+      pickTeam: base === 'mine',
+      slots: ['1', '2', '队长', '4', '5'].map(function (l) { return { label: l, fill: 'transparent' }; }),
+      budgets: pick([
+        { id: 'quick', title: '快', note: '约 5 秒' },
+        { id: 'normal', title: '标准', note: '约 20 秒' },
+        { id: 'long', title: '更久', note: '约 1 分钟' }
+      ], budget, 'budget')
+    };
+  }
+}
+</script>
+</body>
+</html>

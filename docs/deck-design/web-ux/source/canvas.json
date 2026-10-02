@@ -1,0 +1,152 @@
+{
+  "v": 3,
+  "attachments": {},
+  "createdOnFiles": {
+    "at": "2026-10-02T09:00:00Z",
+    "v": 1
+  },
+  "title": "MoeNotes 组卡页设计",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Goal.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1260,
+      "title": "1 · 目标、卡池与歌曲（面板里切换卡池状态）",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "Skills.dc.html": {
+      "x": 1520,
+      "y": 0,
+      "w": 1440,
+      "h": 1340,
+      "title": "2 · 补这次需要的信息（只问关键的卡）",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "Main.dc.html": {
+      "x": 3040,
+      "y": 0,
+      "w": 1440,
+      "h": 1640,
+      "title": "3 · 推荐结果（右侧切换 计算中 / 已过期 / 区间）",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "SkillsMobile.dc.html": {
+      "x": 5030,
+      "y": 0,
+      "w": 390,
+      "h": 1280,
+      "title": "2 · 补这次需要的信息（手机）",
+      "is_interactive": true
+    },
+    "Mobile.dc.html": {
+      "x": 5500,
+      "y": 0,
+      "w": 390,
+      "h": 1500,
+      "title": "3 · 推荐结果（手机）",
+      "is_interactive": true
+    },
+    "Box.dc.html": {
+      "x": 0,
+      "y": 2700,
+      "w": 1440,
+      "h": 1120,
+      "title": "账号 · 我的卡池",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "BoxSetup.dc.html": {
+      "x": 1520,
+      "y": 2700,
+      "w": 1440,
+      "h": 900,
+      "title": "首次建立卡池（从组卡打开的弹层）",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "Constraints.dc.html": {
+      "x": 0,
+      "y": 1340,
+      "w": 1440,
+      "h": 960,
+      "title": "1a · 更多选项（对比队伍、不用的卡、必须上场、搜索时长）",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "GoalMobile.dc.html": {
+      "x": 4560,
+      "y": 0,
+      "w": 390,
+      "h": 1180,
+      "title": "1 · 目标与卡池（手机）",
+      "is_interactive": true
+    },
+    "BoxSetupMobile.dc.html": {
+      "x": 3040,
+      "y": 2700,
+      "w": 390,
+      "h": 1100,
+      "title": "首次建立卡池（手机，未登录）",
+      "is_interactive": true
+    },
+    "CardEdit.dc.html": {
+      "x": 3510,
+      "y": 2700,
+      "w": 1440,
+      "h": 900,
+      "title": "修正一张卡（身份、冲突值、来源）",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "LoginMerge.dc.html": {
+      "x": 5030,
+      "y": 2700,
+      "w": 1440,
+      "h": 900,
+      "title": "登录后：把本机卡池存进账号",
+      "expand": "fill",
+      "is_interactive": true
+    }
+  },
+  "order": [
+    "Goal.dc.html",
+    "Constraints.dc.html",
+    "Skills.dc.html",
+    "Main.dc.html",
+    "GoalMobile.dc.html",
+    "SkillsMobile.dc.html",
+    "Mobile.dc.html",
+    "Box.dc.html",
+    "BoxSetup.dc.html",
+    "BoxSetupMobile.dc.html",
+    "CardEdit.dc.html",
+    "LoginMerge.dc.html"
+  ],
+  "notes": {
+    "flow": {
+      "x": 0,
+      "y": -300,
+      "w": 240,
+      "text": "组卡：选目标与卡池 → 补这次需要的信息 → 推荐结果",
+      "kind": "title1",
+      "maxW": 5890
+    },
+    "account": {
+      "x": 0,
+      "y": 2420,
+      "w": 240,
+      "text": "账号：卡池单独管理；第一次组卡时在弹层里建立",
+      "kind": "title1",
+      "maxW": 6470
+    }
+  },
+  "designSystems": []
+}

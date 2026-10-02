@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>卡池：修正一张卡</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.mn{--mn-bg:#EEF2FA;--mn-surface:rgba(247,250,255,.92);--mn-surface-strong:#F7FAFF;--mn-glass:rgba(247,250,255,.7);--mn-glass-border:rgba(163,183,219,.52);--mn-text:#202E4C;--mn-ink-soft:#3D506F;--mn-muted:#596B87;--mn-border:#C5D1E6;--mn-cream-deep:#E3EAF7;--mn-accent:#5475BC;--mn-accent-deep:#395EA8;--mn-accent-soft:#E1EAFB;--mn-on-accent:#FFFFFF;--mn-pink:#C3B8EC;--mn-pink-soft:#EEE9FA;--mn-cyan:#A0DDEA;--mn-amber:#EAD0A6;--mn-peach:#F8D3B8;--mn-yellow:#F7E9AD;--mn-mint:#B9D5B1;--mn-mint-deep:#3F5740;--mn-mint-soft:#E4EBDD;--mn-rose:#B85C6B;--mn-rose-soft:#F6E1E4;--mn-rose-ink:#7A2433;--mn-warn-soft:#FBF1DC;--mn-warn-ink:#6E4A12;--mn-shadow:0 12px 36px rgba(48,72,122,.09);--mn-dot:rgba(39,62,112,.06);--mn-font:"Inter","PingFang SC","Microsoft YaHei",ui-sans-serif,system-ui,sans-serif;--mn-mono:"SFMono-Regular",Consolas,monospace}
+.mn[data-theme="dark"]{--mn-bg:#080F21;--mn-surface:rgba(16,27,49,.92);--mn-surface-strong:#17243E;--mn-glass:rgba(13,23,43,.78);--mn-glass-border:rgba(146,182,233,.22);--mn-text:#EAF1FF;--mn-ink-soft:#D2DDF3;--mn-muted:#A0B0CD;--mn-border:#2C3D5E;--mn-cream-deep:#17243F;--mn-accent:#9ACBFA;--mn-accent-deep:#B2D8FF;--mn-accent-soft:#1C3453;--mn-on-accent:#080F21;--mn-pink:#C4BAF1;--mn-pink-soft:#29233F;--mn-cyan:#9ADAE9;--mn-amber:#EDCE95;--mn-peach:#F0C4A4;--mn-yellow:#F6E79E;--mn-mint:#94C78B;--mn-mint-deep:#99D3B1;--mn-mint-soft:#182F32;--mn-rose:#D47888;--mn-rose-soft:#3A1C24;--mn-rose-ink:#F2B8C2;--mn-warn-soft:#3A2E17;--mn-warn-ink:#F3D9A4;--mn-shadow:0 16px 44px rgba(0,5,20,.28);--mn-dot:rgba(175,206,255,.12)}
+
+.mn{--mn-scrim:rgba(20,30,52,.42)}.mn[data-theme="dark"]{--mn-scrim:rgba(0,4,14,.6)}
+a{color:var(--mn-accent-deep)}a:hover{color:var(--mn-accent)}
+.mn-edit{display:grid;grid-template-columns:300px minmax(0,1fr);gap:24px}
+.mn-field{display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--mn-border)}
+@media (max-width:760px){.mn-edit{grid-template-columns:minmax(0,1fr)}}
+.mn{display:flow-root}
+</style>
+</helmet>
+<div class="mn" data-theme="{{theme}}" style="min-height: 100vh; background: var(--mn-bg); color: var(--mn-text); font-family: var(--mn-font); font-size: 14px; line-height: 1.55; position: relative">
+<div aria-hidden="true" style="position: absolute; inset: 0; background: var(--mn-scrim)"></div>
+<div role="dialog" aria-modal="true" aria-labelledby="h-edit" style="position: relative; max-width: 900px; margin: 48px auto; box-sizing: border-box; padding: 24px 28px; border-radius: 3px 28px 3px 28px; background: var(--mn-surface-strong); border: 1px solid var(--mn-glass-border); box-shadow: 0 24px 64px rgba(20,34,70,.24); display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; align-items: flex-start; gap: 12px">
+<div style="flex-grow: 1"><h2 id="h-edit" style="margin: 0; font-size: 21px; font-weight: 700">修正这张卡</h2><p style="margin: 4px 0 0; color: var(--mn-muted)">左边是它在截图里的样子。你改过的值会标成“手动”，以后的截图不会覆盖。</p></div>
+<a href="Box.dc.html" aria-label="关闭" style="width: 44px; height: 44px; display: grid; place-items: center; color: var(--mn-text)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+</div>
+
+<div class="mn-edit">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="position: relative; aspect-ratio: 4 / 3; border-radius: 10px; background: var(--mn-cream-deep); overflow: hidden">
+<span style="position: absolute; left: 34%; top: 22%; width: 34%; height: 56%; border: 2px solid var(--mn-rose); border-radius: 6px; background: var(--mn-peach)"></span>
+<span style="position: absolute; left: 10px; bottom: 8px; font-size: 11px; color: var(--mn-muted)">截图 2 · 等级视图（裁切）</span>
+</div>
+<div style="font-size: 12px; color: var(--mn-muted)">出现在 2 张截图里 · <a href="#">看另一张</a></div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+<div>
+<div style="font-weight: 600; margin-bottom: 6px">这是哪张卡？</div>
+<div role="radiogroup" aria-label="卡片身份" style="display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{ids}}" as="c" hint-placeholder-count="3">
+<button type="button" role="radio" aria-checked="{{c.on}}" onClick="{{c.pick}}" style="display: flex; align-items: center; gap: 10px; text-align: left; min-height: 48px; padding: 6px 10px; border-radius: 10px; border: {{c.border}}; background: {{c.bg}}; color: var(--mn-text); font: inherit; cursor: pointer">
+<span style="width: 34px; height: 34px; border-radius: 4px 10px 4px 10px; background: {{c.fill}}"></span>
+<span style="flex-grow: 1">{{c.name}}</span><span style="font-size: 12px; color: var(--mn-muted)">{{c.conf}}</span>
+</button>
+</sc-for>
+<label for="idq" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">搜索其他卡</label>
+<input id="idq" type="search" placeholder="都不是？搜索卡名" style="min-height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--mn-border); background: var(--mn-surface); color: var(--mn-text); font: inherit">
+</div>
+</div>
+
+<div>
+<div class="mn-field"><span>等级</span>
+<div role="radiogroup" aria-label="等级冲突" style="display: flex; gap: 8px; flex-wrap: wrap">
+<button type="button" role="radio" aria-checked="false" style="min-height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--mn-border); background: transparent; color: var(--mn-text); font: inherit; cursor: pointer">58（截图 1，9-12）</button>
+<button type="button" role="radio" aria-checked="true" style="min-height: 36px; padding: 0 12px; border-radius: 8px; border: 2px solid var(--mn-accent-deep); background: var(--mn-accent-soft); color: var(--mn-text); font: inherit; cursor: pointer">60（截图 2，9-30）</button>
+</div>
+<span style="font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--mn-rose-soft); color: var(--mn-rose-ink)">两张图不一致</span></div>
+<div class="mn-field"><label for="tr">特训</label><input id="tr" type="number" min="1" max="5" value="3" style="width: 80px; min-height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--mn-border); background: var(--mn-surface); color: var(--mn-text); font: inherit"><span style="font-size: 11px; color: var(--mn-muted)">截图 9-30</span></div>
+<div class="mn-field"><label for="rk">卡阶</label><input id="rk" type="number" min="1" max="5" value="2" style="width: 80px; min-height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--mn-border); background: var(--mn-surface); color: var(--mn-text); font: inherit"><span style="font-size: 11px; color: var(--mn-muted)">截图 9-30</span></div>
+<div class="mn-field"><label for="sk">普通技能</label><select id="sk" style="width: 120px; min-height: 36px; padding: 0 8px; border-radius: 8px; border: 1px solid var(--mn-border); background: var(--mn-surface); color: var(--mn-text); font: inherit"><option>未知</option><option>Lv1</option><option>Lv2</option><option>Lv3</option><option>Lv4</option><option>Lv5</option></select><span style="font-size: 11px; color: var(--mn-muted)">截图读不到</span></div>
+<div class="mn-field"><label for="gk">撃奏技能</label><select id="gk" style="width: 120px; min-height: 36px; padding: 0 8px; border-radius: 8px; border: 1px solid var(--mn-border); background: var(--mn-surface); color: var(--mn-text); font: inherit"><option>同普通</option><option>Lv1</option><option>Lv2</option><option>Lv3</option><option>Lv4</option><option>Lv5</option></select><span style="font-size: 11px; color: var(--mn-muted)">截图读不到</span></div>
+</div>
+</div>
+</div>
+
+<div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding-top: 14px; border-top: 1px solid var(--mn-border)">
+<button type="button" style="min-height: 44px; padding: 0 14px; border-radius: 10px; border: 0; background: transparent; color: var(--mn-rose); font: inherit; cursor: pointer">这不是我的卡，删掉</button>
+<span style="flex-grow: 1"></span>
+<a href="Box.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; color: var(--mn-accent-deep); text-decoration: none">取消</a>
+<a href="Box.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: 12px; background: var(--mn-accent-deep); color: var(--mn-on-accent); text-decoration: none; font-weight: 600">保存</a>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var cur = this.state.id || 'e1';
+    var ids = [
+      { id: 'e1', name: '角色 E · [卡名 1]', conf: '最像', fill: 'var(--mn-peach)' },
+      { id: 'e2', name: '角色 E · [卡名 2]', conf: '同角色另一张', fill: 'var(--mn-peach)' },
+      { id: 'x', name: '角色 F · [卡名]', conf: '卡面相近', fill: 'var(--mn-yellow)' }
+    ].map(function (c) {
+      var on = c.id === cur;
+      return { name: c.name, conf: c.conf, fill: c.fill, on: on,
+        border: on ? '2px solid var(--mn-accent-deep)' : '1px solid var(--mn-border)',
+        bg: on ? 'var(--mn-accent-soft)' : 'transparent',
+        pick: function () { self.setState({ id: c.id }); } };
+    });
+    return { theme: this.props.theme || 'light', ids: ids };
+  }
+}
+</script>
+</body>
+</html>

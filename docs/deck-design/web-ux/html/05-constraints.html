@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN"><head><style>
+    .sc-placeholder{background:color-mix(in srgb,currentColor 8%,transparent);
+      border:1px solid color-mix(in srgb,currentColor 50%,transparent);
+      border-radius:2px;box-sizing:border-box;overflow:hidden}
+    @keyframes sc-shine{0%{background-position:100% 50%}100%{background-position:0% 50%}}
+    html.sc-dc-streaming .sc-placeholder,
+    html.sc-dc-streaming .sc-interp.sc-missing{position:relative;
+      background:color-mix(in srgb,currentColor 5%,transparent);
+      border-color:transparent}
+    html.sc-dc-streaming .sc-placeholder::before,
+    html.sc-dc-streaming .sc-interp.sc-missing::before{content:'';
+      position:absolute;inset:0;pointer-events:none;
+      background:linear-gradient(90deg,rgba(217,119,87,0) 25%,rgba(247,225,211,.95) 37%,rgba(217,119,87,0) 63%);
+      background-size:400% 100%;animation:sc-shine 1.4s ease infinite}
+    html.sc-dc-streaming .sc-placeholder:nth-child(n+9 of .sc-placeholder)::before,
+    html.sc-dc-streaming .sc-interp.sc-missing:nth-child(n+9 of .sc-interp.sc-missing)::before{animation:none;
+      background:color-mix(in srgb,currentColor 8%,transparent)}
+    .sc-placeholder-error{padding:4px 8px;font:11px/1.4 ui-monospace,monospace;
+      color:color-mix(in srgb,currentColor 70%,transparent);word-break:break-word}
+    .sc-interp.sc-missing{display:inline-block;width:2em;height:1em;overflow:hidden;
+      vertical-align:text-bottom;background:rgba(255,255,255,.3);border:1px solid rgba(0,0,0,.5);
+      border-radius:2px;box-sizing:border-box;color:transparent;
+      user-select:none}
+    .sc-interp.sc-unresolved{font-family:ui-monospace,monospace;font-size:.85em;
+      color:color-mix(in srgb,currentColor 50%,transparent);
+      background:color-mix(in srgb,currentColor 10%,transparent);border-radius:3px;
+      padding:0 3px}
+    .sc-host.sc-has-error{position:relative}
+    .sc-logic-error{position:absolute;top:8px;left:8px;z-index:2147483647;max-width:60ch;
+      padding:6px 10px;background:#b00020;color:#fff;font:12px/1.4 ui-monospace,monospace;
+      border-radius:4px;white-space:pre-wrap;pointer-events:none}
+    /* Mirrors PRINT_BASELINE_CSS in apps/web deck-stage-export.ts — keep both
+       in sync until dc-runtime regains a build step. */
+    @media print {
+      @page { margin: 0.5cm; }
+      figure, table { break-inside: avoid; }
+      #dc-root, #dc-root > .sc-host { height: auto; }
+      *, *::before, *::after {
+        print-color-adjust: exact; -webkit-print-color-adjust: exact;
+        backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+        animation-delay: -99s !important; animation-duration: .001s !important;
+        animation-iteration-count: 1 !important; animation-fill-mode: both !important;
+        animation-play-state: running !important; transition-duration: 0s !important;
+      }
+    }
+  </style>
+<meta charset="utf-8">
+<title>组卡：更多选项</title>
+<style>x-dc{display:none!important}</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" data-dc-tpl="1"><style data-dc-tpl="2">
+body{margin:0}
+.mn{--mn-bg:#EEF2FA;--mn-surface:rgba(247,250,255,.92);--mn-surface-strong:#F7FAFF;--mn-glass:rgba(247,250,255,.7);--mn-glass-border:rgba(163,183,219,.52);--mn-text:#202E4C;--mn-ink-soft:#3D506F;--mn-muted:#596B87;--mn-border:#C5D1E6;--mn-cream-deep:#E3EAF7;--mn-accent:#5475BC;--mn-accent-deep:#395EA8;--mn-accent-soft:#E1EAFB;--mn-on-accent:#FFFFFF;--mn-pink:#C3B8EC;--mn-pink-soft:#EEE9FA;--mn-cyan:#A0DDEA;--mn-amber:#EAD0A6;--mn-peach:#F8D3B8;--mn-yellow:#F7E9AD;--mn-mint:#B9D5B1;--mn-mint-deep:#3F5740;--mn-mint-soft:#E4EBDD;--mn-rose:#B85C6B;--mn-rose-soft:#F6E1E4;--mn-rose-ink:#7A2433;--mn-warn-soft:#FBF1DC;--mn-warn-ink:#6E4A12;--mn-shadow:0 12px 36px rgba(48,72,122,.09);--mn-dot:rgba(39,62,112,.06);--mn-font:"Inter","PingFang SC","Microsoft YaHei",ui-sans-serif,system-ui,sans-serif;--mn-mono:"SFMono-Regular",Consolas,monospace}
+.mn[data-theme="dark"]{--mn-bg:#080F21;--mn-surface:rgba(16,27,49,.92);--mn-surface-strong:#17243E;--mn-glass:rgba(13,23,43,.78);--mn-glass-border:rgba(146,182,233,.22);--mn-text:#EAF1FF;--mn-ink-soft:#D2DDF3;--mn-muted:#A0B0CD;--mn-border:#2C3D5E;--mn-cream-deep:#17243F;--mn-accent:#9ACBFA;--mn-accent-deep:#B2D8FF;--mn-accent-soft:#1C3453;--mn-on-accent:#080F21;--mn-pink:#C4BAF1;--mn-pink-soft:#29233F;--mn-cyan:#9ADAE9;--mn-amber:#EDCE95;--mn-peach:#F0C4A4;--mn-yellow:#F6E79E;--mn-mint:#94C78B;--mn-mint-deep:#99D3B1;--mn-mint-soft:#182F32;--mn-rose:#D47888;--mn-rose-soft:#3A1C24;--mn-rose-ink:#F2B8C2;--mn-warn-soft:#3A2E17;--mn-warn-ink:#F3D9A4;--mn-shadow:0 16px 44px rgba(0,5,20,.28);--mn-dot:rgba(175,206,255,.12)}
+
+.mn{--mn-scrim:rgba(20,30,52,.42)}.mn[data-theme="dark"]{--mn-scrim:rgba(0,4,14,.6)}
+a{color:var(--mn-accent-deep)}a:hover{color:var(--mn-accent)}
+.mn-opt{display:grid;grid-template-columns:200px minmax(0,1fr);gap:18px;padding:16px 0;border-top:1px solid var(--mn-border)}
+@media (max-width:720px){.mn-opt{grid-template-columns:minmax(0,1fr);gap:8px}}
+.mn{display:flow-root}
+</style></head>
+<body>
+<div id="dc-root"><div class="sc-host" data-sc-name="05-constraints"><div data-dc-tpl="3" class="mn" data-theme="light" style="min-height: 100vh; background: var(--mn-bg); color: var(--mn-text); font-family: var(--mn-font); font-size: 14px; line-height: 1.55; position: relative;"><div data-dc-tpl="4" aria-hidden="true" style="position: absolute; inset: 0px; background: var(--mn-scrim);"></div><div data-dc-tpl="5" role="dialog" aria-modal="true" aria-labelledby="h-opt" style="position: relative; max-width: 820px; margin: 48px auto; box-sizing: border-box; padding: 24px 28px; border-radius: 3px 28px; background: var(--mn-surface-strong); border: 1px solid var(--mn-glass-border); box-shadow: rgba(20, 34, 70, 0.24) 0px 24px 64px;"><div data-dc-tpl="6" style="display: flex; align-items: flex-start; gap: 12px;"><div data-dc-tpl="7" style="flex-grow: 1;"><h2 data-dc-tpl="8" id="h-opt" style="margin: 0px; font-size: 21px; font-weight: 700;">更多选项</h2><p data-dc-tpl="9" style="margin: 4px 0px 0px; color: var(--mn-muted);">都不改也能组卡。这里的设置只影响这一次搜索，不改动卡池。</p></div><a data-dc-tpl="10" href="Goal.dc.html" aria-label="关闭" style="width: 44px; height: 44px; display: grid; place-items: center; color: var(--mn-text);"><svg data-dc-tpl="11" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path data-dc-tpl="12" d="M6 6l12 12M18 6L6 18"></path></svg></a></div><div data-dc-tpl="13" style="margin-top: 14px;"><div data-dc-tpl="14" class="mn-opt"><div data-dc-tpl="15"><div data-dc-tpl="16" style="font-weight: 600;">和哪个队比</div><div data-dc-tpl="17" style="font-size: 12px; color: var(--mn-muted);">结果里“比当前队伍 +X”的基准</div></div><div data-dc-tpl="18" role="radiogroup" aria-label="对比对象" style="display: flex; flex-direction: column; gap: 8px;"><button data-dc-tpl="20" type="button" role="radio" aria-checked="true" style="text-align: left; display: flex; flex-direction: column; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--mn-accent-deep); background: var(--mn-accent-soft); color: var(--mn-text); font: inherit; cursor: pointer;"><span data-dc-tpl="21" style="font-weight: 600;"><span class="sc-interp">卡池里综合力最高的队（自动）</span></span><span data-dc-tpl="22" style="font-size: 12px; color: var(--mn-muted);"><span class="sc-interp">不用填，适合大多数人</span></span></button><button data-dc-tpl="20" type="button" role="radio" aria-checked="false" style="text-align: left; display: flex; flex-direction: column; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--mn-border); background: transparent; color: var(--mn-text); font: inherit; cursor: pointer;"><span data-dc-tpl="21" style="font-weight: 600;"><span class="sc-interp">我现在用的队</span></span><span data-dc-tpl="22" style="font-size: 12px; color: var(--mn-muted);"><span class="sc-interp">选 5 张卡和 Snap，和推荐逐张对比</span></span></button><button data-dc-tpl="20" type="button" role="radio" aria-checked="false" style="text-align: left; display: flex; flex-direction: column; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--mn-border); background: transparent; color: var(--mn-text); font: inherit; cursor: pointer;"><span data-dc-tpl="21" style="font-weight: 600;"><span class="sc-interp">不比较</span></span><span data-dc-tpl="22" style="font-size: 12px; color: var(--mn-muted);"><span class="sc-interp">只看推荐本身</span></span></button></div></div><div data-dc-tpl="28" class="mn-opt"><div data-dc-tpl="29"><div data-dc-tpl="30" style="font-weight: 600;">这次不用的卡</div><div data-dc-tpl="31" style="font-size: 12px; color: var(--mn-muted);">仍算持有，回忆加成照算</div></div><div data-dc-tpl="32" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;"><span data-dc-tpl="33" style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 12px; border-radius: 999px; background: var(--mn-cream-deep);">角色 G · [卡名]<button data-dc-tpl="34" type="button" aria-label="移除角色 G" style="width: 28px; height: 28px; border-radius: 50%; border: 0px; background: transparent; color: var(--mn-ink-soft); cursor: pointer;">×</button></span><button data-dc-tpl="35" type="button" style="min-height: 36px; padding: 0px 12px; border-radius: 999px; border: 1px dashed var(--mn-border); background: transparent; color: var(--mn-accent-deep); font: inherit; cursor: pointer;">+ 选卡</button></div></div><div data-dc-tpl="36" class="mn-opt"><div data-dc-tpl="37"><div data-dc-tpl="38" style="font-weight: 600;">必须上场</div><div data-dc-tpl="39" style="font-size: 12px; color: var(--mn-muted);">比如想用刚抽到的卡</div></div><div data-dc-tpl="40" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;"><button data-dc-tpl="41" type="button" style="min-height: 36px; padding: 0px 12px; border-radius: 999px; border: 1px dashed var(--mn-border); background: transparent; color: var(--mn-accent-deep); font: inherit; cursor: pointer;">+ 选卡</button><span data-dc-tpl="42" style="font-size: 12px; color: var(--mn-muted);">可以同时指定它坐队长位</span></div></div><div data-dc-tpl="43" class="mn-opt"><div data-dc-tpl="44"><div data-dc-tpl="45" style="font-weight: 600;">搜索多久</div><div data-dc-tpl="46" style="font-size: 12px; color: var(--mn-muted);">时间越长，越可能找到更好的队</div></div><div data-dc-tpl="47" role="radiogroup" aria-label="搜索时长" style="display: grid; grid-template-columns: repeat(3, minmax(0px, 1fr)); gap: 8px;"><button data-dc-tpl="49" type="button" role="radio" aria-checked="false" style="min-height: 52px; border-radius: 10px; border: 1px solid var(--mn-border); background: transparent; color: var(--mn-text); font: inherit; cursor: pointer;"><span data-dc-tpl="50" style="display: block; font-weight: 600;"><span class="sc-interp">快</span></span><span data-dc-tpl="51" style="display: block; font-size: 12px; color: var(--mn-muted);"><span class="sc-interp">约 5 秒</span></span></button><button data-dc-tpl="49" type="button" role="radio" aria-checked="true" style="min-height: 52px; border-radius: 10px; border: 2px solid var(--mn-accent-deep); background: var(--mn-accent-soft); color: var(--mn-text); font: inherit; cursor: pointer;"><span data-dc-tpl="50" style="display: block; font-weight: 600;"><span class="sc-interp">标准</span></span><span data-dc-tpl="51" style="display: block; font-size: 12px; color: var(--mn-muted);"><span class="sc-interp">约 20 秒</span></span></button><button data-dc-tpl="49" type="button" role="radio" aria-checked="false" style="min-height: 52px; border-radius: 10px; border: 1px solid var(--mn-border); background: transparent; color: var(--mn-text); font: inherit; cursor: pointer;"><span data-dc-tpl="50" style="display: block; font-weight: 600;"><span class="sc-interp">更久</span></span><span data-dc-tpl="51" style="display: block; font-size: 12px; color: var(--mn-muted);"><span class="sc-interp">约 1 分钟</span></span></button></div></div></div><div data-dc-tpl="52" style="display: flex; justify-content: flex-end; gap: 10px; padding-top: 14px; border-top: 1px solid var(--mn-border);"><a data-dc-tpl="53" href="Goal.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0px 14px; color: var(--mn-accent-deep); text-decoration: none;">恢复默认</a><a data-dc-tpl="54" href="Goal.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0px 20px; border-radius: 12px; background: var(--mn-accent-deep); color: var(--mn-on-accent); text-decoration: none; font-weight: 600;">完成</a></div></div></div></div></div>
+
+
+
+</body></html>

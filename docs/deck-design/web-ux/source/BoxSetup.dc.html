@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>组卡：首次建立卡池</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.mn{--mn-bg:#EEF2FA;--mn-surface:rgba(247,250,255,.92);--mn-surface-strong:#F7FAFF;--mn-glass-border:rgba(163,183,219,.52);--mn-text:#202E4C;--mn-ink-soft:#3D506F;--mn-muted:#596B87;--mn-border:#C5D1E6;--mn-cream-deep:#E3EAF7;--mn-accent:#5475BC;--mn-accent-deep:#395EA8;--mn-accent-soft:#E1EAFB;--mn-on-accent:#FFFFFF;--mn-mint-deep:#3F5740;--mn-mint-soft:#E4EBDD;--mn-warn-soft:#FBF1DC;--mn-warn-ink:#6E4A12;--mn-scrim:rgba(20,30,52,.42);--mn-shadow:0 24px 64px rgba(20,34,70,.24);--mn-font:"Inter","PingFang SC","Microsoft YaHei",ui-sans-serif,system-ui,sans-serif;--mn-mono:"SFMono-Regular",Consolas,monospace}
+.mn[data-theme="dark"]{--mn-bg:#080F21;--mn-surface:rgba(16,27,49,.96);--mn-surface-strong:#17243E;--mn-glass-border:rgba(146,182,233,.22);--mn-text:#EAF1FF;--mn-ink-soft:#D2DDF3;--mn-muted:#A0B0CD;--mn-border:#2C3D5E;--mn-cream-deep:#17243F;--mn-accent:#9ACBFA;--mn-accent-deep:#B2D8FF;--mn-accent-soft:#1C3453;--mn-on-accent:#080F21;--mn-mint-deep:#99D3B1;--mn-mint-soft:#182F32;--mn-warn-soft:#3A2E17;--mn-warn-ink:#F3D9A4;--mn-scrim:rgba(0,4,14,.6);--mn-shadow:0 24px 64px rgba(0,0,0,.5)}
+a{color:var(--mn-accent-deep)}a:hover{color:var(--mn-accent)}
+.mn-views{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:640px){.mn-views{grid-template-columns:minmax(0,1fr)}}
+.mn{display:flow-root}
+</style>
+</helmet>
+<div class="mn" data-theme="{{theme}}" style="min-height: 100vh; background: var(--mn-bg); color: var(--mn-text); font-family: var(--mn-font); font-size: 14px; line-height: 1.55; position: relative">
+<div aria-hidden="true" style="position: absolute; inset: 0; background: var(--mn-scrim)"></div>
+
+<div role="dialog" aria-modal="true" aria-labelledby="h-setup" style="position: relative; max-width: 760px; margin: 56px auto; box-sizing: border-box; padding: 26px 28px 24px; border-radius: 3px 28px 3px 28px; background: var(--mn-surface); border: 1px solid var(--mn-glass-border); box-shadow: var(--mn-shadow); display: flex; flex-direction: column; gap: 18px">
+
+<div style="display: flex; align-items: flex-start; gap: 12px">
+<div style="flex-grow: 1">
+<h2 id="h-setup" style="margin: 0; font-size: 22px; font-weight: 700">建立卡池</h2>
+<p style="margin: 4px 0 0; color: var(--mn-muted)">{{saveLine}}</p>
+</div>
+<a href="Goal.dc.html" aria-label="关闭并回到组卡" style="width: 44px; height: 44px; display: grid; place-items: center; border-radius: 10px; color: var(--mn-text)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+</div>
+
+<ol aria-label="步骤" style="list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; font-size: 13px; flex-wrap: wrap">
+<sc-for list="{{steps}}" as="s" hint-placeholder-count="3">
+<li style="padding: 4px 12px; border-radius: 999px; background: {{s.bg}}; color: {{s.fg}}">{{s.label}}</li>
+</sc-for>
+</ol>
+
+<sc-if value="{{signedOut}}" hint-placeholder-val="{{false}}">
+<div role="radiogroup" aria-label="卡池存在哪里" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{keeps}}" as="k" hint-placeholder-count="2">
+<button type="button" role="radio" aria-checked="{{k.on}}" onClick="{{k.pick}}" style="text-align: left; display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 12px; border: {{k.border}}; background: {{k.bg}}; color: var(--mn-text); font: inherit; cursor: pointer">
+<span style="font-weight: 600">{{k.title}}</span><span style="font-size: 12px; color: var(--mn-muted)">{{k.note}}</span>
+</button>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{isUpload}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; flex-direction: column; gap: 14px">
+<div class="mn-views">
+<div style="padding: 12px; border-radius: 12px; background: var(--mn-cream-deep)"><div style="font-weight: 600">等级视图</div><div style="font-size: 12px; color: var(--mn-muted)">卡池列表默认显示，往下滑多截几张，盖住所有卡</div></div>
+<div style="padding: 12px; border-radius: 12px; background: var(--mn-cream-deep)"><div style="font-weight: 600">特训视图</div><div style="font-size: 12px; color: var(--mn-muted)">切换显示后再截一轮</div></div>
+<div style="padding: 12px; border-radius: 12px; background: var(--mn-cream-deep)"><div style="font-weight: 600">Snap 列表</div><div style="font-size: 12px; color: var(--mn-muted)">留影的等级与卡阶</div></div>
+</div>
+<button type="button" onClick="{{toScan}}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 150px; border-radius: 14px; border: 1.5px dashed var(--mn-accent); background: transparent; color: var(--mn-accent-deep); font: inherit; cursor: pointer">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg>
+<span style="font-weight: 600">拖入、粘贴或选择截图</span>
+<span style="font-size: 12px; color: var(--mn-muted)">可以一次选多张；截图只在浏览器里识别，不上传</span>
+</button>
+<p style="margin: 0; font-size: 12px; color: var(--mn-muted)">技能等级截图读不到，这里不用管：组卡时只会问影响结果的几张。</p>
+</div>
+</sc-if>
+
+<sc-if value="{{isScan}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; font-size: 13px"><span>正在识别第 5 / 7 张截图</span><span style="font-family: var(--mn-mono)">已找到 104 张</span></div>
+<div style="height: 8px; border-radius: 999px; background: var(--mn-cream-deep); overflow: hidden"><div style="height: 100%; width: 68%; border-radius: 999px; background: var(--mn-accent-deep)"></div></div>
+<p style="margin: 0; font-size: 13px; color: var(--mn-muted)">可以继续拖入截图，会合并到同一次识别里。</p>
+<button type="button" onClick="{{toDone}}" style="align-self: flex-start; min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--mn-border); background: var(--mn-surface-strong); color: var(--mn-text); font: inherit; cursor: pointer">（演示：跳到识别完成）</button>
+</div>
+</sc-if>
+
+<sc-if value="{{isDone}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+<div style="padding: 12px; border-radius: 12px; background: var(--mn-mint-soft); color: var(--mn-mint-deep)"><div style="font-size: 24px; font-weight: 700">132</div><div style="font-size: 12px">成员卡</div></div>
+<div style="padding: 12px; border-radius: 12px; background: var(--mn-mint-soft); color: var(--mn-mint-deep)"><div style="font-size: 24px; font-weight: 700">64</div><div style="font-size: 12px">Snap</div></div>
+<div style="padding: 12px; border-radius: 12px; background: var(--mn-warn-soft); color: var(--mn-warn-ink)"><div style="font-size: 24px; font-weight: 700">3</div><div style="font-size: 12px">张没认准</div></div>
+</div>
+<p style="margin: 0; font-size: 13px; color: var(--mn-ink-soft)">没认准的 3 张先记为“待确认”。只有它们会影响推荐时，组卡才会请你确认；也可以现在去卡池页逐张看。</p>
+<label style="display: flex; gap: 10px; align-items: flex-start; font-size: 13px"><input type="checkbox" checked style="width: 18px; height: 18px; margin-top: 1px; accent-color: var(--mn-accent-deep)"><span>这些截图包含我全部的卡<span style="display: block; font-size: 12px; color: var(--mn-muted)">不勾选时，结果会注明“只在已上传的卡中推荐”</span></span></label>
+</div>
+</sc-if>
+
+<div style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; padding-top: 6px; border-top: 1px solid var(--mn-border)">
+<sc-if value="{{isDone}}" hint-placeholder-val="{{false}}">
+<a href="Box.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--mn-border); color: var(--mn-text); text-decoration: none">去卡池页检查</a>
+<a href="Skills.dc.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 12px; background: var(--mn-accent-deep); color: var(--mn-on-accent); text-decoration: none; font-weight: 600">{{doneCta}}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+</sc-if>
+<sc-if value="{{notDone}}" hint-placeholder-val="{{true}}">
+<a href="Goal.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 12px; color: var(--mn-accent-deep); text-decoration: none">取消</a>
+</sc-if>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"mode":{"editor":"enum","options":["account","signedOut"],"default":"account"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var phase = this.state.phase || 'upload';
+    var signedOut = this.props.mode === 'signedOut';
+    var keep = this.state.keep || 'local';
+    var temp = signedOut && keep === 'temp';
+    var local = signedOut && keep === 'local';
+    var keeps = [
+      { id: 'local', title: '存在这个浏览器', note: '下次打开还在；登录后可存进账号' },
+      { id: 'temp', title: '只用这一次', note: '关闭页面就清除，不留任何数据' }
+    ].map(function (k) {
+      var on = k.id === keep;
+      return { title: k.title, note: k.note, on: on,
+        border: on ? '2px solid var(--mn-accent-deep)' : '1px solid var(--mn-border)',
+        bg: on ? 'var(--mn-accent-soft)' : 'transparent',
+        pick: function () { self.setState({ keep: k.id }); } };
+    });
+    var order = ['upload', 'scan', 'done'];
+    var names = ['1 截图', '2 识别', '3 确认'];
+    var at = order.indexOf(phase);
+    var steps = names.map(function (n, i) {
+      return {
+        label: n,
+        bg: i === at ? 'var(--mn-accent-deep)' : (i < at ? 'var(--mn-mint-soft)' : 'var(--mn-cream-deep)'),
+        fg: i === at ? 'var(--mn-on-accent)' : (i < at ? 'var(--mn-mint-deep)' : 'var(--mn-ink-soft)')
+      };
+    });
+    return {
+      theme: this.props.theme || 'light',
+      steps: steps,
+      isUpload: phase === 'upload', isScan: phase === 'scan', isDone: phase === 'done', notDone: phase !== 'done',
+      signedOut: signedOut, keeps: keeps,
+      saveLine: signedOut ? '未登录：卡池不会存进账号。建好后直接回到组卡，已选的目标和歌曲不变。' : '存进 JP · [玩家名] 的卡池。建好后直接回到组卡，已选的目标和歌曲不变。',
+      doneCta: temp ? '继续组卡（不保存）' : (local ? '存到本机并继续组卡' : '保存并继续组卡'),
+      toScan: function () { self.setState({ phase: 'scan' }); },
+      toDone: function () { self.setState({ phase: 'done' }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>组卡：目标（手机）</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.mn{--mn-bg:#EEF2FA;--mn-surface:rgba(247,250,255,.92);--mn-surface-strong:#F7FAFF;--mn-glass:rgba(247,250,255,.7);--mn-glass-border:rgba(163,183,219,.52);--mn-text:#202E4C;--mn-ink-soft:#3D506F;--mn-muted:#596B87;--mn-border:#C5D1E6;--mn-cream-deep:#E3EAF7;--mn-accent:#5475BC;--mn-accent-deep:#395EA8;--mn-accent-soft:#E1EAFB;--mn-on-accent:#FFFFFF;--mn-pink:#C3B8EC;--mn-pink-soft:#EEE9FA;--mn-cyan:#A0DDEA;--mn-amber:#EAD0A6;--mn-peach:#F8D3B8;--mn-yellow:#F7E9AD;--mn-mint:#B9D5B1;--mn-mint-deep:#3F5740;--mn-mint-soft:#E4EBDD;--mn-rose:#B85C6B;--mn-rose-soft:#F6E1E4;--mn-rose-ink:#7A2433;--mn-warn-soft:#FBF1DC;--mn-warn-ink:#6E4A12;--mn-shadow:0 12px 36px rgba(48,72,122,.09);--mn-dot:rgba(39,62,112,.06);--mn-font:"Inter","PingFang SC","Microsoft YaHei",ui-sans-serif,system-ui,sans-serif;--mn-mono:"SFMono-Regular",Consolas,monospace}
+.mn[data-theme="dark"]{--mn-bg:#080F21;--mn-surface:rgba(16,27,49,.92);--mn-surface-strong:#17243E;--mn-glass:rgba(13,23,43,.78);--mn-glass-border:rgba(146,182,233,.22);--mn-text:#EAF1FF;--mn-ink-soft:#D2DDF3;--mn-muted:#A0B0CD;--mn-border:#2C3D5E;--mn-cream-deep:#17243F;--mn-accent:#9ACBFA;--mn-accent-deep:#B2D8FF;--mn-accent-soft:#1C3453;--mn-on-accent:#080F21;--mn-pink:#C4BAF1;--mn-pink-soft:#29233F;--mn-cyan:#9ADAE9;--mn-amber:#EDCE95;--mn-peach:#F0C4A4;--mn-yellow:#F6E79E;--mn-mint:#94C78B;--mn-mint-deep:#99D3B1;--mn-mint-soft:#182F32;--mn-rose:#D47888;--mn-rose-soft:#3A1C24;--mn-rose-ink:#F2B8C2;--mn-warn-soft:#3A2E17;--mn-warn-ink:#F3D9A4;--mn-shadow:0 16px 44px rgba(0,5,20,.28);--mn-dot:rgba(175,206,255,.12)}
+
+a{color:var(--mn-accent-deep)}a:hover{color:var(--mn-accent)}
+</style>
+</helmet>
+<div class="mn" data-theme="{{theme}}" style="width: 390px; min-height: 1180px; position: relative; background: var(--mn-bg); color: var(--mn-text); font-family: var(--mn-font); font-size: 14px; line-height: 1.5">
+
+<header style="height: 52px; display: flex; align-items: center; gap: 8px; padding: 0 16px; border-bottom: 1px solid var(--mn-glass-border); background: var(--mn-glass)">
+<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.2l7.1-.6z" fill="var(--mn-accent)"/></svg>
+<span style="font-weight: 650">组卡</span>
+<span style="flex-grow: 1"></span>
+<a href="Box.dc.html" style="font-size: 13px; text-decoration: none">我的卡池</a>
+</header>
+
+<div style="padding: 14px 16px 120px; display: flex; flex-direction: column; gap: 16px">
+<div>
+<h1 style="margin: 0; font-size: 20px; font-weight: 700">这次想要什么队？</h1>
+<p style="margin: 4px 0 0; font-size: 13px; color: var(--mn-muted)">选一个目标，其余用默认就行。</p>
+</div>
+
+<div role="radiogroup" aria-label="组卡目标" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{goals}}" as="g" hint-placeholder-count="6">
+<button type="button" role="radio" aria-checked="{{g.on}}" aria-disabled="{{g.off}}" onClick="{{g.pick}}" style="text-align: left; min-height: 72px; padding: 10px 12px; border-radius: 3px 16px 3px 16px; border: {{g.border}}; background: {{g.bg}}; color: var(--mn-text); opacity: {{g.op}}; font: inherit; cursor: pointer"><span style="display: block; font-weight: 600">{{g.title}}</span><span style="display: block; font-size: 12px; color: var(--mn-muted)">{{g.note}}</span></button>
+</sc-for>
+</div>
+
+<section aria-labelledby="h-box" style="border-radius: 3px 20px 3px 20px; background: var(--mn-surface); border: 1px solid var(--mn-glass-border); padding: 14px; display: flex; flex-direction: column; gap: 10px">
+<h2 id="h-box" style="margin: 0; font-size: 15px">卡池</h2>
+<sc-if value="{{hasBox}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--mn-accent-soft)">{{tag}}</span>
+<span style="flex-grow: 1; min-width: 0"><span style="display: block; font-weight: 600">{{title}}</span><span style="display: block; font-size: 12px; color: var(--mn-muted)">{{sub}}</span></span>
+<a href="Box.dc.html" style="font-size: 13px">管理</a>
+</div>
+</sc-if>
+<sc-if value="{{noBox}}" hint-placeholder-val="{{false}}">
+<p style="margin: 0; font-size: 13px; color: var(--mn-ink-soft)">还没有卡池。上传几张游戏截图就能建立，不登录也能用（只存在本机或只用这一次）。</p>
+<a href="BoxSetupMobile.dc.html" style="display: flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 12px; border: 1.5px solid var(--mn-accent-deep); color: var(--mn-accent-deep); text-decoration: none; font-weight: 600">上传截图建立卡池</a>
+</sc-if>
+</section>
+
+<section aria-labelledby="h-song" style="display: flex; flex-direction: column; gap: 8px">
+<h2 id="h-song" style="margin: 0; font-size: 15px">歌曲与场景</h2>
+<label for="m-song" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">歌曲</label>
+<input id="m-song" type="search" value="[歌曲名]" style="min-height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--mn-border); background: var(--mn-surface-strong); color: var(--mn-text); font: inherit">
+<div role="radiogroup" aria-label="难度" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px">
+<button type="button" role="radio" aria-checked="false" style="min-height: 40px; border-radius: 8px; border: 1px solid var(--mn-border); background: transparent; color: var(--mn-text); font: inherit; font-size: 13px">EASY</button>
+<button type="button" role="radio" aria-checked="false" style="min-height: 40px; border-radius: 8px; border: 1px solid var(--mn-border); background: transparent; color: var(--mn-text); font: inherit; font-size: 13px">NORMAL</button>
+<button type="button" role="radio" aria-checked="false" style="min-height: 40px; border-radius: 8px; border: 1px solid var(--mn-border); background: transparent; color: var(--mn-text); font: inherit; font-size: 13px">HARD</button>
+<button type="button" role="radio" aria-checked="true" style="min-height: 40px; border-radius: 8px; border: 2px solid var(--mn-accent-deep); background: var(--mn-accent-soft); color: var(--mn-text); font: inherit; font-size: 13px; font-weight: 600">EXPERT</button>
+</div>
+<div role="radiogroup" aria-label="场景" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+<button type="button" role="radio" aria-checked="true" style="min-height: 44px; border-radius: 8px; border: 2px solid var(--mn-accent-deep); background: var(--mn-accent-soft); color: var(--mn-text); font: inherit; font-weight: 600">撃奏ライブ</button>
+<button type="button" role="radio" aria-checked="false" style="min-height: 44px; border-radius: 8px; border: 1px solid var(--mn-border); background: transparent; color: var(--mn-text); font: inherit">自由 Live</button>
+</div>
+<a href="Constraints.dc.html" style="font-size: 13px">更多选项（对比队伍、不用的卡、必须上场）</a>
+</section>
+</div>
+
+<div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 16px 20px; background: var(--mn-glass); border-top: 1px solid var(--mn-glass-border)">
+<sc-if value="{{hasBox}}" hint-placeholder-val="{{true}}">
+<a href="SkillsMobile.dc.html" style="display: flex; align-items: center; justify-content: center; min-height: 50px; border-radius: 12px; background: var(--mn-accent-deep); color: var(--mn-on-accent); text-decoration: none; font-weight: 600">开始组卡</a>
+</sc-if>
+<sc-if value="{{noBox}}" hint-placeholder-val="{{false}}">
+<span aria-disabled="true" style="display: flex; align-items: center; justify-content: center; min-height: 50px; border-radius: 12px; background: var(--mn-cream-deep); color: var(--mn-muted); font-weight: 600">开始组卡（先准备卡池）</span>
+</sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"boxState":{"editor":"enum","options":["ready","local","temporary","signedOut"],"default":"ready"},"$preview":{"width":390,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var cur = this.state.goal || 'score';
+    var goals = [
+      { id: 'score', title: '冲分', note: '这首歌的期望分' },
+      { id: 'battle', title: '撃奏ライブ', note: '含激走，名次按假设' },
+      { id: 'stable', title: '稳定过线', note: '达到分数线的机会' },
+      { id: 'skip', title: '跳过演出', note: '不看技能顺序' },
+      { id: 'power', title: '只看综合力', note: '这首歌加成下' },
+      { id: 'event', title: '活动歌曲排名', note: '规则待核', off: true }
+    ].map(function (g) {
+      var on = g.id === cur;
+      return { title: g.title, note: g.note, on: on, off: !!g.off, op: g.off ? '.5' : '1',
+        border: on ? '2px solid var(--mn-accent-deep)' : '1px solid var(--mn-border)',
+        bg: on ? 'var(--mn-accent-soft)' : 'var(--mn-surface-strong)',
+        pick: function () { if (!g.off) self.setState({ goal: g.id }); } };
+    });
+    var bs = this.props.boxState || 'ready';
+    var info = {
+      ready: ['JP', '[玩家名] 的卡池', '成员 132 · Snap 64 · 9-30 更新'],
+      local: ['本机', '本机卡池 · JP', '只存在这个浏览器 · 9-30'],
+      temporary: ['临时', '这次上传的卡', '关掉页面就没了']
+    }[bs];
+    return { theme: this.props.theme || 'light', goals: goals,
+      hasBox: !!info, noBox: !info,
+      tag: info ? info[0] : '', title: info ? info[1] : '', sub: info ? info[2] : '' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>组卡推荐结果</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+.mn{--mn-bg:#EEF2FA;--mn-surface:rgba(247,250,255,.92);--mn-surface-strong:#F7FAFF;--mn-glass:rgba(247,250,255,.7);--mn-glass-border:rgba(163,183,219,.52);--mn-text:#202E4C;--mn-ink-soft:#3D506F;--mn-muted:#596B87;--mn-border:#C5D1E6;--mn-cream-deep:#E3EAF7;--mn-accent:#5475BC;--mn-accent-deep:#395EA8;--mn-accent-soft:#E1EAFB;--mn-on-accent:#FFFFFF;--mn-pink:#C3B8EC;--mn-pink-soft:#EEE9FA;--mn-cyan:#A0DDEA;--mn-amber:#EAD0A6;--mn-peach:#F8D3B8;--mn-yellow:#F7E9AD;--mn-mint:#B9D5B1;--mn-mint-deep:#3F5740;--mn-mint-soft:#E4EBDD;--mn-rose:#B85C6B;--mn-warn-soft:#FBF1DC;--mn-warn-ink:#6E4A12;--mn-shadow:0 12px 36px rgba(48,72,122,.09);--mn-dot:rgba(39,62,112,.06);--mn-font:"Inter","PingFang SC","Microsoft YaHei",ui-sans-serif,system-ui,sans-serif;--mn-mono:"SFMono-Regular",Consolas,monospace}
+.mn[data-theme="dark"]{--mn-bg:#080F21;--mn-surface:rgba(16,27,49,.92);--mn-surface-strong:#17243E;--mn-glass:rgba(13,23,43,.78);--mn-glass-border:rgba(146,182,233,.22);--mn-text:#EAF1FF;--mn-ink-soft:#D2DDF3;--mn-muted:#A0B0CD;--mn-border:#2C3D5E;--mn-cream-deep:#17243F;--mn-accent:#9ACBFA;--mn-accent-deep:#B2D8FF;--mn-accent-soft:#1C3453;--mn-on-accent:#080F21;--mn-pink:#C4BAF1;--mn-pink-soft:#29233F;--mn-cyan:#9ADAE9;--mn-amber:#EDCE95;--mn-peach:#F0C4A4;--mn-yellow:#F6E79E;--mn-mint:#94C78B;--mn-mint-deep:#99D3B1;--mn-mint-soft:#182F32;--mn-rose:#D47888;--mn-warn-soft:#3A2E17;--mn-warn-ink:#F3D9A4;--mn-shadow:0 16px 44px rgba(0,5,20,.28);--mn-dot:rgba(175,206,255,.12)}
+a{color:var(--mn-accent-deep)}a:hover{color:var(--mn-accent)}
+.mn-grid{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:24px;align-items:start}
+.mn-formation{display:flex;gap:14px;align-items:flex-start;justify-content:center}
+@media (max-width:1080px){.mn-grid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:720px){.mn-formation{gap:6px}.mn-hide-sm{display:none}}
+</style>
+</helmet>
+<div class="mn" data-theme="{{theme}}" style="min-height: 100vh; background-color: var(--mn-bg); background-image: radial-gradient(var(--mn-dot) 1px, transparent 1px); background-size: 22px 22px; color: var(--mn-text); font-family: var(--mn-font); font-size: 14px; line-height: 1.55">
+
+<header style="height: 60px; display: flex; align-items: center; gap: 28px; padding: 0 32px; border-bottom: 1px solid var(--mn-glass-border); background: var(--mn-glass)">
+<div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 17px; letter-spacing: .01em">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 2l2 8 8 2-8 2-2 8-2-8-8-2 8-2z"/></svg>
+<span>MoeNotes</span>
+</div>
+<nav aria-label="主导航" style="display: flex; gap: 22px; font-size: 14px">
+<a href="#" style="color: var(--mn-muted); text-decoration: none">歌曲</a>
+<a href="#" style="color: var(--mn-muted); text-decoration: none">活动</a>
+<a href="#" style="color: var(--mn-muted); text-decoration: none">谱面数据</a>
+<a href="#" aria-current="page" style="color: var(--mn-text); text-decoration: none; font-weight: 600; border-bottom: 2px solid var(--mn-accent); padding-bottom: 2px">组卡</a>
+</nav>
+<div style="flex-grow: 1"></div>
+<span style="font-size: 12px; padding: 3px 10px; border-radius: 999px; background: var(--mn-warn-soft); color: var(--mn-warn-ink)">示例数据</span>
+</header>
+
+<main style="max-width: 1360px; margin: 0 auto; padding: 24px 32px 48px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+
+<ol aria-label="组卡步骤" style="list-style: none; margin: 0; padding: 0; display: flex; gap: 10px; flex-wrap: wrap; font-size: 13px">
+<li style="display: flex; align-items: center; gap: 8px; padding: 6px 14px 6px 8px; border-radius: 999px; background: var(--mn-surface); border: 1px solid var(--mn-glass-border)"><span style="width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--mn-mint-soft); color: var(--mn-mint-deep)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg></span><a href="Goal.dc.html" style="color: var(--mn-text); text-decoration: none">目标 · [玩家名] 的卡池</a></li>
+<li style="display: flex; align-items: center; gap: 8px; padding: 6px 14px 6px 8px; border-radius: 999px; background: var(--mn-surface); border: 1px solid var(--mn-glass-border)"><span style="width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--mn-mint-soft); color: var(--mn-mint-deep)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg></span><a href="Skills.dc.html" style="color: var(--mn-text); text-decoration: none">技能等级 · 9 张</a></li>
+<li aria-current="step" style="display: flex; align-items: center; gap: 8px; padding: 6px 14px 6px 8px; border-radius: 999px; background: var(--mn-accent-deep); color: var(--mn-on-accent)"><span style="width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--mn-on-accent); color: var(--mn-accent-deep); font-weight: 700; font-size: 12px">3</span>推荐结果</li>
+</ol>
+
+<section aria-label="当前条件" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 14px 18px; border-radius: 3px 24px 3px 24px; background: var(--mn-glass); border: 1px solid var(--mn-glass-border); box-shadow: var(--mn-shadow)">
+<span style="font-weight: 600; margin-right: 4px">条件</span>
+<span style="padding: 4px 12px; border-radius: 999px; background: var(--mn-accent-soft); color: var(--mn-text)">日服</span>
+<span style="padding: 4px 12px; border-radius: 999px; background: var(--mn-accent-soft); color: var(--mn-text)">[歌曲名]</span>
+<span style="padding: 4px 12px; border-radius: 999px; background: #BE123C; color: #FFFFFF; font-weight: 600">EX 27</span>
+<div role="group" aria-label="场景" style="display: inline-flex; padding: 3px; border-radius: 999px; background: var(--mn-cream-deep)">
+<button type="button" aria-pressed="{{isBattle}}" onClick="{{toBattle}}" style="border: 0; cursor: pointer; font: inherit; padding: 4px 14px; border-radius: 999px; background: {{battleBg}}; color: {{battleFg}}">撃奏ライブ</button>
+<button type="button" aria-pressed="{{isFree}}" onClick="{{toFree}}" style="border: 0; cursor: pointer; font: inherit; padding: 4px 14px; border-radius: 999px; background: {{freeBg}}; color: {{freeFg}}">自由 Live</button>
+</div>
+<sc-if value="{{isBattle}}" hint-placeholder-val="{{true}}">
+<span style="padding: 4px 12px; border-radius: 999px; background: var(--mn-accent-soft)">名次：每区间第 1（最佳情况）</span>
+</sc-if>
+<span style="padding: 4px 12px; border-radius: 999px; background: var(--mn-accent-soft)">目标：期望分最高</span>
+<span style="padding: 4px 12px; border-radius: 999px; background: var(--mn-accent-soft)">打法：Just 60% · Great 2%</span>
+<div style="flex-grow: 1"></div>
+<a href="Goal.dc.html" style="font-size: 13px">修改条件</a>
+</section>
+
+<sc-if value="{{rs.searching}}" hint-placeholder-val="{{false}}">
+<section aria-live="polite" style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 14px 18px; border-radius: 3px 24px 3px 24px; background: var(--mn-accent-soft); border: 1px solid var(--mn-glass-border)">
+<div style="flex-grow: 1; min-width: 240px">
+<div style="display: flex; justify-content: space-between; font-size: 13px"><span style="font-weight: 600">正在搜索：已完整复算 640 个候选</span><span style="color: var(--mn-muted)">在浏览器后台计算，可以离开这一页</span></div>
+<div style="height: 6px; margin-top: 6px; border-radius: 999px; background: var(--mn-surface-strong); overflow: hidden"><div style="height: 100%; width: 52%; border-radius: 999px; background: var(--mn-accent-deep)"></div></div>
+</div>
+<button type="button" style="min-height: 40px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--mn-border); background: var(--mn-surface-strong); color: var(--mn-text); font: inherit; cursor: pointer">停止，用目前最好的</button>
+</section>
+</sc-if>
+<sc-if value="{{rs.stale}}" hint-placeholder-val="{{false}}">
+<section role="status" style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 18px; border-radius: 3px 24px 3px 24px; background: var(--mn-warn-soft); color: var(--mn-warn-ink)">
+<div style="flex-grow: 1; min-width: 240px"><div style="font-weight: 600">这个结果已过期</div><div style="font-size: 13px">算完之后卡池更新了（新增 2 张卡）。下面仍是旧结果，仅供参考。</div></div>
+<button type="button" style="min-height: 40px; padding: 0 16px; border-radius: 10px; border: 0; background: var(--mn-warn-ink); color: var(--mn-warn-soft); font: inherit; font-weight: 600; cursor: pointer">重新计算</button>
+</section>
+</sc-if>
+<sc-if value="{{rs.range}}" hint-placeholder-val="{{false}}">
+<section role="status" style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 18px; border-radius: 3px 24px 3px 24px; background: var(--mn-surface); border: 1px solid var(--mn-glass-border)">
+<div style="flex-grow: 1; min-width: 240px"><div style="font-weight: 600">有 2 张卡的技能等级未知，分数是区间</div><div style="font-size: 13px; color: var(--mn-muted)">角色 B、角色 G。填上后结果会变成一个确定的数，队伍也可能变。</div></div>
+<a href="Skills.dc.html" style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 10px; background: var(--mn-accent-deep); color: var(--mn-on-accent); text-decoration: none; font-weight: 600">去填（2 张）</a>
+</section>
+</sc-if>
+
+<div class="mn-grid">
+
+<div style="display: flex; flex-direction: column; gap: 20px; min-width: 0">
+
+<section aria-labelledby="h-formation" style="padding: 22px 24px 24px; border-radius: 3px 24px 3px 24px; background: var(--mn-surface); border: 1px solid var(--mn-glass-border); box-shadow: var(--mn-shadow)">
+<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 18px">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--mn-accent)" stroke-width="1.6" aria-hidden="true"><path d="M12 2l2 8 8 2-8 2-2 8-2-8-8-2 8-2z"/></svg>
+<h2 id="h-formation" style="margin: 0; font-size: 18px; font-weight: 650">照这样摆</h2>
+<span style="font-size: 13px; color: var(--mn-muted)">候选 #{{rankNo}} · 中间为队长 · 每张卡下方是配对 Snap</span>
+<div style="flex-grow: 1"></div>
+<button type="button" style="display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--mn-border); background: var(--mn-surface-strong); color: var(--mn-text); font: inherit; cursor: pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a1 1 0 011-1h9"/></svg>复制摆法</button>
+<button type="button" style="display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 10px; border: 0; background: var(--mn-accent-deep); color: var(--mn-on-accent); font: inherit; font-weight: 600; cursor: pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M21 17l-5-5-7 7"/></svg>保存为图片</button>
+</div>
+
+<div class="mn-formation" style="padding: 8px 0 4px">
+<sc-for list="{{members}}" as="m" hint-placeholder-count="5">
+<div style="flex: 1 1 0; max-width: 176px; min-width: 0; display: flex; flex-direction: column; gap: 8px; margin-top: {{m.lift}}px">
+<div style="position: relative; aspect-ratio: 3 / 4; border-radius: 6px 18px 6px 18px; background: {{m.fill}}; border: {{m.ring}}; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; padding: 10px; box-sizing: border-box">
+<span style="position: absolute; top: 8px; left: 8px; font-size: 11px; padding: 1px 8px; border-radius: 999px; background: rgba(255,255,255,.82); color: #202E4C">{{m.slotLabel}}</span>
+<sc-if value="{{m.changed}}" hint-placeholder-val="{{false}}"><span style="position: absolute; top: 8px; right: 8px; font-size: 11px; padding: 1px 8px; border-radius: 999px; background: #202E4C; color: #FFFFFF">与 #1 不同</span></sc-if>
+<span style="font-size: 11px; color: rgba(32,46,76,.7)">卡面</span>
+<span style="font-weight: 700; font-size: 15px; color: #202E4C">{{m.name}}</span>
+<span style="font-size: 12px; color: #3D506F">{{m.card}}</span>
+</div>
+<div style="font-size: 12px; color: var(--mn-ink-soft); display: flex; flex-direction: column; gap: 2px">
+<span style="font-family: var(--mn-mono)">Lv.{{m.lv}} · 特训 {{m.tr}} · 卡阶 {{m.rank}}</span>
+<span style="color: var(--mn-muted)">技能 Lv.{{m.skillLv}} · {{m.skill}}</span>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; background: var(--mn-cream-deep)">
+<span style="width: 28px; height: 20px; border-radius: 4px; background: {{m.fill}}; flex-shrink: 0"></span>
+<span style="font-size: 12px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{m.snap}}</span>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section aria-labelledby="h-why" style="padding: 22px 24px; border-radius: 3px 24px 3px 24px; background: var(--mn-surface); border: 1px solid var(--mn-glass-border); box-shadow: var(--mn-shadow)">
+<div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; flex-wrap: wrap">
+<h2 id="h-why" style="margin: 0; font-size: 16px; font-weight: 650">分数从哪来</h2>
+<span style="font-size: 13px; color: var(--mn-muted)">技能顺序每局随机洗牌，下表是各成员技能的期望贡献</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{members}}" as="m" hint-placeholder-count="5">
+<div style="display: grid; grid-template-columns: 96px minmax(0, 1fr) 64px; gap: 12px; align-items: center">
+<span style="font-size: 13px">{{m.name}}</span>
+<div style="height: 10px; border-radius: 999px; background: var(--mn-cream-deep); overflow: hidden"><div style="height: 100%; width: {{m.contribW}}%; border-radius: 999px; background: var(--mn-accent)"></div></div>
+<span style="font-family: var(--mn-mono); font-size: 12px; text-align: right">{{m.contrib}}%</span>
+</div>
+</sc-for>
+</div>
+<p style="margin: 14px 0 0; font-size: 13px; color: var(--mn-muted)">其余来自基础分（综合力）、判定倍率与{{sceneExtra}}。点任一成员可看换掉它后的分数变化。</p>
+</section>
+
+</div>
+
+<aside style="display: flex; flex-direction: column; gap: 20px; min-width: 0">
+
+<section aria-labelledby="h-score" style="padding: 22px 24px; border-radius: 3px 24px 3px 24px; background: var(--mn-surface); border: 1px solid var(--mn-glass-border); box-shadow: var(--mn-shadow)">
+<h2 id="h-score" style="margin: 0 0 4px; font-size: 13px; font-weight: 500; color: var(--mn-muted)">{{rs.scoreLabel}} · {{sceneName}}</h2>
+<sc-if value="{{rs.notRange}}" hint-placeholder-val="{{true}}"><div style="font-size: 40px; font-weight: 700; letter-spacing: -.01em; font-variant-numeric: tabular-nums">{{s.exp}}</div></sc-if>
+<sc-if value="{{rs.range}}" hint-placeholder-val="{{false}}"><div style="font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums">1,251,300 – 1,298,400</div></sc-if>
+<div style="display: flex; gap: 8px; align-items: center; margin-top: 4px; flex-wrap: wrap">
+<span style="font-size: 13px; padding: 2px 10px; border-radius: 999px; background: var(--mn-mint-soft); color: var(--mn-mint-deep); font-weight: 600">比当前队伍 {{s.delta}}</span>
+<span style="font-size: 13px; color: var(--mn-muted)">当前队伍 {{s.current}}</span>
+</div>
+
+<div aria-label="分数分布" style="margin-top: 18px">
+<div style="height: 84px; display: flex; align-items: flex-end; gap: 3px">
+<sc-for list="{{bars}}" as="b" hint-placeholder-count="20">
+<div style="flex: 1 1 0; height: {{b.h}}%; border-radius: 3px 3px 0 0; background: {{b.bg}}"></div>
+</sc-for>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 8px; font-size: 12px; color: var(--mn-muted)">
+<div><div>较差局 P10</div><div style="color: var(--mn-text); font-family: var(--mn-mono)">{{s.p10}}</div></div>
+<div style="text-align: center"><div>中位</div><div style="color: var(--mn-text); font-family: var(--mn-mono)">{{s.p50}}</div></div>
+<div style="text-align: right"><div>较好局 P90</div><div style="color: var(--mn-text); font-family: var(--mn-mono)">{{s.p90}}</div></div>
+</div>
+<p style="margin: 10px 0 0; font-size: 12px; color: var(--mn-muted)">波动来自每局随机的技能顺序与幸运类效果；分数为 [N] 个随机种子的统计。</p>
+</div>
+
+<div style="margin-top: 16px; padding: 12px 14px; border-radius: 10px; background: var(--mn-warn-soft); color: var(--mn-warn-ink); display: flex; gap: 10px; font-size: 13px">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.5"/></svg>
+<div><div style="font-weight: 600">启发式搜索结果</div><div>已完整复算 1,240 个候选，用时 18 秒。可能还有更好的队伍，差距未知。</div></div>
+</div>
+<button type="button" style="margin-top: 12px; width: 100%; min-height: 44px; border-radius: 10px; border: 1px solid var(--mn-border); background: var(--mn-surface-strong); color: var(--mn-text); font: inherit; cursor: pointer">继续搜索（更久）</button>
+</section>
+
+<section aria-labelledby="h-alt" style="padding: 20px 20px 14px; border-radius: 3px 24px 3px 24px; background: var(--mn-surface); border: 1px solid var(--mn-glass-border); box-shadow: var(--mn-shadow)">
+<h2 id="h-alt" style="margin: 0 0 10px 4px; font-size: 16px; font-weight: 650">其他候选</h2>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{cands}}" as="c" hint-placeholder-count="3">
+<button type="button" aria-pressed="{{c.on}}" onClick="{{c.pick}}" style="display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left; min-height: 56px; padding: 8px 10px; border-radius: 10px; border: {{c.border}}; background: {{c.bg}}; color: var(--mn-text); font: inherit; cursor: pointer">
+<span style="font-weight: 700; color: var(--mn-muted)">#{{c.no}}</span>
+<span style="display: flex; gap: 4px">
+<sc-for list="{{c.sw}}" as="w" hint-placeholder-count="5"><span style="width: 22px; height: 28px; border-radius: 3px 8px 3px 8px; background: {{w.fill}}"></span></sc-for>
+</span>
+<span style="text-align: right"><span style="display: block; font-family: var(--mn-mono); font-size: 13px">{{c.exp}}</span><span style="display: block; font-size: 12px; color: var(--mn-muted)">{{c.diff}}</span></span>
+</button>
+</sc-for>
+</div>
+</section>
+
+<section aria-labelledby="h-basis" style="padding: 18px 20px; border-radius: 3px 24px 3px 24px; background: var(--mn-glass); border: 1px solid var(--mn-glass-border); font-size: 12px; color: var(--mn-muted)">
+<h2 id="h-basis" style="margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--mn-ink-soft)">计算依据</h2>
+<ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px">
+<li>日服 master 2026-09-30，谱面与引擎版本 [rev]</li>
+<li>卡池：JP [玩家名]，2026-09-30 更新；成员 132、Snap 64，这次全部参选</li>
+<li>技能等级：9 张由你确认，其余卡的等级不影响本结果</li>
+<li>角色等级、乐队道具按你选的试算条件</li>
+<li>数值按本模型计算，以游戏反编译为来源，不保证正确；与其他工具有出入时请以对方为准</li>
+</ul>
+</section>
+
+</aside>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"resultState":{"editor":"enum","options":["done","searching","stale","range"],"default":"done"},"$preview":{"width":1440,"height":1640}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var scene = this.state.scene || 'battle';
+    var idx = this.state.idx || 0;
+    var fmt = function (n) { return n.toLocaleString('en-US'); };
+    var A = { name: '角色 A', card: '[卡名]', lv: 60, tr: 5, rank: 4, skillLv: 4, skill: '分数提升', fill: 'var(--mn-pink)', snap: '[Snap 名] · Perfect 加成', contrib: 17.2 };
+    var B = { name: '角色 B', card: '[卡名]', lv: 60, tr: 5, rank: 3, skillLv: 5, skill: '分数提升', fill: 'var(--mn-cyan)', snap: '[Snap 名] · 判定强化', contrib: 21.4 };
+    var C = { name: '角色 C', card: '[卡名]', lv: 60, tr: 5, rank: 5, skillLv: 5, skill: '分数提升', fill: 'var(--mn-amber)', snap: '[Snap 名] · 队长加成', contrib: 24.9 };
+    var D = { name: '角色 D', card: '[卡名]', lv: 58, tr: 4, rank: 4, skillLv: 4, skill: '回复 + 分数', fill: 'var(--mn-mint)', snap: '[Snap 名] · Combo 加成', contrib: 19.6 };
+    var E = { name: '角色 E', card: '[卡名]', lv: 60, tr: 5, rank: 2, skillLv: 3, skill: '分数提升', fill: 'var(--mn-peach)', snap: '[Snap 名] · Perfect 加成', contrib: 16.9 };
+    var F = { name: '角色 F', card: '[卡名]', lv: 60, tr: 3, rank: 4, skillLv: 4, skill: '判定强化', fill: 'var(--mn-yellow)', snap: '[Snap 名] · Perfect 加成', contrib: 16.1 };
+    var G = { name: '角色 G', card: '[卡名]', lv: 55, tr: 5, rank: 3, skillLv: 5, skill: '分数提升', fill: 'var(--mn-pink-soft)', snap: '[Snap 名] · 判定强化', contrib: 20.7 };
+    var teams = [[A, B, C, D, E], [A, B, C, D, F], [A, G, C, D, E]];
+    var scores = {
+      battle: [
+        { exp: 1284560, p10: 1212300, p50: 1286900, p90: 1361900, current: 1242250 },
+        { exp: 1281440, p10: 1209800, p50: 1283100, p90: 1357600, current: 1242250 },
+        { exp: 1278690, p10: 1204100, p50: 1280500, p90: 1356200, current: 1242250 }
+      ],
+      free: [
+        { exp: 538940, p10: 509800, p50: 539600, p90: 568300, current: 521180 },
+        { exp: 537610, p10: 508700, p50: 538200, p90: 566900, current: 521180 },
+        { exp: 536420, p10: 506300, p50: 537400, p90: 566100, current: 521180 }
+      ]
+    };
+    var self = this;
+    var lifts = [36, 16, 0, 16, 36];
+    var labels = ['1', '2', '队长', '4', '5'];
+    var team = teams[idx];
+    var members = team.map(function (m, i) {
+      return Object.assign({}, m, {
+        lift: lifts[i],
+        slotLabel: labels[i],
+        ring: i === 2 ? '2px solid var(--mn-accent-deep)' : '1px solid var(--mn-glass-border)',
+        changed: idx > 0 && m !== teams[0][i],
+        contribW: Math.round(m.contrib / 25 * 100)
+      });
+    });
+    var sc = scores[scene];
+    var cur = sc[idx];
+    var s = {
+      exp: fmt(cur.exp), p10: fmt(cur.p10), p50: fmt(cur.p50), p90: fmt(cur.p90),
+      current: fmt(cur.current), delta: '+' + fmt(cur.exp - cur.current)
+    };
+    var heights = [4, 7, 11, 17, 25, 35, 47, 60, 72, 82, 88, 86, 78, 66, 52, 39, 27, 17, 10, 6];
+    var bars = heights.map(function (h, i) {
+      return { h: h, bg: (i >= 3 && i <= 16) ? 'var(--mn-accent)' : 'var(--mn-border)' };
+    });
+    var cands = sc.map(function (x, i) {
+      var on = i === idx;
+      return {
+        no: i + 1, on: on,
+        exp: fmt(x.exp),
+        diff: i === 0 ? '当前最高' : '−' + fmt(sc[0].exp - x.exp),
+        border: on ? '2px solid var(--mn-accent-deep)' : '1px solid var(--mn-border)',
+        bg: on ? 'var(--mn-accent-soft)' : 'transparent',
+        sw: teams[i].map(function (m) { return { fill: m.fill }; }),
+        pick: function () { self.setState({ idx: i }); }
+      };
+    });
+    var battle = scene === 'battle';
+    var r = this.props.resultState || 'done';
+    var rs = { searching: r === 'searching', stale: r === 'stale', range: r === 'range', notRange: r !== 'range',
+      scoreLabel: r === 'searching' ? '目前最好的期望分数' : (r === 'range' ? '期望分数区间' : '期望分数') };
+    return {
+      rs: rs,
+      theme: this.props.theme || 'light',
+      members: members, s: s, bars: bars, cands: cands,
+      rankNo: idx + 1,
+      isBattle: battle, isFree: !battle,
+      sceneName: battle ? '撃奏ライブ' : '自由 Live',
+      sceneExtra: battle ? '撃奏区间加成' : '音符与 combo 倍率',
+      battleBg: battle ? 'var(--mn-accent-deep)' : 'transparent',
+      battleFg: battle ? 'var(--mn-on-accent)' : 'var(--mn-text)',
+      freeBg: battle ? 'transparent' : 'var(--mn-accent-deep)',
+      freeFg: battle ? 'var(--mn-text)' : 'var(--mn-on-accent)',
+      toBattle: function () { self.setState({ scene: 'battle' }); },
+      toFree: function () { self.setState({ scene: 'free' }); }
+    };
+  }
+}
+</script>
+</body>
+</html>
