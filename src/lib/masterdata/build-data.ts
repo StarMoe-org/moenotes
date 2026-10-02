@@ -1,4 +1,4 @@
-import type { AppLocale } from "@/config/locales";
+import { DEFAULT_LOCALE, type AppLocale } from "@/config/locales";
 import { GAME_SERVER_PROFILES, PRIMARY_SERVER, type GameServer } from "@/config/servers";
 import { serverReleaseFetcher } from "@/lib/assets/release";
 import { buildFetch } from "@/lib/build/fetch";
@@ -50,7 +50,7 @@ import {
 import { normalizeItems, type ItemViewModel, type RawItem } from "@/lib/items/data";
 import { normalizeStamps, type RawStamp, type StampViewModel } from "@/lib/stamps/data";
 import { normalizeComics, type ComicViewModel, type RawComic } from "@/lib/comics/data";
-import { MASTER_TEXT_FIELDS, isUsableMasterText, localizeMasterText, masterTextFieldOrder } from "@/lib/masterdata/localize-text";
+import { MASTER_TEXT_FIELDS, isUsableMasterText, localizeMasterText, masterTextFieldOrder, type LocalizableMasterText } from "@/lib/masterdata/localize-text";
 import {
   normalizeStories,
   storyNeighbors,
@@ -88,6 +88,7 @@ import { normalizeBackgrounds, type BackgroundViewModel, type RawBackground } fr
 import { createRewardResolver, type RawHomeSpot as RawRewardHomeSpot, type RewardResolver } from "@/lib/rewards/resources";
 import {
   normalizeRewardEntries,
+  rewardEntrySlug,
   toRewardEntrySummary,
   type RawLimitedMission,
   type RawLimitedMissionGroup,
@@ -99,6 +100,7 @@ import {
   type RawSeasonPassLevelReward,
   type RawSeasonPassMission,
   type RewardEntryDetail,
+  type RewardEntryKind,
   type RewardEntrySummary,
 } from "@/lib/rewards/data";
 import {
@@ -877,6 +879,235 @@ export function getBuildStoryDetail(locale: AppLocale, advId: number): Promise<S
       servers: available,
       server,
     };
+  });
+}
+
+/**
+ * Global content search: one entry per searchable entity (card, song, character, story, gacha, event, reward).
+ *
+ * Each entry carries its title as the MasterText row's five language cells so the browser can localize it for the
+ * current UI locale, plus a per-locale `searchText` (the list pages' own search blob) so matching a member or band
+ * name lands on their cards and songs. hrefs are locale-free; the browser prefixes them when navigating.
+ */
+export interface ContentSearchEntry {
+  /** Stable id within its kind (card id, song id, adv id, reward slug, …). */
+  key: string;
+  kind: "card" | "support-card" | "character" | "music" | "story" | "gacha" | "event" | "reward";
+  /** Locale-free detail path, e.g. `/cards/12`. The browser localizes it on render. */
+  href: `/${string}`;
+  /** Title as a MasterText row (five language cells); localized client-side. */
+  title: LocalizableMasterText;
+  /** Per-locale search blob (already lowercase); localized client-side with an en fallback. */
+  searchText: Partial<Record<AppLocale, string>>;
+}
+
+/** The core UI locales a per-locale searchText is built for; other locales read the English one. */
+const SEARCH_TEXT_LOCALES: readonly AppLocale[] = ["zh-CN", "zh-TW", "ja-JP", "en-US", "ko-KR"];
+
+/** MasterText rows by id on the primary server, for resolving entity titles to their five language cells. */
+async function primaryTextRows(): Promise<Map<string, RawText>> {
+  return memo("search-text-rows", async () => new Map((await texts(PRIMARY_SERVER))._allData.map((row) => [row.id, row])));
+}
+
+function titleRow(rows: Map<string, RawText>, textId: string | undefined): LocalizableMasterText {
+  if (!textId) return {};
+  const row = rows.get(textId);
+  if (!row) return {};
+  return {
+    id: row.id,
+    japanese: row.japanese,
+    english: row.english,
+    simplifiedChinese: row.simplifiedChinese,
+    traditionalChinese: row.traditionalChinese,
+    korean: row.korean,
+  };
+}
+
+/**
+ * Per-locale searchText of every entity of one kind: each locale's list is loaded once and indexed by `idOf`, so
+ * building the index is linear rather than re-scanning the list per entity. Values equal to the English one are left
+ * out — the client falls back to English for both UI-only locales and entities whose search text does not vary.
+ */
+async function perLocaleSearchTexts<VM extends { searchText: string }>(
+  load: (locale: AppLocale) => Promise<Array<ServerFaceted<VM>>>,
+  idOf: (item: ServerFaceted<VM>) => string | number,
+): Promise<Map<string, Map<AppLocale, string>>> {
+  const byLocale = new Map<AppLocale, Map<string, string>>();
+  await Promise.all(SEARCH_TEXT_LOCALES.map(async (locale) => {
+    const map = new Map<string, string>();
+    for (const item of await load(locale)) if (item.searchText) map.set(String(idOf(item)), item.searchText);
+    byLocale.set(locale, map);
+  }));
+  const english = byLocale.get("en-US") ?? new Map<string, string>();
+  const out = new Map<string, Map<AppLocale, string>>();
+  for (const id of new Set([...byLocale.values()].flatMap((map) => [...map.keys()]))) {
+    const variants = new Map<AppLocale, string>();
+    for (const locale of SEARCH_TEXT_LOCALES) {
+      const value = byLocale.get(locale)?.get(id);
+      if (value !== undefined && (locale === "en-US" || value !== english.get(id))) variants.set(locale, value);
+    }
+    out.set(id, variants);
+  }
+  return out;
+}
+
+/** Serialize an entity's per-locale searchText map to the index's JSON shape. */
+function toSearchTextRecord(map: Map<AppLocale, string> | undefined): Partial<Record<AppLocale, string>> {
+  return map ? Object.fromEntries(map) : {};
+}
+
+export function getBuildContentSearchIndex(): Promise<ContentSearchEntry[]> {
+  return memo("content-search-index", async () => {
+    const rows = await primaryTextRows();
+    const entries: ContentSearchEntry[] = [];
+
+    // Cards: title is the card's subtitle; matching also covers the character and band via per-locale searchText.
+    const [rawMemberCards, defaultCards] = await Promise.all([
+      table<RawMemberCard>("MasterMemberCard.json", PRIMARY_SERVER),
+      getBuildCards(DEFAULT_LOCALE),
+    ]);
+    const cardSubtitleIds = new Map(rawMemberCards._allData.map((card) => [card.id, card.subtitleTextID]));
+    const cardSearchTexts = await perLocaleSearchTexts(getBuildCards, (item) => item.id);
+    for (const card of defaultCards) {
+      entries.push({
+        key: `card:${card.id}`,
+        kind: "card",
+        href: `/cards/${card.id}`,
+        title: titleRow(rows, cardSubtitleIds.get(card.id)),
+        searchText: toSearchTextRecord(cardSearchTexts.get(String(card.id))),
+      });
+    }
+
+    // Support cards: title is the support card's own name.
+    const [rawSupportCards, defaultSupportCards] = await Promise.all([
+      table<RawSupportCard>("MasterSupportCard.json", PRIMARY_SERVER),
+      getBuildSupportCards(DEFAULT_LOCALE),
+    ]);
+    const supportNameIds = new Map(rawSupportCards._allData.map((card) => [card.id, card.nameTextID]));
+    const supportCardSearchTexts = await perLocaleSearchTexts(getBuildSupportCards, (item) => item.id);
+    for (const card of defaultSupportCards) {
+      entries.push({
+        key: `support-card:${card.id}`,
+        kind: "support-card",
+        href: `/support-cards/${card.id}`,
+        title: titleRow(rows, supportNameIds.get(card.id)),
+        searchText: toSearchTextRecord(supportCardSearchTexts.get(String(card.id))),
+      });
+    }
+
+    // Characters: title is the character's display name.
+    const [rawCharacters, { characters: defaultCharacters }] = await Promise.all([
+      table<RawCharacterDetail>("MasterCharacter.json", PRIMARY_SERVER),
+      getBuildCharacters(DEFAULT_LOCALE),
+    ]);
+    const characterNameIds = new Map(rawCharacters._allData.map((character) => [character.id, character.nameTextID]));
+    const characterSearchTexts = await perLocaleSearchTexts(async (locale) => (await getBuildCharacters(locale)).characters, (item) => item.id);
+    for (const character of defaultCharacters) {
+      entries.push({
+        key: `character:${character.id}`,
+        kind: "character",
+        href: `/characters/${character.id}`,
+        title: titleRow(rows, characterNameIds.get(character.id)),
+        searchText: toSearchTextRecord(characterSearchTexts.get(String(character.id))),
+      });
+    }
+
+    // Songs: title is the song title.
+    const [rawMusic, defaultMusic] = await Promise.all([
+      table<RawMusic>("MasterLiveMusic.json", PRIMARY_SERVER),
+      getBuildMusic(DEFAULT_LOCALE),
+    ]);
+    const musicTitleIds = new Map(rawMusic._allData.map((song) => [song.id, song.titleTextID]));
+    const musicSearchTexts = await perLocaleSearchTexts(getBuildMusic, (item) => item.id);
+    for (const song of defaultMusic) {
+      entries.push({
+        key: `music:${song.id}`,
+        kind: "music",
+        href: `/music/${song.id}`,
+        title: titleRow(rows, musicTitleIds.get(song.id)),
+        searchText: toSearchTextRecord(musicSearchTexts.get(String(song.id))),
+      });
+    }
+
+    // Stories (deduped by advId): title is the ADV's title.
+    const [rawAdvs, defaultStories] = await Promise.all([
+      table<RawAdv>("MasterAdv.json", PRIMARY_SERVER),
+      getBuildStories(DEFAULT_LOCALE),
+    ]);
+    const advTitleIds = new Map(rawAdvs._allData.map((adv) => [adv.id, adv.titleTextId]));
+    // Stories appear once per list they sit in; the search index keys them by adv, so the map keys on advId.
+    const storySearchTexts = await perLocaleSearchTexts(getBuildStories, (item) => item.advId);
+    const seenAdv = new Set<number>();
+    for (const story of defaultStories) {
+      if (seenAdv.has(story.advId)) continue;
+      seenAdv.add(story.advId);
+      entries.push({
+        key: `story:${story.advId}`,
+        kind: "story",
+        href: `/story/${story.advId}`,
+        title: titleRow(rows, advTitleIds.get(story.advId)),
+        searchText: toSearchTextRecord(storySearchTexts.get(String(story.advId))),
+      });
+    }
+
+    // Gachas: title is the gacha's name.
+    const [rawGachas, defaultGachas] = await Promise.all([
+      table<RawGacha>("MasterGacha.json", PRIMARY_SERVER),
+      getBuildGachas(DEFAULT_LOCALE),
+    ]);
+    const gachaNameIds = new Map(rawGachas._allData.map((gacha) => [gacha.id, gacha.nameTextId]));
+    const gachaSearchTexts = await perLocaleSearchTexts(getBuildGachas, (item) => item.id);
+    for (const gacha of defaultGachas) {
+      entries.push({
+        key: `gacha:${gacha.id}`,
+        kind: "gacha",
+        href: `/gacha/${gacha.id}`,
+        title: titleRow(rows, gachaNameIds.get(gacha.id)),
+        searchText: toSearchTextRecord(gachaSearchTexts.get(String(gacha.id))),
+      });
+    }
+
+    // Events: title is the event's name.
+    const [rawEvents, defaultEvents] = await Promise.all([
+      table<RawEvent>("MasterEvent.json", PRIMARY_SERVER),
+      getBuildEvents(DEFAULT_LOCALE),
+    ]);
+    const eventNameIds = new Map(rawEvents._allData.map((event) => [event.id, event.nameTextId]));
+    const eventSearchTexts = await perLocaleSearchTexts(getBuildEvents, (item) => item.id);
+    for (const event of defaultEvents) {
+      entries.push({
+        key: `event:${event.id}`,
+        kind: "event",
+        href: `/events/${event.id}`,
+        title: titleRow(rows, eventNameIds.get(event.id)),
+        searchText: toSearchTextRecord(eventSearchTexts.get(String(event.id))),
+      });
+    }
+
+    // Rewards (season pass / login bonus / mission): title is the entry's name; the slug is the href param.
+    const defaultRewards = await getBuildRewardEntries(DEFAULT_LOCALE);
+    const rewardNameIds = new Map<string, string>();
+    const rewardTables: Array<[RewardEntryKind, string]> = [
+      ["seasonPass", "MasterSeasonPass.json"],
+      ["loginBonus", "MasterLoginBonus.json"],
+      ["mission", "MasterLimitedMissionGroup.json"],
+    ];
+    for (const [kind, file] of rewardTables) {
+      const tableRows = await table<{ id: number; nameTextId: string }>(file, PRIMARY_SERVER);
+      for (const row of tableRows._allData) rewardNameIds.set(rewardEntrySlug(kind, row.id), row.nameTextId);
+    }
+    const rewardSearchTexts = await perLocaleSearchTexts(getBuildRewardEntries, (item) => item.slug);
+    for (const reward of defaultRewards) {
+      entries.push({
+        key: `reward:${reward.slug}`,
+        kind: "reward",
+        href: `/rewards/${reward.slug}`,
+        title: titleRow(rows, rewardNameIds.get(reward.slug)),
+        searchText: toSearchTextRecord(rewardSearchTexts.get(reward.slug)),
+      });
+    }
+
+    return entries;
   });
 }
 

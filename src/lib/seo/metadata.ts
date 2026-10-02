@@ -1,4 +1,5 @@
 import { DEFAULT_LOCALE, HTML_LANG, OG_LOCALE, SUPPORTED_LOCALES, type AppLocale } from "@/config/locales";
+import { activeBuildLocales } from "@/config/build-locales";
 import { siteConfig } from "@/config/site";
 import { t } from "@/i18n";
 import { localeAlternates, localizePath } from "@/i18n/routing";
@@ -50,7 +51,7 @@ export function buildPageMetadata(
     fullTitle: overrides.fullTitle ?? siteConfig.titleTemplate.replace("%s", title),
     description,
     canonical,
-    alternates: overrides.alternates ?? localeAlternates(pathname).map(({ locale: altLocale, href }) => ({ locale: altLocale, href: absolutePageUrl(href) })),
+    alternates: overrides.alternates ?? localeAlternates(pathname, activeBuildLocales()).map(({ locale: altLocale, href }) => ({ locale: altLocale, href: absolutePageUrl(href) })),
     ogLocale: overrides.ogLocale ?? OG_LOCALE[locale],
     keywords: overrides.keywords ?? route?.seo.keywords ?? [],
     indexable: overrides.indexable ?? route?.seo.indexable !== false,

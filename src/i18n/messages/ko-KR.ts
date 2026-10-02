@@ -114,7 +114,7 @@ export const koKR = {
   nav: {
     home: "홈",
     groups: { database: "데이터베이스", music: "음악", events: "이벤트", story: "스토리", tools: "도구", community: "소개" },
-    items: { characters: "캐릭터", cards: "카드", supportCards: "서포트 카드", music: "음악 목록", eventList: "이벤트 목록", gacha: "뽑기", rewards: "미션·보상", titles: "칭호", backgrounds: "배경", stamps: "스티커", comics: "만화", items: "아이템", mainStory: "메인 스토리", eventStory: "이벤트 스토리", friendshipStory: "인연 스토리", otherStory: "기타 스토리", liveResultStory: "라이브 종료 대화", homeStory: "홈 스토리", tutorialStory: "튜토리얼 스토리", assetViewer: "에셋 뷰어", designSystem: "디자인 시스템", chartPreview: "채보 미리보기", live2dViewer: "Live2D 뷰어", storyPlayer: "스토리 플레이어", news: "공지사항", eventTracker: "이벤트 트래커", musicRanking: "곡 랭킹", chartData: "곡 메타" },
+    items: { characters: "캐릭터", cards: "카드", supportCards: "서포트 카드", music: "음악 목록", eventList: "이벤트 목록", gacha: "뽑기", rewards: "미션·보상", titles: "칭호", backgrounds: "배경", stamps: "스티커", comics: "만화", items: "아이템", mainStory: "메인 스토리", eventStory: "이벤트 스토리", friendshipStory: "인연 스토리", otherStory: "기타 스토리", liveResultStory: "라이브 종료 대화", homeStory: "홈 스토리", tutorialStory: "튜토리얼 스토리", assetViewer: "에셋 뷰어", designSystem: "디자인 시스템", chartPreview: "채보 미리보기", live2dViewer: "Live2D 뷰어", storyPlayer: "스토리 플레이어", news: "공지사항", eventTracker: "이벤트 트래커", musicRanking: "곡 랭킹", chartData: "곡 메타", search: "검색" },
   },
   shell: {
     openSidebar: "사이드바 열기",
@@ -127,6 +127,24 @@ export const koKR = {
     commandPlaceholder: "페이지나 기능을 검색...",
     noCommandResults: "결과가 없습니다",
     shortcuts: "단축키",
+  },
+  search: {
+    placeholder: "카드, 곡, 캐릭터, 스토리 검색…",
+    filterByKind: "유형으로 필터",
+    noResults: "결과가 없습니다",
+    viewAllResults: "모든 결과 보기",
+    kinds: {
+      all: "전체",
+      page: "페이지",
+      character: "캐릭터",
+      card: "카드",
+      supportCard: "서포트 카드",
+      music: "곡",
+      story: "스토리",
+      gacha: "뽑기",
+      event: "이벤트",
+      reward: "보상",
+    },
   },
   account: {
     signIn: "로그인",
@@ -1436,6 +1454,10 @@ export const koKR = {
     noBody: "이 공지에는 본문이 없습니다.",
   },
   seo: {
+    search: {
+      title: "검색",
+      description: "Moenotes에서 BanG Dream! Our Notes의 모든 카드, 곡, 캐릭터, 스토리를 검색하세요.",
+    },
     events: {
       title: "게임 이벤트",
       description: "BanG Dream! Our Notes 각 서버의 게임 이벤트, 공지사항, 뽑기, 미션과 보상입니다.",

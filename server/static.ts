@@ -1,5 +1,7 @@
 import { stat } from "node:fs/promises";
 import { extname, join, posix } from "node:path";
+import { LOCALE_PATH_PREFIX, type AppLocale } from "../src/config/locales";
+import { REST_LOCALES } from "../src/config/build-locales";
 import { playerShellPath } from "../src/config/players";
 import { COMPRESSIBLE_EXTENSIONS, ENCODINGS } from "./finalize";
 
@@ -26,8 +28,16 @@ const REVALIDATE = "no-cache";
  *
  * `/_astro/` files are content-hashed, so they are cached for a year and, when missing from the live build,
  * looked up in earlier builds: a page loaded just before a swap still finds its scripts afterwards.
+ *
+ * `stage` tells the rollout phase of the currently live build. During a split-locale rollout a request under a
+ * locale prefix whose pages are not built yet is **307**-redirected to its English equivalent so hreflang
+ * targets never 404; once the full batch takes over the rule is inert.
  */
-export async function serveStatic(request: Request, roots: SiteRoots): Promise<Response> {
+export async function serveStatic(
+  request: Request,
+  roots: SiteRoots,
+  stage: "core" | "full" = "full",
+): Promise<Response> {
   if (request.method !== "GET" && request.method !== "HEAD") {
     return new Response("Method Not Allowed\n", { status: 405, headers: { allow: "GET, HEAD" } });
   }
@@ -51,8 +61,39 @@ export async function serveStatic(request: Request, roots: SiteRoots): Promise<R
   }
   if (file) return fileResponse(request, file, 200, immutable ? IMMUTABLE : REVALIDATE);
 
+  if (stage === "core") {
+    const redirect = englishFallbackLocation(pathname);
+    if (redirect) {
+      return new Response(null, {
+        status: 307,
+        headers: {
+          location: redirect,
+          "cache-control": "no-store",
+          link: `<${redirect}>; rel="alternate"`,
+        },
+      });
+    }
+  }
+
   const notFound = await fileInfo(join(roots.current, "404.html"));
   return notFound ? fileResponse(request, notFound, 404, REVALIDATE) : new Response("Not Found\n", { status: 404 });
+}
+
+/**
+ * Pathname → `Location` of the 307 the site answers while stage==="core". Only non-core locale prefixes
+ * redirect, and only if the rest of the path (`/cards/123` from `/th/cards/123`) still names a real page
+ * shape; a path with nothing but the prefix is the language's home page, which the prefix-less home covers.
+ */
+function englishFallbackLocation(pathname: string): string | null {
+  const segments = pathname.split("/").filter(Boolean);
+  if (!segments.length) return null;
+  const [first, ...rest] = segments;
+  const locale = Object.entries(LOCALE_PATH_PREFIX).find(([, prefix]) => prefix === first)?.[0] as AppLocale | undefined;
+  if (!locale || !REST_LOCALES.includes(locale)) return null;
+  // /en is the canonical fallback locale of the split rollout.
+  const englishPrefix = LOCALE_PATH_PREFIX["en-US"];
+  const restPath = rest.length ? `/${rest.join("/")}` : "/";
+  return restPath === "/" ? `/${englishPrefix}/` : `/${englishPrefix}${restPath}`;
 }
 
 /** The decoded request path, confined to the site root; null when it cannot name a file. */

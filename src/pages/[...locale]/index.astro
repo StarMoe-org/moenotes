@@ -34,6 +34,7 @@ import TitlesPage from "@/components/titles/TitlesPage.astro";
 import BackgroundsPage from "@/components/backgrounds/BackgroundsPage.astro";
 import StoryPage from "@/components/story/StoryPage.astro";
 import StoryDetailPage from "@/components/story/StoryDetailPage.astro";
+import SearchPage from "@/components/search/SearchPage";
 import GroupLanding from "@/components/route/GroupLanding.astro";
 import PageHeader from "@/components/route/PageHeader.astro";
 import AppLayout from "@/layouts/AppLayout.astro";
@@ -117,6 +118,10 @@ const component = match.item.component ?? "page";
     <CharactersPage locale={locale} />
   ) : component === "character-detail" ? (
     <CharacterDetailPage locale={locale} characterId={Number(match.params.id)} />
+  ) : component === "search" ? (
+    <PageLayout locale={locale} titleKey={match.item.seo.titleKey} descriptionKey={match.item.seo.descriptionKey}>
+      <SearchPage client:visible locale={locale} />
+    </PageLayout>
   ) : component === "design-system" ? (
     <DesignSystemPage locale={locale} />
   ) : component === "asset-viewer" ? (

@@ -46,6 +46,12 @@ export const config = {
   buildTimeoutMs: positiveNumber("MOENOTES_BUILD_TIMEOUT_SECONDS", 60 * 60) * 1000,
   /** Builds kept on disk: the live one, the previous one in full, the rest as `_astro/` only. */
   keepBuilds: Math.max(2, Math.floor(positiveNumber("MOENOTES_KEEP_BUILDS", 4))),
+  /**
+   * Split one release into two Astro builds: the five core locales go live first, the remaining locales follow
+   * in a second `astro build` whose shared files hard-link to the first. Set `MOENOTES_SPLIT_LOCALES=0` to
+   * restore the historical single full build (the documented rollback switch).
+   */
+  splitLocales: env("MOENOTES_SPLIT_LOCALES") !== "0",
   keepLogs: 10,
 } as const;
 

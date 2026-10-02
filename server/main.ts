@@ -52,7 +52,7 @@ const server = Bun.serve({
     // The account API works before the first build too: it does not depend on the site output.
     if (isApiPath(pathname)) return proxyApi(request, config.apiInternal.origin);
     if (playerShellPath(pathname)) return servePlayerPage(request, store.roots, config.apiInternal.origin);
-    return serveStatic(request, store.roots);
+    return serveStatic(request, store.roots, store.current?.stage ?? "full");
   },
   error(error) {
     log(`request failed: ${errorMessage(error)}`);
@@ -83,6 +83,11 @@ function status() {
     ready: Boolean(store.current),
     revision,
     current: store.current,
+    /** Rollout phase of the live build: only the five core locales on "core", all supported on "full". */
+    stage: store.current?.stage ?? null,
+    localesRendered: store.current?.localesRendered ?? null,
+    pendingRest: store.current?.pendingRest ?? false,
+    splitLocales: config.splitLocales,
     building: scheduler.building && { ...scheduler.building, ...store.progress?.toJSON() },
     compressing: store.compressing,
     waiting: scheduler.waiting && { reason: scheduler.waiting.reason, since: new Date(scheduler.waiting.since).toISOString() },
@@ -114,6 +119,12 @@ async function tick(): Promise<void> {
   const key = buildKey(revision, data);
   if (store.current?.key === key) {
     scheduler.waiting = null;
+    // A core batch that never got its full complement (server restart between the two Astro runs) finishes here:
+    // rerunning the whole split build re-links the unchanged core half, so only the rest locales cost real work.
+    if (store.current.pendingRest && config.splitLocales) {
+      log(`resuming the interrupted full build for ${store.current.id} (stage=core)`);
+      await runBuild(key, data);
+    }
     return;
   }
   if (scheduler.failure?.key === key && Date.now() < scheduler.failure.retryAt) return;
@@ -134,9 +145,10 @@ async function runBuild(key: string, data: DataVersion): Promise<void> {
   scheduler.building = { data: data.label, startedAt: new Date().toISOString() };
   try {
     const record = await store.build(key, revision, data);
+    // A split-locale rollout already activates the core batch inside build(); here we swap the full batch in.
     await store.activate(record);
     scheduler.failure = null;
-    log(`build ${record.id} is live after ${Math.round(record.durationMs / 1000)}s (${record.pages} pages); compressing it in the background`);
+    log(`build ${record.id} is live after ${Math.round(record.durationMs / 1000)}s (${record.pages} pages, stage=${record.stage ?? "full"}); compressing it in the background`);
   } catch (error) {
     if (stopping) return;
     const attempts = scheduler.failure?.key === key ? scheduler.failure.attempts + 1 : 1;

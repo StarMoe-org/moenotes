@@ -1,6 +1,8 @@
 import { createWriteStream } from "node:fs";
 import { link, mkdir, readdir, rename, rm, symlink } from "node:fs/promises";
-import { basename, dirname, join } from "node:path";
+import { dirname, join } from "node:path";
+import { CORE_LOCALES } from "../src/config/build-locales";
+import { SUPPORTED_LOCALES } from "../src/config/locales";
 import type { ServerConfig } from "./config";
 import type { SiteRoots } from "./static";
 import type { DataVersion } from "./upstream";
@@ -28,6 +30,12 @@ export interface BuildRecord {
   durationMs: number;
   /** Pages Astro rendered; absent from records written before builds counted them. */
   pages?: number;
+  /** Rollout phase of a split-locale build: only the core five locales on `core`, all supported on `full`. */
+  stage?: "core" | "full";
+  /** Which locales this record actually renders; absent on records written before the split-locale rollout. */
+  localesRendered?: string[];
+  /** Set on a `core` record whose complementary full-locale build has not yet replaced it; cleared on `full`. */
+  pendingRest?: boolean;
 }
 
 interface State {
@@ -163,50 +171,130 @@ export class BuildStore {
     this.startCompression();
   }
 
-  async build(key: string, revision: string, data: DataVersion): Promise<BuildRecord> {
-    const startedAt = Date.now();
-    const id = `${new Date(startedAt).toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z")}-${key.slice(0, 8)}`;
-    const staging = join(this.config.buildsDir, `${STAGING_PREFIX}${id}`);
+  /**
+   * One release, built in two full Astro runs because Astro 7 empties its `outDir` each time:
+   *   - the **core** run (`MOENOTES_BUILD_LOCALES=core`) renders the five core locales and goes live first.
+   *   - the **full** run (`=all`) re-renders everything (core pages come out byte-identical and are hard-linked
+   *     from the core build, so the second run costs CPU but not disk or compression) and then takes over `id`.
+   * With `MOENOTES_SPLIT_LOCALES` unset the server keeps the historical single full run.
+   */
+
+  /** Render one batch into `<staging>` then hard-link duplicates of `linkAgainst` into it. */
+  private async runAstro(
+    staging: string,
+    localesSelection: "core" | "all",
+    logFile: LogSink,
+    logPath: string,
+    linkAgainst?: { siteDir: string; filesJson: string },
+  ): Promise<void> {
     const site = join(staging, "site");
-    const logPath = join(this.config.logsDir, `${id}.log`);
+    await mkdir(staging, { recursive: true });
+    // Astro keeps its intermediate output in <cwd>/.astro when outDir lies outside the working directory
+    // and then renames it into outDir, which fails across filesystems (image vs. volume). Running it from
+    // the staging directory, with the project as --root, keeps both on the volume.
+    await this.run(ASTRO_STEP, [process.execPath, "--bun", await astroCli(this.config.appDir), "build", "--root", this.config.appDir, "--outDir", site], logFile, {
+      cwd: staging,
+      env: {
+        MOENOTES_FETCH_CACHE_DIR: this.config.fetchCacheDir,
+        ASTRO_TELEMETRY_DISABLED: "1",
+        MOENOTES_BUILD_LOCALES: localesSelection,
+      },
+    });
+    if (linkAgainst) {
+      // Unchanged files are linked together with the earlier build's variants, so those must be complete.
+      if (this.compressing) this.progress!.step = COMPRESSION_WAIT_STEP;
+      await this.compression;
+    }
+    const finalize = [process.execPath, this.finalizeScript(), "link", site, join(staging, "files.json")];
+    if (linkAgainst) finalize.push(linkAgainst.siteDir, linkAgainst.filesJson);
+    this.progress!.step = `${FINALIZE_STEP} (${localesSelection})`;
+    await this.run(FINALIZE_STEP, finalize, logFile);
+  }
+
+  async build(key: string, revision: string, data: DataVersion): Promise<BuildRecord> {
+    const split = this.config.splitLocales;
+    const startedAt = Date.now();
+    const baseId = `${new Date(startedAt).toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z")}-${key.slice(0, 8)}`;
+    const logPath = join(this.config.logsDir, `${baseId}.log`);
     const logFile = Bun.file(logPath).writer();
-    const progress = new BuildProgress(id, await this.expectedPages().catch(() => null));
+    const progress = new BuildProgress(baseId, await this.expectedPages().catch(() => null));
     const expected = progress.expectedPages ? `, ~${progress.expectedPages} pages expected` : "";
-    log(`build ${id} started (${data.label}, revision ${revision}${expected}); log: ${logPath}`);
-    logFile.write(`build ${id} (${data.label}, revision ${revision}) started ${new Date(startedAt).toISOString()}\n`);
+    log(`build ${baseId} started (${data.label}, revision ${revision}${expected}${split ? ", split core→full" : ""}); log: ${logPath}`);
+    logFile.write(`build ${baseId} (${data.label}, revision ${revision}) started ${new Date(startedAt).toISOString()}\n`);
     await logFile.flush();
     await this.linkLatestLog(logPath).catch((error: unknown) => log(`could not update ${LATEST_LOG}: ${errorMessage(error)}`));
     this.progress = progress;
-    const ticker = setInterval(() => log(`build ${id}: ${progress.describe()}`), PROGRESS_INTERVAL_MS);
+    const ticker = setInterval(() => log(`build ${baseId}: ${progress.describe()}`), PROGRESS_INTERVAL_MS);
+
+    const stageTag = split ? "core" : "full";
+    const id = split ? `${baseId}-${stageTag}` : baseId;
+    const staging = join(this.config.buildsDir, `${STAGING_PREFIX}${id}`);
 
     try {
-      await mkdir(staging, { recursive: true });
-      progress.step = ASTRO_STEP;
-      // Astro keeps its intermediate output in <cwd>/.astro when outDir lies outside the working directory
-      // and then renames it into outDir, which fails across filesystems (image vs. volume). Running it from
-      // the staging directory, with the project as --root, keeps both on the volume.
-      await this.run(ASTRO_STEP, [process.execPath, "--bun", await astroCli(this.config.appDir), "build", "--root", this.config.appDir, "--outDir", site], logFile, {
-        cwd: staging,
-        env: { MOENOTES_FETCH_CACHE_DIR: this.config.fetchCacheDir, ASTRO_TELEMETRY_DISABLED: "1" },
-      });
-      // Unchanged files are linked together with the live build's variants, so those must be complete.
-      if (this.compressing) progress.step = COMPRESSION_WAIT_STEP;
-      await this.compression;
-      const finalize = [process.execPath, this.finalizeScript(), "link", site, join(staging, "files.json")];
-      if (this.current) finalize.push(this.siteDir(this.current.id), join(this.buildDir(this.current.id), "files.json"));
-      progress.step = FINALIZE_STEP;
-      await this.run(FINALIZE_STEP, finalize, logFile);
+      // ── Batch 1: core five locales (or the legacy single full build) ──────────────────────────────
+      progress.step = `${ASTRO_STEP} (${stageTag})`;
+      const firstLinkAgainst = this.current
+        ? { siteDir: this.siteDir(this.current.id), filesJson: join(this.buildDir(this.current.id), "files.json") }
+        : undefined;
+      await this.runAstro(staging, split ? "core" : "all", logFile, logPath, firstLinkAgainst);
       await rename(staging, this.buildDir(id));
+
+      const firstRecord: BuildRecord = {
+        id,
+        key,
+        revision,
+        data: data.label,
+        builtAt: new Date().toISOString(),
+        durationMs: Date.now() - startedAt,
+        pages: progress.pages,
+        stage: split ? "core" : "full",
+        localesRendered: split ? [...CORE_LOCALES] : [...SUPPORTED_LOCALES],
+        ...(split ? { pendingRest: true } : {}),
+      };
+      if (split) {
+        // Make the core locales live immediately. The full batch takes over `id` below.
+        await this.activate(firstRecord);
+        log(`build ${id}: core locales live; continuing with the full build in the background`);
+        await this.prune().catch((error: unknown) => log(`prune after core failed: ${errorMessage(error)}`));
+      }
+
+      if (!split) {
+        return firstRecord;
+      }
+
+      // ── Batch 2: all 13 locales, taking the live core build as the `link` baseline ──────────────
+      const fullId = `${baseId}-full`;
+      const fullStaging = join(this.config.buildsDir, `${STAGING_PREFIX}${fullId}`);
+      progress.step = `${ASTRO_STEP} (full)`;
+      progress.pages = 0;
+      await this.runAstro(fullStaging, "all", logFile, logPath, {
+        siteDir: this.siteDir(id),
+        filesJson: join(this.buildDir(id), "files.json"),
+      });
+      await rename(fullStaging, this.buildDir(fullId));
+
+      return {
+        id: fullId,
+        key,
+        revision,
+        data: data.label,
+        builtAt: new Date().toISOString(),
+        durationMs: Date.now() - startedAt,
+        pages: progress.pages,
+        stage: "full",
+        localesRendered: [...SUPPORTED_LOCALES],
+      };
     } catch (error) {
-      await rm(staging, { recursive: true, force: true });
+      // The core build may already be live: do not delete it, only the unfinished <id>-full staging.
+      for (const leftover of [staging, join(this.config.buildsDir, `${STAGING_PREFIX}${baseId}-full`)]) {
+        await rm(leftover, { recursive: true, force: true }).catch(() => {});
+      }
       throw new Error(`${errorMessage(error)} (log: ${logPath})`);
     } finally {
       clearInterval(ticker);
       this.progress = null;
       await logFile.end();
     }
-
-    return { id, key, revision, data: data.label, builtAt: new Date().toISOString(), durationMs: Date.now() - startedAt, pages: progress.pages };
   }
 
   /**
@@ -214,6 +302,7 @@ export class BuildStore {
    * are until the background compression has added their variants.
    */
   async activate(record: BuildRecord): Promise<void> {
+    // Records forward `pendingRest` only while stage==="core"; persisting it keeps a crashed full batch resumable.
     const temporary = `${this.config.statePath}.tmp`;
     await Bun.write(temporary, `${JSON.stringify({ current: record } satisfies State, null, 2)}\n`);
     await rename(temporary, this.config.statePath);
