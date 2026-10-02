@@ -1,3 +1,4 @@
+import { SETTINGS_STORAGE_KEY } from "@/config/settings";
 import type { AppSettings, ColorScheme } from "@/types/settings";
 
 export function resolveColorScheme(colorScheme: ColorScheme): "light" | "dark" {
@@ -20,16 +21,19 @@ export function applySettingsToDocument(settings: AppSettings): void {
 export function buildThemeBootstrapScript(): string {
   return `
 (function(){
+  var colorScheme = 'system';
   try {
-    var raw = localStorage.getItem('moenotes:settings');
+    var raw = localStorage.getItem(${JSON.stringify(SETTINGS_STORAGE_KEY)});
     var settings = raw ? JSON.parse(raw) : {};
-    var colorScheme = ['system','light','dark'].indexOf(settings.colorScheme) >= 0 ? settings.colorScheme : 'system';
-    var resolved = colorScheme === 'system'
-      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-      : colorScheme;
-    document.documentElement.dataset.theme = resolved;
-    document.documentElement.dataset.themePreference = colorScheme;
-    document.documentElement.style.colorScheme = resolved;
+    if (settings && ['system','light','dark'].indexOf(settings.colorScheme) >= 0) {
+      colorScheme = settings.colorScheme;
+    }
   } catch(e) {}
+  var resolved = colorScheme === 'system'
+    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    : colorScheme;
+  document.documentElement.dataset.theme = resolved;
+  document.documentElement.dataset.themePreference = colorScheme;
+  document.documentElement.style.colorScheme = resolved;
 })();`;
 }

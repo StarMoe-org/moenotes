@@ -39,12 +39,14 @@ const googleAnalyticsBootstrapScript = isGoogleAnalyticsEnabled
 <html lang={HTML_LANG[locale]} data-locale={locale}>
   <head>
     <meta charset="utf-8" />
+    <meta name="color-scheme" content="light dark" />
+    <!-- Resolve the theme before any external stylesheet can block this script. -->
+    <script is:inline set:html={themeScript}></script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="preconnect" href={assetConfig.fonts.googlePreconnect} />
     <link rel="preconnect" href={assetConfig.fonts.googleStaticPreconnect} crossorigin />
     <link rel="stylesheet" href={assetConfig.fonts.googleDisplay} />
     <link rel="stylesheet" href={assetConfig.fonts.lxgwWenKaiScreen} />
-    <meta name="color-scheme" content="light dark" />
     <title>{meta.fullTitle}</title>
     <meta name="description" content={meta.description} />
     {meta.keywords.length > 0 && <meta name="keywords" content={meta.keywords.join(", ")} />}
@@ -75,7 +77,6 @@ const googleAnalyticsBootstrapScript = isGoogleAnalyticsEnabled
     <meta name="twitter:description" content={meta.description} />
     <meta name="twitter:image" content={meta.image} />
     <meta name="twitter:image:alt" content={meta.fullTitle} />
-    <script is:inline set:html={themeScript}></script>
     <script is:inline type="application/ld+json" set:html={serializeJsonLd(website)}></script>
     {breadcrumbs && <script is:inline type="application/ld+json" set:html={serializeJsonLd(breadcrumbs)}></script>}
     {isGoogleAnalyticsEnabled && (
