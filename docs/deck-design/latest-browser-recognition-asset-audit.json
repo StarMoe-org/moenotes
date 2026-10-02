@@ -1,0 +1,108 @@
+{
+  "format": "ournotes.browser-recognition-asset-audit/1",
+  "region": "jp",
+  "masterVersion": "1.0.0.300/52355a9de56a475f691b10ef58acba58",
+  "visualManifestSha256": "c9ca5a34c0487b469efc6ba77ce59afac1ec7ded495b900a5635417f360b8f8b",
+  "sourceFilesVerified": 1110,
+  "identityCoverage": {
+    "member": 63,
+    "snap": 64
+  },
+  "oldCatalogDelta": {
+    "member": {
+      "missingInOldCatalog": [
+        61,
+        62,
+        63
+      ],
+      "foreignToJPInOldCatalog": []
+    },
+    "snap": {
+      "missingInOldCatalog": [
+        62,
+        63,
+        64
+      ],
+      "foreignToJPInOldCatalog": [
+        70
+      ]
+    }
+  },
+  "galleryFingerprintVerified": "fe0a842cd97376ee89e9ef6b6661aeb2493307a1ee5ea60c91f806ee63f0b783",
+  "runtimeAssetFiles": 142,
+  "runtimeAssetBytes": 22133066,
+  "numericBufferBytes": 14171628,
+  "numericBuffers": {
+    "descriptors": {
+      "dtype": "<f4",
+      "shape": [
+        26921,
+        128
+      ],
+      "bytes": 13783552,
+      "sha256": "ab8f5c05ae36c0b3848c43910a3fd220170f4544e40699df5eb8e826638fe693",
+      "gzip": {
+        "bytes": 7082631,
+        "sha256": "3fd06230c0863e51d63f023d11d35917017c464a3bd077ba95e00b6d3b06343c",
+        "decodedSha256": "ab8f5c05ae36c0b3848c43910a3fd220170f4544e40699df5eb8e826638fe693",
+        "mtime": 0
+      }
+    },
+    "points": {
+      "dtype": "<f4",
+      "shape": [
+        26921,
+        2
+      ],
+      "bytes": 215368,
+      "sha256": "a2b0fbbae15337a244b9185689ac1d7e551e2ba8a439d74c43fa91927a32ca52",
+      "gzip": {
+        "bytes": 155678,
+        "sha256": "76934f4b22689691302d1eea9ee3493a2d16c12c3d3b871d836cad55bcdc07e5",
+        "decodedSha256": "a2b0fbbae15337a244b9185689ac1d7e551e2ba8a439d74c43fa91927a32ca52",
+        "mtime": 0
+      }
+    },
+    "owners": {
+      "dtype": "<i4",
+      "shape": [
+        26921
+      ],
+      "bytes": 107684,
+      "sha256": "1cc106bc7c1307061aa7d1ad79577423008c291ee8c5ecbb7319b42b0a712840",
+      "gzip": {
+        "bytes": 458,
+        "sha256": "9479b4a72acbdd051873475b600ee5fc81f700dec3e7183b68d9da9d1e89a76b",
+        "decodedSha256": "1cc106bc7c1307061aa7d1ad79577423008c291ee8c5ecbb7319b42b0a712840",
+        "mtime": 0
+      }
+    },
+    "gallery": {
+      "dtype": "<f4",
+      "shape": [
+        127,
+        128
+      ],
+      "bytes": 65024,
+      "sha256": "239593a7d5bbfcaf39614f0b0c9b5ffaaae57b9e5e8c9e1f74579a563b519077",
+      "gzip": {
+        "bytes": 60567,
+        "sha256": "d96915806f335b94dfb2be965aa690ab002538f48cab3a579a9cf54fac1cf4c2",
+        "decodedSha256": "239593a7d5bbfcaf39614f0b0c9b5ffaaae57b9e5e8c9e1f74579a563b519077",
+        "mtime": 0
+      }
+    }
+  },
+  "numericBufferGzipBytes": 7299334,
+  "sourceRecognitionFiles": {
+    "engine.py": "5141cddb5da7e923e765078a32f5fccc33d0f0c589078a44d2d7fd152dc58b81",
+    "inference.py": "b79e22b66bcc358371c076154352b8bec2b94450a70b97f3371721eee65e4186",
+    "ocr.py": "668ed8204da7805d7e80f71573d91b91d52b774a25b5a5750704a92a6fdb8b23",
+    "assets.py": "dc2e63e50134cb5b3f4b0a83d5ceaae0d4ce2f6666329f9d349458afce7d803f"
+  },
+  "browserInferenceExecuted": false,
+  "formalBrowserGatePassed": false,
+  "scope": "Asset and raw-buffer identity only. Existing JP gallery is verified; browser preprocessing/detection/retrieval/rejection/merge and real-device accuracy remain unvalidated.",
+  "sourceCommit": "2ea25d8e2fdcbd3d1514b101a13b34d3e70d2ff1",
+  "payloadPublished": false
+}

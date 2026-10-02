@@ -75,6 +75,8 @@ Local 初始 152-call 阶段的输入与报告 SHA、培养读回、14.365 s / 8
 
 浏览器最小识别 manifest 还需绑定 ORT JS/WASM、两份权重、catalog、SIFT descriptors/points/owners、图库向量、规范卡面、卡阶模板及预处理规则的 SHA/大小和有序素材指纹。当前 Python/OpenCV 的 SIFT/FLANN/RANSAC/像素核验/网格恢复未完成 Web 移植；不能仅传两份 ONNX 宣称识别闭环。
 
+已有完整 JP127卡离线图库已独立核验，不能再将旧122卡目录混为当前来源。运行资产、14.17MB数值缓冲及确定性gzip的无损导出见[浏览器识别契约](browser-recognition-port-contract.md)与[资产审计](latest-browser-recognition-asset-audit.json)；它们未执行浏览器推理/整屏识别，B门槛继续保留。
+
 推荐 Worker 需明确 `SearchSession.step` 的共享 monotonic deadline、部分根/候选的完成状态、合作取消/恢复及 cleanup；单次同步 `recommend()` 不构成可分片搜索。热启动两秒内首个**完整**结果、十秒优化预算是待测目标；中低端设备 cold/hot p95、下载量和峰值内存单独验收，不从 64 核吞吐推算手机体验。展示继续复用已有卡片组件与 nnnotes 预制体。
 
 ## 放行记录
