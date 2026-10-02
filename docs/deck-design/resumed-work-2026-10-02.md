@@ -72,6 +72,30 @@ CNB 独立 Node v22.23.1 容器真实执行后，四组 JP 数值 buffer 共 14,
 
 探针另修复真实 `numeric-buffers/` 路径以及发行物 `Module.then` 自解析循环。第一次初始化超时 exit 124，修订后以普通对象承接 callback，第二轮 exit 0，未改 runtime。约 203 ms 初始化仅属于本次 Node/CPU 条件，不是浏览器或手机延迟。源码 SHA `deccdf76f10a17a520347ddf0c7d70bd0405e575bf051b7700b1cd6d2230b5bf`；回收报告包 SHA `f3fe7f4b00300393a50ccc0f1c1ab4a0399fb5b841b89eee892a2cff9c357ac5`，6 项 manifest 本地核验一致。私有完整材料在 `helpers/opencv-runtime-audit-20261002/`。
 
+## 完整目标接手后的新增执行
+
+用户已要求新会话接手完整目标与原子代理任务。原目标、未提交源码和活跃环境已恢复；继承的原生工作区新备份为 502,675,960 bytes，SHA `cae7470e302ec461e7bee6ab0b7d22c747790189f539fa2be0ab626f9bac2702`，1,714 个文件取回逐项核验一致，snapshot changed=0。它仍是工作备份，不是新增原生通过证明。主线复用原 CNB，没有另开机器或停止共享任务。
+
+### 可分片的确定性搜索
+
+[Deck fork Draft #3](https://github.com/nichinichisou0609/ournotes-deck/pull/3) 的 `02db4082b182a79451904ecd47d45a0c0a1570f1` 已新增 strict Power/Skip 的 in-memory exhaustive `SearchSession.step/cancel/resume`。固定输入、完整 dataset 不可变借用、共有 monotonic deadline 和完整候选 Top-K 均贯穿分片；只有 frontier 耗尽才返回 Complete，绑定变化清空并永久作废旧结果。该版明确 physicalDeck 身份及既有 None-first 平局规则，不等于成员集合 Top-K，也未支持 Live、跨 Worker 持久恢复或完整网页时长预算。
+
+独立 CNB fmt、Clippy、release 测试 **321 通过、0 失败、1 项有意忽略**及 wasm32 编译检查通过；321 已包含旧 305，不相加。新增 15 个搜索行为测试与 1 个不可变借用 compile-fail。独立 Cartesian oracle 使用共享 point evaluator，不能算独立原生计分证明。私有证据 SHA `780d771d3284f29366c9420966f43d2e653cd2c09e7c836e7028bbf2d9cf8dcd`，161 留存文件和 143 编译输入取回核验一致；源码 manifest SHA `fbb8639a51802dbfb10e58cddd8aba7d30ec6d657904ed3b75e28a2ff7efb643`。新原生模型调用为 0，S 仍未整体放行。
+
+### SIFT/FLANN 绑定构建与实际差异
+
+已从官方 OpenCV `5.0.0` tag，在独立 CNB Emscripten 4.0.15 容器构建单线程、无 SIMD 的 WASM，实际暴露 SIFT 与参数化 FLANN。仅修改 upstream `modules/js/src/core_bindings.cpp` 追加参数与明确 trained-knn overload 的 binding；对完整源归档逐项核对，其他 upstream 源文件未变。SIFT 的 JS constructor 与默认参数重载冲突已按实际生成 ABI处理，FLANN 的 4 trees/64 checks 与训练调用历史保持原链要求。
+
+最终 WASM 3,313,244 bytes、SHA `6dadf5f9187a1cc740b7e81318dea1ee0dc8714405409203431d7b6137209313`；glue SHA `790f28c4c056a413897b767d91bc4e84840f0eae22b9368816d3bc1c1db883ef`。四张冻结 JP 原图库图像用 OpenCV Python 5.0.0.93 生成相同解码像素的独立运行端参考，再真实执行 Node/WASM。灰度与 resize 原字均一致、ratio 后的 owner 数量一致、所测 affine inlier mask 一致；**严格逐值/顺序对拍失败**，SIFT 描述子/顺序有差异，第四张 keypoint 数 1,033 对 1,034，部分 affine 数值也不完全相同。owner 数量一致不能代替完整卡片定位、拒识或截图结果一致，后续须对齐点集和真实识别输出，不能把符号可用算作 B 通过。
+
+失败、CPU/WASM 报告、源归档、最终 bindings/构建参数/产物均保留。私有证据包 92,797,979 bytes、SHA `5adb4aa9c7da3be49327e3bc5e040257e11eb3a71795f781b90823b51efe738d`；82 项取回逐文件 SHA 核验一致。`strictSamePixelParityPassed=false`、`fullBrowserGatePassed=false`。
+
+### 玩家手动加成跟随 Box
+
+用户明确要求家具等全局加成由 Box 的玩家手动输入，并按反编译求值。页面、固定队伍、搜索和排行消费同一份玩家事实，不维护各自默认加成。填写项由匹配 master/metadata 生成，保留手动来源、目录版本、未知和持有事实；不从没填推“没有”，也不让玩家填一个任意加成百分比来替代实际等级。
+
+冻结 JP `MasterBandItem` 有 25 项，实际 `MasterBandItemLevel` 每项为 Lv1–30；`MasterBandItemSkillEffect` 有 Lv1–50 预留行，不能用效果表最大值当玩家可达等级。新 strict `bandItemFacts` 正在独立验证 ID、实际等级行与 effect 的共同存在，以及 partial/complete、owned/null/not-owned 语义。原 metadata 的 BandItem 只有 MasterId/Level，没有据此推出装备互斥或关闭加成开关。非空 BandItem ctor/UpgradeTo、原 Player list/BuildMap/bonus 和真实 CardParameter 的最新 JP 原生对照正另行执行；这份静态目录不解除 M。
+
 ## 后续依赖
 
 原生线继续闭合真实 cue → matching CRI 初始化与 handle → 原 getter → 正常 SkillInput/driver，再做有技能、Snap、撃奏同输入整局差分。资源元数据长度不能直接写入游戏缓存作为原生 getter 证据。
