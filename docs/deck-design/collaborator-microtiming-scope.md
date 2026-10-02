@@ -66,4 +66,8 @@
 
 先交一份 T1/T2 实验说明和机器可读 case 清单：选一条已绑定真实谱、少量 note/line 图与原生真实输入对象，分别安排 nominal、提前、延后、跨帧及非法轨迹，定义预期观察字段、负控制和未初始化依赖。审阅接口后，在独占 CNB 工作目录跑一个单 worker，取回源码/输入/原始流/异常/参数与 SHA 清单，再扩大队列。
 
+第一个 Draft PR 的完成条件是：其他开发者能按说明重跑至少一组真实 touch 正/负控制，复现同判定与改变判定两类时间实验，并看清 nominal/judgement/command/frame 的关系。若技能上下文尚未就绪，交付无技能结论和明确依赖，不将 AutoInput 结果包装为触控证明。后续跨技能窗实验与联合搜索仍保留在本工作包中。
+
+交接时提交四项：实验入口和 case manifest、绑定身份及完整原始流/哈希清单、统一 replay 的最小接口 diff、结论与反例表。源码与摘要进 Draft PR；原游戏 payload 通过已有私有产物目录交接，凭证不随产物交接。我们评审公共接口并提供依赖 fixture，协作者独立维护本工作包的实验与实现。
+
 工程起点是 Deck Draft #5 对应核心及[微操设计](micro-timing-search.md)，对照基线见[无技能同输入整谱](latest-native-frame-comparison.json)。每项结论绑定实际源码/二进制；原游戏 payload 在私有/忽略目录，公开 PR 放代码、无 payload 的摘要和可追溯身份。所有相关 PR 始终 Draft。
