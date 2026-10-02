@@ -68,7 +68,7 @@ export default function SnapPairedMemberControls({ locale, members, value, onCha
   return <div className={`mn-cd-snap-paired${variant === "overlay" ? " mn-cd-snap-paired--overlay" : ""}`}>
     <button type="button" className={`mn-cd-snap-member-button${value ? " selected" : ""}${variant === "overlay" ? " mn-cd-snap-member-trigger-overlay" : ""}`} aria-haspopup="dialog" aria-expanded={open}
       aria-label={`${tr("chooseMember")}: ${member?.name || (value ? tr("unavailable") : tr("memberUnset"))}`} onClick={begin}>
-      {variant === "overlay" ? <span className="mn-cd-snap-member-trigger-label">{tr("chooseMember")}</span> : <>
+      {variant === "overlay" ? <span className="mn-cd-snap-member-trigger-label">{member?.vm?.characterName || member?.name || tr("chooseMember")}</span> : <>
       <span className="mn-cd-snap-member-label">{tr("pairedMember")}</span>
       {member ? art(member, "mn-cd-snap-member-art") : <span className="mn-cd-snap-member-placeholder mn-cd-snap-member-art" aria-hidden="true"><span>+</span></span>}
       <span className="mn-cd-snap-member-name">{member ? member.vm?.characterName || member.name : value ? tr("unavailable") : tr("memberUnset")}</span>
@@ -79,6 +79,7 @@ export default function SnapPairedMemberControls({ locale, members, value, onCha
     {value ? <button type="button" className="mn-cd-snap-member-clear" aria-label={tr("memberClear")} onClick={() => commit(null)}>×</button> : null}
     <Modal isOpen={open} onClose={() => setOpen(false)} title={tr("memberDialog")} closeLabel={tr("close")} size="xl">
       <div className="mn-cd-snap-picker mn-cd-snap-member-picker">
+        <p className="mn-cd-note">{tr("profileHint")}</p>
         <label className="mn-cd-snap-search"><Icon name="search" /><input type="search" value={query} placeholder={tr("memberSearchPlaceholder")}
           aria-label={tr("memberSearch")} onChange={(event) => { setQuery(event.target.value); setLimit(24); }} /></label>
         <div className="mn-cd-snap-member-filters">

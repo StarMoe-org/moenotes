@@ -73,7 +73,8 @@ export default function ChartDataTool({ locale, guide }: Props) {
 
   const data = load.status === "ready" ? load.data : null;
   const currentSnapCatalogue = useMemo(() => isCurrentSnapCatalogue(snapCatalogue, data) ? snapCatalogue : null, [snapCatalogue, data]);
-  useEffect(() => { setSnapCatalogue(null); setSnapCatalogueError(false); }, [data]);
+  // A new data object for the same verified snapshot keeps its already loaded card choices.
+  useEffect(() => { setSnapCatalogue(previous => isCurrentSnapCatalogue(previous, data) ? previous : null); setSnapCatalogueError(false); }, [data]);
   const support = useMemo(() => scenarioSupport(data), [data]);
   const hasStats = support.battle || support.free;
   const queryContext = useMemo<QueryContext>(() => ({ hasStats, support }), [hasStats, support]);

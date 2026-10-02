@@ -23,8 +23,10 @@ export default function NativeGameCard({ entry, data, label, className = "", onG
     void (async () => {
       const library = await loadNativeUiLibrary(assetConfig.gameUiLibraries[server], server);
       const { UIPlayer, UISession, cameraProjection } = await import("ournotes-player/ui");
+      await document.fonts.ready;
       if (disposed || !host.current) return;
       const pack = library.pack(entry);
+      pack.resources.browserFontFamily = getComputedStyle(host.current).fontFamily || "sans-serif";
       const fixture = entry === "formationGroup"
         ? createNativeFormationFixture(pack, { ...data as NativeFormationFixtureData, catalogs: library.catalogs, spriteGeometries: library.spriteGeometries })
         : createNativeCardFixture(pack, { ...data as NativeCardFixtureData, catalogs: library.catalogs, spriteGeometries: library.spriteGeometries });

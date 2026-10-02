@@ -29,7 +29,8 @@ export const assetConfig = {
   musicDataSite: (import.meta.env.PUBLIC_MUSIC_DATA_SITE || "https://storage.bdon.moe/moenotes/music-data").replace(/\/+$/, ""),
   /** Region-specific nnnotes prefab libraries. Keep the game files outside the application source repository. */
   gameUiLibraries: {
-    tw: import.meta.env.PUBLIC_GAME_UI_LIBRARY_TW || "",
+    tw: import.meta.env.PUBLIC_GAME_UI_LIBRARY_TW
+      ?? "https://storage.bdon.moe/moenotes/game-ui/tw/0c7f77573ffb33957aa168cfd8816bf2d4a40ec67b87a26f188757a76e5132c2/manifest.json",
     jp: import.meta.env.PUBLIC_GAME_UI_LIBRARY_JP || "",
     kr: import.meta.env.PUBLIC_GAME_UI_LIBRARY_KR || "",
     en: import.meta.env.PUBLIC_GAME_UI_LIBRARY_EN || "",

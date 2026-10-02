@@ -1,5 +1,5 @@
-import { expect, test } from "bun:test";
-import { validateNativeUiManifest, type NativeUiManifest } from "../src/lib/game-ui/source";
+import { expect, spyOn, test } from "bun:test";
+import { loadNativeUiLibrary, validateNativeUiManifest, type NativeUiManifest } from "../src/lib/game-ui/source";
 
 function manifest(): NativeUiManifest {
   const file = { sha256: "a".repeat(64), size: 100, mime: "application/json" };
@@ -38,4 +38,43 @@ test("click regions cannot silently reorder, duplicate or invalidate original sl
   expect(() => validateNativeUiManifest(duplicate, "tw")).toThrow("formation layout");
   const invalid = manifest(); invalid.layout.slots[0]!.targetSupportRect.width = 0;
   expect(() => validateNativeUiManifest(invalid, "tw")).toThrow("formation layout");
+});
+
+test("legacy UI manifests load painted resources without fetching native font files or SDF atlases", async () => {
+  const source = manifest();
+  const pack = { document: { nodes: [{ path: "Formation", components: [{ class: "RawImage", m_Texture: { textureRef: "raw" } },
+    { class: "TextMeshProUGUI", m_text: "LEADER", m_fontAsset: { name: "VibeMOPro-Medium SDF" } }] }] },
+    resources: { textures: { frame: "textures/frame.png", raw: "textures/raw.png", font: "textures/font-atlas.png" },
+      sprites: { frame: { textureRef: "frame" } }, fonts: { FZLTH: "fonts/native.ttf" }, fontMetrics: "fonts/vibemo.json" } };
+  const documents: Record<string, unknown> = Object.fromEntries(Object.values(source.entries).map(entry => [entry.file, pack]));
+  documents["index.json"] = {};
+  documents["bindings.json"] = { catalogs: {} };
+  documents["sprites.json"] = { schema: "nnnotes.observed-sprite-geometries/1", region: "tw", client: source.client, sprites: {} };
+  documents["camera.json"] = { document: { nodes: [
+    { path: "Camera", components: [{ class: "Camera" }] },
+    { path: "Canvas", components: [{ class: "Canvas" }, { class: "CanvasScaler", m_ReferenceResolution: { x: 1920, y: 1080 } }] },
+  ] } };
+  documents["fonts/vibemo.json"] = { texture: "textures/font-atlas.png" };
+  const payload = new Map(Object.entries(documents).map(([path, value]) => [path, new TextEncoder().encode(JSON.stringify(value))]));
+  for (const path of ["textures/frame.png", "textures/raw.png", "textures/font-atlas.png", "fonts/native.ttf"]) payload.set(path, new Uint8Array([1, 2, 3]));
+  source.files = {};
+  for (const [path, data] of payload) source.files[path] = { size: data.length, mime: path.endsWith(".json") ? "application/json" : "application/octet-stream",
+    sha256: [...new Uint8Array(await crypto.subtle.digest("SHA-256", data))].map(value => value.toString(16).padStart(2, "0")).join("") };
+  for (const record of [source.index, source.bindingSources, source.spriteGeometries, source.layout.sourcePack, source.layout.sourceCamera]) Object.assign(record, source.files[record.file]);
+  const requested: string[] = [];
+  const fetcher = spyOn(globalThis, "fetch").mockImplementation(async input => {
+    const path = new URL(String(input)).pathname.replace("/website-font/", ""); requested.push(path);
+    if (path === "manifest.json") return Response.json(source);
+    const bytes = payload.get(path); return bytes ? new Response(bytes) : new Response(null, { status: 404 });
+  });
+  try {
+    const loaded = await loadNativeUiLibrary("https://example.invalid/website-font/manifest.json", "tw");
+    expect(requested).toContain("textures/frame.png");
+    expect(requested).toContain("textures/raw.png");
+    expect(requested).not.toContain("textures/font-atlas.png");
+    expect(requested).not.toContain("fonts/native.ttf");
+    expect(requested).not.toContain("fonts/vibemo.json");
+    expect(loaded.pack("formationGroup").resources.browserFontFamily).toBe("sans-serif");
+    expect(loaded.pack("formationGroup").document.nodes![0]!.components[1].m_text).toBe("LEADER");
+  } finally { fetcher.mockRestore(); }
 });

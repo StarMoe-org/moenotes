@@ -219,15 +219,59 @@ diff --git a/src/ui/renderer.js b/src/ui/renderer.js
  export const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
  const number=(v,fallback=0)=>Number.isFinite(v)?v:fallback;
  const white={r:1,g:1,b:1,a:1},zeroBorder={x:0,y:0,z:0,w:0};
-@@ -90,6 +92,7 @@
+@@ -18,6 +20,8 @@
+ const fonts=new Map();
+ export async function loadFonts(pack,resolve){
+   const gameFonts=new Map();let fontFamily='sans-serif';
++  // An embedding site can reuse its loaded CSS fonts without loading the game's TTF/SDF resources.
++  if(typeof pack.resources?.browserFontFamily==='string'&&pack.resources.browserFontFamily.trim())return {gameFonts,fontFamily:pack.resources.browserFontFamily};
+   const names=new Set((pack.document.nodes||[]).map(n=>comp(n,'TextMeshProUGUI')?.m_fontAsset?.name).filter(n=>n?.includes('VibeMO')));
+   await Promise.all([...names].map(async name=>gameFonts.set(name,await loadGameFont(loadImage,resolve(pack.resources.fontMetricsByAsset?.[name]||pack.resources.fontMetrics||'fonts/vibemo.json'),resolve))));
+   for(const [name,file] of Object.entries(pack.resources?.fonts||{})){
+@@ -89,17 +93,40 @@
+ 
  export class Renderer {
    constructor(pack,options={}){
-     this.pack=pack;this.options=options;this.nodes=buildNodes(pack);this.sprites=new Map();this.preferredCache=new Map();this.images=new Map();this.fontFamily='sans-serif';this.gameFonts=new Map();
+-    this.pack=pack;this.options=options;this.nodes=buildNodes(pack);this.sprites=new Map();this.preferredCache=new Map();this.images=new Map();this.fontFamily='sans-serif';this.gameFonts=new Map();
++    this.pack=pack;this.options=options;this.nodes=buildNodes(pack);this.sprites=new Map();this.spriteCrops=new Map();this.preferredCache=new Map();this.images=new Map();this.fontFamily='sans-serif';this.gameFonts=new Map();
 +    this.projection=options.projection?validateProjection(options.projection):null;this.regions=Object.create(null);
      this.metrics={drawn:0,hidden:0,transparent:0,unboundImages:0,particles:0};
      this.measure=makeCanvas(1,1).getContext('2d');
    }
-@@ -113,7 +116,7 @@
+   url(file){if(!file)throw Error('UI resource path missing');return new URL(file,this.options.assetBase||document.baseURI).href;}
++  spriteCrop(image,textureRef,r){
++    // Keep fractional sampling local: Canvas backends otherwise round the same
++    // Sprite differently when its identical texels move to a smaller atlas.
++    const top=image.height-r.y-r.height,x=Math.floor(r.x)-2,y=Math.floor(top)-2,
++      width=Math.ceil(r.x+r.width)-x+2,height=Math.ceil(top+r.height)-y+2,
++      key=JSON.stringify([textureRef,x,y,width,height]);
++    if(!this.spriteCrops.has(key)){
++      const canvas=makeCanvas(width,height),ctx=canvas.getContext('2d'),
++        left=Math.max(0,x),upper=Math.max(0,y),right=Math.min(image.width,x+width),bottom=Math.min(image.height,y+height),
++        dx=left-x,dy=upper-y,cw=right-left,ch=bottom-upper;
++      ctx.imageSmoothingEnabled=false;
++      // Integer source/destination rectangles copy texels without resampling.
++      ctx.drawImage(image,left,upper,cw,ch,dx,dy,cw,ch);
++      // Preserve texture-edge clamping when the two-pixel halo leaves an atlas.
++      if(dx)ctx.drawImage(canvas,dx,dy,1,ch,0,dy,dx,ch);
++      if(dx+cw<width)ctx.drawImage(canvas,dx+cw-1,dy,1,ch,dx+cw,dy,width-dx-cw,ch);
++      if(dy)ctx.drawImage(canvas,0,dy,width,1,0,0,width,dy);
++      if(dy+ch<height)ctx.drawImage(canvas,0,dy+ch-1,width,1,0,dy+ch,width,height-dy-ch);
++      this.spriteCrops.set(key,canvas);
++    }
++    return {canvas:this.spriteCrops.get(key),x:r.x-x,y:top-y};
++  }
+   async sprite(ref){
+     if(this.sprites.has(ref))return this.sprites.get(ref);
+     const s=this.pack.resources.sprites[ref];if(!s)throw Error(`缺失 Sprite: ${ref}`);
+     const file=this.pack.resources.textures[s.textureRef];if(!file)throw Error(`缺失贴图: ${s.textureRef}`);
+     const im=await loadImage(this.url(file)),c=makeCanvas(s.rect.width,s.rect.height),ctx=c.getContext('2d'),r=s.textureRect,o=s.textureRectOffset;
+-    if(r.width>0&&r.height>0)ctx.drawImage(im,r.x,im.height-r.y-r.height,r.width,r.height,o.x,c.height-o.y-r.height,r.width,r.height);
++    if(r.width>0&&r.height>0){const source=this.spriteCrop(im,s.textureRef,r);ctx.drawImage(source.canvas,source.x,source.y,r.width,r.height,o.x,c.height-o.y-r.height,r.width,r.height);}
+     const result={canvas:c,meta:s};this.sprites.set(ref,result);return result;
+   }
+   children(n){return n.children.map(i=>this.nodes[i]).filter(c=>c.active&&!comp(c,'LayoutElement')?.m_IgnoreLayout);}
+@@ -113,7 +140,7 @@
        add([0,0],[Math.max(...lines.map(s=>hasGameGlyphs(s,text.m_fontAsset,gameFont)?gameTextWidth(s,fs,gameFont):this.measure.measureText(s).width),0)+Math.max(0,margin.x)+Math.max(0,margin.z),textHeight(lines,fs*1.16)+Math.max(0,margin.y)+Math.max(0,margin.w)],[-1,-1]);
      }
      if(image&&image.m_Enabled!==0){
@@ -236,7 +280,7 @@ diff --git a/src/ui/renderer.js b/src/ui/renderer.js
        add([0,0],sprite?[(sliced?border.x+border.z:sprite.rect.width)/ppu,(sliced?border.y+border.w:sprite.rect.height)/ppu]:[0,0],[-1,-1]);
      }
      const g=comp(n,'HorizontalLayoutGroup')||comp(n,'VerticalLayoutGroup')||comp(n,'RectFitVerticalLayoutGroup');
-@@ -133,7 +136,7 @@
+@@ -133,7 +160,7 @@
      const fit=comp(n,'ContentSizeFitter');if(fit&&fit.m_Enabled!==0){const input=this.layoutInput(n);if(fit.m_HorizontalFit)w=(fit.m_HorizontalFit===1?input.min:input.preferred)[0];if(fit.m_VerticalFit)h=(fit.m_VerticalFit===1?input.min:input.preferred)[1];}
      const ar=comp(n,'AspectRatioFitter');let aspect=ar?.m_AspectRatio||1;
      const bound=n.children.map(i=>comp(this.nodes[i],'Image')).find(im=>im?._previewSource);
@@ -245,7 +289,7 @@ diff --git a/src/ui/renderer.js b/src/ui/renderer.js
      if(ar?.m_Enabled!==0){if(ar?.m_AspectMode===1)h=w/aspect;if(ar?.m_AspectMode===2)w=h*aspect;}
      if(ar&&ar.m_Enabled!==0&&[3,4].includes(ar.m_AspectMode))return aspectBox(pw,ph,aspect,ar.m_AspectMode,pivot);
      return rectBox(r,pw,ph,number(w),number(h));
-@@ -157,7 +160,14 @@
+@@ -157,7 +184,14 @@
    async imageLayer(n,im,w,h){
      if(w<=0||h<=0)return null;
      let sp;
@@ -261,7 +305,7 @@ diff --git a/src/ui/renderer.js b/src/ui/renderer.js
      else if(im.m_Sprite?.spriteRef)sp=await this.sprite(im.m_Sprite.spriteRef);
      const scale=Math.min(1,4096/w,4096/h,Math.sqrt(8388608/(w*h))),layer=makeCanvas(w*scale,h*scale),ctx=layer.getContext('2d');
      ctx.scale(scale,scale);ctx.save();const flip=comp(n,'UIFlipImage');
-@@ -188,13 +198,34 @@
+@@ -188,13 +222,34 @@
      const shadow=comp(n,'Shadow'),outline=comp(n,'Outline');if(shadow){ctx.shadowColor=color(shadow.m_EffectColor);ctx.shadowOffsetX=shadow.m_EffectDistance?.x||0;ctx.shadowOffsetY=-(shadow.m_EffectDistance?.y||0);}
      lines.forEach((line,i)=>{if(native){drawGameText(ctx,line,tx,ty+i*lineHeight,fs,t.m_fontColor||t.m_Color||white,gameFont);return;}if(outline){ctx.strokeStyle=color(outline.m_EffectColor);ctx.lineWidth=Math.max(Math.abs(outline.m_EffectDistance?.x||1),Math.abs(outline.m_EffectDistance?.y||1))*2;ctx.strokeText(line,tx,ty+i*lineHeight);}ctx.fillText(line,tx,ty+i*lineHeight);});ctx.restore();if(plain)this.metrics.drawn++;
    }
@@ -276,7 +320,7 @@ diff --git a/src/ui/renderer.js b/src/ui/renderer.js
 +    // Compose the original planar subtree first: frame/foreground/masks retain
 +    // their original painter order and transparent overflow remains in the quad.
 +    const flat=new Renderer(this.pack,{...this.options,projection:undefined,framing:'content',ignoreRootRotation:true});
-+    flat.sprites=this.sprites;flat.images=this.images;flat.gameFonts=this.gameFonts;flat.fontFamily=this.fontFamily;
++    flat.sprites=this.sprites;flat.spriteCrops=this.spriteCrops;flat.images=this.images;flat.gameFonts=this.gameFonts;flat.fontFamily=this.fontFamily;
 +    const result=await flat.render(n.i,[box.w,box.h],true),b=result.bounds;
 +    const rect={x:b.minX-24,y:b.minY-24,w:result.canvas.width/result.scale,h:result.canvas.height/result.scale};
 +    const quad=projectedQuad(world,rect,this.projection);
@@ -299,7 +343,7 @@ diff --git a/src/ui/renderer.js b/src/ui/renderer.js
        const s=isRoot||(nativeCanvas&&nativeCanvas.m_RenderMode!==2)?{x:1,y:1}:(n.localScale||{x:1,y:1});ctx.scale(number(s.x,1),number(s.y,1));ctx.translate(-w*pivot.x,-h*(1-pivot.y));
        const cg=comp(n,'CanvasGroup');if(cg&&!this.options.showHidden)ctx.globalAlpha*=clamp(number(cg.m_Alpha,1),0,1);
        if(ctx.globalAlpha<.001){this.metrics.transparent++;return;}
-@@ -210,37 +241,38 @@
+@@ -210,37 +265,38 @@
        if(hasMask&&layer&&w>0&&h>0){
          // Sprite-alpha masks need an isolated subtree, including when its graphic is hidden.
          const maskScale=Math.min(1,4096/w,4096/h),sub=makeCanvas(w*maskScale,h*maskScale),sx=sub.getContext('2d');sx.scale(maskScale,maskScale);

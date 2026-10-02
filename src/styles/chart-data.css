@@ -120,6 +120,9 @@ html[data-theme="dark"] .mn-cd {
 .mn-cd-check { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--mn-ink-soft); }
 .mn-cd-check input { accent-color: var(--mn-accent); width: 16px; height: 16px; }
 .mn-cd-skills { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.mn-cd-skill-entry { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
+.mn-cd-skill-no { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; background: var(--mn-paper); color: var(--mn-text-muted); font-size: 11px; font-weight: 700; }
+.mn-cd-skill-unit { color: var(--mn-text-muted); font-size: 12px; }
 .mn-cd-mean { padding: 0 4px; color: var(--mn-accent-deep); font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .mn-cd-ghost { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--mn-border); background: none; color: var(--mn-ink-soft); font-size: 12px; font-weight: 500; }
 .mn-cd-ghost:hover { color: var(--mn-accent-deep); border-color: var(--mn-accent); background: var(--mn-accent-soft); }
@@ -611,11 +614,48 @@ html[data-theme="dark"] .mn-cd {
 .mn-cd-snap-power{display:flex;align-items:center;gap:.5rem;color:var(--mn-text-muted)}
 .mn-cd-snap-power input{width:8rem;padding:.25rem .45rem}
 @media(max-width:700px){.mn-cd-snap-slots{grid-template-columns:repeat(5,184px);gap:.6rem}.mn-cd-snap-member-options{grid-template-columns:repeat(2,minmax(0,1fr))}.mn-cd-snap-member-levels{width:100%;flex:auto}.mn-cd-snap-member-apply{width:100%;text-align:center}.mn-cd-snap-option-art{width:112px}}
-.mn-cd-native-formation-scroll{overflow-x:auto;scroll-snap-type:x proximity}
-.mn-cd-native-formation-stage{position:relative;min-width:1050px}
+.mn-cd-native-formation-scroll{container:formation-controls / inline-size;min-width:0;max-width:100%}
+.mn-cd-native-formation-stage{position:relative;width:100%;max-width:1000px;min-width:0;margin-inline:auto}
 .mn-cd-native-formation-art{pointer-events:none;filter:drop-shadow(0 6px 10px #0002)}
 .mn-cd-native-formation-stage .mn-cd-snap-slot--formation{display:inline-block;width:20%;height:150px}
 .mn-cd-native-formation-stage[data-ui-geometry="ready"] .mn-cd-snap-slot--formation{position:absolute;left:var(--member-hit-left);top:var(--member-hit-top);width:var(--member-hit-width);height:var(--member-hit-height)}
 .mn-cd-snap-slot--formation .mn-cd-snap-member-trigger-overlay{clip-path:var(--member-hit-clip)}
 .mn-cd-snap-slot--formation .mn-cd-snap-slot-button{clip-path:var(--snap-hit-clip)}
+.mn-cd-snap-slot--formation .mn-cd-snap-slot-button .mn-cd-snap-slot-name{display:none}
+.mn-cd-snap-slot-tooltip{position:absolute;z-index:5;left:0;right:0;top:var(--snap-hit-top);transform:translateY(calc(-100% - .25rem));padding:.35rem .45rem;border-radius:.35rem;background:#101729ed;color:white;text-align:center;font-size:.7rem;line-height:1.5;overflow-wrap:anywhere;opacity:0;pointer-events:none}
+.mn-cd-snap-slot-button:hover+.mn-cd-snap-slot-tooltip,.mn-cd-snap-slot-button:focus-visible+.mn-cd-snap-slot-tooltip{opacity:1}
 .mn-cd-snap-slot--formation .mn-cd-snap-remove{left:calc(var(--snap-hit-left) + var(--snap-hit-width) - 12px);top:calc(var(--snap-hit-top) + var(--snap-hit-height) - 12px);right:auto;bottom:auto}
+
+.mn-cd-scenario-note{flex-basis:100%;margin:0;white-space:normal;line-height:1.65;overflow-wrap:anywhere}
+.mn-cd-snap-heading>div{min-width:0}
+.mn-cd-snap-heading h3{flex-wrap:wrap}
+.mn-cd-snap-slots{grid-template-columns:repeat(5,minmax(0,1fr));overflow:visible}
+.mn-cd-snap-member-button:not(.mn-cd-snap-member-trigger-overlay){display:flex;flex-direction:column;align-items:center;gap:.35rem;width:100%;min-height:44px;padding:.6rem;border:1px solid var(--mn-border);border-radius:.75rem;background:var(--mn-paper);color:var(--mn-text);text-align:center}
+.mn-cd-snap-member-button:not(.mn-cd-snap-member-trigger-overlay):hover{border-color:var(--mn-accent)}
+.mn-cd-snap-member-name{font-size:.75rem;font-weight:700;overflow-wrap:anywhere}
+.mn-cd-snap-member-meta,.mn-cd-snap-member-label,.mn-cd-snap-member-level{font-size:.65rem;overflow-wrap:anywhere}
+.mn-cd-snap-paired:not(.mn-cd-snap-paired--overlay){position:relative;min-width:0}
+.mn-cd-snap-paired:not(.mn-cd-snap-paired--overlay) .mn-cd-snap-member-clear{opacity:1;top:.35rem;right:.35rem;width:32px;height:32px;border-color:var(--mn-border);background:var(--mn-paper);color:var(--mn-text)}
+.mn-cd-snap-picker{container:snap-picker / inline-size;min-width:0}
+
+/* Keep selection on the painted slots; expand the small Snap hit target for touch. */
+@container formation-controls (max-width:560px){
+  .mn-cd-snap-slot--formation .mn-cd-snap-slot-button{left:0;top:auto;bottom:0;width:100%;height:44px;min-height:44px;clip-path:none}
+  .mn-cd-snap-slot--formation .mn-cd-snap-slot-meta{display:none}
+  .mn-cd-snap-slot-tooltip{display:none}
+  .mn-cd-snap-slot--formation .mn-cd-snap-remove{left:auto;right:0;top:auto;bottom:0;width:24px;height:24px}
+}
+@container chart-view (max-width:600px){
+  .mn-cd-snap-slots{grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem}
+  .mn-cd-snap-heading{gap:.6rem;flex-wrap:wrap}
+  .mn-cd-snap-heading>.mn-cd-ghost{min-height:40px}
+}
+@container snap-picker (max-width:600px){
+  .mn-cd-snap-options{grid-template-columns:1fr}
+  .mn-cd-snap-option-top{align-items:flex-start;gap:.6rem}
+  .mn-cd-snap-option-art{width:clamp(72px,24cqw,112px)}
+  .mn-cd-snap-option-actions{flex-wrap:wrap}
+}
+@media(pointer:coarse){
+  .mn-cd-snap-slot--native .mn-cd-snap-remove,.mn-cd-snap-member-clear{opacity:1}
+}

@@ -2,6 +2,7 @@ import type { GameServer } from "@/config/servers";
 import type { UIPack } from "ournotes-player/ui";
 import type { NativeCardCatalog, NativeSpriteGeometry } from "./card-fixture";
 import { fetchNativeUiResource } from "./client";
+import { withWebsiteUiFont } from "./website-font";
 
 export type NativeUiEntry = "formationSlot" | "memberSquare" | "supportSquare" | "formationGroup";
 interface FileRecord { file?: string; sha256: string; size: number; mime: string }
@@ -76,16 +77,31 @@ export function loadNativeUiLibrary(url: string, region: GameServer): Promise<Na
     const response = await fetchNativeUiResource(url);
     const manifest = validateNativeUiManifest(await response.json(), region);
     const bytes = new Map<string, ArrayBuffer>();
-    await Promise.all(Object.entries(manifest.files).map(async ([path, record]) => {
+    const fetchFile = async (path: string) => {
+      if (bytes.has(path)) return;
+      const record = manifest.files[path];
+      if (!record) throw new Error(`UI resource is outside the verified closure: ${path}`);
       const response = await fetchNativeUiResource(new URL(path, base));
       const data = await response.arrayBuffer();
       if (data.byteLength !== record.size || await digest(data) !== record.sha256) throw new Error(`UI resource content differs: ${path}`);
       bytes.set(path, data);
-    }));
+    };
+    const documents = new Set([manifest.index.file, manifest.bindingSources.file, manifest.spriteGeometries.file,
+      manifest.layout.sourceCamera.file, ...Object.values(manifest.entries).map(entry => entry.file)]);
+    await Promise.all([...documents].map(fetchFile));
     const json = (path: string) => JSON.parse(new TextDecoder().decode(bytes.get(path)));
+    const packs = new Map<NativeUiEntry, UIPack>();
+    for (const [name, entry] of Object.entries(manifest.entries)) {
+      const pack = json(entry.file) as UIPack;
+      if (!Array.isArray(pack.document?.nodes) || !pack.resources) throw new Error("UI prefab has no serialized nodes");
+      packs.set(name as NativeUiEntry, withWebsiteUiFont(pack));
+    }
+    // Text no longer needs native TTF/SDF files. Shared Sprite/RawImage textures still do.
+    const textures = new Set([...packs.values()].flatMap(pack => Object.values(pack.resources.textures ?? {})));
+    await Promise.all([...textures].map(fetchFile));
     const blobs = new Map<string, string>();
-    for (const [path, record] of Object.entries(manifest.files)) if (record.mime !== "application/json") {
-      blobs.set(path, URL.createObjectURL(new Blob([bytes.get(path)!], { type: record.mime })));
+    for (const [path, data] of bytes) if (manifest.files[path]!.mime !== "application/json") {
+      blobs.set(path, URL.createObjectURL(new Blob([data], { type: manifest.files[path]!.mime })));
     }
     const resolve = (path: string): string => {
       const relative = new URL(path, base).href.slice(base.length);
@@ -98,15 +114,7 @@ export function loadNativeUiLibrary(url: string, region: GameServer): Promise<Na
       blobs.set(relative, result);
       return result;
     };
-    const packs = new Map<NativeUiEntry, UIPack>();
-    for (const [name, entry] of Object.entries(manifest.entries)) {
-      const pack = json(entry.file) as UIPack;
-      if (!Array.isArray(pack.document?.nodes) || !pack.resources) throw new Error("UI prefab has no serialized nodes");
-      for (const type of ["textures", "fonts"] as const) pack.resources[type] = Object.fromEntries(Object.entries(pack.resources[type] ?? {}).map(([id, path]) => [id, resolve(path)]));
-      pack.resources.fontMetrics = resolve(pack.resources.fontMetrics || "fonts/vibemo.json");
-      if (pack.resources.fontMetricsByAsset) pack.resources.fontMetricsByAsset = Object.fromEntries(Object.entries(pack.resources.fontMetricsByAsset as Record<string, string>).map(([id, path]) => [id, resolve(path)]));
-      packs.set(name as NativeUiEntry, pack);
-    }
+    for (const pack of packs.values()) pack.resources.textures = Object.fromEntries(Object.entries(pack.resources.textures ?? {}).map(([id, path]) => [id, resolve(path)]));
     const binding = json(manifest.bindingSources.file) as { catalogs: Record<string, unknown> };
     if (!binding.catalogs) throw new Error("UI binding catalogs are missing");
     const catalogs = Object.values(binding.catalogs);

@@ -21,6 +21,7 @@ interface Props {
   onOpen?: () => void;
   onSelect: (slot: number, selection: SnapSkillSelection | null) => void;
   onReset: () => void;
+  canReset?: boolean;
   renderContext?: (slot: number, choice: SnapSkillChoice | undefined) => ReactNode;
   renderSlot?: (slot: number, choice: SnapSkillChoice | undefined) => ReactNode;
   renderFormation?: (choices: readonly (SnapSkillChoice | undefined)[]) => ReactNode;
@@ -30,7 +31,7 @@ interface Props {
 }
 
 /** Five paired effect slots. Artwork, filters and accessible dialog come from the site's component library. */
-export default function SnapSkillPicker({ locale, choices, selections, cards, loading = false, error, onOpen, onSelect, onReset, renderContext, renderSlot, renderFormation, renderArtwork, validateSelection, onReject }: Props) {
+export default function SnapSkillPicker({ locale, choices, selections, cards, loading = false, error, onOpen, onSelect, onReset, canReset, renderContext, renderSlot, renderFormation, renderArtwork, validateSelection, onReject }: Props) {
   const tr = (key: string, values?: Record<string, string | number>) => t(locale, `chartData.snap.${key}`, values);
   const [slot, setSlot] = useState<number | null>(null);
   const [query, setQuery] = useState("");
@@ -80,7 +81,7 @@ export default function SnapSkillPicker({ locale, choices, selections, cards, lo
     <section className="mn-cd-snap mn-cd-glass" aria-label={tr("title")}>
       <div className="mn-cd-snap-heading">
         <div><h3><Icon name="star" />{tr("title")}<span className="mn-cd-snap-optional">{tr("optional")}</span></h3><p>{tr("intro")}</p></div>
-        <button type="button" className="mn-cd-ghost" disabled={!active} onClick={onReset}>{tr("reset")}</button>
+        <button type="button" className="mn-cd-ghost" disabled={!(canReset ?? Boolean(active))} onClick={onReset}>{tr("reset")}</button>
       </div>
       <div className={renderFormation ? "mn-cd-native-formation-scroll" : undefined}>
       <div className={renderFormation ? "mn-cd-native-formation-stage" : "mn-cd-snap-slots"}>
@@ -92,12 +93,13 @@ export default function SnapSkillPicker({ locale, choices, selections, cards, lo
             <div key={index} data-snap-slot={index} className={`mn-cd-snap-slot${selection ? " selected" : ""}${renderSlot || renderFormation ? " mn-cd-snap-slot--native" : ""}${renderFormation ? " mn-cd-snap-slot--formation" : ""}`}>
               {renderSlot?.(index, choice)}
               <button type="button" className="mn-cd-snap-slot-button" aria-haspopup="dialog" aria-expanded={slot === index}
-                aria-label={tr("chooseSlot", { n: index + 1 })} onClick={() => open(index)}>
+                aria-label={tr("chooseSlot", { n: index + 1 })} title={choice ? title(choice) : selection ? tr("unavailable") : tr("none")} onClick={() => open(index)}>
                 <span className="mn-cd-snap-slot-no">{tr("slot", { n: index + 1 })}</span>
                 {!renderSlot && !renderFormation ? choice ? art(choice, "mn-cd-snap-slot-art") : <span className="mn-cd-snap-plus" aria-hidden="true">+</span> : null}
                 <span className="mn-cd-snap-slot-name">{choice ? title(choice) : selection ? tr("unavailable") : tr("none")}</span>
                 <span className="mn-cd-snap-slot-meta">{choice ? `${tr(`kind.${choice.kind}`)} · ${tr("level", { n: choice.level })}` : tr("choose")}</span>
               </button>
+              {renderFormation ? <span className="mn-cd-snap-slot-tooltip" aria-hidden="true">{choice ? title(choice) : selection ? tr("unavailable") : tr("none")}</span> : null}
               {context ? <div className="mn-cd-snap-context">{context}</div> : null}
               {selection ? <button type="button" className="mn-cd-snap-remove" aria-label={tr("removeSlot", { n: index + 1 })} onClick={() => commit(index, null)}>×</button> : null}
             </div>
