@@ -25,6 +25,8 @@
 
 只传两份 ONNX 并按图库最高 embedding 接受所有卡，会改变定位、可见范围、拒识和未知身份语义，不能作为完整移植。OpenCV WASM 构建须实际提供当前用到的 SIFT、匹配与 affine/image 函数；不能从一个包能加载推导符号与算法都可用。可另做更快策略，但先以原链路同输入验收，并独立标明新策略覆盖与阈值。
 
+2026-10-02 接手后已在 CNB Node 执行官方 OpenCV 5.0.0 文档发行物的 WASM runtime：四组 JP 数值 buffer 原字/压缩 SHA 与灰度、resize primitive 通过，但实际缺少 `SIFT` 和 `FlannBasedMatcher` JS binding。尚未执行浏览器或完整识别链；明确来源、探针修复和回收身份见[恢复执行记录](resumed-work-2026-10-02.md)。
+
 ## 输入、输出与拒识必须对齐
 
 | 边界 | 源语义 | 必须验证 |

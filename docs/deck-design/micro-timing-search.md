@@ -2,11 +2,13 @@
 
 状态：2026-10-02，Draft。用户明确要求计算技能窗口附近提前或延后操作的收益。这项能力属于正式目标，不能以固定 AP、Great/Just 百分比或一个收益系数代替。
 
+2026-10-02 外协固定区间批次以 JP 1.0.4/10053 基础代码执行，声明不考虑补丁且未加载 IFix；不据此改变整体任务范围。19 个原生动态用例证明：固定加分区间按音符谱面名义时间归属，边界为 `[start,end)`；同判定提前/延后跨边界收益为零，故意降成 Great 的反例损失 159 分。40 ms 为 ceil 分桶，桶内仍比较精确时间。详见[原生证明](microtiming-skill-window-proof.md)及[证据清单](microtiming-skill-window-evidence.json)。
+
 ## 当前能力与时钟缺口
 
 核心已有 raw judgement/runtime、触控候选、判定窗口和 mutable skill-window 状态。研究推荐入口主要接收声明判定流，尚无可交付的微操优化器。
 
-当前 `live/full/mod.rs` 的 `judgement_time_ms` 用于判定转换，而 combo、life damage 与 `NoteCommand` 使用 `n.time_ms`（谱面缓存时间）。所以，不能只改 judgement timestamp 就宣布一个技能窗外 Perfect 移入窗内并涨分。最新原生必须核实：
+当前 `live/full/mod.rs` 的 `judgement_time_ms` 用于判定转换，而 combo、life damage 与 `NoteCommand` 使用 `n.time_ms`（谱面缓存时间）。固定因子区间的 command 名义时间及精确边界现已取得原生证据；不能只改 judgement timestamp 就宣布一个技能窗外 Perfect 移入窗内并涨分。以下问题继续针对条件技能、完整生命周期和其他触控类型核实：
 
 1. 原始触控、判定产生、计分 command 和技能状态分别使用哪个时钟？
 2. command 是否回溯到谱面时间，回放如何选择因子、血量与 combo？
@@ -31,6 +33,8 @@
 
 1. 对多个合法候选队伍完成固定打法基线。它是可行解和起点，不是微操最优上界，不能据此删除可能靠微操反超的队伍。
 2. 从实际技能开始/结束、判定窗口、计分帧、撃奏区间和触控链约束生成关键时间候选；没有已验证收益因果的边界不强行制造候选。
+
+   固定 `[start,end)` 加分区间在同判定下不生成“移入技能窗”的增益候选，返回已证零收益。该结论不用于删掉 Just、条件触发/解除或连续轨迹候选；这些路径仍需独立证明。
 3. 对同窗口或同触控链的音符组做有限枚举、局部搜索或 beam 提案；必要时联合多个组。combo/life/转换/累计影响后续轨迹，不能默认逐音符贪心可加。
 4. 每个保留的 `d,π` 由同一个完整 evaluator、同一环境分布复算；队伍和时序轮流改进，保留多个初始队伍与重启机会。
 5. 用 held-out RNG/误差样本检验收益与容错。未经可采纳上界证明标为 heuristic、gap unknown；小卡池和少数操作组用独立穷举验收。
