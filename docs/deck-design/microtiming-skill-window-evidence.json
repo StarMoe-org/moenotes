@@ -1,0 +1,3431 @@
+{
+  "format": "ournotes.microtiming-e1e2-evidence/1",
+  "scope": "JP 1.0.4/10053 native base code",
+  "cases": [
+    {
+      "caseId": "mt-e1a-no-touch",
+      "frames": 1771,
+      "steps": [
+        16
+      ],
+      "realtimeBaseSeconds": 37.0003,
+      "factorIntervals": [],
+      "factorCalls": [],
+      "finalScore": 0,
+      "taps": [],
+      "skillEvents": [
+        {
+          "index": 0,
+          "timeMs": 11764,
+          "frameClockMs": 11776,
+          "rawEventsHex": "00000000f42d0000",
+          "activeInputUnits": 0
+        },
+        {
+          "index": 1,
+          "timeMs": 28235,
+          "frameClockMs": 28240,
+          "rawEventsHex": "010000004b6e0000",
+          "activeInputUnits": 0
+        }
+      ],
+      "nativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+      "sourceSha256": {
+        "bound_pilot.py": "16ca03692208a0c8f6b79bb37adf84ad8d47fa3b9c649bd3a1af92519a606171",
+        "libc.py": "225f35a0b8afe391f369ff4514f540d6a8cd2f7a74d8c9e6b01f1772a32b57f8",
+        "local_factory_pilot.py": "87cfe323078522c23de2932bf9ee74686e210d53b58bc63048445b30a72fa0ba",
+        "make_physical_replay_pilot.py": "467a3779e4d397f43bee8acc6a4bc6bcc7cface8511489c729f4bd0d59aebc26",
+        "mrt.py": "672b593f0238b07cc0ce8b747517ad9e0e09e36864a7dcbca9b345d0aaddf19f",
+        "native_observe.py": "40a398e89ba8377b00e4e8b17bca2757f1624fec518ca968745300149fe95835",
+        "nemu.py": "2549fc23b83ef6d0512ee6f997b9f79c085c7edf6656fe963b7f1bf430c10358",
+        "physical_replay_pilot.py": "f564dcdcfeda0a617ea1b5981a0cc39246b88452462fd878e5c49efb23ca50e8",
+        "unity.py": "dae39e72fe10658ad51176cbcfdde8d28f5e2dbc6c5326cf8db914cd75444f6d"
+      },
+      "manifestSha256": "5aae2bdce53c6e4a96dbefd719c185898780ff9ad9c2c3f544bde3cf65d0f7ba",
+      "judgementStreamSha256": "5ae329236e2ff40c590d7aa4f79985795c39492fda505e10e7f195c63272a8b5",
+      "commandFileSha256": "ba81e7de76037ff9ca6744663b1ca7344ac82ea65b0b2975f46a11b731f146c1",
+      "inputHashes": {
+        "input-record.json": "3e0e9d152031029add5700d46bcc194cad24e21ae6d8721ca11c3b28b29acaae",
+        "schedule.json": "f6631a6995f957029df9d308252c8fee7d5121f2ff423c2ffdaeb44f50818fa5"
+      }
+    },
+    {
+      "caseId": "mt-e1b-offset-touch",
+      "frames": 1771,
+      "steps": [
+        16
+      ],
+      "realtimeBaseSeconds": 37.0003,
+      "factorIntervals": [],
+      "factorCalls": [],
+      "finalScore": 8015,
+      "taps": [
+        {
+          "noteId": 1,
+          "nominalMs": 2352,
+          "touchMs": 2332,
+          "offsetMs": -20,
+          "judgedFrameMs": 2336,
+          "grade": 5,
+          "commandTimeMs": 2352,
+          "commandFrame": 59,
+          "addedScore": 796
+        },
+        {
+          "noteId": 2,
+          "nominalMs": 3529,
+          "touchMs": 3549,
+          "offsetMs": 20,
+          "judgedFrameMs": 3552,
+          "grade": 5,
+          "commandTimeMs": 3529,
+          "commandFrame": 89,
+          "addedScore": 796
+        },
+        {
+          "noteId": 3,
+          "nominalMs": 4705,
+          "touchMs": 4725,
+          "offsetMs": 20,
+          "judgedFrameMs": 4736,
+          "grade": 5,
+          "commandTimeMs": 4705,
+          "commandFrame": 118,
+          "addedScore": 796
+        },
+        {
+          "noteId": 4,
+          "nominalMs": 5882,
+          "touchMs": 5842,
+          "offsetMs": -40,
+          "judgedFrameMs": 5856,
+          "grade": 5,
+          "commandTimeMs": 5882,
+          "commandFrame": 148,
+          "addedScore": 796
+        },
+        {
+          "noteId": 5,
+          "nominalMs": 7058,
+          "touchMs": 7018,
+          "offsetMs": -40,
+          "judgedFrameMs": 7024,
+          "grade": 5,
+          "commandTimeMs": 7058,
+          "commandFrame": 177,
+          "addedScore": 796
+        },
+        {
+          "noteId": 6,
+          "nominalMs": 7647,
+          "touchMs": 7627,
+          "offsetMs": -20,
+          "judgedFrameMs": 7632,
+          "grade": 5,
+          "commandTimeMs": 7647,
+          "commandFrame": 192,
+          "addedScore": 796
+        },
+        {
+          "noteId": 7,
+          "nominalMs": 8235,
+          "touchMs": 8215,
+          "offsetMs": -20,
+          "judgedFrameMs": 8224,
+          "grade": 5,
+          "commandTimeMs": 8235,
+          "commandFrame": 206,
+          "addedScore": 796
+        },
+        {
+          "noteId": 8,
+          "nominalMs": 8823,
+          "touchMs": 8803,
+          "offsetMs": -20,
+          "judgedFrameMs": 8816,
+          "grade": 5,
+          "commandTimeMs": 8823,
+          "commandFrame": 221,
+          "addedScore": 796
+        }
+      ],
+      "skillEvents": [
+        {
+          "index": 0,
+          "timeMs": 11764,
+          "frameClockMs": 11776,
+          "rawEventsHex": "00000000f42d0000",
+          "activeInputUnits": 2
+        },
+        {
+          "index": 1,
+          "timeMs": 28235,
+          "frameClockMs": 28240,
+          "rawEventsHex": "010000004b6e0000",
+          "activeInputUnits": 2
+        }
+      ],
+      "nativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+      "sourceSha256": {
+        "bound_pilot.py": "16ca03692208a0c8f6b79bb37adf84ad8d47fa3b9c649bd3a1af92519a606171",
+        "libc.py": "225f35a0b8afe391f369ff4514f540d6a8cd2f7a74d8c9e6b01f1772a32b57f8",
+        "local_factory_pilot.py": "87cfe323078522c23de2932bf9ee74686e210d53b58bc63048445b30a72fa0ba",
+        "make_physical_replay_pilot.py": "467a3779e4d397f43bee8acc6a4bc6bcc7cface8511489c729f4bd0d59aebc26",
+        "mrt.py": "672b593f0238b07cc0ce8b747517ad9e0e09e36864a7dcbca9b345d0aaddf19f",
+        "native_observe.py": "40a398e89ba8377b00e4e8b17bca2757f1624fec518ca968745300149fe95835",
+        "nemu.py": "2549fc23b83ef6d0512ee6f997b9f79c085c7edf6656fe963b7f1bf430c10358",
+        "physical_replay_pilot.py": "f564dcdcfeda0a617ea1b5981a0cc39246b88452462fd878e5c49efb23ca50e8",
+        "unity.py": "dae39e72fe10658ad51176cbcfdde8d28f5e2dbc6c5326cf8db914cd75444f6d"
+      },
+      "manifestSha256": "cf03ba4072a1b65ed1722f0218e31492d545e4aee1bf3e6e087594c880df6bcf",
+      "judgementStreamSha256": "3837a9b65cc198f66bbbf6571c98e8e8acb9f392fdc3fb38c317b5bb03167c59",
+      "commandFileSha256": "7a82b686efafb206aa2e1fefd99948387b99078cb826f23586f3637acfcd7dea",
+      "inputHashes": {
+        "input-record.json": "75ad18e9a9570cd39378f4305f3c81b504206b62847f64f3f31d14628d0dd507",
+        "schedule.json": "b16d04d0256c84e37f8116f43d6ffd208b1f79133a87ba61819aeff5f2a75fe6"
+      }
+    },
+    {
+      "caseId": "mt-e1c-variable-touch",
+      "frames": 1491,
+      "steps": [
+        8,
+        33,
+        16,
+        17,
+        31,
+        9
+      ],
+      "realtimeBaseSeconds": 1234.5678,
+      "factorIntervals": [],
+      "factorCalls": [],
+      "finalScore": 8015,
+      "taps": [
+        {
+          "noteId": 1,
+          "nominalMs": 2352,
+          "touchMs": 2332,
+          "offsetMs": -20,
+          "judgedFrameMs": 2337,
+          "grade": 5,
+          "commandTimeMs": 2352,
+          "commandFrame": 59,
+          "addedScore": 796
+        },
+        {
+          "noteId": 2,
+          "nominalMs": 3529,
+          "touchMs": 3549,
+          "offsetMs": 20,
+          "judgedFrameMs": 3575,
+          "grade": 5,
+          "commandTimeMs": 3529,
+          "commandFrame": 89,
+          "addedScore": 796
+        },
+        {
+          "noteId": 3,
+          "nominalMs": 4705,
+          "touchMs": 4725,
+          "offsetMs": 20,
+          "judgedFrameMs": 4731,
+          "grade": 5,
+          "commandTimeMs": 4705,
+          "commandFrame": 118,
+          "addedScore": 796
+        },
+        {
+          "noteId": 4,
+          "nominalMs": 5882,
+          "touchMs": 5842,
+          "offsetMs": -40,
+          "judgedFrameMs": 5855,
+          "grade": 5,
+          "commandTimeMs": 5882,
+          "commandFrame": 148,
+          "addedScore": 796
+        },
+        {
+          "noteId": 5,
+          "nominalMs": 7058,
+          "touchMs": 7018,
+          "offsetMs": -40,
+          "judgedFrameMs": 7028,
+          "grade": 5,
+          "commandTimeMs": 7058,
+          "commandFrame": 177,
+          "addedScore": 796
+        },
+        {
+          "noteId": 6,
+          "nominalMs": 7647,
+          "touchMs": 7627,
+          "offsetMs": -20,
+          "judgedFrameMs": 7629,
+          "grade": 5,
+          "commandTimeMs": 7647,
+          "commandFrame": 192,
+          "addedScore": 796
+        },
+        {
+          "noteId": 7,
+          "nominalMs": 8235,
+          "touchMs": 8215,
+          "offsetMs": -20,
+          "judgedFrameMs": 8216,
+          "grade": 5,
+          "commandTimeMs": 8235,
+          "commandFrame": 206,
+          "addedScore": 796
+        },
+        {
+          "noteId": 8,
+          "nominalMs": 8823,
+          "touchMs": 8803,
+          "offsetMs": -20,
+          "judgedFrameMs": 8819,
+          "grade": 5,
+          "commandTimeMs": 8823,
+          "commandFrame": 221,
+          "addedScore": 796
+        }
+      ],
+      "skillEvents": [
+        {
+          "index": 0,
+          "timeMs": 11764,
+          "frameClockMs": 11783,
+          "rawEventsHex": "00000000f42d0000",
+          "activeInputUnits": 2
+        },
+        {
+          "index": 1,
+          "timeMs": 28235,
+          "frameClockMs": 28263,
+          "rawEventsHex": "010000004b6e0000",
+          "activeInputUnits": 2
+        }
+      ],
+      "nativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+      "sourceSha256": {
+        "bound_pilot.py": "16ca03692208a0c8f6b79bb37adf84ad8d47fa3b9c649bd3a1af92519a606171",
+        "libc.py": "225f35a0b8afe391f369ff4514f540d6a8cd2f7a74d8c9e6b01f1772a32b57f8",
+        "local_factory_pilot.py": "87cfe323078522c23de2932bf9ee74686e210d53b58bc63048445b30a72fa0ba",
+        "make_physical_replay_pilot.py": "467a3779e4d397f43bee8acc6a4bc6bcc7cface8511489c729f4bd0d59aebc26",
+        "mrt.py": "672b593f0238b07cc0ce8b747517ad9e0e09e36864a7dcbca9b345d0aaddf19f",
+        "native_observe.py": "40a398e89ba8377b00e4e8b17bca2757f1624fec518ca968745300149fe95835",
+        "nemu.py": "2549fc23b83ef6d0512ee6f997b9f79c085c7edf6656fe963b7f1bf430c10358",
+        "physical_replay_pilot.py": "f564dcdcfeda0a617ea1b5981a0cc39246b88452462fd878e5c49efb23ca50e8",
+        "unity.py": "dae39e72fe10658ad51176cbcfdde8d28f5e2dbc6c5326cf8db914cd75444f6d"
+      },
+      "manifestSha256": "49ac4cf3c0e3b0f10a76cbdb19d300b66f55183f6c216dc9b92209a23ea60325",
+      "judgementStreamSha256": "1a4dec9e7b81bfeedad4cff7bcf3fa496a13adfc48d394ac6c82978d5d512c95",
+      "commandFileSha256": "7a82b686efafb206aa2e1fefd99948387b99078cb826f23586f3637acfcd7dea",
+      "inputHashes": {
+        "input-record.json": "75ad18e9a9570cd39378f4305f3c81b504206b62847f64f3f31d14628d0dd507",
+        "schedule.json": "0e20ffe9de25b87955f07010c67015ab9f230c884da6e934c98b56ae833ab346"
+      }
+    },
+    {
+      "caseId": "mt-e2a-baseline",
+      "frames": 579,
+      "steps": [
+        16
+      ],
+      "realtimeBaseSeconds": 37.0003,
+      "factorIntervals": [],
+      "factorCalls": [],
+      "finalScore": 6368,
+      "taps": [
+        {
+          "noteId": 1,
+          "nominalMs": 2352,
+          "touchMs": 2332,
+          "offsetMs": -20,
+          "judgedFrameMs": 2336,
+          "grade": 5,
+          "commandTimeMs": 2352,
+          "commandFrame": 59,
+          "addedScore": 796
+        },
+        {
+          "noteId": 2,
+          "nominalMs": 3529,
+          "touchMs": 3509,
+          "offsetMs": -20,
+          "judgedFrameMs": 3520,
+          "grade": 5,
+          "commandTimeMs": 3529,
+          "commandFrame": 89,
+          "addedScore": 796
+        },
+        {
+          "noteId": 3,
+          "nominalMs": 4705,
+          "touchMs": 4685,
+          "offsetMs": -20,
+          "judgedFrameMs": 4688,
+          "grade": 5,
+          "commandTimeMs": 4705,
+          "commandFrame": 118,
+          "addedScore": 796
+        },
+        {
+          "noteId": 4,
+          "nominalMs": 5882,
+          "touchMs": 5862,
+          "offsetMs": -20,
+          "judgedFrameMs": 5872,
+          "grade": 5,
+          "commandTimeMs": 5882,
+          "commandFrame": 148,
+          "addedScore": 796
+        },
+        {
+          "noteId": 5,
+          "nominalMs": 7058,
+          "touchMs": 7038,
+          "offsetMs": -20,
+          "judgedFrameMs": 7040,
+          "grade": 5,
+          "commandTimeMs": 7058,
+          "commandFrame": 177,
+          "addedScore": 796
+        },
+        {
+          "noteId": 6,
+          "nominalMs": 7647,
+          "touchMs": 7627,
+          "offsetMs": -20,
+          "judgedFrameMs": 7632,
+          "grade": 5,
+          "commandTimeMs": 7647,
+          "commandFrame": 192,
+          "addedScore": 796
+        },
+        {
+          "noteId": 7,
+          "nominalMs": 8235,
+          "touchMs": 8215,
+          "offsetMs": -20,
+          "judgedFrameMs": 8224,
+          "grade": 5,
+          "commandTimeMs": 8235,
+          "commandFrame": 206,
+          "addedScore": 796
+        },
+        {
+          "noteId": 8,
+          "nominalMs": 8823,
+          "touchMs": 8803,
+          "offsetMs": -20,
+          "judgedFrameMs": 8816,
+          "grade": 5,
+          "commandTimeMs": 8823,
+          "commandFrame": 221,
+          "addedScore": 796
+        }
+      ],
+      "skillEvents": [],
+      "nativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+      "sourceSha256": {
+        "bound_pilot.py": "16ca03692208a0c8f6b79bb37adf84ad8d47fa3b9c649bd3a1af92519a606171",
+        "libc.py": "225f35a0b8afe391f369ff4514f540d6a8cd2f7a74d8c9e6b01f1772a32b57f8",
+        "local_factory_pilot.py": "87cfe323078522c23de2932bf9ee74686e210d53b58bc63048445b30a72fa0ba",
+        "make_physical_replay_pilot.py": "cf4c15fc584bf6c01bd4300cb6a4ad4ab7e7143cb1bcf89b90126433f934e22b",
+        "mrt.py": "672b593f0238b07cc0ce8b747517ad9e0e09e36864a7dcbca9b345d0aaddf19f",
+        "native_observe.py": "40a398e89ba8377b00e4e8b17bca2757f1624fec518ca968745300149fe95835",
+        "nemu.py": "2549fc23b83ef6d0512ee6f997b9f79c085c7edf6656fe963b7f1bf430c10358",
+        "physical_replay_pilot.py": "06b695dab96e63a732d98e76ae8e96c3556f973ca3dd0eb47cb70e6560c7b2e3",
+        "unity.py": "dae39e72fe10658ad51176cbcfdde8d28f5e2dbc6c5326cf8db914cd75444f6d"
+      },
+      "manifestSha256": "8163d4f6643a96532a0bb4832f81c7fb9346b64329d1b99ad0216a8bf6114d05",
+      "judgementStreamSha256": "6d9a27b5396d58da8726d9381a394c39f7a6496acba3a538a384f056bcfe83fa",
+      "commandFileSha256": "d2925e22ac597b48808183de24e67bd4ed9ff81f983bdc7c0d8c1d9888d24981",
+      "inputHashes": {
+        "input-record.json": "462300479575a7474ba91e5f63040483acd0b174c3edad2fc4994516bc59dfd1",
+        "schedule.json": "ed01c32ec10798c062fe9bbaef7961cb6ca3990b18722879eef81edb87f1c6e3"
+      }
+    },
+    {
+      "caseId": "mt-e2b-factors-early",
+      "frames": 579,
+      "steps": [
+        16
+      ],
+      "realtimeBaseSeconds": 37.0003,
+      "factorIntervals": [
+        {
+          "startMs": 3540,
+          "endMs": 3600,
+          "phase": "beforeUpdate"
+        },
+        {
+          "startMs": 4720,
+          "endMs": 4800,
+          "phase": "beforeUpdate"
+        },
+        {
+          "startMs": 5860,
+          "endMs": 5910,
+          "phase": "beforeUpdate"
+        },
+        {
+          "startMs": 7000,
+          "endMs": 7040,
+          "phase": "beforeUpdate"
+        }
+      ],
+      "factorCalls": [
+        {
+          "action": "add",
+          "clockMs": 3552,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "ownerId": 0,
+          "phase": "beforeUpdate",
+          "timeMs": 3540
+        },
+        {
+          "action": "disable",
+          "clockMs": 3600,
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "phase": "beforeUpdate",
+          "timeMs": 3600
+        },
+        {
+          "action": "add",
+          "clockMs": 4720,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor1",
+          "nativeFactorId": 2,
+          "ownerId": 1,
+          "phase": "beforeUpdate",
+          "timeMs": 4720
+        },
+        {
+          "action": "disable",
+          "clockMs": 4800,
+          "key": "factor1",
+          "nativeFactorId": 2,
+          "phase": "beforeUpdate",
+          "timeMs": 4800
+        },
+        {
+          "action": "add",
+          "clockMs": 5872,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor2",
+          "nativeFactorId": 3,
+          "ownerId": 2,
+          "phase": "beforeUpdate",
+          "timeMs": 5860
+        },
+        {
+          "action": "disable",
+          "clockMs": 5920,
+          "key": "factor2",
+          "nativeFactorId": 3,
+          "phase": "beforeUpdate",
+          "timeMs": 5910
+        },
+        {
+          "action": "add",
+          "clockMs": 7008,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor3",
+          "nativeFactorId": 4,
+          "ownerId": 3,
+          "phase": "beforeUpdate",
+          "timeMs": 7000
+        },
+        {
+          "action": "disable",
+          "clockMs": 7040,
+          "key": "factor3",
+          "nativeFactorId": 4,
+          "phase": "beforeUpdate",
+          "timeMs": 7040
+        }
+      ],
+      "finalScore": 7165,
+      "taps": [
+        {
+          "noteId": 1,
+          "nominalMs": 2352,
+          "touchMs": 2332,
+          "offsetMs": -20,
+          "judgedFrameMs": 2336,
+          "grade": 5,
+          "commandTimeMs": 2352,
+          "commandFrame": 59,
+          "addedScore": 796
+        },
+        {
+          "noteId": 2,
+          "nominalMs": 3529,
+          "touchMs": 3509,
+          "offsetMs": -20,
+          "judgedFrameMs": 3520,
+          "grade": 5,
+          "commandTimeMs": 3529,
+          "commandFrame": 89,
+          "addedScore": 796
+        },
+        {
+          "noteId": 3,
+          "nominalMs": 4705,
+          "touchMs": 4685,
+          "offsetMs": -20,
+          "judgedFrameMs": 4688,
+          "grade": 5,
+          "commandTimeMs": 4705,
+          "commandFrame": 118,
+          "addedScore": 796
+        },
+        {
+          "noteId": 4,
+          "nominalMs": 5882,
+          "touchMs": 5862,
+          "offsetMs": -20,
+          "judgedFrameMs": 5872,
+          "grade": 5,
+          "commandTimeMs": 5882,
+          "commandFrame": 148,
+          "addedScore": 1593
+        },
+        {
+          "noteId": 5,
+          "nominalMs": 7058,
+          "touchMs": 7038,
+          "offsetMs": -20,
+          "judgedFrameMs": 7040,
+          "grade": 5,
+          "commandTimeMs": 7058,
+          "commandFrame": 177,
+          "addedScore": 796
+        },
+        {
+          "noteId": 6,
+          "nominalMs": 7647,
+          "touchMs": 7627,
+          "offsetMs": -20,
+          "judgedFrameMs": 7632,
+          "grade": 5,
+          "commandTimeMs": 7647,
+          "commandFrame": 192,
+          "addedScore": 796
+        },
+        {
+          "noteId": 7,
+          "nominalMs": 8235,
+          "touchMs": 8215,
+          "offsetMs": -20,
+          "judgedFrameMs": 8224,
+          "grade": 5,
+          "commandTimeMs": 8235,
+          "commandFrame": 206,
+          "addedScore": 796
+        },
+        {
+          "noteId": 8,
+          "nominalMs": 8823,
+          "touchMs": 8803,
+          "offsetMs": -20,
+          "judgedFrameMs": 8816,
+          "grade": 5,
+          "commandTimeMs": 8823,
+          "commandFrame": 221,
+          "addedScore": 796
+        }
+      ],
+      "skillEvents": [],
+      "nativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+      "sourceSha256": {
+        "bound_pilot.py": "16ca03692208a0c8f6b79bb37adf84ad8d47fa3b9c649bd3a1af92519a606171",
+        "libc.py": "225f35a0b8afe391f369ff4514f540d6a8cd2f7a74d8c9e6b01f1772a32b57f8",
+        "local_factory_pilot.py": "87cfe323078522c23de2932bf9ee74686e210d53b58bc63048445b30a72fa0ba",
+        "make_physical_replay_pilot.py": "cf4c15fc584bf6c01bd4300cb6a4ad4ab7e7143cb1bcf89b90126433f934e22b",
+        "mrt.py": "672b593f0238b07cc0ce8b747517ad9e0e09e36864a7dcbca9b345d0aaddf19f",
+        "native_observe.py": "40a398e89ba8377b00e4e8b17bca2757f1624fec518ca968745300149fe95835",
+        "nemu.py": "2549fc23b83ef6d0512ee6f997b9f79c085c7edf6656fe963b7f1bf430c10358",
+        "physical_replay_pilot.py": "06b695dab96e63a732d98e76ae8e96c3556f973ca3dd0eb47cb70e6560c7b2e3",
+        "unity.py": "dae39e72fe10658ad51176cbcfdde8d28f5e2dbc6c5326cf8db914cd75444f6d"
+      },
+      "manifestSha256": "11eefae942fffe5403b92e9c8d0268f6e186521f2d90978120eff073555ba311",
+      "judgementStreamSha256": "c4f9b25f77e477dcb6c1eb03780923958cffac2057a3dd224dc8edb773f53ef6",
+      "commandFileSha256": "8a95c2bb51fea38ea83889b65ba7738326edf4cb8acac2927b6ba07a100ca1e5",
+      "inputHashes": {
+        "input-record.json": "462300479575a7474ba91e5f63040483acd0b174c3edad2fc4994516bc59dfd1",
+        "schedule.json": "b9a38134315f901323c19cf4b9ac7c0c1f6e9aa474f50fe755df92a7586f86a9"
+      }
+    },
+    {
+      "caseId": "mt-e2c-factors-crossing",
+      "frames": 579,
+      "steps": [
+        16
+      ],
+      "realtimeBaseSeconds": 37.0003,
+      "factorIntervals": [
+        {
+          "startMs": 3540,
+          "endMs": 3600,
+          "phase": "beforeUpdate"
+        },
+        {
+          "startMs": 4720,
+          "endMs": 4800,
+          "phase": "beforeUpdate"
+        },
+        {
+          "startMs": 5860,
+          "endMs": 5910,
+          "phase": "beforeUpdate"
+        },
+        {
+          "startMs": 7000,
+          "endMs": 7040,
+          "phase": "beforeUpdate"
+        }
+      ],
+      "factorCalls": [
+        {
+          "action": "add",
+          "clockMs": 3552,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "ownerId": 0,
+          "phase": "beforeUpdate",
+          "timeMs": 3540
+        },
+        {
+          "action": "disable",
+          "clockMs": 3600,
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "phase": "beforeUpdate",
+          "timeMs": 3600
+        },
+        {
+          "action": "add",
+          "clockMs": 4720,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor1",
+          "nativeFactorId": 2,
+          "ownerId": 1,
+          "phase": "beforeUpdate",
+          "timeMs": 4720
+        },
+        {
+          "action": "disable",
+          "clockMs": 4800,
+          "key": "factor1",
+          "nativeFactorId": 2,
+          "phase": "beforeUpdate",
+          "timeMs": 4800
+        },
+        {
+          "action": "add",
+          "clockMs": 5872,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor2",
+          "nativeFactorId": 3,
+          "ownerId": 2,
+          "phase": "beforeUpdate",
+          "timeMs": 5860
+        },
+        {
+          "action": "disable",
+          "clockMs": 5920,
+          "key": "factor2",
+          "nativeFactorId": 3,
+          "phase": "beforeUpdate",
+          "timeMs": 5910
+        },
+        {
+          "action": "add",
+          "clockMs": 7008,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor3",
+          "nativeFactorId": 4,
+          "ownerId": 3,
+          "phase": "beforeUpdate",
+          "timeMs": 7000
+        },
+        {
+          "action": "disable",
+          "clockMs": 7040,
+          "key": "factor3",
+          "nativeFactorId": 4,
+          "phase": "beforeUpdate",
+          "timeMs": 7040
+        }
+      ],
+      "finalScore": 7165,
+      "taps": [
+        {
+          "noteId": 1,
+          "nominalMs": 2352,
+          "touchMs": 2332,
+          "offsetMs": -20,
+          "judgedFrameMs": 2336,
+          "grade": 5,
+          "commandTimeMs": 2352,
+          "commandFrame": 59,
+          "addedScore": 796
+        },
+        {
+          "noteId": 2,
+          "nominalMs": 3529,
+          "touchMs": 3549,
+          "offsetMs": 20,
+          "judgedFrameMs": 3552,
+          "grade": 5,
+          "commandTimeMs": 3529,
+          "commandFrame": 89,
+          "addedScore": 796
+        },
+        {
+          "noteId": 3,
+          "nominalMs": 4705,
+          "touchMs": 4725,
+          "offsetMs": 20,
+          "judgedFrameMs": 4736,
+          "grade": 5,
+          "commandTimeMs": 4705,
+          "commandFrame": 118,
+          "addedScore": 796
+        },
+        {
+          "noteId": 4,
+          "nominalMs": 5882,
+          "touchMs": 5842,
+          "offsetMs": -40,
+          "judgedFrameMs": 5856,
+          "grade": 5,
+          "commandTimeMs": 5882,
+          "commandFrame": 148,
+          "addedScore": 1593
+        },
+        {
+          "noteId": 5,
+          "nominalMs": 7058,
+          "touchMs": 7018,
+          "offsetMs": -40,
+          "judgedFrameMs": 7024,
+          "grade": 5,
+          "commandTimeMs": 7058,
+          "commandFrame": 177,
+          "addedScore": 796
+        },
+        {
+          "noteId": 6,
+          "nominalMs": 7647,
+          "touchMs": 7627,
+          "offsetMs": -20,
+          "judgedFrameMs": 7632,
+          "grade": 5,
+          "commandTimeMs": 7647,
+          "commandFrame": 192,
+          "addedScore": 796
+        },
+        {
+          "noteId": 7,
+          "nominalMs": 8235,
+          "touchMs": 8215,
+          "offsetMs": -20,
+          "judgedFrameMs": 8224,
+          "grade": 5,
+          "commandTimeMs": 8235,
+          "commandFrame": 206,
+          "addedScore": 796
+        },
+        {
+          "noteId": 8,
+          "nominalMs": 8823,
+          "touchMs": 8803,
+          "offsetMs": -20,
+          "judgedFrameMs": 8816,
+          "grade": 5,
+          "commandTimeMs": 8823,
+          "commandFrame": 221,
+          "addedScore": 796
+        }
+      ],
+      "skillEvents": [],
+      "nativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+      "sourceSha256": {
+        "bound_pilot.py": "16ca03692208a0c8f6b79bb37adf84ad8d47fa3b9c649bd3a1af92519a606171",
+        "libc.py": "225f35a0b8afe391f369ff4514f540d6a8cd2f7a74d8c9e6b01f1772a32b57f8",
+        "local_factory_pilot.py": "87cfe323078522c23de2932bf9ee74686e210d53b58bc63048445b30a72fa0ba",
+        "make_physical_replay_pilot.py": "cf4c15fc584bf6c01bd4300cb6a4ad4ab7e7143cb1bcf89b90126433f934e22b",
+        "mrt.py": "672b593f0238b07cc0ce8b747517ad9e0e09e36864a7dcbca9b345d0aaddf19f",
+        "native_observe.py": "40a398e89ba8377b00e4e8b17bca2757f1624fec518ca968745300149fe95835",
+        "nemu.py": "2549fc23b83ef6d0512ee6f997b9f79c085c7edf6656fe963b7f1bf430c10358",
+        "physical_replay_pilot.py": "06b695dab96e63a732d98e76ae8e96c3556f973ca3dd0eb47cb70e6560c7b2e3",
+        "unity.py": "dae39e72fe10658ad51176cbcfdde8d28f5e2dbc6c5326cf8db914cd75444f6d"
+      },
+      "manifestSha256": "f0da3d7ca8fe42577d14945ad1fbaad32b5b42e81614cd6ed58fc3470e617721",
+      "judgementStreamSha256": "da8b444f349d3e60e1164afb3a8802c2e1bb577a03d46900d32c41ac16a0f03b",
+      "commandFileSha256": "8a95c2bb51fea38ea83889b65ba7738326edf4cb8acac2927b6ba07a100ca1e5",
+      "inputHashes": {
+        "input-record.json": "2200fa7b1e776aa0d26ebc0ca719ae7e1d8f568532ed1bcb248f4c072cbb00be",
+        "schedule.json": "586a878571d40117a9e353cdcf511de067c484b88c579c0c038631cf109bee89"
+      }
+    },
+    {
+      "caseId": "mt-e2d-factors-variable",
+      "frames": 488,
+      "steps": [
+        8,
+        33,
+        16,
+        17,
+        31,
+        9
+      ],
+      "realtimeBaseSeconds": 1234.5678,
+      "factorIntervals": [
+        {
+          "startMs": 3540,
+          "endMs": 3600,
+          "phase": "beforeUpdate"
+        },
+        {
+          "startMs": 4720,
+          "endMs": 4800,
+          "phase": "beforeUpdate"
+        },
+        {
+          "startMs": 5860,
+          "endMs": 5910,
+          "phase": "beforeUpdate"
+        },
+        {
+          "startMs": 7000,
+          "endMs": 7040,
+          "phase": "beforeUpdate"
+        }
+      ],
+      "factorCalls": [
+        {
+          "action": "add",
+          "clockMs": 3542,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "ownerId": 0,
+          "phase": "beforeUpdate",
+          "timeMs": 3540
+        },
+        {
+          "action": "disable",
+          "clockMs": 3608,
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "phase": "beforeUpdate",
+          "timeMs": 3600
+        },
+        {
+          "action": "add",
+          "clockMs": 4731,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor1",
+          "nativeFactorId": 2,
+          "ownerId": 1,
+          "phase": "beforeUpdate",
+          "timeMs": 4720
+        },
+        {
+          "action": "disable",
+          "clockMs": 4829,
+          "key": "factor1",
+          "nativeFactorId": 2,
+          "phase": "beforeUpdate",
+          "timeMs": 4800
+        },
+        {
+          "action": "add",
+          "clockMs": 5871,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor2",
+          "nativeFactorId": 3,
+          "ownerId": 2,
+          "phase": "beforeUpdate",
+          "timeMs": 5860
+        },
+        {
+          "action": "disable",
+          "clockMs": 5919,
+          "key": "factor2",
+          "nativeFactorId": 3,
+          "phase": "beforeUpdate",
+          "timeMs": 5910
+        },
+        {
+          "action": "add",
+          "clockMs": 7011,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor3",
+          "nativeFactorId": 4,
+          "ownerId": 3,
+          "phase": "beforeUpdate",
+          "timeMs": 7000
+        },
+        {
+          "action": "disable",
+          "clockMs": 7059,
+          "key": "factor3",
+          "nativeFactorId": 4,
+          "phase": "beforeUpdate",
+          "timeMs": 7040
+        }
+      ],
+      "finalScore": 7165,
+      "taps": [
+        {
+          "noteId": 1,
+          "nominalMs": 2352,
+          "touchMs": 2332,
+          "offsetMs": -20,
+          "judgedFrameMs": 2337,
+          "grade": 5,
+          "commandTimeMs": 2352,
+          "commandFrame": 59,
+          "addedScore": 796
+        },
+        {
+          "noteId": 2,
+          "nominalMs": 3529,
+          "touchMs": 3549,
+          "offsetMs": 20,
+          "judgedFrameMs": 3575,
+          "grade": 5,
+          "commandTimeMs": 3529,
+          "commandFrame": 89,
+          "addedScore": 796
+        },
+        {
+          "noteId": 3,
+          "nominalMs": 4705,
+          "touchMs": 4725,
+          "offsetMs": 20,
+          "judgedFrameMs": 4731,
+          "grade": 5,
+          "commandTimeMs": 4705,
+          "commandFrame": 118,
+          "addedScore": 796
+        },
+        {
+          "noteId": 4,
+          "nominalMs": 5882,
+          "touchMs": 5842,
+          "offsetMs": -40,
+          "judgedFrameMs": 5855,
+          "grade": 5,
+          "commandTimeMs": 5882,
+          "commandFrame": 148,
+          "addedScore": 1593
+        },
+        {
+          "noteId": 5,
+          "nominalMs": 7058,
+          "touchMs": 7018,
+          "offsetMs": -40,
+          "judgedFrameMs": 7028,
+          "grade": 5,
+          "commandTimeMs": 7058,
+          "commandFrame": 177,
+          "addedScore": 796
+        },
+        {
+          "noteId": 6,
+          "nominalMs": 7647,
+          "touchMs": 7627,
+          "offsetMs": -20,
+          "judgedFrameMs": 7629,
+          "grade": 5,
+          "commandTimeMs": 7647,
+          "commandFrame": 192,
+          "addedScore": 796
+        },
+        {
+          "noteId": 7,
+          "nominalMs": 8235,
+          "touchMs": 8215,
+          "offsetMs": -20,
+          "judgedFrameMs": 8216,
+          "grade": 5,
+          "commandTimeMs": 8235,
+          "commandFrame": 206,
+          "addedScore": 796
+        },
+        {
+          "noteId": 8,
+          "nominalMs": 8823,
+          "touchMs": 8803,
+          "offsetMs": -20,
+          "judgedFrameMs": 8819,
+          "grade": 5,
+          "commandTimeMs": 8823,
+          "commandFrame": 221,
+          "addedScore": 796
+        }
+      ],
+      "skillEvents": [],
+      "nativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+      "sourceSha256": {
+        "bound_pilot.py": "16ca03692208a0c8f6b79bb37adf84ad8d47fa3b9c649bd3a1af92519a606171",
+        "libc.py": "225f35a0b8afe391f369ff4514f540d6a8cd2f7a74d8c9e6b01f1772a32b57f8",
+        "local_factory_pilot.py": "87cfe323078522c23de2932bf9ee74686e210d53b58bc63048445b30a72fa0ba",
+        "make_physical_replay_pilot.py": "cf4c15fc584bf6c01bd4300cb6a4ad4ab7e7143cb1bcf89b90126433f934e22b",
+        "mrt.py": "672b593f0238b07cc0ce8b747517ad9e0e09e36864a7dcbca9b345d0aaddf19f",
+        "native_observe.py": "40a398e89ba8377b00e4e8b17bca2757f1624fec518ca968745300149fe95835",
+        "nemu.py": "2549fc23b83ef6d0512ee6f997b9f79c085c7edf6656fe963b7f1bf430c10358",
+        "physical_replay_pilot.py": "06b695dab96e63a732d98e76ae8e96c3556f973ca3dd0eb47cb70e6560c7b2e3",
+        "unity.py": "dae39e72fe10658ad51176cbcfdde8d28f5e2dbc6c5326cf8db914cd75444f6d"
+      },
+      "manifestSha256": "97a1802eca0e64bf2c817669e4bce9555a6e3c01cc66bfae5dc996c0449c7718",
+      "judgementStreamSha256": "b51c548f6a6ed90791e9b28dd3f527481c6f7c926d31f11462087b7f366f95ea",
+      "commandFileSha256": "8a95c2bb51fea38ea83889b65ba7738326edf4cb8acac2927b6ba07a100ca1e5",
+      "inputHashes": {
+        "input-record.json": "2200fa7b1e776aa0d26ebc0ca719ae7e1d8f568532ed1bcb248f4c072cbb00be",
+        "schedule.json": "503c27c208ff5d970d54bdd70e26096a647d3841047b2b512e368a9a58b56614"
+      }
+    },
+    {
+      "caseId": "mt-e2e-start4719",
+      "frames": 579,
+      "steps": [
+        16
+      ],
+      "realtimeBaseSeconds": 37.0003,
+      "factorIntervals": [
+        {
+          "startMs": 4719,
+          "endMs": 4800,
+          "phase": "beforeUpdate"
+        }
+      ],
+      "factorCalls": [
+        {
+          "action": "add",
+          "clockMs": 4720,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "ownerId": 0,
+          "phase": "beforeUpdate",
+          "timeMs": 4719
+        },
+        {
+          "action": "disable",
+          "clockMs": 4800,
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "phase": "beforeUpdate",
+          "timeMs": 4800
+        }
+      ],
+      "finalScore": 6368,
+      "taps": [
+        {
+          "noteId": 1,
+          "nominalMs": 2352,
+          "touchMs": 2332,
+          "offsetMs": -20,
+          "judgedFrameMs": 2336,
+          "grade": 5,
+          "commandTimeMs": 2352,
+          "commandFrame": 59,
+          "addedScore": 796
+        },
+        {
+          "noteId": 2,
+          "nominalMs": 3529,
+          "touchMs": 3509,
+          "offsetMs": -20,
+          "judgedFrameMs": 3520,
+          "grade": 5,
+          "commandTimeMs": 3529,
+          "commandFrame": 89,
+          "addedScore": 796
+        },
+        {
+          "noteId": 3,
+          "nominalMs": 4705,
+          "touchMs": 4685,
+          "offsetMs": -20,
+          "judgedFrameMs": 4688,
+          "grade": 5,
+          "commandTimeMs": 4705,
+          "commandFrame": 118,
+          "addedScore": 796
+        },
+        {
+          "noteId": 4,
+          "nominalMs": 5882,
+          "touchMs": 5862,
+          "offsetMs": -20,
+          "judgedFrameMs": 5872,
+          "grade": 5,
+          "commandTimeMs": 5882,
+          "commandFrame": 148,
+          "addedScore": 796
+        },
+        {
+          "noteId": 5,
+          "nominalMs": 7058,
+          "touchMs": 7038,
+          "offsetMs": -20,
+          "judgedFrameMs": 7040,
+          "grade": 5,
+          "commandTimeMs": 7058,
+          "commandFrame": 177,
+          "addedScore": 796
+        },
+        {
+          "noteId": 6,
+          "nominalMs": 7647,
+          "touchMs": 7627,
+          "offsetMs": -20,
+          "judgedFrameMs": 7632,
+          "grade": 5,
+          "commandTimeMs": 7647,
+          "commandFrame": 192,
+          "addedScore": 796
+        },
+        {
+          "noteId": 7,
+          "nominalMs": 8235,
+          "touchMs": 8215,
+          "offsetMs": -20,
+          "judgedFrameMs": 8224,
+          "grade": 5,
+          "commandTimeMs": 8235,
+          "commandFrame": 206,
+          "addedScore": 796
+        },
+        {
+          "noteId": 8,
+          "nominalMs": 8823,
+          "touchMs": 8803,
+          "offsetMs": -20,
+          "judgedFrameMs": 8816,
+          "grade": 5,
+          "commandTimeMs": 8823,
+          "commandFrame": 221,
+          "addedScore": 796
+        }
+      ],
+      "skillEvents": [],
+      "nativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+      "sourceSha256": {
+        "bound_pilot.py": "16ca03692208a0c8f6b79bb37adf84ad8d47fa3b9c649bd3a1af92519a606171",
+        "libc.py": "225f35a0b8afe391f369ff4514f540d6a8cd2f7a74d8c9e6b01f1772a32b57f8",
+        "local_factory_pilot.py": "87cfe323078522c23de2932bf9ee74686e210d53b58bc63048445b30a72fa0ba",
+        "make_physical_replay_pilot.py": "cf4c15fc584bf6c01bd4300cb6a4ad4ab7e7143cb1bcf89b90126433f934e22b",
+        "mrt.py": "672b593f0238b07cc0ce8b747517ad9e0e09e36864a7dcbca9b345d0aaddf19f",
+        "native_observe.py": "40a398e89ba8377b00e4e8b17bca2757f1624fec518ca968745300149fe95835",
+        "nemu.py": "2549fc23b83ef6d0512ee6f997b9f79c085c7edf6656fe963b7f1bf430c10358",
+        "physical_replay_pilot.py": "06b695dab96e63a732d98e76ae8e96c3556f973ca3dd0eb47cb70e6560c7b2e3",
+        "unity.py": "dae39e72fe10658ad51176cbcfdde8d28f5e2dbc6c5326cf8db914cd75444f6d"
+      },
+      "manifestSha256": "acb58d74b691da3b3a423b6a9484d913af24c764c2e62133e8c5d5913279bcb6",
+      "judgementStreamSha256": "6d9a27b5396d58da8726d9381a394c39f7a6496acba3a538a384f056bcfe83fa",
+      "commandFileSha256": "d2925e22ac597b48808183de24e67bd4ed9ff81f983bdc7c0d8c1d9888d24981",
+      "inputHashes": {
+        "input-record.json": "462300479575a7474ba91e5f63040483acd0b174c3edad2fc4994516bc59dfd1",
+        "schedule.json": "93d037796edb0019fa6e6f6ce9071982fc96ebb5df65e55ba6c426eed97e4877"
+      }
+    },
+    {
+      "caseId": "mt-e2f-start4721",
+      "frames": 579,
+      "steps": [
+        16
+      ],
+      "realtimeBaseSeconds": 37.0003,
+      "factorIntervals": [
+        {
+          "startMs": 4721,
+          "endMs": 4800,
+          "phase": "beforeUpdate"
+        }
+      ],
+      "factorCalls": [
+        {
+          "action": "add",
+          "clockMs": 4736,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "ownerId": 0,
+          "phase": "beforeUpdate",
+          "timeMs": 4721
+        },
+        {
+          "action": "disable",
+          "clockMs": 4800,
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "phase": "beforeUpdate",
+          "timeMs": 4800
+        }
+      ],
+      "finalScore": 6368,
+      "taps": [
+        {
+          "noteId": 1,
+          "nominalMs": 2352,
+          "touchMs": 2332,
+          "offsetMs": -20,
+          "judgedFrameMs": 2336,
+          "grade": 5,
+          "commandTimeMs": 2352,
+          "commandFrame": 59,
+          "addedScore": 796
+        },
+        {
+          "noteId": 2,
+          "nominalMs": 3529,
+          "touchMs": 3509,
+          "offsetMs": -20,
+          "judgedFrameMs": 3520,
+          "grade": 5,
+          "commandTimeMs": 3529,
+          "commandFrame": 89,
+          "addedScore": 796
+        },
+        {
+          "noteId": 3,
+          "nominalMs": 4705,
+          "touchMs": 4685,
+          "offsetMs": -20,
+          "judgedFrameMs": 4688,
+          "grade": 5,
+          "commandTimeMs": 4705,
+          "commandFrame": 118,
+          "addedScore": 796
+        },
+        {
+          "noteId": 4,
+          "nominalMs": 5882,
+          "touchMs": 5862,
+          "offsetMs": -20,
+          "judgedFrameMs": 5872,
+          "grade": 5,
+          "commandTimeMs": 5882,
+          "commandFrame": 148,
+          "addedScore": 796
+        },
+        {
+          "noteId": 5,
+          "nominalMs": 7058,
+          "touchMs": 7038,
+          "offsetMs": -20,
+          "judgedFrameMs": 7040,
+          "grade": 5,
+          "commandTimeMs": 7058,
+          "commandFrame": 177,
+          "addedScore": 796
+        },
+        {
+          "noteId": 6,
+          "nominalMs": 7647,
+          "touchMs": 7627,
+          "offsetMs": -20,
+          "judgedFrameMs": 7632,
+          "grade": 5,
+          "commandTimeMs": 7647,
+          "commandFrame": 192,
+          "addedScore": 796
+        },
+        {
+          "noteId": 7,
+          "nominalMs": 8235,
+          "touchMs": 8215,
+          "offsetMs": -20,
+          "judgedFrameMs": 8224,
+          "grade": 5,
+          "commandTimeMs": 8235,
+          "commandFrame": 206,
+          "addedScore": 796
+        },
+        {
+          "noteId": 8,
+          "nominalMs": 8823,
+          "touchMs": 8803,
+          "offsetMs": -20,
+          "judgedFrameMs": 8816,
+          "grade": 5,
+          "commandTimeMs": 8823,
+          "commandFrame": 221,
+          "addedScore": 796
+        }
+      ],
+      "skillEvents": [],
+      "nativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+      "sourceSha256": {
+        "bound_pilot.py": "16ca03692208a0c8f6b79bb37adf84ad8d47fa3b9c649bd3a1af92519a606171",
+        "libc.py": "225f35a0b8afe391f369ff4514f540d6a8cd2f7a74d8c9e6b01f1772a32b57f8",
+        "local_factory_pilot.py": "87cfe323078522c23de2932bf9ee74686e210d53b58bc63048445b30a72fa0ba",
+        "make_physical_replay_pilot.py": "cf4c15fc584bf6c01bd4300cb6a4ad4ab7e7143cb1bcf89b90126433f934e22b",
+        "mrt.py": "672b593f0238b07cc0ce8b747517ad9e0e09e36864a7dcbca9b345d0aaddf19f",
+        "native_observe.py": "40a398e89ba8377b00e4e8b17bca2757f1624fec518ca968745300149fe95835",
+        "nemu.py": "2549fc23b83ef6d0512ee6f997b9f79c085c7edf6656fe963b7f1bf430c10358",
+        "physical_replay_pilot.py": "06b695dab96e63a732d98e76ae8e96c3556f973ca3dd0eb47cb70e6560c7b2e3",
+        "unity.py": "dae39e72fe10658ad51176cbcfdde8d28f5e2dbc6c5326cf8db914cd75444f6d"
+      },
+      "manifestSha256": "8cf4e5ec6433310b89d04d4651bd7da2a75b54ac8e75a8bd829f5959d3204cf5",
+      "judgementStreamSha256": "6d9a27b5396d58da8726d9381a394c39f7a6496acba3a538a384f056bcfe83fa",
+      "commandFileSha256": "d2925e22ac597b48808183de24e67bd4ed9ff81f983bdc7c0d8c1d9888d24981",
+      "inputHashes": {
+        "input-record.json": "462300479575a7474ba91e5f63040483acd0b174c3edad2fc4994516bc59dfd1",
+        "schedule.json": "24c9516eee02ccbea8e2597bde56b0f8d390e1959b5c3c1157e628d20410cc58"
+      }
+    },
+    {
+      "caseId": "mt-e2g-after-update",
+      "frames": 579,
+      "steps": [
+        16
+      ],
+      "realtimeBaseSeconds": 37.0003,
+      "factorIntervals": [
+        {
+          "startMs": 3540,
+          "endMs": 3600,
+          "phase": "afterUpdate"
+        },
+        {
+          "startMs": 4720,
+          "endMs": 4800,
+          "phase": "afterUpdate"
+        },
+        {
+          "startMs": 5860,
+          "endMs": 5910,
+          "phase": "afterUpdate"
+        },
+        {
+          "startMs": 7000,
+          "endMs": 7040,
+          "phase": "afterUpdate"
+        }
+      ],
+      "factorCalls": [
+        {
+          "action": "add",
+          "clockMs": 3552,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "ownerId": 0,
+          "phase": "afterUpdate",
+          "timeMs": 3540
+        },
+        {
+          "action": "disable",
+          "clockMs": 3600,
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "phase": "afterUpdate",
+          "timeMs": 3600
+        },
+        {
+          "action": "add",
+          "clockMs": 4720,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor1",
+          "nativeFactorId": 2,
+          "ownerId": 1,
+          "phase": "afterUpdate",
+          "timeMs": 4720
+        },
+        {
+          "action": "disable",
+          "clockMs": 4800,
+          "key": "factor1",
+          "nativeFactorId": 2,
+          "phase": "afterUpdate",
+          "timeMs": 4800
+        },
+        {
+          "action": "add",
+          "clockMs": 5872,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor2",
+          "nativeFactorId": 3,
+          "ownerId": 2,
+          "phase": "afterUpdate",
+          "timeMs": 5860
+        },
+        {
+          "action": "disable",
+          "clockMs": 5920,
+          "key": "factor2",
+          "nativeFactorId": 3,
+          "phase": "afterUpdate",
+          "timeMs": 5910
+        },
+        {
+          "action": "add",
+          "clockMs": 7008,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor3",
+          "nativeFactorId": 4,
+          "ownerId": 3,
+          "phase": "afterUpdate",
+          "timeMs": 7000
+        },
+        {
+          "action": "disable",
+          "clockMs": 7040,
+          "key": "factor3",
+          "nativeFactorId": 4,
+          "phase": "afterUpdate",
+          "timeMs": 7040
+        }
+      ],
+      "finalScore": 7165,
+      "taps": [
+        {
+          "noteId": 1,
+          "nominalMs": 2352,
+          "touchMs": 2332,
+          "offsetMs": -20,
+          "judgedFrameMs": 2336,
+          "grade": 5,
+          "commandTimeMs": 2352,
+          "commandFrame": 59,
+          "addedScore": 796
+        },
+        {
+          "noteId": 2,
+          "nominalMs": 3529,
+          "touchMs": 3549,
+          "offsetMs": 20,
+          "judgedFrameMs": 3552,
+          "grade": 5,
+          "commandTimeMs": 3529,
+          "commandFrame": 89,
+          "addedScore": 796
+        },
+        {
+          "noteId": 3,
+          "nominalMs": 4705,
+          "touchMs": 4725,
+          "offsetMs": 20,
+          "judgedFrameMs": 4736,
+          "grade": 5,
+          "commandTimeMs": 4705,
+          "commandFrame": 118,
+          "addedScore": 796
+        },
+        {
+          "noteId": 4,
+          "nominalMs": 5882,
+          "touchMs": 5842,
+          "offsetMs": -40,
+          "judgedFrameMs": 5856,
+          "grade": 5,
+          "commandTimeMs": 5882,
+          "commandFrame": 148,
+          "addedScore": 1593
+        },
+        {
+          "noteId": 5,
+          "nominalMs": 7058,
+          "touchMs": 7018,
+          "offsetMs": -40,
+          "judgedFrameMs": 7024,
+          "grade": 5,
+          "commandTimeMs": 7058,
+          "commandFrame": 177,
+          "addedScore": 796
+        },
+        {
+          "noteId": 6,
+          "nominalMs": 7647,
+          "touchMs": 7627,
+          "offsetMs": -20,
+          "judgedFrameMs": 7632,
+          "grade": 5,
+          "commandTimeMs": 7647,
+          "commandFrame": 192,
+          "addedScore": 796
+        },
+        {
+          "noteId": 7,
+          "nominalMs": 8235,
+          "touchMs": 8215,
+          "offsetMs": -20,
+          "judgedFrameMs": 8224,
+          "grade": 5,
+          "commandTimeMs": 8235,
+          "commandFrame": 206,
+          "addedScore": 796
+        },
+        {
+          "noteId": 8,
+          "nominalMs": 8823,
+          "touchMs": 8803,
+          "offsetMs": -20,
+          "judgedFrameMs": 8816,
+          "grade": 5,
+          "commandTimeMs": 8823,
+          "commandFrame": 221,
+          "addedScore": 796
+        }
+      ],
+      "skillEvents": [],
+      "nativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+      "sourceSha256": {
+        "bound_pilot.py": "16ca03692208a0c8f6b79bb37adf84ad8d47fa3b9c649bd3a1af92519a606171",
+        "libc.py": "225f35a0b8afe391f369ff4514f540d6a8cd2f7a74d8c9e6b01f1772a32b57f8",
+        "local_factory_pilot.py": "87cfe323078522c23de2932bf9ee74686e210d53b58bc63048445b30a72fa0ba",
+        "make_physical_replay_pilot.py": "467a3779e4d397f43bee8acc6a4bc6bcc7cface8511489c729f4bd0d59aebc26",
+        "mrt.py": "672b593f0238b07cc0ce8b747517ad9e0e09e36864a7dcbca9b345d0aaddf19f",
+        "native_observe.py": "40a398e89ba8377b00e4e8b17bca2757f1624fec518ca968745300149fe95835",
+        "nemu.py": "2549fc23b83ef6d0512ee6f997b9f79c085c7edf6656fe963b7f1bf430c10358",
+        "physical_replay_pilot.py": "f564dcdcfeda0a617ea1b5981a0cc39246b88452462fd878e5c49efb23ca50e8",
+        "unity.py": "dae39e72fe10658ad51176cbcfdde8d28f5e2dbc6c5326cf8db914cd75444f6d"
+      },
+      "manifestSha256": "0fd7cc644d33ebf6cb33732241d8514347eae7112156950b1d04a2e88ffb8ecd",
+      "judgementStreamSha256": "da8b444f349d3e60e1164afb3a8802c2e1bb577a03d46900d32c41ac16a0f03b",
+      "commandFileSha256": "8a95c2bb51fea38ea83889b65ba7738326edf4cb8acac2927b6ba07a100ca1e5",
+      "inputHashes": {
+        "input-record.json": "2200fa7b1e776aa0d26ebc0ca719ae7e1d8f568532ed1bcb248f4c072cbb00be",
+        "schedule.json": "f5446b7fd717a4c15e1c460c1f88f32cf3ede034cb9de3e2d0cd4fc7e7aa8e24"
+      }
+    },
+    {
+      "caseId": "mt-e2h-end5919",
+      "frames": 579,
+      "steps": [
+        16
+      ],
+      "realtimeBaseSeconds": 37.0003,
+      "factorIntervals": [
+        {
+          "startMs": 5860,
+          "endMs": 5919,
+          "phase": "beforeUpdate"
+        }
+      ],
+      "factorCalls": [
+        {
+          "action": "add",
+          "clockMs": 5872,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "ownerId": 0,
+          "phase": "beforeUpdate",
+          "timeMs": 5860
+        },
+        {
+          "action": "disable",
+          "clockMs": 5920,
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "phase": "beforeUpdate",
+          "timeMs": 5919
+        }
+      ],
+      "finalScore": 7165,
+      "taps": [
+        {
+          "noteId": 1,
+          "nominalMs": 2352,
+          "touchMs": 2332,
+          "offsetMs": -20,
+          "judgedFrameMs": 2336,
+          "grade": 5,
+          "commandTimeMs": 2352,
+          "commandFrame": 59,
+          "addedScore": 796
+        },
+        {
+          "noteId": 2,
+          "nominalMs": 3529,
+          "touchMs": 3549,
+          "offsetMs": 20,
+          "judgedFrameMs": 3552,
+          "grade": 5,
+          "commandTimeMs": 3529,
+          "commandFrame": 89,
+          "addedScore": 796
+        },
+        {
+          "noteId": 3,
+          "nominalMs": 4705,
+          "touchMs": 4725,
+          "offsetMs": 20,
+          "judgedFrameMs": 4736,
+          "grade": 5,
+          "commandTimeMs": 4705,
+          "commandFrame": 118,
+          "addedScore": 796
+        },
+        {
+          "noteId": 4,
+          "nominalMs": 5882,
+          "touchMs": 5842,
+          "offsetMs": -40,
+          "judgedFrameMs": 5856,
+          "grade": 5,
+          "commandTimeMs": 5882,
+          "commandFrame": 148,
+          "addedScore": 1593
+        },
+        {
+          "noteId": 5,
+          "nominalMs": 7058,
+          "touchMs": 7018,
+          "offsetMs": -40,
+          "judgedFrameMs": 7024,
+          "grade": 5,
+          "commandTimeMs": 7058,
+          "commandFrame": 177,
+          "addedScore": 796
+        },
+        {
+          "noteId": 6,
+          "nominalMs": 7647,
+          "touchMs": 7627,
+          "offsetMs": -20,
+          "judgedFrameMs": 7632,
+          "grade": 5,
+          "commandTimeMs": 7647,
+          "commandFrame": 192,
+          "addedScore": 796
+        },
+        {
+          "noteId": 7,
+          "nominalMs": 8235,
+          "touchMs": 8215,
+          "offsetMs": -20,
+          "judgedFrameMs": 8224,
+          "grade": 5,
+          "commandTimeMs": 8235,
+          "commandFrame": 206,
+          "addedScore": 796
+        },
+        {
+          "noteId": 8,
+          "nominalMs": 8823,
+          "touchMs": 8803,
+          "offsetMs": -20,
+          "judgedFrameMs": 8816,
+          "grade": 5,
+          "commandTimeMs": 8823,
+          "commandFrame": 221,
+          "addedScore": 796
+        }
+      ],
+      "skillEvents": [],
+      "nativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+      "sourceSha256": {
+        "bound_pilot.py": "16ca03692208a0c8f6b79bb37adf84ad8d47fa3b9c649bd3a1af92519a606171",
+        "libc.py": "225f35a0b8afe391f369ff4514f540d6a8cd2f7a74d8c9e6b01f1772a32b57f8",
+        "local_factory_pilot.py": "87cfe323078522c23de2932bf9ee74686e210d53b58bc63048445b30a72fa0ba",
+        "make_physical_replay_pilot.py": "467a3779e4d397f43bee8acc6a4bc6bcc7cface8511489c729f4bd0d59aebc26",
+        "mrt.py": "672b593f0238b07cc0ce8b747517ad9e0e09e36864a7dcbca9b345d0aaddf19f",
+        "native_observe.py": "40a398e89ba8377b00e4e8b17bca2757f1624fec518ca968745300149fe95835",
+        "nemu.py": "2549fc23b83ef6d0512ee6f997b9f79c085c7edf6656fe963b7f1bf430c10358",
+        "physical_replay_pilot.py": "f564dcdcfeda0a617ea1b5981a0cc39246b88452462fd878e5c49efb23ca50e8",
+        "unity.py": "dae39e72fe10658ad51176cbcfdde8d28f5e2dbc6c5326cf8db914cd75444f6d"
+      },
+      "manifestSha256": "05a3107fe6cbed16e254c6bb9c53c46cc8c3f6915164f56b346737808cde46cd",
+      "judgementStreamSha256": "da8b444f349d3e60e1164afb3a8802c2e1bb577a03d46900d32c41ac16a0f03b",
+      "commandFileSha256": "8a95c2bb51fea38ea83889b65ba7738326edf4cb8acac2927b6ba07a100ca1e5",
+      "inputHashes": {
+        "input-record.json": "2200fa7b1e776aa0d26ebc0ca719ae7e1d8f568532ed1bcb248f4c072cbb00be",
+        "schedule.json": "cb85fa3a91516ae2c5b954ff2201d3dfc1290e6f57f24fc45e8d4bb4d006373d"
+      }
+    },
+    {
+      "caseId": "mt-e2i-end5920",
+      "frames": 579,
+      "steps": [
+        16
+      ],
+      "realtimeBaseSeconds": 37.0003,
+      "factorIntervals": [
+        {
+          "startMs": 5860,
+          "endMs": 5920,
+          "phase": "beforeUpdate"
+        }
+      ],
+      "factorCalls": [
+        {
+          "action": "add",
+          "clockMs": 5872,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "ownerId": 0,
+          "phase": "beforeUpdate",
+          "timeMs": 5860
+        },
+        {
+          "action": "disable",
+          "clockMs": 5920,
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "phase": "beforeUpdate",
+          "timeMs": 5920
+        }
+      ],
+      "finalScore": 7165,
+      "taps": [
+        {
+          "noteId": 1,
+          "nominalMs": 2352,
+          "touchMs": 2332,
+          "offsetMs": -20,
+          "judgedFrameMs": 2336,
+          "grade": 5,
+          "commandTimeMs": 2352,
+          "commandFrame": 59,
+          "addedScore": 796
+        },
+        {
+          "noteId": 2,
+          "nominalMs": 3529,
+          "touchMs": 3549,
+          "offsetMs": 20,
+          "judgedFrameMs": 3552,
+          "grade": 5,
+          "commandTimeMs": 3529,
+          "commandFrame": 89,
+          "addedScore": 796
+        },
+        {
+          "noteId": 3,
+          "nominalMs": 4705,
+          "touchMs": 4725,
+          "offsetMs": 20,
+          "judgedFrameMs": 4736,
+          "grade": 5,
+          "commandTimeMs": 4705,
+          "commandFrame": 118,
+          "addedScore": 796
+        },
+        {
+          "noteId": 4,
+          "nominalMs": 5882,
+          "touchMs": 5842,
+          "offsetMs": -40,
+          "judgedFrameMs": 5856,
+          "grade": 5,
+          "commandTimeMs": 5882,
+          "commandFrame": 148,
+          "addedScore": 1593
+        },
+        {
+          "noteId": 5,
+          "nominalMs": 7058,
+          "touchMs": 7018,
+          "offsetMs": -40,
+          "judgedFrameMs": 7024,
+          "grade": 5,
+          "commandTimeMs": 7058,
+          "commandFrame": 177,
+          "addedScore": 796
+        },
+        {
+          "noteId": 6,
+          "nominalMs": 7647,
+          "touchMs": 7627,
+          "offsetMs": -20,
+          "judgedFrameMs": 7632,
+          "grade": 5,
+          "commandTimeMs": 7647,
+          "commandFrame": 192,
+          "addedScore": 796
+        },
+        {
+          "noteId": 7,
+          "nominalMs": 8235,
+          "touchMs": 8215,
+          "offsetMs": -20,
+          "judgedFrameMs": 8224,
+          "grade": 5,
+          "commandTimeMs": 8235,
+          "commandFrame": 206,
+          "addedScore": 796
+        },
+        {
+          "noteId": 8,
+          "nominalMs": 8823,
+          "touchMs": 8803,
+          "offsetMs": -20,
+          "judgedFrameMs": 8816,
+          "grade": 5,
+          "commandTimeMs": 8823,
+          "commandFrame": 221,
+          "addedScore": 796
+        }
+      ],
+      "skillEvents": [],
+      "nativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+      "sourceSha256": {
+        "bound_pilot.py": "16ca03692208a0c8f6b79bb37adf84ad8d47fa3b9c649bd3a1af92519a606171",
+        "libc.py": "225f35a0b8afe391f369ff4514f540d6a8cd2f7a74d8c9e6b01f1772a32b57f8",
+        "local_factory_pilot.py": "87cfe323078522c23de2932bf9ee74686e210d53b58bc63048445b30a72fa0ba",
+        "make_physical_replay_pilot.py": "467a3779e4d397f43bee8acc6a4bc6bcc7cface8511489c729f4bd0d59aebc26",
+        "mrt.py": "672b593f0238b07cc0ce8b747517ad9e0e09e36864a7dcbca9b345d0aaddf19f",
+        "native_observe.py": "40a398e89ba8377b00e4e8b17bca2757f1624fec518ca968745300149fe95835",
+        "nemu.py": "2549fc23b83ef6d0512ee6f997b9f79c085c7edf6656fe963b7f1bf430c10358",
+        "physical_replay_pilot.py": "f564dcdcfeda0a617ea1b5981a0cc39246b88452462fd878e5c49efb23ca50e8",
+        "unity.py": "dae39e72fe10658ad51176cbcfdde8d28f5e2dbc6c5326cf8db914cd75444f6d"
+      },
+      "manifestSha256": "acee95ab0db377820201266a15b250bc39a212bfa43262fe9a9f47fd0a23c64a",
+      "judgementStreamSha256": "da8b444f349d3e60e1164afb3a8802c2e1bb577a03d46900d32c41ac16a0f03b",
+      "commandFileSha256": "8a95c2bb51fea38ea83889b65ba7738326edf4cb8acac2927b6ba07a100ca1e5",
+      "inputHashes": {
+        "input-record.json": "2200fa7b1e776aa0d26ebc0ca719ae7e1d8f568532ed1bcb248f4c072cbb00be",
+        "schedule.json": "7f0006c910fa39780bfedd4a969b5b4ecbb0e6ba1aaae90f4df4a1e0f030830b"
+      }
+    },
+    {
+      "caseId": "mt-e2j-end5921",
+      "frames": 579,
+      "steps": [
+        16
+      ],
+      "realtimeBaseSeconds": 37.0003,
+      "factorIntervals": [
+        {
+          "startMs": 5860,
+          "endMs": 5921,
+          "phase": "beforeUpdate"
+        }
+      ],
+      "factorCalls": [
+        {
+          "action": "add",
+          "clockMs": 5872,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "ownerId": 0,
+          "phase": "beforeUpdate",
+          "timeMs": 5860
+        },
+        {
+          "action": "disable",
+          "clockMs": 5936,
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "phase": "beforeUpdate",
+          "timeMs": 5921
+        }
+      ],
+      "finalScore": 7165,
+      "taps": [
+        {
+          "noteId": 1,
+          "nominalMs": 2352,
+          "touchMs": 2332,
+          "offsetMs": -20,
+          "judgedFrameMs": 2336,
+          "grade": 5,
+          "commandTimeMs": 2352,
+          "commandFrame": 59,
+          "addedScore": 796
+        },
+        {
+          "noteId": 2,
+          "nominalMs": 3529,
+          "touchMs": 3549,
+          "offsetMs": 20,
+          "judgedFrameMs": 3552,
+          "grade": 5,
+          "commandTimeMs": 3529,
+          "commandFrame": 89,
+          "addedScore": 796
+        },
+        {
+          "noteId": 3,
+          "nominalMs": 4705,
+          "touchMs": 4725,
+          "offsetMs": 20,
+          "judgedFrameMs": 4736,
+          "grade": 5,
+          "commandTimeMs": 4705,
+          "commandFrame": 118,
+          "addedScore": 796
+        },
+        {
+          "noteId": 4,
+          "nominalMs": 5882,
+          "touchMs": 5842,
+          "offsetMs": -40,
+          "judgedFrameMs": 5856,
+          "grade": 5,
+          "commandTimeMs": 5882,
+          "commandFrame": 148,
+          "addedScore": 1593
+        },
+        {
+          "noteId": 5,
+          "nominalMs": 7058,
+          "touchMs": 7018,
+          "offsetMs": -40,
+          "judgedFrameMs": 7024,
+          "grade": 5,
+          "commandTimeMs": 7058,
+          "commandFrame": 177,
+          "addedScore": 796
+        },
+        {
+          "noteId": 6,
+          "nominalMs": 7647,
+          "touchMs": 7627,
+          "offsetMs": -20,
+          "judgedFrameMs": 7632,
+          "grade": 5,
+          "commandTimeMs": 7647,
+          "commandFrame": 192,
+          "addedScore": 796
+        },
+        {
+          "noteId": 7,
+          "nominalMs": 8235,
+          "touchMs": 8215,
+          "offsetMs": -20,
+          "judgedFrameMs": 8224,
+          "grade": 5,
+          "commandTimeMs": 8235,
+          "commandFrame": 206,
+          "addedScore": 796
+        },
+        {
+          "noteId": 8,
+          "nominalMs": 8823,
+          "touchMs": 8803,
+          "offsetMs": -20,
+          "judgedFrameMs": 8816,
+          "grade": 5,
+          "commandTimeMs": 8823,
+          "commandFrame": 221,
+          "addedScore": 796
+        }
+      ],
+      "skillEvents": [],
+      "nativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+      "sourceSha256": {
+        "bound_pilot.py": "16ca03692208a0c8f6b79bb37adf84ad8d47fa3b9c649bd3a1af92519a606171",
+        "libc.py": "225f35a0b8afe391f369ff4514f540d6a8cd2f7a74d8c9e6b01f1772a32b57f8",
+        "local_factory_pilot.py": "87cfe323078522c23de2932bf9ee74686e210d53b58bc63048445b30a72fa0ba",
+        "make_physical_replay_pilot.py": "467a3779e4d397f43bee8acc6a4bc6bcc7cface8511489c729f4bd0d59aebc26",
+        "mrt.py": "672b593f0238b07cc0ce8b747517ad9e0e09e36864a7dcbca9b345d0aaddf19f",
+        "native_observe.py": "40a398e89ba8377b00e4e8b17bca2757f1624fec518ca968745300149fe95835",
+        "nemu.py": "2549fc23b83ef6d0512ee6f997b9f79c085c7edf6656fe963b7f1bf430c10358",
+        "physical_replay_pilot.py": "f564dcdcfeda0a617ea1b5981a0cc39246b88452462fd878e5c49efb23ca50e8",
+        "unity.py": "dae39e72fe10658ad51176cbcfdde8d28f5e2dbc6c5326cf8db914cd75444f6d"
+      },
+      "manifestSha256": "2ad506e9dbd1d7799390ddecb2b23056bbde8ead153cbe14ef1f5ed17a2b15b3",
+      "judgementStreamSha256": "da8b444f349d3e60e1164afb3a8802c2e1bb577a03d46900d32c41ac16a0f03b",
+      "commandFileSha256": "8a95c2bb51fea38ea83889b65ba7738326edf4cb8acac2927b6ba07a100ca1e5",
+      "inputHashes": {
+        "input-record.json": "2200fa7b1e776aa0d26ebc0ca719ae7e1d8f568532ed1bcb248f4c072cbb00be",
+        "schedule.json": "43a67e682f16cdb8dec3b56017a5be432bf70aa306956dad2a40c996ff38ce67"
+      }
+    },
+    {
+      "caseId": "mt-e2k-end-touch-cross",
+      "frames": 579,
+      "steps": [
+        16
+      ],
+      "realtimeBaseSeconds": 37.0003,
+      "factorIntervals": [
+        {
+          "startMs": 3540,
+          "endMs": 3600,
+          "phase": "beforeUpdate"
+        },
+        {
+          "startMs": 4720,
+          "endMs": 4800,
+          "phase": "beforeUpdate"
+        },
+        {
+          "startMs": 5860,
+          "endMs": 5910,
+          "phase": "beforeUpdate"
+        },
+        {
+          "startMs": 7000,
+          "endMs": 7040,
+          "phase": "beforeUpdate"
+        }
+      ],
+      "factorCalls": [
+        {
+          "action": "add",
+          "clockMs": 3552,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "ownerId": 0,
+          "phase": "beforeUpdate",
+          "timeMs": 3540
+        },
+        {
+          "action": "disable",
+          "clockMs": 3600,
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "phase": "beforeUpdate",
+          "timeMs": 3600
+        },
+        {
+          "action": "add",
+          "clockMs": 4720,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor1",
+          "nativeFactorId": 2,
+          "ownerId": 1,
+          "phase": "beforeUpdate",
+          "timeMs": 4720
+        },
+        {
+          "action": "disable",
+          "clockMs": 4800,
+          "key": "factor1",
+          "nativeFactorId": 2,
+          "phase": "beforeUpdate",
+          "timeMs": 4800
+        },
+        {
+          "action": "add",
+          "clockMs": 5872,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor2",
+          "nativeFactorId": 3,
+          "ownerId": 2,
+          "phase": "beforeUpdate",
+          "timeMs": 5860
+        },
+        {
+          "action": "disable",
+          "clockMs": 5920,
+          "key": "factor2",
+          "nativeFactorId": 3,
+          "phase": "beforeUpdate",
+          "timeMs": 5910
+        },
+        {
+          "action": "add",
+          "clockMs": 7008,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor3",
+          "nativeFactorId": 4,
+          "ownerId": 3,
+          "phase": "beforeUpdate",
+          "timeMs": 7000
+        },
+        {
+          "action": "disable",
+          "clockMs": 7040,
+          "key": "factor3",
+          "nativeFactorId": 4,
+          "phase": "beforeUpdate",
+          "timeMs": 7040
+        }
+      ],
+      "finalScore": 7165,
+      "taps": [
+        {
+          "noteId": 1,
+          "nominalMs": 2352,
+          "touchMs": 2332,
+          "offsetMs": -20,
+          "judgedFrameMs": 2336,
+          "grade": 5,
+          "commandTimeMs": 2352,
+          "commandFrame": 59,
+          "addedScore": 796
+        },
+        {
+          "noteId": 2,
+          "nominalMs": 3529,
+          "touchMs": 3549,
+          "offsetMs": 20,
+          "judgedFrameMs": 3552,
+          "grade": 5,
+          "commandTimeMs": 3529,
+          "commandFrame": 89,
+          "addedScore": 796
+        },
+        {
+          "noteId": 3,
+          "nominalMs": 4705,
+          "touchMs": 4725,
+          "offsetMs": 20,
+          "judgedFrameMs": 4736,
+          "grade": 5,
+          "commandTimeMs": 4705,
+          "commandFrame": 118,
+          "addedScore": 796
+        },
+        {
+          "noteId": 4,
+          "nominalMs": 5882,
+          "touchMs": 5842,
+          "offsetMs": -40,
+          "judgedFrameMs": 5856,
+          "grade": 5,
+          "commandTimeMs": 5882,
+          "commandFrame": 148,
+          "addedScore": 1593
+        },
+        {
+          "noteId": 5,
+          "nominalMs": 7058,
+          "touchMs": 7078,
+          "offsetMs": 20,
+          "judgedFrameMs": 7088,
+          "grade": 5,
+          "commandTimeMs": 7058,
+          "commandFrame": 177,
+          "addedScore": 796
+        },
+        {
+          "noteId": 6,
+          "nominalMs": 7647,
+          "touchMs": 7627,
+          "offsetMs": -20,
+          "judgedFrameMs": 7632,
+          "grade": 5,
+          "commandTimeMs": 7647,
+          "commandFrame": 192,
+          "addedScore": 796
+        },
+        {
+          "noteId": 7,
+          "nominalMs": 8235,
+          "touchMs": 8215,
+          "offsetMs": -20,
+          "judgedFrameMs": 8224,
+          "grade": 5,
+          "commandTimeMs": 8235,
+          "commandFrame": 206,
+          "addedScore": 796
+        },
+        {
+          "noteId": 8,
+          "nominalMs": 8823,
+          "touchMs": 8803,
+          "offsetMs": -20,
+          "judgedFrameMs": 8816,
+          "grade": 5,
+          "commandTimeMs": 8823,
+          "commandFrame": 221,
+          "addedScore": 796
+        }
+      ],
+      "skillEvents": [],
+      "nativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+      "sourceSha256": {
+        "bound_pilot.py": "16ca03692208a0c8f6b79bb37adf84ad8d47fa3b9c649bd3a1af92519a606171",
+        "libc.py": "225f35a0b8afe391f369ff4514f540d6a8cd2f7a74d8c9e6b01f1772a32b57f8",
+        "local_factory_pilot.py": "87cfe323078522c23de2932bf9ee74686e210d53b58bc63048445b30a72fa0ba",
+        "make_physical_replay_pilot.py": "467a3779e4d397f43bee8acc6a4bc6bcc7cface8511489c729f4bd0d59aebc26",
+        "mrt.py": "672b593f0238b07cc0ce8b747517ad9e0e09e36864a7dcbca9b345d0aaddf19f",
+        "native_observe.py": "40a398e89ba8377b00e4e8b17bca2757f1624fec518ca968745300149fe95835",
+        "nemu.py": "2549fc23b83ef6d0512ee6f997b9f79c085c7edf6656fe963b7f1bf430c10358",
+        "physical_replay_pilot.py": "f564dcdcfeda0a617ea1b5981a0cc39246b88452462fd878e5c49efb23ca50e8",
+        "unity.py": "dae39e72fe10658ad51176cbcfdde8d28f5e2dbc6c5326cf8db914cd75444f6d"
+      },
+      "manifestSha256": "bbd0afd7c80e7bdf7fa932b6f31177ddd21214601298614a40097c3cbda19be0",
+      "judgementStreamSha256": "d78ce0ef6c52808b2c099d32e1214da090a4f5275a84ea24c407614c12dec97d",
+      "commandFileSha256": "8a95c2bb51fea38ea83889b65ba7738326edf4cb8acac2927b6ba07a100ca1e5",
+      "inputHashes": {
+        "input-record.json": "592124afcdde69a15c49130adb4cbafb1b52292a7870c4863e60c07331f61e56",
+        "schedule.json": "90f21496a21dddb31e7501e8dd8e2c78de729982700eea32c9b371ac4dd40821"
+      }
+    },
+    {
+      "caseId": "mt-e2l-exact-boundaries",
+      "frames": 579,
+      "steps": [
+        16
+      ],
+      "realtimeBaseSeconds": 37.0003,
+      "factorIntervals": [
+        {
+          "startMs": 4704,
+          "endMs": 4800,
+          "phase": "beforeUpdate"
+        },
+        {
+          "startMs": 5800,
+          "endMs": 5881,
+          "phase": "beforeUpdate"
+        }
+      ],
+      "factorCalls": [
+        {
+          "action": "add",
+          "clockMs": 4704,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "ownerId": 0,
+          "phase": "beforeUpdate",
+          "timeMs": 4704
+        },
+        {
+          "action": "disable",
+          "clockMs": 4800,
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "phase": "beforeUpdate",
+          "timeMs": 4800
+        },
+        {
+          "action": "add",
+          "clockMs": 5808,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor1",
+          "nativeFactorId": 2,
+          "ownerId": 1,
+          "phase": "beforeUpdate",
+          "timeMs": 5800
+        },
+        {
+          "action": "disable",
+          "clockMs": 5888,
+          "key": "factor1",
+          "nativeFactorId": 2,
+          "phase": "beforeUpdate",
+          "timeMs": 5881
+        }
+      ],
+      "finalScore": 7165,
+      "taps": [
+        {
+          "noteId": 1,
+          "nominalMs": 2352,
+          "touchMs": 2332,
+          "offsetMs": -20,
+          "judgedFrameMs": 2336,
+          "grade": 5,
+          "commandTimeMs": 2352,
+          "commandFrame": 59,
+          "addedScore": 796
+        },
+        {
+          "noteId": 2,
+          "nominalMs": 3529,
+          "touchMs": 3509,
+          "offsetMs": -20,
+          "judgedFrameMs": 3520,
+          "grade": 5,
+          "commandTimeMs": 3529,
+          "commandFrame": 89,
+          "addedScore": 796
+        },
+        {
+          "noteId": 3,
+          "nominalMs": 4705,
+          "touchMs": 4685,
+          "offsetMs": -20,
+          "judgedFrameMs": 4688,
+          "grade": 5,
+          "commandTimeMs": 4705,
+          "commandFrame": 118,
+          "addedScore": 1593
+        },
+        {
+          "noteId": 4,
+          "nominalMs": 5882,
+          "touchMs": 5862,
+          "offsetMs": -20,
+          "judgedFrameMs": 5872,
+          "grade": 5,
+          "commandTimeMs": 5882,
+          "commandFrame": 148,
+          "addedScore": 796
+        },
+        {
+          "noteId": 5,
+          "nominalMs": 7058,
+          "touchMs": 7038,
+          "offsetMs": -20,
+          "judgedFrameMs": 7040,
+          "grade": 5,
+          "commandTimeMs": 7058,
+          "commandFrame": 177,
+          "addedScore": 796
+        },
+        {
+          "noteId": 6,
+          "nominalMs": 7647,
+          "touchMs": 7627,
+          "offsetMs": -20,
+          "judgedFrameMs": 7632,
+          "grade": 5,
+          "commandTimeMs": 7647,
+          "commandFrame": 192,
+          "addedScore": 796
+        },
+        {
+          "noteId": 7,
+          "nominalMs": 8235,
+          "touchMs": 8215,
+          "offsetMs": -20,
+          "judgedFrameMs": 8224,
+          "grade": 5,
+          "commandTimeMs": 8235,
+          "commandFrame": 206,
+          "addedScore": 796
+        },
+        {
+          "noteId": 8,
+          "nominalMs": 8823,
+          "touchMs": 8803,
+          "offsetMs": -20,
+          "judgedFrameMs": 8816,
+          "grade": 5,
+          "commandTimeMs": 8823,
+          "commandFrame": 221,
+          "addedScore": 796
+        }
+      ],
+      "skillEvents": [],
+      "nativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+      "sourceSha256": {
+        "bound_pilot.py": "16ca03692208a0c8f6b79bb37adf84ad8d47fa3b9c649bd3a1af92519a606171",
+        "libc.py": "225f35a0b8afe391f369ff4514f540d6a8cd2f7a74d8c9e6b01f1772a32b57f8",
+        "local_factory_pilot.py": "87cfe323078522c23de2932bf9ee74686e210d53b58bc63048445b30a72fa0ba",
+        "make_physical_replay_pilot.py": "467a3779e4d397f43bee8acc6a4bc6bcc7cface8511489c729f4bd0d59aebc26",
+        "mrt.py": "672b593f0238b07cc0ce8b747517ad9e0e09e36864a7dcbca9b345d0aaddf19f",
+        "native_observe.py": "40a398e89ba8377b00e4e8b17bca2757f1624fec518ca968745300149fe95835",
+        "nemu.py": "2549fc23b83ef6d0512ee6f997b9f79c085c7edf6656fe963b7f1bf430c10358",
+        "physical_replay_pilot.py": "f564dcdcfeda0a617ea1b5981a0cc39246b88452462fd878e5c49efb23ca50e8",
+        "unity.py": "dae39e72fe10658ad51176cbcfdde8d28f5e2dbc6c5326cf8db914cd75444f6d"
+      },
+      "manifestSha256": "07da68425f3e505428e099edbc5fc016298a4dcabd2c68854bf56dc440ff5e6c",
+      "judgementStreamSha256": "7ec05a22b40eebf3d90c769c317014d3a1b014443d41177097e477b8ffd1ad9a",
+      "commandFileSha256": "7843ee66ab94ba1fb86c2ec85d505ceb35c6a08519c8b6fb545eef89991686e3",
+      "inputHashes": {
+        "input-record.json": "462300479575a7474ba91e5f63040483acd0b174c3edad2fc4994516bc59dfd1",
+        "schedule.json": "c80643ef422b89b8fe0efab1287bce321ad6d9a605d9901c791d10ca06cad08b"
+      }
+    },
+    {
+      "caseId": "mt-e2m-exact-boundaries",
+      "frames": 579,
+      "steps": [
+        16
+      ],
+      "realtimeBaseSeconds": 37.0003,
+      "factorIntervals": [
+        {
+          "startMs": 4705,
+          "endMs": 4800,
+          "phase": "beforeUpdate"
+        },
+        {
+          "startMs": 5800,
+          "endMs": 5882,
+          "phase": "beforeUpdate"
+        }
+      ],
+      "factorCalls": [
+        {
+          "action": "add",
+          "clockMs": 4720,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "ownerId": 0,
+          "phase": "beforeUpdate",
+          "timeMs": 4705
+        },
+        {
+          "action": "disable",
+          "clockMs": 4800,
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "phase": "beforeUpdate",
+          "timeMs": 4800
+        },
+        {
+          "action": "add",
+          "clockMs": 5808,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor1",
+          "nativeFactorId": 2,
+          "ownerId": 1,
+          "phase": "beforeUpdate",
+          "timeMs": 5800
+        },
+        {
+          "action": "disable",
+          "clockMs": 5888,
+          "key": "factor1",
+          "nativeFactorId": 2,
+          "phase": "beforeUpdate",
+          "timeMs": 5882
+        }
+      ],
+      "finalScore": 7165,
+      "taps": [
+        {
+          "noteId": 1,
+          "nominalMs": 2352,
+          "touchMs": 2332,
+          "offsetMs": -20,
+          "judgedFrameMs": 2336,
+          "grade": 5,
+          "commandTimeMs": 2352,
+          "commandFrame": 59,
+          "addedScore": 796
+        },
+        {
+          "noteId": 2,
+          "nominalMs": 3529,
+          "touchMs": 3509,
+          "offsetMs": -20,
+          "judgedFrameMs": 3520,
+          "grade": 5,
+          "commandTimeMs": 3529,
+          "commandFrame": 89,
+          "addedScore": 796
+        },
+        {
+          "noteId": 3,
+          "nominalMs": 4705,
+          "touchMs": 4685,
+          "offsetMs": -20,
+          "judgedFrameMs": 4688,
+          "grade": 5,
+          "commandTimeMs": 4705,
+          "commandFrame": 118,
+          "addedScore": 1593
+        },
+        {
+          "noteId": 4,
+          "nominalMs": 5882,
+          "touchMs": 5862,
+          "offsetMs": -20,
+          "judgedFrameMs": 5872,
+          "grade": 5,
+          "commandTimeMs": 5882,
+          "commandFrame": 148,
+          "addedScore": 796
+        },
+        {
+          "noteId": 5,
+          "nominalMs": 7058,
+          "touchMs": 7038,
+          "offsetMs": -20,
+          "judgedFrameMs": 7040,
+          "grade": 5,
+          "commandTimeMs": 7058,
+          "commandFrame": 177,
+          "addedScore": 796
+        },
+        {
+          "noteId": 6,
+          "nominalMs": 7647,
+          "touchMs": 7627,
+          "offsetMs": -20,
+          "judgedFrameMs": 7632,
+          "grade": 5,
+          "commandTimeMs": 7647,
+          "commandFrame": 192,
+          "addedScore": 796
+        },
+        {
+          "noteId": 7,
+          "nominalMs": 8235,
+          "touchMs": 8215,
+          "offsetMs": -20,
+          "judgedFrameMs": 8224,
+          "grade": 5,
+          "commandTimeMs": 8235,
+          "commandFrame": 206,
+          "addedScore": 796
+        },
+        {
+          "noteId": 8,
+          "nominalMs": 8823,
+          "touchMs": 8803,
+          "offsetMs": -20,
+          "judgedFrameMs": 8816,
+          "grade": 5,
+          "commandTimeMs": 8823,
+          "commandFrame": 221,
+          "addedScore": 796
+        }
+      ],
+      "skillEvents": [],
+      "nativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+      "sourceSha256": {
+        "bound_pilot.py": "16ca03692208a0c8f6b79bb37adf84ad8d47fa3b9c649bd3a1af92519a606171",
+        "libc.py": "225f35a0b8afe391f369ff4514f540d6a8cd2f7a74d8c9e6b01f1772a32b57f8",
+        "local_factory_pilot.py": "87cfe323078522c23de2932bf9ee74686e210d53b58bc63048445b30a72fa0ba",
+        "make_physical_replay_pilot.py": "467a3779e4d397f43bee8acc6a4bc6bcc7cface8511489c729f4bd0d59aebc26",
+        "mrt.py": "672b593f0238b07cc0ce8b747517ad9e0e09e36864a7dcbca9b345d0aaddf19f",
+        "native_observe.py": "40a398e89ba8377b00e4e8b17bca2757f1624fec518ca968745300149fe95835",
+        "nemu.py": "2549fc23b83ef6d0512ee6f997b9f79c085c7edf6656fe963b7f1bf430c10358",
+        "physical_replay_pilot.py": "f564dcdcfeda0a617ea1b5981a0cc39246b88452462fd878e5c49efb23ca50e8",
+        "unity.py": "dae39e72fe10658ad51176cbcfdde8d28f5e2dbc6c5326cf8db914cd75444f6d"
+      },
+      "manifestSha256": "48e844fa8f735075e8c13cdfff6736a1ebd9811245db3c6df97ae8628db93e59",
+      "judgementStreamSha256": "1771d136bb66b089920f3be7335896a52651749398617a7c6ae6260b9bd38318",
+      "commandFileSha256": "7843ee66ab94ba1fb86c2ec85d505ceb35c6a08519c8b6fb545eef89991686e3",
+      "inputHashes": {
+        "input-record.json": "462300479575a7474ba91e5f63040483acd0b174c3edad2fc4994516bc59dfd1",
+        "schedule.json": "20e1fa12f1334c6a48ef2283fe1d14bc6130de676ffe11a5031306dd6e4bb2f6"
+      }
+    },
+    {
+      "caseId": "mt-e2n-exact-boundaries",
+      "frames": 579,
+      "steps": [
+        16
+      ],
+      "realtimeBaseSeconds": 37.0003,
+      "factorIntervals": [
+        {
+          "startMs": 4706,
+          "endMs": 4800,
+          "phase": "beforeUpdate"
+        },
+        {
+          "startMs": 5800,
+          "endMs": 5883,
+          "phase": "beforeUpdate"
+        }
+      ],
+      "factorCalls": [
+        {
+          "action": "add",
+          "clockMs": 4720,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "ownerId": 0,
+          "phase": "beforeUpdate",
+          "timeMs": 4706
+        },
+        {
+          "action": "disable",
+          "clockMs": 4800,
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "phase": "beforeUpdate",
+          "timeMs": 4800
+        },
+        {
+          "action": "add",
+          "clockMs": 5808,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor1",
+          "nativeFactorId": 2,
+          "ownerId": 1,
+          "phase": "beforeUpdate",
+          "timeMs": 5800
+        },
+        {
+          "action": "disable",
+          "clockMs": 5888,
+          "key": "factor1",
+          "nativeFactorId": 2,
+          "phase": "beforeUpdate",
+          "timeMs": 5883
+        }
+      ],
+      "finalScore": 7165,
+      "taps": [
+        {
+          "noteId": 1,
+          "nominalMs": 2352,
+          "touchMs": 2332,
+          "offsetMs": -20,
+          "judgedFrameMs": 2336,
+          "grade": 5,
+          "commandTimeMs": 2352,
+          "commandFrame": 59,
+          "addedScore": 796
+        },
+        {
+          "noteId": 2,
+          "nominalMs": 3529,
+          "touchMs": 3509,
+          "offsetMs": -20,
+          "judgedFrameMs": 3520,
+          "grade": 5,
+          "commandTimeMs": 3529,
+          "commandFrame": 89,
+          "addedScore": 796
+        },
+        {
+          "noteId": 3,
+          "nominalMs": 4705,
+          "touchMs": 4685,
+          "offsetMs": -20,
+          "judgedFrameMs": 4688,
+          "grade": 5,
+          "commandTimeMs": 4705,
+          "commandFrame": 118,
+          "addedScore": 796
+        },
+        {
+          "noteId": 4,
+          "nominalMs": 5882,
+          "touchMs": 5862,
+          "offsetMs": -20,
+          "judgedFrameMs": 5872,
+          "grade": 5,
+          "commandTimeMs": 5882,
+          "commandFrame": 148,
+          "addedScore": 1593
+        },
+        {
+          "noteId": 5,
+          "nominalMs": 7058,
+          "touchMs": 7038,
+          "offsetMs": -20,
+          "judgedFrameMs": 7040,
+          "grade": 5,
+          "commandTimeMs": 7058,
+          "commandFrame": 177,
+          "addedScore": 796
+        },
+        {
+          "noteId": 6,
+          "nominalMs": 7647,
+          "touchMs": 7627,
+          "offsetMs": -20,
+          "judgedFrameMs": 7632,
+          "grade": 5,
+          "commandTimeMs": 7647,
+          "commandFrame": 192,
+          "addedScore": 796
+        },
+        {
+          "noteId": 7,
+          "nominalMs": 8235,
+          "touchMs": 8215,
+          "offsetMs": -20,
+          "judgedFrameMs": 8224,
+          "grade": 5,
+          "commandTimeMs": 8235,
+          "commandFrame": 206,
+          "addedScore": 796
+        },
+        {
+          "noteId": 8,
+          "nominalMs": 8823,
+          "touchMs": 8803,
+          "offsetMs": -20,
+          "judgedFrameMs": 8816,
+          "grade": 5,
+          "commandTimeMs": 8823,
+          "commandFrame": 221,
+          "addedScore": 796
+        }
+      ],
+      "skillEvents": [],
+      "nativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+      "sourceSha256": {
+        "bound_pilot.py": "16ca03692208a0c8f6b79bb37adf84ad8d47fa3b9c649bd3a1af92519a606171",
+        "libc.py": "225f35a0b8afe391f369ff4514f540d6a8cd2f7a74d8c9e6b01f1772a32b57f8",
+        "local_factory_pilot.py": "87cfe323078522c23de2932bf9ee74686e210d53b58bc63048445b30a72fa0ba",
+        "make_physical_replay_pilot.py": "467a3779e4d397f43bee8acc6a4bc6bcc7cface8511489c729f4bd0d59aebc26",
+        "mrt.py": "672b593f0238b07cc0ce8b747517ad9e0e09e36864a7dcbca9b345d0aaddf19f",
+        "native_observe.py": "40a398e89ba8377b00e4e8b17bca2757f1624fec518ca968745300149fe95835",
+        "nemu.py": "2549fc23b83ef6d0512ee6f997b9f79c085c7edf6656fe963b7f1bf430c10358",
+        "physical_replay_pilot.py": "f564dcdcfeda0a617ea1b5981a0cc39246b88452462fd878e5c49efb23ca50e8",
+        "unity.py": "dae39e72fe10658ad51176cbcfdde8d28f5e2dbc6c5326cf8db914cd75444f6d"
+      },
+      "manifestSha256": "8180094cdfa495d87f4250419da7621575c0b0f069eb2a52afdc2ed62ebbd92d",
+      "judgementStreamSha256": "c4f9b25f77e477dcb6c1eb03780923958cffac2057a3dd224dc8edb773f53ef6",
+      "commandFileSha256": "8a95c2bb51fea38ea83889b65ba7738326edf4cb8acac2927b6ba07a100ca1e5",
+      "inputHashes": {
+        "input-record.json": "462300479575a7474ba91e5f63040483acd0b174c3edad2fc4994516bc59dfd1",
+        "schedule.json": "dac8adf509afe6fad120404b3967c5209ca7396d548dc853f917b630867e663c"
+      }
+    },
+    {
+      "caseId": "mt-e2o-exact-late",
+      "frames": 579,
+      "steps": [
+        16
+      ],
+      "realtimeBaseSeconds": 37.0003,
+      "factorIntervals": [
+        {
+          "startMs": 4705,
+          "endMs": 4800,
+          "phase": "beforeUpdate"
+        },
+        {
+          "startMs": 5800,
+          "endMs": 5882,
+          "phase": "beforeUpdate"
+        }
+      ],
+      "factorCalls": [
+        {
+          "action": "add",
+          "clockMs": 4720,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "ownerId": 0,
+          "phase": "beforeUpdate",
+          "timeMs": 4705
+        },
+        {
+          "action": "disable",
+          "clockMs": 4800,
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "phase": "beforeUpdate",
+          "timeMs": 4800
+        },
+        {
+          "action": "add",
+          "clockMs": 5808,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor1",
+          "nativeFactorId": 2,
+          "ownerId": 1,
+          "phase": "beforeUpdate",
+          "timeMs": 5800
+        },
+        {
+          "action": "disable",
+          "clockMs": 5888,
+          "key": "factor1",
+          "nativeFactorId": 2,
+          "phase": "beforeUpdate",
+          "timeMs": 5882
+        }
+      ],
+      "finalScore": 7165,
+      "taps": [
+        {
+          "noteId": 1,
+          "nominalMs": 2352,
+          "touchMs": 2332,
+          "offsetMs": -20,
+          "judgedFrameMs": 2336,
+          "grade": 5,
+          "commandTimeMs": 2352,
+          "commandFrame": 59,
+          "addedScore": 796
+        },
+        {
+          "noteId": 2,
+          "nominalMs": 3529,
+          "touchMs": 3509,
+          "offsetMs": -20,
+          "judgedFrameMs": 3520,
+          "grade": 5,
+          "commandTimeMs": 3529,
+          "commandFrame": 89,
+          "addedScore": 796
+        },
+        {
+          "noteId": 3,
+          "nominalMs": 4705,
+          "touchMs": 4725,
+          "offsetMs": 20,
+          "judgedFrameMs": 4736,
+          "grade": 5,
+          "commandTimeMs": 4705,
+          "commandFrame": 118,
+          "addedScore": 1593
+        },
+        {
+          "noteId": 4,
+          "nominalMs": 5882,
+          "touchMs": 5902,
+          "offsetMs": 20,
+          "judgedFrameMs": 5904,
+          "grade": 5,
+          "commandTimeMs": 5882,
+          "commandFrame": 148,
+          "addedScore": 796
+        },
+        {
+          "noteId": 5,
+          "nominalMs": 7058,
+          "touchMs": 7038,
+          "offsetMs": -20,
+          "judgedFrameMs": 7040,
+          "grade": 5,
+          "commandTimeMs": 7058,
+          "commandFrame": 177,
+          "addedScore": 796
+        },
+        {
+          "noteId": 6,
+          "nominalMs": 7647,
+          "touchMs": 7627,
+          "offsetMs": -20,
+          "judgedFrameMs": 7632,
+          "grade": 5,
+          "commandTimeMs": 7647,
+          "commandFrame": 192,
+          "addedScore": 796
+        },
+        {
+          "noteId": 7,
+          "nominalMs": 8235,
+          "touchMs": 8215,
+          "offsetMs": -20,
+          "judgedFrameMs": 8224,
+          "grade": 5,
+          "commandTimeMs": 8235,
+          "commandFrame": 206,
+          "addedScore": 796
+        },
+        {
+          "noteId": 8,
+          "nominalMs": 8823,
+          "touchMs": 8803,
+          "offsetMs": -20,
+          "judgedFrameMs": 8816,
+          "grade": 5,
+          "commandTimeMs": 8823,
+          "commandFrame": 221,
+          "addedScore": 796
+        }
+      ],
+      "skillEvents": [],
+      "nativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+      "sourceSha256": {
+        "bound_pilot.py": "16ca03692208a0c8f6b79bb37adf84ad8d47fa3b9c649bd3a1af92519a606171",
+        "libc.py": "225f35a0b8afe391f369ff4514f540d6a8cd2f7a74d8c9e6b01f1772a32b57f8",
+        "local_factory_pilot.py": "87cfe323078522c23de2932bf9ee74686e210d53b58bc63048445b30a72fa0ba",
+        "make_physical_replay_pilot.py": "467a3779e4d397f43bee8acc6a4bc6bcc7cface8511489c729f4bd0d59aebc26",
+        "mrt.py": "672b593f0238b07cc0ce8b747517ad9e0e09e36864a7dcbca9b345d0aaddf19f",
+        "native_observe.py": "40a398e89ba8377b00e4e8b17bca2757f1624fec518ca968745300149fe95835",
+        "nemu.py": "2549fc23b83ef6d0512ee6f997b9f79c085c7edf6656fe963b7f1bf430c10358",
+        "physical_replay_pilot.py": "f564dcdcfeda0a617ea1b5981a0cc39246b88452462fd878e5c49efb23ca50e8",
+        "unity.py": "dae39e72fe10658ad51176cbcfdde8d28f5e2dbc6c5326cf8db914cd75444f6d"
+      },
+      "manifestSha256": "31c2b48a90ebb8031a852896eabed41c6d033c1aa5874a49dc826cd58df348cb",
+      "judgementStreamSha256": "42f709b76dd16f0a3c98f1193853d0a75db83af03764f06a360d05e11dd4ff55",
+      "commandFileSha256": "7843ee66ab94ba1fb86c2ec85d505ceb35c6a08519c8b6fb545eef89991686e3",
+      "inputHashes": {
+        "input-record.json": "5ac274b74ea052b9d3868bae5e92ddea6ac0fe4028c07c140250c448c381dbf9",
+        "schedule.json": "f2f0c1fe8d5f20c0358f8544ef9b22054b176ee0887e8c5a4bd78b2913a70a43"
+      }
+    },
+    {
+      "caseId": "mt-e2p-sacrifice-perfect",
+      "frames": 579,
+      "steps": [
+        16
+      ],
+      "realtimeBaseSeconds": 37.0003,
+      "factorIntervals": [
+        {
+          "startMs": 3540,
+          "endMs": 3600,
+          "phase": "beforeUpdate"
+        },
+        {
+          "startMs": 4720,
+          "endMs": 4800,
+          "phase": "beforeUpdate"
+        },
+        {
+          "startMs": 5860,
+          "endMs": 5910,
+          "phase": "beforeUpdate"
+        },
+        {
+          "startMs": 7000,
+          "endMs": 7040,
+          "phase": "beforeUpdate"
+        }
+      ],
+      "factorCalls": [
+        {
+          "action": "add",
+          "clockMs": 3552,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "ownerId": 0,
+          "phase": "beforeUpdate",
+          "timeMs": 3540
+        },
+        {
+          "action": "disable",
+          "clockMs": 3600,
+          "key": "factor0",
+          "nativeFactorId": 1,
+          "phase": "beforeUpdate",
+          "timeMs": 3600
+        },
+        {
+          "action": "add",
+          "clockMs": 4720,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor1",
+          "nativeFactorId": 2,
+          "ownerId": 1,
+          "phase": "beforeUpdate",
+          "timeMs": 4720
+        },
+        {
+          "action": "disable",
+          "clockMs": 4800,
+          "key": "factor1",
+          "nativeFactorId": 2,
+          "phase": "beforeUpdate",
+          "timeMs": 4800
+        },
+        {
+          "action": "add",
+          "clockMs": 5872,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor2",
+          "nativeFactorId": 3,
+          "ownerId": 2,
+          "phase": "beforeUpdate",
+          "timeMs": 5860
+        },
+        {
+          "action": "disable",
+          "clockMs": 5920,
+          "key": "factor2",
+          "nativeFactorId": 3,
+          "phase": "beforeUpdate",
+          "timeMs": 5910
+        },
+        {
+          "action": "add",
+          "clockMs": 7008,
+          "factorF32Bits": "0x3f800000",
+          "key": "factor3",
+          "nativeFactorId": 4,
+          "ownerId": 3,
+          "phase": "beforeUpdate",
+          "timeMs": 7000
+        },
+        {
+          "action": "disable",
+          "clockMs": 7040,
+          "key": "factor3",
+          "nativeFactorId": 4,
+          "phase": "beforeUpdate",
+          "timeMs": 7040
+        }
+      ],
+      "finalScore": 7006,
+      "taps": [
+        {
+          "noteId": 1,
+          "nominalMs": 2352,
+          "touchMs": 2332,
+          "offsetMs": -20,
+          "judgedFrameMs": 2336,
+          "grade": 5,
+          "commandTimeMs": 2352,
+          "commandFrame": 59,
+          "addedScore": 796
+        },
+        {
+          "noteId": 2,
+          "nominalMs": 3529,
+          "touchMs": 3580,
+          "offsetMs": 51,
+          "judgedFrameMs": 3584,
+          "grade": 4,
+          "commandTimeMs": 3529,
+          "commandFrame": 89,
+          "addedScore": 637
+        },
+        {
+          "noteId": 3,
+          "nominalMs": 4705,
+          "touchMs": 4725,
+          "offsetMs": 20,
+          "judgedFrameMs": 4736,
+          "grade": 5,
+          "commandTimeMs": 4705,
+          "commandFrame": 118,
+          "addedScore": 796
+        },
+        {
+          "noteId": 4,
+          "nominalMs": 5882,
+          "touchMs": 5842,
+          "offsetMs": -40,
+          "judgedFrameMs": 5856,
+          "grade": 5,
+          "commandTimeMs": 5882,
+          "commandFrame": 148,
+          "addedScore": 1593
+        },
+        {
+          "noteId": 5,
+          "nominalMs": 7058,
+          "touchMs": 7018,
+          "offsetMs": -40,
+          "judgedFrameMs": 7024,
+          "grade": 5,
+          "commandTimeMs": 7058,
+          "commandFrame": 177,
+          "addedScore": 796
+        },
+        {
+          "noteId": 6,
+          "nominalMs": 7647,
+          "touchMs": 7627,
+          "offsetMs": -20,
+          "judgedFrameMs": 7632,
+          "grade": 5,
+          "commandTimeMs": 7647,
+          "commandFrame": 192,
+          "addedScore": 796
+        },
+        {
+          "noteId": 7,
+          "nominalMs": 8235,
+          "touchMs": 8215,
+          "offsetMs": -20,
+          "judgedFrameMs": 8224,
+          "grade": 5,
+          "commandTimeMs": 8235,
+          "commandFrame": 206,
+          "addedScore": 796
+        },
+        {
+          "noteId": 8,
+          "nominalMs": 8823,
+          "touchMs": 8803,
+          "offsetMs": -20,
+          "judgedFrameMs": 8816,
+          "grade": 5,
+          "commandTimeMs": 8823,
+          "commandFrame": 221,
+          "addedScore": 796
+        }
+      ],
+      "skillEvents": [],
+      "nativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+      "sourceSha256": {
+        "bound_pilot.py": "16ca03692208a0c8f6b79bb37adf84ad8d47fa3b9c649bd3a1af92519a606171",
+        "libc.py": "225f35a0b8afe391f369ff4514f540d6a8cd2f7a74d8c9e6b01f1772a32b57f8",
+        "local_factory_pilot.py": "87cfe323078522c23de2932bf9ee74686e210d53b58bc63048445b30a72fa0ba",
+        "make_physical_replay_pilot.py": "467a3779e4d397f43bee8acc6a4bc6bcc7cface8511489c729f4bd0d59aebc26",
+        "mrt.py": "672b593f0238b07cc0ce8b747517ad9e0e09e36864a7dcbca9b345d0aaddf19f",
+        "native_observe.py": "40a398e89ba8377b00e4e8b17bca2757f1624fec518ca968745300149fe95835",
+        "nemu.py": "2549fc23b83ef6d0512ee6f997b9f79c085c7edf6656fe963b7f1bf430c10358",
+        "physical_replay_pilot.py": "f564dcdcfeda0a617ea1b5981a0cc39246b88452462fd878e5c49efb23ca50e8",
+        "unity.py": "dae39e72fe10658ad51176cbcfdde8d28f5e2dbc6c5326cf8db914cd75444f6d"
+      },
+      "manifestSha256": "51fb1623f00f0e19b8afae4d84d97137070a95f16f15b6f5218fd3ab4715b610",
+      "judgementStreamSha256": "b91588a3f6a9f620e12123bfcea18b48ae7223033cdf25cf971a5f12f291fa76",
+      "commandFileSha256": "248605eb99fc7a5dec93d93d25293c676ef6092682b32cd8ac1f0892bf74c8d9",
+      "inputHashes": {
+        "input-record.json": "9d1e6f9359fdbf95375df1749ebbddd85eb2c21908518ae266f83c57427656da",
+        "schedule.json": "d0f571bdc46b7590581a6c5cd902ef32b6709e3868b05289febb1f70abe097e5"
+      }
+    }
+  ],
+  "failedAttempts": [
+    {
+      "caseId": "mt-e1-probe",
+      "error": "field Index not in FTLiveSimulator.SkillExecuteEvent",
+      "manifestSha256": "3998ce4433faace3cd7bba21e7ae4fb803711e42200bf319b8665d4f79d50ca9"
+    }
+  ],
+  "comparisons": [
+    {
+      "left": "mt-e2b-factors-early",
+      "right": "mt-e2c-factors-crossing",
+      "allCommandPrimitiveBitsAndBucketOrderEqual": true
+    },
+    {
+      "left": "mt-e2b-factors-early",
+      "right": "mt-e2d-factors-variable",
+      "allCommandPrimitiveBitsAndBucketOrderEqual": true
+    },
+    {
+      "left": "mt-e2b-factors-early",
+      "right": "mt-e2g-after-update",
+      "allCommandPrimitiveBitsAndBucketOrderEqual": true
+    },
+    {
+      "left": "mt-e2b-factors-early",
+      "right": "mt-e2k-end-touch-cross",
+      "allCommandPrimitiveBitsAndBucketOrderEqual": true
+    },
+    {
+      "left": "mt-e2m-exact-boundaries",
+      "right": "mt-e2o-exact-late",
+      "allCommandPrimitiveBitsAndBucketOrderEqual": true
+    }
+  ],
+  "qualification": "E1 original native skill event generation, E2 original factor API mechanism isolation with QA replay input; no full NativeSkillContext certification",
+  "nativeIdentity": {
+    "version": "JP 1.0.4 / 10053",
+    "binarySha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+    "archiveSha256": "e2b65ee37378695ea6b050a7a59d75534e4de316e6ce7a868127eba87667cfe8",
+    "scriptSha256": "42ee86e50e9b87f19b6007cd352f68aff8d4d0feb39cd6832110ced3e03210ec"
+  },
+  "nativeStatic": {
+    "functionCount": 20,
+    "scope": "Complete ELF FDE ranges; source bytes kept private; function hashes and derived semantics only",
+    "functions": [
+      {
+        "address": "0x54f23b8",
+        "end": "0x54f245c",
+        "size": 164,
+        "sha256": "3ee552cc8ce95922050c25088934337dec8cee2eabf23d110812dee223a4cb9c",
+        "instructionCount": 41,
+        "names": [
+          "App.LiveLogic.LiveExecutorFrameResult$$GetCurrentFrameExecuteLiveSkillEventList"
+        ]
+      },
+      {
+        "address": "0x54f9818",
+        "end": "0x54f98e4",
+        "size": 204,
+        "sha256": "c68045c8bdb7ed0cfcb7201908ec4c933cf58468e9d46417f1307e564208afd2",
+        "instructionCount": 51,
+        "names": [
+          "App.LiveLogic.LiveExecutor$$AddNoteScoreUpFactor"
+        ]
+      },
+      {
+        "address": "0x54f98fc",
+        "end": "0x54f99e0",
+        "size": 228,
+        "sha256": "584291eefc604ec94cad362ccc82d0bc2ae687759683ecc8720dafdf5a0f002e",
+        "instructionCount": 57,
+        "names": [
+          "App.LiveLogic.LiveExecutor$$DisableNoteScoreUpFactor"
+        ]
+      },
+      {
+        "address": "0x550e120",
+        "end": "0x550e224",
+        "size": 260,
+        "sha256": "e304cea5b15417cb0f415056b44b507affc172c5a260dbd5944645467dadfba9",
+        "instructionCount": 65,
+        "names": [
+          "App.LiveLogic.Score.FactorCommandComparer$$Compare"
+        ]
+      },
+      {
+        "address": "0x550e234",
+        "end": "0x550e338",
+        "size": 260,
+        "sha256": "2f3a48a13cf62993300127349c834ea7574795e8c308ed60c8b3d3cef92592cc",
+        "instructionCount": 65,
+        "names": [
+          "App.LiveLogic.Score.NoteScoreCommandComparer$$Compare"
+        ]
+      },
+      {
+        "address": "0x550e554",
+        "end": "0x550e5cc",
+        "size": 120,
+        "sha256": "48e563d4f6e388c306ff02a3779550b8bc013fb63c6a99b5b539078be2187002",
+        "instructionCount": 30,
+        "names": [
+          "App.LiveLogic.Score.LiveFactorCommand$$CreateNoteScoreUpFactorCommand"
+        ]
+      },
+      {
+        "address": "0x550e794",
+        "end": "0x550e79c",
+        "size": 8,
+        "sha256": "d5eb9632f67d671efdbe607f1f2a321a90172f800f522bd069fbdf1d8e4a02f1",
+        "instructionCount": 2,
+        "names": [
+          "App.LiveLogic.Score.LiveNoteScoreCommand$$.ctor"
+        ]
+      },
+      {
+        "address": "0x550e7ac",
+        "end": "0x550e838",
+        "size": 140,
+        "sha256": "ddbdc77264f6f11939f0755444b59136c88a42a375e24c18d2a83618e33e04c7",
+        "instructionCount": 35,
+        "names": [
+          "App.LiveLogic.Score.LiveNoteScoreCommand$$Create"
+        ]
+      },
+      {
+        "address": "0x550f308",
+        "end": "0x550f38c",
+        "size": 132,
+        "sha256": "cf4314e446ff11b1b340df6269bb00d43e38c0d3725cec50e752d067118fcc6d",
+        "instructionCount": 33,
+        "names": [
+          "App.LiveLogic.Score.ScoreCalculationUtility$$GetFrame"
+        ]
+      },
+      {
+        "address": "0x5510734",
+        "end": "0x55108f8",
+        "size": 452,
+        "sha256": "58758397937cf645d8399a7ff63a46f2f3071f490fe6e4eb1c14760ebc110f0c",
+        "instructionCount": 113,
+        "names": [
+          "App.LiveLogic.Score.LiveScoreCalculator$$ApplyFactorCommand"
+        ]
+      },
+      {
+        "address": "0x5510a48",
+        "end": "0x5510bc8",
+        "size": 384,
+        "sha256": "8989f751bbe12ad7ae03132200958a3ea864c0dc160217f8e7a559fab3ffdd35",
+        "instructionCount": 96,
+        "names": [
+          "App.LiveLogic.Score.LiveScoreCalculator$$CalcNoteScore"
+        ]
+      },
+      {
+        "address": "0x5511a84",
+        "end": "0x5511b80",
+        "size": 252,
+        "sha256": "fe9c2dddf09bb8ee86425c7f6528127d80b62eb7f752fbe6887b48a725e4751d",
+        "instructionCount": 63,
+        "names": [
+          "App.LiveLogic.Score.LiveScoreCalculator$$AddScoreCommand"
+        ]
+      },
+      {
+        "address": "0x5511b80",
+        "end": "0x5511c7c",
+        "size": 252,
+        "sha256": "be294317542d33dbf4853613f21886d10b2b899cdbf0513972e1ea30ba01c777",
+        "instructionCount": 63,
+        "names": [
+          "App.LiveLogic.Score.LiveScoreCalculator$$AddFactorCommand"
+        ]
+      },
+      {
+        "address": "0x5511e28",
+        "end": "0x55120dc",
+        "size": 692,
+        "sha256": "66662c37b484e337d17e2d026049572f291803f90d06654e5e44bc7a7cfe9511",
+        "instructionCount": 173,
+        "names": [
+          "App.LiveLogic.Score.LiveScoreCalculator$$Calculate"
+        ]
+      },
+      {
+        "address": "0x55123e0",
+        "end": "0x5512988",
+        "size": 1448,
+        "sha256": "4c1f270229583dd320a743416f312a2048e175299f7a61c873fb47f2ba03e0e3",
+        "instructionCount": 362,
+        "names": [
+          "App.LiveLogic.Score.LiveScoreCalculator$$ExecuteCommand"
+        ]
+      },
+      {
+        "address": "0x5512b58",
+        "end": "0x5512dec",
+        "size": 660,
+        "sha256": "2b10ce19e8650eafdacf4379d0e231b81b259d7a6da7d3191904e24705272239",
+        "instructionCount": 165,
+        "names": [
+          "App.LiveLogic.Score.LiveScoreCalculator$$CalcNoteScoreCore"
+        ]
+      },
+      {
+        "address": "0x5513ad4",
+        "end": "0x5513f44",
+        "size": 1136,
+        "sha256": "25c06a1ba87be4771d1375d1120e04b055bb7479abd28786efda6778f1b51492",
+        "instructionCount": 284,
+        "names": [
+          "App.LiveLogic.Score.LiveScoreController$$AddNoteScore"
+        ]
+      },
+      {
+        "address": "0x551437c",
+        "end": "0x5514488",
+        "size": 268,
+        "sha256": "4e7826bc58506698c5db81b81f3f677cf06e72f44cf98f27857dfc9b9a9d1f41",
+        "instructionCount": 67,
+        "names": [
+          "App.LiveLogic.Score.LiveScoreController$$AddNoteScoreUpFactor"
+        ]
+      },
+      {
+        "address": "0x55145a0",
+        "end": "0x5514658",
+        "size": 184,
+        "sha256": "72da82016650e07b607a4f213cbffca6a2322f4e7d5c3bb185a2744d30e654a2",
+        "instructionCount": 46,
+        "names": [
+          "App.LiveLogic.Score.LiveScoreController$$DisableNoteScoreUpFactor"
+        ]
+      },
+      {
+        "address": "0x62209cc",
+        "end": "0x6220c60",
+        "size": 660,
+        "sha256": "72f6dbd57f024f2d6eb1058e264bd07466b1547bfd7d79eaae02026d27a438fa",
+        "instructionCount": 165,
+        "names": [
+          "FTLiveSimulator.SkillEventUpdater$$Update"
+        ]
+      }
+    ],
+    "archiveSha256": "30bad07b02855fd1216dc0bb058f4e96f77d49fa739b2274e1adc60bd6134579",
+    "getFrame": "ms < 0 ? 0 : ceil((float)ms / 40f), for normal music-time domain",
+    "mergeRule": "factor.timeMs <= note.timeMs applies factor first; exact [startMs,endMs) membership",
+    "commandTime": "INoteSimulateResult slot1 -> INote slot1 -> IReadOnlyMusicScorePosition slot4 -> LiveNoteScoreCommand._timeMs",
+    "skillEventTime": "SkillEventUpdater does not read entry input; callback time comes from event position",
+    "olderVersionCorrection": "1.0.1 GetFrame also uses frintp/fcvtps; decompiled C omitted the rounding semantic"
+  },
+  "rawReplayArchiveSha256": "dc993084206c6a1aaed1f220ed7329c84f37373bd0b0cc1c86815001cd71cfb3",
+  "validation": {
+    "successfulCases": 19,
+    "observedFrames": 14206,
+    "sealedManifestsVerified": true,
+    "noGameImageHle": true,
+    "noManualVtable": true,
+    "allScheduledTapJudgementTimesAndGradesVerified": true,
+    "allCommandNominalTimesVerified": true,
+    "E2ExactIntervalMembershipVerified": true
+  },
+  "coverage": {
+    "completed": [
+      "E1 native skill event timing across input/clock variants",
+      "E2 isolated original factor API exact membership and replay",
+      "E3 complete static command/event time and bucket merge evidence"
+    ],
+    "notCertified": [
+      "full NativeSkillContext lifecycle",
+      "ScreenTouchInputProvider device projection",
+      "flick/hold/slide physical execution",
+      "condition-trigger and condition-cancel paths",
+      "RNG distribution",
+      "T3-T6 evaluator/search/browser integration"
+    ]
+  }
+}

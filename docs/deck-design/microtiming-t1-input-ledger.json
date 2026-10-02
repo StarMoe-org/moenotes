@@ -1,0 +1,1756 @@
+{
+ "format": "ournotes.microtiming-input-ledger/1",
+ "source": {
+  "dumpSha256": "8cb1b047392f6759427b3153b25063a29c5d13f160986881b26695dc2019f16e",
+  "restoredNativeSha256": "6059f40b2f949cf028935dacf92df0636f7256150b8bb90e3b52ee1aabfebc70",
+  "decodedMetadataSha256": "8cf963bc5a32262c2ad3e21307dda14d144bcced6fe7731986933718dcf9a91d",
+  "versionName": "1.0.4",
+  "versionCode": 10053
+ },
+ "scope": "Static identity of the input path from the latest dump. Not semantic evidence; VA are ELF VAs of the restored SO.",
+ "classes": {
+  "App.Live.LiveAutoSettings": {
+   "role": "auto play settings object",
+   "typeDefIndex": 1297,
+   "declaration": "public class LiveAutoSettings : IReadOnlyLiveAutoSettings // TypeDefIndex: 1297",
+   "dumpLine": 50517,
+   "fields": [
+    {
+     "name": "<IsAutoPlay>k__BackingField",
+     "type": "bool",
+     "offset": "0x10",
+     "modifiers": "private"
+    },
+    {
+     "name": "<AutoPlayJudgement>k__BackingField",
+     "type": "NoteSimulateJudgement",
+     "offset": "0x14",
+     "modifiers": "private"
+    },
+    {
+     "name": "<IsAutoOverrideJudgementDiffTimeMs>k__BackingField",
+     "type": "bool",
+     "offset": "0x18",
+     "modifiers": "private"
+    },
+    {
+     "name": "<AutoOverrideJudgementDiffTimeMs>k__BackingField",
+     "type": "int",
+     "offset": "0x1C",
+     "modifiers": "private"
+    }
+   ],
+   "methods": [
+    {
+     "va": "0x5970EE8",
+     "slot": "4",
+     "signature": "public bool get_IsAutoPlay()"
+    },
+    {
+     "va": "0x5970EF0",
+     "slot": "5",
+     "signature": "public NoteSimulateJudgement get_AutoPlayJudgement()"
+    },
+    {
+     "va": "0x5970EF8",
+     "slot": "6",
+     "signature": "public bool get_IsAutoOverrideJudgementDiffTimeMs()"
+    },
+    {
+     "va": "0x5970F00",
+     "slot": "7",
+     "signature": "public int get_AutoOverrideJudgementDiffTimeMs()"
+    },
+    {
+     "va": "0x5970F08",
+     "slot": null,
+     "signature": "public void .ctor(bool isAutoPlay, NoteSimulateJudgement autoPlayJudgement, bool isAutoOverrideJudgementDiffTimeMs, int autoOverrideJudgementDiffTimeMs)"
+    }
+   ]
+  },
+  "App.Live.ILiveLaneInputBlocker": {
+   "role": "UI block boundary",
+   "typeDefIndex": 1346,
+   "declaration": "public interface ILiveLaneInputBlocker // TypeDefIndex: 1346",
+   "dumpLine": 52547,
+   "fields": [],
+   "methods": [
+    {
+     "va": "abstract",
+     "slot": "0",
+     "signature": "public abstract bool IsBlocked(Vector2 screenPosition);"
+    }
+   ]
+  },
+  "App.Live.LiveInputConstants": {
+   "role": "finger limit",
+   "typeDefIndex": 1347,
+   "declaration": "public static class LiveInputConstants // TypeDefIndex: 1347",
+   "dumpLine": 52556,
+   "fields": [
+    {
+     "name": "InputFingerCountMax",
+     "type": "int",
+     "const": "5"
+    }
+   ],
+   "methods": []
+  },
+  "App.Live.LiveInputProviderFactory": {
+   "role": "production provider factory",
+   "typeDefIndex": 1348,
+   "declaration": "public static class LiveInputProviderFactory // TypeDefIndex: 1348",
+   "dumpLine": 52563,
+   "fields": [],
+   "methods": [
+    {
+     "va": "0x5986EE8",
+     "slot": null,
+     "signature": "public static ILiveInputProvider CreateScreenTouchInputProvider(LiveStateProperty property)"
+    }
+   ]
+  },
+  "App.Live.LiveLaneInputBlockAreaRegistry": {
+   "role": "UI block implementation",
+   "typeDefIndex": 1351,
+   "declaration": "public sealed class LiveLaneInputBlockAreaRegistry : ILiveLaneInputBlocker // TypeDefIndex: 1351",
+   "dumpLine": 52622,
+   "fields": [
+    {
+     "name": "_entries",
+     "type": "List<LiveLaneInputBlockAreaRegistry.Entry>",
+     "offset": "0x10",
+     "modifiers": "private"
+    }
+   ],
+   "methods": [
+    {
+     "va": "0x59882F8",
+     "slot": null,
+     "signature": "public void Register(Canvas canvas, LiveLaneInputBlockArea[] areas)"
+    },
+    {
+     "va": "0x59885BC",
+     "slot": null,
+     "signature": "public void Clear()"
+    },
+    {
+     "va": "0x598862C",
+     "slot": "4",
+     "signature": "public bool IsBlocked(Vector2 screenPosition)"
+    },
+    {
+     "va": "0x59887C0",
+     "slot": null,
+     "signature": "private static Camera GetEventCamera(Canvas canvas)"
+    },
+    {
+     "va": "0x59887F8",
+     "slot": null,
+     "signature": "public void .ctor()"
+    }
+   ]
+  },
+  "App.Live.ScreenTouchInputProvider": {
+   "role": "device touches -> lane units; Unity InputSystem EnhancedTouch reader",
+   "typeDefIndex": 1353,
+   "declaration": "public class ScreenTouchInputProvider : ILiveInputProvider // TypeDefIndex: 1353",
+   "dumpLine": 52675,
+   "fields": [
+    {
+     "name": "_touchMax",
+     "type": "int",
+     "const": "5"
+    },
+    {
+     "name": "_pixelPerUnit",
+     "type": "int",
+     "const": "100"
+    },
+    {
+     "name": "_laneCount",
+     "type": "int",
+     "offset": "0x10",
+     "modifiers": "private"
+    },
+    {
+     "name": "_flickThresholdPx",
+     "type": "float",
+     "offset": "0x14",
+     "modifiers": "private"
+    },
+    {
+     "name": "_judgementScreenPositions",
+     "type": "IReadOnlyList<Vector2>",
+     "offset": "0x18",
+     "modifiers": "private"
+    },
+    {
+     "name": "_input",
+     "type": "LiveSimulateInput",
+     "offset": "0x20",
+     "modifiers": "private"
+    },
+    {
+     "name": "_judgementAreaOffsetSettings",
+     "type": "IReadOnlyJudgementAreaOffsetSettings",
+     "offset": "0x28",
+     "modifiers": "private"
+    },
+    {
+     "name": "_judgementMaxOffset",
+     "type": "Vector2",
+     "offset": "0x30",
+     "modifiers": "private"
+    },
+    {
+     "name": "_touchPrevPositions",
+     "type": "Vector2[]",
+     "offset": "0x38",
+     "modifiers": "private"
+    },
+    {
+     "name": "_isUiBlockedByFinger",
+     "type": "bool[]",
+     "offset": "0x40",
+     "modifiers": "private"
+    },
+    {
+     "name": "_judgedTouchIds",
+     "type": "int[]",
+     "offset": "0x48",
+     "modifiers": "private"
+    },
+    {
+     "name": "UnjudgedTouchId",
+     "type": "int",
+     "const": "-1"
+    },
+    {
+     "name": "_autoInput",
+     "type": "DefaultLiveSimulateAutoInput",
+     "offset": "0x50",
+     "modifiers": "private"
+    },
+    {
+     "name": "_inputOffsetMs",
+     "type": "double",
+     "offset": "0x58",
+     "modifiers": "private"
+    },
+    {
+     "name": "_laneInputBlocker",
+     "type": "ILiveLaneInputBlocker",
+     "offset": "0x60",
+     "modifiers": "private"
+    }
+   ],
+   "methods": [
+    {
+     "va": "0x5987604",
+     "slot": null,
+     "signature": "public void .ctor(int laneCount, float flickDistance, IReadOnlyList<Vector3> judgementPositions, IReadOnlyJudgementAreaOffsetSettings judgementAreaOffsetSettings, IReadOnlyLiveAutoSettings liveAutoSettings, ILiveLaneInputBlocker laneInputBlocker, bool isEasyFlick = False, double inputOffsetMs = 0)"
+    },
+    {
+     "va": "0x5988968",
+     "slot": null,
+     "signature": "internal static bool ShouldJudgeUiBlock(bool isTouchBegan, int judgedTouchId, int touchId)"
+    },
+    {
+     "va": "0x598897C",
+     "slot": null,
+     "signature": "private static Vector2 ConvertJudgementPosToScreen(Vector3 judgementPos, int pixelPerUnit)"
+    },
+    {
+     "va": "0x5988A08",
+     "slot": "4",
+     "signature": "private ILiveSimulateInput App.LiveLogic.ILiveInputProvider.Update(int currentTimeMs, float deltaTime)"
+    },
+    {
+     "va": "0x598966C",
+     "slot": "5",
+     "signature": "public void SetAutoInput(bool isAuto)"
+    },
+    {
+     "va": "0x5989688",
+     "slot": "6",
+     "signature": "public void SetIsOverrideDiffMs(bool isOverrideDiffMs)"
+    },
+    {
+     "va": "0x59896A4",
+     "slot": "7",
+     "signature": "public void SetOverrideDiffMs(int diffMs)"
+    },
+    {
+     "va": "0x59896BC",
+     "slot": "8",
+     "signature": "public void SetMinimumJudgement(NoteSimulateJudgement minimumJudgement)"
+    },
+    {
+     "va": "0x5989510",
+     "slot": null,
+     "signature": "private InputState ConvertInputState(TouchPhase touchPhase)"
+    },
+    {
+     "va": "0x5989190",
+     "slot": null,
+     "signature": "private float GetJudgmentLane(Vector3 touchPosition, int laneCount, IReadOnlyList<Vector2> judgementPositions)"
+    },
+    {
+     "va": "0x5989534",
+     "slot": null,
+     "signature": "private ValueTuple<bool, Vector2> GetFlickState(Touch touch, float deltaTime, float thresholdPx)"
+    },
+    {
+     "va": "0x5988884",
+     "slot": null,
+     "signature": "private static float GetFlickThresholdPx(float distance)"
+    }
+   ]
+  },
+  "App.Live.LiveLaneFingerState": {
+   "role": "lane effect/finger state after judgement (view side)",
+   "typeDefIndex": 1359,
+   "declaration": "public sealed class LiveLaneFingerState // TypeDefIndex: 1359",
+   "dumpLine": 52894,
+   "fields": [
+    {
+     "name": "_inputFingerCountMax",
+     "type": "int",
+     "offset": "0x0",
+     "modifiers": "private"
+    },
+    {
+     "name": "_invalidFingerIndex",
+     "type": "int",
+     "offset": "0x4",
+     "modifiers": "private"
+    },
+    {
+     "name": "_nearNoteJudgementMsThreshold",
+     "type": "int",
+     "offset": "0x10",
+     "modifiers": "private"
+    },
+    {
+     "name": "_laneCountMax",
+     "type": "int",
+     "offset": "0x14",
+     "modifiers": "private"
+    },
+    {
+     "name": "_fingersLaneArray",
+     "type": "int[]",
+     "offset": "0x18",
+     "modifiers": "private"
+    },
+    {
+     "name": "_ignoreFingerArray",
+     "type": "bool[]",
+     "offset": "0x20",
+     "modifiers": "private"
+    },
+    {
+     "name": "_prevInput",
+     "type": "InputState[]",
+     "offset": "0x28",
+     "modifiers": "private"
+    },
+    {
+     "name": "_laneInputScratch",
+     "type": "InputState[]",
+     "offset": "0x30",
+     "modifiers": "private"
+    },
+    {
+     "name": "_laneInputWrittenScratch",
+     "type": "bool[]",
+     "offset": "0x38",
+     "modifiers": "private"
+    },
+    {
+     "name": "_offsetProvider",
+     "type": "IJudgementAreaOffsetProvider",
+     "offset": "0x40",
+     "modifiers": "private"
+    },
+    {
+     "name": "_needsInputHistoryReset",
+     "type": "bool",
+     "offset": "0x48",
+     "modifiers": "private"
+    }
+   ],
+   "methods": [
+    {
+     "va": "0x5989758",
+     "slot": null,
+     "signature": "public void .ctor(int laneCountMax, IJudgementAreaOffsetProvider offsetProvider, int nearNoteJudgementMsThreshold)"
+    },
+    {
+     "va": "0x5989958",
+     "slot": null,
+     "signature": "public void RequestInputHistoryReset()"
+    },
+    {
+     "va": "0x5989964",
+     "slot": null,
+     "signature": "public void OnUpdateJudgement(IReadOnlyLiveFrameResult liveFrameResult, IReadOnlyLiveExecutorFrameResult executorFrameResult, LaneResultState[] currentLaneResultStateArray)"
+    },
+    {
+     "va": "0x5989C38",
+     "slot": null,
+     "signature": "private void UpdateInputFingerState(Span<LiveSimulateInputUnit> inputStates)"
+    },
+    {
+     "va": "0x5989E8C",
+     "slot": null,
+     "signature": "private void SetInVainLane(LaneResultState[] laneResults, Span<LiveSimulateInputUnit> inputStates)"
+    },
+    {
+     "va": "0x598A7F8",
+     "slot": null,
+     "signature": "private void OverrideLaneFromNoteLine(LaneResultState[] laneResults, IReadOnlyLiveExecutorFrameResult executorFrameResult, int timeMs)"
+    },
+    {
+     "va": "0x598A1B8",
+     "slot": null,
+     "signature": "private void OverrideLaneFromFlick(LaneResultState[] laneResults, IReadOnlyLiveExecutorFrameResult executorFrameResult, int timeMs)"
+    },
+    {
+     "va": "0x598ADA0",
+     "slot": null,
+     "signature": "private void OverrideLaneFromJudgement(LaneResultState[] laneResults, IReadOnlyLiveExecutorFrameResult executorFrameResult)"
+    },
+    {
+     "va": "0x598B428",
+     "slot": null,
+     "signature": "private LaneResultState Max(LaneResultState a, LaneResultState b)"
+    },
+    {
+     "va": "0x598B410",
+     "slot": null,
+     "signature": "private bool IsInputStart(InputState prevInput1, InputState prevInput2, InputState currentInput)"
+    },
+    {
+     "va": "0x598B490",
+     "slot": null,
+     "signature": "private static void .cctor()"
+    }
+   ]
+  },
+  "App.UI.PreviewAutoInputProvider": {
+   "role": "preview scene auto provider",
+   "typeDefIndex": 4369,
+   "declaration": "public class PreviewAutoInputProvider : ILiveInputProvider // TypeDefIndex: 4369",
+   "dumpLine": 163122,
+   "fields": [
+    {
+     "name": "RandomUpdateIntervalSeconds",
+     "type": "float",
+     "const": "0.5"
+    },
+    {
+     "name": "_input",
+     "type": "LiveSimulateInput",
+     "offset": "0x10",
+     "modifiers": "private"
+    },
+    {
+     "name": "_autoInput",
+     "type": "DefaultLiveSimulateAutoInput",
+     "offset": "0x18",
+     "modifiers": "private"
+    },
+    {
+     "name": "_randomRangeMs",
+     "type": "int",
+     "offset": "0x20",
+     "modifiers": "private"
+    },
+    {
+     "name": "_random",
+     "type": "Random",
+     "offset": "0x28",
+     "modifiers": "private"
+    },
+    {
+     "name": "_timer",
+     "type": "float",
+     "offset": "0x30",
+     "modifiers": "private"
+    },
+    {
+     "name": "_currentRandomOffsetMs",
+     "type": "int",
+     "offset": "0x34",
+     "modifiers": "private"
+    },
+    {
+     "name": "_noteTimingOffsetMs",
+     "type": "int",
+     "offset": "0x38",
+     "modifiers": "private"
+    }
+   ],
+   "methods": [
+    {
+     "va": "0x5E04504",
+     "slot": null,
+     "signature": "public void .ctor(int laneCount, int randomRangeMs = 0, int noteTimingOffsetMs = 0)"
+    },
+    {
+     "va": "0x5E04674",
+     "slot": null,
+     "signature": "public void SetNoteTimingOffsetMs(int offsetMs)"
+    },
+    {
+     "va": "0x5E046A0",
+     "slot": "4",
+     "signature": "public ILiveSimulateInput Update(int currentTimeMs, float deltaTime)"
+    },
+    {
+     "va": "0x5E04634",
+     "slot": null,
+     "signature": "private void GenerateNewRandomOffset()"
+    },
+    {
+     "va": "0x5E0467C",
+     "slot": null,
+     "signature": "private void ApplyOverrideDiffMs()"
+    },
+    {
+     "va": "0x5E04788",
+     "slot": "5",
+     "signature": "public void SetAutoInput(bool isAuto)"
+    },
+    {
+     "va": "0x5E047A4",
+     "slot": "6",
+     "signature": "public void SetIsOverrideDiffMs(bool isOverrideDiffMs)"
+    },
+    {
+     "va": "0x5E047C0",
+     "slot": "7",
+     "signature": "public void SetOverrideDiffMs(int diffMs)"
+    },
+    {
+     "va": "0x5E047E0",
+     "slot": "8",
+     "signature": "public void SetMinimumJudgement(NoteSimulateJudgement minimumJudgement)"
+    }
+   ]
+  },
+  "App.UI.PreviewTouchInputProvider": {
+   "role": "preview scene provider (not live play)",
+   "typeDefIndex": 4374,
+   "declaration": "public class PreviewTouchInputProvider : ILiveInputProvider // TypeDefIndex: 4374",
+   "dumpLine": 163357,
+   "fields": [
+    {
+     "name": "_laneCount",
+     "type": "int",
+     "offset": "0x10",
+     "modifiers": "private"
+    },
+    {
+     "name": "_input",
+     "type": "ILiveSimulateInput",
+     "offset": "0x18",
+     "modifiers": "private"
+    },
+    {
+     "name": "_isInputAreaFunc",
+     "type": "bool>",
+     "offset": "0x20",
+     "modifiers": "private"
+    },
+    {
+     "name": "_inputOffsetMs",
+     "type": "int",
+     "offset": "0x28",
+     "modifiers": "private"
+    },
+    {
+     "name": "_noteTimingOffsetMs",
+     "type": "int",
+     "offset": "0x2C",
+     "modifiers": "private"
+    }
+   ],
+   "methods": [
+    {
+     "va": "0x5E0713C",
+     "slot": null,
+     "signature": "public void .ctor(int laneCount, Func<Vector2, bool> isInputAreaFunc, int inputOffsetMs, int noteTimingOffsetMs = 0)"
+    },
+    {
+     "va": "0x5E07238",
+     "slot": null,
+     "signature": "public void SetNoteTimingOffsetMs(int offsetMs)"
+    },
+    {
+     "va": "0x5E07240",
+     "slot": "4",
+     "signature": "public ILiveSimulateInput Update(int currentTimeMs, float deltaTime)"
+    },
+    {
+     "va": "0x5E07750",
+     "slot": "5",
+     "signature": "public void SetAutoInput(bool isAuto)"
+    },
+    {
+     "va": "0x5E07754",
+     "slot": "6",
+     "signature": "public void SetIsOverrideDiffMs(bool isOverrideDiffMs)"
+    },
+    {
+     "va": "0x5E07758",
+     "slot": "7",
+     "signature": "public void SetOverrideDiffMs(int diffMs)"
+    },
+    {
+     "va": "0x5E0775C",
+     "slot": "8",
+     "signature": "public void SetMinimumJudgement(NoteSimulateJudgement minimumJudgement)"
+    }
+   ]
+  },
+  "App.LiveLogic.ILiveInputProvider": {
+   "role": "provider interface called by the playing-state driver",
+   "typeDefIndex": 30446,
+   "declaration": "public interface ILiveInputProvider // TypeDefIndex: 30446",
+   "dumpLine": 2192117,
+   "fields": [],
+   "methods": [
+    {
+     "va": "abstract",
+     "slot": "0",
+     "signature": "public abstract ILiveSimulateInput Update(int currentTimeMs, float deltaTime);"
+    },
+    {
+     "va": "abstract",
+     "slot": "1",
+     "signature": "public abstract void SetAutoInput(bool isAuto);"
+    },
+    {
+     "va": "abstract",
+     "slot": "2",
+     "signature": "public abstract void SetIsOverrideDiffMs(bool isOverrideDiffMs);"
+    },
+    {
+     "va": "abstract",
+     "slot": "3",
+     "signature": "public abstract void SetOverrideDiffMs(int diffMs);"
+    },
+    {
+     "va": "abstract",
+     "slot": "4",
+     "signature": "public abstract void SetMinimumJudgement(NoteSimulateJudgement minimumJudgement);"
+    }
+   ]
+  },
+  "App.LiveLogic.InputPlayer": {
+   "role": "game QA replay provider: lane-level touches in music time",
+   "typeDefIndex": 30451,
+   "declaration": "public class InputPlayer : ILiveInputProvider // TypeDefIndex: 30451",
+   "dumpLine": 2192190,
+   "fields": [
+    {
+     "name": "_input",
+     "type": "LiveSimulateInput",
+     "offset": "0x10",
+     "modifiers": "private"
+    },
+    {
+     "name": "_autoInput",
+     "type": "DefaultLiveSimulateAutoInput",
+     "offset": "0x18",
+     "modifiers": "private"
+    },
+    {
+     "name": "_laneCount",
+     "type": "int",
+     "offset": "0x20",
+     "modifiers": "private"
+    },
+    {
+     "name": "_allTouches",
+     "type": "InputPlayer.FlattenedTouch[]",
+     "offset": "0x28",
+     "modifiers": "private"
+    },
+    {
+     "name": "_touchCount",
+     "type": "int",
+     "offset": "0x30",
+     "modifiers": "private"
+    },
+    {
+     "name": "_currentTouchIndex",
+     "type": "int",
+     "offset": "0x34",
+     "modifiers": "private"
+    },
+    {
+     "name": "_allFlicks",
+     "type": "InputPlayer.FlattenedFlick[]",
+     "offset": "0x38",
+     "modifiers": "private"
+    },
+    {
+     "name": "_flickCount",
+     "type": "int",
+     "offset": "0x40",
+     "modifiers": "private"
+    },
+    {
+     "name": "_currentFlickIndex",
+     "type": "int",
+     "offset": "0x44",
+     "modifiers": "private"
+    },
+    {
+     "name": "_appliedTouchIndices",
+     "type": "bool[]",
+     "offset": "0x48",
+     "modifiers": "private"
+    },
+    {
+     "name": "_appliedFlickIndices",
+     "type": "bool[]",
+     "offset": "0x50",
+     "modifiers": "private"
+    },
+    {
+     "name": "_isPressing",
+     "type": "bool[]",
+     "offset": "0x58",
+     "modifiers": "private"
+    },
+    {
+     "name": "_pressingLane",
+     "type": "float[]",
+     "offset": "0x60",
+     "modifiers": "private"
+    }
+   ],
+   "methods": [
+    {
+     "va": "0x54F300C",
+     "slot": null,
+     "signature": "public void .ctor(string filePath, int laneCount, IReadOnlyLiveAutoSettings liveAutoSettings, bool isEasyFlick = False)"
+    },
+    {
+     "va": "0x54F30A4",
+     "slot": null,
+     "signature": "public void .ctor(InputRecordData data, int laneCount, IReadOnlyLiveAutoSettings liveAutoSettings, bool isEasyFlick = False)"
+    },
+    {
+     "va": "0x54F387C",
+     "slot": "4",
+     "signature": "public ILiveSimulateInput Update(int currentTimeMs, float deltaTime)"
+    },
+    {
+     "va": "0x54F393C",
+     "slot": null,
+     "signature": "private void ApplyMaintainedPressStates()"
+    },
+    {
+     "va": "0x54F39E4",
+     "slot": null,
+     "signature": "private void ApplyTouches(int currentTimeMs)"
+    },
+    {
+     "va": "0x54F3B70",
+     "slot": null,
+     "signature": "private void ApplyFlicks(int currentTimeMs)"
+    },
+    {
+     "va": "0x54F3C64",
+     "slot": "5",
+     "signature": "public void SetAutoInput(bool isAuto)"
+    },
+    {
+     "va": "0x54F3C80",
+     "slot": "6",
+     "signature": "public void SetIsOverrideDiffMs(bool isOverrideDiffMs)"
+    },
+    {
+     "va": "0x54F3C9C",
+     "slot": "7",
+     "signature": "public void SetOverrideDiffMs(int diffMs)"
+    },
+    {
+     "va": "0x54F3CB4",
+     "slot": "8",
+     "signature": "public void SetMinimumJudgement(NoteSimulateJudgement minimumJudgement)"
+    },
+    {
+     "va": "0x54F3CCC",
+     "slot": null,
+     "signature": "public void Reset()"
+    }
+   ]
+  },
+  "App.LiveLogic.TouchInput": {
+   "role": "replay touch record",
+   "typeDefIndex": 30452,
+   "declaration": "public struct TouchInput // TypeDefIndex: 30452",
+   "dumpLine": 2192245,
+   "fields": [
+    {
+     "name": "Index",
+     "type": "int",
+     "offset": "0x0",
+     "modifiers": "public"
+    },
+    {
+     "name": "Lane",
+     "type": "float",
+     "offset": "0x4",
+     "modifiers": "public"
+    },
+    {
+     "name": "State",
+     "type": "InputState",
+     "offset": "0x8",
+     "modifiers": "public"
+    },
+    {
+     "name": "InputTimeMs",
+     "type": "int",
+     "offset": "0xC",
+     "modifiers": "public"
+    }
+   ],
+   "methods": []
+  },
+  "App.LiveLogic.FlickInput": {
+   "role": "replay flick record",
+   "typeDefIndex": 30453,
+   "declaration": "public struct FlickInput // TypeDefIndex: 30453",
+   "dumpLine": 2192256,
+   "fields": [
+    {
+     "name": "Index",
+     "type": "int",
+     "offset": "0x0",
+     "modifiers": "public"
+    },
+    {
+     "name": "BeginLane",
+     "type": "float",
+     "offset": "0x4",
+     "modifiers": "public"
+    },
+    {
+     "name": "MoveVector",
+     "type": "Vector2",
+     "offset": "0x8",
+     "modifiers": "public"
+    },
+    {
+     "name": "InputTimeMs",
+     "type": "int",
+     "offset": "0x10",
+     "modifiers": "public"
+    }
+   ],
+   "methods": []
+  },
+  "App.LiveLogic.InputFrame": {
+   "role": "replay frame",
+   "typeDefIndex": 30454,
+   "declaration": "public struct InputFrame // TypeDefIndex: 30454",
+   "dumpLine": 2192267,
+   "fields": [
+    {
+     "name": "MusicTimeMs",
+     "type": "int",
+     "offset": "0x0",
+     "modifiers": "public"
+    },
+    {
+     "name": "Touches",
+     "type": "TouchInput[]",
+     "offset": "0x8",
+     "modifiers": "public"
+    },
+    {
+     "name": "Flicks",
+     "type": "FlickInput[]",
+     "offset": "0x10",
+     "modifiers": "public"
+    },
+    {
+     "name": "TouchCount",
+     "type": "int",
+     "offset": "0x18",
+     "modifiers": "public"
+    },
+    {
+     "name": "FlickCount",
+     "type": "int",
+     "offset": "0x1C",
+     "modifiers": "public"
+    }
+   ],
+   "methods": []
+  },
+  "App.LiveLogic.InputRecordData": {
+   "role": "replay file (JsonUtility)",
+   "typeDefIndex": 30455,
+   "declaration": "public class InputRecordData // TypeDefIndex: 30455",
+   "dumpLine": 2192279,
+   "fields": [
+    {
+     "name": "MusicId",
+     "type": "string",
+     "offset": "0x10",
+     "modifiers": "public"
+    },
+    {
+     "name": "Difficulty",
+     "type": "string",
+     "offset": "0x18",
+     "modifiers": "public"
+    },
+    {
+     "name": "RecordedAt",
+     "type": "string",
+     "offset": "0x20",
+     "modifiers": "public"
+    },
+    {
+     "name": "RandomSeed",
+     "type": "int",
+     "offset": "0x28",
+     "modifiers": "public"
+    },
+    {
+     "name": "Frames",
+     "type": "InputFrame[]",
+     "offset": "0x30",
+     "modifiers": "public"
+    },
+    {
+     "name": "FrameCount",
+     "type": "int",
+     "offset": "0x38",
+     "modifiers": "public"
+    }
+   ],
+   "methods": [
+    {
+     "va": "0x54F3054",
+     "slot": null,
+     "signature": "public static InputRecordData Load(string filePath)"
+    },
+    {
+     "va": "0x54F3E8C",
+     "slot": null,
+     "signature": "public void Save(string filePath)"
+    },
+    {
+     "va": "0x54F3F3C",
+     "slot": null,
+     "signature": "public void .ctor()"
+    }
+   ]
+  },
+  "App.LiveLogic.InputRecorder": {
+   "role": "debug recorder (Conditional LIVE_DEBUG/LIVE_QA_POST)",
+   "typeDefIndex": 30456,
+   "declaration": "public class InputRecorder // TypeDefIndex: 30456",
+   "dumpLine": 2192302,
+   "fields": [
+    {
+     "name": "_musicId",
+     "type": "string",
+     "offset": "0x10",
+     "modifiers": "private"
+    },
+    {
+     "name": "_difficulty",
+     "type": "string",
+     "offset": "0x18",
+     "modifiers": "private"
+    },
+    {
+     "name": "_maxTouchCount",
+     "type": "int",
+     "offset": "0x20",
+     "modifiers": "private"
+    },
+    {
+     "name": "_frames",
+     "type": "InputFrame[]",
+     "offset": "0x28",
+     "modifiers": "private"
+    },
+    {
+     "name": "_frameCount",
+     "type": "int",
+     "offset": "0x30",
+     "modifiers": "private"
+    },
+    {
+     "name": "_capacity",
+     "type": "int",
+     "offset": "0x34",
+     "modifiers": "private"
+    },
+    {
+     "name": "_randomSeed",
+     "type": "int",
+     "offset": "0x38",
+     "modifiers": "private"
+    }
+   ],
+   "methods": [
+    {
+     "va": "0x54F3F44",
+     "slot": null,
+     "signature": "public void .ctor(string musicId, string difficulty, int maxTouchCount, int initialCapacity = 1000)"
+    },
+    {
+     "va": "0x54F40B8",
+     "slot": null,
+     "signature": "public void Record(ILiveSimulateInput input, int musicTimeMs)"
+    },
+    {
+     "va": "0x54F486C",
+     "slot": null,
+     "signature": "public void Save(string filePath)"
+    },
+    {
+     "va": "0x54F4BC4",
+     "slot": null,
+     "signature": "public void Clear()"
+    },
+    {
+     "va": "0x54F4BCC",
+     "slot": null,
+     "signature": "public void SetRandomSeed(int seed)"
+    },
+    {
+     "va": "0x54F488C",
+     "slot": null,
+     "signature": "public InputRecordData GetData()"
+    },
+    {
+     "va": "0x54F4568",
+     "slot": null,
+     "signature": "private bool HasInput(ILiveSimulateInput input)"
+    },
+    {
+     "va": "0x54F470C",
+     "slot": null,
+     "signature": "private void Expand()"
+    }
+   ]
+  },
+  "FTLiveSimulator.DefaultLiveSimulateAutoInput": {
+   "role": "auto judgement control (not a player action)",
+   "typeDefIndex": 31391,
+   "declaration": "public class DefaultLiveSimulateAutoInput : ILiveSimulateAutoInput // TypeDefIndex: 31391",
+   "dumpLine": 2235844,
+   "fields": [
+    {
+     "name": "_isControllableAutoJudgement",
+     "type": "bool",
+     "offset": "0x10",
+     "modifiers": "private"
+    },
+    {
+     "name": "_initialNoteSimulateJudgement",
+     "type": "NoteSimulateJudgement",
+     "offset": "0x14",
+     "modifiers": "private"
+    },
+    {
+     "name": "_controllableNoteSimulateJudgement",
+     "type": "NoteSimulateJudgement",
+     "offset": "0x18",
+     "modifiers": "private"
+    },
+    {
+     "name": "<IsAutoOverrideJudgementDiffTimeMs>k__BackingField",
+     "type": "bool",
+     "offset": "0x1C",
+     "modifiers": "private"
+    },
+    {
+     "name": "<AutoOverrideJudgementDiffTimeMs>k__BackingField",
+     "type": "int",
+     "offset": "0x20",
+     "modifiers": "private"
+    },
+    {
+     "name": "<IsEasyFlick>k__BackingField",
+     "type": "bool",
+     "offset": "0x24",
+     "modifiers": "private"
+    },
+    {
+     "name": "<MinimumJudgement>k__BackingField",
+     "type": "NoteSimulateJudgement",
+     "offset": "0x28",
+     "modifiers": "private"
+    }
+   ],
+   "methods": [
+    {
+     "va": "0x6229824",
+     "slot": "4",
+     "signature": "public bool get_IsAutoJudgement()"
+    },
+    {
+     "va": "0x622982C",
+     "slot": "5",
+     "signature": "public NoteSimulateJudgement get_Judgement()"
+    },
+    {
+     "va": "0x6229848",
+     "slot": "6",
+     "signature": "public bool get_IsAutoOverrideJudgementDiffTimeMs()"
+    },
+    {
+     "va": "0x6229850",
+     "slot": null,
+     "signature": "public void set_IsAutoOverrideJudgementDiffTimeMs(bool value)"
+    },
+    {
+     "va": "0x6229858",
+     "slot": "7",
+     "signature": "public int get_AutoOverrideJudgementDiffTimeMs()"
+    },
+    {
+     "va": "0x6229860",
+     "slot": null,
+     "signature": "public void set_AutoOverrideJudgementDiffTimeMs(int value)"
+    },
+    {
+     "va": "0x6229868",
+     "slot": "8",
+     "signature": "public bool get_IsEasyFlick()"
+    },
+    {
+     "va": "0x6229870",
+     "slot": null,
+     "signature": "public void set_IsEasyFlick(bool value)"
+    },
+    {
+     "va": "0x6229878",
+     "slot": "9",
+     "signature": "public NoteSimulateJudgement get_MinimumJudgement()"
+    },
+    {
+     "va": "0x6229880",
+     "slot": null,
+     "signature": "private void set_MinimumJudgement(NoteSimulateJudgement value)"
+    },
+    {
+     "va": "0x6229888",
+     "slot": null,
+     "signature": "public void .ctor(bool isAutoJudgement = False, NoteSimulateJudgement initialNoteSimulateJudgement = 5, bool isAutoOverrideJudgementDiffTimeMs = False, int autoOverrideJudgementDiffTimeMs = 0)"
+    },
+    {
+     "va": "0x62298E0",
+     "slot": null,
+     "signature": "public void SetAutoJudgement(bool isAutoJudgement)"
+    },
+    {
+     "va": "0x62298E8",
+     "slot": null,
+     "signature": "public void SetIsOverrideDiffMs(bool isOverrideDiffMs)"
+    },
+    {
+     "va": "0x62298F0",
+     "slot": null,
+     "signature": "public void SetOverrideDiffMs(int diffMs)"
+    },
+    {
+     "va": "0x62298F8",
+     "slot": null,
+     "signature": "public void SetMinimumJudgement(NoteSimulateJudgement minimumJudgement)"
+    }
+   ]
+  },
+  "FTLiveSimulator.ILiveSimulateAutoInput": {
+   "role": "auto control interface",
+   "typeDefIndex": 31392,
+   "declaration": "public interface ILiveSimulateAutoInput // TypeDefIndex: 31392",
+   "dumpLine": 2235924,
+   "fields": [],
+   "methods": [
+    {
+     "va": "abstract",
+     "slot": "0",
+     "signature": "public abstract bool get_IsAutoJudgement();"
+    },
+    {
+     "va": "abstract",
+     "slot": "1",
+     "signature": "public abstract NoteSimulateJudgement get_Judgement();"
+    },
+    {
+     "va": "abstract",
+     "slot": "2",
+     "signature": "public abstract bool get_IsAutoOverrideJudgementDiffTimeMs();"
+    },
+    {
+     "va": "abstract",
+     "slot": "3",
+     "signature": "public abstract int get_AutoOverrideJudgementDiffTimeMs();"
+    },
+    {
+     "va": "abstract",
+     "slot": "4",
+     "signature": "public abstract bool get_IsEasyFlick();"
+    },
+    {
+     "va": "abstract",
+     "slot": "5",
+     "signature": "public abstract NoteSimulateJudgement get_MinimumJudgement();"
+    }
+   ]
+  },
+  "FTLiveSimulator.ILiveSimulateInput": {
+   "role": "input interface",
+   "typeDefIndex": 31393,
+   "declaration": "public interface ILiveSimulateInput // TypeDefIndex: 31393",
+   "dumpLine": 2235956,
+   "fields": [],
+   "methods": [
+    {
+     "va": "abstract",
+     "slot": "0",
+     "signature": "public abstract int get_CurrentMusicTimeMs();"
+    },
+    {
+     "va": "abstract",
+     "slot": "1",
+     "signature": "public abstract void set_CurrentMusicTimeMs(int value);"
+    },
+    {
+     "va": "abstract",
+     "slot": "2",
+     "signature": "public abstract void set_CurrentFrameRealtimeSinceStartupMs(int value);"
+    },
+    {
+     "va": "abstract",
+     "slot": "3",
+     "signature": "public abstract LiveSimulateInputUnit[] get_InputStateArray();"
+    },
+    {
+     "va": "abstract",
+     "slot": "4",
+     "signature": "public abstract LiveSimulateFlickInputUnit[] get_CurrentFrameFlickStateArray();"
+    },
+    {
+     "va": "abstract",
+     "slot": "5",
+     "signature": "public abstract ILiveSimulateAutoInput get_AutoInput();"
+    },
+    {
+     "va": "abstract",
+     "slot": "6",
+     "signature": "public abstract void Clear();"
+    },
+    {
+     "va": "abstract",
+     "slot": "7",
+     "signature": "public abstract int GetMusicScoreTimeMs(int inputTime);"
+    },
+    {
+     "va": "abstract",
+     "slot": "8",
+     "signature": "public abstract LiveUseSimulateInputUnitPair GetUseSimulateInputUnitPair(NoteOperateType operateType, NoteDirection direction, float minLane, float maxLane, float bodyMinLane, float bodyMaxLane);"
+    }
+   ]
+  },
+  "FTLiveSimulator.InputState": {
+   "role": "touch phase enum",
+   "typeDefIndex": 31394,
+   "declaration": "public enum InputState // TypeDefIndex: 31394",
+   "dumpLine": 2235996,
+   "fields": [
+    {
+     "name": "value__",
+     "type": "int",
+     "offset": "0x0",
+     "modifiers": "public"
+    },
+    {
+     "name": "None",
+     "type": "InputState",
+     "const": "0"
+    },
+    {
+     "name": "PressEnter",
+     "type": "InputState",
+     "const": "1"
+    },
+    {
+     "name": "Press",
+     "type": "InputState",
+     "const": "2"
+    },
+    {
+     "name": "PressExit",
+     "type": "InputState",
+     "const": "3"
+    }
+   ],
+   "methods": []
+  },
+  "FTLiveSimulator.LiveSimulateFlickInputUnit": {
+   "role": "one flick unit",
+   "typeDefIndex": 31395,
+   "declaration": "public class LiveSimulateFlickInputUnit // TypeDefIndex: 31395",
+   "dumpLine": 2236007,
+   "fields": [
+    {
+     "name": "<InputUnitIndex>k__BackingField",
+     "type": "int",
+     "offset": "0x10",
+     "modifiers": "private"
+    },
+    {
+     "name": "<IsFlickedCurrentFrame>k__BackingField",
+     "type": "bool",
+     "offset": "0x14",
+     "modifiers": "private"
+    },
+    {
+     "name": "<MoveVector>k__BackingField",
+     "type": "Vector2",
+     "offset": "0x18",
+     "modifiers": "private"
+    },
+    {
+     "name": "<BeginLane>k__BackingField",
+     "type": "float",
+     "offset": "0x20",
+     "modifiers": "private"
+    },
+    {
+     "name": "<FingerIndex>k__BackingField",
+     "type": "int",
+     "offset": "0x24",
+     "modifiers": "private"
+    }
+   ],
+   "methods": [
+    {
+     "va": "0x6229900",
+     "slot": null,
+     "signature": "public int get_InputUnitIndex()"
+    },
+    {
+     "va": "0x6229908",
+     "slot": null,
+     "signature": "public void set_InputUnitIndex(int value)"
+    },
+    {
+     "va": "0x6229910",
+     "slot": null,
+     "signature": "public bool get_IsFlickedCurrentFrame()"
+    },
+    {
+     "va": "0x6229918",
+     "slot": null,
+     "signature": "public void set_IsFlickedCurrentFrame(bool value)"
+    },
+    {
+     "va": "0x6229920",
+     "slot": null,
+     "signature": "public Vector2 get_MoveVector()"
+    },
+    {
+     "va": "0x6229928",
+     "slot": null,
+     "signature": "public void set_MoveVector(Vector2 value)"
+    },
+    {
+     "va": "0x6229930",
+     "slot": null,
+     "signature": "public float get_BeginLane()"
+    },
+    {
+     "va": "0x6229938",
+     "slot": null,
+     "signature": "public void set_BeginLane(float value)"
+    },
+    {
+     "va": "0x6229940",
+     "slot": null,
+     "signature": "public void set_FingerIndex(int value)"
+    },
+    {
+     "va": "0x6229948",
+     "slot": null,
+     "signature": "public void .ctor(int inputUnitIndex)"
+    },
+    {
+     "va": "0x6229970",
+     "slot": null,
+     "signature": "public void Clear()"
+    }
+   ]
+  },
+  "FTLiveSimulator.LiveSimulateInput": {
+   "role": "input object: music/realtime clocks, units, flick units",
+   "typeDefIndex": 31396,
+   "declaration": "public class LiveSimulateInput : ILiveSimulateInput // TypeDefIndex: 31396",
+   "dumpLine": 2236074,
+   "fields": [
+    {
+     "name": "_tempPair",
+     "type": "LiveUseSimulateInputUnitPair",
+     "offset": "0x10",
+     "modifiers": "private"
+    },
+    {
+     "name": "<CurrentMusicTimeMs>k__BackingField",
+     "type": "int",
+     "offset": "0x18",
+     "modifiers": "private"
+    },
+    {
+     "name": "<CurrentFrameRealtimeSinceStartupMs>k__BackingField",
+     "type": "int",
+     "offset": "0x1C",
+     "modifiers": "private"
+    },
+    {
+     "name": "<InputStateArray>k__BackingField",
+     "type": "LiveSimulateInputUnit[]",
+     "offset": "0x20",
+     "modifiers": "private"
+    },
+    {
+     "name": "<CurrentFrameFlickStateArray>k__BackingField",
+     "type": "LiveSimulateFlickInputUnit[]",
+     "offset": "0x28",
+     "modifiers": "private"
+    },
+    {
+     "name": "<CurrentFrameChanceFlickStateArray>k__BackingField",
+     "type": "LiveSimulateFlickInputUnit[]",
+     "offset": "0x30",
+     "modifiers": "private"
+    },
+    {
+     "name": "<AutoInput>k__BackingField",
+     "type": "ILiveSimulateAutoInput",
+     "offset": "0x38",
+     "modifiers": "private"
+    }
+   ],
+   "methods": [
+    {
+     "va": "0x62299D0",
+     "slot": "4",
+     "signature": "public int get_CurrentMusicTimeMs()"
+    },
+    {
+     "va": "0x62299D8",
+     "slot": "5",
+     "signature": "public void set_CurrentMusicTimeMs(int value)"
+    },
+    {
+     "va": "0x62299E0",
+     "slot": "13",
+     "signature": "public int get_CurrentFrameRealtimeSinceStartupMs()"
+    },
+    {
+     "va": "0x62299E8",
+     "slot": "6",
+     "signature": "public void set_CurrentFrameRealtimeSinceStartupMs(int value)"
+    },
+    {
+     "va": "0x62299F0",
+     "slot": "7",
+     "signature": "public LiveSimulateInputUnit[] get_InputStateArray()"
+    },
+    {
+     "va": "0x62299F8",
+     "slot": "8",
+     "signature": "public LiveSimulateFlickInputUnit[] get_CurrentFrameFlickStateArray()"
+    },
+    {
+     "va": "0x6229A00",
+     "slot": null,
+     "signature": "public LiveSimulateFlickInputUnit[] get_CurrentFrameChanceFlickStateArray()"
+    },
+    {
+     "va": "0x6229A08",
+     "slot": "9",
+     "signature": "public ILiveSimulateAutoInput get_AutoInput()"
+    },
+    {
+     "va": "0x6229A10",
+     "slot": null,
+     "signature": "private void set_AutoInput(ILiveSimulateAutoInput value)"
+    },
+    {
+     "va": "0x6229A18",
+     "slot": null,
+     "signature": "public void .ctor(int laneCount, ILiveSimulateAutoInput autoInput)"
+    },
+    {
+     "va": "0x6229CC4",
+     "slot": "10",
+     "signature": "public void Clear()"
+    },
+    {
+     "va": "0x6229E44",
+     "slot": "11",
+     "signature": "public int GetMusicScoreTimeMs(int inputTimeMs)"
+    },
+    {
+     "va": "0x6229E54",
+     "slot": "12",
+     "signature": "public LiveUseSimulateInputUnitPair GetUseSimulateInputUnitPair(NoteOperateType operateType, NoteDirection direction, float minLane, float maxLane, float bodyMinLane, float bodyMaxLane)"
+    },
+    {
+     "va": "0x622A0B4",
+     "slot": null,
+     "signature": "private ValueTuple<LiveSimulateInputUnit, LiveSimulateFlickInputUnit> GetHigherPriorityInputUnit(NoteOperateType operateType, NoteDirection direction, LiveSimulateInputUnit mainUnit, LiveSimulateInputUnit subUnit, float bodyMinLane, float bodyMaxLane)"
+    }
+   ]
+  },
+  "FTLiveSimulator.LiveSimulateInputUnit": {
+   "role": "one touch unit",
+   "typeDefIndex": 31397,
+   "declaration": "public class LiveSimulateInputUnit // TypeDefIndex: 31397",
+   "dumpLine": 2236154,
+   "fields": [
+    {
+     "name": "<UnitIndex>k__BackingField",
+     "type": "int",
+     "offset": "0x10",
+     "modifiers": "private"
+    },
+    {
+     "name": "<InputState>k__BackingField",
+     "type": "InputState",
+     "offset": "0x14",
+     "modifiers": "private"
+    },
+    {
+     "name": "<ScreenPosition>k__BackingField",
+     "type": "Vector2",
+     "offset": "0x18",
+     "modifiers": "private"
+    },
+    {
+     "name": "<Lane>k__BackingField",
+     "type": "float",
+     "offset": "0x20",
+     "modifiers": "private"
+    },
+    {
+     "name": "<InputTimeMs>k__BackingField",
+     "type": "int",
+     "offset": "0x24",
+     "modifiers": "private"
+    },
+    {
+     "name": "<FingerIndex>k__BackingField",
+     "type": "int",
+     "offset": "0x28",
+     "modifiers": "private"
+    }
+   ],
+   "methods": [
+    {
+     "va": "0x622A344",
+     "slot": null,
+     "signature": "public int get_UnitIndex()"
+    },
+    {
+     "va": "0x622A34C",
+     "slot": null,
+     "signature": "public InputState get_InputState()"
+    },
+    {
+     "va": "0x622A354",
+     "slot": null,
+     "signature": "public void set_InputState(InputState value)"
+    },
+    {
+     "va": "0x622A35C",
+     "slot": null,
+     "signature": "public void set_ScreenPosition(Vector2 value)"
+    },
+    {
+     "va": "0x622A364",
+     "slot": null,
+     "signature": "public float get_Lane()"
+    },
+    {
+     "va": "0x622A36C",
+     "slot": null,
+     "signature": "public void set_Lane(float value)"
+    },
+    {
+     "va": "0x622A374",
+     "slot": null,
+     "signature": "public int get_InputTimeMs()"
+    },
+    {
+     "va": "0x622A37C",
+     "slot": null,
+     "signature": "public void set_InputTimeMs(int value)"
+    },
+    {
+     "va": "0x622A384",
+     "slot": null,
+     "signature": "public int get_FingerIndex()"
+    },
+    {
+     "va": "0x622A38C",
+     "slot": null,
+     "signature": "public void set_FingerIndex(int value)"
+    },
+    {
+     "va": "0x6229C9C",
+     "slot": null,
+     "signature": "public void .ctor(int inputIndex)"
+    },
+    {
+     "va": "0x6229DE0",
+     "slot": null,
+     "signature": "public void Clear()"
+    }
+   ]
+  },
+  "FTLiveSimulator.LiveUseSimulateInputUnitPair": {
+   "role": "unit pair chosen for a note",
+   "typeDefIndex": 31398,
+   "declaration": "public class LiveUseSimulateInputUnitPair // TypeDefIndex: 31398",
+   "dumpLine": 2236228,
+   "fields": [
+    {
+     "name": "<InputUnit>k__BackingField",
+     "type": "LiveSimulateInputUnit",
+     "offset": "0x10",
+     "modifiers": "private"
+    },
+    {
+     "name": "<FlickInputUnit>k__BackingField",
+     "type": "LiveSimulateFlickInputUnit",
+     "offset": "0x18",
+     "modifiers": "private"
+    }
+   ],
+   "methods": [
+    {
+     "va": "0x622A394",
+     "slot": null,
+     "signature": "public LiveSimulateInputUnit get_InputUnit()"
+    },
+    {
+     "va": "0x622A39C",
+     "slot": null,
+     "signature": "private void set_InputUnit(LiveSimulateInputUnit value)"
+    },
+    {
+     "va": "0x622A3A4",
+     "slot": null,
+     "signature": "public LiveSimulateFlickInputUnit get_FlickInputUnit()"
+    },
+    {
+     "va": "0x622A3AC",
+     "slot": null,
+     "signature": "private void set_FlickInputUnit(LiveSimulateFlickInputUnit value)"
+    },
+    {
+     "va": "0x622A084",
+     "slot": null,
+     "signature": "public void Set(LiveSimulateInputUnit inputUnit, LiveSimulateFlickInputUnit flickInputUnit)"
+    },
+    {
+     "va": "0x622A05C",
+     "slot": null,
+     "signature": "public void Clear()"
+    },
+    {
+     "va": "0x6229C94",
+     "slot": null,
+     "signature": "public void .ctor()"
+    }
+   ]
+  },
+  "FTLiveSimulator.NoteSimulateJudgement": {
+   "role": "grade enum",
+   "typeDefIndex": 31459,
+   "declaration": "public enum NoteSimulateJudgement // TypeDefIndex: 31459",
+   "dumpLine": 2237901,
+   "fields": [
+    {
+     "name": "value__",
+     "type": "int",
+     "offset": "0x0",
+     "modifiers": "public"
+    },
+    {
+     "name": "None",
+     "type": "NoteSimulateJudgement",
+     "const": "-1"
+    },
+    {
+     "name": "Wait",
+     "type": "NoteSimulateJudgement",
+     "const": "0"
+    },
+    {
+     "name": "Miss",
+     "type": "NoteSimulateJudgement",
+     "const": "1"
+    },
+    {
+     "name": "Bad",
+     "type": "NoteSimulateJudgement",
+     "const": "2"
+    },
+    {
+     "name": "Good",
+     "type": "NoteSimulateJudgement",
+     "const": "3"
+    },
+    {
+     "name": "Great",
+     "type": "NoteSimulateJudgement",
+     "const": "4"
+    },
+    {
+     "name": "Perfect",
+     "type": "NoteSimulateJudgement",
+     "const": "5"
+    },
+    {
+     "name": "Just",
+     "type": "NoteSimulateJudgement",
+     "const": "6"
+    },
+    {
+     "name": "Pass",
+     "type": "NoteSimulateJudgement",
+     "const": "7"
+    },
+    {
+     "name": "Excellent",
+     "type": "NoteSimulateJudgement",
+     "const": "8"
+    }
+   ],
+   "methods": []
+  }
+ },
+ "missing": []
+}
