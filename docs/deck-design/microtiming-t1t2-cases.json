@@ -824,5 +824,15 @@
     "InputSystem state route (T1b)"
    ]
   }
- ]
+ ],
+ "followupEvidence": {
+  "file": "microtiming-skill-window-evidence.json",
+  "scope": "JP 1.0.4/10053 native fixed score-factor intervals",
+  "corrections": [
+   "GetFrame uses ceil, not floor",
+   "40ms is only a storage bucket; exact time merge determines [start,end)"
+  ],
+  "physicalCrossBoundaryGain": 0,
+  "fullNativeSkillContextCertified": false
+ }
 }
