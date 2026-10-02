@@ -52,21 +52,3 @@ export default function NativeFormationGroup({ locale, slots, label }: {
       stage.dataset.uiGeometry = "ready";
     }} /></div>;
 }
-
-export function NativeMemberArtwork({ locale, card, className }: { locale: AppLocale; card: CardViewModel; className: string }) {
-  const assetUrl = useAssetUrl();
-  const data = useMemo(() => ({ leader: false, member: { rarity: card.rarity, cardType: card.cardType,
-    thumbnailUrl: assetUrl(releaseFileUrl(`MemberCard/${card.assetId}/member_thumbnail`, "square.webp", locale)),
-    thumbnailSpriteKey: `MemberCard/${card.assetId}/member_thumbnail[square]`,
-  } }), [card, locale, assetUrl]);
-  return <NativeGameCard entry="memberSquare" data={data} label={`${card.characterName} ${card.title}`} className={className} />;
-}
-
-export function NativeSupportArtwork({ card, className }: { card: SupportCardViewModel; className: string }) {
-  const assetUrl = useAssetUrl();
-  const data = useMemo(() => ({ leader: false, support: { rarity: card.rarity, cardType: card.cardType,
-    thumbnailUrl: assetUrl(getSupportCardThumbnailUrl(card.assetId)),
-    thumbnailSpriteKey: `SupportCard/${card.assetId}/snap_thumbnail[snap_thumbnail]`,
-  } }), [card, assetUrl]);
-  return <NativeGameCard entry="supportSquare" data={data} label={card.name} className={className} />;
-}

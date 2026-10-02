@@ -1,28 +1,18 @@
-import { useListSort } from "@/lib/filter/use-list-sort";
-import { sortEntries } from "@/lib/filter/list-sort";
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import { t } from "@/i18n";
-import BaseFilters, {
-  RarityFilter,
-  AttributeFilter,
-  BandFilter,
-  CharacterFilter,
-} from "@/components/shared/BaseFilters";
+import CardFilters, { useCardFilters } from "@/components/shared/CardFilters";
+import CardViewSwitch from "@/components/shared/CardViewSwitch";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
-import MemberCardItem from "@/components/cards/MemberCardItem";
+import MemberCardItem, { MemberCardTile } from "@/components/cards/MemberCardItem";
 import ServerScope from "@/components/shared/ServerScope";
 import type { ServerFaceted } from "@/lib/servers/facets";
 import { serverOnlyLabel, useServerList } from "@/lib/servers/use-content-server";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
-import {
-  type CardViewModel,
-} from "@/lib/cards/data";
-import {
-  type CardRarity,
-  type CardType,
-} from "@/lib/cards/assets";
+import { useCardView } from "@/lib/cards/use-card-view";
+import { memberCardSubject, parseCardFilterState } from "@/lib/filter/card-filter";
+import type { CardViewModel } from "@/lib/cards/data";
 
 interface Props {
   locale: AppLocale;
@@ -30,32 +20,21 @@ interface Props {
   servers: GameServer[];
 }
 
-const rarities: CardRarity[] = [4, 3, 2];
-const cardTypes: CardType[] = [1, 2, 3, 4, 5];
-
 export default function CardsExplorer({ locale, initialCards, servers }: Props) {
   const memory = useListPageMemory("cards");
   const { server, pickServer, items: cards } = useServerList(locale, servers, initialCards);
-  const [query, setQuery] = useState("");
-  const sort = useListSort("cards", locale, "date rarity");
-  const [selectedRarities, setSelectedRarities] = useState<number[]>([]);
-  const [selectedCardTypes, setSelectedCardTypes] = useState<number[]>([]);
-  const [selectedBands, setSelectedBands] = useState<number[]>([]);
-  const [selectedCharacters, setSelectedCharacters] = useState<number[]>([]);
+  const controller = useCardFilters(cards, locale, "cards", memberCardSubject);
+  const { filters, setFilters, sorted, filtered, reset, hasActiveFilters, bands, characters } = controller;
+  const [view, setView] = useCardView("cards");
 
   useEffect(() => {
-    const remembered = parseRememberedFilters(memory.state?.filtersHash);
-    setQuery(remembered.query);
-    setSelectedRarities(remembered.rarities);
-    setSelectedCardTypes(remembered.cardTypes);
-    setSelectedBands(remembered.bands);
-    setSelectedCharacters(remembered.characters);
-  }, [memory.state?.filtersHash]);
+    setFilters(parseCardFilterState(memory.state?.filtersHash));
+  }, [memory.state?.filtersHash, setFilters]);
 
   useEffect(() => {
     if (!memory.state?.scrollY) return;
     const targetY = memory.state.scrollY;
-    
+
     const handle = window.requestAnimationFrame(() => {
       window.scrollTo({ top: targetY });
     });
@@ -66,15 +45,8 @@ export default function CardsExplorer({ locale, initialCards, servers }: Props) 
   }, [memory.state?.scrollY]);
 
   const saveCurrentState = useCallback(() => {
-    const filtersHash = JSON.stringify({
-      query,
-      rarities: selectedRarities,
-      cardTypes: selectedCardTypes,
-      bands: selectedBands,
-      characters: selectedCharacters
-    });
-    memory.saveState({ scrollY: window.scrollY, filtersHash });
-  }, [query, selectedRarities, selectedCardTypes, selectedBands, selectedCharacters, memory]);
+    memory.saveState({ scrollY: window.scrollY, filtersHash: JSON.stringify(filters) });
+  }, [filters, memory]);
 
   useEffect(() => {
     window.addEventListener("beforeunload", saveCurrentState);
@@ -84,148 +56,36 @@ export default function CardsExplorer({ locale, initialCards, servers }: Props) 
     };
   }, [saveCurrentState]);
 
-  const bands = useMemo(() => {
-    const values = new Map<number, string>();
-    cards.forEach((card) => {
-      if (card.bandId && card.bandName) values.set(card.bandId, card.bandName);
-    });
-    return [...values.entries()].sort(([a], [b]) => a - b);
-  }, [cards]);
-
-  const bandCharacters = useMemo(() => {
-    if (selectedBands.length === 0) return [];
-    const charMap = new Map<number, { id: number; name: string }>();
-    cards.forEach((card) => {
-      if (selectedBands.includes(card.bandId)) {
-        charMap.set(card.characterId, { id: card.characterId, name: card.characterName });
-      }
-    });
-    return [...charMap.values()].sort((a, b) => a.id - b.id);
-  }, [cards, selectedBands]);
-
-  const filteredCards = useMemo(() => {
-    const needle = query.trim().toLocaleLowerCase();
-    return cards.filter((card) => {
-      if (selectedRarities.length > 0 && !selectedRarities.includes(card.rarity)) return false;
-      if (selectedCardTypes.length > 0 && !selectedCardTypes.includes(card.cardType)) return false;
-      if (selectedBands.length > 0 && !selectedBands.includes(card.bandId)) return false;
-      if (selectedCharacters.length > 0 && !selectedCharacters.includes(card.characterId)) return false;
-      return !needle || card.searchText.includes(needle);
-    });
-  }, [cards, query, selectedRarities, selectedCardTypes, selectedBands, selectedCharacters]);
-
-  const sortedEntries = useMemo(() => sortEntries(filteredCards, sort.value, locale), [filteredCards, sort.value, locale]);
-
-  const hasActiveFilters = sort.value !== "default" || Boolean(query) || selectedRarities.length > 0 || selectedCardTypes.length > 0 || selectedBands.length > 0 || selectedCharacters.length > 0;
-
-  const handleBandToggle = (bandId: number) => {
-    const nextBands = selectedBands.includes(bandId)
-      ? selectedBands.filter((id) => id !== bandId)
-      : [...selectedBands, bandId];
-    
-    setSelectedBands(nextBands);
-
-    // Filter characters to only keep those that belong to the new set of bands
-    if (nextBands.length === 0) {
-      setSelectedCharacters([]);
-    } else {
-      const validCharIds = new Set<number>();
-      cards.forEach((card) => {
-        if (nextBands.includes(card.bandId)) {
-          validCharIds.add(card.characterId);
-        }
-      });
-      setSelectedCharacters((prev) => prev.filter((charId) => validCharIds.has(charId)));
-    }
-  };
-
-  const handleBandReset = () => {
-    setSelectedBands([]);
-    setSelectedCharacters([]);
-  };
-
   const resetFilters = () => {
-    sort.onChange("default");
-    setQuery("");
-    setSelectedRarities([]);
-    setSelectedCardTypes([]);
-    setSelectedBands([]);
-    setSelectedCharacters([]);
+    reset();
     memory.clearState();
   };
 
-  const quickFilterContent = (
-    <BaseFilters
-      sort={sort}
-      variant="plain"
-      title={t(locale, "cards.filterTitle")}
-      searchValue={query}
-      onSearchChange={setQuery}
-      searchLabel={t(locale, "filter.search")}
-      searchPlaceholder={t(locale, "cards.searchPlaceholder")}
-      resultCount={filteredCards.length}
-      totalCount={cards.length}
-      hasActiveFilters={hasActiveFilters}
-      onReset={resetFilters}
-      resetLabel={t(locale, "filter.reset")}
-      expandLabel={t(locale, "filter.expand")}
-    >
-      <RarityFilter
-        title={t(locale, "cards.rarity")}
-        rarities={rarities}
-        selectedRarities={selectedRarities as CardRarity[]}
-        onChange={setSelectedRarities}
-        getRarityLabel={(value) => t(locale, `cards.rarities.${value}`)}
-      />
-
-      <AttributeFilter
-        title={t(locale, "cards.attribute")}
-        attributes={cardTypes}
-        selectedAttributes={selectedCardTypes as CardType[]}
-        onChange={setSelectedCardTypes}
-        getAttributeLabel={(value) => t(locale, `cards.attributes.${value}`)}
-      />
-
-      <BandFilter
-        title={t(locale, "cards.band")}
-        bands={bands}
-        selectedBands={selectedBands}
-        onToggle={handleBandToggle}
-        onReset={handleBandReset}
-      />
-
-      <CharacterFilter
-        title={t(locale, "nav.items.characters")}
-        characters={bandCharacters}
-        selectedCharacters={selectedCharacters}
-        onChange={setSelectedCharacters}
-      />
-    </BaseFilters>
-  );
-
-  useQuickFilter(t(locale, "cards.filterTitle"), quickFilterContent, [
-    sort.value,
-    query,
-    selectedRarities,
-    selectedCardTypes,
-    selectedBands,
-    selectedCharacters,
+  useQuickFilter(t(locale, "cards.filterTitle"), <CardFilters locale={locale} controller={controller} kind="member" onReset={resetFilters} />, [
+    controller.sort.value,
+    filters,
     bands,
-    bandCharacters,
+    characters,
     hasActiveFilters,
-    filteredCards.length,
+    filtered.length,
     cards.length,
     locale,
   ]);
 
   return (
-    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
+    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer} actions={<CardViewSwitch locale={locale} value={view} onChange={setView} />}>
       <section className="min-w-0" aria-live="polite">
-        {filteredCards.length === 0 ? (
+        {filtered.length === 0 ? (
           <EmptyState locale={locale} onReset={resetFilters} />
+        ) : view === "square" ? (
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 3xl:grid-cols-10 4xl:grid-cols-12">
+            {sorted.map((card) => (
+              <MemberCardTile key={card.id} card={card} locale={locale} onClick={saveCurrentState} badge={serverOnlyLabel(locale, card, servers)} />
+            ))}
+          </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4xl:grid-cols-7 5xl:grid-cols-8">
-            {sortedEntries.map((card) => (
+            {sorted.map((card) => (
               <MemberCardItem key={card.id} card={card} locale={locale} onClick={saveCurrentState} badge={serverOnlyLabel(locale, card, servers)} />
             ))}
           </div>
@@ -245,27 +105,4 @@ function EmptyState({ locale, onReset }: { locale: AppLocale; onReset: () => voi
       </button>
     </div>
   );
-}
-
-function parseRememberedFilters(raw?: string) {
-  const fallback = {
-    query: "",
-    rarities: [] as number[],
-    cardTypes: [] as number[],
-    bands: [] as number[],
-    characters: [] as number[]
-  };
-  if (!raw) return fallback;
-  try {
-    const parsed = JSON.parse(raw) as Partial<typeof fallback>;
-    return {
-      query: typeof parsed.query === "string" ? parsed.query : "",
-      rarities: Array.isArray(parsed.rarities) ? parsed.rarities : [],
-      cardTypes: Array.isArray(parsed.cardTypes) ? parsed.cardTypes : [],
-      bands: Array.isArray(parsed.bands) ? parsed.bands : [],
-      characters: Array.isArray(parsed.characters) ? parsed.characters : []
-    };
-  } catch {
-    return fallback;
-  }
 }

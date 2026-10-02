@@ -351,6 +351,11 @@ export const enUS = {
     allRarities: "All rarities",
     allAttributes: "All attributes",
     allBands: "All bands",
+    view: {
+      label: "Display",
+      card: "Cards",
+      square: "Icons",
+    },
     results: "{count} cards",
     loading: "Waking card memories from the starlight…",
     loadErrorTitle: "The starlight has momentarily faded",
@@ -1073,6 +1078,9 @@ export const enUS = {
       "skillId": "Skill #{id}",
       "unsupported": "Not supported",
       "select": "Select",
+      "kindFilter": "Skill type",
+      "skillChosen": "Selected skill",
+      "skillPickHint": "Choose a Snap card, then its skill level.",
       "kind": {
         "support": "Live Snap skill",
         "gekisou-support": "Gekiso Snap skill"

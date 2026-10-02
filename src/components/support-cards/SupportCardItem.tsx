@@ -4,6 +4,7 @@ import { localizePath } from "@/i18n/routing";
 import BandLogo from "@/components/shared/BandLogo";
 import ListCardBadge from "@/components/shared/ListCardBadge";
 import SupportCardArtwork from "@/components/support-cards/SupportCardArtwork";
+import { SupportSquareArtwork } from "@/components/shared/CardSquareArtwork";
 import { getRoutePathById } from "@/lib/route/registry";
 import { getSupportRarityIconUrl } from "@/lib/support-cards/assets";
 import type { SupportCardViewModel } from "@/lib/support-cards/data";
@@ -60,6 +61,28 @@ export default function SupportCardItem({ card, locale, onClick, badge }: Props)
           <BandLogo bandId={card.bandId} bandName={card.bandName} locale={locale} />
         </div>
       </div>
+    </a>
+  );
+}
+
+/** The square view's tile: the game's 1:1 Snap icon with the name below. */
+export function SupportCardTile({ card, locale, onClick, badge }: Props) {
+  return (
+    <a
+      href={localizePath(`${getRoutePathById("support-cards")}/${card.id}`, locale)}
+      onClick={onClick}
+      className="mn-focus group flex min-w-0 flex-col items-center gap-1.5 rounded-2xl p-1.5 text-center transition hover:-translate-y-0.5 hover:bg-[var(--mn-paper)] hover:shadow-[var(--mn-shadow-stamp)]"
+      data-list-item-id={card.id}
+      aria-label={t(locale, "supportCards.openDetail", { title: card.title, character: card.name })}
+    >
+      <span className="relative block w-full">
+        <SupportSquareArtwork locale={locale} card={card} />
+        {badge && <ListCardBadge label={badge} position="right-0 top-0" />}
+      </span>
+      <span className="w-full min-w-0">
+        <span className="block truncate text-xs font-black text-[var(--mn-text)]">{card.name}</span>
+        <span className="block truncate text-[10px] font-medium text-[var(--mn-text-muted)]">{card.title}</span>
+      </span>
     </a>
   );
 }

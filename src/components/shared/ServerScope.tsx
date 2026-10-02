@@ -20,6 +20,8 @@ interface Props {
   entityServers?: readonly GameServer[];
   /** Leave the switch to another island of the page (it changes the same setting). */
   hideSwitch?: boolean;
+  /** Page controls at the end of the switch row, e.g. a list's display switch; shown even with one server. */
+  actions?: ReactNode;
   children?: ReactNode;
 }
 
@@ -27,14 +29,16 @@ interface Props {
  * One server's content: the server switch (only when the build has several servers) above `children`, which show that
  * server's files. See docs/servers.md.
  */
-export default function ServerScope({ locale, servers, server, onChange, entityServers, hideSwitch = false, children }: Props) {
+export default function ServerScope({ locale, servers, server, onChange, entityServers, hideSwitch = false, actions, children }: Props) {
   const source = entityServers ? entityServer({ servers: entityServers }, server) : server;
+  const showSwitch = servers.length > 1 && !hideSwitch;
   return (
     <ContentServerProvider server={source} servers={servers}>
-      {servers.length > 1 && !hideSwitch && (
+      {(showSwitch || actions) && (
         <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2">
-          <GameServerSwitch locale={locale} value={server} onChange={onChange} servers={servers} />
-          {entityServers && <AvailabilityNote locale={locale} servers={servers} server={server} source={source} entityServers={entityServers} />}
+          {showSwitch && <GameServerSwitch locale={locale} value={server} onChange={onChange} servers={servers} />}
+          {showSwitch && entityServers && <AvailabilityNote locale={locale} servers={servers} server={server} source={source} entityServers={entityServers} />}
+          {actions && <div className="ml-auto">{actions}</div>}
         </div>
       )}
       {children}

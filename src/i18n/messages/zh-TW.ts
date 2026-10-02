@@ -389,6 +389,11 @@ export const zhTW = {
     allRarities: "全部稀有度",
     allAttributes: "全部屬性",
     allBands: "全部樂隊",
+    view: {
+      label: "顯示方式",
+      card: "卡面",
+      square: "方形圖示",
+    },
     results: "{count} 張卡牌",
     loading: "正在翻開記憶手帳…",
     loadErrorTitle: "星光暫時隱沒",
@@ -1111,6 +1116,9 @@ export const zhTW = {
       "skillId": "技能 #{id}",
       "unsupported": "暫不支援",
       "select": "選擇",
+      "kindFilter": "技能類型",
+      "skillChosen": "已選技能",
+      "skillPickHint": "選擇一張 Snap 卡，再選擇技能等級。",
       "kind": {
         "support": "演出留影技能",
         "gekisou-support": "擊奏留影技能"

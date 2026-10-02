@@ -351,6 +351,11 @@ export const koKR = {
     allRarities: "모든 레어도",
     allAttributes: "모든 속성",
     allBands: "모든 밴드",
+    view: {
+      label: "표시 방식",
+      card: "카드",
+      square: "아이콘",
+    },
     results: "{count}장의 카드",
     loading: "별빛 카드 화첩을 넘기는 중…",
     loadErrorTitle: "카드 노트를 열지 못했습니다",
@@ -1073,6 +1078,9 @@ export const koKR = {
       "skillId": "스킬 #{id}",
       "unsupported": "미지원",
       "select": "선택",
+      "kindFilter": "스킬 종류",
+      "skillChosen": "선택한 스킬",
+      "skillPickHint": "스냅 카드를 고른 뒤 스킬 레벨을 선택하세요.",
       "kind": {
         "support": "라이브 스냅 스킬",
         "gekisou-support": "격주 스냅 스킬"

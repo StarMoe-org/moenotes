@@ -383,6 +383,11 @@ export const jaJP = {
     allRarities: "すべてのレアリティ",
     allAttributes: "すべてのタイプ",
     allBands: "すべてのバンド",
+    view: {
+      label: "表示",
+      card: "カード",
+      square: "アイコン",
+    },
     results: "{count} 枚",
     loading: "星光のカード画帖をめくっています…",
     loadErrorTitle: "カードの手帳が開けませんでした",
@@ -1105,6 +1110,9 @@ export const jaJP = {
       "skillId": "スキル #{id}",
       "unsupported": "未対応",
       "select": "選択",
+      "kindFilter": "スキルの種類",
+      "skillChosen": "選択中のスキル",
+      "skillPickHint": "スナップを選んでから、スキルレベルを選択してください。",
       "kind": {
         "support": "ライブスナップスキル",
         "gekisou-support": "撃奏スナップスキル"

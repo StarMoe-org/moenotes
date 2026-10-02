@@ -569,7 +569,7 @@ html[data-theme="dark"] .mn-cd {
 /* The game prefab owns every painted layer; DOM buttons provide selection and keyboard access. */
 .mn-native-card{position:relative;width:100%;overflow:visible}
 .mn-native-card-canvas{position:absolute;inset:0;display:grid;place-items:center}
-.mn-native-card-canvas canvas{width:100%;height:100%;object-fit:contain;display:block}
+.mn-native-card-canvas canvas,.mn-native-card-canvas img{width:100%;height:100%;object-fit:contain;display:block}
 .mn-native-card[data-status="loading"]{border-radius:.8rem;background:linear-gradient(110deg,transparent 20%,color-mix(in oklab,var(--mn-accent) 6%,transparent) 45%,transparent 70%);background-size:220% 100%;animation:mn-native-shimmer 1.5s linear infinite}
 .mn-native-card-fallback{position:absolute;inset:8%;display:grid;place-items:center;border:1px dashed var(--mn-border);border-radius:.8rem;font-size:.75rem;color:var(--mn-text-muted)}
 @keyframes mn-native-shimmer{to{background-position:-220% 0}}

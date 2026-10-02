@@ -8,7 +8,7 @@ import { replaceSnapSlot } from "@/lib/chart-data/snap-query";
 import { resolveSnapSupportCardId, validateSnapMemberReplacement, validateSnapSkillReplacement, type SnapLegalityContext, type SnapLegalityIssue } from "@/lib/chart-data/snap-legality";
 import SnapSkillPicker from "./SnapSkillPicker";
 import SnapPairedMemberControls from "./SnapPairedMemberControls";
-import NativeFormationGroup, { NativeMemberArtwork, NativeSupportArtwork } from "./NativeFormationGroup";
+import NativeFormationGroup from "./NativeFormationGroup";
 import type { ChartDataContext } from "./shared";
 
 export default function SnapRankingPanel({ ctx, catalogue, measurement, loading, invalidMembers, legality, issues, available, catalogueError, onOpen }: {
@@ -49,11 +49,9 @@ export default function SnapRankingPanel({ ctx, catalogue, measurement, loading,
       {...(nativeUi ? { renderFormation: () => <NativeFormationGroup locale={locale} slots={state.snapSkills.map((selection, slot) => ({
         member: cards?.members.find(member => member.id === state.snapMembers[slot]?.memberId)?.vm,
         support: cards?.snaps.get(resolveSnapSupportCardId(selection, choices) ?? -1),
-      }))} label={tr("snap.title")} />,
-        renderArtwork: (card, className) => <NativeSupportArtwork card={card} className={className} /> } : {})}
+      }))} label={tr("snap.title")} /> } : {})}
       renderContext={(slot) => <SnapPairedMemberControls locale={locale} members={cards?.members ?? []} value={state.snapMembers[slot] ?? null}
         variant={nativeUi ? "overlay" : "card"} onOpen={onOpen}
-        {...(nativeUi ? { renderArtwork: (card, className) => <NativeMemberArtwork locale={locale} card={card} className={className} /> } : {})}
         validateSelection={(member) => legality ? validateSnapMemberReplacement(state, legality, slot, member) : null} onReject={setRejected}
         onChange={(member) => {
           const issue = legality ? validateSnapMemberReplacement(state, legality, slot, member) : null;
