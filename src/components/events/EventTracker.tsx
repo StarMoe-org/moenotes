@@ -1,8 +1,9 @@
+import SiriusLoader from "@/components/shared/SiriusLoader";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import EventBanner from "@/components/events/EventBanner";
-import RankingList, { RankingSkeleton } from "@/components/music/RankingList";
+import RankingList, { RankingLoading } from "@/components/music/RankingList";
 import PlayerNamecard from "@/components/music/PlayerNamecard";
 import GameServerSwitch from "@/components/shared/GameServerSwitch";
 import { t } from "@/i18n";
@@ -168,10 +169,7 @@ export default function EventTracker({ locale, events, songs, deckCards, servers
       </div>
 
       {load.state === "loading" && (
-        <div className="space-y-4" role="status" aria-label={t(locale, "eventTracker.loading")}>
-          <div className="mn-paper aspect-[7/3] animate-pulse sm:aspect-[5/1]" />
-          <div className="mn-paper h-64 animate-pulse" />
-        </div>
+        <SiriusLoader locale={locale} label={t(locale, "eventTracker.loading")} className="mn-paper min-h-72" />
       )}
 
       {load.state === "error" && (
@@ -449,7 +447,7 @@ function ChallengeBoard({ locale, server, eventId, challenge, song, cards, serve
       {!readable ? (
         <BoardNotice locale={locale} server={server} challenge={challenge} />
       ) : load.state === "loading" ? (
-        <RankingSkeleton label={t(locale, "music.ranking.loading")} />
+        <RankingLoading locale={locale} label={t(locale, "music.ranking.loading")} />
       ) : load.state === "error" ? (
         load.kind === "pending" || load.kind === "upstream" || load.kind === "failed" ? (
           <Notice
@@ -536,7 +534,7 @@ function PointRankingPanel({ locale, server, event, servers }: { locale: AppLoca
         ) : !data ? (
           failed
             ? <p className="px-2 py-4 text-sm font-semibold text-[var(--mn-text-muted)]">{t(locale, "music.ranking.errors.failed")}</p>
-            : <RankingSkeleton label={t(locale, "music.ranking.loading")} />
+            : <RankingLoading locale={locale} label={t(locale, "music.ranking.loading")} />
         ) : (
           <>
             <p className="mb-3 px-2 text-right text-[11px] font-semibold text-[var(--mn-text-muted)]">

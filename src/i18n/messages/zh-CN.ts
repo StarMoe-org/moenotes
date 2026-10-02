@@ -1,6 +1,7 @@
 import type { MessageTree } from "@/i18n/translate";
 
 export const zhCN = {
+  loader: { loading: "正在加载" },
   sorting: { default: "默认顺序", id: "编号", name: "名称", date: "发布时间", rarity: "稀有度", ascending: "升序", descending: "降序" },
   assetBrowser: {
     noLanguages: "暂时没有可用的资源语言。",
@@ -437,7 +438,7 @@ export const zhCN = {
       copyImage: "复制图像或资源链接",
       copyStates: { image: "图像已复制，可直接粘贴。", link: "浏览器不支持复制图像，已复制资源链接。", error: "复制失败，请使用打开原图。" },
     },
-    rarities: { "2": "R", "3": "SR", "4": "SSR", "10": "特殊" },
+    rarities: { "2": "R", "3": "SR", "4": "SSR", "10": "特殊", "20": "生日" },
     attributes: { "1": "红赤", "2": "绀碧", "3": "翡翠", "4": "山吹", "5": "紫苑" },
     growth: { level: "等级", levelValue: "Lv.{level} / {limit}", decrease: "降低等级", increase: "提升等级", max: "最大", training: "特训", awaken: "觉醒", power: "综合力", skillLevel: "技能等级", leaderSkillHint: "队长技能等级与觉醒次数联动，调整时会同步修改觉醒。" },
   },

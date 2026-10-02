@@ -1,3 +1,4 @@
+import SiriusLoader from "@/components/shared/SiriusLoader";
 import { Fragment, useState } from "react";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
@@ -279,13 +280,6 @@ function UnknownThumb({ id, ratio }: { id: number | null; ratio: string }) {
   );
 }
 
-export function RankingSkeleton({ label }: { label: string }) {
-  return (
-    <div className="space-y-2 px-2" role="status" aria-label={label}>
-      <p className="pb-1 text-center text-xs font-semibold text-[var(--mn-text-muted)]">{label}</p>
-      {Array.from({ length: 6 }, (_, index) => (
-        <div key={index} className="h-10 animate-pulse rounded-xl bg-[var(--mn-cream-deep)]" />
-      ))}
-    </div>
-  );
+export function RankingLoading({ locale, label }: { locale: AppLocale; label: string }) {
+  return <SiriusLoader locale={locale} label={label} className="min-h-72" />;
 }

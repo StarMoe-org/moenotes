@@ -1,3 +1,4 @@
+import SiriusLoader, { SiriusIcon } from "@/components/shared/SiriusLoader";
 import SortControl, { type SortFieldOption } from "@/components/shared/SortControl";
 import BrandLogo from "@/components/shared/BrandLogo";
 import { useState } from "react";
@@ -63,6 +64,12 @@ export default function DesignSystemPage({ locale }: Props) {
           {t(locale, "designSystem.subtitle")}
         </p>
       </header>
+
+      <section className="mn-paper flex flex-wrap items-center justify-around gap-8 p-6" aria-label={t(locale, "loader.loading")}>
+        <SiriusLoader locale={locale} />
+        <SiriusLoader locale={locale} compact />
+        <span className="inline-flex items-center gap-2"><SiriusIcon />{t(locale, "loader.loading")}</span>
+      </section>
 
       {/* Tab Navigation */}
       <nav className="mn-system-tabs sticky top-[var(--mn-header-bottom,5rem)] sm:top-24 z-20 border border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp-sm)] rounded-2xl mx-1 sm:mx-3 sm:rounded-xl sm:p-2.5 transition-all duration-300">
@@ -405,7 +412,7 @@ function ModalsSection({ locale }: { locale: AppLocale }) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
           </svg>
         )}
-        {downloadState === "downloading" && <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9" strokeWidth="2" className="opacity-30" /><path d="M12 3a9 9 0 019 9" strokeWidth="2" strokeLinecap="round" /></svg>}
+        {downloadState === "downloading" && <SiriusIcon />}
         {downloadState === "success" && <svg className="h-4 w-4 text-[var(--mn-mint)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
       </button>
       <button
@@ -418,7 +425,7 @@ function ModalsSection({ locale }: { locale: AppLocale }) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
           </svg>
         )}
-        {copyState === "copying" && <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9" strokeWidth="2" className="opacity-30" /><path d="M12 3a9 9 0 019 9" strokeWidth="2" strokeLinecap="round" /></svg>}
+        {copyState === "copying" && <SiriusIcon />}
         {copyState === "success" && <svg className="h-4 w-4 text-[var(--mn-mint)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
       </button>
     </>

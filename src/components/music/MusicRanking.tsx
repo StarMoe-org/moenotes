@@ -4,7 +4,7 @@ import type { AppLocale } from "@/config/locales";
 import { PRIMARY_SERVER } from "@/config/servers";
 import { t } from "@/i18n";
 import GameServerSwitch from "@/components/shared/GameServerSwitch";
-import RankingList, { RankingSkeleton } from "@/components/music/RankingList";
+import RankingList, { RankingLoading } from "@/components/music/RankingList";
 import { GameApiError, fetchMusicRanking } from "@/lib/game-api/client";
 import { toRankingRows, type DeckCardLookup, type RankingRow } from "@/lib/game-api/music-ranking";
 import { formatAge } from "@/lib/game-api/server";
@@ -108,7 +108,7 @@ export default function MusicRanking({ locale, musicId, cards }: Props) {
           </p>
         )}
 
-        {load.state === "loading" && <RankingSkeleton label={t(locale, "music.ranking.loading")} />}
+        {load.state === "loading" && <RankingLoading locale={locale} label={t(locale, "music.ranking.loading")} />}
 
         {load.state === "error" && (
           <div className="px-2 py-8 text-center" role="status">

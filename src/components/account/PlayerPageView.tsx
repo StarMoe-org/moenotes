@@ -1,3 +1,4 @@
+import SiriusLoader from "@/components/shared/SiriusLoader";
 import { useEffect, useMemo, useState } from "react";
 import PlayerProfileCard from "@/components/account/PlayerProfileCard";
 import ShareImageButton from "@/components/account/ShareImageButton";
@@ -72,17 +73,17 @@ export default function PlayerPageView({ locale, cards }: Props) {
               <ShareImageButton locale={locale} snapshot={state.snapshot} cards={cardMap} isPublic stampButton={stampButton} />
             </div>
           </>
+        ) : state.status === "loading" ? (
+          <SiriusLoader locale={locale} label={t(locale, "player.loading")} />
         ) : (
           <p className="text-sm text-[var(--mn-text-muted)]">
             {t(
               locale,
-              state.status === "loading"
-                ? "player.loading"
-                : state.status === "invalid"
-                  ? "player.invalid"
-                  : state.status === "not-found"
-                    ? "player.notFound"
-                    : "player.unavailable",
+              state.status === "invalid"
+                ? "player.invalid"
+                : state.status === "not-found"
+                  ? "player.notFound"
+                  : "player.unavailable",
             )}
           </p>
         )}

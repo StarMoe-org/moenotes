@@ -17,7 +17,7 @@ import { useListSort } from "@/lib/filter/use-list-sort";
 
 export type CardFilterKind = "member" | "support";
 
-const RARITIES: Record<CardFilterKind, readonly number[]> = { member: [4, 3, 2], support: [10, 4, 3, 2] };
+const RARITIES: Record<CardFilterKind, readonly number[]> = { member: [20, 4, 3, 2], support: [10, 4, 3, 2] };
 const CARD_TYPES = [1, 2, 3, 4, 5] as const;
 
 interface CardFilterOptions<T> {

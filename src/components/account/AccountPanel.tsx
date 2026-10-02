@@ -1,3 +1,4 @@
+import SiriusLoader from "@/components/shared/SiriusLoader";
 import { useEffect, useState } from "react";
 import AccountAvatar from "@/components/account/AccountAvatar";
 import GameAccounts from "@/components/account/GameAccounts";
@@ -42,7 +43,7 @@ export default function AccountPanel({ locale, bands, cards }: Props) {
     if (account?.status === "signed-in") setUser(account.user);
   }, [account]);
 
-  if (!account) return <p className="text-sm text-[var(--mn-text-muted)]">{t(locale, "account.loading")}</p>;
+  if (!account) return <SiriusLoader locale={locale} compact label={t(locale, "account.loading")} />;
 
   if (account.status === "unavailable") {
     return (
@@ -236,7 +237,7 @@ function AvatarPicker({ locale, bands, user, displayName, open, onClose, onSaved
         ))}
       </div>
 
-      {saving && <p className="mt-4 text-xs text-[var(--mn-text-muted)]">{t(locale, "account.saving")}</p>}
+      {saving && <SiriusLoader locale={locale} compact label={t(locale, "account.saving")} />}
       {failed && <p className="mt-4 text-xs text-[var(--mn-danger,#ba1b1b)]">{t(locale, "account.saveFailed")}</p>}
     </Modal>
   );

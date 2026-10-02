@@ -37,9 +37,9 @@ export function buildSnapSourceCards(data: SnapDeckData, sourceMusicData: MusicD
     const gkLevels = [...new Set(gkEffects.filter((e) => e._gekisouSkillID === row._gekisouSkillID).map((e) => number(e._level)))].filter((n) => n > 0).sort((a, b) => a - b);
     let vm = existing;
     // Current normalized exports omit _assetID. Future additive columns can supply it without a global lookup.
-    if (!vm && Number.isSafeInteger(row._assetID) && number(row._assetID) > 0 && [2, 3, 4].includes(number(row._rarity)) && [1, 2, 3, 4, 5].includes(number(row._cardType))) {
+    if (!vm && Number.isSafeInteger(row._assetID) && number(row._assetID) > 0 && [2, 3, 4, 20].includes(number(row._rarity)) && [1, 2, 3, 4, 5].includes(number(row._cardType))) {
       const characterId = number(row._characterID), character = characters.get(characterId), bandId = number(nativeCharacters.get(characterId)?._bandID), band = bands.get(bandId);
-      vm = { id, assetId: number(row._assetID), characterId, bandId, rarity: number(row._rarity) as 2 | 3 | 4, cardType: number(row._cardType) as 1 | 2 | 3 | 4 | 5, title: localizeDataText(named?.subtitle, locale) || name,
+      vm = { id, assetId: number(row._assetID), characterId, bandId, rarity: number(row._rarity) as 2 | 3 | 4 | 20, cardType: number(row._cardType) as 1 | 2 | 3 | 4 | 5, title: localizeDataText(named?.subtitle, locale) || name,
         characterName: localizeDataText(character?.name, locale), bandName: localizeDataText(band?.name, locale), characterColor: character?.mainColor ?? "",
         performancePower: number(row._performancePowerMax), technicPower: number(row._technicPowerMax), visualPower: number(row._visualPowerMax), totalPower: number(row._performancePowerMax) + number(row._technicPowerMax) + number(row._visualPowerMax),
         startAt: text(row._startAt), gachaVoice: "", liveSkillId: number(row._liveSkillID), leaderSkillId: number(row._leaderSkillID), gekisouSkillId: number(row._gekisouSkillID), searchText: `${id} ${name}`.toLowerCase() };

@@ -1,3 +1,4 @@
+import SiriusLoader from "@/components/shared/SiriusLoader";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
@@ -160,7 +161,7 @@ export default function SnapSkillPicker({ locale, choices, selections, cards, lo
 
           <div className="min-w-0 space-y-3">
             <button type="button" className="mn-cd-snap-none" onClick={() => slot !== null && commit(slot, null)}><span aria-hidden="true">–</span><strong>{tr("none")}</strong><span>{tr("noneHint")}</span></button>
-            {loading ? <p className="mn-cd-snap-state" role="status">{tr("loading")}</p> : error ? <p className="mn-cd-snap-state" role="alert">{error}</p> : picker.sorted.length === 0 ? (
+            {loading ? <SiriusLoader locale={locale} compact className="mn-cd-snap-state" label={tr("loading")} /> : error ? <p className="mn-cd-snap-state" role="alert">{error}</p> : picker.sorted.length === 0 ? (
               <div className="mn-paper p-8 text-center">
                 <p className="font-[var(--mn-font-display)] text-lg text-[var(--mn-text)]">{tr("empty")}</p>
                 <button type="button" onClick={picker.reset}

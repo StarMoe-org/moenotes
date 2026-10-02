@@ -70,7 +70,7 @@ export interface RankingRow {
  * (index `level - 1`), which turns a card's `exp` into its level.
  */
 export interface DeckCardLookup {
-  member: Record<string, [number, number, 2 | 3 | 4, 1 | 2 | 3 | 4 | 5, string, number]>;
+  member: Record<string, [number, number, 2 | 3 | 4 | 20, 1 | 2 | 3 | 4 | 5, string, number]>;
   support: Record<string, [number, 2 | 3 | 4 | 10, 1 | 2 | 3 | 4 | 5, string, number]>;
   levelExp: { member: Record<string, number[]>; support: Record<string, number[]> };
 }

@@ -1,3 +1,4 @@
+import SiriusLoader, { SiriusIcon } from "@/components/shared/SiriusLoader";
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
@@ -258,9 +259,8 @@ function SheetStatus({ locale, sheet, onRetry }: { locale: AppLocale; sheet: She
 
   const stage = sheet.stage === "rendering" ? "rendering" : "fetching";
   return (
-    <div className={frame} role="status" aria-live="polite">
-      <Spinner className="h-7 w-7 text-[var(--mn-accent-deep)]" />
-      <p className="text-sm font-bold text-[var(--mn-text)]">{t(locale, `music.chartPreview.${stage}`)}</p>
+    <div className={frame}>
+      <SiriusLoader locale={locale} label={t(locale, `music.chartPreview.${stage}`)} />
       <p className="max-w-md text-xs font-medium leading-6 text-[var(--mn-text-muted)]">{t(locale, `music.chartPreview.${stage}Hint`)}</p>
     </div>
   );
@@ -437,10 +437,7 @@ function Segmented({ label, options, value, disabled, onChange }: {
 
 function Spinner({ className = "h-4 w-4" }: { className?: string }) {
   return (
-    <svg className={`${className} animate-spin`} viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-      <circle cx="12" cy="12" r="9" strokeWidth="2" className="opacity-30" />
-      <path d="M12 3a9 9 0 019 9" strokeWidth="2" strokeLinecap="round" />
-    </svg>
+    <SiriusIcon className={className} />
   );
 }
 

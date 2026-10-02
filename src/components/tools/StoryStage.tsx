@@ -1,3 +1,4 @@
+import SiriusLoader from "@/components/shared/SiriusLoader";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type { StoryPlayer } from "ournotes-player/story";
 import type { AppLocale } from "@/config/locales";
@@ -174,14 +175,14 @@ export default function StoryStage({ locale, manifest, language, title, simple, 
 
         {status.kind === "booting" && (
           <StageMessage>
-            <p className="text-sm font-bold text-white/75">{t(locale, "storyPlayer.preparing")}</p>
+            <SiriusLoader locale={locale} compact label={t(locale, "storyPlayer.preparing")} />
           </StageMessage>
         )}
 
         {status.kind === "loading" && (
           <StageMessage>
             {title && <p className="max-w-md font-[var(--mn-font-display)] text-base text-white sm:text-lg">{title}</p>}
-            <p className="mt-2 text-xs font-bold text-white/70">{t(locale, "storyPlayer.loading")}</p>
+            <SiriusLoader locale={locale} compact label={t(locale, "storyPlayer.loading")} />
             {status.total > 0 && (
               <>
                 <div className="mx-auto mt-3 h-1.5 w-48 overflow-hidden rounded-full bg-white/20">

@@ -1,6 +1,7 @@
 import type { MessageTree } from "@/i18n/translate";
 
 export const enUS = {
+  loader: { loading: "Loading" },
   sorting: { default: "Default order", id: "ID", name: "Name", date: "Release date", rarity: "Rarity", ascending: "Ascending", descending: "Descending" },
   assetBrowser: {
     noLanguages: "No content languages are available yet.",
@@ -399,7 +400,7 @@ export const enUS = {
       copyImage: "Copy image or asset URL",
       copyStates: { image: "Image copied. You can paste it now.", link: "Image copying is unavailable, so the asset URL was copied instead.", error: "Copy failed. Use Open Original instead." },
     },
-    rarities: { "2": "R", "3": "SR", "4": "SSR", "10": "Special" },
+    rarities: { "2": "R", "3": "SR", "4": "SSR", "10": "Special", "20": "Birthday" },
     attributes: { "1": "Red", "2": "Blue", "3": "Green", "4": "Yellow", "5": "Purple" },
     growth: { level: "Level", levelValue: "Lv.{level} / {limit}", decrease: "Decrease level", increase: "Increase level", max: "MAX", training: "Training", awaken: "Awaken", power: "Total power", skillLevel: "Skill level", leaderSkillHint: "Leader skill level is tied to the Awaken count; changing it also changes Awaken." },
   },

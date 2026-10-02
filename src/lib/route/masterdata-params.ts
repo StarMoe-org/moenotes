@@ -20,7 +20,7 @@ export function detailParamsFromRows(kind: DetailKind, rows: DetailRow[]): Route
     if (!Number.isSafeInteger(row.id) || row.id <= 0) return false;
     // Match the supported cards shown by the list/detail normalizers.
     if (kind !== "cards" && kind !== "support-cards") return true;
-    const rarities = kind === "support-cards" ? [2, 3, 4, 10] : [2, 3, 4];
+    const rarities = kind === "support-cards" ? [2, 3, 4, 10] : [2, 3, 4, 20];
     return rarities.includes(row.rarity ?? 0) && [1, 2, 3, 4, 5].includes(row.cardType ?? 0);
   }).map((row) => row.id))].sort((a, b) => a - b).map((id) => ({
     params: { id: String(id) }, breadcrumbDetail: { label: `#${id}` },

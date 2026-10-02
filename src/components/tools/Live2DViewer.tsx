@@ -1,3 +1,4 @@
+import SiriusLoader from "@/components/shared/SiriusLoader";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { ModelPlayer } from "ournotes-player/live2d";
 import type { AppLocale } from "@/config/locales";
@@ -400,7 +401,7 @@ function StageEmpty({ locale, list, onChoose, onRetry }: { locale: AppLocale; li
     <div className="relative grid aspect-[3/4] max-h-[80vh] w-full place-items-center overflow-hidden rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[linear-gradient(180deg,var(--mn-cream-deep),var(--mn-paper))] px-6 text-center shadow-[var(--mn-shadow-stamp)] @lg:aspect-[16/9]">
       <StageSignature />
       <div className="relative">
-        {list.kind === "loading" && <p className="text-sm font-bold text-[var(--mn-text-muted)]">{t(locale, "live2d.listLoading")}</p>}
+        {list.kind === "loading" && <SiriusLoader locale={locale} compact label={t(locale, "live2d.listLoading")} />}
         {list.kind === "error" && (
           <>
             <p className="text-sm font-bold text-[var(--mn-rose)]">{t(locale, "live2d.listError")}</p>

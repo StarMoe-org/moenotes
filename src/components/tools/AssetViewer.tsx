@@ -1,3 +1,4 @@
+import SiriusLoader, { SiriusIcon } from "@/components/shared/SiriusLoader";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { t } from "@/i18n";
 import type { AppLocale } from "@/config/locales";
@@ -590,10 +591,7 @@ export default function AssetViewer({ locale }: Props) {
                 <button type="button" className={`${buttonClass} border border-[var(--mn-border)]`} onClick={failed.reload}>{t(locale, "assetBrowser.retry")}</button>
               </div>
             ) : loading ? (
-              <div role="status" className="my-auto flex min-h-72 flex-col items-center justify-center gap-4 text-sm text-[var(--mn-text-muted)]">
-                <span className="h-7 w-7 animate-spin rounded-full border-2 border-[var(--mn-border)] border-t-[var(--mn-accent)]" />
-                <p>{t(locale, "assetBrowser.loading")}</p>
-              </div>
+              <SiriusLoader locale={locale} label={t(locale, "assetBrowser.loading")} className="my-auto min-h-72 text-[var(--mn-text-muted)]" />
             ) : !displayedFolders.length && !filteredFiles.length ? (
               <div className="my-auto flex min-h-72 flex-col items-center justify-center gap-3 p-8 text-center text-sm text-[var(--mn-text-muted)]">
                 <Icon name="folder" className="h-10 w-10 text-amber-500 opacity-40" />
@@ -812,7 +810,7 @@ function TreeNode({
           aria-label={isExpanded ? "Collapse" : "Expand"}
         >
           {isLoading ? (
-            <span className="h-2.5 w-2.5 animate-spin rounded-full border border-[var(--mn-border)] border-t-[var(--mn-accent)]" />
+            <SiriusIcon className="h-2.5 w-2.5" />
           ) : (
             <Icon name={isExpanded ? "chevronDown" : "chevronRight"} className="h-3 w-3" />
           )}

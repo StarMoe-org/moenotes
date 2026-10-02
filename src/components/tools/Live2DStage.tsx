@@ -1,3 +1,4 @@
+import SiriusLoader from "@/components/shared/SiriusLoader";
 import { useCallback, useEffect, useRef, useState, type Dispatch, type ReactNode, type RefObject, type SetStateAction } from "react";
 import type { AssetStore, ModelPlayer } from "ournotes-player/live2d";
 import { assetConfig } from "@/config/assets";
@@ -152,13 +153,13 @@ export default function Live2DStage({ locale, manifestUrl, onReady }: Live2DStag
 
         {status.kind === "booting" && (
           <StageMessage>
-            <p className="text-sm font-bold text-[var(--mn-text-muted)]">{t(locale, "live2d.preparing")}</p>
+            <SiriusLoader locale={locale} compact label={t(locale, "live2d.preparing")} />
           </StageMessage>
         )}
 
         {status.kind === "loading" && (
           <StageMessage>
-            <p className="text-sm font-bold text-[var(--mn-text-muted)]">{t(locale, "live2d.loading")}</p>
+            <SiriusLoader locale={locale} compact label={t(locale, "live2d.loading")} />
             {status.total > 0 && (
               <>
                 <div className="mt-3 h-1.5 w-48 overflow-hidden rounded-full bg-[color-mix(in_oklab,var(--mn-border)_25%,transparent)]">

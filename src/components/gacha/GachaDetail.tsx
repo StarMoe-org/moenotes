@@ -40,7 +40,7 @@ const panelHeader = "border-b border-[var(--mn-border)] bg-gradient-to-r from-[c
 const panelTitle = "font-[var(--mn-font-display)] text-xl text-[var(--mn-text)] sm:text-2xl";
 
 function rarityIcon(kind: GachaPool["kind"], rarity: number): string {
-  if (kind === "member") return [2, 3, 4].includes(rarity) ? getRarityIconUrl(rarity as CardRarity) : "";
+  if (kind === "member") return [2, 3, 4, 20].includes(rarity) ? getRarityIconUrl(rarity as CardRarity) : "";
   if (kind === "support") return getSupportRarityIconUrl(rarity as SupportCardRarity);
   return "";
 }

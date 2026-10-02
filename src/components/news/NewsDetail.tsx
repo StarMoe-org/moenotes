@@ -1,3 +1,4 @@
+import SiriusLoader from "@/components/shared/SiriusLoader";
 import { useEffect, useState } from "react";
 import type { GameServer } from "@/config/game-api";
 import type { AppLocale } from "@/config/locales";
@@ -129,10 +130,7 @@ export default function NewsDetail({ locale }: Props) {
 
   if (load.state === "loading" || !target) {
     return (
-      <div className="space-y-4" role="status" aria-label={t(locale, "news.loading")}>
-        <div className="mn-paper h-28 animate-pulse" />
-        <div className="mn-paper h-[60vh] animate-pulse" />
-      </div>
+      <SiriusLoader locale={locale} label={t(locale, "news.loading")} className="mn-paper min-h-72" />
     );
   }
 

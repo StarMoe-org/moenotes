@@ -1,3 +1,4 @@
+import SiriusLoader, { SiriusIcon } from "@/components/shared/SiriusLoader";
 import { useCallback, useEffect, useMemo, useState, type ReactNode, type Ref } from "react";
 import type { StoryPlayer } from "ournotes-player/story";
 import { assetConfig } from "@/config/assets";
@@ -325,7 +326,7 @@ function LanguageSelect({ locale, languages, value, busy, onChange }: {
           <LanguageIcon className="h-4 w-4 shrink-0 text-[var(--mn-accent-deep)]" />
           <span>{label}</span>
           {busy
-            ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[var(--mn-accent)] border-t-transparent" aria-hidden="true" />
+            ? <SiriusIcon className="h-3.5 w-3.5" />
             : languages.length > 1 && <ChevronIcon direction="down" className="h-3.5 w-3.5 opacity-60" />}
         </button>
       )}
@@ -438,7 +439,7 @@ function StageEmpty({ locale, site, onChoose, onInfo, onRetry }: { locale: AppLo
     <div className="relative grid aspect-[13/6] min-h-64 w-full place-items-center overflow-hidden rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[linear-gradient(180deg,var(--mn-cream-deep),var(--mn-paper))] px-6 text-center shadow-[var(--mn-shadow-stamp)]">
       <StageSignature />
       <div className="relative">
-        {site.kind === "loading" && <p className="text-sm font-bold text-[var(--mn-text-muted)]">{t(locale, "storyPlayer.listLoading")}</p>}
+        {site.kind === "loading" && <SiriusLoader locale={locale} compact label={t(locale, "storyPlayer.listLoading")} />}
         {site.kind === "error" && (
           <>
             <p className="text-sm font-bold text-[var(--mn-rose)]">{t(locale, "storyPlayer.listError")}</p>

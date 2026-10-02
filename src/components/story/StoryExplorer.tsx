@@ -1,3 +1,4 @@
+import SiriusLoader from "@/components/shared/SiriusLoader";
 import { useListSort } from "@/lib/filter/use-list-sort";
 import { sortEntries, type ListSort } from "@/lib/filter/list-sort";
 import { useEffect, useMemo, useState } from "react";
@@ -97,7 +98,7 @@ export default function StoryExplorer({ locale, servers, initialCategory, initia
   );
 
   if (initialCategory === "main") {
-    if (loading) return <State text={t(locale, "story.ui.loadingMain")} />;
+    if (loading) return <SiriusLoader locale={locale} label={t(locale, "story.ui.loadingMain")} />;
     if (error) return <State text={t(locale, "story.ui.loadMainError")} action={() => setReload((v) => v + 1)} />;
     return (
       <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
@@ -123,7 +124,7 @@ export default function StoryExplorer({ locale, servers, initialCategory, initia
     <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
       <section className="min-w-0" aria-live="polite">
         {loading ? (
-          <State text={t(locale, "story.ui.loading")} />
+          <SiriusLoader locale={locale} label={t(locale, "story.ui.loading")} />
         ) : error ? (
           <State text={t(locale, "story.ui.loadError")} action={() => setReload((v) => v + 1)} />
         ) : filtered.length === 0 ? (

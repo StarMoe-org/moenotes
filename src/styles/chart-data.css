@@ -322,10 +322,7 @@ html[data-theme="dark"] .mn-cd {
 .mn-cd-boot { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; min-height: 40vh; color: var(--mn-text-muted); }
 .mn-cd-boot.error { flex-direction: column; color: var(--mn-rose); }
 .mn-cd-boot.error small { color: var(--mn-text-muted); font-family: var(--mn-font-note); }
-.mn-cd-spinner { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--mn-border); border-top-color: var(--mn-accent); animation: mn-cd-spin 1s linear infinite; }
-@keyframes mn-cd-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) {
-  .mn-cd-spinner { animation-duration: 3s; }
   .mn-cd-rank-table tbody tr, .mn-cd-plot .dots circle { transition: none; }
 }
 
@@ -570,10 +567,7 @@ html[data-theme="dark"] .mn-cd {
 .mn-native-card{position:relative;width:100%;overflow:visible}
 .mn-native-card-canvas{position:absolute;inset:0;display:grid;place-items:center}
 .mn-native-card-canvas canvas,.mn-native-card-canvas img{width:100%;height:100%;object-fit:contain;display:block}
-.mn-native-card[data-status="loading"]{border-radius:.8rem;background:linear-gradient(110deg,transparent 20%,color-mix(in oklab,var(--mn-accent) 6%,transparent) 45%,transparent 70%);background-size:220% 100%;animation:mn-native-shimmer 1.5s linear infinite}
 .mn-native-card-fallback{position:absolute;inset:8%;display:grid;place-items:center;border:1px dashed var(--mn-border);border-radius:.8rem;font-size:.75rem;color:var(--mn-text-muted)}
-@keyframes mn-native-shimmer{to{background-position:-220% 0}}
-@media(prefers-reduced-motion:reduce){.mn-native-card[data-status="loading"]{animation:none}}
 .mn-cd-snap-slots{grid-template-columns:repeat(5,minmax(168px,1fr));gap:.9rem;padding:.3rem .1rem .8rem}
 .mn-cd-snap-slot--native{border:0;background:transparent;box-shadow:none;border-radius:.9rem;isolation:isolate;--snap-hit-left:18.42%;--snap-hit-top:62.89%;--snap-hit-width:63.16%;--snap-hit-height:20.83%}
 .mn-cd-snap-slot--native.selected{border:0;background:transparent}

@@ -1,6 +1,7 @@
 import type { MessageTree } from "@/i18n/translate";
 
 export const zhTW = {
+  loader: { loading: "正在載入" },
   sorting: { default: "預設順序", id: "編號", name: "名稱", date: "發布時間", rarity: "稀有度", ascending: "升冪", descending: "降冪" },
   assetBrowser: {
     noLanguages: "暫時沒有可用的資源語言。",
@@ -437,7 +438,7 @@ export const zhTW = {
       copyImage: "複製圖像或資源連結",
       copyStates: { image: "圖像已複製，可直接粘貼。", link: "瀏覽器不支持複製圖像，已複製資源連結。", error: "複製失敗，請使用打開原圖。" },
     },
-    rarities: { "2": "R", "3": "SR", "4": "SSR", "10": "特殊" },
+    rarities: { "2": "R", "3": "SR", "4": "SSR", "10": "特殊", "20": "生日" },
     attributes: { "1": "紅赤", "2": "紺碧", "3": "翡翠", "4": "山吹", "5": "紫苑" },
     growth: { level: "等級", levelValue: "Lv.{level} / {limit}", decrease: "降低等級", increase: "提升等級", max: "上限", training: "特訓", awaken: "覺醒", power: "綜合力", skillLevel: "技能等級", leaderSkillHint: "隊長技能等級與覺醒次數連動，調整時會同步修改覺醒。" },
   },

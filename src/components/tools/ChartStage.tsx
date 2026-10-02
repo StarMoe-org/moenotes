@@ -1,3 +1,4 @@
+import SiriusLoader from "@/components/shared/SiriusLoader";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type { ChartPlayer, LiveSettingsInput } from "ournotes-player";
 import type { AppLocale } from "@/config/locales";
@@ -272,13 +273,13 @@ export default function ChartStage({ locale, manifestUrl }: ChartStageProps) {
 
           {status.kind === "booting" && (
             <StageMessage>
-              <p className="text-sm font-bold text-white/80">{t(locale, "chartPreview3d.preparing")}</p>
+              <SiriusLoader locale={locale} compact label={t(locale, "chartPreview3d.preparing")} />
             </StageMessage>
           )}
 
           {status.kind === "loading" && (
             <StageMessage>
-              <p className="text-sm font-bold text-white/80">{t(locale, "chartPreview3d.loading")}</p>
+              <SiriusLoader locale={locale} compact label={t(locale, "chartPreview3d.loading")} />
               {status.total > 0 && (
                 <>
                   <div className="mt-3 h-1.5 w-48 overflow-hidden rounded-full bg-white/20">

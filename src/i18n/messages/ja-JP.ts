@@ -1,6 +1,7 @@
 import type { MessageTree } from "@/i18n/translate";
 
 export const jaJP = {
+  loader: { loading: "読み込み中" },
   sorting: { default: "既定の順序", id: "ID", name: "名前", date: "公開日", rarity: "レアリティ", ascending: "昇順", descending: "降順" },
   assetBrowser: {
     noLanguages: "利用可能なコンテンツの言語はまだありません。",
@@ -431,7 +432,7 @@ export const jaJP = {
       copyImage: "画像またはアセット URL をコピー",
       copyStates: { image: "美しいカードイラストをクリップボードに収めました。", link: "カードの星光リンクをクリップボードにコピーしました。", error: "コピーに失敗しました。画像を開いて直接保存してください。" },
     },
-    rarities: { "2": "R", "3": "SR", "4": "SSR", "10": "特別" },
+    rarities: { "2": "R", "3": "SR", "4": "SSR", "10": "特別", "20": "バースデー" },
     attributes: { "1": "紅赤", "2": "紺碧", "3": "翡翠", "4": "山吹", "5": "紫苑" },
     growth: { level: "レベル", levelValue: "Lv.{level} / {limit}", decrease: "レベルを下げる", increase: "レベルを上げる", max: "最大", training: "特訓", awaken: "覚醒", power: "総合力", skillLevel: "スキルレベル", leaderSkillHint: "リーダースキルレベルは覚醒回数と連動しており、変更すると覚醒も変わります。" },
   },

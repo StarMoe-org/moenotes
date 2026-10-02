@@ -1,0 +1,28 @@
+.mn-sirius-loader { display: flex; align-items: center; justify-content: center; gap: 17px; color: inherit; }
+.mn-sirius-full { flex-direction: column; padding: 24px 0; }
+.mn-sirius-compact { display: inline-flex; gap: 8px; }
+.mn-sirius-graphic { display: block; flex-shrink: 0; overflow: visible; }
+.mn-sirius-large { width: 128px; height: 128px; }
+.mn-sirius-message { font-size: 12px; line-height: 1.5; letter-spacing: 1.4px; opacity: .72; }
+.mn-sirius-detail { font-size: 12px; line-height: 1.5; opacity: .72; text-align: center; }
+.mn-sirius-compact .mn-sirius-message { letter-spacing: normal; }
+.mn-sirius-dots { display: inline-flex; width: 12px; margin-right: -12px; letter-spacing: 1px; }
+.mn-sirius-dots i { font-style: normal; animation: mn-sirius-dot 2.8s ease-in-out infinite; }
+.mn-sirius-dots i:nth-child(2) { animation-delay: -1.848s; }
+.mn-sirius-dots i:nth-child(3) { animation-delay: -.924s; }
+.mn-sirius-spin { transform-origin: 80px 80px; animation: mn-sirius-turn 5.6s cubic-bezier(.65, 0, .25, 1) infinite; }
+.mn-sirius-piece { animation: mn-sirius-converge 2.8s cubic-bezier(.45, 0, .25, 1) infinite; }
+.mn-sirius-center { animation: mn-sirius-dot 2.8s ease-in-out infinite; }
+@keyframes mn-sirius-converge {
+  0%, 100% { transform: translateY(-12px); opacity: .45; }
+  45%, 65% { transform: translateY(0); opacity: 1; }
+}
+@keyframes mn-sirius-turn {
+  0%, 15% { transform: rotate(0); }
+  45%, 65% { transform: rotate(180deg); }
+  95%, 100% { transform: rotate(360deg); }
+}
+@keyframes mn-sirius-dot { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .mn-sirius-graphic *, .mn-sirius-dots i { animation: none !important; }
+}

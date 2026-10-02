@@ -5,8 +5,8 @@ import { assetConfig } from "@/config/assets";
 import NativeGameCard from "@/components/shared/NativeGameCard";
 import type { CardViewModel } from "@/lib/cards/data";
 import type { SupportCardViewModel } from "@/lib/support-cards/data";
-import { getCardThumbnailUrl, getCardTypeIconUrl, getCharacterFaceIconUrl } from "@/lib/cards/assets";
-import { getSupportCardThumbnailUrl, getSupportCardTypeIconUrl } from "@/lib/support-cards/assets";
+import { getCardSquareFrameUrl, getCardThumbnailUrl, getCardTypeIconUrl, getCharacterFaceIconUrl } from "@/lib/cards/assets";
+import { getSupportCardSquareFrameUrl, getSupportCardThumbnailUrl, getSupportCardTypeIconUrl } from "@/lib/support-cards/assets";
 import { releaseFileUrl } from "@/lib/assets/release";
 import { useAssetUrl, useContentServerScope } from "@/lib/servers/use-content-server";
 
@@ -22,22 +22,22 @@ function useNativeUi(): boolean {
 
 /** A member card as the game's 1:1 square icon (frame, attribute and rarity painted by the game where available). */
 export function MemberSquareArtwork({ locale, card, className = "" }: { locale: AppLocale; card: CardViewModel; className?: string }) {
-  return useNativeUi()
+  return useNativeUi() && card.rarity !== 20
     ? <NativeMemberArtwork locale={locale} card={card} className={className} />
     : <SquareImage
       sources={[memberSquareUrl(card, locale), getCardThumbnailUrl(card.assetId), getCharacterFaceIconUrl(card.characterId)]}
-      typeIconUrl={getCardTypeIconUrl(card.cardType)} attributeLabel={t(locale, `cards.attributes.${card.cardType}`)}
+      frameUrl={getCardSquareFrameUrl(card.rarity)} typeIconUrl={getCardTypeIconUrl(card.cardType)} attributeLabel={t(locale, `cards.attributes.${card.cardType}`)}
       label={`${card.characterName} ${card.title}`.trim()} className={className} />;
 }
 
 /** A support card (Snap) as the game's 1:1 square icon; the wide Snap art is cropped by the square, not stretched. */
 export function SupportSquareArtwork({ locale, card, className = "" }: { locale: AppLocale; card: SupportCardViewModel; className?: string }) {
   const face = card.characterIds[0];
-  return useNativeUi()
+  return useNativeUi() && card.rarity !== 10
     ? <NativeSupportArtwork card={card} className={className} />
     : <SquareImage
       sources={[getSupportCardThumbnailUrl(card.assetId), ...(face ? [getCharacterFaceIconUrl(face)] : [])]}
-      typeIconUrl={getSupportCardTypeIconUrl(card.cardType)} attributeLabel={t(locale, `cards.attributes.${card.cardType}`)}
+      frameUrl={getSupportCardSquareFrameUrl(card.rarity)} typeIconUrl={getSupportCardTypeIconUrl(card.cardType)} attributeLabel={t(locale, `cards.attributes.${card.cardType}`)}
       label={card.name} className={className} />;
 }
 
@@ -60,8 +60,8 @@ export function NativeSupportArtwork({ card, className }: { card: SupportCardVie
 }
 
 /** Servers without a game UI library: the square image (or the next source that loads), center-cropped. */
-function SquareImage({ sources, typeIconUrl, attributeLabel, label, className }: {
-  sources: readonly string[]; typeIconUrl: string; attributeLabel: string; label: string; className: string;
+function SquareImage({ sources, frameUrl, typeIconUrl, attributeLabel, label, className }: {
+  sources: readonly string[]; frameUrl: string; typeIconUrl: string; attributeLabel: string; label: string; className: string;
 }) {
   const assetUrl = useAssetUrl();
   const [attempt, setAttempt] = useState(0);
@@ -73,6 +73,7 @@ function SquareImage({ sources, typeIconUrl, attributeLabel, label, className }:
       ) : (
         <span className="grid h-full place-items-center p-2 text-center text-xs font-medium text-[var(--mn-text-muted)]">{label}</span>
       )}
+      <img className="pointer-events-none absolute inset-0 h-full w-full" src={frameUrl} alt="" aria-hidden="true" />
       <img className="absolute left-[6%] top-[6%] h-[22%] w-[22%] drop-shadow-sm" src={typeIconUrl} alt={attributeLabel} />
     </div>
   );

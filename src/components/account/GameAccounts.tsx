@@ -1,3 +1,4 @@
+import SiriusLoader, { SiriusIcon } from "@/components/shared/SiriusLoader";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import PlayerProfileCard from "@/components/account/PlayerProfileCard";
 import ShareImageButton from "@/components/account/ShareImageButton";
@@ -116,7 +117,7 @@ export default function GameAccounts({ locale, panel, stampButton, cards }: Prop
     return (
       <div className={panel}>
         {header}
-        <p className="mt-4 text-sm text-[var(--mn-text-muted)]">{t(locale, loadFailed ? "account.games.loadFailed" : "account.loading")}</p>
+        <div className="mt-4 text-sm text-[var(--mn-text-muted)]">{loadFailed ? t(locale, "account.games.loadFailed") : <SiriusLoader locale={locale} compact label={t(locale, "account.loading")} />}</div>
       </div>
     );
   }
@@ -348,7 +349,7 @@ function ProfilePanel({
       {snapshot ? (
         <PlayerProfileCard locale={locale} snapshot={snapshot} cards={cards} own />
       ) : (
-        !error && <p className="text-sm text-[var(--mn-text-muted)]">{t(locale, "account.profile.loading")}</p>
+        !error && <SiriusLoader locale={locale} compact label={t(locale, "account.profile.loading")} />
       )}
       {error && (
         <p role="alert" className="text-xs text-[var(--mn-danger,#ba1b1b)]">
@@ -478,7 +479,7 @@ function VerifyPanel({
       </div>
       <p className="text-xs text-[var(--mn-text-muted)]">{t(locale, "account.games.refreshHint")}</p>
       <button type="button" disabled={busy} onClick={onVerify} className={`${stampButton} disabled:opacity-60`}>
-        {t(locale, busy ? "account.games.checking" : "account.games.verify")}
+        {busy && <SiriusIcon className="mr-2 h-4 w-4" />}{t(locale, busy ? "account.games.checking" : "account.games.verify")}
       </button>
     </div>
   );
@@ -548,7 +549,7 @@ function AddForm({
             className="min-w-0 flex-1 rounded-xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] px-4 py-2 font-mono text-sm text-[var(--mn-text)] focus:border-[var(--mn-accent-deep)] focus:bg-[var(--mn-paper)] focus:outline-none"
           />
           <button type="submit" disabled={busy || !valid} className={`${stampButton} disabled:opacity-60`}>
-            {t(locale, busy ? "account.games.checking" : "account.games.addButton")}
+            {busy && <SiriusIcon className="mr-2 h-4 w-4" />}{t(locale, busy ? "account.games.checking" : "account.games.addButton")}
           </button>
         </div>
         <p id="game-profile-id-hint" className={`mt-2 text-xs ${showInvalid ? "text-[var(--mn-danger,#ba1b1b)]" : "text-[var(--mn-text-muted)]"}`}>

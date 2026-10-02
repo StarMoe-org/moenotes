@@ -1,3 +1,4 @@
+import SiriusLoader from "@/components/shared/SiriusLoader";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import type { AppLocale } from "@/config/locales";
 import { assetConfig } from "@/config/assets";
@@ -183,7 +184,7 @@ export default function ChartDataTool({ locale, guide }: Props) {
           {ctx ? <Filters ctx={ctx} /> : null}
           <main className="mn-cd-main">
             {load.status === "loading" || (load.status === "ready" && !ctx) ? (
-              <div className="mn-cd-boot"><div className="mn-cd-spinner" />{tr("loading")}</div>
+              <div className="mn-cd-boot"><SiriusLoader locale={locale} label={tr("loading")} /></div>
             ) : load.status === "error" ? (
               <div className="mn-cd-boot error">
                 <span>{tr("loadError")}</span>

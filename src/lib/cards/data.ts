@@ -1,5 +1,6 @@
 import type { AppLocale } from "@/config/locales";
 import { localizeMasterText, type MasterTextRow } from "@/lib/masterdata/localize-text";
+import type { CardRarity, CardType } from "@/lib/cards/assets";
 
 export interface MasterTable<T> {
   _allData: T[];
@@ -49,8 +50,8 @@ export interface CardViewModel {
   assetId: number;
   characterId: number;
   bandId: number;
-  rarity: 2 | 3 | 4;
-  cardType: 1 | 2 | 3 | 4 | 5;
+  rarity: CardRarity;
+  cardType: CardType;
   title: string;
   characterName: string;
   bandName: string;
@@ -94,8 +95,8 @@ export function normalizeCards(
   const resolveText = (id: string) => localizeMasterText(textMap.get(id), locale) || id;
 
   return cards
-    .filter((card): card is RawMemberCard & { rarity: 2 | 3 | 4; cardType: 1 | 2 | 3 | 4 | 5 } =>
-      [2, 3, 4].includes(card.rarity) && [1, 2, 3, 4, 5].includes(card.cardType),
+    .filter((card): card is RawMemberCard & { rarity: CardRarity; cardType: CardType } =>
+      [2, 3, 4, 20].includes(card.rarity) && [1, 2, 3, 4, 5].includes(card.cardType),
     )
     .map((card) => {
       const character = characterMap.get(card.characterID);

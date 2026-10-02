@@ -1,6 +1,7 @@
 import type { MessageTree } from "@/i18n/translate";
 
 export const koKR = {
+  loader: { loading: "불러오는 중" },
   sorting: { default: "기본 순서", id: "ID", name: "이름", date: "공개일", rarity: "희귀도", ascending: "오름차순", descending: "내림차순" },
   assetBrowser: {
     noLanguages: "아직 이용 가능한 콘텐츠 언어가 없습니다.",
@@ -399,7 +400,7 @@ export const koKR = {
       copyImage: "이미지 또는 에셋 URL 복사",
       copyStates: { image: "아름다운 카드 일러스트를 클립보드에 담았습니다.", link: "카드의 별빛 링크를 클립보드에 복사했습니다.", error: "복사에 실패했습니다. 원본 이미지를 열어 직접 저장해 주세요." },
     },
-    rarities: { "2": "R", "3": "SR", "4": "SSR", "10": "스페셜" },
+    rarities: { "2": "R", "3": "SR", "4": "SSR", "10": "스페셜", "20": "생일" },
     attributes: { "1": "빨강", "2": "파랑", "3": "초록", "4": "노랑", "5": "보라" },
     growth: { level: "레벨", levelValue: "Lv.{level} / {limit}", decrease: "레벨 낮추기", increase: "레벨 올리기", max: "최대", training: "특훈", awaken: "각성", power: "종합력", skillLevel: "스킬 레벨", leaderSkillHint: "리더 스킬 레벨은 각성 횟수와 연동되어, 변경하면 각성도 함께 바뀝니다." },
   },

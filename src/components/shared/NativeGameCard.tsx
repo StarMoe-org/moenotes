@@ -1,3 +1,4 @@
+import { SiriusIcon } from "@/components/shared/SiriusLoader";
 import { useEffect, useRef, useState } from "react";
 import type { GameServer } from "@/config/servers";
 import { assetConfig } from "@/config/assets";
@@ -122,6 +123,7 @@ export default function NativeGameCard({ entry, data, label, className = "", onG
 
   return <div ref={root} className={`mn-native-card mn-native-card--${entry} ${className}`.trim()} style={{ aspectRatio: ratio }} data-renderer="nnnotes-ui" data-status={status}
     role="img" aria-label={label} aria-busy={status === "loading"}>
+    {status === "loading" && <span className="pointer-events-none absolute inset-0 grid place-items-center"><SiriusIcon className="h-8 w-8" /></span>}
     {snapshot
       ? <div className="mn-native-card-canvas" aria-hidden="true">{image ? <img src={image} alt="" draggable={false} /> : null}</div>
       : <div ref={host} className="mn-native-card-canvas" aria-hidden="true" />}

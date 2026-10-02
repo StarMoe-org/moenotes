@@ -1,13 +1,14 @@
 import type { AppLocale } from "@/config/locales";
 import { getAssetUrl } from "@/lib/assets/url";
 
-export type CardRarity = 2 | 3 | 4;
+export type CardRarity = 2 | 3 | 4 | 20;
 export type CardType = 1 | 2 | 3 | 4 | 5;
 
-const rarityNames: Record<CardRarity, "R" | "SR" | "SSR"> = {
+const rarityNames: Record<CardRarity, "R" | "SR" | "SSR" | "BD"> = {
   2: "R",
   3: "SR",
   4: "SSR",
+  20: "BD",
 };
 
 const cardTypeColors: Record<CardType, "Green" | "Red" | "Blue" | "Yellow" | "Purple"> = {
@@ -85,6 +86,10 @@ export function getBandStudioBackgroundUrl(bandId: number): string {
 
 export function getCardFrameUrl(rarity: CardRarity): string {
   return `/assets/FrameMemberThum_${rarityNames[rarity]}.png`;
+}
+
+export function getCardSquareFrameUrl(rarity: CardRarity): string {
+  return `/assets/FrameSquare_${rarityNames[rarity]}.png`;
 }
 
 export function getRarityIconUrl(rarity: CardRarity): string {

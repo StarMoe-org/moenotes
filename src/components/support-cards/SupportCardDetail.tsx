@@ -1,3 +1,4 @@
+import SiriusLoader, { SiriusIcon } from "@/components/shared/SiriusLoader";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
@@ -289,7 +290,7 @@ function SupportCardDetailView({ locale, data }: { locale: AppLocale; data: Deta
   ) : null;
 
   if (loading) {
-    return <div className="mn-paper h-72 animate-pulse" aria-label={t(locale, "supportCards.loading")} />;
+    return <SiriusLoader locale={locale} label={t(locale, "supportCards.loading")} className="mn-paper min-h-72" />;
   }
 
   if (error || !card) {
@@ -760,9 +761,6 @@ function CheckIcon() {
 }
 function SpinnerIcon() {
   return (
-    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-      <circle cx="12" cy="12" r="9" strokeWidth="2" className="opacity-30" />
-      <path d="M12 3a9 9 0 0 1 9 9" strokeWidth="2" strokeLinecap="round" />
-    </svg>
+    <SiriusIcon />
   );
 }

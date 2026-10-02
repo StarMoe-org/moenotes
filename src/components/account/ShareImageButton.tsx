@@ -1,3 +1,4 @@
+import SiriusLoader from "@/components/shared/SiriusLoader";
 import { useEffect, useState } from "react";
 import Modal from "@/components/shared/Modal";
 import { playerCardPath } from "@/config/account";
@@ -106,9 +107,11 @@ export default function ShareImageButton({ locale, snapshot, cards, isPublic, ow
           >
             {status === "ready" && preview ? (
               <img src={preview} alt={t(locale, "account.share.alt", { name: snapshot.name ?? snapshot.profileId })} className="h-full w-full" />
+            ) : status !== "failed" ? (
+              <SiriusLoader locale={locale} label={t(locale, "account.share.rendering")} className="h-full" />
             ) : (
               <p className="grid h-full place-items-center p-6 text-center text-sm text-[var(--mn-text-muted)]">
-                {t(locale, status === "failed" ? "account.share.failed" : "account.share.rendering")}
+                {t(locale, "account.share.failed")}
               </p>
             )}
           </div>
