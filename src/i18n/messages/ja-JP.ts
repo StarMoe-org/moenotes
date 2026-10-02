@@ -145,7 +145,7 @@ export const jaJP = {
       designSystem: "デザインシステム",
       chartPreview: "譜面プレビュー",
       live2dViewer: "Live2D ビューア",
-      storyPlayer: "ストーリープレイヤー", news: "お知らせ", eventTracker: "イベントトラッカー", musicRanking: "楽曲ランキング", chartData: "楽曲meta",
+      storyPlayer: "ストーリープレイヤー", news: "お知らせ", eventTracker: "イベントトラッカー", musicRanking: "楽曲ランキング", chartData: "楽曲meta", search: "検索",
     },
   },
   shell: {
@@ -159,6 +159,24 @@ export const jaJP = {
     commandPlaceholder: "ページ、機能、データを検索...",
     noCommandResults: "結果がありません",
     shortcuts: "ショートカット",
+  },
+  search: {
+    placeholder: "カード・楽曲・キャラ・ストーリーを検索…",
+    filterByKind: "種類で絞り込む",
+    noResults: "結果がありません",
+    viewAllResults: "すべての結果を見る",
+    kinds: {
+      all: "すべて",
+      page: "ページ",
+      character: "キャラクター",
+      card: "カード",
+      supportCard: "サポートカード",
+      music: "楽曲",
+      story: "ストーリー",
+      gacha: "ガチャ",
+      event: "イベント",
+      reward: "報酬",
+    },
   },
   account: {
     signIn: "ログイン",
@@ -1468,6 +1486,10 @@ export const jaJP = {
     noBody: "このお知らせには本文がありません。",
   },
   seo: {
+    search: {
+      title: "検索",
+      description: "Moenotes で BanG Dream! Our Notes のすべてのカード・楽曲・キャラクター・ストーリーを検索。",
+    },
     events: {
       title: "ゲーム内イベント",
       description: "BanG Dream! Our Notes 各サーバーのゲーム内イベント、お知らせ、ガチャ、ミッションと報酬。",

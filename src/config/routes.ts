@@ -17,6 +17,21 @@ export const routeRegistry = [
     keywords: ["home", "index", "moenotes"],
   },
   {
+    // Global content search: a shell the browser fills from /search-index.json, so the page itself has no content to index.
+    id: "search",
+    path: "/search",
+    labelKey: "nav.items.search",
+    component: "search",
+    seo: {
+      titleKey: "seo.search.title",
+      descriptionKey: "seo.search.description",
+      indexable: false,
+    },
+    nav: false,
+    searchable: false,
+    keywords: ["search", "find"],
+  },
+  {
     id: "database",
     path: "/database",
     labelKey: "nav.groups.database",

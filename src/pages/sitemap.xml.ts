@@ -1,5 +1,5 @@
-import { siteConfig } from "@/config/site";
-import { getSitemapEntries } from "@/lib/seo/sitemap";
+import { sitemapShardLocales } from "@/lib/seo/sitemap";
+import { absolutePageUrl } from "@/lib/seo/metadata";
 
 function escapeXml(value: string): string {
   return value
@@ -10,28 +10,22 @@ function escapeXml(value: string): string {
     .replace(/'/g, "&apos;");
 }
 
+/**
+ * Sitemap index. The previous single-file sitemap grew large (13 locales × every route), so it is split into
+ * one shard per locale at /sitemaps/<locale-code>.xml (e.g. /sitemaps/zh-CN.xml, /sitemaps/ja-JP.xml). The
+ * index lists exactly the shards this build rendered: a core-locale build advertises only the core shards.
+ * (Astro 7 empties outDir per build and each build batch renders its own shard set, so crawler-visible sitemap
+ * content follows the build's active locale set.)
+ */
 export async function GET() {
-  const entries = await getSitemapEntries();
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="${siteConfig.xmlNamespaces.xhtml}">
-${entries.map((entry) => {
-  const urlParts = [
-    `    <loc>${escapeXml(entry.loc)}</loc>`,
-  ];
-  if (entry.lastmod) {
-    urlParts.push(`    <lastmod>${escapeXml(entry.lastmod)}</lastmod>`);
-  }
-  urlParts.push(`    <changefreq>${entry.changefreq}</changefreq>`);
-  urlParts.push(`    <priority>${entry.priority.toFixed(1)}</priority>`);
-  
-  entry.alternates.forEach((alternate) => {
-    urlParts.push(`    <xhtml:link rel="alternate" hreflang="${escapeXml(alternate.locale)}" href="${escapeXml(alternate.href)}" />`);
-  });
-  urlParts.push(`    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(entry.xDefault)}" />`);
+  const shards = sitemapShardLocales().map((locale) => `  <sitemap>
+    <loc>${escapeXml(absolutePageUrl(`/sitemaps/${locale}.xml`))}</loc>
+  </sitemap>`);
 
-  return `  <url>\n${urlParts.join("\n")}\n  </url>`;
-}).join("\n")}
-</urlset>`;
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${shards.join("\n")}
+</sitemapindex>`;
 
   return new Response(xml, {
     headers: {

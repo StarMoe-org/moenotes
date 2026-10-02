@@ -37,6 +37,22 @@ file only changes once a release has been exported (`regions.{id}` is the latest
 so every story table and image the new MasterData refers to is already published. MasterData's own version
 is not a trigger: it moves first, and building on it would render pages whose files are not exported yet.
 
+### Split locale rollout (default)
+
+One release is built by **two** full Astro runs, because Astro empties its `outDir` each time and cannot
+append:
+
+1. **Core batch** — `MOENOTES_BUILD_LOCALES=core` renders the five core locales (`zh-CN`, `zh-TW`, `ja-JP`,
+   `en-US`, `ko-KR`) and goes live first at `builds/<id>-core/`. The sitemap index at this point references
+   only those locales' shards (`/sitemaps/<locale-code>.xml`), and hreflang lists only the rendered set.
+2. **Full batch** — `MOENOTES_BUILD_LOCALES=all` re-renders everything (the core pages come out byte-identical
+   and are hard-linked from the core batch, so this run costs CPU but not extra disk or compression). It then
+   takes over as `builds/<id>-full/`, and the sitemap index expands to all 13 locales.
+
+While stage is `core`, requests under a not-yet-built locale prefix (`/th/...`, `/id/...`, …) are **307**
+redirected to their English equivalent; once stage goes `full` that rule is inert. Set
+`MOENOTES_SPLIT_LOCALES=0` to restore the historical single full build.
+
 The build key hashes, per region, `resource_version`, `master_version` and every locale's `snapshot` (a
 content hash, so a re-export counts too), together with the source revision: the files under `src/` and
 `public/`, `bun.lock`, the build config and all `PUBLIC_*` variables. When the key differs from the live
@@ -66,6 +82,7 @@ directory Astro keeps intermediate output in `<cwd>/.astro/` and renames it into
 | `MOENOTES_SYNC_WAIT_SECONDS` | `7200` | Longest wait for the export to catch up with MasterData |
 | `MOENOTES_BUILD_TIMEOUT_SECONDS` | `3600` | A build step running longer is stopped and counts as failed |
 | `MOENOTES_KEEP_BUILDS` | `4` | Builds kept on disk (see [Disk](#disk)) |
+| `MOENOTES_SPLIT_LOCALES` | `1` | `0` disables the two-batch core→full rollout for a single full `astro build` |
 | `MOENOTES_VERSION_URL` | _(asset service)_`/versions/current_version.json` | Override of the release manifest URL; the build reads it too, to pick the game servers it shows |
 | `MOENOTES_SERVERS` | _(from the release manifest)_ | Comma-separated game servers to build (`tw,jp`) regardless of their asset exports ([servers.md](servers.md)) |
 | `PUBLIC_ASSET_API`, `PUBLIC_CHART_SITE`, `PUBLIC_CUBISM_CORE` | public origins | Public URLs written into pages (`src/config/assets.ts`; the Live2D viewer loads Cubism Core from the last one, see live2d-viewer.md) |
@@ -121,7 +138,7 @@ client accepts it and the variant has been written (see [Caching across builds](
 | --- | --- |
 | `/healthz` | 200 while the process runs (liveness; use this for platform health checks) |
 | `/readyz` | 200 once a build is live, 503 before |
-| `/_moenotes/status` | JSON: live build, source revision, build in progress (step, `pages` rendered, `expectedPages`), background compression (`compressing`: build id and start), wait reason, last failure, last check |
+| `/_moenotes/status` | JSON: live build, `stage`/`localesRendered`/`pendingRest`/`splitLocales` of the split-locale rollout, source revision, build in progress (step, `pages` rendered, `expectedPages`), background compression (`compressing`: build id and start), wait reason, last failure, last check |
 | `/api/*` | Forwarded to starmoe-api (`server/api-proxy.ts`), also before the first build; 404 without `MOENOTES_API_INTERNAL`, 502 when the API does not answer |
 
 Before the first build completes every site path answers 503 with `Retry-After: 60`.
@@ -129,9 +146,11 @@ Before the first build completes every site path answers 503 with `Retry-After: 
 ## Disk
 
 ```text
-/data/state.json               live build record
+/data/state.json               live build record (plus `stage`, `localesRendered`, `pendingRest` during a split rollout)
 /data/builds/<id>/site/        web root: Astro output + .br/.gz variants (added once live)
 /data/builds/<id>/files.json   size + SHA-256 per file for the next finalize
+/data/builds/<id>-core/        core-locale batch of a split rollout (first half; becomes `previous` once `-full` takes over)
+/data/builds/<id>-full/        full 13-locale build of a split rollout (replaces `<id>-core` as live)
 /data/builds/.staging-<id>/    build in progress (removed on failure and at startup)
 /data/logs/<id>.log            full output of the last 10 attempts
 /data/logs/latest.log          link to the newest attempt's log (running or finished)

@@ -145,7 +145,7 @@ export const zhCN = {
       designSystem: "设计系统",
       chartPreview: "谱面预览器",
       live2dViewer: "Live2D 浏览器",
-      storyPlayer: "剧情播放器", news: "游戏公告", eventTracker: "活动追踪器", musicRanking: "歌曲排行榜", chartData: "歌曲meta",
+      storyPlayer: "剧情播放器", news: "游戏公告", eventTracker: "活动追踪器", musicRanking: "歌曲排行榜", chartData: "歌曲meta", search: "搜索",
     },
   },
   shell: {
@@ -159,6 +159,24 @@ export const zhCN = {
     commandPlaceholder: "搜索页面或功能...",
     noCommandResults: "没有找到结果",
     shortcuts: "快捷键",
+  },
+  search: {
+    placeholder: "搜索卡牌、歌曲、角色、剧情…",
+    filterByKind: "按类型筛选",
+    noResults: "没有找到结果",
+    viewAllResults: "查看全部结果",
+    kinds: {
+      all: "全部",
+      page: "页面",
+      character: "角色",
+      card: "卡牌",
+      supportCard: "支援卡",
+      music: "歌曲",
+      story: "剧情",
+      gacha: "招募",
+      event: "活动",
+      reward: "奖励",
+    },
   },
   account: {
     signIn: "登录",
@@ -1474,6 +1492,10 @@ export const zhCN = {
     noBody: "这条公告没有正文。",
   },
   seo: {
+    search: {
+      title: "搜索",
+      description: "在 Moenotes 搜索 BanG Dream! Our Notes 的每一张卡牌、每一首歌曲、每一位角色与每一段剧情。",
+    },
     events: {
       title: "游戏活动",
       description: "BanG Dream! Our Notes 各区服的游戏活动、游戏公告、招募卡池与任务奖励。",

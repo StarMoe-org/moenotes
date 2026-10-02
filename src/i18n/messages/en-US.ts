@@ -114,7 +114,7 @@ export const enUS = {
   nav: {
     home: "Home",
     groups: { database: "Database", music: "Music", events: "Events", story: "Story", tools: "Tools", community: "About" },
-    items: { characters: "Characters", cards: "Cards", supportCards: "Support Cards", music: "Music List", eventList: "Event List", gacha: "Gacha", rewards: "Missions & Rewards", titles: "Titles", backgrounds: "Backgrounds", stamps: "Stickers", comics: "Comics", items: "Items", mainStory: "Main Story", eventStory: "Event Story", friendshipStory: "Bond Stories", otherStory: "Other Stories", liveResultStory: "Post-live Talks", homeStory: "Home Stories", tutorialStory: "Tutorial Stories", assetViewer: "Asset Viewer", designSystem: "Design System", chartPreview: "Chart Previewer", live2dViewer: "Live2D Viewer", storyPlayer: "Story Player", news: "News", eventTracker: "Event Tracker", musicRanking: "Song Rankings", chartData: "Song Meta" },
+    items: { characters: "Characters", cards: "Cards", supportCards: "Support Cards", music: "Music List", eventList: "Event List", gacha: "Gacha", rewards: "Missions & Rewards", titles: "Titles", backgrounds: "Backgrounds", stamps: "Stickers", comics: "Comics", items: "Items", mainStory: "Main Story", eventStory: "Event Story", friendshipStory: "Bond Stories", otherStory: "Other Stories", liveResultStory: "Post-live Talks", homeStory: "Home Stories", tutorialStory: "Tutorial Stories", assetViewer: "Asset Viewer", designSystem: "Design System", chartPreview: "Chart Previewer", live2dViewer: "Live2D Viewer", storyPlayer: "Story Player", news: "News", eventTracker: "Event Tracker", musicRanking: "Song Rankings", chartData: "Song Meta", search: "Search" },
   },
   shell: {
     openSidebar: "Open sidebar",
@@ -127,6 +127,24 @@ export const enUS = {
     commandPlaceholder: "Search pages or features...",
     noCommandResults: "No results found",
     shortcuts: "Shortcuts",
+  },
+  search: {
+    placeholder: "Search cards, songs, characters, stories…",
+    filterByKind: "Filter by type",
+    noResults: "No results found",
+    viewAllResults: "See all results",
+    kinds: {
+      all: "All",
+      page: "Pages",
+      character: "Characters",
+      card: "Cards",
+      supportCard: "Support Cards",
+      music: "Songs",
+      story: "Stories",
+      gacha: "Gacha",
+      event: "Events",
+      reward: "Rewards",
+    },
   },
   account: {
     signIn: "Sign in",
@@ -1436,6 +1454,10 @@ export const enUS = {
     noBody: "This announcement has no text.",
   },
   seo: {
+    search: {
+      title: "Search",
+      description: "Search every BanG Dream! Our Notes card, song, character and story on Moenotes.",
+    },
     events: {
       title: "In-game Events",
       description: "In-game events, announcements, gacha pools, missions and rewards of every BanG Dream! Our Notes server.",

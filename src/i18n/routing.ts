@@ -34,6 +34,10 @@ export function switchLocalePath(currentPathname: string, locale: AppLocale): `/
   return localizePath(stripLocaleFromPathname(currentPathname), locale);
 }
 
-export function localeAlternates(pathname: string): Array<{ locale: AppLocale; href: `/${string}` }> {
-  return SUPPORTED_LOCALES.map((locale) => ({ locale, href: localizePath(pathname, locale) }));
+/**
+ * hreflang alternates of a path. `locales` defaults to the full supported set; a build batch passes its own
+ * active set so pages published before the full rollout do not advertise language variants that 404/redirect.
+ */
+export function localeAlternates(pathname: string, locales: readonly AppLocale[] = SUPPORTED_LOCALES): Array<{ locale: AppLocale; href: `/${string}` }> {
+  return locales.map((locale) => ({ locale, href: localizePath(pathname, locale) }));
 }

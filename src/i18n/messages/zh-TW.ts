@@ -145,7 +145,7 @@ export const zhTW = {
       designSystem: "設計系統",
       chartPreview: "譜面預覽器",
       live2dViewer: "Live2D 瀏覽器",
-      storyPlayer: "劇情播放器", news: "遊戲公告", eventTracker: "活動追蹤器", musicRanking: "歌曲排行榜", chartData: "歌曲meta",
+      storyPlayer: "劇情播放器", news: "遊戲公告", eventTracker: "活動追蹤器", musicRanking: "歌曲排行榜", chartData: "歌曲meta", search: "搜尋",
     },
   },
   shell: {
@@ -159,6 +159,24 @@ export const zhTW = {
     commandPlaceholder: "搜索頁面或功能...",
     noCommandResults: "沒有找到結果",
     shortcuts: "快捷鍵",
+  },
+  search: {
+    placeholder: "搜尋卡牌、歌曲、角色、劇情…",
+    filterByKind: "按類型篩選",
+    noResults: "沒有找到結果",
+    viewAllResults: "查看全部結果",
+    kinds: {
+      all: "全部",
+      page: "頁面",
+      character: "角色",
+      card: "卡牌",
+      supportCard: "支援卡",
+      music: "歌曲",
+      story: "劇情",
+      gacha: "招募",
+      event: "活動",
+      reward: "獎勵",
+    },
   },
   account: {
     signIn: "登入",
@@ -1474,6 +1492,10 @@ export const zhTW = {
     noBody: "這則公告沒有內文。",
   },
   seo: {
+    search: {
+      title: "搜尋",
+      description: "在 Moenotes 搜尋 BanG Dream! Our Notes 的每一張卡牌、每一首歌曲、每一位角色與每一段劇情。",
+    },
     events: {
       title: "遊戲活動",
       description: "BanG Dream! Our Notes 各伺服器的遊戲活動、遊戲公告、轉蛋卡池與任務獎勵。",

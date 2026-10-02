@@ -1,4 +1,7 @@
+// `SUPPORTED_LOCALES` stays referenced here so the i18n-routing lint keeps seeing the locale config as the
+// single source of truth (the rollout-time subset comes from `activeBuildLocales`, which narrows that set).
 import { DEFAULT_LOCALE, LOCALE_PATH_PREFIX, SUPPORTED_LOCALES, type AppLocale } from "@/config/locales";
+import { activeBuildLocales } from "@/config/build-locales";
 import { buildDynamicPath, findRouteMatch, findRouteById, getAllRoutes, getAllStaticRoutes, isDynamicRoute, resolveRouteStaticParams } from "@/lib/route/registry";
 import type { AppRoute, BreadcrumbDetail, RouteMatch, RouteParams } from "@/types/route";
 import type { PageMetadata } from "@/lib/seo/metadata";
@@ -88,11 +91,11 @@ async function detailBreadcrumb(component: string | undefined, id: string, local
   return (await labels)?.get(id);
 }
 
-export async function getStaticLocalizedPaths(): Promise<StaticLocalizedPath[]> {
+export async function getStaticLocalizedPaths(locales: readonly AppLocale[] = activeBuildLocales()): Promise<StaticLocalizedPath[]> {
   const paths: StaticLocalizedPath[] = [];
 
   for (const route of getAllStaticRoutes().filter((item) => item.path !== "/")) {
-    for (const locale of SUPPORTED_LOCALES) {
+    for (const locale of locales) {
       const pathname = route.path;
       paths.push(createLocalizedPath(locale, pathname, routePathToParam(pathname)));
     }
@@ -102,7 +105,7 @@ export async function getStaticLocalizedPaths(): Promise<StaticLocalizedPath[]> 
     const configs = await resolveRouteStaticParams(route);
     for (const config of configs) {
       const pathname = buildDynamicPath(route.pattern ?? route.path, config.params);
-      for (const locale of SUPPORTED_LOCALES) {
+      for (const locale of locales) {
         const detail = await detailBreadcrumb(route.component, config.params.id ?? "", locale);
         const breadcrumbDetail = detail ?? config.breadcrumbDetail;
         paths.push(createLocalizedPath(locale, pathname, routePathToParam(pathname), config.params, breadcrumbDetail, config.meta));
@@ -110,7 +113,7 @@ export async function getStaticLocalizedPaths(): Promise<StaticLocalizedPath[]> 
     }
   }
 
-  for (const locale of SUPPORTED_LOCALES) {
+  for (const locale of locales) {
     if (locale === DEFAULT_LOCALE) continue;
     paths.push(createLocalizedPath(locale, "/", ""));
   }

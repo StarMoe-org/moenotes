@@ -1,4 +1,5 @@
 import { SUPPORTED_LOCALES } from "../src/config/locales";
+import { activeBuildLocales } from "../src/config/build-locales";
 import { t } from "../src/i18n";
 import { getAllRoutes, getAllStaticRoutes, isDynamicRoute } from "../src/lib/route/registry";
 import { buildStaticSearchIndex } from "../src/lib/search/static-index";
@@ -37,9 +38,13 @@ for (const route of indexableStaticRoutes) {
   }
 }
 
+// The sitemap/hreflang assertions follow this build's active locale set rather than the full supported set,
+// so a core-locale batch (MOENOTES_BUILD_LOCALES=core) is still fully valid against the same script.
+const buildLocales = activeBuildLocales();
+
 const sitemapEntries = await getSitemapEntries();
 const sitemapLocs = new Set(sitemapEntries.map((entry) => entry.loc));
-const expectedStaticSitemapCount = indexableStaticRoutes.length * SUPPORTED_LOCALES.length;
+const expectedStaticSitemapCount = indexableStaticRoutes.length * buildLocales.length;
 
 if (sitemapEntries.length < expectedStaticSitemapCount) {
   errors.push(`Sitemap has ${sitemapEntries.length} entries; expected at least ${expectedStaticSitemapCount}.`);
@@ -47,15 +52,26 @@ if (sitemapEntries.length < expectedStaticSitemapCount) {
 if (sitemapEntries.length !== sitemapLocs.size) errors.push("Sitemap contains duplicate loc values.");
 
 for (const entry of sitemapEntries) {
-  if (entry.alternates.length !== SUPPORTED_LOCALES.length) {
+  if (entry.alternates.length !== buildLocales.length) {
     errors.push(`Sitemap entry has incomplete alternates: ${entry.loc}`);
   }
-  const defaultAlternate = entry.alternates.find((alternate) => alternate.locale === "zh-CN")?.href;
-  if (!defaultAlternate || entry.xDefault !== defaultAlternate) {
-    errors.push(`Sitemap entry has an invalid x-default alternate: ${entry.loc}`);
+  // x-default always points at the default-locale (zh-CN) version, regardless of which locales this batch
+  // happens to list as alternates. Validate by re-deriving it from this entry's own pathname.
+  const path = new URL(entry.loc).pathname.replace(/\/$/, "") || "/";
+  const pathname = path.replace(/^\/(zh-tw|ja|en|ko|th|id|vi|es|pt|fr|de|ru)(?=\/|$)/, "") || "/";
+  const expectedDefault = new URL(`${pathname === "/" ? "/" : `${pathname}/`}`, "https://bdon.moe/").toString();
+  if (entry.xDefault !== expectedDefault) {
+    errors.push(`Sitemap entry has an invalid x-default alternate: ${entry.loc} (x-default=${entry.xDefault}, expected=${expectedDefault})`);
   }
   if (entry.priority < 0 || entry.priority > 1) errors.push(`Invalid sitemap priority: ${entry.loc}`);
   if (entry.lastmod && Number.isNaN(Date.parse(entry.lastmod))) errors.push(`Invalid sitemap lastmod: ${entry.loc}`);
+}
+
+// Per-locale sitemap shards: every active locale's URLs must appear in exactly its own shard, with the build's
+// full active locale set as the alternates of each entry in any shard. The shard set equals the sitemap index.
+const shardLocales = [...new Set(sitemapEntries.map((entry) => entry.locale))];
+if (shardLocales.length !== buildLocales.length || !buildLocales.every((locale) => shardLocales.includes(locale))) {
+  errors.push(`Sitemap shards (${shardLocales.join(", ")}) do not match this build's active locales (${buildLocales.join(", ")}).`);
 }
 
 if (errors.length > 0) {
