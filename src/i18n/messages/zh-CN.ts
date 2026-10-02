@@ -851,6 +851,7 @@ export const zhCN = {
       power: "综合力 {power}",
       columns: {
         rank: "名次",
+        namecard: "名片",
         player: "玩家",
         score: "分数",
         deck: "队伍",
@@ -1267,8 +1268,8 @@ export const zhCN = {
       accuracy: "准率",
       great: "Great 比例",
       just: "Just 率",
-      accNote: "估算值（不含断连），Great 比例作用于全曲，Just 率作用于 Just 任务区间",
-      accNoteFree: "估算值（不含断连），Great 比例作用于全曲",
+      accNote: "估算值（不含断连，0% Great 即 100% Perfect）。Just 率作用于 Just 任务区间",
+      accNoteFree: "估算值（不含断连，0% Great 即 100% Perfect）",
       pending: "数据待更新",
       room: "房间人数",
       roomHint: "按房间全员总分评级；此处按同分水平估算个人所需得分",

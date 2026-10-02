@@ -128,7 +128,7 @@ export default function MusicRanking({ locale, musicId, cards }: Props) {
           <p className="px-2 py-8 text-center text-sm font-semibold text-[var(--mn-text-muted)]">{t(locale, "music.ranking.empty")}</p>
         )}
 
-        {rows.length > 0 && load.state === "ready" && <RankingList key={load.server} locale={locale} rows={rows} cards={cards} assetUrl={assetUrl} />}
+        {rows.length > 0 && load.state === "ready" && <RankingList key={load.server} locale={locale} rows={rows} cards={cards} assetUrl={assetUrl} server={load.server} />}
       </div>
     </section>
   );

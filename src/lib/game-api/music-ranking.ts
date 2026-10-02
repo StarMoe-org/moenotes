@@ -8,8 +8,27 @@ export interface MusicRanking {
 
 export interface RankingPlayer {
   score?: number;
-  playerData?: { id?: string; name?: string; profileId?: string; rankExp?: number };
+  playerData?: {
+    id?: string;
+    name?: string;
+    profileId?: string;
+    rankExp?: number;
+    profileCard?: {
+      name?: string;
+      slot?: number;
+      thumbnailUrl?: string[];
+    };
+  };
   highScoreDeck?: { id?: number; name?: string; totalPower?: number; cards?: RankingDeckSlot[] };
+  profile?: {
+    id?: string;
+    name?: string;
+    profileId?: string;
+    profileCard?: {
+      name?: string;
+      thumbnailUrl?: string[];
+    };
+  };
 }
 
 export interface RankingDeckSlot {
@@ -39,6 +58,9 @@ export interface RankingRow {
   deckName: string;
   totalPower: number | null;
   cards: RankingDeckCard[];
+  /** Profile card information when available from the ranking data. */
+  profileCard?: { name: string | null; images: number } | null;
+  profileId?: string | null;
 }
 
 /**
@@ -80,6 +102,10 @@ export function toRankingRows(ranking: MusicRanking, by: "score" | "response" = 
     if (by === "response" || score !== previous) rank = position + 1;
     previous = score;
     const deck = player.highScoreDeck;
+    const profile = player.profile;
+    // profileCard can be in either playerData (new API) or profile (old API)
+    const profileCard = player.playerData?.profileCard ?? profile?.profileCard;
+    const cardImages = Array.isArray(profileCard?.thumbnailUrl) ? profileCard.thumbnailUrl.length : 0;
     // Boards keep repeated players as the game sent them; the key still has to be unique.
     let uid = player.playerData?.id ?? String(index);
     if (seen.has(uid)) uid = `${uid}#${index}`;
@@ -88,7 +114,7 @@ export function toRankingRows(ranking: MusicRanking, by: "score" | "response" = 
       rank,
       tied: by === "score" && (counts.get(score) ?? 0) > 1,
       uid,
-      name: player.playerData?.name ?? "",
+      name: player.playerData?.name ?? profile?.name ?? "",
       score,
       deckName: deck?.name ?? "",
       totalPower: typeof deck?.totalPower === "number" ? deck.totalPower : null,
@@ -103,6 +129,8 @@ export function toRankingRows(ranking: MusicRanking, by: "score" | "response" = 
           supportRank: slot.supportCard?.rank ?? null,
         }))
         .sort((a, b) => a.slot - b.slot),
+      profileCard: cardImages > 0 ? { name: typeof profileCard?.name === "string" && profileCard.name ? profileCard.name : null, images: cardImages } : null,
+      profileId: typeof profile?.profileId === "string" ? profile.profileId : (typeof player.playerData?.profileId === "string" ? player.playerData.profileId : null),
     };
   });
 }

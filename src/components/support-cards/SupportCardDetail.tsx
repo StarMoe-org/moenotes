@@ -554,7 +554,6 @@ function SupportCardDetailView({ locale, data }: { locale: AppLocale; data: Deta
                       label={t(locale, "supportCards.growth.limitBreak")}
                       value={build.rank}
                       options={growth.rankSteps.map((step) => step.rank)}
-                      formatOption={(_, index) => String(index)}
                       onChange={setRank}
                     />
                   )}

@@ -813,6 +813,7 @@ export const enUS = {
       power: "Deck power {power}",
       columns: {
         rank: "#",
+        namecard: "Card",
         player: "Player",
         score: "Score",
         deck: "Deck",
@@ -1155,7 +1156,7 @@ export const enUS = {
       "time": "Time",
       "type": "Type",
       "judgement": "Judgement",
-      "range": "Range",
+      "range": "Section",
       "just": "Just",
       "luck": "Luck points",
       "complete": "Calculated",
@@ -1337,7 +1338,7 @@ export const enUS = {
       "gain": "Gain / Power",
       "score": "Score gain",
       "seeds": "Seeds",
-      "details": "Range changes",
+      "details": "Section changes",
       "support": "Gekiso support skill",
       "member": "Member Gekiso skill",
       "level": "Lv {n}",
@@ -1348,19 +1349,19 @@ export const enUS = {
       "targetUnmet": "SE target not met",
       "baseSe": "Rank 1, all-Just baseline gain / power",
       "converted": "Judgement conversions",
-      "metricsHint": "Range metrics are baseline gains under ideal play (all Just).",
+      "metricsHint": "Section metrics are baseline gains under ideal play (all Just).",
       "empty": "No skill aptitude matches this chart's missions.",
       "approximation": "Figures are simulated estimates for reference; actual results may vary depending on judgements, skill combinations, and rankings.",
       "factors": "Chart factors",
       "factor": {
-        "judgedNotes": "Range judged notes",
+        "judgedNotes": "Section judged notes",
         "justNotes": "Just notes",
-        "perfectNotes": "Just range Perfect notes",
+        "perfectNotes": "Just section Perfect notes",
         "tailNotes": "Tail notes",
         "comboAtStart": "Starting combo",
         "lotteries": "No-skill lotteries"
       },
-      "factorsHint": "Summary of judged notes and mission metrics by range, used to analyze skill performance across charts."
+      "factorsHint": "Summary of judged notes and mission metrics by section, used to analyze skill performance across charts."
     },
     kinds: { tap: "Tap", flick: "Flick", slide: "Slide", trace: "Trace", combo: "Combo tick" },
     source: "Data: Global / Japan · version {version}",
@@ -1577,7 +1578,7 @@ export const enUS = {
     chartPreview: { title: "Our Notes 3D Chart Previewer", description: "Pick a song and difficulty to watch its Our Notes chart rendered in 3D right in your browser: lanes, notes and hit effects auto-played in sync with the music, with pause, seek and speed controls." },
     live2dViewer: { title: "Our Notes Live2D Viewer", description: "Browse every Live2D model of BanG Dream! Our Notes by character and costume right in your browser: idle motion, blinking, breathing and physics as in the story, with every motion and expression on demand." },
     storyPlayer: { title: "Our Notes Story Player", description: "Play the stories of BanG Dream! Our Notes in your browser as the game's story screen shows them: Live2D characters, stages, camera and effects, the talk window, music, sound effects and voices, in Japanese, English, Chinese or Korean." },
-    chartData: { title: "Our Notes Song Meta", description: "Rankings of every BanG Dream! Our Notes chart by score efficiency, event power, speed, level and length, with multidimensional charts and song details." },
+    chartData: { title: "Our Notes Song Meta", description: "Explore and compare every BanG Dream! Our Notes chart by score efficiency, target event power, speed, level, and duration with interactive charts and details." },
     assetViewer: {
       title: "Our Notes Game Asset Workshop",
       description: "Step through the heavy wooden door into the backstage workshop. Amid silent easels and dusty worktables, explore unfading brushstrokes and original devotion that built this stage.",

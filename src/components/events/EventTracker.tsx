@@ -3,6 +3,7 @@ import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import EventBanner from "@/components/events/EventBanner";
 import RankingList, { RankingSkeleton } from "@/components/music/RankingList";
+import PlayerNamecard from "@/components/music/PlayerNamecard";
 import GameServerSwitch from "@/components/shared/GameServerSwitch";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
@@ -220,13 +221,14 @@ export default function EventTracker({ locale, events, songs, deckCards, servers
                     challenge={challenge}
                     song={songs[challenge.musicId] ?? null}
                     cards={deckCards}
+                    servers={servers}
                   />
                 )}
               </>
             )}
           </section>
 
-          <PointRankingPanel key={`${server}:${event.eventId}`} locale={locale} server={server} event={event} />
+          <PointRankingPanel key={`${server}:${event.eventId}`} locale={locale} server={server} event={event} servers={servers} />
         </>
       )}
     </div>
@@ -367,13 +369,14 @@ type BoardLoad =
   | { state: "error"; kind: ErrorKind | "notStarted" | "disabled" | "missed" | "unknown" };
 
 /** One challenge song's board, kept in the game's order and refreshed every minute while collection runs. */
-function ChallengeBoard({ locale, server, eventId, challenge, song, cards }: {
+function ChallengeBoard({ locale, server, eventId, challenge, song, cards, servers }: {
   locale: AppLocale;
   server: GameServer;
   eventId: string;
   challenge: ChallengeRanking;
   song: TrackerSong | null;
   cards: DeckCardLookup;
+  servers: GameServer[];
 }) {
   const readable = challengeReadable(challenge);
   const live = readable && (challenge.collectStatus === "collecting" || challenge.collectStatus === "finalizing");
@@ -461,7 +464,7 @@ function ChallengeBoard({ locale, server, eventId, challenge, song, cards }: {
       ) : top.length === 0 ? (
         <p className="px-2 py-8 text-center text-sm font-semibold text-[var(--mn-text-muted)]">{t(locale, "music.ranking.empty")}</p>
       ) : (
-        <RankingList locale={locale} rows={top} cards={cards} assetUrl={assetUrl} boundaries={boundaries} />
+        <RankingList locale={locale} rows={top} cards={cards} assetUrl={assetUrl} boundaries={boundaries} server={server} />
       )}
 
       {finalQuality === "lastSeen" && (
@@ -486,7 +489,7 @@ function BoardNotice({ locale, server, challenge }: { locale: AppLocale; server:
 }
 
 /** The point ranking's latest top list; most early events have none, and then this says so. */
-function PointRankingPanel({ locale, server, event }: { locale: AppLocale; server: GameServer; event: RankdEvent }) {
+function PointRankingPanel({ locale, server, event, servers }: { locale: AppLocale; server: GameServer; event: RankdEvent; servers: GameServer[] }) {
   const enabled = hasPointRanking(event);
   const readable = pointRankingReadable(event);
   const status = event.pointRanking?.collectStatus ?? event.collectStatus;
@@ -542,16 +545,32 @@ function PointRankingPanel({ locale, server, event }: { locale: AppLocale; serve
               {data.frozen && ` · ${t(locale, "eventTracker.points.frozen")}`}
             </p>
             <ol className="divide-y divide-dashed divide-[var(--mn-border)]/50">
-              {rows.map((row, index) => (
-                <li key={`${row.rank}:${row.profile?.id ?? index}`} className="grid grid-cols-[3.5rem_minmax(0,1fr)_auto] items-center gap-3 px-2 py-2">
-                  <span className={`font-mono text-base font-black ${row.rank <= 3 ? "text-[var(--mn-accent-deep)]" : "text-[var(--mn-text)]"}`}>
-                    {numbers.format(row.rank)}
-                    {row.dup && <span className="ml-0.5 align-top text-[9px] font-bold text-[var(--mn-text-muted)]" title={t(locale, "eventTracker.points.tied")}>=</span>}
-                  </span>
-                  <span className="truncate text-sm font-bold text-[var(--mn-text)]">{row.profile?.name ?? ""}</span>
-                  <span className="text-right font-mono text-sm font-black tabular-nums text-[var(--mn-text)]">{numbers.format(row.point)}</span>
-                </li>
-              ))}
+              {rows.map((row, index) => {
+                const profile = row.profile;
+                const hasNamecard = profile?.profileCard && Array.isArray(profile.profileCard.thumbnailUrl) && profile.profileCard.thumbnailUrl.length > 0;
+                return (
+                  <li key={`${row.rank}:${profile?.id ?? index}`} className="grid grid-cols-[3.5rem_minmax(0,1fr)_auto] items-center gap-3 px-2 py-2">
+                    <span className={`font-mono text-base font-black ${row.rank <= 3 ? "text-[var(--mn-accent-deep)]" : "text-[var(--mn-text)]"}`}>
+                      {numbers.format(row.rank)}
+                      {row.dup && <span className="ml-0.5 align-top text-[9px] font-bold text-[var(--mn-text-muted)]" title={t(locale, "eventTracker.points.tied")}>=</span>}
+                    </span>
+                    <span className="flex min-w-0 items-center gap-2">
+                      {hasNamecard && (
+                        <PlayerNamecard
+                          server={server}
+                          profileId={profile.profileId}
+                          images={profile.profileCard.thumbnailUrl.length}
+                          playerName={profile.name ?? ""}
+                          variant="thumbnail"
+                          useRankingApi={true}
+                        />
+                      )}
+                      <span className="truncate text-sm font-bold text-[var(--mn-text)]">{profile?.name ?? ""}</span>
+                    </span>
+                    <span className="text-right font-mono text-sm font-black tabular-nums text-[var(--mn-text)]">{numbers.format(row.point)}</span>
+                  </li>
+                );
+              })}
             </ol>
             {missing.length > 0 && (
               <p className="mt-3 px-2 text-xs text-[var(--mn-text-muted)]">

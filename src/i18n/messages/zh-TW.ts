@@ -851,6 +851,7 @@ export const zhTW = {
       power: "綜合力 {power}",
       columns: {
         rank: "名次",
+        namecard: "名片",
         player: "玩家",
         score: "分數",
         deck: "隊伍",
@@ -1267,8 +1268,8 @@ export const zhTW = {
       accuracy: "準率",
       great: "Great 比例",
       just: "Just 率",
-      accNote: "估算值（不含斷連），Great 比例作用於全曲，Just 率作用於 Just 任務區間",
-      accNoteFree: "估算值（不含斷連），Great 比例作用於全曲",
+      accNote: "估算值（不含斷連，0% Great 即 100% Perfect）。Just 率作用於 Just 任務區間",
+      accNoteFree: "估算值（不含斷連，0% Great 即 100% Perfect）",
       pending: "資料待更新",
       room: "房間人數",
       roomHint: "按房間全員總分評級；此處按同分水平估算個人所需得分",
