@@ -1,17 +1,14 @@
 ---
-import StoryExplorer from "@/components/story/StoryExplorer";
+import StoryExplorer, { inStorySection, type StorySection } from "@/components/story/StoryExplorer";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
-import type { StorySection } from "@/components/story/StoryExplorer";
 import { getBuildStories, getBuildStoryReaderLookup } from "@/lib/masterdata/build-data";
 import { getBuildServers } from "@/lib/masterdata/build-servers";
 
 interface Props { locale: AppLocale; category: StorySection; titleKey: string; descriptionKey: string; }
 const { locale, category, titleKey, descriptionKey } = Astro.props;
 const allStories = await getBuildStories(locale);
-const stories = allStories.filter((story) => category === "other"
-  ? ["live-result", "home", "tutorial"].includes(story.category)
-  : story.category === category);
+const stories = allStories.filter((story) => inStorySection(category, story));
 // The other lists read their scripts in the browser (they are not shown in full); the chapter lists can.
 const readerLookup = category === "main" || category === "event"
   ? await getBuildStoryReaderLookup()

@@ -1,6 +1,7 @@
 import type { ContentSearchEntry } from "@/lib/search/content-entry";
 import { itemSearchEntries } from "@/lib/search/sources/items";
 import { gameSystemSearchEntries } from "@/lib/search/sources/game-systems";
+import { loadCollectibleSearchEntries } from "@/lib/search/sources/collectibles";
 
 /**
  * Searchable entities beyond the ones `getBuildContentSearchIndex` builds itself (cards, songs, characters, stories,
@@ -15,4 +16,5 @@ export type ContentSearchSource = () => Promise<ContentSearchEntry[]>;
 export const CONTENT_SEARCH_SOURCES: readonly ContentSearchSource[] = [
   itemSearchEntries,
   gameSystemSearchEntries,
+  loadCollectibleSearchEntries,
 ];

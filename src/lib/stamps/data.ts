@@ -11,6 +11,7 @@ export interface RawStamp {
   stampAsset: string;
   stampCategory: number;
   startAt: string;
+  endAt?: string;
   voiceAsset: string;
 }
 
@@ -21,6 +22,8 @@ export interface StampViewModel {
   bandIds: number[];
   name: string;
   imageUrl: string;
+  startAt: string;
+  endAt: string;
   searchText: string;
 }
 
@@ -86,6 +89,8 @@ export function normalizeStamps(
         bandIds,
         name,
         imageUrl: getStampImageUrl(stamp.stampAsset, locale),
+        startAt: stamp.startAt ?? "",
+        endAt: stamp.endAt ?? "",
         searchText: [name, ...charNames, stamp.id].join(" ").toLowerCase(),
       };
     })

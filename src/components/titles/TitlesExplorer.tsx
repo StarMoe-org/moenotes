@@ -6,9 +6,14 @@ import type { ServerFaceted } from "@/lib/servers/facets";
 import { useServerFiles, useServerList } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
 import BaseFilters, { BandFilter, CharacterFilter, FilterButton, FilterSection, toggleArrayItem } from "@/components/shared/BaseFilters";
-import Modal from "@/components/shared/Modal";
+import CollectibleOverlay from "@/components/collectibles/CollectibleOverlay";
 import type { CharacterOption } from "@/components/shared/filters";
-import type { DegreeViewModel } from "@/lib/degrees/data";
+import { isDegreeRetired, type DegreeViewModel } from "@/lib/degrees/data";
+import { imageFileName } from "@/lib/collectibles/image-client";
+import { localizePath } from "@/i18n/routing";
+import { parsePositiveIntParam, useQueryOverlay } from "@/lib/overlay/use-query-overlay";
+import { entityLinkPath } from "@/lib/route/entity-link";
+import { useNow } from "@/lib/schedule/use-now";
 import { sortEntries } from "@/lib/filter/list-sort";
 import { useListSort } from "@/lib/filter/use-list-sort";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
@@ -34,7 +39,13 @@ export default function TitlesExplorer({ locale, servers, initialTitles, bands, 
   const [selectedTypes, setSelectedTypes] = useState<number[]>([]);
   const [selectedBands, setSelectedBands] = useState<number[]>([]);
   const [selectedCharacters, setSelectedCharacters] = useState<number[]>([]);
-  const [preview, setPreview] = useState<DegreeViewModel | null>(null);
+  const [availability, setAvailability] = useState<Availability>("all");
+  const [unlockOnly, setUnlockOnly] = useState(false);
+  const now = useNow();
+  // `?id=<title>` deep links (search, reward chips) open the title's overlay; see useQueryOverlay.
+  const isListed = useCallback((id: number) => titles.some((title) => title.id === id), [titles]);
+  const overlay = useQueryOverlay("id", { parse: parsePositiveIntParam, isShown: isListed });
+  const preview = useMemo(() => (overlay.value === null ? null : titles.find((title) => title.id === overlay.value) ?? null), [titles, overlay.value]);
 
   useEffect(() => {
     const remembered = parseRememberedFilters(memory.state?.filtersHash);
@@ -42,6 +53,8 @@ export default function TitlesExplorer({ locale, servers, initialTitles, bands, 
     setSelectedTypes(remembered.types);
     setSelectedBands(remembered.bands);
     setSelectedCharacters(remembered.characters);
+    setAvailability(remembered.availability);
+    setUnlockOnly(remembered.unlockOnly);
   }, [memory.state?.filtersHash]);
 
   useEffect(() => {
@@ -56,9 +69,9 @@ export default function TitlesExplorer({ locale, servers, initialTitles, bands, 
   }, [memory.state?.scrollY]);
 
   const saveCurrentState = useCallback(() => {
-    const filtersHash = JSON.stringify({ query, types: selectedTypes, bands: selectedBands, characters: selectedCharacters });
+    const filtersHash = JSON.stringify({ query, types: selectedTypes, bands: selectedBands, characters: selectedCharacters, availability, unlockOnly });
     memory.saveState({ scrollY: window.scrollY, filtersHash });
-  }, [query, selectedTypes, selectedBands, selectedCharacters, memory]);
+  }, [query, selectedTypes, selectedBands, selectedCharacters, availability, unlockOnly, memory]);
 
   useEffect(() => {
     window.addEventListener("beforeunload", saveCurrentState);
@@ -84,12 +97,19 @@ export default function TitlesExplorer({ locale, servers, initialTitles, bands, 
       if (selectedTypes.length > 0 && !selectedTypes.includes(title.type)) return false;
       if (selectedBands.length > 0 && !title.bandIds.some((id) => selectedBands.includes(id))) return false;
       if (selectedCharacters.length > 0 && !title.characterIds.some((id) => selectedCharacters.includes(id))) return false;
+      if (availability !== "all") {
+        // Before hydration nothing counts as retired, so the static HTML matches the "obtainable" list.
+        const retired = now !== null && isDegreeRetired(title, now);
+        if ((availability === "retired") !== retired) return false;
+      }
+      if (unlockOnly && title.unlocks.length === 0) return false;
       return !needle || title.searchText.includes(needle);
     });
-  }, [titles, query, selectedTypes, selectedBands, selectedCharacters]);
+  }, [titles, query, selectedTypes, selectedBands, selectedCharacters, availability, unlockOnly, now]);
 
   const sortedTitles = useMemo(() => sortEntries(filteredTitles, sort.value, locale), [filteredTitles, sort.value, locale]);
-  const hasActiveFilters = sort.value !== "default" || Boolean(query) || selectedTypes.length > 0 || selectedBands.length > 0 || selectedCharacters.length > 0;
+  const hasActiveFilters = sort.value !== "default" || Boolean(query) || selectedTypes.length > 0 || selectedBands.length > 0 || selectedCharacters.length > 0 || availability !== "all" || unlockOnly;
+  const toImage = useCallback((title: DegreeViewModel) => ({ src: title.imageUrl, alt: title.name, caption: title.name, downloadName: imageFileName(title.imageUrl, `title_${title.id}.webp`) }), []);
 
   const toggleBand = (bandId: number) => {
     const next = toggleArrayItem(selectedBands, bandId);
@@ -104,6 +124,8 @@ export default function TitlesExplorer({ locale, servers, initialTitles, bands, 
     setSelectedTypes([]);
     setSelectedBands([]);
     setSelectedCharacters([]);
+    setAvailability("all");
+    setUnlockOnly(false);
     memory.clearState();
   };
 
@@ -135,6 +157,19 @@ export default function TitlesExplorer({ locale, servers, initialTitles, bands, 
       </FilterSection>
       <BandFilter title={t(locale, "cards.band")} bands={usedBands} selectedBands={selectedBands} onToggle={toggleBand} onReset={() => { setSelectedBands([]); setSelectedCharacters([]); }} />
       <CharacterFilter title={t(locale, "nav.items.characters")} characters={bandCharacters} selectedCharacters={selectedCharacters} onChange={setSelectedCharacters} />
+      <FilterSection title={t(locale, "titles.availability")}>
+        <div className="flex flex-wrap gap-2">
+          <FilterButton active={availability === "all"} onClick={() => setAvailability("all")}>ALL</FilterButton>
+          <FilterButton active={availability === "available"} onClick={() => setAvailability("available")}>{t(locale, "titles.available")}</FilterButton>
+          <FilterButton active={availability === "retired"} onClick={() => setAvailability("retired")}>{t(locale, "titles.retired")}</FilterButton>
+        </div>
+      </FilterSection>
+      <FilterSection title={t(locale, "titles.unlock")}>
+        <div className="flex flex-wrap gap-2">
+          <FilterButton active={!unlockOnly} onClick={() => setUnlockOnly(false)}>ALL</FilterButton>
+          <FilterButton active={unlockOnly} onClick={() => setUnlockOnly(true)}>{t(locale, "titles.hasUnlock")}</FilterButton>
+        </div>
+      </FilterSection>
     </BaseFilters>
   );
 
@@ -144,6 +179,8 @@ export default function TitlesExplorer({ locale, servers, initialTitles, bands, 
     selectedTypes,
     selectedBands,
     selectedCharacters,
+    availability,
+    unlockOnly,
     usedBands,
     bandCharacters,
     hasActiveFilters,
@@ -169,7 +206,8 @@ export default function TitlesExplorer({ locale, servers, initialTitles, bands, 
               <button
                 key={title.id}
                 type="button"
-                onClick={() => setPreview(title)}
+                onClick={() => { saveCurrentState(); overlay.open(title.id); }}
+                aria-haspopup="dialog"
                 data-list-item-id={title.id}
                 aria-label={t(locale, "titles.openPreview", { name: title.name })}
                 className="mn-list-card group flex min-w-0 flex-col overflow-hidden border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] text-left shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)]"
@@ -177,6 +215,7 @@ export default function TitlesExplorer({ locale, servers, initialTitles, bands, 
                 <span className="mn-stripes-cream relative grid aspect-square place-items-center border-b border-[var(--mn-glass-border)] bg-[var(--mn-cream-deep)] p-3">
                   <img className="max-h-full max-w-full object-contain transition duration-300 group-hover:scale-105" src={title.imageUrl} alt="" loading="lazy" decoding="async" />
                   <span className="absolute left-2 top-2 rounded-full border border-[var(--mn-glass-border)] bg-[var(--mn-paper)] px-2 py-0.5 text-[10px] font-bold text-[var(--mn-ink-soft)]">{t(locale, `titles.types.${title.type}`)}</span>
+                  {now !== null && isDegreeRetired(title, now) && <span className="absolute right-2 top-2 rounded-full border border-[var(--mn-rose)] bg-[var(--mn-paper)] px-2 py-0.5 text-[10px] font-bold text-[var(--mn-rose)]">{t(locale, "titles.retired")}</span>}
                 </span>
                 <span className="flex flex-1 flex-col gap-1 p-3">
                   <span className="line-clamp-2 text-sm font-black leading-5 text-[var(--mn-text)] group-hover:text-[var(--mn-accent-deep)]">{title.name}</span>
@@ -187,27 +226,51 @@ export default function TitlesExplorer({ locale, servers, initialTitles, bands, 
           </div>
         )}
 
-        <Modal isOpen={preview !== null} onClose={() => setPreview(null)} title={preview?.name ?? ""} closeLabel={t(locale, "actions.close")} size="lg">
-          {preview && (
-            <div className="space-y-4">
-              <div className="mn-stripes-cream grid place-items-center rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-cream-deep)] p-4">
-                <img className="max-h-[55vh] w-auto max-w-full object-contain" src={preview.imageUrl} alt={preview.name} />
-              </div>
-              <dl className="divide-y divide-dashed divide-[var(--mn-border)]/60 text-sm">
-                <div className="flex justify-between gap-4 py-2.5"><dt className="font-semibold text-[var(--mn-text-muted)]">{t(locale, "titles.type")}</dt><dd className="font-semibold">{t(locale, `titles.types.${preview.type}`)}</dd></div>
-                {preview.source && <div className="flex justify-between gap-4 py-2.5"><dt className="shrink-0 font-semibold text-[var(--mn-text-muted)]">{t(locale, "titles.source")}</dt><dd className="text-right font-semibold">{preview.source}</dd></div>}
-                <div className="flex justify-between gap-4 py-2.5"><dt className="font-semibold text-[var(--mn-text-muted)]">ID</dt><dd className="font-mono">#{preview.id}</dd></div>
-              </dl>
+        <CollectibleOverlay
+          locale={locale}
+          servers={servers}
+          entry={preview}
+          onClose={overlay.close}
+          title={preview?.name ?? ""}
+          closeLabel={t(locale, "actions.close")}
+          results={sortedTitles}
+          toImage={toImage}
+          onNavigate={overlay.open}
+          description={preview?.source ? <><span className="mr-2 font-black text-[var(--mn-text)]">{t(locale, "titles.source")}</span>{preview.source}</> : undefined}
+          characters={preview ? preview.characterIds.map((id, index) => ({ id, name: preview.characterNames[index] ?? "" })) : []}
+          facts={preview ? [
+            { label: t(locale, "titles.type"), value: t(locale, `titles.types.${preview.type}`) || `#${preview.type}` },
+            ...(now !== null && isDegreeRetired(preview, now) ? [{ label: t(locale, "titles.availability"), value: <span className="text-[var(--mn-rose)]">{t(locale, "titles.retired")}</span> }] : []),
+            ...(preview.sourceCardId ? [{
+              label: t(locale, "titles.sourceCard"),
+              value: <a className="text-[var(--mn-accent-deep)] underline-offset-2 hover:underline" href={localizePath(entityLinkPath({ routeId: "cards", detailId: preview.sourceCardId }), locale)}>{t(locale, "titles.viewCard", { id: preview.sourceCardId })}</a>,
+            }] : []),
+          ] : []}
+        >
+          {preview && preview.unlocks.length > 0 ? (
+            <div className="rounded-xl border border-dashed border-[var(--mn-border)] p-3">
+              <p className="text-xs font-black text-[var(--mn-text-muted)]">{t(locale, "titles.unlock")}</p>
+              <ul className="mt-2 space-y-1 text-sm font-semibold">
+                {preview.unlocks.map((unlock) => (
+                  <li key={`${unlock.characterId}-${unlock.rank}`}>
+                    <a className="text-[var(--mn-accent-deep)] underline-offset-2 hover:underline" href={localizePath(entityLinkPath({ routeId: "characters", detailId: unlock.characterId }), locale)}>
+                      {t(locale, "titles.unlockCharacterRank", { name: unlock.characterName || `#${unlock.characterId}`, rank: unlock.rank })}
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
-          )}
-        </Modal>
+          ) : null}
+        </CollectibleOverlay>
       </section>
     </ServerScope>
   );
 }
 
+type Availability = "all" | "available" | "retired";
+
 function parseRememberedFilters(raw?: string) {
-  const fallback = { query: "", types: [] as number[], bands: [] as number[], characters: [] as number[] };
+  const fallback = { query: "", types: [] as number[], bands: [] as number[], characters: [] as number[], availability: "all" as Availability, unlockOnly: false };
   if (!raw) return fallback;
   try {
     const parsed = JSON.parse(raw) as Partial<typeof fallback>;
@@ -216,6 +279,8 @@ function parseRememberedFilters(raw?: string) {
       types: Array.isArray(parsed.types) ? parsed.types : [],
       bands: Array.isArray(parsed.bands) ? parsed.bands : [],
       characters: Array.isArray(parsed.characters) ? parsed.characters : [],
+      availability: (parsed.availability === "available" || parsed.availability === "retired" ? parsed.availability : "all") as Availability,
+      unlockOnly: parsed.unlockOnly === true,
     };
   } catch {
     return fallback;

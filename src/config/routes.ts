@@ -265,7 +265,7 @@ export const routeRegistry = [
           keywords: ["BanG Dream! Our Notes help", "Our Notes game guide", "Our Notes FAQ", "loading tips", "game manual"],
           sitemap: { priority: 0.5, changefreq: "weekly" },
         },
-        nav: false,
+        nav: { order: 90, icon: "info" },
         searchable: true,
         keywords: ["help", "guide", "manual", "faq", "tips"],
         children: [
@@ -283,8 +283,7 @@ export const routeRegistry = [
             },
             nav: false,
             searchable: false,
-            // Filled by the feature pack that owns this page; a function, like every dynamic route (tests/masterdata-params).
-            staticParams: async () => [],
+            staticParams: async () => (await import("@/lib/route/masterdata-params")).getMasterdataHelpParams(),
           },
         ],
       },
@@ -803,7 +802,7 @@ export const routeRegistry = [
           keywords: ["BanG Dream! Our Notes birthday stories", "Our Notes birthday episodes", "character birthdays", "birthday story transcript", "character voices"],
           sitemap: { priority: 0.5, changefreq: "weekly" },
         },
-        nav: false,
+        nav: { order: 25, icon: "book" },
         searchable: true,
         keywords: ["birthday story", "birthday", "scenario"],
       },
