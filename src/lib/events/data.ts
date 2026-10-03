@@ -208,6 +208,8 @@ export interface EventSources {
   supportCards: SupportCardViewModel[];
   music: MusicViewModel[];
   stories: StoryViewModel[];
+  /** Gachas, lots and prizes, for the gachas featuring the event's cards; optional (no related gachas without it). */
+  gachas?: EventGachaSources;
 }
 
 /** List summary. Detail pages receive {@link EventDetailViewModel}. */
@@ -352,6 +354,8 @@ export interface EventDetailViewModel extends EventViewModel {
   boxGacha: EventBoxGachaSection | null;
   rankingRewards: EventRankingTier[];
   challengeMusic: EventChallengeLive | null;
+  /** Gachas featuring the event's cards (see relatedGachas); empty when no gacha does. */
+  relatedGachas: EventRelatedGacha[];
 }
 
 // MasterEventEffect.resourceTypeConstraint and MasterEventPickUpCard.resourceType (MasterData resourceType).
@@ -362,6 +366,8 @@ const RESOURCE_ITEM = 1;
 const BONUS_EVENT_ITEM = 2;
 // MasterEventBoxGacha.eventBoxGachaType 1 is the never-empty loop box after the numbered boxes.
 const LOOP_BOX_GACHA_TYPE = 1;
+// MasterGachaPrize.pickUpType of the rate-up prizes.
+const PICKUP_RATE_UP = 2;
 
 function groupBy<T, K>(rows: readonly T[], key: (row: T) => K): Map<K, T[]> {
   const groups = new Map<K, T[]>();
@@ -601,7 +607,62 @@ export function normalizeEvents(data: EventMasterData, sources: EventSources, re
         boxGacha: boxGachaSection(event, boxGachasByEvent.get(event.id) ?? []),
         rankingRewards: rankingTier(eventRankingRewards),
         challengeMusic: challengeSongs.length ? { boosts: challengeBoosts, songs: challengeSongs } : null,
+        relatedGachas: sources.gachas ? relatedGachas({ pickUpCards: pickUps, effects }, sources.gachas) : [],
       };
+    })
+    .sort((a, b) => b.id - a.id);
+}
+
+/** A gacha that features one of an event's cards, for the event page's "related gacha" links. */
+export interface EventRelatedGacha {
+  id: number;
+  name: string;
+  bannerPath: string;
+  startAt: string;
+  endAt: string;
+  /** The event's cards the gacha features, as `"<resourceType>:<id>"` (2 member, 3 support). */
+  cards: string[];
+}
+
+/** The gacha rows `relatedGachas` reads: each gacha's lot group, and the prizes of every lot. */
+export interface EventGachaSources {
+  gachas: Array<{ id: number; name: string; bannerPath: string; startAt: string; endAt: string; lotGroupId: number }>;
+  lots: Array<{ lotGroupId: number; prizeGroupId: number }>;
+  prizes: Array<{ groupId: number; resourceType: number; resourceId: number; pickUpType: number }>;
+}
+
+/**
+ * Gachas featuring an event's cards: the cards of MasterEventPickUpCard and of the bonus rows naming one card
+ * (MasterEventEffect memberCardId/supportCardId), met among the rate-up prizes (MasterGachaPrize, pickUpType 2) of
+ * each gacha's lots. Dates never establish the relation. Newest gacha (highest id) first.
+ */
+export function relatedGachas(
+  event: { pickUpCards: ReadonlyArray<{ resourceType: number; resourceId: number }>; effects: ReadonlyArray<{ memberCardId: number; supportCardId: number }> },
+  sources: EventGachaSources,
+): EventRelatedGacha[] {
+  const targets = new Set<string>();
+  for (const card of event.pickUpCards) if (card.resourceType === RESOURCE_MEMBER || card.resourceType === RESOURCE_SUPPORT) targets.add(`${card.resourceType}:${card.resourceId}`);
+  for (const effect of event.effects) {
+    if (effect.memberCardId) targets.add(`${RESOURCE_MEMBER}:${effect.memberCardId}`);
+    if (effect.supportCardId) targets.add(`${RESOURCE_SUPPORT}:${effect.supportCardId}`);
+  }
+  if (!targets.size) return [];
+  const matchesByPrizeGroup = new Map<number, Set<string>>();
+  for (const prize of sources.prizes) {
+    if (prize.pickUpType !== PICKUP_RATE_UP) continue;
+    const key = `${prize.resourceType}:${prize.resourceId}`;
+    if (!targets.has(key)) continue;
+    const set = matchesByPrizeGroup.get(prize.groupId) ?? new Set<string>();
+    set.add(key);
+    matchesByPrizeGroup.set(prize.groupId, set);
+  }
+  if (!matchesByPrizeGroup.size) return [];
+  const prizeGroupsByLot = groupBy(sources.lots, (lot) => lot.lotGroupId);
+  return sources.gachas
+    .flatMap((gacha): EventRelatedGacha[] => {
+      const cards = new Set<string>();
+      for (const lot of prizeGroupsByLot.get(gacha.lotGroupId) ?? []) for (const key of matchesByPrizeGroup.get(lot.prizeGroupId) ?? []) cards.add(key);
+      return cards.size ? [{ id: gacha.id, name: gacha.name, bannerPath: gacha.bannerPath, startAt: gacha.startAt, endAt: gacha.endAt, cards: [...cards].sort() }] : [];
     })
     .sort((a, b) => b.id - a.id);
 }

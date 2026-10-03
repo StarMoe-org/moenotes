@@ -1,16 +1,18 @@
 ---
-// Placeholder reserved for the haneoka feature-parity work (.narrafork/plans/plan-parallel-weaving-hellman.md).
-import PageHeader from "@/components/route/PageHeader.astro";
+import RealLivesView from "@/components/real-lives/RealLivesView";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
+import { getBuildRealLives } from "@/lib/masterdata/build-real-lives";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
 
 interface Props {
   locale: AppLocale;
 }
 
 const { locale } = Astro.props;
+const [lives, servers] = await Promise.all([getBuildRealLives(locale), getBuildServers()]);
 ---
 
 <PageLayout locale={locale} titleKey="seo.realLives.title" descriptionKey="seo.realLives.description">
-  <PageHeader locale={locale} titleKey="seo.realLives.title" descriptionKey="seo.realLives.description" />
+  <RealLivesView client:load servers={servers} locale={locale} lives={lives} />
 </PageLayout>

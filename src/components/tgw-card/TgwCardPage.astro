@@ -1,16 +1,18 @@
 ---
-// Placeholder reserved for the haneoka feature-parity work (.narrafork/plans/plan-parallel-weaving-hellman.md).
-import PageHeader from "@/components/route/PageHeader.astro";
+import TgwCardView from "@/components/tgw-card/TgwCardView";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
+import { getBuildTgwCard } from "@/lib/masterdata/build-vip";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
 
 interface Props {
   locale: AppLocale;
 }
 
 const { locale } = Astro.props;
+const [card, servers] = await Promise.all([getBuildTgwCard(locale), getBuildServers()]);
 ---
 
 <PageLayout locale={locale} titleKey="seo.tgwCard.title" descriptionKey="seo.tgwCard.description">
-  <PageHeader locale={locale} titleKey="seo.tgwCard.title" descriptionKey="seo.tgwCard.description" />
+  <TgwCardView client:load servers={servers} locale={locale} card={card} />
 </PageLayout>

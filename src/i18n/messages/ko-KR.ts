@@ -457,6 +457,8 @@ export const koKR = {
     materials: {"limitBreak":"상한 해제"},
   },
   events: {
+    relatedGacha: "관련 뽑기",
+    relatedGachaNote: "이 이벤트의 카드나 보너스 대상 카드를 픽업하는 뽑기입니다.",
     filterTitle: "이벤트 필터",
     searchPlaceholder: "이벤트, 캐릭터, 곡 검색...",
     status: "상태",
@@ -530,6 +532,9 @@ export const koKR = {
     notFoundDescription: "이 이벤트는 이미 막을 내렸거나 아직 막이 오르지 않았습니다. 이벤트 목록에서 다른 무대를 찾아보세요.",
   },
   gacha: {
+    category: "뽑기 종류",
+    categories: { stars: "스타", ticket: "티켓", ad: "광고", pass: "패스", bonus: "T.G.W 보너스", other: "기타" },
+    options: { title: "뽑기 방식", draws: "{count}회", firstTime: "첫 구매", free: "무료", ad: "광고 시청", pass: "패스 전용", bonus: "T.G.W 보너스", guarantee: "{rarity} 이상 {count}장 확정", ensuredNew: "신규 카드 확정", limit: { once: "{count}회 한정", daily: "1일 {count}회", weekly: "1주 {count}회", monthly: "1개월 {count}회" }, points: "+{count} 뽑기pt" },
     searchPlaceholder: "뽑기 이름, 픽업 캐릭터, 카드 이름으로 검색...",
     gachaId: "뽑기 ID",
     viewAllCards: "전체 {count}장 보기",
@@ -613,7 +618,8 @@ export const koKR = {
     searchPlaceholder: "이름이나 보상으로 검색...",
     filterTitle: "미션·보상 필터",
     kind: "종류",
-    kinds: { seasonPass: "시즌 미션 패스", loginBonus: "로그인 보너스", mission: "기간 한정 미션" },
+    kinds: { seasonPass: "시즌 미션 패스", loginBonus: "로그인 보너스", mission: "기간 한정 미션", monthlyPass: "월간 패스" },
+    monthlyPass: { expireDays: "유효 기간", liveSkip: "라이브 스킵 횟수 추가", consumeAll: "전체 소모 횟수 추가", skipAd: "광고 스킵", perDay: "1일 +{count}", yes: "가능", no: "없음", firstTime: "첫 구매 보상", continuation: "연속 구매 보상", purchase: "{count}번째 구매", dayRange: "{from}~{to}일째" },
     status: "진행 상태",
     openDetail: "보기: {title}",
     emptyTitle: "마음에 닿는 약속을 찾을 수 없습니다",
@@ -1980,10 +1986,10 @@ export const koKR = {
   detailNav: { label: "항목 탐색", previous: "이전", next: "다음", backToList: "목록으로" },
   collectionView: { label: "보기 방식", grid: "그리드", list: "목록", table: "표", card: "카드", square: "아이콘", nameSeparator: ", " },
   // ── pack G ──
-  shop: {},
-  missions: {},
-  tgwCard: {},
-  realLives: {},
+  shop: { filterTitle: "상점 필터", searchPlaceholder: "패키지나 구성 아이템 검색...", payment: "결제 방식", limit: "구매 제한", status: "상태", price: "가격", period: "판매 기간", sortPrice: "가격", openDetail: "패키지 보기: {name}", noneOnServer: "이 서버의 상점에는 패키지가 없습니다.", emptyTitle: "조건에 맞는 패키지가 없습니다", recommended: "추천", free: "무료", alwaysOpen: "상시 판매", vipRank: "T.G.W 카드 랭크", vipRankValue: "랭크 {rank} 이상", vipRankShort: "T.G.W 랭크 {rank}", playerRank: "플레이어 랭크", playerRankValue: "랭크 {rank} 이상", shopId: "패키지 ID", contents: "구성품", noContents: "데이터에 이 패키지의 구성품이 없습니다.", bonus: "보너스", description: "설명", storePrices: "지역별 가격", storePricesNote: "게임 데이터에 기록된 지역별 스토어 정가이며 환율 환산은 하지 않습니다.", notFoundTitle: "패키지를 찾을 수 없습니다", notFoundDescription: "이 패키지를 판매하는 서버가 없습니다. 상점으로 돌아가 판매 중인 패키지를 확인해 보세요.", payments: { money: "현금", star: "스타", paidStar: "유료 스타", ad: "광고 시청", other: "기타" }, limits: { unlimited: "제한 없음", once: "횟수 한정", daily: "매일", weekly: "매주", monthly: "매월" }, limitPer: { once: "{count}회 한정", daily: "1일 {count}회", weekly: "1주 {count}회", monthly: "1개월 {count}회" }, columns: { name: "패키지", price: "가격", limit: "제한", status: "상태" }, currencies: { usd: "미국 달러", twd: "신타이완 달러", hkd: "홍콩 달러", krw: "원", jpy: "엔" } },
+  missions: { tabs: "미션 분류", limited: "기간 한정", empty: "이 분류에는 미션이 없습니다.", noLimited: "이 서버에는 기간 한정 미션이 없습니다.", categories: { daily: "데일리", normal: "일반", titles: "칭호", songs: "곡 해제", home: "홈 해제", other: "기타" }, columns: { mission: "미션", goal: "목표", rewards: "보상" } },
+  tgwCard: { empty: "이 서버에는 T.G.W 카드 데이터가 없습니다.", ranks: "랭크 일람", rankCount: "총 {count}랭크", rank: "RANK", rankTitle: "T.G.W 카드 랭크 {rank}", pointValue: "{count} pt", points: "포인트", dailyRewards: "데일리 보상", rankUpRewards: "랭크 업 보상", benefits: "혜택", unlocked: "해제", bonusFallback: "혜택 {type}", percentUp: "{value}% UP", percentDown: "{value}% 단축", units: { hours: "시간", minutes: "분" }, colors: { normal: "노멀", gold: "골드", platinum: "플래티넘", black: "블랙" }, dailyPoints: "로그인 포인트", consecutiveDays: "연속 로그인", days: "{count}일째", daysOrMore: "{count}일째 이후", dailyPointsNote: "매일 로그인하면 받는 포인트로, 연속 로그인 일수에 따라 늘어납니다." },
+  realLives: { empty: "이 서버에는 예정된 리얼 라이브가 없습니다.", ready: "로비 개방 중", readyAt: "로비 개방", startAt: "시작", endAt: "종료" },
   // ── pack M ──
   help: {},
   // ── pack F ──

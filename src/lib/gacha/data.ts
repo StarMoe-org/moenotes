@@ -31,6 +31,8 @@ export interface RawGacha {
   gimmickGroupId?: number;
   /** View label id (0 = none); the label lives in MasterGachaViewLabel. */
   viewLabelId?: number;
+  /** The gacha's own ticket (MasterItem id), 0 when none. */
+  gachaTicketItemId?: number;
 }
 
 export interface RawGachaBonus {
@@ -94,6 +96,16 @@ export interface RawGachaProduct {
   ensuredRarity: number;
   /** MasterText key of the option's own name, e.g. `gacha_rates_label_draw_one_paid` → "Pull 1 Time (Paid)". */
   ratesLabelTextId?: string;
+  /** What a draw costs: a MasterItem `_type` (12 stars, 13 paid stars, 2 tickets, 15 ads, 23 pass draws, 24 T.G.W bonus draws). */
+  itemType?: number;
+  price?: number;
+  /** Price of the first purchase: 0 when it is not discounted, -1 when the first purchase is free. */
+  firstTimePrice?: number;
+  isEnsuredNew?: boolean;
+  resetType?: number;
+  limitConsumeCount?: number;
+  gachaPoint?: number;
+  monthlyPassIds?: number[];
 }
 
 export interface RawGachaLot {
@@ -179,6 +191,8 @@ function normalizeStepUp(stepUpId: number | undefined, chains: Map<number, RawGa
 }
 // Rate-up prizes; ordinary entries use pickUpType 1.
 const PICKUP_RATE_UP = 2;
+// The shared reset enum (MasterShop, MasterExchangeProduct, MasterGachaProduct): 1 never; 2/3/4 daily/weekly/monthly.
+const LIMIT_RESETS: Partial<Record<number, GachaDrawOption["limitReset"]>> = { 2: "daily", 3: "weekly", 4: "monthly" };
 
 export type GachaPoolKind = "member" | "support" | "item";
 
@@ -223,6 +237,56 @@ export interface GachaPickupCharacter {
   name: string;
 }
 
+/**
+ * What a gacha is drawn with, from its draw options' currencies (MasterGachaProduct `_itemType`) and its own ticket:
+ * tickets first, then ad draws, T.G.W bonus draws, stars, and finally draws only a pass gives.
+ */
+export type GachaCategory = "stars" | "ticket" | "ad" | "pass" | "bonus" | "other";
+
+// MasterItem `_type` of a draw option's currency.
+const ITEM_TYPE_TICKET = 2;
+const ITEM_TYPE_STAR = 12;
+const ITEM_TYPE_PAID_STAR = 13;
+const ITEM_TYPE_AD = 15;
+const ITEM_TYPE_PASS = 23;
+const ITEM_TYPE_BONUS = 24;
+
+export function gachaCategory(itemTypes: readonly number[], hasTicket: boolean, passLinked = false): GachaCategory {
+  const types = new Set(itemTypes);
+  if (types.has(ITEM_TYPE_TICKET) || hasTicket) return "ticket";
+  if (types.has(ITEM_TYPE_AD)) return "ad";
+  if (types.has(ITEM_TYPE_BONUS)) return "bonus";
+  if (types.has(ITEM_TYPE_STAR) || types.has(ITEM_TYPE_PAID_STAR)) return "stars";
+  if (types.has(ITEM_TYPE_PASS) || passLinked) return "pass";
+  return "other";
+}
+
+/** One draw option (productId1–4) as the gacha screen offers it. */
+export interface GachaDrawOption {
+  slot: number;
+  /** The game's name of the option, without its quotes; "" when it has none. */
+  label: string;
+  drawCount: number;
+  /** The currency's MasterItem `_type` (see GachaCategory). */
+  itemType: number;
+  /** The currency item (name and icon path); null when unknown. */
+  currency: { id: number; name: string; imagePath: string } | null;
+  price: number;
+  /** A discounted first purchase (0 = the first one is free); null when the first costs the same. */
+  firstTimePrice: number | null;
+  /** Guaranteed draws of at least `ensuredRarity` (both 0 when the option guarantees nothing). */
+  ensuredCount: number;
+  ensuredRarity: number;
+  ensuredNew: boolean;
+  /** 0 = no limit. */
+  limitCount: number;
+  /** "" = the limit never resets (or there is none); else its period (the shared reset enum). */
+  limitReset: "" | "daily" | "weekly" | "monthly";
+  gachaPoint: number;
+  /** Monthly passes the option comes with. */
+  monthlyPassIds: number[];
+}
+
 /** List/home summary. Detail pages receive {@link GachaDetailViewModel}. */
 export interface GachaViewModel {
   id: number;
@@ -238,6 +302,7 @@ export interface GachaViewModel {
   pickupCharacters: GachaPickupCharacter[];
   /** Bands of the rate-up cards, used by the band filter. */
   bandIds: number[];
+  category: GachaCategory;
   searchText: string;
 }
 
@@ -311,6 +376,8 @@ export interface GachaDetailViewModel extends GachaViewModel {
   gimmicks: GachaGimmickEntry[];
   /** Extra banner label point set on top of the banner (already localized; "" when none). */
   viewLabel: string;
+  /** The draw options in slot order (productId1–4), with their prices and guarantees. */
+  drawOptions: GachaDrawOption[];
 }
 
 const poolKindOrder: Record<GachaPoolKind, number> = { member: 0, support: 1, item: 2 };
@@ -353,6 +420,20 @@ function drawEntriesForLot(lot: RawGachaLot, prizes: RawGachaPrize[], kind: Gach
     weight: prize.pickUpType === PICKUP_RATE_UP ? pickupWeight : restWeight,
     pickup: prize.pickUpType === PICKUP_RATE_UP,
   }));
+}
+
+/** The simulator's plan for one purchase of a draw option: its draws, the last `ensuredCount` of them guaranteed. */
+export function drawOptionPlan(option: Pick<GachaDrawOption, "drawCount" | "ensuredCount" | "ensuredRarity">): GachaDrawPlan {
+  const count = Math.max(1, option.drawCount);
+  return { count, guaranteeCount: option.ensuredRarity > 0 ? Math.min(option.ensuredCount, count) : 0, guaranteeRarity: option.ensuredCount > 0 ? option.ensuredRarity : 0 };
+}
+
+/**
+ * What the `purchase`-th purchase (1-based) of an option costs: its first-time price on the first one when the option
+ * discounts it, else its price.
+ */
+export function drawOptionCost(option: Pick<GachaDrawOption, "price" | "firstTimePrice">, purchase: number): number {
+  return purchase === 1 && option.firstTimePrice !== null ? option.firstTimePrice : option.price;
 }
 
 function drawPlan(products: RawGachaProduct[], count: number): GachaDrawPlan {
@@ -401,6 +482,9 @@ export function normalizeGachas(
   const gimmicksByGroup = groupBy(detail.gimmicks ?? [], (gimmick) => gimmick.groupId);
   const viewLabelMap = new Map((detail.viewLabels ?? []).map((label) => [label.id, label]));
   const textOf = (id: string | undefined) => (id ? localizeMasterText(textMap.get(id), locale) : "");
+  // Currencies by MasterItem `_type`: the lowest id of each type (stars 1, paid stars 2, the ad item 37, …).
+  const currencyByType = new Map<number, ItemViewModel>();
+  for (const item of [...items].sort((a, b) => a.id - b.id)) if (!currencyByType.has(item.type)) currencyByType.set(item.type, item);
 
   return [...gachas]
     .sort((a, b) => b.priority - a.priority || a.id - b.id)
@@ -471,6 +555,34 @@ export function normalizeGachas(
       const bandIds = [...new Set([...pickupMembers, ...pickupSupports].map((card) => card.bandId).filter(Boolean))].sort((a, b) => a - b);
 
       const gachaProducts = [gacha.productId1, gacha.productId2, gacha.productId3, gacha.productId4].flatMap((id) => (id ? productMap.get(id) ?? [] : []));
+      const ticket = gacha.gachaTicketItemId ? itemMap.get(gacha.gachaTicketItemId) : undefined;
+      const drawOptions = ([gacha.productId1, gacha.productId2, gacha.productId3, gacha.productId4] as const).flatMap((productId, index): GachaDrawOption[] => {
+        const product = productId ? productMap.get(productId) : undefined;
+        if (!product) return [];
+        const itemType = product.itemType ?? 0;
+        // A ticket option is paid in the gacha's own ticket; the other currencies are one item each.
+        const currencyItem = itemType === ITEM_TYPE_TICKET ? ticket : currencyByType.get(itemType);
+        const first = product.firstTimePrice ?? 0;
+        const limitCount = Math.max(0, product.limitConsumeCount ?? 0);
+        return [{
+          slot: index + 1,
+          label: optionLabel(textOf(product.ratesLabelTextId)),
+          drawCount: Math.max(0, product.drawCount),
+          itemType,
+          currency: currencyItem ? { id: currencyItem.id, name: currencyItem.name, imagePath: currencyItem.imagePath } : null,
+          price: Math.max(0, product.price ?? 0),
+          firstTimePrice: first < 0 ? 0 : first > 0 ? first : null,
+          ensuredCount: product.ensuredRarity > 0 ? Math.max(0, product.ensuredCount) : 0,
+          ensuredRarity: product.ensuredCount > 0 ? Math.max(0, product.ensuredRarity) : 0,
+          ensuredNew: Boolean(product.isEnsuredNew),
+          limitCount,
+          limitReset: limitCount > 0 ? LIMIT_RESETS[product.resetType ?? 1] ?? "" : "",
+          gachaPoint: Math.max(0, product.gachaPoint ?? 0),
+          monthlyPassIds: product.monthlyPassIds ?? [],
+        }];
+      });
+      // Most star gachas name a ticket too (a ticket can stand in for a draw); it decides only when no option is priced.
+      const category = gachaCategory(drawOptions.map((option) => option.itemType), !drawOptions.length && Boolean(ticket), drawOptions.some((option) => option.monthlyPassIds.length > 0));
       const name = localizeMasterText(textMap.get(gacha.nameTextId), locale) || `#${gacha.id}`;
       const description = localizeMasterText(textMap.get(gacha.descriptionTextId), locale);
       const pickupText = [...pickupMembers, ...pickupSupports].map((card) => card.title).join(" ");
@@ -489,6 +601,7 @@ export function normalizeGachas(
         itemCount: gachaItems.length,
         pickupCharacters: [...pickupCharacters.values()],
         bandIds,
+        category,
         searchText: [name, description, pickupText, ...[...pickupCharacters.values()].map((character) => character.name), gacha.id].join(" ").toLocaleLowerCase(),
         pools: [...pools.values()].sort((a, b) => poolKindOrder[a.kind] - poolKindOrder[b.kind] || b.rarity - a.rarity),
         memberCards,
@@ -514,11 +627,12 @@ export function normalizeGachas(
           ssrWeight: gimmick.ssrWeight,
         })),
         viewLabel: textOf(viewLabelMap.get(gacha.viewLabelId ?? 0)?.labelTextId ?? viewLabelMap.get(gacha.viewLabelId ?? 0)?.nameTextId),
+        drawOptions,
       };
     });
 }
 
 export function toGachaSummary(gacha: GachaDetailViewModel): GachaViewModel {
-  const { id, name, description, bannerPath, startAt, endAt, isLimited, memberCount, supportCount, itemCount, pickupCharacters, bandIds, searchText } = gacha;
-  return { id, name, description, bannerPath, startAt, endAt, isLimited, memberCount, supportCount, itemCount, pickupCharacters, bandIds, searchText };
+  const { id, name, description, bannerPath, startAt, endAt, isLimited, memberCount, supportCount, itemCount, pickupCharacters, bandIds, category, searchText } = gacha;
+  return { id, name, description, bannerPath, startAt, endAt, isLimited, memberCount, supportCount, itemCount, pickupCharacters, bandIds, category, searchText };
 }

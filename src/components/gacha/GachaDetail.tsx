@@ -10,6 +10,7 @@ import { useAssetUrl, useContentServer } from "@/lib/servers/use-content-server"
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import MemberCardItem from "@/components/cards/MemberCardItem";
+import GachaDrawOptions from "@/components/gacha/GachaDrawOptions";
 import GachaSimulator from "@/components/gacha/GachaSimulator";
 import LimitedChip from "@/components/gacha/LimitedChip";
 import BannerImage from "@/components/shared/BannerImage";
@@ -108,12 +109,15 @@ function GachaDetailView({ locale, gacha, schedules }: { locale: AppLocale; gach
             <div className="bg-[var(--mn-paper)] p-6 sm:p-8">
               <div className="divide-y divide-dashed divide-[var(--mn-border)]/60">
                 <DetailRow label={t(locale, "gacha.period")} value={<span className="tabular-nums">{schedule}</span>} />
+                <DetailRow label={t(locale, "gacha.category")} value={t(locale, `gacha.categories.${gacha.category}`)} />
                 <DetailRow label={t(locale, "gacha.gachaId")} value={`#${gacha.id}`} />
               </div>
               <TimesNote locale={locale} value={gacha.startAt || gacha.endAt} timeZone={timeZone} className="mt-3 text-xs text-[var(--mn-text-muted)]" />
               {schedules}
             </div>
           </div>
+
+          {gacha.drawOptions.length > 0 && <GachaDrawOptions locale={locale} options={gacha.drawOptions} title={t(locale, "gacha.options.title")} />}
 
           <GachaSimulator locale={locale} gacha={gacha} />
 

@@ -1,16 +1,18 @@
 ---
-// Placeholder reserved for the haneoka feature-parity work (.narrafork/plans/plan-parallel-weaving-hellman.md).
-import PageHeader from "@/components/route/PageHeader.astro";
+import MissionsExplorer from "@/components/missions/MissionsExplorer";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
+import { getBuildLimitedMissionGroups, getBuildRegularMissions } from "@/lib/masterdata/build-missions";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
 
 interface Props {
   locale: AppLocale;
 }
 
 const { locale } = Astro.props;
+const [categories, limitedGroups, servers] = await Promise.all([getBuildRegularMissions(locale), getBuildLimitedMissionGroups(locale), getBuildServers()]);
 ---
 
 <PageLayout locale={locale} titleKey="seo.missions.title" descriptionKey="seo.missions.description">
-  <PageHeader locale={locale} titleKey="seo.missions.title" descriptionKey="seo.missions.description" />
+  <MissionsExplorer client:load servers={servers} locale={locale} categories={categories} limitedGroups={limitedGroups} />
 </PageLayout>
