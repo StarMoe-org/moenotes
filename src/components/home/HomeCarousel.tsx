@@ -10,6 +10,7 @@ import BannerImage from "@/components/shared/BannerImage";
 import ScheduleBadge from "@/components/shared/ScheduleBadge";
 import { getImageAssetUrl } from "@/lib/assets/url";
 import type { HomeLink, HomeSlide } from "@/lib/home/data";
+import { entityLinkPath } from "@/lib/route/entity-link";
 import { getRoutePathById } from "@/lib/route/registry";
 import { formatScheduleRange, scheduleStatus } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
@@ -24,8 +25,7 @@ interface Props {
 const INTERVAL_MS = 6_000;
 
 export function homeLinkHref(link: HomeLink, locale: AppLocale): string {
-  const base = getRoutePathById(link.routeId);
-  return localizePath(link.detail === undefined ? base : `${base}/${link.detail}`, locale);
+  return localizePath(entityLinkPath(link), locale);
 }
 
 /** Read after mount: the server cannot know the preference, and the first client render must match it. */
@@ -118,7 +118,7 @@ function Carousel({ locale, slides }: { locale: AppLocale; slides: HomeSlide[] }
               href={href}
               className="mn-focus mn-stamp-press inline-flex w-fit items-center gap-2 rounded-full border border-[var(--mn-border)] bg-[var(--mn-accent-deep)] px-5 py-2.5 text-sm font-bold text-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]"
             >
-              {t(locale, active.link?.routeId === "gacha" ? "home.viewGacha" : active.link?.routeId === "music" ? "home.viewMusic" : "home.viewDetail")}
+              {t(locale, active.link?.routeId === "gacha" ? "home.viewGacha" : active.link?.routeId === "main-story" ? "home.viewStory" : active.link?.routeId === "exchange" ? "home.viewExchange" : "home.viewDetail")}
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></svg>
             </a>
           )}

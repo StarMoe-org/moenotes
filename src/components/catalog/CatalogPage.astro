@@ -1,16 +1,61 @@
 ---
-// Placeholder reserved for the haneoka feature-parity work (.narrafork/plans/plan-parallel-weaving-hellman.md).
 import PageHeader from "@/components/route/PageHeader.astro";
+import RouteGlyph from "@/components/shared/RouteGlyph";
+import SectionHeading from "@/components/shared/SectionHeading";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
+import { t } from "@/i18n";
+import { localizePath } from "@/i18n/routing";
+import { getBuildCatalogCounts } from "@/lib/masterdata/build-catalog";
+import { getNavChildren, getNavigationGroups } from "@/lib/route/registry";
 
 interface Props {
   locale: AppLocale;
 }
 
 const { locale } = Astro.props;
+const counts = await getBuildCatalogCounts(locale);
+const number = new Intl.NumberFormat(locale);
+// Every navigation group with its pages (the catalog itself left out), as the sidebar lists them.
+const groups = getNavigationGroups()
+  .map((group) => ({ group, children: getNavChildren(group).filter((route) => route.id !== "catalog") }))
+  .filter((entry) => entry.children.length > 0);
 ---
 
 <PageLayout locale={locale} titleKey="seo.catalog.title" descriptionKey="seo.catalog.description">
   <PageHeader locale={locale} titleKey="seo.catalog.title" descriptionKey="seo.catalog.description" />
+  <div class="space-y-10" data-density-section>
+    {groups.map(({ group, children }) => (
+      <section aria-labelledby={`catalog-${group.id}`}>
+        <SectionHeading id={`catalog-${group.id}`} title={t(locale, group.labelKey)} />
+        <ul class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
+          {children.map((route) => {
+            const count = counts[route.id];
+            const description = route.seo?.descriptionKey ? t(locale, route.seo.descriptionKey) : "";
+            return (
+              <li class="min-w-0">
+                <a
+                  href={localizePath(route.path, locale)}
+                  class="mn-list-card mn-list-card-row group flex h-full min-w-0 items-start gap-3 border border-[var(--mn-glass-border)] bg-[var(--mn-paper)] p-3"
+                >
+                  <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]">
+                    <RouteGlyph icon={route.nav && route.nav.icon ? route.nav.icon : "sparkles"} routeId={route.id} className="h-5 w-5" />
+                  </span>
+                  <span class="min-w-0 flex-1">
+                    <span class="flex items-baseline justify-between gap-2">
+                      <span class="truncate text-sm font-black text-[var(--mn-text)] group-hover:text-[var(--mn-accent-deep)]">{t(locale, route.labelKey)}</span>
+                      {count !== undefined && (
+                        <span class="shrink-0 font-mono text-xs font-bold tabular-nums text-[var(--mn-text-muted)]">{t(locale, "catalog.count", { count: number.format(count) })}</span>
+                      )}
+                    </span>
+                    {description && <span class="mt-1 line-clamp-2 block text-xs leading-5 text-[var(--mn-text-muted)]">{description}</span>}
+                  </span>
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+    ))}
+  </div>
 </PageLayout>

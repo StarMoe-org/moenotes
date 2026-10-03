@@ -38,6 +38,8 @@ const listeners = new Set<AudioPlayerListener>();
 let audio: HTMLAudioElement | null = null;
 /** Shuffle order of queue indices, regenerated when the queue or mode changes. */
 let shuffleOrder: number[] = [];
+/** Position to start a restored track from on its first play (restore()). */
+let pendingSeek = 0;
 
 function setState(patch: Partial<AudioPlayerState>): void {
   state = { ...state, ...patch };
@@ -73,10 +75,13 @@ function shuffled(length: number, first: number): number[] {
 
 function load(track: AudioTrack, queueIndex: number): void {
   const media = element();
-  setState({ track, queueIndex, status: media ? "loading" : "idle", currentTime: 0, duration: 0 });
+  // A restored track resumes where it was left (restore()); anything else starts from the top.
+  const from = pendingSeek;
+  pendingSeek = 0;
+  setState({ track, queueIndex, status: media ? "loading" : "idle", currentTime: from, duration: 0 });
   if (!media) return;
   media.src = track.src;
-  media.currentTime = 0;
+  media.currentTime = from;
   media.play().catch((error: unknown) => {
     // A newer play()/pause() interrupting this one is not a failure.
     if (error instanceof DOMException && error.name === "AbortError") return;
@@ -217,6 +222,37 @@ export function resetAudioPlayer(): void {
   if (audio) audio.pause();
   audio = null;
   shuffleOrder = [];
+  pendingSeek = 0;
   state = initialState;
   for (const listener of listeners) listener(state);
 }
+
+/** Drops a queue entry; removing the current track stops it (the rest of the queue stays). */
+export function removeFromQueue(index: number): void {
+  if (index < 0 || index >= state.queue.length) return;
+  const queue = state.queue.filter((_, position) => position !== index);
+  shuffleOrder = shuffleOrder.filter((position) => position !== index).map((position) => (position > index ? position - 1 : position));
+  if (index === state.queueIndex) {
+    setState({ queue });
+    stop();
+    return;
+  }
+  setState({ queue, queueIndex: state.queueIndex > index ? state.queueIndex - 1 : state.queueIndex });
+}
+
+/**
+ * Lines up a saved queue, track and position without playing (after a page load): play() then resumes from
+ * `currentTime`. Does nothing while something is already loaded.
+ */
+export function restore(saved: { queue: readonly AudioTrack[]; queueIndex: number; currentTime?: number; duration?: number; mode?: PlaybackMode; volume?: number }): void {
+  if (state.track) return;
+  const queue = [...saved.queue];
+  const queueIndex = saved.queueIndex >= 0 && saved.queueIndex < queue.length ? saved.queueIndex : -1;
+  const track = queueIndex >= 0 ? queue[queueIndex]! : null;
+  const mode = saved.mode ?? state.mode;
+  shuffleOrder = shuffled(queue.length, queueIndex);
+  if (saved.volume !== undefined) setVolume(saved.volume);
+  setState({ queue, queueIndex, track, mode, status: "idle", currentTime: track ? saved.currentTime ?? 0 : 0, duration: track ? saved.duration ?? 0 : 0 });
+  pendingSeek = track ? saved.currentTime ?? 0 : 0;
+}
+

@@ -438,3 +438,20 @@ a.mn-nav-layer:active { transform: translate3d(1px, 1px, 0); }
   }
   .mn-desktop-sidebar[data-open] { transform: none; }
 }
+
+/* Interface density (settings): compact tightens list grids, card padding and the gaps between page sections.
+   Only these few global spacings change; layouts and type stay as designed. */
+html[data-density="compact"] {
+  --mn-density-grid-gap: 0.5rem;
+  --mn-density-card-pad: 0.5rem;
+  --mn-density-section-gap: 1.5rem;
+}
+html[data-density="compact"] .grid:has(> .mn-list-card, > li > .mn-list-card, > div > .mn-list-card, > li.mn-list-card) { gap: var(--mn-density-grid-gap); }
+html[data-density="compact"] .mn-list-card :is(.p-3, .p-4, .sm\:p-4) { padding: var(--mn-density-card-pad); }
+html[data-density="compact"] .mn-list-card.p-3, html[data-density="compact"] .mn-list-card-row.p-3 { padding: var(--mn-density-card-pad); }
+html[data-density="compact"] [data-density-section] { gap: var(--mn-density-section-gap); }
+
+/* The mini audio player (src/components/shell/AudioDock.tsx) sits at the bottom: keep content and the
+   scroll-to-top button clear of it. */
+html[data-audio-dock="open"] body { padding-bottom: 5.5rem; }
+html[data-audio-dock="open"] button.fixed.bottom-8.right-8 { bottom: 6rem; }

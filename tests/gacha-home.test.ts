@@ -3,7 +3,7 @@ import type { CardViewModel } from "../src/lib/cards/data";
 import { normalizeDegrees } from "../src/lib/degrees/data";
 import { normalizeGachas, optionLabel, toGachaSummary, type RawGacha } from "../src/lib/gacha/data";
 import { drawGacha } from "../src/lib/gacha/simulate";
-import { buildHomeData, type RawHomeBanner } from "../src/lib/home/data";
+import { birthdayCardFor, birthdayGachaFor, buildHomeData, currentHomeEvent, homeBirthdays, homeEvents, type RawHomeBanner } from "../src/lib/home/data";
 import { normalizeRewardEntries, type RewardsMasterData, type RewardEntrySummary } from "../src/lib/rewards/data";
 import type { RewardResolver } from "../src/lib/rewards/resources";
 import { compareByStartDesc, parseMasterDate, scheduleStatus } from "../src/lib/schedule";
@@ -228,8 +228,30 @@ describe("home data", () => {
 
   test("carousel keeps live banners, drops shop packs and ended ones, and links to detail pages", () => {
     expect(data.slides.map((slide) => [slide.id, slide.kind, slide.title, slide.link])).toEqual([
-      [4, "seasonPass", "season-pass-1", { routeId: "rewards", detail: "season-pass-1" }],
-      [1, "gacha", "MyGO Pickup", { routeId: "gacha", detail: 1 }],
+      [4, "seasonPass", "season-pass-1", { routeId: "rewards", detailId: "season-pass-1" }],
+      [1, "gacha", "MyGO Pickup", { routeId: "gacha", detailId: 1 }],
+    ]);
+  });
+
+  test("exchange banners (displayType 3 and 11) open the shop, story banners the main story", () => {
+    // TW MasterHomeBanner, 2026-10: contentId 10 is MasterExchange 10; the chapter banner names chapter 6 under contentId 1.
+    const live: RawHomeBanner[] = [
+      { id: 6, imageAsset: "Image/Banner/home_banner_00006", displayType: 3, contentId: 10, displayOrder: 120, startAt: "2026-09-25 15:00:00", endAt: "2026-10-07 23:59:59" },
+      { id: 8, imageAsset: "Story/Banner/Chapter/ui_banner_chapter_6", displayType: 1, contentId: 1, displayOrder: 2, startAt: "2026-09-30 15:00:00", endAt: "2026-10-08 20:59:59" },
+      { id: 11, imageAsset: "Exchange/Banner/Banner_19", displayType: 11, contentId: 10, displayOrder: 10, startAt: "2026-10-04 0:00:00", endAt: "2026-10-06 23:59:59" },
+      { id: 12, imageAsset: "Exchange/Banner/Banner_20", displayType: 11, contentId: 99, displayOrder: 9, startAt: "2026-10-04 0:00:00", endAt: "2026-10-06 23:59:59" },
+    ];
+    const home = buildHomeData(live, [], [], [], [], [], Date.parse("2026-10-01T12:00:00+08:00"), {
+      targets: {
+        exchanges: new Map([[10, { id: 10, title: "Event Shop", link: { routeId: "exchange", detailId: 10 } }]]),
+        chapters: [{ id: 1, banner: "ui_banner_chapter_1", title: "Chapter 1" }, { id: 6, banner: "ui_banner_chapter_6", title: "Chapter 6" }],
+      },
+    });
+    expect(home.slides.map((slide) => [slide.id, slide.kind, slide.title, slide.link])).toEqual([
+      [6, "exchange", "Event Shop", { routeId: "exchange", detailId: 10 }],
+      [11, "exchange", "Event Shop", { routeId: "exchange", detailId: 10 }],
+      [12, "exchange", "", { routeId: "exchange" }],
+      [8, "story", "Chapter 6", { routeId: "main-story" }],
     ]);
   });
 
@@ -238,9 +260,82 @@ describe("home data", () => {
   });
 });
 
+describe("home events and birthdays", () => {
+  const event = (id: number, startAt: string, endAt: string) => ({ id, name: `Event ${id}`, startAt, endAt, displayEndAt: endAt, bannerUrl: "", logoUrl: "", backgroundUrl: "", bandIds: [], characters: [], searchText: "" });
+  const now = Date.parse("2026-10-05T12:00:00+08:00");
+
+  test("keeps unfinished events and features the running one, else the next", () => {
+    const events = homeEvents([event(1, "2026-09-01 0:00:00", "2026-09-30 0:00:00"), event(3, "2026-10-20 15:00:00", "2026-10-28 20:59:59"), event(2, "2026-10-01 15:00:00", "2026-10-09 20:59:59")], now);
+    expect(events.map((entry) => entry.id)).toEqual([2, 3]);
+    expect(currentHomeEvent(events, now)?.id).toBe(2);
+    expect(currentHomeEvent(events, Date.parse("2026-10-15T12:00:00+08:00"))?.id).toBe(3);
+    expect(currentHomeEvent(events, Date.parse("2026-11-15T12:00:00+08:00"))).toBeNull();
+  });
+
+  const bdCard = { ...card(64, 4, 22, 5), rarity: 20, startAt: "2026-10-04 0:00:00" } as unknown as CardViewModel;
+  const characters = [
+    { id: 22, name: "Chara 22", mainColor: "#22CCFF", bandName: "Band 5", birthdayMonth: 10, birthdayDay: 4 },
+    { id: 1, name: "Chara 1", mainColor: "#77BBDD", bandName: "Band 1", birthdayMonth: 11, birthdayDay: 22 },
+  ] as Parameters<typeof homeBirthdays>[0];
+  const gachaList = [
+    { id: 7, name: "Birthday Gacha", bannerPath: "g7", startAt: "2026-10-04 0:00:00", endAt: "2026-10-06 23:59:59" },
+    { id: 8, name: "Rerun", bannerPath: "g8", startAt: "2027-03-01 0:00:00", endAt: "2027-03-06 23:59:59" },
+  ] as Parameters<typeof homeBirthdays>[2];
+  const birthdays = homeBirthdays(characters, [bdCard, card(65, 4, 22, 5)], gachaList, [{ id: 7, pickupMemberIds: [64] }, { id: 8, pickupMemberIds: [64] }]);
+
+  test("collects every character's BD cards and the gacha picking them up", () => {
+    expect(birthdays.map((entry) => [entry.characterId, entry.cards.map((item) => item.id), entry.gachas.map((item) => item.id)])).toEqual([[22, [64], [7, 8]], [1, [], []]]);
+  });
+
+  test("links the card and gacha released within 45 days of the birthday", () => {
+    const kanon = birthdays[0]!;
+    const birthday2026 = Date.parse("2026-10-04T00:00:00+08:00");
+    expect(birthdayCardFor(kanon, birthday2026)?.id).toBe(64);
+    expect(birthdayGachaFor(kanon, birthday2026, now)?.id).toBe(7);
+    const birthday2027 = Date.parse("2027-10-04T00:00:00+08:00");
+    expect(birthdayCardFor(kanon, birthday2027)).toBeNull();
+    expect(birthdayGachaFor(kanon, birthday2027, now)).toBeNull();
+  });
+});
+
 describe("compact counts", () => {
   test("badge counts shorten to K and M", async () => {
     const { formatCompactCount } = await import("../src/lib/format/compact-count");
     expect([50, 999, 1_000, 1_500, 40_000, 100_000, 999_960, 2_500_000].map(formatCompactCount)).toEqual(["50", "999", "1K", "1.5K", "40K", "100K", "1M", "2.5M"]);
+  });
+});
+
+describe("home birthdays in the reader's zone", () => {
+  test("lists the next 30 days from today, wrapping the year", async () => {
+    const { upcomingBirthdays } = await import("../src/lib/home/data");
+    const birthday = (characterId: number, month: number, day: number) => ({ characterId, name: "", color: "", bandName: "", month, day, cards: [], gachas: [] });
+    const list = [birthday(1, 1, 2), birthday(2, 12, 25), birthday(3, 6, 1), birthday(4, 12, 20)];
+    // 2026-12-20 23:30 in Shanghai is still the 20th there but already the 21st in Tokyo.
+    const now = Date.parse("2026-12-20T23:30:00+08:00");
+    expect(upcomingBirthdays(list, now, "Asia/Shanghai").map((entry) => [entry.birthday.characterId, entry.date, entry.daysLeft])).toEqual([
+      [4, "2026-12-20", 0], [2, "2026-12-25", 5], [1, "2027-01-02", 13],
+    ]);
+    expect(upcomingBirthdays(list, now, "Asia/Tokyo").map((entry) => entry.birthday.characterId)).toEqual([2, 1]);
+    expect(upcomingBirthdays(list, now, "Asia/Shanghai")[0]!.at).toBe(Date.parse("2026-12-20T00:00:00+08:00"));
+  });
+});
+
+describe("home layout", () => {
+  test("stored layouts are repaired and new modules keep their default place", async () => {
+    const { HOME_MODULES, normalizeHomeLayout, moveHomeModule, toggleHomeModule, homeLayoutCss, isDefaultHomeLayout, defaultHomeLayout } = await import("../src/lib/home/layout");
+    expect(normalizeHomeLayout(null)).toEqual(defaultHomeLayout());
+    const repaired = normalizeHomeLayout({ order: ["cards", "now", "bogus", "now"], hidden: ["music", "x"] });
+    expect(repaired.order).toHaveLength(HOME_MODULES.length);
+    expect(repaired.order).toEqual(["cards", "shortcuts", "now", "event", "birthdays", "rewards", "music"]);
+    expect(repaired.order.indexOf("event")).toBe(repaired.order.indexOf("now") + 1);
+    expect(repaired.hidden).toEqual(["music"]);
+    const moved = moveHomeModule(defaultHomeLayout(), "event", -1);
+    expect(moved.order.slice(0, 2)).toEqual(["event", "now"]);
+    expect(moveHomeModule(defaultHomeLayout(), "now", -1)).toEqual(defaultHomeLayout());
+    const hidden = toggleHomeModule(defaultHomeLayout(), "rewards");
+    expect(hidden.hidden).toEqual(["rewards"]);
+    expect(isDefaultHomeLayout(hidden)).toBe(false);
+    expect(homeLayoutCss(hidden)).toContain('[data-home-module="rewards"]{order:3;display:none!important}');
+    expect(isDefaultHomeLayout(toggleHomeModule(hidden, "rewards"))).toBe(true);
   });
 });

@@ -7,12 +7,14 @@ import KeyboardShortcutsHelp from "@/components/shell/KeyboardShortcutsHelp";
 import OverlayHost from "@/components/shell/OverlayHost";
 import ScrollRestorer from "@/components/shell/ScrollRestorer.astro";
 import ScrollToTop from "@/components/shared/ScrollToTop";
+import AudioDock from "@/components/shell/AudioDock";
 import SettingsDrawer from "@/components/shell/SettingsDrawer";
 import Sidebar from "@/components/shell/Sidebar";
 import FilterDrawerHost from "@/components/shell/filter-drawer/FilterDrawerHost";
 import Footer from "@/components/shell/Footer.astro";
 import type { AppLocale } from "@/config/locales";
 import { buildBreadcrumbs } from "@/lib/route/breadcrumbs";
+import { getBuildThemeBands } from "@/lib/masterdata/build-settings";
 import type { BreadcrumbDetail } from "@/types/route";
 
 interface Props {
@@ -25,6 +27,8 @@ const { locale, pathname, breadcrumbDetail } = Astro.props;
 const crumbs = buildBreadcrumbs(pathname, locale, breadcrumbDetail);
 const hasCrumbs = crumbs.length > 1;
 const activePath = breadcrumbDetail?.ancestors?.at(-1)?.path;
+// Band colors for the settings' theme color choice (memoized per locale, so every page shares one lookup).
+const themeBands = await getBuildThemeBands(locale);
 ---
 
 <AssetCacheBootstrap />
@@ -39,8 +43,9 @@ const activePath = breadcrumbDetail?.ancestors?.at(-1)?.path;
 </main>
 <Footer locale={locale} />
 <CommandPalette client:idle locale={locale} />
-<SettingsDrawer client:idle locale={locale} pathname={pathname} />
+<SettingsDrawer client:idle locale={locale} pathname={pathname} bands={themeBands} />
 <KeyboardShortcutsHelp client:idle locale={locale} />
 <ScrollRestorer />
 <OverlayHost client:load locale={locale} />
 <ScrollToTop client:idle />
+<AudioDock client:idle locale={locale} />

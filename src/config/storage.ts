@@ -10,4 +10,9 @@ export const storageKeys = {
   chartLiveSettings: "moenotes:chart-live-settings",
   storyPlayerVolumes: "moenotes:story-player-volumes",
   newsSeen: "moenotes:news-seen",
+  homeLayout: "moenotes:home-layout:v1",
+  accentPalette: "moenotes:accent-palette",
+  audioDock: "moenotes:audio-dock:v1",
+  /** Shared with the song title preference (src/lib/music/title-preference.ts): "1" / "0". */
+  forceJapaneseTitles: "moenotes:force-ja-titles",
 } as const;
