@@ -39,6 +39,7 @@ import type { DeckCardLookup } from "@/lib/game-api/music-ranking";
 import { buildSupportCardGrowth, type RawSupportCardRank, type SupportCardGrowth } from "@/lib/support-cards/growth";
 import { getRoutePathById } from "@/lib/route/registry";
 import {
+  costumeCharacterId,
   normalizeCharacterCostumes,
   normalizeCharacters,
   normalizeCharacterVoices,
@@ -372,8 +373,8 @@ function characterProgressionOn(server: GameServer, locale: AppLocale): Promise<
       const charId = char.id;
 
       const costumes = normalizeCharacterCostumes(
-        costumeTable._allData.filter((entry) => entry.characterId === charId),
-        costumeGroupTable._allData.filter((entry) => entry.characterId === charId),
+        costumeTable._allData.filter((entry) => costumeCharacterId(entry) === charId),
+        costumeGroupTable._allData.filter((entry) => costumeCharacterId(entry) === charId),
         textTable._allData,
         locale,
       );

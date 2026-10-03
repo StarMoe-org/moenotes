@@ -30,9 +30,9 @@ test("json requests pass through as published", () => {
   expect(getAssetUrl({ type: "json", path: " " })).toBe("");
 });
 
-test("character voices resolve by their cue sheet", () => {
+test("character voices resolve by their exact cue inside the cue sheet", () => {
   expect(getVoiceAudioUrl(42, "live_voice_kasumi_001", "live_voice_kasumi", "ko-KR"))
-    .toBe(`${api}/ko/Cri/Sound/live_voice_kasumi/live_voice_kasumi.m4a`);
+    .toBe(`${api}/ko/Cri/Sound/live_voice_kasumi/live_voice_kasumi_001.m4a`);
 });
 
 test("costume icons follow the image release layout", () => {

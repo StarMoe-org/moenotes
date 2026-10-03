@@ -153,10 +153,16 @@ export interface RawCharacterVoice {
   startAt: string;
 }
 
+/**
+ * MasterCharacterCostume / MasterCharacterCostumeGroup name their keys `_characterID` / `_groupID` (capital `ID`),
+ * unlike most tables; the lower-case spellings are accepted too, so either form reads through `costumeCharacterId`.
+ */
 export interface RawCharacterCostume {
   id: number;
-  characterId: number;
-  groupId: number;
+  characterID?: number;
+  characterId?: number;
+  groupID?: number;
+  groupId?: number;
   costumeType: number;
   costumeId: number;
   isDefault: boolean;
@@ -165,13 +171,24 @@ export interface RawCharacterCostume {
 
 export interface RawCharacterCostumeGroup {
   id: number;
-  characterId: number;
+  characterID?: number;
+  characterId?: number;
   costumeNameTextId: string;
   iconPath: string;
   isInitial: boolean;
   isChangeable: boolean;
   specialConditionMemberCardId: number;
   startAt: string;
+}
+
+/** The character a costume row (or costume group row) belongs to, whichever key spelling the table uses. */
+export function costumeCharacterId(row: { characterID?: number; characterId?: number }): number {
+  return row.characterID ?? row.characterId ?? 0;
+}
+
+/** The costume group a costume row belongs to, whichever key spelling the table uses. */
+export function costumeGroupId(row: { groupID?: number; groupId?: number }): number {
+  return row.groupID ?? row.groupId ?? 0;
 }
 
 export interface CostumeViewModel {
@@ -241,11 +258,12 @@ export function normalizeCharacterCostumes(
   const groupMap = new Map(groups.map((entry) => [entry.id, entry]));
 
   return costumes.map((costume) => {
-    const group = groupMap.get(costume.groupId);
+    const groupId = costumeGroupId(costume);
+    const group = groupMap.get(groupId);
     const name = group ? localizeMasterText(textMap.get(group.costumeNameTextId), locale) || group.costumeNameTextId : `Costume ${costume.id}`;
     return {
       id: costume.id,
-      groupId: costume.groupId,
+      groupId,
       name,
       iconPath: group?.iconPath ?? "",
       isDefault: costume.isDefault,
