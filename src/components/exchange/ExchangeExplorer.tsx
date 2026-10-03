@@ -7,8 +7,10 @@ import ScheduleBadge from "@/components/shared/ScheduleBadge";
 import type { ServerFaceted } from "@/lib/servers/facets";
 import { useAssetUrl, useServerList, useServerOnlyLabel } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
-import type { ExchangeCategoryViewModel, ExchangeProductViewModel, ExchangeViewModel } from "@/lib/exchange/data";
-import { formatMasterDate } from "@/lib/schedule";
+import { localizePath } from "@/i18n/routing";
+import type { ExchangeCategoryViewModel, ExchangeSummaryViewModel } from "@/lib/exchange/data";
+import { exchangePath } from "@/lib/exchange/links";
+import { formatScheduleRange } from "@/lib/schedule";
 import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { useNow } from "@/lib/schedule/use-now";
 
@@ -18,6 +20,7 @@ interface Props {
   servers: GameServer[];
 }
 
+/** The shops by category; each shop's products are on its own page (`/events/exchange/:id`). */
 export default function ExchangeExplorer({ locale, servers, initialCategories }: Props) {
   const { server, pickServer, items: categories } = useServerList(locale, servers, initialCategories);
   const timeZone = useDisplayTimeZone();
@@ -36,19 +39,18 @@ export default function ExchangeExplorer({ locale, servers, initialCategories }:
         ))}
       </nav>
       <div className="mt-5 space-y-10">
-        {active.map((category) => {
-          const note = serverOnly(category);
-          return (
-            <section key={category.id} aria-labelledby={`exchange-category-${category.id}`}>
-              <CategoryHeading category={category} note={note} />
-              <div className="mt-4 space-y-6">
-                {category.exchanges.map((exchange) => (
-                  <ExchangeShop key={exchange.id} exchange={exchange} locale={locale} timeZone={timeZone} now={now} />
-                ))}
-              </div>
-            </section>
-          );
-        })}
+        {active.map((category) => (
+          <section key={category.id} aria-labelledby={`exchange-category-${category.id}`}>
+            <CategoryHeading category={category} note={serverOnly(category)} />
+            <ul className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
+              {category.exchanges.map((exchange) => (
+                <li key={exchange.id} className="min-w-0">
+                  <ExchangeCard exchange={exchange} locale={locale} timeZone={timeZone} now={now} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
         {categories.length === 0 ? (
           <p className="mn-paper p-8 text-center text-sm font-medium text-[var(--mn-text-muted)]">{t(locale, "exchange.pageDescription")}</p>
         ) : null}
@@ -99,90 +101,37 @@ function CategoryHeading({ category, note }: { category: ExchangeCategoryViewMod
   );
 }
 
-function ExchangeShop({ exchange, locale, timeZone, now }: { exchange: ExchangeViewModel; locale: AppLocale; timeZone: string | null; now: number | null }) {
-  const assetUrl = useAssetUrl();
-  const currencyUrl = assetUrl(exchange.paymentResourceImageUrl);
-  const start = formatMasterDate(exchange.startAt, locale, true, timeZone);
-  const end = formatMasterDate(exchange.endAt, locale, true, timeZone);
+/** One shop: banner (or its name on a plain tile), status, currency, product count and window; links to its page. */
+function ExchangeCard({ exchange, locale, timeZone, now }: { exchange: ExchangeSummaryViewModel; locale: AppLocale; timeZone: string | null; now: number | null }) {
+  const currencyUrl = useAssetUrl()(exchange.currency.imageUrl);
+  const [currencyFailed, setCurrencyFailed] = useState(false);
+  const schedule = formatScheduleRange(exchange.startAt, exchange.endAt, locale, timeZone) || t(locale, "exchange.alwaysOpen");
   return (
-    <div className="mn-paper p-4 sm:p-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-        {/* The shop banners are 420×180: shown at their own size, never stretched across the column. */}
-        {exchange.bannerUrl ? (
-          <BannerImage
-            src={exchange.bannerUrl}
-            alt={exchange.name}
-            fallback={exchange.name}
-            className="w-full max-w-[420px] shrink-0 rounded-xl border-[1.5px] border-[var(--mn-border)] sm:w-60"
-          />
-        ) : null}
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <h3 className="min-w-0 text-sm font-black text-[var(--mn-text)] sm:text-base">{exchange.name}</h3>
-            <ScheduleBadge locale={locale} startAt={exchange.startAt} endAt={exchange.endAt} now={now} />
-          </div>
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-medium text-[var(--mn-text-muted)]">
-            {exchange.paymentResourceName ? (
-              <span className="inline-flex items-center gap-1">
-                <span>{t(locale, "exchange.currency")}</span>
-                {currencyUrl ? <img src={currencyUrl} alt="" className="h-4 w-4 object-contain" /> : null}
-                <span className="font-bold text-[var(--mn-text)]">{exchange.paymentResourceName}</span>
-              </span>
-            ) : null}
-            {end ? <span className="tabular-nums">{[start, end].filter(Boolean).join(" – ")}</span> : null}
-          </div>
+    <a
+      href={localizePath(exchangePath(exchange.id), locale)}
+      className="mn-list-card group flex h-full min-w-0 flex-col overflow-hidden border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)]"
+      data-list-item-id={exchange.id}
+      aria-label={t(locale, "exchange.openDetail", { name: exchange.name })}
+    >
+      <div className="relative border-b border-[var(--mn-glass-border)]">
+        <BannerImage src={exchange.bannerUrl} alt="" fallback={exchange.name} />
+        <div className="absolute left-2 top-2 flex max-w-[calc(100%-1rem)] flex-wrap gap-1.5">
+          <ScheduleBadge locale={locale} startAt={exchange.startAt} endAt={exchange.endAt} now={now} />
         </div>
       </div>
-      <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {exchange.products.map((product) => (
-          <ProductCard key={product.id} product={product} currencyUrl={currencyUrl} locale={locale} timeZone={timeZone} />
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function ProductCard({ product, currencyUrl, locale, timeZone }: { product: ExchangeProductViewModel; currencyUrl: string; locale: AppLocale; timeZone: string | null }) {
-  const imageUrl = useAssetUrl()(product.resourceImageUrl);
-  const [imageFailed, setImageFailed] = useState(false);
-  const limitLabel = product.limitCount === 0
-    ? t(locale, "exchange.product.unlimited")
-    : [
-        product.limitResetLabel ? t(locale, `exchange.product.${product.limitResetLabel}`) : "",
-        t(locale, "exchange.product.limit", { count: product.limitCount }),
-      ].filter(Boolean).join(" ");
-  const start = formatMasterDate(product.startAt, locale, false, timeZone);
-  const end = formatMasterDate(product.endAt, locale, false, timeZone);
-  return (
-    <li className="relative flex gap-3 rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-3 shadow-[var(--mn-shadow-stamp)]">
-      {product.isRecommended ? (
-        <span className="absolute -top-2 left-3 rounded-full border border-[var(--mn-accent-deep)]/30 bg-[var(--mn-accent-deep)] px-2 py-0.5 text-[10px] font-bold leading-none text-[var(--mn-paper)]">
-          {t(locale, "exchange.product.recommended")}
-        </span>
-      ) : null}
-      {imageUrl && !imageFailed ? (
-        <img
-          src={imageUrl}
-          alt=""
-          loading="lazy"
-          className="h-16 w-16 shrink-0 rounded-xl border border-[var(--mn-glass-border)] object-contain"
-          onError={() => setImageFailed(true)}
-        />
-      ) : (
-        <div aria-hidden="true" className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border border-[var(--mn-glass-border)] bg-[var(--mn-surface-strong)] text-lg font-black text-[var(--mn-text-muted)]">?</div>
-      )}
-      <div className="min-w-0 flex-1">
-        <p className="line-clamp-2 text-xs font-bold leading-4 text-[var(--mn-text)] sm:text-sm sm:leading-5">
-          {product.resourceName || `#${product.id}`}
-          {product.resourceCount > 1 ? <span className="text-[var(--mn-text-muted)]"> ×{product.resourceCount.toLocaleString(locale)}</span> : null}
-        </p>
-        <p className="mt-1.5 flex items-center gap-1 text-xs font-bold tabular-nums text-[var(--mn-accent-deep)]">
-          {currencyUrl ? <img src={currencyUrl} alt="" className="h-4 w-4 object-contain" /> : null}
-          <span>{product.paymentResourceCount.toLocaleString(locale)}</span>
-        </p>
-        <p className="mt-1 text-[11px] font-medium text-[var(--mn-text-muted)]">{limitLabel}</p>
-        {start || end ? <p className="mt-0.5 text-[11px] tabular-nums text-[var(--mn-text-muted)]">{[start, end].filter(Boolean).join(" – ")}</p> : null}
+      <div className="flex flex-1 flex-col gap-1.5 p-3 sm:p-4">
+        <h3 className="line-clamp-2 text-sm font-black leading-5 text-[var(--mn-text)] transition-colors group-hover:text-[var(--mn-accent-deep)]">{exchange.name}</h3>
+        <p className="truncate text-xs font-medium tabular-nums text-[var(--mn-text-muted)]">{schedule}</p>
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-1 pt-1.5 text-xs font-medium text-[var(--mn-text-muted)]">
+          {exchange.currency.name ? (
+            <span className="inline-flex min-w-0 items-center gap-1">
+              {currencyUrl && !currencyFailed ? <img src={currencyUrl} alt="" loading="lazy" className="h-4 w-4 shrink-0 object-contain" onError={() => setCurrencyFailed(true)} /> : null}
+              <span className="truncate font-bold text-[var(--mn-text)]">{exchange.currency.name}</span>
+            </span>
+          ) : <span />}
+          <span className="shrink-0">{t(locale, "exchange.productCount", { count: exchange.productCount })}</span>
+        </div>
       </div>
-    </li>
+    </a>
   );
 }

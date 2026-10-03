@@ -429,6 +429,25 @@ export const routeRegistry = [
         nav: { order: 25, icon: "calendar" },
         searchable: true,
         keywords: ["exchange", "shop", "trade"],
+        children: [
+          {
+            // One shop: its currency, products, limits and opening window (the list shows the shops only).
+            id: "exchange-detail",
+            kind: "dynamic",
+            path: "/events/exchange/:id",
+            pattern: "/events/exchange/:id",
+            parentId: "exchange",
+            labelKey: "nav.items.exchange",
+            component: "exchange-detail",
+            seo: {
+              titleKey: "seo.exchangeDetail.title",
+              descriptionKey: "seo.exchangeDetail.description",
+            },
+            nav: false,
+            searchable: false,
+            staticParams: async () => (await import("@/lib/route/masterdata-params")).getMasterdataExchangeParams(),
+          },
+        ],
       },
       {
         id: "gacha",

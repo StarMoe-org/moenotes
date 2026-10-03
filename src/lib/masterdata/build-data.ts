@@ -159,12 +159,16 @@ import {
   type RawLiveEventReward,
 } from "@/lib/events/data";
 import {
+  exchangeSearchText,
   normalizeExchanges,
   type ExchangeCategoryViewModel,
+  type ExchangeDetailViewModel,
+  type NormalizedExchanges,
   type RawExchange,
   type RawExchangeCategory,
   type RawExchangeProduct,
 } from "@/lib/exchange/data";
+import { exchangePath } from "@/lib/exchange/links";
 
 /*
  * Build-time view models of the merged catalog (docs/servers.md). Every `…On(server, locale)` selector computes one
@@ -800,18 +804,16 @@ export function getBuildStamps(locale: AppLocale): Promise<ServerFaceted<StampVi
   return mergedList(`stamps:${locale}`, (server) => stampsOn(server, locale), (stamp) => stamp.id);
 }
 
-function exchangesOn(server: GameServer, locale: AppLocale): Promise<ExchangeCategoryViewModel[]> {
+function exchangesOn(server: GameServer, locale: AppLocale): Promise<NormalizedExchanges> {
   return memo(`exchanges:${server}:${locale}`, async () => {
-    const [exchanges, categories, products, items, cards, supportCards, music, stamps, degrees, resolve, textTable] = await Promise.all([
+    const [exchanges, categories, products, items, events, gachas, resolve, textTable] = await Promise.all([
       table<RawExchange>("MasterExchange.json", server),
       table<RawExchangeCategory>("MasterExchangeCategory.json", server),
       table<RawExchangeProduct>("MasterExchangeProduct.json", server),
       itemsOn(server, locale),
-      cardsOn(server, locale),
-      supportCardsOn(server, locale),
-      musicOn(server, locale),
-      stampsOn(server, locale),
-      degreesOn(server, locale),
+      // Only names and the event item: the event and gacha lists are built for their own pages anyway.
+      eventDetailsOn(server, locale),
+      gachasOn(server, locale),
       rewardResolverOn(server, locale),
       texts(server),
     ]);
@@ -820,19 +822,26 @@ function exchangesOn(server: GameServer, locale: AppLocale): Promise<ExchangeCat
       categories: categories._allData,
       products: products._allData,
       items,
-      cards,
-      supportCards,
-      music,
-      stamps,
-      degrees,
+      events: events.map((event) => ({ id: event.id, name: event.name, eventItemId: event.eventItem?.id ?? 0 })),
+      gachas: gachas.map((gacha) => ({ id: gacha.id, name: gacha.name })),
       texts: textTable._allData,
       resolve,
     }, locale);
   });
 }
 
+/** Exchange categories with their shops (the products only appear on each shop's own page). */
 export function getBuildExchange(locale: AppLocale): Promise<ServerFaceted<ExchangeCategoryViewModel>[]> {
-  return mergedList(`exchanges:${locale}`, (server) => exchangesOn(server, locale), (category) => category.id);
+  return mergedList(`exchanges:${locale}`, async (server) => (await exchangesOn(server, locale)).categories, (category) => category.id);
+}
+
+/** Every shop of every server, for the detail pages' params, breadcrumbs and the site search. */
+export function getBuildExchangeSummaries(locale: AppLocale): Promise<ServerFaceted<ExchangeDetailViewModel>[]> {
+  return mergedList(`exchange-details:${locale}`, async (server) => (await exchangesOn(server, locale)).details, (exchange) => exchange.id);
+}
+
+export function getBuildExchangeDetail(locale: AppLocale, exchangeId: number): Promise<ServerFacetedValue<ExchangeDetailViewModel> | null> {
+  return mergedValue(`exchange-detail:${locale}:${exchangeId}`, async (server) => (await exchangesOn(server, locale)).details.find((exchange) => exchange.id === exchangeId) ?? null);
 }
 
 function comicsOn(server: GameServer, locale: AppLocale): Promise<ComicViewModel[]> {
@@ -1201,7 +1210,7 @@ export function getBuildStoryDetail(locale: AppLocale, advId: number): Promise<S
 export interface ContentSearchEntry {
   /** Stable id within its kind (card id, song id, adv id, reward slug, …). */
   key: string;
-  kind: "card" | "support-card" | "character" | "music" | "story" | "gacha" | "event" | "reward" | "band-item";
+  kind: "card" | "support-card" | "character" | "music" | "story" | "gacha" | "event" | "reward" | "band-item" | "exchange";
   /** Locale-free detail path, e.g. `/cards/12`. The browser localizes it on render. */
   href: `/${string}`;
   /** Title as a MasterText row (five language cells); localized client-side. */
@@ -1431,6 +1440,30 @@ export function getBuildContentSearchIndex(): Promise<ContentSearchEntry[]> {
         href: `${bandItemsPath}?item=${item.id}`,
         title: titleRow(rows, bandItemNameIds.get(item.id)),
         searchText: toSearchTextRecord(bandItemSearchTexts.get(String(item.id))),
+      });
+    }
+
+    // Exchange shops: title is the shop's name; matching also covers the products sold there. Shops only some server
+    // has (serial-code shops) take their name id from that server's table; the primary MasterText carries every name.
+    const [exchangeTables, defaultExchanges] = await Promise.all([
+      eachServer((server) => table<RawExchange>("MasterExchange.json", server)),
+      getBuildExchangeSummaries(DEFAULT_LOCALE),
+    ]);
+    const exchangeNameIds = new Map<number, string>();
+    for (const [, rawExchanges] of exchangeTables) {
+      for (const exchange of rawExchanges._allData) if (!exchangeNameIds.has(exchange.id)) exchangeNameIds.set(exchange.id, exchange.nameTextId);
+    }
+    const exchangeSearchTexts = await perLocaleSearchTexts<ExchangeDetailViewModel & { searchText: string }>(
+      async (locale) => (await getBuildExchangeSummaries(locale)).map((exchange) => ({ ...exchange, searchText: exchangeSearchText(exchange) })),
+      (exchange) => exchange.id,
+    );
+    for (const exchange of defaultExchanges) {
+      entries.push({
+        key: `exchange:${exchange.id}`,
+        kind: "exchange",
+        href: exchangePath(exchange.id),
+        title: titleRow(rows, exchangeNameIds.get(exchange.id)),
+        searchText: toSearchTextRecord(exchangeSearchTexts.get(String(exchange.id))),
       });
     }
 

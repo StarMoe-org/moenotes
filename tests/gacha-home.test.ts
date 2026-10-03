@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { CardViewModel } from "../src/lib/cards/data";
 import { normalizeDegrees } from "../src/lib/degrees/data";
-import { normalizeGachas, toGachaSummary, type RawGacha } from "../src/lib/gacha/data";
+import { normalizeGachas, optionLabel, toGachaSummary, type RawGacha } from "../src/lib/gacha/data";
 import { drawGacha } from "../src/lib/gacha/simulate";
 import { buildHomeData, type RawHomeBanner } from "../src/lib/home/data";
 import { normalizeRewardEntries, type RewardsMasterData, type RewardEntrySummary } from "../src/lib/rewards/data";
@@ -99,7 +99,33 @@ describe("gacha normalization", () => {
     const results = drawGacha(entries, { count: 10, guaranteeCount: 1, guaranteeRarity: 3 }, () => 0);
     expect(results.map((entry) => entry.id)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 1, 2]);
   });
-});
+
+  test("bonuses are named after their draw option and skip options without one", () => {
+    const [withBonus] = normalizeGachas(
+      [gacha(11, { productId1: 4, productId2: 5, gachaBonusIds1: [1], gachaBonusIds2: [] })],
+      [], [], [],
+      [
+        { id: 4, drawCount: 1, ensuredCount: 0, ensuredRarity: 0, ratesLabelTextId: "gacha_rates_label_draw_one_paid" },
+        { id: 5, drawCount: 10, ensuredCount: 1, ensuredRarity: 3, ratesLabelTextId: "gacha_rates_label_draw_ten_paid" },
+      ],
+      [], [], [],
+      [text("Gacha_Name_11", "Birthday"), text("gacha_rates_label_draw_one_paid", "\"Pull 1 Time (Paid)\"")],
+      "en-US",
+      {
+        bonuses: [{ id: 1, bonusDrawTiming: 1, requiredGachaDrawCount: 1, bonusDrawCount: 1 }],
+        bonusLots: [{ id: 1, gachaBonusId: 1, bonusPrizeType: 1, bonusPrizeId: 64, bonusPrizeCount: 5, weight: 1 }],
+      },
+    );
+    expect(withBonus?.bonusRewards.map((bonus) => [bonus.slot, bonus.label, bonus.drawCount, bonus.rules.length])).toEqual([[1, "Pull 1 Time (Paid)", 1, 1]]);
+    expect(withBonus?.bonusRewards[0]?.rules[0]?.rewards[0]).toMatchObject({ rate: 100, reward: { id: 64, count: 5 } });
+  });
+
+  test("option labels drop the quotes the game writes them in", () => {
+    expect(optionLabel("「招募1次（付费）」")).toBe("招募1次（付费）");
+    expect(optionLabel("\"Pull 10 Times\"")).toBe("Pull 10 Times");
+    expect(optionLabel("")).toBe("");
+  });
+  });
 
 describe("rewards", () => {
   const resolve: RewardResolver = ({ resourceType, resourceId, resourceCount }) => ({

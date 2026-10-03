@@ -10,6 +10,7 @@ export const CONTENT_KIND_ORDER: readonly ContentSearchEntry["kind"][] = [
   "gacha",
   "event",
   "reward",
+  "exchange",
   "band-item",
 ] as const;
 
@@ -23,5 +24,6 @@ export const KIND_LABEL_KEY: Record<ContentSearchEntry["kind"], string> = {
   gacha: "search.kinds.gacha",
   event: "search.kinds.event",
   reward: "search.kinds.reward",
+  exchange: "search.kinds.exchange",
   "band-item": "search.kinds.bandItem",
 };

@@ -92,6 +92,8 @@ export interface RawGachaProduct {
   drawCount: number;
   ensuredCount: number;
   ensuredRarity: number;
+  /** MasterText key of the option's own name, e.g. `gacha_rates_label_draw_one_paid` → "Pull 1 Time (Paid)". */
+  ratesLabelTextId?: string;
 }
 
 export interface RawGachaLot {
@@ -122,6 +124,11 @@ export interface RawGachaView {
 const RESOURCE_ITEM = 1;
 const RESOURCE_MEMBER = 2;
 const RESOURCE_SUPPORT = 3;
+
+/** A draw option's game name without the quotes it is written in (CJK corner brackets, or straight/curly quotes in English). */
+export function optionLabel(text: string): string {
+  return text.trim().replace(/^[「『"“]+|[」』"”]+$/g, "").trim(); // i18n-allow-hardcoded: the game's quote marks
+}
 
 /** Per-product bonus pools (each draw of that product grants one of the lots, weighted). */
 function bonusRewardsFor(
@@ -251,6 +258,16 @@ export interface GachaBonusRule {
   rewards: GachaBonusRewardEntry[];
 }
 
+/** The bonus of one draw option (productId1–4): what buying that option once grants on top. */
+export interface GachaProductBonus {
+  /** The slot, 1–4. */
+  slot: number;
+  /** The game's name of the option ("Pull 1 Time (Paid)", without its quotes); "" when it has none. */
+  label: string;
+  drawCount: number;
+  rules: GachaBonusRule[];
+}
+
 export interface GachaStepUpStepEntry {
   step: number;
   cost: number;
@@ -283,11 +300,14 @@ export interface GachaDetailViewModel extends GachaViewModel {
   pickupSupportIds: number[];
   draws: GachaDrawEntry[];
   drawPlans: { single: GachaDrawPlan; ten: GachaDrawPlan };
-  /** Per-product bonus rewards (index matches productId1–4); empty when the gacha grants no extras. */
-  bonusRewards: GachaBonusRule[][];
+  /** Bonuses of the draw options that grant one, in slot order (productId1–4); empty when the gacha grants no extras. */
+  bonusRewards: GachaProductBonus[];
   /** Step-up chain when the gacha is a step-up banner. */
   stepUp: GachaStepUpChain | null;
-  /** Special mechanic branches (e.g. Weather weight shifts); empty when no gimmick. */
+  /**
+   * MasterGachaGimmick branches: weights of the draw animation's variants (only `Weather` so far), for normal draws
+   * and for draws that bring an SSR. They pick the presentation, not the prize; empty when no gimmick.
+   */
   gimmicks: GachaGimmickEntry[];
   /** Extra banner label point set on top of the banner (already localized; "" when none). */
   viewLabel: string;
@@ -479,12 +499,12 @@ export function normalizeGachas(
         // Prizes missing from the card/item tables cannot be shown, so they are not drawn either.
         draws: draws.filter((entry) => entry.weight > 0 && (entry.kind === "member" ? cardMap.has(entry.id) : entry.kind === "support" ? supportMap.has(entry.id) : itemMap.has(entry.id))),
         drawPlans: { single: drawPlan(gachaProducts, 1), ten: drawPlan(gachaProducts, 10) },
-        bonusRewards: [
-          bonusRewardsFor(gacha.gachaBonusIds1, bonusMap, bonusLotsById, detail.resolveReward),
-          bonusRewardsFor(gacha.gachaBonusIds2, bonusMap, bonusLotsById, detail.resolveReward),
-          bonusRewardsFor(gacha.gachaBonusIds3, bonusMap, bonusLotsById, detail.resolveReward),
-          bonusRewardsFor(gacha.gachaBonusIds4, bonusMap, bonusLotsById, detail.resolveReward),
-        ],
+        bonusRewards: ([gacha.productId1, gacha.productId2, gacha.productId3, gacha.productId4] as const).flatMap((productId, index): GachaProductBonus[] => {
+          const rules = bonusRewardsFor([gacha.gachaBonusIds1, gacha.gachaBonusIds2, gacha.gachaBonusIds3, gacha.gachaBonusIds4][index], bonusMap, bonusLotsById, detail.resolveReward);
+          if (!rules.length) return [];
+          const product = productId ? productMap.get(productId) : undefined;
+          return [{ slot: index + 1, label: optionLabel(textOf(product?.ratesLabelTextId)), drawCount: product?.drawCount ?? 0, rules }];
+        }),
         stepUp: normalizeStepUp(gacha.stepUpId, stepUpMap, textOf),
         gimmicks: (gimmicksByGroup.get(gacha.gimmickGroupId ?? 0) ?? []).map((gimmick) => ({
           id: gimmick.id,

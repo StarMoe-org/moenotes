@@ -4,9 +4,11 @@ import { validateMasterTable } from "@/lib/cards/data";
 import type { RouteStaticParamConfig } from "@/types/route";
 import { DEFAULT_LOCALE } from "@/config/locales";
 
-type DetailKind = "cards" | "support-cards" | "characters" | "music" | "gacha" | "events";
+type TableDetailKind = "cards" | "support-cards" | "characters" | "music" | "gacha" | "events";
+/** Detail kinds whose ids come from a list the build computes rather than one table. */
+type DetailKind = TableDetailKind | "exchange";
 interface DetailRow { id: number; rarity?: number; cardType?: number }
-const tables: Record<DetailKind, string> = {
+const tables: Record<TableDetailKind, string> = {
   cards: "MasterMemberCard.json",
   "support-cards": "MasterSupportCard.json",
   characters: "MasterCharacter.json",
@@ -34,7 +36,7 @@ async function rowsOfEveryServer<T>(file: string): Promise<T[]> {
   return tablesByServer.flatMap((table) => table._allData);
 }
 
-export async function getMasterdataDetailParams(kind: DetailKind): Promise<RouteStaticParamConfig[]> {
+export async function getMasterdataDetailParams(kind: TableDetailKind): Promise<RouteStaticParamConfig[]> {
   return detailParamsFromRows(kind, await rowsOfEveryServer<DetailRow>(tables[kind]));
 }
 
@@ -45,6 +47,16 @@ export async function getMasterdataStoryParams(): Promise<RouteStaticParamConfig
     .filter((id) => Number.isSafeInteger(id) && id > 0)
     .sort((a, b) => a - b)
     .map((id) => ({ params: { id: String(id) }, breadcrumbDetail: { label: `ADV ${id}` } }));
+}
+
+/**
+ * Exchange shops any server lists: the normalizer's shops rather than MasterExchange's rows, since a shop without a
+ * category or products (the arena's before its first season) is not shown and has no page.
+ */
+export async function getMasterdataExchangeParams(): Promise<RouteStaticParamConfig[]> {
+  const { getBuildExchangeSummaries } = await import("@/lib/masterdata/build-data");
+  const exchanges = await getBuildExchangeSummaries(DEFAULT_LOCALE);
+  return detailParamsFromRows("exchange", exchanges.map((exchange) => ({ id: exchange.id })));
 }
 
 /** Season passes, limited mission groups and login bonuses share the rewards detail route. */

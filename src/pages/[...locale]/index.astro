@@ -28,6 +28,7 @@ import BandItemsPage from "@/components/band-items/BandItemsPage.astro";
 import GachaPage from "@/components/gacha/GachaPage.astro";
 import GachaDetailPage from "@/components/gacha/GachaDetailPage.astro";
 import ExchangePage from "@/components/exchange/ExchangePage.astro";
+import ExchangeDetailPage from "@/components/exchange/ExchangeDetailPage.astro";
 import RewardsPage from "@/components/rewards/RewardsPage.astro";
 import RewardDetailPage from "@/components/rewards/RewardDetailPage.astro";
 import EventsPage from "@/components/events/EventsPage.astro";
@@ -98,6 +99,8 @@ const component = match.item.component ?? "page";
     <GachaDetailPage locale={locale} gachaId={Number(match.params.id)} />
   ) : component === "exchange" ? (
     <ExchangePage locale={locale} />
+  ) : component === "exchange-detail" ? (
+    <ExchangeDetailPage locale={locale} exchangeId={Number(match.params.id)} />
   ) : component === "rewards" ? (
     <RewardsPage locale={locale} />
   ) : component === "reward-detail" ? (

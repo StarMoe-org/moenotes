@@ -1,0 +1,20 @@
+---
+import ExchangeDetail from "@/components/exchange/ExchangeDetail";
+import PageLayout from "@/layouts/PageLayout.astro";
+import type { AppLocale } from "@/config/locales";
+import { getBuildExchangeDetail } from "@/lib/masterdata/build-data";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
+
+interface Props {
+  locale: AppLocale;
+  exchangeId: number;
+}
+
+const { locale, exchangeId } = Astro.props;
+const exchange = await getBuildExchangeDetail(locale, exchangeId);
+const servers = await getBuildServers();
+---
+
+<PageLayout locale={locale} titleKey="seo.exchangeDetail.title" descriptionKey="seo.exchangeDetail.description">
+  <ExchangeDetail client:load servers={servers} locale={locale} exchange={exchange} />
+</PageLayout>

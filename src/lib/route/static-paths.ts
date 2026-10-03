@@ -9,6 +9,7 @@ import {
   getBuildCards,
   getBuildCharacters,
   getBuildEvents,
+  getBuildExchangeSummaries,
   getBuildGachas,
   getBuildMusic,
   getBuildRewardEntries,
@@ -70,6 +71,7 @@ const detailLabelLoaders: Record<string, (locale: AppLocale) => Promise<Map<stri
   "song-detail": async (locale) => byId(await getBuildMusic(locale), (song) => song.id, (song) => label(song.title)),
   "gacha-detail": async (locale) => byId(await getBuildGachas(locale), (gacha) => gacha.id, (gacha) => label(gacha.name || `#${gacha.id}`)),
   "reward-detail": async (locale) => byId(await getBuildRewardEntries(locale), (entry) => entry.slug, (entry) => label(entry.title || `#${entry.id}`)),
+  "exchange-detail": async (locale) => byId(await getBuildExchangeSummaries(locale), (exchange) => exchange.id, (exchange) => label(exchange.name)),
   "event-detail": async (locale) => {
     // `/events/:id` is not under the list's path, so name the list as the ancestor the navigation marks.
     const ancestors = [findRouteById("events"), findRouteById("event-list")].filter(Boolean) as AppRoute[];
