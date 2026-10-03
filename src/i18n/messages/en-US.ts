@@ -145,6 +145,7 @@ export const enUS = {
       gacha: "Gacha",
       event: "Events",
       reward: "Rewards",
+      bandItem: "Band Gear",
     },
   },
   account: {

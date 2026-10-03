@@ -178,6 +178,7 @@ export const zhCN = {
       gacha: "招募",
       event: "活动",
       reward: "奖励",
+      bandItem: "乐队道具",
     },
   },
   account: {

@@ -3,33 +3,12 @@ import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { stripLocaleFromPathname } from "@/i18n/routing";
 import { searchContent, type ContentSearchResult } from "@/lib/search/client";
+import { CONTENT_KIND_ORDER, KIND_LABEL_KEY } from "@/lib/search/kinds";
 import { buildStaticIndexPageItems, type StaticSearchPageItem } from "@/lib/search/static-page-items";
 
 interface Props {
   locale: AppLocale;
 }
-
-const KIND_ORDER: ContentSearchResult["kind"][] = [
-  "character",
-  "card",
-  "support-card",
-  "music",
-  "story",
-  "gacha",
-  "event",
-  "reward",
-];
-
-const KIND_LABEL_KEY: Record<ContentSearchResult["kind"], string> = {
-  character: "search.kinds.character",
-  card: "search.kinds.card",
-  "support-card": "search.kinds.supportCard",
-  music: "search.kinds.music",
-  story: "search.kinds.story",
-  gacha: "search.kinds.gacha",
-  event: "search.kinds.event",
-  reward: "search.kinds.reward",
-};
 
 function readQuery(): string {
   if (typeof window === "undefined") return "";
@@ -59,9 +38,9 @@ export default function SearchPage({ locale }: Props) {
 
   const grouped = useMemo(() => {
     const byKind = new Map<ContentSearchResult["kind"], ContentSearchResult[]>();
-    for (const kind of KIND_ORDER) byKind.set(kind, []);
+    for (const kind of CONTENT_KIND_ORDER) byKind.set(kind, []);
     for (const result of content) byKind.get(result.kind)?.push(result);
-    return KIND_ORDER.map((kind) => ({ kind, results: byKind.get(kind) ?? [] })).filter(({ results }) => results.length > 0);
+    return CONTENT_KIND_ORDER.map((kind) => ({ kind, results: byKind.get(kind) ?? [] })).filter(({ results }) => results.length > 0);
   }, [content]);
 
   const presentKinds = useMemo(() => grouped.map(({ kind }) => kind), [grouped]);

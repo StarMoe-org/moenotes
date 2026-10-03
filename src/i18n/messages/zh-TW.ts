@@ -178,6 +178,7 @@ export const zhTW = {
       gacha: "招募",
       event: "活動",
       reward: "獎勵",
+      bandItem: "樂隊道具",
     },
   },
   account: {

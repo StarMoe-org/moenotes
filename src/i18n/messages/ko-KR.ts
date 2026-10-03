@@ -144,6 +144,7 @@ export const koKR = {
       gacha: "뽑기",
       event: "이벤트",
       reward: "보상",
+      bandItem: "밴드 장비",
     },
   },
   account: {

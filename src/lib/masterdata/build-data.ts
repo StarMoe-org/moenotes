@@ -37,7 +37,7 @@ import {
 } from "@/lib/cards/growth";
 import type { DeckCardLookup } from "@/lib/game-api/music-ranking";
 import { buildSupportCardGrowth, type RawSupportCardRank, type SupportCardGrowth } from "@/lib/support-cards/growth";
-import { assetConfig } from "@/config/assets";
+
 import {
   normalizeCharacterCostumes,
   normalizeCharacters,
@@ -47,9 +47,7 @@ import {
   type CharacterViewModel,
   type RawCharacterCostume,
   type RawCharacterCostumeGroup,
-  type RawCharacterFriendshipRank,
   type RawCharacterFriendshipRankReward,
-  type RawCharacterRank,
   type RawCharacterRankReward,
   type RawCharacterVoice,
   type RawCharacter as RawCharacterDetail,
@@ -331,9 +329,7 @@ function characterProgressionOn(server: GameServer, locale: AppLocale): Promise<
       costumeTable,
       costumeGroupTable,
       voiceTable,
-      rankTable,
       rankRewardTable,
-      friendshipRankTable,
       friendshipRewardTable,
       soundTable,
       cueSheetTable,
@@ -344,9 +340,7 @@ function characterProgressionOn(server: GameServer, locale: AppLocale): Promise<
       table<RawCharacterCostume>("MasterCharacterCostume.json", server),
       table<RawCharacterCostumeGroup>("MasterCharacterCostumeGroup.json", server),
       table<RawCharacterVoice>("MasterCharacterVoice.json", server),
-      table<RawCharacterRank>("MasterCharacterRank.json", server),
       table<RawCharacterRankReward>("MasterCharacterRankReward.json", server),
-      table<RawCharacterFriendshipRank>("MasterCharacterFriendshipRank.json", server),
       table<RawCharacterFriendshipRankReward>("MasterCharacterFriendshipRankReward.json", server),
       table<{ id: number; cueName: string; soundCueSheetID: number }>("MasterSound.json", server),
       table<{ id: number; cueSheetName: string }>("MasterSoundCueSheet.json", server),
@@ -1167,7 +1161,7 @@ export function getBuildStoryDetail(locale: AppLocale, advId: number): Promise<S
 export interface ContentSearchEntry {
   /** Stable id within its kind (card id, song id, adv id, reward slug, …). */
   key: string;
-  kind: "card" | "support-card" | "character" | "music" | "story" | "gacha" | "event" | "reward";
+  kind: "card" | "support-card" | "character" | "music" | "story" | "gacha" | "event" | "reward" | "band-item";
   /** Locale-free detail path, e.g. `/cards/12`. The browser localizes it on render. */
   href: `/${string}`;
   /** Title as a MasterText row (five language cells); localized client-side. */
@@ -1379,6 +1373,23 @@ export function getBuildContentSearchIndex(): Promise<ContentSearchEntry[]> {
         href: `/rewards/${reward.slug}`,
         title: titleRow(rows, rewardNameIds.get(reward.slug)),
         searchText: toSearchTextRecord(rewardSearchTexts.get(reward.slug)),
+      });
+    }
+
+    // Band items: no detail route, so href lands on the /band-items list page; users narrow further with the in-page filter.
+    const [rawBandItems, defaultBandItems] = await Promise.all([
+      table<RawBandItem>("MasterBandItem.json", PRIMARY_SERVER),
+      getBuildBandItems(DEFAULT_LOCALE),
+    ]);
+    const bandItemNameIds = new Map(rawBandItems._allData.map((item) => [item.id, item.nameTextId]));
+    const bandItemSearchTexts = await perLocaleSearchTexts(getBuildBandItems, (item) => item.id);
+    for (const item of defaultBandItems) {
+      entries.push({
+        key: `band-item:${item.id}`,
+        kind: "band-item",
+        href: "/band-items",
+        title: titleRow(rows, bandItemNameIds.get(item.id)),
+        searchText: toSearchTextRecord(bandItemSearchTexts.get(String(item.id))),
       });
     }
 

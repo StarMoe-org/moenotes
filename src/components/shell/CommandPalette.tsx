@@ -7,6 +7,7 @@ import { lockBodyScroll, unlockBodyScroll } from "@/lib/overlay/body-scroll-lock
 import { useOverlay } from "@/lib/overlay/use-overlay";
 import { buildStaticSearchIndex } from "@/lib/search/static-index";
 import { searchContent } from "@/lib/search/client";
+import { CONTENT_KIND_ORDER, KIND_LABEL_KEY } from "@/lib/search/kinds";
 import { getRoutePathById } from "@/lib/route/registry";
 import { useSpringAnimation } from "@/lib/animation/use-animation";
 
@@ -24,18 +25,6 @@ interface PaletteRow {
   label: string;
   href: `/${string}`;
 }
-
-const CONTENT_KIND_ORDER = ["character", "card", "support-card", "music", "story", "gacha", "event", "reward"] as const;
-const KIND_LABEL_KEY: Record<string, string> = {
-  character: "search.kinds.character",
-  card: "search.kinds.card",
-  "support-card": "search.kinds.supportCard",
-  music: "search.kinds.music",
-  story: "search.kinds.story",
-  gacha: "search.kinds.gacha",
-  event: "search.kinds.event",
-  reward: "search.kinds.reward",
-};
 
 export default function CommandPalette({ locale }: CommandPaletteProps) {
   const { isOpen, close } = useOverlay("command");

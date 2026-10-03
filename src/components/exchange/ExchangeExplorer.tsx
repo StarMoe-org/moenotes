@@ -16,9 +16,6 @@ interface Props {
   servers: GameServer[];
 }
 
-// View models carry server-neutral file URLs; the list shows the page server's files.
-const PRODUCT_IMAGE_FIELDS = ["resourceImageUrl", "paymentResourceImageUrl"] as const;
-
 export default function ExchangeExplorer({ locale, servers, initialCategories }: Props) {
   const { server, pickServer, items: categories } = useServerList(locale, servers, initialCategories);
   const assetCategories = useServerFiles(categories, server, ["bannerUrl"]);

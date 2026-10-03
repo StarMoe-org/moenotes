@@ -178,6 +178,7 @@ export const jaJP = {
       gacha: "ガチャ",
       event: "イベント",
       reward: "報酬",
+      bandItem: "バンド装備",
     },
   },
   account: {
