@@ -8,10 +8,15 @@ import type { LocalizableMasterText } from "@/lib/masterdata/localize-text";
  * current UI locale, plus a per-locale `searchText` (the list pages' own search blob) so matching a member or band
  * name lands on their cards and songs. hrefs are locale-free; the browser prefixes them when navigating.
  */
+/** Every kind of searchable entity; the later ones come from the per-domain sources in content-sources.ts. */
+export type ContentSearchKind =
+  | "card" | "support-card" | "character" | "music" | "story" | "gacha" | "event" | "reward" | "band-item" | "exchange"
+  | "item" | "stamp" | "title" | "background" | "comic" | "shop" | "help" | "mission";
+
 export interface ContentSearchEntry {
   /** Stable id within its kind (card id, song id, adv id, reward slug, …). */
   key: string;
-  kind: "card" | "support-card" | "character" | "music" | "story" | "gacha" | "event" | "reward" | "band-item" | "exchange";
+  kind: ContentSearchKind;
   /** Locale-free detail path, e.g. `/cards/12`. The browser localizes it on render. */
   href: `/${string}`;
   /** Title as a MasterText row (five language cells); localized client-side. */

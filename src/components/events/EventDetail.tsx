@@ -17,6 +17,7 @@ import type { EventBonus, EventBonusGroup, EventBonusTarget, EventBoxGachaBox, E
 import { formatCompactCount } from "@/lib/format/compact-count";
 import { getEventTrackerHref } from "@/lib/game-api/links";
 import type { MusicViewModel } from "@/lib/music/data";
+import { entityLinkPath } from "@/lib/route/entity-link";
 import { getRoutePathById } from "@/lib/route/registry";
 import { formatMasterDate, formatScheduleRange } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
@@ -259,7 +260,7 @@ function BonusTargetLabel({ locale, target }: { locale: AppLocale; target: Event
       <span className="min-w-0 truncate font-bold text-[var(--mn-text)] group-hover:text-[var(--mn-accent-deep)]">{name}</span>
     </>
   );
-  const href = target.link ? localizePath(target.link.detailId === undefined ? getRoutePathById(target.link.routeId) : `${getRoutePathById(target.link.routeId)}/${target.link.detailId}`, locale) : null;
+  const href = target.link ? localizePath(entityLinkPath(target.link), locale) : null;
   const className = "flex min-w-0 items-center gap-2.5";
   return href
     ? <a href={href} className={`mn-focus group ${className}`}>{content}</a>

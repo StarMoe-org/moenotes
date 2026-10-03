@@ -148,6 +148,19 @@ export const zhTW = {
       exchange: "交換所",
       live2dViewer: "Live2D 瀏覽器",
       storyPlayer: "劇情播放器", news: "遊戲公告", eventTracker: "活動追蹤器", musicRanking: "歌曲排行榜", chartData: "歌曲meta", search: "搜尋",
+      shop: "商店",
+      missions: "任務",
+      tgwCard: "T.G.W CARD",
+      realLives: "現實演出",
+      birthdayStory: "生日劇情",
+      help: "說明",
+      songMeta: "譜面一覽",
+      playlists: "歌單",
+      calendar: "行事曆",
+      catalog: "目錄",
+      license: "授權",
+      terms: "使用條款",
+      privacy: "隱私",
     },
   },
   shell: {
@@ -180,6 +193,14 @@ export const zhTW = {
       reward: "獎勵",
       bandItem: "樂隊道具",
       exchange: "交換所",
+      item: "道具",
+      stamp: "貼圖",
+      title: "稱號",
+      background: "背景",
+      comic: "漫畫",
+      shop: "商店",
+      help: "說明",
+      mission: "任務",
     },
   },
   account: {
@@ -1786,6 +1807,70 @@ export const zhTW = {
       title: "設計系統",
       description: "探索天狼星光與淡紫星雲交織的視覺美學。在奶油紙質感、星軌徽章與溫潤呼吸的交互細節中，感受字句落紙的溫度。",
     },
+    itemDetail: {
+      title: "道具詳情",
+      description: "查看 BanG Dream! Our Notes 道具的取得途徑與用途：哪些獎勵、任務和商店會發放它，以及它在哪些養成環節中被消耗。",
+    },
+    shop: {
+      title: "商店禮包",
+      description: "BanG Dream! Our Notes 商店的全部禮包：內容、各伺服器的價格、購買次數限制與上架時間，一頁即可查閱。",
+    },
+    shopDetail: {
+      title: "商店禮包",
+      description: "一個 BanG Dream! Our Notes 商店禮包的詳情：包含的道具、價格、購買次數限制，以及它的上架與下架時間。",
+    },
+    missions: {
+      title: "任務一覽",
+      description: "BanG Dream! Our Notes 的常規任務與限時任務：每個任務的達成條件，以及完成後可以領取的全部獎勵。",
+    },
+    tgwCard: {
+      title: "T.G.W CARD",
+      description: "BanG Dream! Our Notes 的 T.G.W CARD 會員等級：每級所需點數、每日贈禮、升級獎勵與會員專屬權益一覽。",
+    },
+    realLives: {
+      title: "現實演出",
+      description: "BanG Dream! Our Notes 在遊戲內公布的現實世界樂團演出：參演樂團、演出日期與開場時間，按時間順序排列。",
+    },
+    birthdayStory: {
+      title: "生日劇情",
+      description: "BanG Dream! Our Notes 的生日劇情：角色生日當天遊戲開放的特別故事，附帶完整的對話文本與語音記錄。",
+    },
+    help: {
+      title: "遊戲說明",
+      description: "BanG Dream! Our Notes 的遊戲內說明：玩法說明書的各個主題、讀取畫面的小提示，以及常見問題的解答。",
+    },
+    helpDetail: {
+      title: "說明主題",
+      description: "BanG Dream! Our Notes 遊戲內說明書中的一個主題：完整的說明文字，以及配套的圖解頁面，方便隨時查閱。",
+    },
+    songMeta: {
+      title: "譜面一覽",
+      description: "把 BanG Dream! Our Notes 的全部譜面放進一張表：等級、時長、BPM、物量、密度，以及激奏模式下的各項指標。",
+    },
+    playlists: {
+      title: "樂團歌單",
+      description: "按樂團整理的 BanG Dream! Our Notes 歌單，曲目順序與遊戲內一致，可以直接試聽並一鍵連續播放整張歌單。",
+    },
+    calendar: {
+      title: "活動行事曆",
+      description: "BanG Dream! Our Notes 的行事曆：活動、招募、登入獎勵、通行證、現實演出與角色生日，按月或按列表查看。",
+    },
+    catalog: {
+      title: "資料目錄",
+      description: "一覽 Moenotes 中 BanG Dream! Our Notes 資料庫的全部收錄分類，以及每個分類目前收錄的條目數量。",
+    },
+    license: {
+      title: "授權與版權",
+      description: "Moenotes 的授權說明：網站程式碼以開源授權發布，遊戲內的美術與音訊等素材版權歸原權利人所有，另附第三方聲明。",
+    },
+    terms: {
+      title: "使用條款",
+      description: "使用 Moenotes 這個非官方 BanG Dream! Our Notes 資料站及其 StarMoe 帳號功能時需要了解和遵守的條款。",
+    },
+    privacy: {
+      title: "隱私說明",
+      description: "Moenotes 會在你的瀏覽器裡保存哪些資料、為什麼保存，以及登入 StarMoe Passport 後涉及的帳號資訊說明。",
+    },
   },
   designSystem: {
     sirius: {"stars": "星野", "nebula": "星雲", "orbit": "星軌", "grid": "座標網格", "card": "內容面板", "raised": "浮層面板", "surface": "靜謐底板"},
@@ -2017,4 +2102,20 @@ export const zhTW = {
     techStackTitle: "手帳構築手記",
     techStackDesc: "選用輕快靈動的現代化技術精巧裝幀，只為讓翻閱手帳的每一次指尖停留，都如翻開紙頁般流暢而溫暖。",
   },
+  // ── W1 foundation ──
+  audio: {},
+  lightbox: {},
+  detailNav: {},
+  collectionView: {},
+  // ── pack G ──
+  shop: {},
+  missions: {},
+  tgwCard: {},
+  realLives: {},
+  // ── pack M ──
+  help: {},
+  // ── pack F ──
+  calendar: {},
+  catalog: {},
+  legal: {},
 } as const satisfies MessageTree;

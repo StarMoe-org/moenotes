@@ -148,6 +148,19 @@ export const jaJP = {
       exchange: "交換所",
       live2dViewer: "Live2D ビューア",
       storyPlayer: "ストーリープレイヤー", news: "お知らせ", eventTracker: "イベントトラッカー", musicRanking: "楽曲ランキング", chartData: "楽曲meta", search: "検索",
+      shop: "ショップ",
+      missions: "ミッション",
+      tgwCard: "T.G.W CARD",
+      realLives: "リアルライブ",
+      birthdayStory: "誕生日ストーリー",
+      help: "ヘルプ",
+      songMeta: "譜面一覧",
+      playlists: "プレイリスト",
+      calendar: "カレンダー",
+      catalog: "カタログ",
+      license: "ライセンス",
+      terms: "利用規約",
+      privacy: "プライバシー",
     },
   },
   shell: {
@@ -180,6 +193,14 @@ export const jaJP = {
       reward: "報酬",
       bandItem: "バンド装備",
       exchange: "交換所",
+      item: "アイテム",
+      stamp: "スタンプ",
+      title: "称号",
+      background: "背景",
+      comic: "コミック",
+      shop: "ショップ",
+      help: "ヘルプ",
+      mission: "ミッション",
     },
   },
   account: {
@@ -1780,6 +1801,70 @@ export const jaJP = {
       title: "デザインシステム",
       description: "シリウスの星光と淡紫の星雲が織りなす美学の世界へ。用紙の質感、星軌のバッジ、そして温かな呼吸を感じる細部の中に、言葉が紙に染み込む温度を感じて。",
     },
+    itemDetail: {
+      title: "アイテム詳細",
+      description: "BanG Dream! Our Notes のアイテムの入手先と使い道。報酬・ミッション・ショップ、そして育成素材としての消費先を確認できます。",
+    },
+    shop: {
+      title: "ショップ",
+      description: "BanG Dream! Our Notes のショップで販売されるパックの内容、各サーバーの価格、購入回数の上限と販売期間をまとめました。",
+    },
+    shopDetail: {
+      title: "ショップパック",
+      description: "BanG Dream! Our Notes のショップパックの詳細。含まれるアイテム、価格、購入回数の上限、販売期間を確認できます。",
+    },
+    missions: {
+      title: "ミッション",
+      description: "BanG Dream! Our Notes の通常ミッションと期間限定ミッション。それぞれの達成条件と、受け取れる報酬の一覧です。",
+    },
+    tgwCard: {
+      title: "T.G.W CARD",
+      description: "BanG Dream! Our Notes の T.G.W CARD のランク一覧。必要ポイント、毎日の特典、ランクアップ報酬と会員特典を確認できます。",
+    },
+    realLives: {
+      title: "リアルライブ",
+      description: "BanG Dream! Our Notes がゲーム内で告知する現実のライブ公演。出演バンド、開催日、開演時間を日付順にまとめました。",
+    },
+    birthdayStory: {
+      title: "誕生日ストーリー",
+      description: "BanG Dream! Our Notes の誕生日ストーリー。キャラクターの誕生日に開放される特別なお話を、会話テキストとボイス付きで。",
+    },
+    help: {
+      title: "ゲームヘルプ",
+      description: "BanG Dream! Our Notes のゲーム内ヘルプ。遊び方マニュアルの各トピック、ローディング画面のヒント、よくある質問をまとめました。",
+    },
+    helpDetail: {
+      title: "ヘルプ項目",
+      description: "BanG Dream! Our Notes のゲーム内マニュアルの一項目。説明の全文と図解ページをいつでも読み返せます。",
+    },
+    songMeta: {
+      title: "譜面一覧",
+      description: "BanG Dream! Our Notes の全譜面を一つの表に。レベル、長さ、BPM、ノーツ数、密度、そして激奏モードの各指標を比較できます。",
+    },
+    playlists: {
+      title: "プレイリスト",
+      description: "バンドごとにまとめた BanG Dream! Our Notes のプレイリスト。ゲーム内と同じ曲順で、試聴を続けて再生できます。",
+    },
+    calendar: {
+      title: "カレンダー",
+      description: "BanG Dream! Our Notes のイベント、ガチャ、ログインボーナス、パス、リアルライブ、キャラクターの誕生日をまとめたカレンダー。",
+    },
+    catalog: {
+      title: "カタログ",
+      description: "Moenotes に収録している BanG Dream! Our Notes データベースの全コレクションと、それぞれの収録件数を一覧できます。",
+    },
+    license: {
+      title: "ライセンス",
+      description: "Moenotes のライセンスについて。サイトのソースコードはオープンソースで公開し、ゲーム内素材の著作権は各権利者に帰属します。",
+    },
+    terms: {
+      title: "利用規約",
+      description: "非公式の BanG Dream! Our Notes データベース Moenotes と、その StarMoe アカウント機能を利用する際の規約です。",
+    },
+    privacy: {
+      title: "プライバシー",
+      description: "Moenotes がブラウザに保存するデータとその目的、アクセス解析、StarMoe Passport でログインした際のアカウント情報について。",
+    },
   },
   designSystem: {
     sirius: {"stars": "星空", "nebula": "星雲", "orbit": "軌道", "grid": "座標グリッド", "card": "コンテンツパネル", "raised": "浮遊パネル", "surface": "ベースパネル"},
@@ -1923,4 +2008,20 @@ export const jaJP = {
     techStackTitle: "制作ノート",
     techStackDesc: "手帳をめくる指先がいつでも紙のように軽やかで温かくあるよう、モダンでしなやかな技術を用いて丁寧に装丁されています。",
   },
+  // ── W1 foundation ──
+  audio: {},
+  lightbox: {},
+  detailNav: {},
+  collectionView: {},
+  // ── pack G ──
+  shop: {},
+  missions: {},
+  tgwCard: {},
+  realLives: {},
+  // ── pack M ──
+  help: {},
+  // ── pack F ──
+  calendar: {},
+  catalog: {},
+  legal: {},
 } as const satisfies MessageTree;

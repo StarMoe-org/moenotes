@@ -4,7 +4,7 @@ import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import { formatCompactCount } from "@/lib/format/compact-count";
 import type { RewardViewModel } from "@/lib/rewards/resources";
-import { getRoutePathById } from "@/lib/route/registry";
+import { entityLinkPath } from "@/lib/route/entity-link";
 import { useAssetUrl } from "@/lib/servers/use-content-server";
 
 interface Props {
@@ -22,8 +22,7 @@ export function rewardName(reward: RewardViewModel, locale: AppLocale): string {
 
 function rewardHref(reward: RewardViewModel, locale: AppLocale): string | null {
   if (!reward.link) return null;
-  const base = getRoutePathById(reward.link.routeId);
-  return localizePath(reward.link.detailId === undefined ? base : `${base}/${reward.link.detailId}`, locale);
+  return localizePath(entityLinkPath(reward.link), locale);
 }
 
 // Card and jacket art is cropped to fill; item icons and stickers keep their transparent silhouette.

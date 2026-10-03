@@ -38,6 +38,20 @@ import BackgroundsPage from "@/components/backgrounds/BackgroundsPage.astro";
 import StoryPage from "@/components/story/StoryPage.astro";
 import StoryDetailPage from "@/components/story/StoryDetailPage.astro";
 import SearchPage from "@/components/search/SearchPage";
+import ItemDetailPage from "@/components/items/ItemDetailPage.astro";
+import ShopPage from "@/components/shop/ShopPage.astro";
+import ShopDetailPage from "@/components/shop/ShopDetailPage.astro";
+import MissionsPage from "@/components/missions/MissionsPage.astro";
+import TgwCardPage from "@/components/tgw-card/TgwCardPage.astro";
+import RealLivesPage from "@/components/real-lives/RealLivesPage.astro";
+import BirthdayStoryPage from "@/components/story/BirthdayStoryPage.astro";
+import HelpPage from "@/components/help/HelpPage.astro";
+import HelpDetailPage from "@/components/help/HelpDetailPage.astro";
+import SongMetaPage from "@/components/music/SongMetaPage.astro";
+import PlaylistsPage from "@/components/music/PlaylistsPage.astro";
+import CalendarPage from "@/components/calendar/CalendarPage.astro";
+import CatalogPage from "@/components/catalog/CatalogPage.astro";
+import LegalPage, { type LegalDocument } from "@/components/legal/LegalPage.astro";
 import GroupLanding from "@/components/route/GroupLanding.astro";
 import PageHeader from "@/components/route/PageHeader.astro";
 import AppLayout from "@/layouts/AppLayout.astro";
@@ -155,6 +169,34 @@ const component = match.item.component ?? "page";
     <NewsDetailPage locale={locale} />
   ) : component === "event-tracker" ? (
     <EventTrackerPage locale={locale} />
+  ) : component === "item-detail" ? (
+    <ItemDetailPage locale={locale} itemId={Number(match.params.id)} />
+  ) : component === "shop" ? (
+    <ShopPage locale={locale} />
+  ) : component === "shop-detail" ? (
+    <ShopDetailPage locale={locale} shopId={Number(match.params.id)} />
+  ) : component === "missions" ? (
+    <MissionsPage locale={locale} />
+  ) : component === "tgw-card" ? (
+    <TgwCardPage locale={locale} />
+  ) : component === "real-lives" ? (
+    <RealLivesPage locale={locale} />
+  ) : component === "story-birthday" ? (
+    <BirthdayStoryPage locale={locale} />
+  ) : component === "help" ? (
+    <HelpPage locale={locale} />
+  ) : component === "help-detail" ? (
+    <HelpDetailPage locale={locale} helpId={Number(match.params.id)} />
+  ) : component === "song-meta" ? (
+    <SongMetaPage locale={locale} />
+  ) : component === "playlists" ? (
+    <PlaylistsPage locale={locale} />
+  ) : component === "calendar" ? (
+    <CalendarPage locale={locale} />
+  ) : component === "catalog" ? (
+    <CatalogPage locale={locale} />
+  ) : component === "legal" ? (
+    <LegalPage locale={locale} document={match.item.id as LegalDocument} />
   ) : (
     <PageLayout locale={locale} titleKey={match.item.seo.titleKey} descriptionKey={match.item.seo.descriptionKey}>
       {match.isGroupLanding ? (

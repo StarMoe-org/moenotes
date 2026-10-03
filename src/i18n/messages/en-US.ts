@@ -114,7 +114,7 @@ export const enUS = {
   nav: {
     home: "Home",
     groups: { database: "Database", music: "Music", events: "Events", story: "Story", tools: "Tools", community: "About" },
-    items: { characters: "Characters", cards: "Cards", supportCards: "Support Cards", music: "Music List", eventList: "Event List", gacha: "Gacha", rewards: "Missions & Rewards", titles: "Titles", backgrounds: "Backgrounds", stamps: "Stickers", comics: "Comics", items: "Items", bandItems: "Band Gear", mainStory: "Main Story", eventStory: "Event Story", friendshipStory: "Bond Stories", otherStory: "Other Stories", liveResultStory: "Post-live Talks", homeStory: "Home Stories", tutorialStory: "Tutorial Stories", assetViewer: "Asset Viewer", designSystem: "Design System", chartPreview: "Chart Previewer", exchange: "Exchange Shop", live2dViewer: "Live2D Viewer", storyPlayer: "Story Player", news: "News", eventTracker: "Event Tracker", musicRanking: "Song Rankings", chartData: "Song Meta", search: "Search" },
+    items: { characters: "Characters", cards: "Cards", supportCards: "Support Cards", music: "Music List", eventList: "Event List", gacha: "Gacha", rewards: "Missions & Rewards", titles: "Titles", backgrounds: "Backgrounds", stamps: "Stickers", comics: "Comics", items: "Items", bandItems: "Band Gear", mainStory: "Main Story", eventStory: "Event Story", friendshipStory: "Bond Stories", otherStory: "Other Stories", liveResultStory: "Post-live Talks", homeStory: "Home Stories", tutorialStory: "Tutorial Stories", assetViewer: "Asset Viewer", designSystem: "Design System", chartPreview: "Chart Previewer", exchange: "Exchange Shop", live2dViewer: "Live2D Viewer", storyPlayer: "Story Player", news: "News", eventTracker: "Event Tracker", musicRanking: "Song Rankings", chartData: "Song Meta", search: "Search", shop: "Shop", missions: "Missions", tgwCard: "T.G.W CARD", realLives: "Real Lives", birthdayStory: "Birthday Stories", help: "Help", songMeta: "Chart Table", playlists: "Playlists", calendar: "Calendar", catalog: "Catalog", license: "License", terms: "Terms of Use", privacy: "Privacy", },
 
   },
   shell: {
@@ -147,6 +147,14 @@ export const enUS = {
       reward: "Rewards",
       bandItem: "Band Gear",
       exchange: "Exchange Shops",
+      item: "Items",
+      stamp: "Stickers",
+      title: "Titles",
+      background: "Backgrounds",
+      comic: "Comics",
+      shop: "Shop",
+      help: "Help",
+      mission: "Missions",
     },
   },
   account: {
@@ -1747,6 +1755,70 @@ export const enUS = {
       title: "Design System",
       description: "Explore visual aesthetics woven of Sirius starlight and violet nebulae. Across paper-like textures, orbit emblems, and gentle interaction rhythms, feel the quiet warmth of written words.",
     },
+    itemDetail: {
+      title: "Item Detail",
+      description: "Where a BanG Dream! Our Notes item comes from and what it is spent on: rewards, missions, shops and upgrade materials.",
+    },
+    shop: {
+      title: "Shop",
+      description: "Every BanG Dream! Our Notes shop pack: contents, prices on each server, purchase limits and sale periods.",
+    },
+    shopDetail: {
+      title: "Shop Pack",
+      description: "A BanG Dream! Our Notes shop pack: what it contains, its price, purchase limit and when it is on sale.",
+    },
+    missions: {
+      title: "Missions",
+      description: "BanG Dream! Our Notes regular and limited missions with their goals and the rewards each one pays out.",
+    },
+    tgwCard: {
+      title: "T.G.W CARD",
+      description: "The BanG Dream! Our Notes T.G.W CARD ladder: points per rank, daily grants, rank-up rewards and member benefits.",
+    },
+    realLives: {
+      title: "Real Lives",
+      description: "The real-world live performances BanG Dream! Our Notes announces in game: bands, dates and opening times.",
+    },
+    birthdayStory: {
+      title: "Birthday Stories",
+      description: "BanG Dream! Our Notes birthday episodes: the special stories the game opens on a character's birthday, with transcripts.",
+    },
+    help: {
+      title: "Help",
+      description: "The BanG Dream! Our Notes in-game help: manual topics, loading-screen tips and frequently asked questions.",
+    },
+    helpDetail: {
+      title: "Help Topic",
+      description: "One topic of the BanG Dream! Our Notes in-game manual, with its full text and illustrated pages.",
+    },
+    songMeta: {
+      title: "Chart Table",
+      description: "Every BanG Dream! Our Notes chart in one table: level, length, BPM, notes, density and gekisou metrics.",
+    },
+    playlists: {
+      title: "Playlists",
+      description: "Each band's BanG Dream! Our Notes songs as a playlist in the game's own order, with previews to play through.",
+    },
+    calendar: {
+      title: "Calendar",
+      description: "A calendar of BanG Dream! Our Notes events, gacha, login campaigns, passes, real lives and character birthdays.",
+    },
+    catalog: {
+      title: "Catalog",
+      description: "Every collection of the Moenotes BanG Dream! Our Notes database at a glance, with how many entries each holds.",
+    },
+    license: {
+      title: "License",
+      description: "How Moenotes is licensed: the open-source code, the game's copyrighted assets and third-party notices.",
+    },
+    terms: {
+      title: "Terms of Use",
+      description: "The terms for using Moenotes, the unofficial BanG Dream! Our Notes database and its StarMoe account features.",
+    },
+    privacy: {
+      title: "Privacy",
+      description: "What Moenotes stores and why: browser storage, analytics and the data of a signed-in StarMoe Passport.",
+    },
   },
   designSystem: {
     sirius: {"stars": "Starfield", "nebula": "Nebula", "orbit": "Orbits", "grid": "Coordinates", "card": "Content panel", "raised": "Raised panel", "surface": "Quiet surface"},
@@ -1890,4 +1962,20 @@ export const enUS = {
     techStackTitle: "Crafting Notes",
     techStackDesc: "Bound delicately with modern, lightweight technologies, ensuring that every touch and turn of the page feels as warm, fluid, and effortless as real paper.",
   },
+  // ── W1 foundation ──
+  audio: {},
+  lightbox: {},
+  detailNav: {},
+  collectionView: {},
+  // ── pack G ──
+  shop: {},
+  missions: {},
+  tgwCard: {},
+  realLives: {},
+  // ── pack M ──
+  help: {},
+  // ── pack F ──
+  calendar: {},
+  catalog: {},
+  legal: {},
 } as const satisfies MessageTree;

@@ -1,4 +1,5 @@
 import type { AppLocale } from "@/config/locales";
+import type { EntityLink } from "@/lib/route/entity-link";
 import { getImageAssetUrl } from "@/lib/assets/url";
 import { getCardThumbnailUrl } from "@/lib/cards/assets";
 import type { CardViewModel, RawText } from "@/lib/cards/data";
@@ -34,7 +35,7 @@ export interface RewardViewModel {
   name: string;
   imageUrl: string;
   /** Page on this site that shows the resource. */
-  link?: { routeId: string; detailId?: number };
+  link?: EntityLink;
 }
 
 // MasterData resourceType, identified by matching reward ids against the referenced tables.

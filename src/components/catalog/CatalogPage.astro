@@ -1,0 +1,16 @@
+---
+// Placeholder reserved for the haneoka feature-parity work (.narrafork/plans/plan-parallel-weaving-hellman.md).
+import PageHeader from "@/components/route/PageHeader.astro";
+import PageLayout from "@/layouts/PageLayout.astro";
+import type { AppLocale } from "@/config/locales";
+
+interface Props {
+  locale: AppLocale;
+}
+
+const { locale } = Astro.props;
+---
+
+<PageLayout locale={locale} titleKey="seo.catalog.title" descriptionKey="seo.catalog.description">
+  <PageHeader locale={locale} titleKey="seo.catalog.title" descriptionKey="seo.catalog.description" />
+</PageLayout>

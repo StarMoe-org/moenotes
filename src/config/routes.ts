@@ -218,6 +218,26 @@ export const routeRegistry = [
         nav: { order: 26, icon: "archive" },
         searchable: true,
         keywords: ["items", "possessions", "materials", "inventory"],
+        children: [
+          {
+            // One item: where the game hands it out and what it is spent on.
+            id: "item-detail",
+            kind: "dynamic",
+            path: "/items/:id",
+            pattern: "/items/:id",
+            parentId: "items",
+            labelKey: "nav.items.items",
+            component: "item-detail",
+            seo: {
+              titleKey: "seo.itemDetail.title",
+              descriptionKey: "seo.itemDetail.description",
+            },
+            nav: false,
+            searchable: false,
+            // Filled by the feature pack that owns this page; a function, like every dynamic route (tests/masterdata-params).
+            staticParams: async () => [],
+          },
+        ],
       },
       {
         id: "band-items",
@@ -233,6 +253,57 @@ export const routeRegistry = [
         nav: { order: 27, icon: "archive" },
         searchable: true,
         keywords: ["band items", "equipment", "band gear"],
+      },
+      {
+        // The in-game help: manual topics (MasterHelpCategory/SubCategory), loading tips and FAQ.
+        id: "help",
+        path: "/help",
+        labelKey: "nav.items.help",
+        component: "help",
+        seo: {
+          titleKey: "seo.help.title",
+          descriptionKey: "seo.help.description",
+          keywords: ["BanG Dream! Our Notes help", "Our Notes game guide", "Our Notes FAQ", "loading tips", "game manual"],
+          sitemap: { priority: 0.5, changefreq: "weekly" },
+        },
+        nav: false,
+        searchable: true,
+        keywords: ["help", "guide", "manual", "faq", "tips"],
+        children: [
+          {
+            id: "help-detail",
+            kind: "dynamic",
+            path: "/help/:id",
+            pattern: "/help/:id",
+            parentId: "help",
+            labelKey: "nav.items.help",
+            component: "help-detail",
+            seo: {
+              titleKey: "seo.helpDetail.title",
+              descriptionKey: "seo.helpDetail.description",
+            },
+            nav: false,
+            searchable: false,
+            // Filled by the feature pack that owns this page; a function, like every dynamic route (tests/masterdata-params).
+            staticParams: async () => [],
+          },
+        ],
+      },
+      {
+        // Every browsable collection of the site with how many entries it holds.
+        id: "catalog",
+        path: "/catalog",
+        labelKey: "nav.items.catalog",
+        component: "catalog",
+        seo: {
+          titleKey: "seo.catalog.title",
+          descriptionKey: "seo.catalog.description",
+          keywords: ["BanG Dream! Our Notes catalog", "Our Notes database index", "Our Notes collections", "Moenotes catalog", "game data overview"],
+          sitemap: { priority: 0.6, changefreq: "daily" },
+        },
+        nav: false,
+        searchable: true,
+        keywords: ["catalog", "index", "collections", "overview"],
       },
     ],
   },
@@ -282,6 +353,38 @@ export const routeRegistry = [
             staticParams: async () => (await import("@/lib/route/masterdata-params")).getMasterdataDetailParams("music"),
           },
         ],
+      },
+      {
+        // One row per chart: per-difficulty metrics (normal / gekisou), loaded in the browser from the music data site.
+        id: "song-meta",
+        path: "/music/meta",
+        labelKey: "nav.items.songMeta",
+        component: "song-meta",
+        seo: {
+          titleKey: "seo.songMeta.title",
+          descriptionKey: "seo.songMeta.description",
+          keywords: ["BanG Dream! Our Notes chart table", "Our Notes song meta", "chart BPM and notes", "gekisou chart metrics", "chart difficulty table"],
+          sitemap: { priority: 0.6, changefreq: "weekly" },
+        },
+        nav: false,
+        searchable: true,
+        keywords: ["meta", "charts", "bpm", "notes", "nps", "gekisou"],
+      },
+      {
+        // Each band's songs as a playlist, in the game's own order.
+        id: "playlists",
+        path: "/music/playlists",
+        labelKey: "nav.items.playlists",
+        component: "playlists",
+        seo: {
+          titleKey: "seo.playlists.title",
+          descriptionKey: "seo.playlists.description",
+          keywords: ["BanG Dream! Our Notes playlists", "Our Notes band songs", "song previews", "band discography", "play all songs"],
+          sitemap: { priority: 0.5, changefreq: "weekly" },
+        },
+        nav: false,
+        searchable: true,
+        keywords: ["playlists", "bands", "play all", "songs"],
       },
       {
         // Chart rankings, figures and their guide over nnnotes' music-data.json, loaded in the browser.
@@ -530,6 +633,105 @@ export const routeRegistry = [
         searchable: true,
         keywords: ["tracker", "ranking", "leaderboard", "cutoff", "challenge", "event points"],
       },
+      {
+        // MasterRealLiveSchedule: the bands' real-world live performances shown in game.
+        id: "real-lives",
+        path: "/events/real-lives",
+        labelKey: "nav.items.realLives",
+        component: "real-lives",
+        seo: {
+          titleKey: "seo.realLives.title",
+          descriptionKey: "seo.realLives.description",
+          keywords: ["BanG Dream! Our Notes real lives", "Our Notes live concerts", "band live schedule", "real live performances", "concert dates"],
+          sitemap: { priority: 0.5, changefreq: "weekly" },
+        },
+        nav: false,
+        searchable: true,
+        keywords: ["real live", "concert", "performance", "schedule"],
+      },
+      {
+        // The cash shop (MasterShop / MasterShopProduct / MasterShopBiliPay).
+        id: "shop",
+        path: "/shop",
+        labelKey: "nav.items.shop",
+        component: "shop",
+        seo: {
+          titleKey: "seo.shop.title",
+          descriptionKey: "seo.shop.description",
+          keywords: ["BanG Dream! Our Notes shop", "Our Notes packs", "star packs", "pack prices", "purchase limits"],
+          sitemap: { priority: 0.6, changefreq: "daily" },
+        },
+        nav: false,
+        searchable: true,
+        keywords: ["shop", "packs", "purchase", "price"],
+        children: [
+          {
+            id: "shop-detail",
+            kind: "dynamic",
+            path: "/shop/:id",
+            pattern: "/shop/:id",
+            parentId: "shop",
+            labelKey: "nav.items.shop",
+            component: "shop-detail",
+            seo: {
+              titleKey: "seo.shopDetail.title",
+              descriptionKey: "seo.shopDetail.description",
+            },
+            nav: false,
+            searchable: false,
+            // Filled by the feature pack that owns this page; a function, like every dynamic route (tests/masterdata-params).
+            staticParams: async () => [],
+          },
+        ],
+      },
+      {
+        // Regular missions (MasterMission) beside the limited mission groups the rewards pages carry.
+        id: "missions",
+        path: "/missions",
+        labelKey: "nav.items.missions",
+        component: "missions",
+        seo: {
+          titleKey: "seo.missions.title",
+          descriptionKey: "seo.missions.description",
+          keywords: ["BanG Dream! Our Notes missions", "Our Notes daily missions", "mission rewards", "achievement missions", "limited missions"],
+          sitemap: { priority: 0.6, changefreq: "weekly" },
+        },
+        nav: false,
+        searchable: true,
+        keywords: ["missions", "daily", "achievements", "tasks"],
+      },
+      {
+        // T.G.W CARD: the membership ladder (MasterVip*): points, daily grants, rank-up grants and benefits per rank.
+        id: "tgw-card",
+        path: "/tgw-card",
+        labelKey: "nav.items.tgwCard",
+        component: "tgw-card",
+        seo: {
+          titleKey: "seo.tgwCard.title",
+          descriptionKey: "seo.tgwCard.description",
+          keywords: ["BanG Dream! Our Notes TGW CARD", "Our Notes VIP ranks", "membership benefits", "TGW points", "rank rewards"],
+          sitemap: { priority: 0.5, changefreq: "weekly" },
+        },
+        nav: false,
+        searchable: true,
+        keywords: ["tgw card", "vip", "membership", "benefits"],
+      },
+      {
+        // Month and list views of everything with a date: events, gacha, campaigns, passes, real lives, birthdays.
+        id: "calendar",
+        path: "/calendar",
+        labelKey: "nav.items.calendar",
+        component: "calendar",
+        seo: {
+          titleKey: "seo.calendar.title",
+          descriptionKey: "seo.calendar.description",
+          keywords: ["BanG Dream! Our Notes calendar", "Our Notes event schedule", "gacha schedule", "character birthdays", "login campaign dates"],
+          sitemap: { priority: 0.7, changefreq: "daily" },
+        },
+        nav: false,
+        searchable: true,
+        keywords: ["calendar", "schedule", "birthdays", "dates"],
+      },
     ],
   },
   {
@@ -590,6 +792,22 @@ export const routeRegistry = [
         nav: { order: 20, icon: "book" },
         searchable: true,
         keywords: ["friendship story", "link story", "scenario"],
+      },
+      {
+        // Birthday episodes: the special chapters the game lands on for a character's birthday (MasterStoryLoginLanding).
+        id: "birthday-story",
+        path: "/story/birthday",
+        labelKey: "nav.items.birthdayStory",
+        component: "story-birthday",
+        seo: {
+          titleKey: "seo.birthdayStory.title",
+          descriptionKey: "seo.birthdayStory.description",
+          keywords: ["BanG Dream! Our Notes birthday stories", "Our Notes birthday episodes", "character birthdays", "birthday story transcript", "character voices"],
+          sitemap: { priority: 0.5, changefreq: "weekly" },
+        },
+        nav: false,
+        searchable: true,
+        keywords: ["birthday story", "birthday", "scenario"],
       },
       {
         id: "other-story",
@@ -711,7 +929,55 @@ export const routeRegistry = [
     nav: { order: 50, icon: "info" },
     searchable: true,
     keywords: ["about", "StarMoe", "star.moe"],
-    children: [],
+    children: [
+      {
+        // `/licenses`, not `/license`: astro dev resolves `/license` to the repository's LICENSE file (case-insensitive
+        // file systems) and fails to parse it; the page also covers several licenses (code, assets, third parties).
+        id: "license",
+        path: "/licenses",
+        labelKey: "nav.items.license",
+        component: "legal",
+        seo: {
+          titleKey: "seo.license.title",
+          descriptionKey: "seo.license.description",
+          keywords: ["Moenotes license", "Moenotes AGPL", "open source license", "game asset copyright", "third-party notices"],
+          sitemap: { priority: 0.2, changefreq: "yearly" },
+        },
+        nav: false,
+        searchable: true,
+        keywords: ["license", "copyright", "open source"],
+      },
+      {
+        id: "terms",
+        path: "/terms",
+        labelKey: "nav.items.terms",
+        component: "legal",
+        seo: {
+          titleKey: "seo.terms.title",
+          descriptionKey: "seo.terms.description",
+          keywords: ["Moenotes terms", "terms of use", "site rules", "Moenotes service terms", "StarMoe terms"],
+          sitemap: { priority: 0.2, changefreq: "yearly" },
+        },
+        nav: false,
+        searchable: true,
+        keywords: ["terms", "rules", "conditions"],
+      },
+      {
+        id: "privacy",
+        path: "/privacy",
+        labelKey: "nav.items.privacy",
+        component: "legal",
+        seo: {
+          titleKey: "seo.privacy.title",
+          descriptionKey: "seo.privacy.description",
+          keywords: ["Moenotes privacy", "privacy policy", "cookies and storage", "analytics", "StarMoe Passport data"],
+          sitemap: { priority: 0.2, changefreq: "yearly" },
+        },
+        nav: false,
+        searchable: true,
+        keywords: ["privacy", "data", "cookies", "storage"],
+      },
+    ],
   },
   {
     // Per-user page: the content is fetched from the account API in the browser, so there is nothing to index.

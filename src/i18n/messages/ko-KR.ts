@@ -114,7 +114,7 @@ export const koKR = {
   nav: {
     home: "홈",
     groups: { database: "데이터베이스", music: "음악", events: "이벤트", story: "스토리", tools: "도구", community: "소개" },
-    items: { characters: "캐릭터", cards: "카드", supportCards: "서포트 카드", music: "음악 목록", eventList: "이벤트 목록", gacha: "뽑기", rewards: "미션·보상", titles: "칭호", backgrounds: "배경", stamps: "스티커", comics: "만화", items: "아이템", bandItems: "밴드 장비", mainStory: "메인 스토리", eventStory: "이벤트 스토리", friendshipStory: "인연 스토리", otherStory: "기타 스토리", liveResultStory: "라이브 종료 대화", homeStory: "홈 스토리", tutorialStory: "튜토리얼 스토리", assetViewer: "에셋 뷰어", exchange: "교환소", designSystem: "디자인 시스템", chartPreview: "채보 미리보기", live2dViewer: "Live2D 뷰어", storyPlayer: "스토리 플레이어", news: "공지사항", eventTracker: "이벤트 트래커", musicRanking: "곡 랭킹", chartData: "곡 메타", search: "검색" },
+    items: { characters: "캐릭터", cards: "카드", supportCards: "서포트 카드", music: "음악 목록", eventList: "이벤트 목록", gacha: "뽑기", rewards: "미션·보상", titles: "칭호", backgrounds: "배경", stamps: "스티커", comics: "만화", items: "아이템", bandItems: "밴드 장비", mainStory: "메인 스토리", eventStory: "이벤트 스토리", friendshipStory: "인연 스토리", otherStory: "기타 스토리", liveResultStory: "라이브 종료 대화", homeStory: "홈 스토리", tutorialStory: "튜토리얼 스토리", assetViewer: "에셋 뷰어", exchange: "교환소", designSystem: "디자인 시스템", chartPreview: "채보 미리보기", live2dViewer: "Live2D 뷰어", storyPlayer: "스토리 플레이어", news: "공지사항", eventTracker: "이벤트 트래커", musicRanking: "곡 랭킹", chartData: "곡 메타", search: "검색", shop: "상점", missions: "미션", tgwCard: "T.G.W CARD", realLives: "리얼 라이브", birthdayStory: "생일 스토리", help: "도움말", songMeta: "채보 일람", playlists: "플레이리스트", calendar: "캘린더", catalog: "카탈로그", license: "라이선스", terms: "이용 약관", privacy: "개인정보", },
   },
   shell: {
     openSidebar: "사이드바 열기",
@@ -146,6 +146,14 @@ export const koKR = {
       reward: "보상",
       bandItem: "밴드 장비",
       exchange: "교환소",
+      item: "아이템",
+      stamp: "스티커",
+      title: "칭호",
+      background: "배경",
+      comic: "만화",
+      shop: "상점",
+      help: "도움말",
+      mission: "미션",
     },
   },
   account: {
@@ -1746,6 +1754,70 @@ export const koKR = {
       title: "디자인 시스템",
       description: "시리우스 별빛과 연보라 성운이 자아내는 미학의 세계로. 포근한 종이 질감, 별 궤도 배지, 숨결처럼 온기 어린 디테일 속에서 글자가 종이에 스며드는 온도를 느껴보세요.",
     },
+    itemDetail: {
+      title: "아이템 상세",
+      description: "BanG Dream! Our Notes 아이템의 획득처와 사용처. 어떤 보상·미션·상점에서 얻을 수 있고 어떤 육성 재료로 쓰이는지 확인하세요.",
+    },
+    shop: {
+      title: "상점 패키지",
+      description: "BanG Dream! Our Notes 상점의 모든 패키지: 구성품, 서버별 가격, 구매 횟수 제한과 판매 기간을 한곳에서 확인하세요.",
+    },
+    shopDetail: {
+      title: "상점 패키지",
+      description: "BanG Dream! Our Notes 상점 패키지 상세: 포함된 아이템, 가격, 구매 횟수 제한, 판매 시작과 종료 시각을 확인하세요.",
+    },
+    missions: {
+      title: "미션 목록",
+      description: "BanG Dream! Our Notes의 일반 미션과 기간 한정 미션: 각 미션의 달성 조건과 받을 수 있는 보상을 한눈에 확인하세요.",
+    },
+    tgwCard: {
+      title: "T.G.W CARD",
+      description: "BanG Dream! Our Notes T.G.W CARD 등급표: 등급별 필요 포인트, 매일 지급 보상, 등급 상승 보상과 회원 혜택을 정리했습니다.",
+    },
+    realLives: {
+      title: "리얼 라이브",
+      description: "BanG Dream! Our Notes가 게임 안에서 알리는 실제 라이브 공연: 출연 밴드, 공연 날짜와 개막 시간을 날짜순으로 정리했습니다.",
+    },
+    birthdayStory: {
+      title: "생일 스토리",
+      description: "BanG Dream! Our Notes 생일 스토리: 캐릭터 생일에 열리는 특별한 이야기를 대화 텍스트와 보이스와 함께 다시 읽어 보세요.",
+    },
+    help: {
+      title: "게임 도움말",
+      description: "BanG Dream! Our Notes 게임 내 도움말: 플레이 설명서의 각 주제, 로딩 화면 팁, 자주 묻는 질문을 한곳에 모았습니다.",
+    },
+    helpDetail: {
+      title: "도움말 항목",
+      description: "BanG Dream! Our Notes 게임 내 설명서의 한 항목: 설명 전문과 그림 해설 페이지를 언제든지 다시 확인할 수 있습니다.",
+    },
+    songMeta: {
+      title: "채보 일람",
+      description: "BanG Dream! Our Notes의 모든 채보를 한 표로: 레벨, 길이, BPM, 노트 수, 밀도, 그리고 격주 모드의 각종 지표를 비교하세요.",
+    },
+    playlists: {
+      title: "플레이리스트",
+      description: "밴드별로 정리한 BanG Dream! Our Notes 플레이리스트. 게임과 같은 곡 순서로 미리듣기를 이어서 재생할 수 있습니다.",
+    },
+    calendar: {
+      title: "이벤트 캘린더",
+      description: "BanG Dream! Our Notes의 이벤트, 뽑기, 로그인 보너스, 패스, 리얼 라이브와 캐릭터 생일을 월별 또는 목록으로 보세요.",
+    },
+    catalog: {
+      title: "카탈로그",
+      description: "Moenotes에 수록된 BanG Dream! Our Notes 데이터베이스의 모든 컬렉션과 각 컬렉션의 수록 항목 수를 한눈에 확인하세요.",
+    },
+    license: {
+      title: "라이선스",
+      description: "Moenotes의 라이선스 안내: 사이트 소스 코드는 오픈 소스로 공개하며, 게임 내 아트와 음원 등의 저작권은 각 권리자에게 있습니다.",
+    },
+    terms: {
+      title: "이용 약관",
+      description: "비공식 BanG Dream! Our Notes 데이터베이스 Moenotes와 StarMoe 계정 기능을 이용할 때 알아 두고 지켜야 할 약관입니다.",
+    },
+    privacy: {
+      title: "개인정보",
+      description: "Moenotes가 브라우저에 저장하는 데이터와 그 목적, 접속 통계, StarMoe Passport로 로그인할 때 다루는 계정 정보 안내.",
+    },
   },
   designSystem: {
     sirius: {"stars": "별하늘", "nebula": "성운", "orbit": "궤도", "grid": "좌표 격자", "card": "콘텐츠 패널", "raised": "플로팅 패널", "surface": "기본 패널"},
@@ -1889,4 +1961,20 @@ export const koKR = {
     techStackTitle: "제작 기록",
     techStackDesc: "노트를 넘기는 손끝이 언제나 종이처럼 가볍고 따스하도록, 현대적이고 유연한 기술로 정성껏 장정했습니다.",
   },
+  // ── W1 foundation ──
+  audio: {},
+  lightbox: {},
+  detailNav: {},
+  collectionView: {},
+  // ── pack G ──
+  shop: {},
+  missions: {},
+  tgwCard: {},
+  realLives: {},
+  // ── pack M ──
+  help: {},
+  // ── pack F ──
+  calendar: {},
+  catalog: {},
+  legal: {},
 } as const satisfies MessageTree;

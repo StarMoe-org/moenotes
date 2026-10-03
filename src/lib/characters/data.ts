@@ -1,6 +1,7 @@
 import type { AppLocale } from "@/config/locales";
 import type { RawBand, RawText } from "@/lib/cards/data";
 import { localizeMasterText } from "@/lib/masterdata/localize-text";
+import type { EntityLink } from "@/lib/route/entity-link";
 
 export interface RawCharacter {
   id: number;
@@ -214,7 +215,7 @@ export interface VoiceViewModel {
 
 export interface RankRewardGroup {
   rank: number;
-  rewards: Array<{ kind: string; id: number; count: number; name: string; imageUrl: string; link?: { routeId: string; detailId?: number } }>;
+  rewards: Array<{ kind: string; id: number; count: number; name: string; imageUrl: string; link?: EntityLink }>;
 }
 
 export interface CharacterProgressionData {
@@ -296,7 +297,7 @@ export function normalizeCharacterVoices(
 export function normalizeRankRewards(
   rewards: RawCharacterRankReward[] | RawCharacterFriendshipRankReward[],
   characterId: number,
-  resolve: (resource: { resourceType: number; resourceId: number; resourceCount: number }) => { kind: string; id: number; count: number; name: string; imageUrl: string; link?: { routeId: string; detailId?: number } },
+  resolve: (resource: { resourceType: number; resourceId: number; resourceCount: number }) => { kind: string; id: number; count: number; name: string; imageUrl: string; link?: EntityLink },
 ): RankRewardGroup[] {
 
   const filtered = rewards.filter((entry) => entry.characterId === 0 || entry.characterId === characterId);

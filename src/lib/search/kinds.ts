@@ -12,6 +12,14 @@ export const CONTENT_KIND_ORDER: readonly ContentSearchEntry["kind"][] = [
   "reward",
   "exchange",
   "band-item",
+  "item",
+  "shop",
+  "mission",
+  "title",
+  "stamp",
+  "comic",
+  "background",
+  "help",
 ] as const;
 
 /** i18n key used to render the group label for each kind. Defined once so the two search UIs cannot drift. */
@@ -26,4 +34,12 @@ export const KIND_LABEL_KEY: Record<ContentSearchEntry["kind"], string> = {
   reward: "search.kinds.reward",
   exchange: "search.kinds.exchange",
   "band-item": "search.kinds.bandItem",
+  item: "search.kinds.item",
+  stamp: "search.kinds.stamp",
+  title: "search.kinds.title",
+  background: "search.kinds.background",
+  comic: "search.kinds.comic",
+  shop: "search.kinds.shop",
+  help: "search.kinds.help",
+  mission: "search.kinds.mission",
 };
