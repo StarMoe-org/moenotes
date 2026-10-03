@@ -37,7 +37,7 @@ import {
 } from "@/lib/cards/growth";
 import type { DeckCardLookup } from "@/lib/game-api/music-ranking";
 import { buildSupportCardGrowth, type RawSupportCardRank, type SupportCardGrowth } from "@/lib/support-cards/growth";
-
+import { getRoutePathById } from "@/lib/route/registry";
 import {
   normalizeCharacterCostumes,
   normalizeCharacters,
@@ -69,10 +69,13 @@ import {
 import { normalizeItems, type ItemViewModel, type RawItem } from "@/lib/items/data";
 import {
   normalizeBandItems,
+  groupSkillLevelResources,
+  type BandItemUpgradesPayload,
   type BandItemViewModel,
   type RawBandItem,
   type RawBandItemLevel,
   type RawBandItemSkillEffect,
+  type RawSkillLevelResource,
 } from "@/lib/band-items/data";
 import { normalizeStamps, type RawStamp, type StampViewModel } from "@/lib/stamps/data";
 import { normalizeComics, type ComicViewModel, type RawComic } from "@/lib/comics/data";
@@ -492,6 +495,43 @@ function bandItemsOn(server: GameServer, locale: AppLocale): Promise<BandItemVie
 
 export function getBuildBandItems(locale: AppLocale): Promise<ServerFaceted<BandItemViewModel>[]> {
   return mergedList(`band-items:${locale}`, (server) => bandItemsOn(server, locale), (item) => item.id);
+}
+
+/**
+ * Body of `/band-item-upgrades.json`. Only the groups band items use are kept (the shared table also holds member and
+ * support card costs). Servers whose groups serialize identically share one `groupSets` entry; material names are
+ * read from the primary server's MasterText, the same source the search index titles use.
+ */
+export function getBuildBandItemUpgrades(): Promise<BandItemUpgradesPayload> {
+  return memo("band-item-upgrades", async () => {
+    const [rows, primaryItems] = await Promise.all([primaryTextRows(), table<RawItem>("MasterItem.json", PRIMARY_SERVER)]);
+    const itemById = new Map(primaryItems._allData.map((item) => [item.id, item]));
+    const payload: BandItemUpgradesPayload = { items: {}, groupSets: [], servers: {} };
+    const setIndexByJson = new Map<string, number>();
+    const usedItems = new Set<number>();
+
+    for (const [server, [bandItems, resources]] of await eachServer((server) => Promise.all([
+      table<RawBandItem>("MasterBandItem.json", server),
+      table<RawSkillLevelResource>("MasterSkillLevelResource.json", server),
+    ]))) {
+      const wanted = new Set(bandItems._allData.map((item) => item.resourceGroupId));
+      const groups = groupSkillLevelResources(resources._allData.filter((row) => wanted.has(row.group)));
+      const json = JSON.stringify(groups);
+      let index = setIndexByJson.get(json);
+      if (index === undefined) {
+        index = payload.groupSets.push(groups) - 1;
+        setIndexByJson.set(json, index);
+        for (const steps of Object.values(groups)) for (const [, costs] of steps) for (const [itemId] of costs) usedItems.add(itemId);
+      }
+      payload.servers[server] = index;
+    }
+
+    for (const itemId of [...usedItems].sort((a, b) => a - b)) {
+      const item = itemById.get(itemId);
+      payload.items[String(itemId)] = { name: titleRow(rows, item?.nameTextId), imagePath: item?.imagePath ?? "" };
+    }
+    return payload;
+  });
 }
 
 function gachaDetailsOn(server: GameServer, locale: AppLocale): Promise<GachaDetailViewModel[]> {
@@ -1376,18 +1416,19 @@ export function getBuildContentSearchIndex(): Promise<ContentSearchEntry[]> {
       });
     }
 
-    // Band items: no detail route, so href lands on the /band-items list page; users narrow further with the in-page filter.
+    // Band items: no detail route; the list page opens an item's detail overlay from `?item=<id>`.
     const [rawBandItems, defaultBandItems] = await Promise.all([
       table<RawBandItem>("MasterBandItem.json", PRIMARY_SERVER),
       getBuildBandItems(DEFAULT_LOCALE),
     ]);
     const bandItemNameIds = new Map(rawBandItems._allData.map((item) => [item.id, item.nameTextId]));
     const bandItemSearchTexts = await perLocaleSearchTexts(getBuildBandItems, (item) => item.id);
+    const bandItemsPath = getRoutePathById("band-items");
     for (const item of defaultBandItems) {
       entries.push({
         key: `band-item:${item.id}`,
         kind: "band-item",
-        href: "/band-items",
+        href: `${bandItemsPath}?item=${item.id}`,
         title: titleRow(rows, bandItemNameIds.get(item.id)),
         searchText: toSearchTextRecord(bandItemSearchTexts.get(String(item.id))),
       });

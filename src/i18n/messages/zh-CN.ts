@@ -1966,6 +1966,13 @@ export const zhCN = {
     emptyTitle: "未寻得契合的乐队道具",
     emptyDescription: "装备架中未寻得对应的乐队道具。重置筛选后，即可浏览为各乐队加成的全部装备。",
     reset: "查看全部乐队道具",
+    openDetail: "查看升级素材",
+    upgradeTitle: "升级消耗",
+    upgradeLevel: "等级",
+    upgradeCost: "所需素材",
+    upgradeEmpty: "该道具暂无升级素材记录。",
+    upgradeLoading: "正在载入升级素材…",
+    overlayClose: "关闭",
   },
   about: {
     teamIntro: "我们是来自 <a href=\"https://github.com/moe-sekai\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-[var(--mn-accent-deep)] underline decoration-2 decoration-[var(--mn-accent)] underline-offset-4 hover:text-[var(--mn-accent)]\">StarMoe</a> 的小团队。做 <em>MoeSekai</em> 的两年里，我们一直在想：一个好的 wiki, 到底应该长什么样？",

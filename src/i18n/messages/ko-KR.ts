@@ -1838,6 +1838,13 @@ export const koKR = {
     emptyTitle: "일치하는 밴드 장비를 찾을 수 없습니다",
     emptyDescription: "장비 선반에서 해당하는 물건을 찾지 못했습니다. 필터를 초기화하면 각 밴드를 강화하는 모든 장비를 볼 수 있습니다.",
     reset: "모든 밴드 장비 보기",
+    openDetail: "강화 재료 보기",
+    upgradeTitle: "강화 재료",
+    upgradeLevel: "레벨",
+    upgradeCost: "필요한 재료",
+    upgradeEmpty: "이 장비의 강화 재료 정보가 없습니다.",
+    upgradeLoading: "강화 재료를 불러오는 중…",
+    overlayClose: "닫기",
   },
   about: {
     teamIntro: "우리는 <a href=\"https://github.com/moe-sekai\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-[var(--mn-accent-deep)] underline decoration-2 decoration-[var(--mn-accent)] underline-offset-4 hover:text-[var(--mn-accent)]\">StarMoe</a>의 작은 팀입니다. <em>MoeSekai</em>를 만들어 온 2년 동안 계속 고민했습니다. 좋은 위키는 어떤 모습이어야 할까요?",

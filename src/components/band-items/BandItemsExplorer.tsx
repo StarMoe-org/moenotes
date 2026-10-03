@@ -1,17 +1,38 @@
 import { useListSort } from "@/lib/filter/use-list-sort";
 import { sortEntries } from "@/lib/filter/list-sort";
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import ServerScope from "@/components/shared/ServerScope";
 import type { ServerFaceted } from "@/lib/servers/facets";
-import { useServerList } from "@/lib/servers/use-content-server";
+import { useAssetUrl, useServerList } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
 import BaseFilters, { BandFilter } from "@/components/shared/BaseFilters";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 import type { BandItemViewModel } from "@/lib/band-items/data";
-import { describeBandItemEffect } from "@/lib/band-items/assets";
+import { describeBandItemEffect, formatBandItemEffectPercent, getBandItemIconUrl } from "@/lib/band-items/assets";
+import BandItemOverlay from "./BandItemOverlay";
+
+/** The item a `?item=<id>` deep link opens (read only; the parameter is cleared by the explorer's layout effect). */
+function readItemParam(): number | null {
+  if (typeof window === "undefined") return null;
+  const raw = new URLSearchParams(window.location.search).get("item");
+  if (raw === null) return null;
+  const id = Number(raw);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+/**
+ * Sets or clears `?item=` on the current history entry, keeping its state object: Modal marks the entry it pushes with
+ * `{ modal: true }` and steps back over it on close, which a replaced state would break.
+ */
+function replaceItemParam(id: number | null) {
+  const url = new URL(window.location.href);
+  if (id === null) url.searchParams.delete("item");
+  else url.searchParams.set("item", String(id));
+  window.history.replaceState(window.history.state, "", url.toString());
+}
 
 interface Props {
   locale: AppLocale;
@@ -26,6 +47,26 @@ export default function BandItemsExplorer({ locale, servers, initialItems, initi
   const [query, setQuery] = useState("");
   const sort = useListSort("band-items", locale, "");
   const [selectedBands, setSelectedBands] = useState<number[]>([]);
+  const [activeItemId, setActiveItemId] = useState<number | null>(readItemParam);
+
+  const openItem = useCallback((id: number) => setActiveItemId(id), []);
+  const closeItem = useCallback(() => setActiveItemId(null), []);
+
+  const activeItem = useMemo(
+    () => (activeItemId === null ? null : items.find((item) => item.id === activeItemId) ?? null),
+    [items, activeItemId],
+  );
+
+  // History entries for the overlay: a deep link's `?item=` leaves the landing entry before Modal pushes its own
+  // (a layout effect runs before every passive effect, Modal's included), so closing — Modal steps back — lands on a
+  // clean list URL. The parameter is then shown on Modal's entry, after its push, while an item is actually open.
+  useLayoutEffect(() => {
+    if (new URLSearchParams(window.location.search).has("item")) replaceItemParam(null);
+  }, []);
+  const openItemId = activeItem?.id ?? null;
+  useEffect(() => {
+    if (openItemId !== null) replaceItemParam(openItemId);
+  }, [openItemId]);
 
   useEffect(() => {
     const remembered = parseRememberedFilters(memory.state?.filtersHash);
@@ -136,20 +177,23 @@ export default function BandItemsExplorer({ locale, servers, initialItems, initi
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {sortedEntries.map((item) => (
-              <BandItemCard key={item.id} item={item} locale={locale} />
+              <BandItemCard key={item.id} item={item} locale={locale} onOpen={() => openItem(item.id)} />
             ))}
           </div>
         )}
       </section>
+      <BandItemOverlay locale={locale} server={server} item={activeItem} onClose={closeItem} />
     </ServerScope>
   );
 }
 
-function BandItemCard({ item, locale }: { item: BandItemViewModel; locale: AppLocale }) {
+function BandItemCard({ item, locale, onOpen }: { item: BandItemViewModel; locale: AppLocale; onOpen: () => void }) {
   const [level, setLevel] = useState(item.maxLevel);
   const effect = item.skillEffects.find((entry) => entry.level === level) ?? item.skillEffects.at(-1) ?? null;
-  const effectText = effect ? describeBandItemEffect(item.description, effect.value) : "";
+  const effectText = effect ? describeBandItemEffect(item.description, effect.value, locale) : "";
   const maxLevel = item.maxLevel;
+  const artUrl = useAssetUrl()(getBandItemIconUrl(item, locale));
+  const [artFailed, setArtFailed] = useState(false);
 
   return (
     <div
@@ -157,25 +201,46 @@ function BandItemCard({ item, locale }: { item: BandItemViewModel; locale: AppLo
       data-list-item-id={item.id}
     >
       <div className="flex flex-col flex-1 min-w-0 p-3 sm:p-4">
-        <div className="min-w-0">
-          <h3 className="line-clamp-2 text-sm font-black leading-5 text-[var(--mn-text)]" title={item.name}>
-            {item.name}
-          </h3>
-          <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--mn-text-muted)]/80" title={item.bandName}>
-            {item.bandName}
-          </p>
-          {effectText ? (
-            <p className="mt-1.5 text-xs font-medium text-[var(--mn-text-muted)] leading-relaxed min-h-[3rem]" title={effectText}>
-              {effectText}
-            </p>
+        <button
+          type="button"
+          onClick={onOpen}
+          aria-haspopup="dialog"
+          className="mn-focus mb-2 flex items-center gap-3 rounded-lg -m-1 p-1 text-left"
+        >
+          {artUrl && !artFailed ? (
+            <img
+              src={artUrl}
+              alt=""
+              loading="lazy"
+              width={270}
+              height={516}
+              className="h-16 w-auto shrink-0 object-contain transition group-hover:scale-105"
+              onError={() => setArtFailed(true)}
+            />
           ) : null}
-        </div>
+          <div className="min-w-0">
+            <h3 className="line-clamp-2 text-sm font-black leading-5 text-[var(--mn-text)]" title={item.name}>
+              {item.name}
+            </h3>
+            <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--mn-text-muted)]/80" title={item.bandName}>
+              {item.bandName}
+            </p>
+            <span className="mt-1 inline-block text-[11px] font-bold text-[var(--mn-accent-deep)]">
+              {t(locale, "bandItems.openDetail")}
+            </span>
+          </div>
+        </button>
+        {effectText ? (
+          <p className="mt-1.5 text-xs font-medium text-[var(--mn-text-muted)] leading-relaxed min-h-[3rem]" title={effectText}>
+            {effectText}
+          </p>
+        ) : null}
 
         {maxLevel > 1 && effect ? (
           <div className="mt-3">
             <div className="flex items-center justify-between gap-2 text-[11px] font-semibold text-[var(--mn-text-muted)]/80">
               <span>{t(locale, "bandItems.level", { level })}</span>
-              <span>{t(locale, "bandItems.effectValue", { value: effect.value })}</span>
+              <span>{t(locale, "bandItems.effectValue", { value: formatBandItemEffectPercent(effect.value, locale) })}</span>
             </div>
             <input
               type="range"

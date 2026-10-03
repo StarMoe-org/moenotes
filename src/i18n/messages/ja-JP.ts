@@ -1872,6 +1872,13 @@ export const jaJP = {
     emptyTitle: "一致するバンド装備が見つかりません",
     emptyDescription: "装備ラックに対応する品は見当たりませんでした。絞り込みをリセットして、各バンドを強化するすべての装備を眺めてみましょう。",
     reset: "すべてのバンド装備を見る",
+    openDetail: "強化素材を見る",
+    upgradeTitle: "強化素材",
+    upgradeLevel: "レベル",
+    upgradeCost: "必要な素材",
+    upgradeEmpty: "この装備の強化素材はまだ登録されていません。",
+    upgradeLoading: "強化素材を読み込んでいます…",
+    overlayClose: "閉じる",
   },
   about: {
     teamIntro: "私たちは <a href=\"https://github.com/moe-sekai\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-[var(--mn-accent-deep)] underline decoration-2 decoration-[var(--mn-accent)] underline-offset-4 hover:text-[var(--mn-accent)]\">StarMoe</a> から来た小さなチームです。<em>MoeSekai</em> を作ってからの2年間、私たちは考え続けてきました：良いWikiとは、一体どのような形であるべきなのか？",

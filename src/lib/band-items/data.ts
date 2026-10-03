@@ -1,6 +1,6 @@
 import type { AppLocale } from "@/config/locales";
 import { validateMasterTable, type RawBand, type RawText } from "@/lib/cards/data";
-import { localizeMasterText } from "@/lib/masterdata/localize-text";
+import { localizeMasterText, type LocalizableMasterText } from "@/lib/masterdata/localize-text";
 
 export interface RawBandItem {
   id: number;
@@ -27,6 +27,19 @@ export interface RawBandItemSkillEffect {
   effectValue: number;
 }
 
+/**
+ * MasterSkillLevelResource is the shared upgrade-cost table (member cards, support cards and band items all pull
+ * per-level materials from it). A band item reads the rows whose `group` is its `resourceGroupId`; `level` is the
+ * level the materials buy, so a band item's level 1 row is the cost of obtaining it.
+ */
+export interface RawSkillLevelResource {
+  id: number;
+  group: number;
+  level: number;
+  itemID: number;
+  count: number;
+}
+
 export interface BandItemSkillEffect {
   level: number;
   value: number;
@@ -39,12 +52,73 @@ export interface BandItemViewModel {
   name: string;
   /** Per-level effect template from masterdata: keeps the `{0}` value slot and `<style>` markup, filled at render time. */
   description: string;
-  /** MasterBandItem ships no image path — only `resourceGroupId`. Icon resolution is withheld until the key is known. */
-  imageUrl: string;
   resourceGroupId: number;
   maxLevel: number;
   skillEffects: BandItemSkillEffect[];
   searchText: string;
+}
+
+/**
+ * `/band-item-upgrades.json`: upgrade materials, kept out of the list page's props (every level of every item is
+ * ~600 KB) and fetched when an item's detail opens. One file serves every locale: material names are MasterText
+ * rows the browser localizes. Servers sharing identical cost tables point at one entry of `groupSets`.
+ */
+export interface BandItemUpgradesPayload {
+  /** Cost item id → its name (MasterText cells) and MasterItem image path. */
+  items: Record<string, { name: LocalizableMasterText; imagePath: string }>;
+  /** Distinct per-server cost tables: resourceGroupId → steps of `[level, [[itemId, count], …]]`, levels ascending. */
+  groupSets: Array<Record<string, Array<[number, Array<[number, number]>]>>>;
+  /** Server → index into `groupSets`. */
+  servers: Record<string, number>;
+}
+
+/** One upgrade step, localized for display: every material owed to reach `level`. */
+export interface BandItemUpgradeStep {
+  level: number;
+  costs: Array<{ itemId: number; itemName: string; itemImagePath: string; count: number }>;
+}
+
+/** MasterSkillLevelResource rows → resourceGroupId → compact steps (levels ascending, materials by item id). */
+export function groupSkillLevelResources(rows: RawSkillLevelResource[]): Record<string, Array<[number, Array<[number, number]>]>> {
+  const byGroup = new Map<number, Map<number, Array<[number, number]>>>();
+  for (const row of rows) {
+    const levels = byGroup.get(row.group) ?? new Map<number, Array<[number, number]>>();
+    const costs = levels.get(row.level) ?? [];
+    costs.push([row.itemID, row.count]);
+    levels.set(row.level, costs);
+    byGroup.set(row.group, levels);
+  }
+  const result: Record<string, Array<[number, Array<[number, number]>]>> = {};
+  for (const [group, levels] of byGroup) {
+    result[String(group)] = [...levels.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([level, costs]) => [level, costs.sort((a, b) => a[0] - b[0])]);
+  }
+  return result;
+}
+
+/** A band item's steps from the payload for `server`, material names localized for `locale`. */
+export function resolveBandItemUpgradeSteps(
+  payload: BandItemUpgradesPayload,
+  server: string,
+  resourceGroupId: number,
+  locale: AppLocale,
+): BandItemUpgradeStep[] {
+  const setIndex = payload.servers[server];
+  const steps = setIndex === undefined ? undefined : payload.groupSets[setIndex]?.[String(resourceGroupId)];
+  if (!steps) return [];
+  return steps.map(([level, costs]) => ({
+    level,
+    costs: costs.map(([itemId, count]) => {
+      const item = payload.items[String(itemId)];
+      return {
+        itemId,
+        itemName: (item && localizeMasterText(item.name, locale)) || `#${itemId}`,
+        itemImagePath: item?.imagePath ?? "",
+        count,
+      };
+    }),
+  }));
 }
 
 export function normalizeBandItems(
@@ -89,7 +163,6 @@ export function normalizeBandItems(
         bandName,
         name,
         description,
-        imageUrl: "",
         resourceGroupId: item.resourceGroupId,
         maxLevel,
         skillEffects: effects,

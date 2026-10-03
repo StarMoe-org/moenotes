@@ -29,6 +29,7 @@ const allowedFetchFiles = new Set([
   "src/lib/game-api/client.ts",
   "src/lib/chart-data/client.ts",
   "src/lib/game-ui/client.ts",
+  "src/lib/band-items/upgrades-client.ts",
 ]);
 
 const allowedDomainFiles = new Set([

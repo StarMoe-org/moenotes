@@ -1839,6 +1839,13 @@ export const enUS = {
     emptyTitle: "No band gear matches your search",
     emptyDescription: "No matching gear was found in the equipment rack. Reset the filters to browse every piece that powers up the bands.",
     reset: "View all band gear",
+    openDetail: "View upgrade materials",
+    upgradeTitle: "Upgrade materials",
+    upgradeLevel: "Level",
+    upgradeCost: "Required materials",
+    upgradeEmpty: "No upgrade materials recorded for this gear.",
+    upgradeLoading: "Loading upgrade materials…",
+    overlayClose: "Close",
   },
   about: {
     teamIntro: "we are a small team from <a href=\"https://github.com/moe-sekai\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-[var(--mn-accent-deep)] underline decoration-2 decoration-[var(--mn-accent)] underline-offset-4 hover:text-[var(--mn-accent)]\">StarMoe</a>. During the two years of building <em>MoeSekai</em>, we have been thinking: what should a good wiki actually look like?",
