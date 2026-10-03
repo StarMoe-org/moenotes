@@ -1,16 +1,26 @@
 import { DEFAULT_LOCALE, type AppLocale } from "@/config/locales";
-import { GAME_SERVER_PROFILES, PRIMARY_SERVER, type GameServer } from "@/config/servers";
+import { PRIMARY_SERVER, type GameServer } from "@/config/servers";
 import { serverReleaseFetcher } from "@/lib/assets/release";
 import { getVoiceAudioUrl } from "@/lib/assets/voice";
 import { buildFetch } from "@/lib/build/fetch";
-import { getBuildMasterData, getBuildTableKey } from "@/lib/masterdata/build-snapshot";
 import { getBuildServers } from "@/lib/masterdata/build-servers";
-import { mergeServerLists, mergeServerValues, type ServerFaceted, type ServerFacetedValue } from "@/lib/servers/facets";
+import {
+  eachServer,
+  memo,
+  mergedList,
+  mergedValue,
+  perLocaleSearchTexts,
+  primaryTextRows,
+  table,
+  texts,
+  titleRow,
+  toSearchTextRecord,
+} from "@/lib/masterdata/build-core";
+import type { ContentSearchEntry } from "@/lib/search/content-entry";
+import { mergeServerLists, type ServerFaceted, type ServerFacetedValue } from "@/lib/servers/facets";
 import {
   normalizeCards,
-  validateMasterTable,
   type CardViewModel,
-  type MasterTable,
   type RawBand,
   type RawCharacter,
   type RawMemberCard,
@@ -80,7 +90,7 @@ import {
 } from "@/lib/band-items/data";
 import { normalizeStamps, type RawStamp, type StampViewModel } from "@/lib/stamps/data";
 import { normalizeComics, type ComicViewModel, type RawComic } from "@/lib/comics/data";
-import { MASTER_TEXT_FIELDS, isUsableMasterText, localizeMasterText, masterTextFieldOrder, type LocalizableMasterText } from "@/lib/masterdata/localize-text";
+import { localizeMasterText, masterTextFieldOrder } from "@/lib/masterdata/localize-text";
 import {
   normalizeStories,
   storyNeighbors,
@@ -100,7 +110,6 @@ import {
 } from "@/lib/story/data";
 import { fetchAndParseStory, type ParsedStoryScript, type StoryScriptLookups } from "@/lib/story/parser";
 import { plainRichText } from "@/lib/story/rich-text";
-import { MASTER_UTC_OFFSET, isUntaggedMasterDate } from "@/lib/schedule";
 import {
   normalizeGachas,
   toGachaSummary,
@@ -171,17 +180,14 @@ import {
 } from "@/lib/exchange/data";
 import { exchangePath } from "@/lib/exchange/links";
 
+export type { ContentSearchEntry };
+
 /*
  * Build-time view models of the merged catalog (docs/servers.md). Every `…On(server, locale)` selector computes one
  * server's view from its own MasterData; the exported `getBuild…` selectors merge the build's servers by id, so an
  * entity carries the servers that have it and what differs between them (ServerFaceted). A merged entity is a
  * superset of the plain view model, so pages that do not tell servers apart keep working with the base fields.
  */
-
-interface BuildDataState {
-  tables: Map<string, Promise<MasterTable<unknown>>>;
-  selectors: Map<string, Promise<unknown>>;
-}
 
 export interface CharacterBandModel {
   id: number;
@@ -227,91 +233,7 @@ export interface StoryReaderLookup {
   texts: RawText[];
 }
 
-// Versioned: a dev server keeps this state across reloads, and the merged selectors reuse the earlier keys.
-const buildDataKey = Symbol.for("moenotes.masterdata.build-data.v2");
-const globalState = globalThis as typeof globalThis & { [buildDataKey]?: BuildDataState };
-const state = globalState[buildDataKey] ??= { tables: new Map(), selectors: new Map() };
-
-/**
- * A server's table, shared with every server serving the same bytes in the same time zone. Timestamps of a server
- * whose MasterData is not timed in UTC+8 get its offset appended, so parseMasterDate reads them right everywhere.
- */
-async function table<T>(path: string, server: GameServer): Promise<MasterTable<T>> {
-  const offset = GAME_SERVER_PROFILES[server].masterdataUtcOffset;
-  const tagged = offset !== MASTER_UTC_OFFSET && path !== "MasterText.json";
-  const key = `${await getBuildTableKey(server, path)}${tagged ? `@${offset}` : ""}`;
-  let request = state.tables.get(key);
-  if (!request) {
-    request = getBuildMasterData(path, validateMasterTable<unknown>, server).then((loaded) => tagged ? tagMasterDates(loaded, offset) : loaded);
-    state.tables.set(key, request);
-  }
-  return request as Promise<MasterTable<T>>;
-}
-
-function tagMasterDates(loaded: MasterTable<unknown>, offset: string): MasterTable<unknown> {
-  return {
-    _allData: loaded._allData.map((row) => {
-      if (!row || typeof row !== "object" || Array.isArray(row)) return row;
-      return Object.fromEntries(Object.entries(row).map(([field, value]) => [field, typeof value === "string" && isUntaggedMasterDate(value) ? `${value.trim()}${offset}` : value]));
-    }),
-  };
-}
-
-function memo<T>(key: string, load: () => Promise<T>): Promise<T> {
-  let request = state.selectors.get(key);
-  if (!request) {
-    request = load();
-    state.selectors.set(key, request);
-  }
-  return request as Promise<T>;
-}
-
-async function eachServer<T>(load: (server: GameServer) => Promise<T>): Promise<Array<readonly [GameServer, T]>> {
-  const servers = await getBuildServers();
-  return Promise.all(servers.map(async (server) => [server, await load(server)] as const));
-}
-
-function mergedList<T>(key: string, load: (server: GameServer) => Promise<T[]>, idOf: (item: T) => string | number): Promise<ServerFaceted<T>[]> {
-  return memo(key, async () => mergeServerLists(await eachServer(load), idOf));
-}
-
-function mergedValue<T>(key: string, load: (server: GameServer) => Promise<T | null>): Promise<ServerFacetedValue<T> | null> {
-  return memo(key, async () => mergeServerValues(await eachServer(load)));
-}
-
-/**
- * A server's MasterText, with each cell it leaves without copy taken from the other servers' row of the same id (the
- * JP tables carry Japanese only, the international ones miss some Japanese), and CRLF line ends as LF. The servers'
- * views of the entities they share therefore agree, and JP-only entities read in Japanese.
- */
-function texts(server: GameServer): Promise<MasterTable<RawText>> {
-  return memo(`texts:${server}`, async () => {
-    const servers = await getBuildServers();
-    const [own, ...donors] = await Promise.all([server, ...servers.filter((other) => other !== server)].map((source) => table<RawText>("MasterText.json", source)));
-    const donorRows = donors.map((donor) => new Map(donor._allData.map((row) => [row.id, row])));
-    return {
-      _allData: own!._allData.map((row) => {
-        const filled = { ...row };
-        for (const field of MASTER_TEXT_FIELDS) {
-          let value = filled[field];
-          if (!isUsableMasterText(value, row.id)) {
-            for (const rows of donorRows) {
-              const candidate = rows.get(row.id)?.[field];
-              if (isUsableMasterText(candidate, row.id)) {
-                value = candidate;
-                break;
-              }
-            }
-          }
-          if (typeof value === "string") filled[field] = value.replace(/\r\n?/g, "\n");
-        }
-        return filled;
-      }),
-    };
-  });
-}
-
-function cardsOn(server: GameServer, locale: AppLocale): Promise<CardViewModel[]> {
+export function cardsOn(server: GameServer, locale: AppLocale): Promise<CardViewModel[]> {
   return memo(`cards:${server}:${locale}`, async () => {
     const [cards, characters, bands, textTable] = await Promise.all([
       table<RawMemberCard>("MasterMemberCard.json", server),
@@ -331,7 +253,7 @@ export function getBuildCards(locale: AppLocale): Promise<ServerFaceted<CardView
  * Character progression: costumes, voices, rank / friendship rewards, from the
  * MasterCharacterCostume / MasterCharacterVoice / MasterCharacterRank / MasterCharacterFriendshipRank tables.
  */
-function characterProgressionOn(server: GameServer, locale: AppLocale): Promise<Map<number, CharacterProgressionData>> {
+export function characterProgressionOn(server: GameServer, locale: AppLocale): Promise<Map<number, CharacterProgressionData>> {
   return memo(`character-progression:${server}:${locale}`, async () => {
     const [
       costumeTable,
@@ -404,7 +326,7 @@ export async function getBuildCharacterProgression(locale: AppLocale, characterI
   return merged?.value ?? null;
 }
 
-function supportCardsOn(server: GameServer, locale: AppLocale): Promise<SupportCardViewModel[]> {
+export function supportCardsOn(server: GameServer, locale: AppLocale): Promise<SupportCardViewModel[]> {
   return memo(`support-cards:${server}:${locale}`, async () => {
     const [cards, characters, bands, textTable] = await Promise.all([
       table<RawSupportCard>("MasterSupportCard.json", server),
@@ -420,7 +342,7 @@ export function getBuildSupportCards(locale: AppLocale): Promise<ServerFaceted<S
   return mergedList(`support-cards:${locale}`, (server) => supportCardsOn(server, locale), (card) => card.id);
 }
 
-function charactersOn(server: GameServer, locale: AppLocale): Promise<{ characters: CharacterViewModel[]; bands: CharacterBandModel[] }> {
+export function charactersOn(server: GameServer, locale: AppLocale): Promise<{ characters: CharacterViewModel[]; bands: CharacterBandModel[] }> {
   return memo(`characters:${server}:${locale}`, async () => {
     const [characters, bands, textTable] = await Promise.all([
       table<RawCharacterDetail>("MasterCharacter.json", server),
@@ -450,7 +372,7 @@ export function getBuildCharacters(locale: AppLocale): Promise<{ characters: Ser
   });
 }
 
-function musicOn(server: GameServer, locale: AppLocale): Promise<MusicViewModel[]> {
+export function musicOn(server: GameServer, locale: AppLocale): Promise<MusicViewModel[]> {
   return memo(`music:${server}:${locale}`, async () => {
     const [music, scores, characters, bands, textTable, sounds, cueSheets] = await Promise.all([
       table<RawMusic>("MasterLiveMusic.json", server),
@@ -471,7 +393,7 @@ export function getBuildMusic(locale: AppLocale): Promise<ServerFaceted<MusicVie
   return mergedList(`music:${locale}`, (server) => musicOn(server, locale), (song) => song.id);
 }
 
-function itemsOn(server: GameServer, locale: AppLocale): Promise<ItemViewModel[]> {
+export function itemsOn(server: GameServer, locale: AppLocale): Promise<ItemViewModel[]> {
   return memo(`items:${server}:${locale}`, async () => {
     const [items, textTable] = await Promise.all([
       table<RawItem>("MasterItem.json", server),
@@ -485,7 +407,7 @@ export function getBuildItems(locale: AppLocale): Promise<ServerFaceted<ItemView
   return mergedList(`items:${locale}`, (server) => itemsOn(server, locale), (item) => item.id);
 }
 
-function bandItemsOn(server: GameServer, locale: AppLocale): Promise<BandItemViewModel[]> {
+export function bandItemsOn(server: GameServer, locale: AppLocale): Promise<BandItemViewModel[]> {
   return memo(`band-items:${server}:${locale}`, async () => {
     const [items, levels, skillEffects, bands, textTable] = await Promise.all([
       table<RawBandItem>("MasterBandItem.json", server),
@@ -539,7 +461,7 @@ export function getBuildBandItemUpgrades(): Promise<BandItemUpgradesPayload> {
   });
 }
 
-function gachaDetailsOn(server: GameServer, locale: AppLocale): Promise<GachaDetailViewModel[]> {
+export function gachaDetailsOn(server: GameServer, locale: AppLocale): Promise<GachaDetailViewModel[]> {
   return memo(`gacha-details:${server}:${locale}`, async () => {
     const [gachas, lots, prizes, views, products, cards, supportCards, items, textTable, bonuses, bonusLots, stepUps, gimmicks, viewLabels, resolveReward] = await Promise.all([
       table<RawGacha>("MasterGacha.json", server),
@@ -569,7 +491,7 @@ function gachaDetailsOn(server: GameServer, locale: AppLocale): Promise<GachaDet
   });
 }
 
-function gachasOn(server: GameServer, locale: AppLocale): Promise<GachaViewModel[]> {
+export function gachasOn(server: GameServer, locale: AppLocale): Promise<GachaViewModel[]> {
   return memo(`gachas:${server}:${locale}`, async () => (await gachaDetailsOn(server, locale)).map(toGachaSummary));
 }
 
@@ -581,7 +503,7 @@ export function getBuildGachaDetail(locale: AppLocale, gachaId: number): Promise
   return mergedValue(`gacha-detail:${locale}:${gachaId}`, async (server) => (await gachaDetailsOn(server, locale)).find((gacha) => gacha.id === gachaId) ?? null);
 }
 
-function homeOn(server: GameServer, locale: AppLocale): Promise<HomeData> {
+export function homeOn(server: GameServer, locale: AppLocale): Promise<HomeData> {
   return memo(`home:${server}:${locale}`, async () => {
     const [banners, gachas, rewards, music, cards, supportCards] = await Promise.all([
       table<RawHomeBanner>("MasterHomeBanner.json", server),
@@ -600,7 +522,7 @@ export async function getBuildHomeData(locale: AppLocale): Promise<ServerFaceted
   return (await mergedValue(`home:${locale}`, (server) => homeOn(server, locale)))!;
 }
 
-function degreesOn(server: GameServer, locale: AppLocale): Promise<DegreeViewModel[]> {
+export function degreesOn(server: GameServer, locale: AppLocale): Promise<DegreeViewModel[]> {
   return memo(`degrees:${server}:${locale}`, async () => {
     const [degrees, characters, textTable] = await Promise.all([
       table<RawDegree>("MasterDegree.json", server),
@@ -615,7 +537,7 @@ export function getBuildDegrees(locale: AppLocale): Promise<ServerFaceted<Degree
   return mergedList(`degrees:${locale}`, (server) => degreesOn(server, locale), (degree) => degree.id);
 }
 
-function backgroundsOn(server: GameServer, locale: AppLocale): Promise<BackgroundViewModel[]> {
+export function backgroundsOn(server: GameServer, locale: AppLocale): Promise<BackgroundViewModel[]> {
   return memo(`backgrounds:${server}:${locale}`, async () => {
     const [backgrounds, textTable] = await Promise.all([
       table<RawBackground>("MasterBackground.json", server),
@@ -630,7 +552,7 @@ export function getBuildBackgrounds(locale: AppLocale): Promise<ServerFaceted<Ba
 }
 
 /** Names and artwork of the resources a server's rewards hand out (MasterData resourceType / resourceId). */
-function rewardResolverOn(server: GameServer, locale: AppLocale): Promise<RewardResolver> {
+export function rewardResolverOn(server: GameServer, locale: AppLocale): Promise<RewardResolver> {
   return memo(`reward-resolver:${server}:${locale}`, async () => {
     const [items, cards, supportCards, music, stamps, degrees, spots, textTable] = await Promise.all([
       itemsOn(server, locale),
@@ -646,7 +568,7 @@ function rewardResolverOn(server: GameServer, locale: AppLocale): Promise<Reward
   });
 }
 
-function rewardEntryDetailsOn(server: GameServer, locale: AppLocale): Promise<RewardEntryDetail[]> {
+export function rewardEntryDetailsOn(server: GameServer, locale: AppLocale): Promise<RewardEntryDetail[]> {
   return memo(`reward-entries:${server}:${locale}`, async () => {
     const [
       resolve, music, textTable,
@@ -697,7 +619,7 @@ function rewardEntryDetailsOn(server: GameServer, locale: AppLocale): Promise<Re
   });
 }
 
-function rewardEntriesOn(server: GameServer, locale: AppLocale): Promise<RewardEntrySummary[]> {
+export function rewardEntriesOn(server: GameServer, locale: AppLocale): Promise<RewardEntrySummary[]> {
   return memo(`reward-summaries:${server}:${locale}`, async () => (await rewardEntryDetailsOn(server, locale)).map(toRewardEntrySummary));
 }
 
@@ -709,7 +631,7 @@ export function getBuildRewardEntryDetail(locale: AppLocale, slug: string): Prom
   return mergedValue(`reward-entry:${locale}:${slug}`, async (server) => (await rewardEntryDetailsOn(server, locale)).find((entry) => entry.slug === slug) ?? null);
 }
 
-function eventDetailsOn(server: GameServer, locale: AppLocale): Promise<EventDetailViewModel[]> {
+export function eventDetailsOn(server: GameServer, locale: AppLocale): Promise<EventDetailViewModel[]> {
   return memo(`event-details:${server}:${locale}`, async () => {
     const [
       events, effects, pickUpCards, achievementRewards, loopRewards, livePoints, liveRewards, challengePoints, challengeRewards, rewards,
@@ -778,7 +700,7 @@ function eventDetailsOn(server: GameServer, locale: AppLocale): Promise<EventDet
   });
 }
 
-function eventsOn(server: GameServer, locale: AppLocale): Promise<EventViewModel[]> {
+export function eventsOn(server: GameServer, locale: AppLocale): Promise<EventViewModel[]> {
   return memo(`events:${server}:${locale}`, async () => (await eventDetailsOn(server, locale)).map(toEventSummary));
 }
 
@@ -790,7 +712,7 @@ export function getBuildEventDetail(locale: AppLocale, eventId: number): Promise
   return mergedValue(`event-detail:${locale}:${eventId}`, async (server) => (await eventDetailsOn(server, locale)).find((event) => event.id === eventId) ?? null);
 }
 
-function stampsOn(server: GameServer, locale: AppLocale): Promise<StampViewModel[]> {
+export function stampsOn(server: GameServer, locale: AppLocale): Promise<StampViewModel[]> {
   return memo(`stamps:${server}:${locale}`, async () => {
     const [stamps, characters, textTable] = await Promise.all([
       table<RawStamp>("MasterStamp.json", server),
@@ -805,7 +727,7 @@ export function getBuildStamps(locale: AppLocale): Promise<ServerFaceted<StampVi
   return mergedList(`stamps:${locale}`, (server) => stampsOn(server, locale), (stamp) => stamp.id);
 }
 
-function exchangesOn(server: GameServer, locale: AppLocale): Promise<NormalizedExchanges> {
+export function exchangesOn(server: GameServer, locale: AppLocale): Promise<NormalizedExchanges> {
   return memo(`exchanges:${server}:${locale}`, async () => {
     const [exchanges, categories, products, items, events, gachas, resolve, textTable] = await Promise.all([
       table<RawExchange>("MasterExchange.json", server),
@@ -845,7 +767,7 @@ export function getBuildExchangeDetail(locale: AppLocale, exchangeId: number): P
   return mergedValue(`exchange-detail:${locale}:${exchangeId}`, async (server) => (await exchangesOn(server, locale)).details.find((exchange) => exchange.id === exchangeId) ?? null);
 }
 
-function comicsOn(server: GameServer, locale: AppLocale): Promise<ComicViewModel[]> {
+export function comicsOn(server: GameServer, locale: AppLocale): Promise<ComicViewModel[]> {
   return memo(`comics:${server}:${locale}`, async () => {
     const [comics, characters, textTable] = await Promise.all([
       table<RawComic>("MasterLoadingComics.json", server),
@@ -875,7 +797,7 @@ export function getBuildBandNames(locale: AppLocale): Promise<Array<[number, str
   });
 }
 
-function storiesOn(server: GameServer, locale: AppLocale): Promise<StoryViewModel[]> {
+export function storiesOn(server: GameServer, locale: AppLocale): Promise<StoryViewModel[]> {
   return memo(`stories:${server}:${locale}`, async () => {
     const [chapters, episodes, friendshipEpisodes, homeTapEpisodes, liveResultEpisodes, advs, homeSpots, friendships, characters, bands, textTable, events] = await Promise.all([
       table<RawStoryChapter>("MasterStoryChapter.json", server),
@@ -929,7 +851,7 @@ export function getBuildStoryReaderLookup(): Promise<StoryReaderLookup> {
 
 const EMPTY_CARD_DETAIL: CardDetailData = { card: null, skills: [], growth: { levelCurve: [], awakeSteps: [], rankSteps: [] } };
 
-function cardDetailOn(server: GameServer, locale: AppLocale, cardId: number): Promise<CardDetailData | null> {
+export function cardDetailOn(server: GameServer, locale: AppLocale, cardId: number): Promise<CardDetailData | null> {
   return memo(`card-detail:${server}:${locale}:${cardId}`, async () => {
     const [
       cards,
@@ -996,7 +918,7 @@ export async function getBuildCardDetail(locale: AppLocale, cardId: number): Pro
 
 const EMPTY_SUPPORT_CARD_DETAIL: SupportCardDetailData = { card: null, skills: [], growth: { levelCurve: [], rankSteps: [] } };
 
-function supportCardDetailOn(server: GameServer, locale: AppLocale, cardId: number): Promise<SupportCardDetailData | null> {
+export function supportCardDetailOn(server: GameServer, locale: AppLocale, cardId: number): Promise<SupportCardDetailData | null> {
   return memo(`support-card-detail:${server}:${locale}:${cardId}`, async () => {
     const [
       cards,
@@ -1075,7 +997,7 @@ export interface MusicDetailData {
   scoreRewards: Array<{ rank: string; liveScoreRank: number; reward: RewardViewModel }>;
 }
 
-function musicDetailOn(server: GameServer, locale: AppLocale, songId: number): Promise<MusicDetailData | null> {
+export function musicDetailOn(server: GameServer, locale: AppLocale, songId: number): Promise<MusicDetailData | null> {
   return memo(`music-detail:${server}:${locale}:${songId}`, async () => {
     const [songs, rawMusic, categories, scoreRankTable, rewardTable, textTable, characterTable, resolve] = await Promise.all([
       musicOn(server, locale),
@@ -1119,7 +1041,7 @@ export async function getBuildMusicDetailData(locale: AppLocale, songId: number)
   return mergedValue(`music-detail:${locale}:${songId}`, (server) => musicDetailOn(server, locale, songId));
 }
 
-function deckCardLookupOn(server: GameServer, locale: AppLocale): Promise<DeckCardLookup> {
+export function deckCardLookupOn(server: GameServer, locale: AppLocale): Promise<DeckCardLookup> {
   return memo(`deck-cards:${server}:${locale}`, async () => {
     const [cards, supportCards, rawCards, rawSupportCards, memberLevels, supportLevels] = await Promise.all([
       cardsOn(server, locale),
@@ -1199,80 +1121,6 @@ export function getBuildStoryDetail(locale: AppLocale, advId: number): Promise<S
       server,
     };
   });
-}
-
-/**
- * Global content search: one entry per searchable entity (card, song, character, story, gacha, event, reward).
- *
- * Each entry carries its title as the MasterText row's five language cells so the browser can localize it for the
- * current UI locale, plus a per-locale `searchText` (the list pages' own search blob) so matching a member or band
- * name lands on their cards and songs. hrefs are locale-free; the browser prefixes them when navigating.
- */
-export interface ContentSearchEntry {
-  /** Stable id within its kind (card id, song id, adv id, reward slug, …). */
-  key: string;
-  kind: "card" | "support-card" | "character" | "music" | "story" | "gacha" | "event" | "reward" | "band-item" | "exchange";
-  /** Locale-free detail path, e.g. `/cards/12`. The browser localizes it on render. */
-  href: `/${string}`;
-  /** Title as a MasterText row (five language cells); localized client-side. */
-  title: LocalizableMasterText;
-  /** Per-locale search blob (already lowercase); localized client-side with an en fallback. */
-  searchText: Partial<Record<AppLocale, string>>;
-}
-
-/** The core UI locales a per-locale searchText is built for; other locales read the English one. */
-const SEARCH_TEXT_LOCALES: readonly AppLocale[] = ["zh-CN", "zh-TW", "ja-JP", "en-US", "ko-KR"];
-
-/** MasterText rows by id on the primary server, for resolving entity titles to their five language cells. */
-async function primaryTextRows(): Promise<Map<string, RawText>> {
-  return memo("search-text-rows", async () => new Map((await texts(PRIMARY_SERVER))._allData.map((row) => [row.id, row])));
-}
-
-function titleRow(rows: Map<string, RawText>, textId: string | undefined): LocalizableMasterText {
-  if (!textId) return {};
-  const row = rows.get(textId);
-  if (!row) return {};
-  return {
-    id: row.id,
-    japanese: row.japanese,
-    english: row.english,
-    simplifiedChinese: row.simplifiedChinese,
-    traditionalChinese: row.traditionalChinese,
-    korean: row.korean,
-  };
-}
-
-/**
- * Per-locale searchText of every entity of one kind: each locale's list is loaded once and indexed by `idOf`, so
- * building the index is linear rather than re-scanning the list per entity. Values equal to the English one are left
- * out — the client falls back to English for both UI-only locales and entities whose search text does not vary.
- */
-async function perLocaleSearchTexts<VM extends { searchText: string }>(
-  load: (locale: AppLocale) => Promise<Array<ServerFaceted<VM>>>,
-  idOf: (item: ServerFaceted<VM>) => string | number,
-): Promise<Map<string, Map<AppLocale, string>>> {
-  const byLocale = new Map<AppLocale, Map<string, string>>();
-  await Promise.all(SEARCH_TEXT_LOCALES.map(async (locale) => {
-    const map = new Map<string, string>();
-    for (const item of await load(locale)) if (item.searchText) map.set(String(idOf(item)), item.searchText);
-    byLocale.set(locale, map);
-  }));
-  const english = byLocale.get("en-US") ?? new Map<string, string>();
-  const out = new Map<string, Map<AppLocale, string>>();
-  for (const id of new Set([...byLocale.values()].flatMap((map) => [...map.keys()]))) {
-    const variants = new Map<AppLocale, string>();
-    for (const locale of SEARCH_TEXT_LOCALES) {
-      const value = byLocale.get(locale)?.get(id);
-      if (value !== undefined && (locale === "en-US" || value !== english.get(id))) variants.set(locale, value);
-    }
-    out.set(id, variants);
-  }
-  return out;
-}
-
-/** Serialize an entity's per-locale searchText map to the index's JSON shape. */
-function toSearchTextRecord(map: Map<AppLocale, string> | undefined): Partial<Record<AppLocale, string>> {
-  return map ? Object.fromEntries(map) : {};
 }
 
 export function getBuildContentSearchIndex(): Promise<ContentSearchEntry[]> {
