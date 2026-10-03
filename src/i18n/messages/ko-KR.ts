@@ -642,6 +642,7 @@ export const koKR = {
   exchange: {
     // /events/exchange: 교환소 페이지의 내비게이션 라벨과 카피
     categories: "모든 상점",
+    currency: "교환 재화",
     pageTitle: "교환소",
     pageDescription: "여행에서 모은 코인과 실로 카드, 스티커, 칭호를 교환하세요.",
     product: {

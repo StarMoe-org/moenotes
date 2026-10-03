@@ -12,10 +12,19 @@ import type { StampViewModel } from "@/lib/stamps/data";
 import { getSupportCardThumbnailUrl } from "@/lib/support-cards/assets";
 import type { SupportCardViewModel } from "@/lib/support-cards/data";
 
+/**
+ * One shop of a category. The currency is the shop's: every product of it is paid in `paymentResourceType`/`Id`
+ * (an item, type 1; or a gacha's own points, type 7, whose id is the gacha's).
+ */
 export interface RawExchange {
   id: number;
   nameTextId: string;
-  categoryId: number;
+  exchangeCategoryId: number;
+  paymentResourceType: number;
+  paymentResourceId: number;
+  startAt: string;
+  endAt: string;
+  bannerAsset: string;
 }
 
 export interface RawExchangeCategory {
@@ -35,9 +44,7 @@ export interface RawExchangeProduct {
   resourceType: number;
   resourceId: number;
   resourceCount: number;
-  /** The cost in the exchange's currency; the currency itself is an item row where the table names it. */
-  paymentResourceType?: number;
-  paymentResourceId?: number;
+  /** The cost, in the currency of the product's exchange. */
   paymentResourceCount: number;
   limitCount: number;
   resetType: number;
@@ -56,10 +63,8 @@ export interface ExchangeProductViewModel {
   resourceName: string;
   resourceImageUrl: string;
   resourceCount: number;
+  /** The price, in the currency of the product's exchange (ExchangeViewModel.paymentResource*). */
   paymentResourceCount: number;
-  /** Localized name of the currency the product costs. */
-  paymentResourceName: string;
-  paymentResourceImageUrl: string;
   /** 0 = unlimited. */
   limitCount: number;
   limitResetLabel: string;
@@ -71,13 +76,22 @@ export interface ExchangeProductViewModel {
 export interface ExchangeViewModel {
   id: number;
   name: string;
+  /** The shop's own banner (an event chapter, a gacha, `Exchange/Banner/…`); empty when it has none. */
+  bannerUrl: string;
+  /** What every product of the shop costs: an item, or a gacha's points (type 7). */
+  paymentResourceName: string;
+  paymentResourceImageUrl: string;
+  /** Opening window; empty for a shop that has no start or no end. */
+  startAt: string;
+  endAt: string;
   products: ExchangeProductViewModel[];
 }
 
 export interface ExchangeCategoryViewModel {
   id: number;
   name: string;
-  bannerUrl: string;
+  /** The category's tile (`Exchange/Category/<name>`): a portrait 356×446 card, not a banner. */
+  iconUrl: string;
   displayOrder: number;
   isMusicShop: boolean;
   isRankMatch: boolean;
@@ -98,6 +112,11 @@ export interface ExchangeSources {
   resolve: RewardResolver;
 }
 
+/**
+ * The limit's reset period. MasterExchangeProduct and MasterShop share the enum: 1 never resets; 2/3/4 are the
+ * daily/weekly/monthly limits the game words as `Shop_Warning_Get{Daily,Weekly,Monthly}` (daily drinks are 2, the
+ * star-seal shop's monthly tickets are 4).
+ */
 function normalizeLimitResetLabel(resetType: number, limitCount: number): string {
   if (limitCount === 0) return "";
   switch (resetType) {
@@ -107,6 +126,11 @@ function normalizeLimitResetLabel(resetType: number, limitCount: number): string
     default: return "";
   }
 }
+
+/** A gacha's points (payment resource type 7) are named by the game's `gacha_point` text and share one icon. */
+const GACHA_POINT_RESOURCE_TYPE = 7;
+const GACHA_POINT_TEXT_ID = "gacha_point";
+const GACHA_POINT_ICON = "Gacha/Icon/GachaPoint";
 
 export function normalizeExchanges(sources: ExchangeSources, locale: AppLocale): ExchangeCategoryViewModel[] {
   const textMap = new Map(sources.texts.map((row) => [row.id, row]));
@@ -152,6 +176,18 @@ export function normalizeExchanges(sources: ExchangeSources, locale: AppLocale):
     }
   };
 
+  // A shop's currency: an item (type 1), or a gacha's own points (type 7). Other types have no known source.
+  const resolvePayment = (exchange: RawExchange): { name: string; imageUrl: string } => {
+    if (exchange.paymentResourceType === GACHA_POINT_RESOURCE_TYPE) {
+      return { name: text(GACHA_POINT_TEXT_ID), imageUrl: getImageAssetUrl(GACHA_POINT_ICON, locale) };
+    }
+    if (exchange.paymentResourceType === 1) {
+      const item = items.get(exchange.paymentResourceId);
+      return item ? { name: item.name, imageUrl: getItemIconUrl(item.imagePath, locale) } : { name: "", imageUrl: "" };
+    }
+    return { name: "", imageUrl: "" };
+  };
+
   // Index products by their exchange, exchanges by their category.
   const productsByExchange = new Map<number, RawExchangeProduct[]>();
   for (const product of sources.products) {
@@ -161,9 +197,9 @@ export function normalizeExchanges(sources: ExchangeSources, locale: AppLocale):
   }
   const exchangesByCategory = new Map<number, RawExchange[]>();
   for (const exchange of sources.exchanges) {
-    const list = exchangesByCategory.get(exchange.categoryId);
+    const list = exchangesByCategory.get(exchange.exchangeCategoryId);
     if (list) list.push(exchange);
-    else exchangesByCategory.set(exchange.categoryId, [exchange]);
+    else exchangesByCategory.set(exchange.exchangeCategoryId, [exchange]);
   }
 
   return sources.categories
@@ -179,11 +215,6 @@ export function normalizeExchanges(sources: ExchangeSources, locale: AppLocale):
             .sort((a, b) => a.id - b.id)
             .map((product): ExchangeProductViewModel => {
               const resource = resolveResource(product.resourceType, product.resourceId);
-              // The payment currency resolves through the item table when the row names it as an
-              // item (resourceType 1; same rule the reward resolver uses).
-              const paymentResourceType = product.paymentResourceType ?? 0;
-              const paymentItem = paymentResourceType === 1 && product.paymentResourceId ? items.get(product.paymentResourceId) : undefined;
-              const limitResetLabel = normalizeLimitResetLabel(product.resetType, product.limitCount);
               return {
                 id: product.id,
                 exchangeId: product.exchangeId,
@@ -193,18 +224,22 @@ export function normalizeExchanges(sources: ExchangeSources, locale: AppLocale):
                   : resource.imageUrl,
                 resourceCount: product.resourceCount,
                 paymentResourceCount: product.paymentResourceCount,
-                paymentResourceName: paymentItem?.name ?? "",
-                paymentResourceImageUrl: paymentItem ? getItemIconUrl(paymentItem.imagePath, locale) : "",
                 limitCount: product.limitCount,
-                limitResetLabel,
+                limitResetLabel: normalizeLimitResetLabel(product.resetType, product.limitCount),
                 isRecommended: product.isRecommended,
                 startAt: product.startAt,
                 endAt: product.endAt,
               };
             });
+          const payment = resolvePayment(exchange);
           return {
             id: exchange.id,
             name: text(exchange.nameTextId) || `#${exchange.id}`,
+            bannerUrl: exchange.bannerAsset ? getImageAssetUrl(exchange.bannerAsset, locale) : "",
+            paymentResourceName: payment.name,
+            paymentResourceImageUrl: payment.imageUrl,
+            startAt: exchange.startAt,
+            endAt: exchange.endAt,
             products,
           };
         })
@@ -212,7 +247,7 @@ export function normalizeExchanges(sources: ExchangeSources, locale: AppLocale):
       return {
         id: category.id,
         name: text(category.nameTextId) || `#${category.id}`,
-        bannerUrl: category.bannerAsset ? getImageAssetUrl(`Image/Banner/${category.bannerAsset}`, locale) : "",
+        iconUrl: category.bannerAsset ? getImageAssetUrl(`Exchange/Category/${category.bannerAsset}`, locale) : "",
         displayOrder: category.displayOrder,
         isMusicShop: category.isMusicShop,
         isRankMatch: category.isRankMatch,

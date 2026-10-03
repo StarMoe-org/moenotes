@@ -682,6 +682,7 @@ export const zhTW = {
   exchange: {
     // /events/exchange：交換所頁面的導覽標籤與頁面文案。
     categories: "全部商店",
+    currency: "使用貨幣",
     pageTitle: "交換所",
     pageDescription: "整理星光旅途中蒐集的各式貨幣與徽章，在交換所裡兌換心儀的卡牌、貼紙與稱號。",
     product: {

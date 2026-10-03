@@ -682,6 +682,7 @@ export const zhCN = {
   exchange: {
     // /events/exchange: the exchange shop route's nav label and page copy.
     categories: "全部商店",
+    currency: "使用货币",
     pageTitle: "交换所",
     pageDescription: "整理星光旅途中收集的各式货币与徽章，在交换所里兑换心仪的卡牌、贴纸与称号。",
     product: {

@@ -643,6 +643,7 @@ export const enUS = {
   exchange: {
     // /events/exchange: the exchange shop route's nav label and page copy.
     categories: "All Shops",
+    currency: "Currency",
     pageTitle: "Exchange Shop",
     pageDescription: "Organize the coins and badges picked up along your starlit journey, then exchange them for the cards, stickers and titles you want.",
     product: {

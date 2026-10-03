@@ -676,6 +676,7 @@ export const jaJP = {
   exchange: {
     // /events/exchange: ナビとページコピー
     categories: "すべてのショップ",
+    currency: "交換に使うもの",
     pageTitle: "交換所",
     pageDescription: "旅路で集めたコインやシールを、カード・スタンプ・称号と交換しましょう。",
     product: {
