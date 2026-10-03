@@ -16,6 +16,8 @@ import {
 import { isChartRendererSupported, renderChartSheet } from "@/lib/music/chart-renderer";
 import type { MusicViewModel, SongDifficultyModel } from "@/lib/music/data";
 import { useAssetUrl } from "@/lib/servers/use-content-server";
+import { useSongTitle } from "@/lib/music/title-preference";
+import { loadChartViewPrefs, saveChartViewPrefs } from "@/lib/music/chart-view-prefs";
 import type { RenderRequest } from "@/vendor/moenotes-chart-renderer/renderer.mjs";
 
 type ChartDifficulty = SongDifficultyModel["difficulty"];
@@ -24,7 +26,7 @@ type FailureKind = "missing" | "failed" | "unsupported";
 type SheetState =
   | { stage: "idle" }
   | { stage: "fetching" | "rendering" }
-  | { stage: "ready"; url: string; width: number; height: number; difficulty: ChartDifficulty; theme: ChartSheetTheme }
+  | { stage: "ready"; url: string; width: number; height: number; difficulty: ChartDifficulty; theme: ChartSheetTheme; mirror: boolean }
   | { stage: "failed"; kind: FailureKind };
 
 interface Viewport { scale: number; x: number; y: number }
@@ -49,8 +51,12 @@ interface ChartSheetDialogProps {
 export default function ChartSheetDialog({ locale, song, difficulty: requested, onClose }: ChartSheetDialogProps) {
   // The chart and jacket come from the catalog of the page's server (a JP-only song has them only there).
   const assetUrl = useAssetUrl();
+  const titleOf = useSongTitle();
+  const title = titleOf(song);
   const [difficulty, setDifficulty] = useState<ChartDifficulty>(requested ?? song.difficulties.at(-1)?.difficulty ?? "expert");
   const [theme, setTheme] = useState<ChartSheetTheme>("white");
+  // Mirrored sheet (lanes flipped left to right), remembered across visits (chart-view-prefs.ts).
+  const [mirror, setMirror] = useState(false);
   const [sheet, setSheet] = useState<SheetState>({ stage: "idle" });
   const [downloadState, setDownloadState] = useState<"idle" | "downloading" | "success">("idle");
   // Only the newest request may publish its result; switching difficulty mid-render supersedes the old one.
@@ -60,20 +66,25 @@ export default function ChartSheetDialog({ locale, song, difficulty: requested, 
   const drawnRef = useRef<{ key: string; failed: boolean } | null>(null);
   const themeRef = useRef(theme);
   themeRef.current = theme;
+  const mirrorRef = useRef(mirror);
+  mirrorRef.current = mirror;
 
   // The sheet follows the site theme until the reader picks one.
   useEffect(() => {
     if (document.documentElement.dataset.theme === "dark") setTheme("black");
+    const saved = loadChartViewPrefs().mirror;
+    mirrorRef.current = saved;
+    setMirror(saved);
   }, []);
 
   useEffect(() => () => {
     if (sheetUrlRef.current) URL.revokeObjectURL(sheetUrlRef.current);
   }, []);
 
-  const draw = useCallback(async (nextDifficulty: ChartDifficulty, nextTheme: ChartSheetTheme) => {
+  const draw = useCallback(async (nextDifficulty: ChartDifficulty, nextTheme: ChartSheetTheme, nextMirror: boolean) => {
     const chart = song.difficulties.find((entry) => entry.difficulty === nextDifficulty);
     if (!chart) return;
-    drawnRef.current = { key: `${nextDifficulty}:${nextTheme}`, failed: false };
+    drawnRef.current = { key: `${nextDifficulty}:${nextTheme}:${nextMirror}`, failed: false };
     if (!isChartRendererSupported()) {
       drawnRef.current.failed = true;
       setSheet({ stage: "failed", kind: "unsupported" });
@@ -92,8 +103,9 @@ export default function ChartSheetDialog({ locale, song, difficulty: requested, 
       const request: RenderRequest = {
         chart: chartBytes,
         cover,
-        metadata: getChartSheetMetadata(song, chart, locale),
+        metadata: getChartSheetMetadata({ ...song, title }, chart, locale),
         options: { theme: nextTheme },
+        mirror: nextMirror,
       };
       const onRendering = () => {
         if (isCurrent()) setSheet({ stage: "rendering" });
@@ -110,14 +122,14 @@ export default function ChartSheetDialog({ locale, song, difficulty: requested, 
       if (sheetUrlRef.current) URL.revokeObjectURL(sheetUrlRef.current);
       const url = URL.createObjectURL(new Blob([result.png as Uint8Array<ArrayBuffer>], { type: "image/png" }));
       sheetUrlRef.current = url;
-      setSheet({ stage: "ready", url, width: result.width, height: result.height, difficulty: nextDifficulty, theme: nextTheme });
+      setSheet({ stage: "ready", url, width: result.width, height: result.height, difficulty: nextDifficulty, theme: nextTheme, mirror: nextMirror });
     } catch (error) {
       if (!isCurrent()) return;
       console.error("Chart preview failed:", error);
       if (drawnRef.current) drawnRef.current.failed = true;
       setSheet({ stage: "failed", kind: error instanceof ReleaseRequestError && error.status === 404 ? "missing" : "failed" });
     }
-  }, [locale, song, assetUrl]);
+  }, [locale, song, title, assetUrl]);
 
   // Another song, server or locale makes the drawn sheet stale.
   useEffect(() => {
@@ -130,8 +142,8 @@ export default function ChartSheetDialog({ locale, song, difficulty: requested, 
     setDifficulty(requested);
     setDownloadState("idle");
     const drawn = drawnRef.current;
-    if (drawn && drawn.key === `${requested}:${themeRef.current}` && !drawn.failed) return;
-    void draw(requested, themeRef.current);
+    if (drawn && drawn.key === `${requested}:${themeRef.current}:${mirrorRef.current}` && !drawn.failed) return;
+    void draw(requested, themeRef.current, mirrorRef.current);
   }, [requested, draw]);
 
   const busy = sheet.stage === "fetching" || sheet.stage === "rendering";
@@ -139,13 +151,20 @@ export default function ChartSheetDialog({ locale, song, difficulty: requested, 
   const selectDifficulty = (next: ChartDifficulty) => {
     setDifficulty(next);
     setDownloadState("idle");
-    void draw(next, theme);
+    void draw(next, theme, mirror);
   };
 
   const selectTheme = (next: ChartSheetTheme) => {
     setTheme(next);
     setDownloadState("idle");
-    void draw(difficulty, next);
+    void draw(difficulty, next, mirror);
+  };
+
+  const selectMirror = (next: boolean) => {
+    setMirror(next);
+    saveChartViewPrefs({ mirror: next });
+    setDownloadState("idle");
+    void draw(difficulty, theme, next);
   };
 
   const download = () => {
@@ -154,7 +173,7 @@ export default function ChartSheetDialog({ locale, song, difficulty: requested, 
     try {
       const anchor = document.createElement("a");
       anchor.href = sheet.url;
-      anchor.download = getChartImageFileName(song.title, sheet.difficulty);
+      anchor.download = getChartImageFileName(title, sheet.difficulty);
       document.body.appendChild(anchor);
       anchor.click();
       document.body.removeChild(anchor);
@@ -186,7 +205,7 @@ export default function ChartSheetDialog({ locale, song, difficulty: requested, 
     </button>
   ) : null;
 
-  const shown = sheet.stage === "ready" && sheet.difficulty === difficulty && sheet.theme === theme ? sheet : null;
+  const shown = sheet.stage === "ready" && sheet.difficulty === difficulty && sheet.theme === theme && sheet.mirror === mirror ? sheet : null;
 
   return (
     <Modal
@@ -195,7 +214,7 @@ export default function ChartSheetDialog({ locale, song, difficulty: requested, 
         setDownloadState("idle");
         onClose();
       }}
-      title={`${t(locale, "music.chartPreview.title")} · ${song.title}`}
+      title={`${t(locale, "music.chartPreview.title")} · ${title}`}
       closeLabel={t(locale, "actions.close")}
       size="xl"
       headerActions={previewActions}
@@ -221,6 +240,16 @@ export default function ChartSheetDialog({ locale, song, difficulty: requested, 
             onChange={(key) => selectTheme(key as ChartSheetTheme)}
             options={CHART_SHEET_THEMES.map((key) => ({ key, label: t(locale, `music.chartPreview.themes.${key}`) }))}
           />
+          <Segmented
+            label={t(locale, "music.chartPreview.mirrorLabel")}
+            value={mirror ? "on" : "off"}
+            disabled={busy}
+            onChange={(key) => selectMirror(key === "on")}
+            options={[
+              { key: "off", label: t(locale, "music.chartPreview.mirrorOff") },
+              { key: "on", label: t(locale, "music.chartPreview.mirrorOn") },
+            ]}
+          />
         </div>
 
         {shown ? (
@@ -229,10 +258,10 @@ export default function ChartSheetDialog({ locale, song, difficulty: requested, 
             url={shown.url}
             width={shown.width}
             height={shown.height}
-            alt={t(locale, "music.chartPreview.imageAlt", { title: song.title, difficulty: difficultyLabel(shown.difficulty) })}
+            alt={t(locale, "music.chartPreview.imageAlt", { title, difficulty: difficultyLabel(shown.difficulty) })}
           />
         ) : (
-          <SheetStatus locale={locale} sheet={sheet} onRetry={() => void draw(difficulty, theme)} />
+          <SheetStatus locale={locale} sheet={sheet} onRetry={() => void draw(difficulty, theme, mirror)} />
         )}
       </div>
     </Modal>

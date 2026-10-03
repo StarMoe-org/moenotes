@@ -32,6 +32,8 @@ interface ChartStageProps {
   locale: AppLocale;
   /** ournotes-player chart manifest; changing it loads that chart. */
   manifestUrl: string;
+  /** The ready player (null while none is), e.g. for page controls of its Live options. */
+  onPlayer?: (player: ChartPlayer | null) => void;
 }
 
 /** Playback speed and the music / sound effect switches, carried from one chart to the next. */
@@ -52,7 +54,9 @@ const FULLSCREEN_WIDTH = "min(100%, calc((100dvh - env(safe-area-inset-top) - en
 const UNLOCK_HINT_MS = 2500;
 
 /** The 3D chart player (ournotes-player) with the Moenotes signature; the frame is what goes fullscreen. */
-export default function ChartStage({ locale, manifestUrl }: ChartStageProps) {
+export default function ChartStage({ locale, manifestUrl, onPlayer }: ChartStageProps) {
+  const onPlayerRef = useRef(onPlayer);
+  onPlayerRef.current = onPlayer;
   const frameRef = useRef<HTMLDivElement>(null);
   const hostRef = useRef<HTMLDivElement>(null);
   const unlockRef = useRef<HTMLButtonElement>(null);
@@ -150,12 +154,14 @@ export default function ChartStage({ locale, manifestUrl }: ChartStageProps) {
         playerRef.current = created;
         controlsRef.current = controls;
         setStatus({ kind: "ready" });
+        onPlayerRef.current?.(created);
         created.root.focus({ preventScroll: true });
       }, fail);
     return () => {
       controller.abort();
       controls?.dispose();
       playerRef.current = null;
+      onPlayerRef.current?.(null);
       controlsRef.current = null;
       if (player) {
         viewerRef.current = { speed: player.speed, music: player.music, se: player.se };

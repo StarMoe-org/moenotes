@@ -1,9 +1,12 @@
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
+import AudioPlayButton from "@/components/shared/AudioPlayButton";
 import ListCardBadge from "@/components/shared/ListCardBadge";
 import { getBandSmallIconUrl, getCardTypeIconUrl, type CardType } from "@/lib/cards/assets";
 import type { MusicViewModel } from "@/lib/music/data";
+import { useSongTitle } from "@/lib/music/title-preference";
+import { songTrack } from "@/lib/music/tracks";
 import { getRoutePathById } from "@/lib/route/registry";
 import { DIFFICULTY_CHIP_CLASSES, DIFFICULTY_SHORT_LABELS, MUSIC_DIFFICULTIES } from "@/lib/music/difficulty";
 import { useAssetUrl } from "@/lib/servers/use-content-server";
@@ -14,71 +17,86 @@ interface Props {
   onClick?: () => void;
   /** Short overlay label on the jacket, e.g. an upcoming release. */
   badge?: string | undefined;
+  /** Show a preview play button on the jacket (when the song has audio). */
+  playable?: boolean;
 }
 
-export default function SongCard({ song, locale, onClick, badge }: Props) {
+export default function SongCard({ song, locale, onClick, badge, playable = false }: Props) {
   const assetUrl = useAssetUrl();
+  const titleOf = useSongTitle();
+  const title = titleOf(song);
+  const track = playable ? songTrack(song, title, assetUrl) : null;
   return (
-    <a
-      href={localizePath(`${getRoutePathById("music")}/${song.id}`, locale)}
-      onClick={onClick}
-      className="mn-list-card mn-focus group block relative rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] overflow-hidden shadow-[var(--mn-shadow-stamp)] transition-all hover:scale-[1.01] hover:shadow-[var(--mn-shadow-stamp-lg)] hover:-translate-y-0.5"
-    >
-      {/* Top Cover Block */}
-      <div className="relative aspect-square w-full shrink-0 border-b-[1.5px] border-[var(--mn-border)] bg-[var(--mn-cream-deep)] overflow-hidden">
-        <img
-          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-          src={assetUrl(song.jacketUrl)}
-          alt={song.title}
-          loading="lazy"
-        />
-        {/* Band Icon Overlaid (Top Left) */}
-        <img
-          className="absolute top-2 left-2 z-10 h-6 w-auto object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]"
-          src={assetUrl(getBandSmallIconUrl(song.bandId))}
-          alt={song.bandName}
-          title={song.bandName}
-          onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-        />
-        {/* Attribute Icon Overlaid (Top Right) */}
-        <img
-          className="absolute top-2 right-2 z-10 h-5 w-5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]"
-          src={getCardTypeIconUrl(song.musicType as CardType)}
-          alt=""
-          aria-hidden="true"
-        />
-        {badge && <ListCardBadge label={badge} position="bottom-2 left-2" />}
-      </div>
-
-      {/* Bottom Info Area */}
-      <div className="p-3 flex-1 flex flex-col justify-between gap-3">
-        <div className="space-y-0.5">
-          <h3 className="font-[var(--mn-font-display)] text-[15px] font-bold leading-snug text-[var(--mn-text)] truncate group-hover:text-[var(--mn-accent-deep)] transition-colors">
-            {song.title}
-          </h3>
-          <p className="text-[10px] font-medium text-[var(--mn-text-muted)] truncate">
-            {t(locale, "music.composer")}: {song.composer}
-          </p>
+    <div className="mn-list-card group relative rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] overflow-hidden shadow-[var(--mn-shadow-stamp)] transition-all hover:scale-[1.01] hover:shadow-[var(--mn-shadow-stamp-lg)] hover:-translate-y-0.5">
+      <a
+        href={localizePath(`${getRoutePathById("music")}/${song.id}`, locale)}
+        onClick={onClick}
+        className="mn-focus block rounded-2xl"
+      >
+        {/* Top Cover Block */}
+        <div className="relative aspect-square w-full shrink-0 border-b-[1.5px] border-[var(--mn-border)] bg-[var(--mn-cream-deep)] overflow-hidden">
+          <img
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+            src={assetUrl(song.jacketUrl)}
+            alt={title}
+            loading="lazy"
+          />
+          {/* Band Icon Overlaid (Top Left) */}
+          <img
+            className="absolute top-2 left-2 z-10 h-6 w-auto object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]"
+            src={assetUrl(getBandSmallIconUrl(song.bandId))}
+            alt={song.bandName}
+            title={song.bandName}
+            onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+          />
+          {/* Attribute Icon Overlaid (Top Right) */}
+          <img
+            className="absolute top-2 right-2 z-10 h-5 w-5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]"
+            src={getCardTypeIconUrl(song.musicType as CardType)}
+            alt=""
+            aria-hidden="true"
+          />
+          {badge && <ListCardBadge label={badge} position="bottom-2 left-2" />}
         </div>
 
-        {/* Difficulties Display */}
-        <div className="flex items-center gap-1">
-          {MUSIC_DIFFICULTIES.map((diffKey) => {
-            const diff = song.difficulties.find((d) => d.difficulty === diffKey);
-            if (!diff) return null;
+        {/* Bottom Info Area */}
+        <div className="p-3 flex-1 flex flex-col justify-between gap-3">
+          <div className="space-y-0.5">
+            <h3 className="font-[var(--mn-font-display)] text-[15px] font-bold leading-snug text-[var(--mn-text)] truncate group-hover:text-[var(--mn-accent-deep)] transition-colors">
+              {title}
+            </h3>
+            <p className="text-[10px] font-medium text-[var(--mn-text-muted)] truncate">
+              {t(locale, "music.composer")}: {song.composer}
+            </p>
+          </div>
 
-            return (
-              <div
-                key={diffKey}
-                className={`flex-1 text-center py-0.5 rounded text-[8px] font-black border uppercase tracking-tighter ${DIFFICULTY_CHIP_CLASSES[diffKey]}`}
-              >
-                <span className="block opacity-60 text-[6px] leading-none mb-0.5">{DIFFICULTY_SHORT_LABELS[diffKey]}</span>
-                <span className="font-mono text-[10px]">{diff.displayLevel}</span>
-              </div>
-            );
-          })}
+          {/* Difficulties Display */}
+          <div className="flex items-center gap-1">
+            {MUSIC_DIFFICULTIES.map((diffKey) => {
+              const diff = song.difficulties.find((d) => d.difficulty === diffKey);
+              if (!diff) return null;
+
+              return (
+                <div
+                  key={diffKey}
+                  className={`flex-1 text-center py-0.5 rounded text-[8px] font-black border uppercase tracking-tighter ${DIFFICULTY_CHIP_CLASSES[diffKey]}`}
+                >
+                  <span className="block opacity-60 text-[6px] leading-none mb-0.5">{DIFFICULTY_SHORT_LABELS[diffKey]}</span>
+                  <span className="font-mono text-[10px]">{diff.displayLevel}</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
-    </a>
+      </a>
+      {/* Outside the link (a button inside an anchor is invalid), over the jacket's bottom-right corner. */}
+      {track && (
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 aspect-square">
+          <div className="pointer-events-auto absolute bottom-2 right-2">
+            <AudioPlayButton locale={locale} track={track} size="sm" />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

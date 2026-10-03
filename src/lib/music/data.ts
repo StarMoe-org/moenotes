@@ -1,7 +1,7 @@
 import type { AppLocale } from "@/config/locales";
 import { getAssetUrl } from "@/lib/assets/url";
 import { getCueUrl } from "@/lib/story/assets";
-import { localizeMasterText, type MasterTextRow } from "@/lib/masterdata/localize-text";
+import { isUsableMasterText, localizeMasterText, type MasterTextRow } from "@/lib/masterdata/localize-text";
 
 export interface MasterTable<T> {
   _allData: T[];
@@ -22,6 +22,8 @@ export interface RawMusic {
   vocalCharacterIDs: number[];
   musicType: number;
   startAt: string;
+  /** The game's song order (band, then category, then song). */
+  sortOrder?: number;
   easyID: number;
   normalID: number;
   hardID: number;
@@ -45,6 +47,12 @@ export interface RawMusic {
   comboNormalLiveMusicRewardID: number;
   comboHardLiveMusicRewardID: number;
   comboExpertLiveMusicRewardID: number;
+  /** Group key into MasterLiveMusicComboReward (the 25 / 50 / 75 / 100 % combo tiers). */
+  comboRewardGroup?: number;
+  /** Gekisou mission of each of the three ranges: 1 Combo, 2 Luck, 3 Just count. */
+  gekisouMission1?: number;
+  gekisouMission2?: number;
+  gekisouMission3?: number;
 }
 
 /** MasterLiveMusicCategory row: the bucket a song belongs to and the text key naming it. */
@@ -105,6 +113,8 @@ export type RawText = MasterTextRow;
 
 export interface SongDifficultyModel {
   difficulty: "easy" | "normal" | "hard" | "expert";
+  /** MasterLiveMusicScore id; music-data.json names charts by it. */
+  scoreId?: number;
   level: number;
   displayLevel: number;
   notesCount: number;
@@ -115,6 +125,8 @@ export interface SongDifficultyModel {
 export interface MusicViewModel {
   id: number;
   title: string;
+  /** The title's Japanese MasterText cell (the localized title when there is none); see title-preference.ts. */
+  titleJa?: string;
   jacketUrl: string;
   jacketAssetName: string;
   composer: string;
@@ -122,8 +134,16 @@ export interface MusicViewModel {
   arranger: string;
   bandId: number;
   bandName: string;
+  /** Every MasterLiveMusic `_bandIDs` entry (empty for songs outside every band). */
+  bandIds?: number[];
   musicType: number;
   startAt: string;
+  /** The game's order of the song (MasterLiveMusic `_sortOrder`); 0 when the table has none. */
+  sortOrder?: number;
+  /** MasterLiveMusicCategory ids (original / cover / virtual-singer …). */
+  categoryIds?: number[];
+  /** Gekisou mission of each range (1 Combo, 2 Luck, 3 Just count); empty when the table has none. */
+  gekisouMissions?: number[];
   difficulties: SongDifficultyModel[];
   vocalistIds: number[];
   vocalists: Array<{ id: number; name: string }>;
@@ -287,6 +307,8 @@ export function normalizeMusic(
     const bandName = music.bandNameTextID ? resolveText(music.bandNameTextID) : band ? resolveText(band.nameTextID) : "";
 
     const title = resolveText(music.titleTextID);
+    const japaneseTitle = textMap.get(music.titleTextID)?.japanese;
+    const titleJa = isUsableMasterText(japaneseTitle, music.titleTextID) ? japaneseTitle : title;
     const composer = resolveText(music.composerTextID);
     const lyricist = resolveText(music.lyricistTextID);
     const arranger = resolveText(music.arrangerTextID);
@@ -305,6 +327,7 @@ export function normalizeMusic(
       if (score) {
         difficulties.push({
           difficulty: key,
+          scoreId,
           level: score.musicScoreLevel,
           displayLevel: score.musicScoreDisplayLevel,
           notesCount: score.fullComboCount,
@@ -325,6 +348,7 @@ export function normalizeMusic(
 
     const searchParts = [
       title,
+      ...(titleJa !== title ? [titleJa] : []),
       composer,
       lyricist,
       arranger,
@@ -337,6 +361,7 @@ export function normalizeMusic(
     return {
       id: music.id,
       title,
+      titleJa,
       jacketUrl: getMusicJacketUrl(music.jacketAssetName),
       jacketAssetName: music.jacketAssetName,
       composer,
@@ -344,8 +369,12 @@ export function normalizeMusic(
       arranger,
       bandId,
       bandName,
+      bandIds: music.bandIDs ?? [],
       musicType: music.musicType,
       startAt: music.startAt,
+      sortOrder: typeof music.sortOrder === "number" ? music.sortOrder : 0,
+      categoryIds: music.musicCategories ?? [],
+      gekisouMissions: gekisouMissions(music),
       difficulties,
       vocalistIds: music.vocalCharacterIDs || [],
       vocalists,
@@ -357,6 +386,11 @@ export function normalizeMusic(
   });
 }
 
+/** The three ranges' Gekisou missions of a MasterLiveMusic row; empty when the row has none. */
+export function gekisouMissions(music: Pick<RawMusic, "gekisouMission1" | "gekisouMission2" | "gekisouMission3">): number[] {
+  const missions = [music.gekisouMission1, music.gekisouMission2, music.gekisouMission3];
+  return missions.every((value) => typeof value === "number" && value > 0) ? missions as number[] : [];
+}
 
 function normalizeEntry(value: unknown): unknown {
   if (!value || typeof value !== "object" || Array.isArray(value)) return value;

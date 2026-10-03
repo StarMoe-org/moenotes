@@ -3,6 +3,7 @@ import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import Modal from "@/components/shared/Modal";
 import MusicFilters, { useMusicFilters } from "@/components/music/MusicFilters";
+import { useSongTitle } from "@/lib/music/title-preference";
 import { getBandSmallIconUrl } from "@/lib/cards/assets";
 import type { MusicViewModel } from "@/lib/music/data";
 import {
@@ -117,6 +118,7 @@ function SongOption({ locale, song, current, preferred, songOnly, onPick }: {
     ? preferred
     : song.difficulties.at(-1)?.difficulty;
   const selected = current !== null;
+  const title = useSongTitle()(song);
 
   return (
     <li
@@ -129,7 +131,7 @@ function SongOption({ locale, song, current, preferred, songOnly, onPick }: {
         type="button"
         disabled={!coverDifficulty}
         onClick={() => coverDifficulty && onPick(coverDifficulty)}
-        aria-label={t(locale, "music.picker.pickSong", { title: song.title })}
+        aria-label={t(locale, "music.picker.pickSong", { title })}
         className="mn-focus block w-full text-left"
       >
         <span className="relative block aspect-square w-full overflow-hidden border-b-[1.5px] border-[var(--mn-border)] bg-[var(--mn-cream-deep)]">
@@ -144,7 +146,7 @@ function SongOption({ locale, song, current, preferred, songOnly, onPick }: {
         </span>
         <span className="block px-2.5 pb-1.5 pt-2">
           <span className={`block truncate font-[var(--mn-font-display)] text-sm font-bold ${selected ? "text-[var(--mn-accent-deep)]" : "text-[var(--mn-text)]"}`}>
-            {song.title}
+            {title}
           </span>
           <span className="block truncate text-[10px] font-medium text-[var(--mn-text-muted)]">{song.bandName}</span>
         </span>
@@ -174,7 +176,7 @@ function SongOption({ locale, song, current, preferred, songOnly, onPick }: {
               key={key}
               type="button"
               onClick={() => onPick(key)}
-              aria-label={t(locale, "music.picker.pickDifficulty", { title: song.title, difficulty: label })}
+              aria-label={t(locale, "music.picker.pickDifficulty", { title, difficulty: label })}
               aria-pressed={current === key}
               title={label}
               className={`mn-focus rounded border py-0.5 text-center font-black transition hover:brightness-95 ${DIFFICULTY_CHIP_CLASSES[key]} ${

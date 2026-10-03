@@ -3,6 +3,7 @@ import MusicExplorer from "@/components/music/MusicExplorer";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
 import { getBuildMusic } from "@/lib/masterdata/build-data";
+import { getBuildMusicCategories } from "@/lib/masterdata/build-music";
 import { getBuildServers } from "@/lib/masterdata/build-servers";
 
 interface Props {
@@ -10,10 +11,10 @@ interface Props {
 }
 
 const { locale } = Astro.props;
-const songs = await getBuildMusic(locale);
-const servers = await getBuildServers();
+const [songs, categories, servers] = await Promise.all([getBuildMusic(locale), getBuildMusicCategories(locale), getBuildServers()]);
+const categoryNames: Array<[number, string]> = categories.map((category) => [category.id, category.name]);
 ---
 
 <PageLayout locale={locale} titleKey="seo.music.title" descriptionKey="seo.music.description">
-  <MusicExplorer client:load servers={servers} locale={locale} initialSongs={songs} />
+  <MusicExplorer client:load servers={servers} locale={locale} initialSongs={songs} categories={categoryNames} />
 </PageLayout>

@@ -13,6 +13,9 @@ import { getRoutePathById } from "@/lib/route/registry";
 import { entityServer, type ServerFaceted } from "@/lib/servers/facets";
 import MusicSelectDialog from "@/components/music/MusicSelectDialog";
 import ChartStage, { StageSignature } from "@/components/tools/ChartStage";
+import ChartQuickSettings from "@/components/tools/ChartQuickSettings";
+import type { ChartPlayer } from "ournotes-player";
+import { useSongTitle } from "@/lib/music/title-preference";
 
 interface Props {
   locale: AppLocale;
@@ -26,6 +29,7 @@ export default function ChartPreview3D({ locale, songs: allSongs }: Props) {
   const [preferred, setPreferred] = useState<MusicDifficulty>("expert");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [restored, setRestored] = useState(false);
+  const [player, setPlayer] = useState<ChartPlayer | null>(null);
 
   const song = useMemo(() => songs.find((entry) => entry.id === selectedId) ?? null, [songs, selectedId]);
   const difficulty = song ? resolveDifficulty(song, preferred) : null;
@@ -52,7 +56,8 @@ export default function ChartPreview3D({ locale, songs: allSongs }: Props) {
       {song && difficulty ? (
         <>
           <ChartHeader locale={locale} song={song} difficulty={difficulty} onDifficulty={setPreferred} onChangeSong={openDialog} />
-          <ChartStage locale={locale} manifestUrl={getChartManifestUrl({ musicId: song.id, difficulty })} />
+          <ChartStage locale={locale} manifestUrl={getChartManifestUrl({ musicId: song.id, difficulty })} onPlayer={setPlayer} />
+          {player && <ChartQuickSettings locale={locale} player={player} />}
         </>
       ) : (
         <StageEmpty locale={locale} onChooseSong={openDialog} />
@@ -82,12 +87,13 @@ function ChartHeader({ locale, song, difficulty, onDifficulty, onChangeSong }: {
   onChangeSong: () => void;
 }) {
   const current = song.difficulties.find((entry) => entry.difficulty === difficulty);
+  const title = useSongTitle()(song);
   return (
     <div className="mn-paper flex flex-col gap-4 p-4 lg:flex-row lg:items-center lg:p-5">
       <a
         href={localizePath(`${getRoutePathById("music")}/${song.id}`, locale)}
         className="mn-focus group flex min-w-0 flex-1 items-center gap-3"
-        title={t(locale, "music.openDetail", { title: song.title })}
+        title={t(locale, "music.openDetail", { title })}
       >
         <img
           className="h-16 w-16 shrink-0 rounded-xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-cream-deep)] object-cover"
@@ -96,7 +102,7 @@ function ChartHeader({ locale, song, difficulty, onDifficulty, onChangeSong }: {
         />
         <span className="min-w-0">
           <span className="block truncate font-[var(--mn-font-display)] text-lg font-bold text-[var(--mn-text)] transition-colors group-hover:text-[var(--mn-accent-deep)] sm:text-xl">
-            {song.title}
+            {title}
           </span>
           <span className="mt-1 flex min-w-0 items-center gap-1.5 text-xs font-semibold text-[var(--mn-text-muted)]">
             <img className="h-4 w-auto shrink-0 object-contain" src={getBandSmallIconUrl(song.bandId)} alt="" aria-hidden="true" />
