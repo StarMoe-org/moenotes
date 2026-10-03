@@ -19,6 +19,12 @@ const exploreLinks = [
   { id: "items", labelKey: "nav.items.items" },
   { id: "asset-viewer", labelKey: "nav.items.assetViewer" },
 ];
+
+const legalLinks = [
+  { id: "license", labelKey: "nav.items.license" },
+  { id: "terms", labelKey: "nav.items.terms" },
+  { id: "privacy", labelKey: "nav.items.privacy" },
+];
 ---
 
 <footer class="mn-site-footer mt-20 border-t-4 border-[var(--mn-accent)] bg-[var(--mn-paper)] text-[var(--mn-text)] transition-[padding] duration-300">
@@ -166,6 +172,11 @@ const exploreLinks = [
 
     {/* Bottom Disclaimer */}
     <div class="mt-12 border-t border-[var(--mn-border)]/10 pt-6 text-center text-xs font-medium text-[var(--mn-text-muted)]/75">
+      <nav aria-label={t(locale, "footer.legal")} class="mb-3 flex flex-wrap justify-center gap-x-4 gap-y-1">
+        {legalLinks.map((link) => (
+          <a href={localizePath(getRoutePathById(link.id), locale)} class="font-bold hover:text-[var(--mn-accent-deep)]">{t(locale, link.labelKey)}</a>
+        ))}
+      </nav>
       {t(locale, "footer.disclaimer")}
     </div>
   </div>

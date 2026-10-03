@@ -505,15 +505,31 @@ export function getBuildGachaDetail(locale: AppLocale, gachaId: number): Promise
 
 export function homeOn(server: GameServer, locale: AppLocale): Promise<HomeData> {
   return memo(`home:${server}:${locale}`, async () => {
-    const [banners, gachas, rewards, music, cards, supportCards] = await Promise.all([
+    const [banners, gachas, rewards, music, cards, supportCards, events, { characters }, gachaDetails, exchanges, chapters, textTable] = await Promise.all([
       table<RawHomeBanner>("MasterHomeBanner.json", server),
       gachasOn(server, locale),
       rewardEntriesOn(server, locale),
       musicOn(server, locale),
       cardsOn(server, locale),
       supportCardsOn(server, locale),
+      eventsOn(server, locale),
+      charactersOn(server, locale),
+      gachaDetailsOn(server, locale),
+      exchangesOn(server, locale),
+      table<RawStoryChapter>("MasterStoryChapter.json", server),
+      texts(server),
     ]);
-    return buildHomeData(banners._allData, gachas, rewards, music, cards, supportCards);
+    // Banner targets: exchange shops (displayType 3, 11) and story chapters (displayType 1).
+    const textMap = new Map(textTable._allData.map((entry) => [entry.id, entry]));
+    return buildHomeData(banners._allData, gachas, rewards, music, cards, supportCards, Date.now(), {
+      events,
+      characters,
+      gachaPickups: gachaDetails.map((gacha) => ({ id: gacha.id, pickupMemberIds: gacha.pickupMemberIds })),
+      targets: {
+        exchanges: new Map(exchanges.details.map((exchange) => [exchange.id, { id: exchange.id, title: exchange.name, link: { routeId: "exchange", detailId: exchange.id } }])),
+        chapters: chapters._allData.map((chapter) => ({ id: chapter.id, banner: chapter.banner, title: localizeMasterText(textMap.get(chapter.nameTextId), locale) })),
+      },
+    });
   });
 }
 

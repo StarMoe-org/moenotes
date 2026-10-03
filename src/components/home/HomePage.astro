@@ -1,14 +1,17 @@
 ---
 import HomeCarousel from "@/components/home/HomeCarousel";
-import HomeUpdates from "@/components/home/HomeUpdates";
+import HomeHighlights from "@/components/home/HomeHighlights";
+import HomeLayoutEditor from "@/components/home/HomeLayoutEditor";
+import HomeUpdates, { type HomeAvailability } from "@/components/home/HomeUpdates";
 import RouteGlyph from "@/components/shared/RouteGlyph";
 import SectionHeading from "@/components/shared/SectionHeading";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
-import { getBuildHomeData } from "@/lib/masterdata/build-data";
+import { getBuildCards, getBuildHomeData, getBuildMusic, getBuildSupportCards } from "@/lib/masterdata/build-data";
 import { getBuildServers } from "@/lib/masterdata/build-servers";
-import { pickFacet } from "@/lib/servers/facets";
+import { pickFacet, valueForServer } from "@/lib/servers/facets";
 import { getNavChildren, getNavigationGroups } from "@/lib/route/registry";
 
 interface Props {
@@ -16,10 +19,28 @@ interface Props {
 }
 
 const { locale } = Astro.props;
-const [data, servers] = await Promise.all([getBuildHomeData(locale), getBuildServers()]);
+const [data, servers, music, cards, supportCards] = await Promise.all([
+  getBuildHomeData(locale),
+  getBuildServers(),
+  getBuildMusic(locale),
+  getBuildCards(locale),
+  getBuildSupportCards(locale),
+]);
 // Each island gets its part of every server's home page.
 const slides = pickFacet(data, ["slides"]);
 const updates = pickFacet(data, ["rewards", "latestMusic", "latestCards", "latestSupportCards"]);
+const highlights = pickFacet(data, ["events", "birthdays"]);
+
+// The servers that have each entry any server lists as new, from the merged catalog (for the availability flags).
+const listed = (key: "latestMusic" | "latestCards" | "latestSupportCards") => new Set(data.servers.flatMap((server) => valueForServer(data, server)[key].map((entry) => entry.id)));
+const serversOf = (entries: ReadonlyArray<{ id: number; servers: GameServer[] }>, ids: Set<number>): Record<number, GameServer[]> =>
+  Object.fromEntries(entries.filter((entry) => ids.has(entry.id)).map((entry) => [entry.id, entry.servers]));
+const availability: HomeAvailability = {
+  music: serversOf(music, listed("latestMusic")),
+  cards: serversOf(cards, listed("latestCards")),
+  supportCards: serversOf(supportCards, listed("latestSupportCards")),
+};
+
 // Same entries and order as the sidebar; a group without pages links to itself.
 const shortcuts = getNavigationGroups().flatMap((group) => {
   const children = getNavChildren(group);
@@ -27,32 +48,56 @@ const shortcuts = getNavigationGroups().flatMap((group) => {
 });
 ---
 
-<div class="space-y-10 pb-4">
+<div class="pb-4">
   <h1 class="sr-only">{t(locale, "home.heading")}</h1>
+  <div class="mb-2 flex justify-end">
+    <HomeLayoutEditor client:idle locale={locale} />
+  </div>
 
-  <section aria-labelledby="home-now">
-    <SectionHeading id="home-now" title={t(locale, "home.now")} />
-    <HomeCarousel client:load locale={locale} home={slides} servers={servers} />
-  </section>
+  {/* Modules: their order and visibility come from the reader's home layout (src/lib/home/layout.ts). */}
+  <div class="flex flex-col gap-10" data-density-section>
+    <section data-home-module="now" aria-labelledby="home-now">
+      <SectionHeading id="home-now" title={t(locale, "home.now")} />
+      <HomeCarousel client:load locale={locale} home={slides} servers={servers} />
+    </section>
 
-  <HomeUpdates client:load locale={locale} home={updates} servers={servers} />
+    <div data-home-module="event">
+      <HomeHighlights client:load locale={locale} home={highlights} servers={servers} module="event" />
+    </div>
 
-  <nav aria-labelledby="home-shortcuts">
-    <SectionHeading id="home-shortcuts" title={t(locale, "home.shortcuts")} />
-    <ul class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-7">
-      {shortcuts.map((route) => (
-        <li class="min-w-0">
-          <a
-            href={localizePath(route.path, locale)}
-            class="mn-focus mn-list-card-row group flex min-w-0 items-center gap-3 border border-[var(--mn-glass-border)] bg-[var(--mn-paper)] px-3 py-2.5 text-sm font-bold text-[var(--mn-text)] transition hover:border-[var(--mn-accent)] hover:text-[var(--mn-accent-deep)]"
-          >
-            <span class="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]">
-              <RouteGlyph icon={route.nav && route.nav.icon ? route.nav.icon : "sparkles"} routeId={route.id} className="h-4 w-4" />
-            </span>
-            <span class="truncate">{t(locale, route.labelKey)}</span>
-          </a>
-        </li>
-      ))}
-    </ul>
-  </nav>
+    <div data-home-module="birthdays">
+      <HomeHighlights client:idle locale={locale} home={highlights} servers={servers} module="birthdays" />
+    </div>
+
+    <div data-home-module="rewards">
+      <HomeUpdates client:load locale={locale} home={updates} servers={servers} module="rewards" />
+    </div>
+
+    <div data-home-module="music">
+      <HomeUpdates client:load locale={locale} home={updates} servers={servers} module="music" availability={availability} />
+    </div>
+
+    <div data-home-module="cards">
+      <HomeUpdates client:load locale={locale} home={updates} servers={servers} module="cards" availability={availability} />
+    </div>
+
+    <nav data-home-module="shortcuts" aria-labelledby="home-shortcuts">
+      <SectionHeading id="home-shortcuts" title={t(locale, "home.shortcuts")} />
+      <ul class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-7">
+        {shortcuts.map((route) => (
+          <li class="min-w-0">
+            <a
+              href={localizePath(route.path, locale)}
+              class="mn-focus mn-list-card-row group flex min-w-0 items-center gap-3 border border-[var(--mn-glass-border)] bg-[var(--mn-paper)] px-3 py-2.5 text-sm font-bold text-[var(--mn-text)] transition hover:border-[var(--mn-accent)] hover:text-[var(--mn-accent-deep)]"
+            >
+              <span class="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]">
+                <RouteGlyph icon={route.nav && route.nav.icon ? route.nav.icon : "sparkles"} routeId={route.id} className="h-4 w-4" />
+              </span>
+              <span class="truncate">{t(locale, route.labelKey)}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  </div>
 </div>

@@ -13,6 +13,7 @@ import BannerImage from "@/components/shared/BannerImage";
 import RewardChip from "@/components/shared/RewardChip";
 import { rewardBannerCrop } from "@/components/rewards/RewardsExplorer";
 import ScheduleBadge from "@/components/shared/ScheduleBadge";
+import ServerAvailabilityBadge from "@/components/shared/ServerAvailabilityBadge";
 import SectionHeading, { SectionLink } from "@/components/shared/SectionHeading";
 import SupportCardItem from "@/components/support-cards/SupportCardItem";
 import type { CardViewModel } from "@/lib/cards/data";
@@ -27,10 +28,25 @@ interface Props {
   locale: AppLocale;
   home: ServerFacetedValue<Pick<HomeData, "rewards" | "latestMusic" | "latestCards" | "latestSupportCards">>;
   servers: GameServer[];
+  /** Which module this island renders; the page places each in its own layout slot. */
+  module: HomeUpdatesModule;
+  /** The servers that have each listed song / card / support card (from the merged catalog), for the availability badges. */
+  availability?: HomeAvailability;
 }
+
+export interface HomeAvailability {
+  music: Record<number, GameServer[]>;
+  cards: Record<number, GameServer[]>;
+  supportCards: Record<number, GameServer[]>;
+}
+
+export type HomeUpdatesModule = "rewards" | "music" | "cards";
 
 interface UpdatesProps {
   locale: AppLocale;
+  module: HomeUpdatesModule;
+  servers: readonly GameServer[];
+  availability: HomeAvailability;
   rewards: RewardEntrySummary[];
   songs: MusicViewModel[];
   cards: CardViewModel[];
@@ -42,17 +58,17 @@ type CardKind = "member" | "support";
 const latestGrid = "grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6";
 
 /** The latest releases of the page's server; the carousel holds the server switch. */
-export default function HomeUpdates({ locale, home, servers }: Props) {
+export default function HomeUpdates({ locale, home, servers, module, availability = { music: {}, cards: {}, supportCards: {} } }: Props) {
   const [server, pickServer] = useContentServer(locale, servers);
   const { rewards, latestMusic, latestCards, latestSupportCards } = valueForServer(home, server);
   return (
     <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer} hideSwitch>
-      <Updates locale={locale} rewards={rewards} songs={latestMusic} cards={latestCards} supportCards={latestSupportCards} />
+      <Updates locale={locale} module={module} servers={servers} availability={availability} rewards={rewards} songs={latestMusic} cards={latestCards} supportCards={latestSupportCards} />
     </ServerScope>
   );
 }
 
-function Updates({ locale, rewards, songs, cards, supportCards }: UpdatesProps) {
+function Updates({ locale, module, servers, availability, rewards, songs, cards, supportCards }: UpdatesProps) {
   const now = useNow();
   const [cardKind, setCardKind] = useState<CardKind>("member");
   const upcoming = t(locale, "schedule.upcoming");
@@ -62,8 +78,11 @@ function Updates({ locale, rewards, songs, cards, supportCards }: UpdatesProps) 
     return now !== null && start !== null && start > now ? { badge: upcoming } : {};
   };
 
-  return (
-    <div className="space-y-10">
+  // Flags of the servers that have an entry, when some of the build's servers lack it.
+  const flags = (ids: Record<number, GameServer[]>, id: number) => <ServerAvailabilityBadge locale={locale} entity={{ servers: ids[id] ?? [] }} servers={servers} />;
+
+  if (module === "rewards") {
+    return (
       <section aria-labelledby="home-rewards">
         <SectionHeading id="home-rewards" title={t(locale, "home.activities")}>
           <SectionLink href={localizePath(getRoutePathById("rewards"), locale)} label={t(locale, "home.viewAll")} />
@@ -79,42 +98,62 @@ function Updates({ locale, rewards, songs, cards, supportCards }: UpdatesProps) 
           </div>
         )}
       </section>
+    );
+  }
 
-      {songs.length > 0 && (
-        <section aria-labelledby="home-music">
-          <SectionHeading id="home-music" title={t(locale, "home.latestMusic")}>
-            <SectionLink href={localizePath(getRoutePathById("music"), locale)} label={t(locale, "home.viewAll")} />
-          </SectionHeading>
-          <div className={latestGrid}>
-            {songs.map((song) => <SongCard key={song.id} song={song} locale={locale} {...badgeFor(song.startAt)} />)}
-          </div>
-        </section>
-      )}
-
-      <section aria-labelledby="home-cards">
-        <SectionHeading id="home-cards" title={t(locale, "home.latestCards")}>
-          <div className="mn-segmented flex gap-1 rounded-full border border-[var(--mn-glass-border)] bg-[var(--mn-surface-strong)] p-1" role="group" aria-label={t(locale, "home.cardKind")}>
-            {(["member", "support"] as const).map((kind) => (
-              <button
-                key={kind}
-                type="button"
-                onClick={() => setCardKind(kind)}
-                aria-pressed={cardKind === kind}
-                className={`mn-focus rounded-full px-3 py-1 text-xs font-bold transition ${cardKind === kind ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)]"}`}
-              >
-                {t(locale, kind === "member" ? "nav.items.cards" : "nav.items.supportCards")}
-              </button>
-            ))}
-          </div>
-          <SectionLink href={localizePath(getRoutePathById(cardKind === "member" ? "cards" : "support-cards"), locale)} label={t(locale, "home.viewAll")} />
+  if (module === "music") {
+    if (songs.length === 0) return null;
+    return (
+      <section aria-labelledby="home-music">
+        <SectionHeading id="home-music" title={t(locale, "home.latestMusic")}>
+          <SectionLink href={localizePath(getRoutePathById("music"), locale)} label={t(locale, "home.viewAll")} />
         </SectionHeading>
         <div className={latestGrid}>
-          {cardKind === "member"
-            ? cards.map((card) => <MemberCardItem key={card.id} card={card} locale={locale} {...badgeFor(card.startAt)} />)
-            : supportCards.map((card) => <SupportCardItem key={card.id} card={card} locale={locale} {...badgeFor(card.startAt)} />)}
+          {songs.map((song) => (
+            <div key={song.id} className="relative min-w-0">
+              <SongCard song={song} locale={locale} {...badgeFor(song.startAt)} />
+              <span className="pointer-events-none absolute right-2 top-9 z-10">{flags(availability.music, song.id)}</span>
+            </div>
+          ))}
         </div>
       </section>
-    </div>
+    );
+  }
+
+  return (
+    <section aria-labelledby="home-cards">
+      <SectionHeading id="home-cards" title={t(locale, "home.latestCards")}>
+        <div className="mn-segmented flex gap-1 rounded-full border border-[var(--mn-glass-border)] bg-[var(--mn-surface-strong)] p-1" role="group" aria-label={t(locale, "home.cardKind")}>
+          {(["member", "support"] as const).map((kind) => (
+            <button
+              key={kind}
+              type="button"
+              onClick={() => setCardKind(kind)}
+              aria-pressed={cardKind === kind}
+              className={`mn-focus rounded-full px-3 py-1 text-xs font-bold transition ${cardKind === kind ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)]"}`}
+            >
+              {t(locale, kind === "member" ? "nav.items.cards" : "nav.items.supportCards")}
+            </button>
+          ))}
+        </div>
+        <SectionLink href={localizePath(getRoutePathById(cardKind === "member" ? "cards" : "support-cards"), locale)} label={t(locale, "home.viewAll")} />
+      </SectionHeading>
+      <div className={latestGrid}>
+        {cardKind === "member"
+          ? cards.map((card) => (
+            <div key={card.id} className="relative min-w-0">
+              <MemberCardItem card={card} locale={locale} {...badgeFor(card.startAt)} />
+              <span className="pointer-events-none absolute right-2 top-9 z-10">{flags(availability.cards, card.id)}</span>
+            </div>
+          ))
+          : supportCards.map((card) => (
+            <div key={card.id} className="relative min-w-0">
+              <SupportCardItem card={card} locale={locale} {...badgeFor(card.startAt)} />
+              <span className="pointer-events-none absolute right-2 top-9 z-10">{flags(availability.supportCards, card.id)}</span>
+            </div>
+          ))}
+      </div>
+    </section>
   );
 }
 

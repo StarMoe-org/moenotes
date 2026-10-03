@@ -16,7 +16,10 @@ import {
 import { formatBytes } from "@/lib/format/bytes";
 import { useOverlay } from "@/lib/overlay/use-overlay";
 import { defaultGameServer } from "@/lib/game-api/server";
-import { GAME_SERVER_SETTINGS } from "@/lib/settings/schema";
+import { DENSITIES, GAME_SERVER_SETTINGS } from "@/lib/settings/schema";
+import { getForceJapaneseTitlesSetting, setForceJapaneseTitlesSetting, SONG_TITLE_PREFERENCE_EVENT } from "@/lib/settings/song-titles";
+import type { ThemeBandColor } from "@/lib/masterdata/build-settings";
+import { DEFAULT_ACCENT } from "@/config/settings";
 import { useSettings } from "@/lib/settings/use-settings";
 import Modal from "@/components/shared/Modal";
 import Popover from "@/components/shared/Popover";
@@ -25,6 +28,8 @@ import type { AppSettings } from "@/types/settings";
 interface SettingsDrawerProps {
   locale: AppLocale;
   pathname: string;
+  /** Band colors the theme color choice offers (build time, src/lib/masterdata/build-settings.ts). */
+  bands?: ThemeBandColor[];
 }
 
 type SettingsTab = "general" | "data";
@@ -34,7 +39,7 @@ const chevronDown = (
   <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
 );
 
-export default function SettingsDrawer({ locale, pathname }: SettingsDrawerProps) {
+export default function SettingsDrawer({ locale, pathname, bands = [] }: SettingsDrawerProps) {
   const { isOpen, close } = useOverlay("settings");
   const [tab, setTab] = useState<SettingsTab>("general");
   const id = useId();
@@ -64,13 +69,13 @@ export default function SettingsDrawer({ locale, pathname }: SettingsDrawerProps
         ))}
       </div>
       <div role="tabpanel" id={`${id}-panel`} aria-labelledby={`${id}-${tab}-tab`}>
-        {tab === "general" ? <GeneralSettings locale={locale} pathname={pathname} /> : <DataSettings locale={locale} />}
+        {tab === "general" ? <GeneralSettings locale={locale} pathname={pathname} bands={bands} /> : <DataSettings locale={locale} />}
       </div>
     </Modal>
   );
 }
 
-function GeneralSettings({ locale, pathname }: SettingsDrawerProps) {
+function GeneralSettings({ locale, pathname, bands = [] }: SettingsDrawerProps) {
   const { settings, updateSettings } = useSettings();
 
   const update = (patch: Partial<AppSettings>) => {
@@ -134,6 +139,23 @@ function GeneralSettings({ locale, pathname }: SettingsDrawerProps) {
           label={(value) => t(locale, `settings.options.${value}`)}
           onChange={(value) => update({ colorScheme: value as AppSettings["colorScheme"] })}
         />
+      </Section>
+
+      <Section title={t(locale, "settings.accent.title")}>
+        <AccentPicker locale={locale} bands={bands} value={settings.accentColor} onChange={(accentColor) => update({ accentColor })} />
+      </Section>
+
+      <Section title={t(locale, "settings.density.title")}>
+        <Segmented
+          value={settings.density}
+          options={[...DENSITIES]}
+          label={(value) => t(locale, `settings.density.${value}`)}
+          onChange={(value) => update({ density: value as AppSettings["density"] })}
+        />
+      </Section>
+
+      <Section title={t(locale, "settings.songTitles.title")}>
+        <JapaneseTitlesToggle locale={locale} />
       </Section>
 
       <Section title={t(locale, "settings.gameServer")}>
@@ -311,6 +333,71 @@ function CacheBreakdown({ locale, overview, active, onActive }: {
 
 function categoryColor(category: CacheCategory): string {
   return `var(--mn-cache-${category})`;
+}
+
+/** Theme color: the site's default blue or a band's color, shown as swatches. */
+function AccentPicker({ locale, bands, value, onChange }: { locale: AppLocale; bands: ThemeBandColor[]; value: string; onChange: (value: string) => void }) {
+  const options = [{ key: DEFAULT_ACCENT, label: t(locale, "settings.accent.default"), color: "" }, ...bands.map((band) => ({ key: band.color, label: band.name, color: band.color }))];
+  return (
+    <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t(locale, "settings.accent.title")}>
+      {options.map((option) => {
+        const selected = value.toUpperCase() === option.key.toUpperCase();
+        return (
+          <button
+            key={option.key}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            title={option.label}
+            onClick={() => onChange(option.key)}
+            className={`mn-focus flex min-w-0 items-center gap-2 rounded-full border-[1.5px] py-1 pl-1 pr-3 text-xs font-bold transition ${selected ? "border-[var(--mn-accent-deep)] bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "border-[var(--mn-border)] bg-[var(--mn-surface-strong)] text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)]"}`}
+          >
+            <span
+              className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-[var(--mn-glass-border)]"
+              style={{ background: option.color || "linear-gradient(135deg, #5475BC 50%, #9ACBFA 50%)" }}
+              aria-hidden="true"
+            >
+              {selected && <svg className="h-3.5 w-3.5 text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 5 5 9-10" /></svg>}
+            </span>
+            <span className="max-w-[9rem] truncate">{option.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Always show songs under their Japanese titles (shared with the music pages' preference). */
+function JapaneseTitlesToggle({ locale }: { locale: AppLocale }) {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    setOn(getForceJapaneseTitlesSetting());
+    const sync = () => setOn(getForceJapaneseTitlesSetting());
+    window.addEventListener(SONG_TITLE_PREFERENCE_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(SONG_TITLE_PREFERENCE_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+  return (
+    <label className="flex cursor-pointer items-start justify-between gap-4 rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface-strong)] px-4 py-3">
+      <span className="min-w-0">
+        <span className="block text-sm font-bold text-[var(--mn-text)]">{t(locale, "settings.songTitles.forceJapanese")}</span>
+        <span className="mt-1 block text-xs leading-5 text-[var(--mn-text-muted)]">{t(locale, "settings.songTitles.hint")}</span>
+      </span>
+      <input
+        type="checkbox"
+        role="switch"
+        checked={on}
+        onChange={(event) => {
+          setOn(event.target.checked);
+          setForceJapaneseTitlesSetting(event.target.checked);
+        }}
+        className="mt-1 h-5 w-5 shrink-0 accent-[var(--mn-accent-deep)]"
+      />
+    </label>
+  );
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {

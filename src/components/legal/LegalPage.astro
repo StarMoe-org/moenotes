@@ -1,8 +1,9 @@
 ---
-// Placeholder reserved for the haneoka feature-parity work (.narrafork/plans/plan-parallel-weaving-hellman.md).
 import PageHeader from "@/components/route/PageHeader.astro";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
+import { siteConfig } from "@/config/site";
+import { getLegalTexts } from "@/i18n/legal";
 
 export type LegalDocument = "license" | "terms" | "privacy";
 
@@ -12,8 +13,42 @@ interface Props {
 }
 
 const { locale, document } = Astro.props;
+const texts = getLegalTexts(locale);
+const doc = texts.documents[document];
+const updated = new Intl.DateTimeFormat(locale, { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" }).format(Date.parse(`${texts.updated}T00:00:00Z`));
+const repo = siteConfig.repository ?? "";
+// `{repo}` marks where the repository link goes.
+const parts = (text: string) => text.split("{repo}");
 ---
 
 <PageLayout locale={locale} titleKey={`seo.${document}.title`} descriptionKey={`seo.${document}.description`}>
   <PageHeader locale={locale} titleKey={`seo.${document}.title`} descriptionKey={`seo.${document}.description`} />
+  <article class="mn-paper max-w-4xl p-5 sm:p-8">
+    <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--mn-text-muted)]">
+      <time datetime={texts.updated}>{texts.updatedLabel.replace("{date}", updated)}</time>
+      <span class="opacity-70">{texts.draftNotice}</span>
+    </p>
+    <div class="mt-6 space-y-8">
+      {doc.sections.map((section) => (
+        <section>
+          <h2 class="font-[var(--mn-font-display)] text-lg text-[var(--mn-text)]">{section.title}</h2>
+          {section.paragraphs?.map((paragraph) => (
+            <p class="mt-3 text-sm leading-7 text-[var(--mn-ink-soft)]">
+              {parts(paragraph).map((chunk, index) => (
+                <>
+                  {index > 0 && repo && <a href={repo} target="_blank" rel="noopener noreferrer" class="break-all font-bold text-[var(--mn-accent-deep)] underline underline-offset-4">{repo}</a>}
+                  {chunk}
+                </>
+              ))}
+            </p>
+          ))}
+          {section.items && (
+            <ul class="mt-3 list-disc space-y-1.5 pl-5 text-sm leading-7 text-[var(--mn-ink-soft)]">
+              {section.items.map((item) => <li>{item}</li>)}
+            </ul>
+          )}
+        </section>
+      ))}
+    </div>
+  </article>
 </PageLayout>
