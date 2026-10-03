@@ -226,7 +226,7 @@ export const enUS = {
     "recognitionFailed": "Recognition did not finish. No facts were saved. Try again.",
     "recognitionSharedCoverage": "Shared card artwork is checked against this server's card catalogue. Cards outside the gallery may remain unread.",
     "recognitionError": {
-      "configuration": "The recognition Worker URL, gallery URL or verified hash is missing. Reload after the runtime is configured.",
+      "configuration": "The recognition Worker URL or the card gallery address is missing. Reload after the runtime is configured.",
       "manifestFetch": "The card gallery could not be downloaded. Check the connection and retry.",
       "manifestHash": "The card gallery failed its file integrity check. Reload after the gallery files are repaired.",
       "manifestFormat": "The downloaded card gallery has an unsupported format. Reload after the gallery is updated.",
@@ -243,7 +243,7 @@ export const enUS = {
     "recognitionSaving": "Saving recognized facts",
     "recognitionStale": "The card box or server changed. Recognize again before saving.",
     "recognitionTimeLimit": "Recognition timed out without saving. Try again.",
-    "recognitionUnavailable": "The recognition Worker URL, gallery URL or verified hash is missing. The preview needs its recognition runtime configured.",
+    "recognitionUnavailable": "The recognition Worker URL or the card gallery address is missing. The preview needs its recognition runtime configured.",
     "recognitionUnknownCultivation": "Card artwork has been recognized. Unread levels, rank, training and skills remain unknown and can be supplemented later.",
     "recognizedCultivation": "Only actually observed growth values are saved. Hidden or uncertain values remain unknown.",
     "recognizedIdentity": "Recognized card {n}",

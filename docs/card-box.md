@@ -14,29 +14,36 @@ Screenshot upload is the primary entry point. The browser decodes each image to 
 
 ### Recognition runtime
 
-The default configuration serves the runtime from `/recognition/<bundle>/`, where `<bundle>` is the SHA-256 of the canonical JSON of its file list; `bundle-manifest.json` records each file's path, size and SHA-256. The bundle holds the Worker and detector modules, the gallery manifest, the SIFT feature buffers (`descriptors`, `points`, `owners`), OpenCV.js with its WASM, and the field reader (ONNX Runtime Web and `fields.onnx`). It contains no card images. License notices are in `/recognition/licenses/`. `PUBLIC_BOX_RECOGNITION_WORKER_*`, `PUBLIC_BOX_RECOGNITION_MANIFEST_*`, `PUBLIC_BOX_RECOGNITION_SHA256_*`, `PUBLIC_BOX_FIELD_MANIFEST_JP` and `PUBLIC_BOX_FIELD_SHA256_JP` override the defaults.
+The Worker (`public/recognition/recognition-worker.js`) and its modules (`detector-core.mjs`, `field-runtime-loader.js`, `field-reader.js`) are served by this site, because a Worker script must be same-origin. Everything else is read from the recognition site, `assetConfig.recognition.site` (`PUBLIC_RECOGNITION_SITE`, default `https://storage.bdon.moe/moenotes`): the storage bucket into which the recognition workflow of StarMoe-org/nnnotes publishes a new bundle when a server's Master data gains cards.
 
-The gallery manifest (`format: "ournotes.browser-feature-gallery/2"`) is checked against its exact UTF-8 SHA-256 before use, and its `galleryId` is the SHA-256 of its canonical JSON without that field. `src/lib/recognition/gallery-art-identity.json` binds the gallery ID, manifest SHA-256, Master table SHA-256 values and artwork SHA-256 values to each card's Master art reference.
+| Path | Content | Caching |
+| --- | --- | --- |
+| `recognition/current.json` | `{"format":"moenotes.recognition-pointer/1","bundle":{"sha256":"…","bytes":…}}`: the SHA-256 and size of the current bundle manifest | `no-cache`; revalidated before each import |
+| `assets/<sha256>.<ext>` | Content-addressed files: the bundle manifest, the gallery manifest, the SIFT feature buffers (`descriptors`, `points`, `owners`), OpenCV.js and its WASM, the field manifest, ONNX Runtime Web (glue, module and WASM), `fields.onnx` and the card artwork | Immutable |
+
+The page reads the pointer, then the bundle manifest at `assets/<sha256>.json` and checks its size and SHA-256 against the pointer. The bundle manifest (`format: "moenotes.recognition-bundle/1"`) lists every file of the bundle by logical name with its path, size, SHA-256 and Content-Type; `entries.gallery` and `entries.fields` name the gallery and field manifests. The page checks the gallery manifest the same way and hands the Worker the URLs and SHA-256 values of the gallery and field manifests. The Worker checks each file it reads (manifests, buffers, OpenCV, ONNX Runtime, the model and artwork) against the size and SHA-256 its manifest records before using it; a mismatch stops the job. The bucket answers with `Access-Control-Allow-Origin: *`, so pages on any origin can read these files. A batch keeps the bundle it first loaded, and a newly published bundle applies to the next import. New cards need no change or deployment of this site. License notices are in `/recognition/licenses/`.
+
+The gallery manifest (`format: "ournotes.browser-feature-gallery/3"`) has a `galleryId`, the SHA-256 of its canonical JSON without that field. `catalog` names the region and Master version of each server that contributed cards. Each card records its kind, decimal ID, card size, `identity` (asset ID, character IDs, rarity and card type from Master), the `regions` whose Master has that identity, and `art`. File references (`file`) are `<sha256>.<ext>` names next to the manifest.
 
 ### Gallery artwork
 
-After a candidate passes the geometric checks, the detector compares the screenshot region with the card's artwork (48 columns, correlation of at least 0.68). The Worker reads that artwork from the asset service (`assetConfig.api`, overridable with `PUBLIC_ASSET_API`) when a candidate first needs it. Each gallery card records an `art` object:
+After a candidate passes the geometric checks, the detector compares the screenshot region with the card's artwork (48 columns, correlation of at least 0.68). The Worker reads that artwork from the bundle when a candidate first needs it. Each gallery card records an `art` object:
 
 | Field | Meaning |
 | --- | --- |
-| `file` | Immutable `files/{id}` route, relative to the asset service root |
-| `assetPath` | Published asset the file belongs to |
-| `bytes`, `sha256` | Size and SHA-256 of the file as served |
+| `file` | `<sha256>.webp`, next to the gallery manifest |
+| `assetPath` | Asset-service path of the published image, e.g. `tw/zh-Hans/MemberCard/1/member_thumbnail/square.webp` |
+| `bytes`, `sha256` | Size and SHA-256 of the file |
 | `width`, `height` | Decoded image size |
 | `derive` | How the comparison image is made from the decoded file |
 
 Member cards use `{"method":"fit","box":[left,top,right,bottom],"filter":"lanczos3"}`: the 384×384 `MemberCard/{asset}/member_thumbnail/square.webp` is cropped, centred, to the 212:282 aspect of the card list and resampled to 212×282. The resampler uses the same fixed-point Lanczos-3 arithmetic as Pillow's `Image.resize(size, Image.LANCZOS, box)`, so a given decoded image always produces the same pixels. Snap cards use `{"method":"direct"}`: `SupportCard/{asset}/snap_thumbnail/snap_thumbnail.webp` is compared at its 512×288 size.
 
-The Worker checks the size and SHA-256 before decoding; a mismatch stops the job (`assetHashMismatch`). The `files/{id}` route never changes its content, carries immutable caching and answers with `Access-Control-Allow-Origin: *`, so pages on any origin can read it.
+The Worker checks the size and SHA-256 before decoding (`assetLengthMismatch`, `assetHashMismatch`).
 
 ### Catalogue binding
 
-The JP gallery also serves other servers. A gallery entry applies to the selected server when kind, decimal ID, asset ID, all character IDs, rarity and card type match that server's Master; matching IDs or a version label alone are not enough. The gallery covers 63 Member and 64 Snap cards, and cards outside it are entered manually. Results describe the cards seen in a screenshot only; they do not establish the screenshot's server, its account or a complete inventory. `binding.datasetId` names the UI Master source of an observation.
+One gallery serves every server: it holds the Member and Snap cards of the current Master of each published server. A gallery entry applies to the selected server when kind, decimal ID, asset ID, all character IDs, rarity and card type match that server's Master; matching IDs or a version label alone are not enough. Cards outside the gallery are entered manually. Results describe the cards seen in a screenshot only; they do not establish the screenshot's server, its account or a complete inventory. `binding.datasetId` names the UI Master source of an observation.
 
 The page transmits only the selected server's Master version and table-identity stamp. Its server-selected card catalogue is the single source for recognition and review: a single immutable projection keeps asset IDs, all character IDs, rarity and card type. A catalogue signature expires running jobs when those art references change within the same source stamp, and a mismatch names the card with its expected and actual art signature. Birthday and EX cards remain in the catalogue.
 

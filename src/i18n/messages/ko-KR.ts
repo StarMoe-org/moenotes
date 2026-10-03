@@ -226,7 +226,7 @@ export const koKR = {
     "recognitionFailed": "인식이 완료되지 않았습니다. 자료는 저장되지 않았으며 다시 시도할 수 있습니다.",
     "recognitionSharedCoverage": "공유 카드 이미지를 이 서버의 실제 카드 자료와 대조합니다. 이미지 목록에 없는 카드는 읽지 못할 수 있습니다.",
     "recognitionError": {
-      "configuration": "인식 Worker URL, 카드 이미지 목록 URL 또는 검증 해시가 없습니다. 설정 후 새로 고침하세요.",
+      "configuration": "인식 Worker URL 또는 카드 이미지 목록 주소가 없습니다. 설정 후 새로 고침하세요.",
       "manifestFetch": "카드 이미지 목록을 다운로드하지 못했습니다. 연결을 확인하고 다시 시도하세요.",
       "manifestHash": "카드 이미지 목록의 파일 무결성 검사에 실패했습니다. 파일 복구 후 새로 고침하세요.",
       "manifestFormat": "다운로드한 카드 이미지 목록 형식이 지원되지 않습니다. 목록 업데이트 후 새로 고침하세요.",
@@ -243,7 +243,7 @@ export const koKR = {
     "recognitionSaving": "인식 정보 저장 중",
     "recognitionStale": "카드 보관함이나 서버가 바뀌었습니다. 저장하기 전에 다시 인식하세요.",
     "recognitionTimeLimit": "인식 시간이 초과되었습니다. 저장되지 않았으며 다시 시도할 수 있습니다.",
-    "recognitionUnavailable": "인식 Worker URL, 카드 이미지 목록 URL 또는 검증 해시가 없습니다. 미리 보기의 인식 환경을 설정해야 합니다.",
+    "recognitionUnavailable": "인식 Worker URL 또는 카드 이미지 목록 주소가 없습니다. 미리 보기의 인식 환경을 설정해야 합니다.",
     "recognitionUnknownCultivation": "카드 이미지를 인식했습니다. 읽지 못한 레벨, 랭크, 특훈 및 스킬은 미확인으로 유지하며 나중에 보충할 수 있습니다.",
     "recognizedCultivation": "실제로 읽은 육성 값만 저장합니다. 보이지 않거나 불확실한 값은 미확인으로 유지합니다.",
     "recognizedIdentity": "인식한 카드 {n}",

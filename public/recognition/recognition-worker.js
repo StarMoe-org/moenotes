@@ -1,17 +1,30 @@
-// Classic Worker: importScripts executes only hash-verified OpenCV glue.
+// Classic Worker. Remote code (OpenCV and ONNX Runtime glue) runs only after its SHA-256 matches the bundle;
+// the field reader modules are this site's own files next to the Worker.
 let latest=null, queue=Promise.resolve(), detector=null, configurationKey=null, cvReady=null;
 const clock=()=>performance.timeOrigin+performance.now();
 const sha=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),v=>v.toString(16).padStart(2,'0')).join('');
 const canonical=value=>Array.isArray(value)?'['+value.map(canonical).join(',')+']':
   value&&typeof value==='object'?'{'+Object.keys(value).sort().map(key=>JSON.stringify(key)+':'+canonical(value[key])).join(',')+'}':JSON.stringify(value);
 
-async function checkedFetch(url,expected,context) {
+// Bundle files are content-addressed (`<sha256>.<ext>`); a cached copy is used only if its bytes still match.
+async function checkedFetch(url,expected,context,bytes) {
   context.check('assetFetch');
-  const response=await fetch(url,{signal:context.abort.signal,cache:'no-cache'});
+  const response=await fetch(url,{signal:context.abort.signal,credentials:'omit'});
   if (!response.ok) throw new Error('assetHttp:'+response.status);
-  const bytes=await response.arrayBuffer();
-  if (await sha(bytes)!==expected) throw new Error('assetHashMismatch');
-  context.check('assetVerified');return bytes;
+  const body=await response.arrayBuffer();
+  if (bytes!==undefined && body.byteLength!==bytes) throw new Error('assetLengthMismatch');
+  if (await sha(body)!==expected) throw new Error('assetHashMismatch');
+  context.check('assetVerified');return body;
+}
+
+// Files named by a manifest are siblings of that manifest: `<sha256>.<ext>`, the SHA-256 the record carries.
+function siblingResolver(manifestUrl) {
+  const base=new URL('.',manifestUrl);
+  return record=>{
+    const file=record?.file;
+    if (typeof file!=='string' || !/^[a-f0-9]{64}\.[a-z0-9]+$/.test(file) || file.slice(0,64)!==record.sha256) throw new Error('invalidAssetPath');
+    return new URL(file,base).href;
+  };
 }
 
 async function initialize(configuration,context,core) {
@@ -22,21 +35,16 @@ async function initialize(configuration,context,core) {
   if (manifest.galleryId!==context.binding.galleryId) throw new Error('galleryBindingMismatch');
   const claimed=manifest.galleryId, content={...manifest};delete content.galleryId;
   if (await sha(new TextEncoder().encode(canonical(content)))!==claimed) throw new Error('galleryIdentityMismatch');
-  const base=new URL('.',configuration.manifestUrl);
-  const resolve=file=>{
-    if (typeof file!=='string' || file.includes('..') || /^[a-z]+:/i.test(file) || file.startsWith('/')) throw new Error('invalidAssetPath');
-    return new URL(file,base).href;
-  };
+  const resolve=siblingResolver(configuration.manifestUrl);
   const buffers={};
   for (const name of ['descriptors','points','owners']) {
     const record=manifest.buffers[name];
-    buffers[name]=await checkedFetch(resolve(record.file),record.sha256,context);
-    if (buffers[name].byteLength!==record.bytes) throw new Error('assetLengthMismatch');
+    buffers[name]=await checkedFetch(resolve(record),record.sha256,context,record.bytes);
   }
   if (!cvReady) {
-    const glue=await checkedFetch(resolve(manifest.opencv.glue.file),manifest.opencv.glue.sha256,context);
-    const wasm=await checkedFetch(resolve(manifest.opencv.wasm.file),manifest.opencv.wasm.sha256,context);
-    self.Module={wasmBinary:new Uint8Array(wasm),locateFile:()=>resolve(manifest.opencv.wasm.file)};
+    const glue=await checkedFetch(resolve(manifest.opencv.glue),manifest.opencv.glue.sha256,context,manifest.opencv.glue.bytes);
+    const wasm=await checkedFetch(resolve(manifest.opencv.wasm),manifest.opencv.wasm.sha256,context,manifest.opencv.wasm.bytes);
+    self.Module={wasmBinary:new Uint8Array(wasm),locateFile:()=>resolve(manifest.opencv.wasm)};
     const url=URL.createObjectURL(new Blob([glue],{type:'application/javascript'}));
     try { importScripts(url); }
     finally { URL.revokeObjectURL(url); }
@@ -47,24 +55,16 @@ async function initialize(configuration,context,core) {
   }
   const cv=(await cvReady).cv;context.check('opencvReady');
   if (detector) detector.delete();
-  detector=new core.WasmDetector(cv,manifest,buffers,null);configurationKey=key;
+  detector=new core.WasmDetector(cv,manifest,buffers,null);configurationKey=key;detector.resolve=resolve;
   return detector;
 }
 
-function artworkBase(configuration) {
-  let base;
-  try { base=new URL(configuration.artworkBaseUrl); } catch { throw new Error('invalidArtworkBase'); }
-  if (!['https:','http:'].includes(base.protocol) || !base.pathname.endsWith('/') || base.search || base.hash) throw new Error('invalidArtworkBase');
-  return base;
-}
-
-// Card artwork comes from the asset service's immutable file route. The bytes must
-// match the gallery record before decoding; Member squares are then cropped and
+// Card artwork is a bundle file next to the gallery manifest. The bytes must match
+// the gallery record before decoding; Member squares are then cropped and
 // resampled to the card size, Snap images are used as decoded.
-async function loadArtwork(card,base,context,cv,core) {
+async function loadArtwork(card,resolve,context,cv,core) {
   const art=core.artworkRecord(card);
-  const bytes=await checkedFetch(new URL(art.file,base).href,art.sha256,context);
-  if (bytes.byteLength!==art.bytes) throw new Error('artworkLengthMismatch');
+  const bytes=await checkedFetch(resolve(art),art.sha256,context,art.bytes);
   const bitmap=await createImageBitmap(new Blob([bytes]),{colorSpaceConversion:'none'});
   try {
     if (bitmap.width!==art.width || bitmap.height!==art.height) throw new Error('artworkShapeMismatch');
@@ -84,16 +84,10 @@ async function readVisibleFields(configuration,context,image,cards,cv) {
   if (typeof configuration.fieldManifestSha256!=='string') throw new Error('invalidFieldManifest');
   const raw=await checkedFetch(configuration.fieldManifestUrl,configuration.fieldManifestSha256,context);
   const manifest=JSON.parse(new TextDecoder().decode(raw));
-  if (manifest.format!=='ournotes.browser-cultivation-assets/1') throw new Error('invalidFieldManifestFormat');
-  const base=new URL('.',configuration.fieldManifestUrl),resolve=record=>({
-    ...record,url:new URL(record.file,base).href
-  });
-  for (const name of ['loader','reader']) {
-    const record=manifest.modules[name],code=await checkedFetch(resolve(record).url,record.sha256,context);
-    if (code.byteLength!==record.size) throw new Error('fieldModuleLengthMismatch');
-    const url=URL.createObjectURL(new Blob([code],{type:'application/javascript'}));
-    try{importScripts(url);}finally{URL.revokeObjectURL(url);}
-  }
+  if (manifest.format!=='ournotes.browser-cultivation-assets/2') throw new Error('invalidFieldManifestFormat');
+  const sibling=siblingResolver(configuration.fieldManifestUrl),resolve=record=>({...record,url:sibling(record)});
+  if (!self.boxLensLoadFieldRuntime || !self.boxLensReadFields)
+    importScripts(new URL('./field-runtime-loader.js',self.location.href).href,new URL('./field-reader.js',self.location.href).href);
   const control={check:context.check,signal:context.abort.signal};
   const runtime=await self.boxLensLoadFieldRuntime({runtime:Object.fromEntries(Object.entries(manifest.runtime).map(([key,record])=>[key,resolve(record)]))},control);
   const fields=await self.boxLensReadFields({cv,image,items:cards.map(card=>({...card,bbox:card.uiBBox})),
@@ -132,14 +126,13 @@ self.onmessage=event=>{
       const {width,height,rgba,sourceId}=request.image??{};
       if (!Number.isSafeInteger(width) || !Number.isSafeInteger(height) || width<1 || height<1 || width*height>24000000 ||
           !(rgba instanceof ArrayBuffer) || rgba.byteLength!==width*height*4 || typeof sourceId!=='string') throw new Error('invalidImage');
-      const base=artworkBase(request.configuration);
       const engine=await initialize(request.configuration,context,core);
       if (engine.manifest.galleryId!==context.binding.galleryId) throw new Error('galleryBindingMismatch');
       const cv=engine.cv, input=cv.matFromArray(height,width,cv.CV_8UC4,new Uint8Array(rgba));
       image=new cv.Mat();
       try {cv.cvtColor(input,image,cv.COLOR_RGBA2BGR);} finally {input.delete();}
       // Cached artwork loads use the current context; never a prior job's cancelled controller.
-      engine.loadArt=card=>loadArtwork(card,base,context,cv,core);
+      engine.loadArt=card=>loadArtwork(card,engine.resolve,context,cv,core);
       const output=await engine.recognize(image,context);
       const fields=await readVisibleFields(request.configuration,context,image,output.cards,cv);
       const decodedPixelSha256=await sha(rgba);context.check('publish');
@@ -149,7 +142,7 @@ self.onmessage=event=>{
           ...(fields?.[index].display_mode?{display_mode:fields[index].display_mode}:{}),...(fields?.[index].crop_bbox?{crop_bbox:fields[index].crop_bbox}:{}),
           ...(fields?.[index].recognition_method?{recognition_method:fields[index].recognition_method}:{})})),
         sourceId,decodedPixelSha256,elapsedMs:clock()-context.started,
-        scope:{coverage:'observed_only',region:engine.manifest.region,galleryRegion:engine.manifest.region,sourceRegionVerified:false,masterVersion:engine.manifest.masterVersion,
+        scope:{coverage:'observed_only',sourceRegionVerified:false,catalog:engine.manifest.catalog.map(({region,masterVersion})=>({region,masterVersion})),
           galleryId:engine.manifest.galleryId,source:engine.manifest.source,
           genuineOpenCvWasm:true,identityGeometryOnly:fields===null,cultivationObserved:fields!==null,
           ...(fields?{fieldManifestSha256:request.configuration.fieldManifestSha256}:{}),fullScanCertified:false}});

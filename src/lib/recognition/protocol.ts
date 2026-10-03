@@ -5,8 +5,11 @@ export interface RecognitionBinding { jobId: string; inputRevision: string; data
 export interface RecognitionArtIdentity { kind: "member" | "snap"; id: string; assetId: string; characterIds: readonly string[]; rarity: number; cardType: number }
 export interface RecognitionSourceStamp { server: GameServer; masterVersion: string; sourceId: string }
 export interface RecognitionSource extends RecognitionSourceStamp { cards: readonly RecognitionArtIdentity[]; catalogueSignature: string;
-  gallery?: { region: string; masterVersion: string; galleryId: string; compatibleCardKeys: readonly string[]; incompatibleCardReasons?: readonly { key: string; expected: string; actual: string }[] } }
-export interface RecognitionConfiguration { workerUrl: string; manifestUrl: string; manifestSha256: string; artworkBaseUrl: string; fieldManifestUrl?: string; fieldManifestSha256?: string }
+  gallery?: { galleryId: string; catalog: readonly RecognitionCatalogEntry[]; compatibleCardKeys: readonly string[]; incompatibleCardReasons?: readonly { key: string; expected: string; actual: string }[] } }
+/** A server's Master snapshot that contributed cards to the gallery. */
+export interface RecognitionCatalogEntry { region: string; masterVersion: string }
+/** One verified bundle: the gallery manifest and the optional field manifest, both content-addressed. */
+export interface RecognitionConfiguration { workerUrl: string; manifestUrl: string; manifestSha256: string; fieldManifestUrl?: string; fieldManifestSha256?: string }
 export type RecognitionBox = [number, number, number, number];
 export interface RecognizedValue { value: number | null; confidence?: number; reason?: string; bbox?: RecognitionBox;
   method?: "boxLensNumberReaderOrtWasm"; modelSha256?: string; runtimeId?: string }
@@ -19,7 +22,7 @@ export interface RecognizedCard {
 export interface RecognitionResult {
   type: "result"; binding: RecognitionBinding; status: "complete" | "timeLimit" | "cancelled" | "stale" | "failed";
   cards: RecognizedCard[]; sourceId: string; elapsedMs: number; error?: string;
-  scope?: { region: string; masterVersion: string; galleryId: string; genuineOpenCvWasm: boolean; identityGeometryOnly: boolean; cultivationObserved: boolean; coverage: string; fullScanCertified: boolean };
+  scope?: { galleryId: string; catalog?: readonly RecognitionCatalogEntry[]; genuineOpenCvWasm: boolean; identityGeometryOnly: boolean; cultivationObserved: boolean; coverage: string; fullScanCertified: boolean };
 }
 export const sameRecognitionBinding = (a: RecognitionBinding | undefined, b: RecognitionBinding): boolean => !!a
   && (["jobId", "inputRevision", "datasetId", "galleryId"] as const).every(key => typeof a[key] === "string" && a[key] === b[key]);
@@ -32,7 +35,7 @@ export function validateRecognitionResult(value: unknown, binding: RecognitionBi
   if (!result || result.type !== "result" || !sameRecognitionBinding(result.binding, binding) || result.sourceId !== sourceId
     || !["complete", "timeLimit", "cancelled", "stale", "failed"].includes(result.status) || !Array.isArray(result.cards)) throw new Error("Recognition reply binding differs");
   if (result.status !== "complete") return result;
-  if (result.scope?.region !== (source.gallery?.region ?? source.server) || result.scope.masterVersion !== (source.gallery?.masterVersion ?? source.masterVersion) || result.scope.galleryId !== binding.galleryId
+  if (result.scope?.galleryId !== binding.galleryId || source.gallery && source.gallery.galleryId !== binding.galleryId
     || result.scope.genuineOpenCvWasm !== true || result.scope.coverage !== "observed_only" || result.scope.fullScanCertified !== false) throw new Error("Recognition source differs");
   for (const card of result.cards) {
     if (!source.cards.some(actual => actual.kind === card.kind && actual.id === card.id)) throw new Error("Recognized card is absent from selected catalogue");

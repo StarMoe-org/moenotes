@@ -226,7 +226,7 @@ export const zhCN = {
     "recognitionFailed": "识别未完成，尚未保存任何资料，可以重试。",
     "recognitionSharedCoverage": "共享卡面会与本区服实际卡牌目录逐张校验，图库之外的卡牌可能无法读取。",
     "recognitionError": {
-      "configuration": "识别 Worker 地址、图库地址或校验值缺失，请在识别资源配置后刷新。",
+      "configuration": "识别 Worker 地址或卡牌图库地址缺失，请在识别资源配置后刷新。",
       "manifestFetch": "无法下载卡牌图库，请检查连接后重试。",
       "manifestHash": "卡牌图库未通过文件完整性校验，请在图库文件修复后刷新。",
       "manifestFormat": "下载的卡牌图库格式不受支持，请在图库更新后刷新。",
@@ -243,7 +243,7 @@ export const zhCN = {
     "recognitionSaving": "正在保存识别资料",
     "recognitionStale": "卡池或区服已改变，请重新识别后保存。",
     "recognitionTimeLimit": "本次识别超时，尚未保存，可以重试。",
-    "recognitionUnavailable": "识别 Worker 地址、图库地址或校验值缺失，需要为当前预览配置识别资源。",
+    "recognitionUnavailable": "识别 Worker 地址或卡牌图库地址缺失，需要为当前预览配置识别资源。",
     "recognitionUnknownCultivation": "本次已识别卡面，尚未读取的等级、卡阶、特训和技能保持未知，可之后补充。",
     "recognizedCultivation": "只保存实际读到的养成值，未显示或不确定的资料仍保持未知。",
     "recognizedIdentity": "第 {n} 张识别卡牌",

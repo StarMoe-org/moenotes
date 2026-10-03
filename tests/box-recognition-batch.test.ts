@@ -22,7 +22,7 @@ function harness(keys = ["first", "second", "third"]) {
 }
 function reply(binding: RecognitionBinding, sha: string, level: number | null = null, kind: "member" | "snap" = "member"): RecognitionResult {
   return { type: "result", binding, sourceId: sha, status: "complete", elapsedMs: 10,
-    scope: { region: "jp", masterVersion: "synthetic/1", galleryId, genuineOpenCvWasm: true,
+    scope: { galleryId, catalog: [{ region: "jp", masterVersion: "synthetic/1" }], genuineOpenCvWasm: true,
       identityGeometryOnly: level === null, cultivationObserved: level !== null, coverage: "observed_only", fullScanCertified: false },
     cards: [{ kind, id: kind === "member" ? largeId : "2", bbox: [10, 20, 30, 40], uiBBox: [10, 20, 30, 40],
       identityConfidence: 0.9, inliers: 10, visibleFraction: 1, identityMethod: "siftFlannWasm", review: true,
@@ -311,7 +311,7 @@ test("worker cancellation retains the exact image SHA and monotonic elapsed time
   const client = new RecognitionWorkerClient(() => worker, () => now), selected = source();
   const binding = { jobId: "9007199254740993", inputRevision: revision, datasetId: selected.sourceId, galleryId };
   const pending = client.run({ binding, source: selected,
-    configuration: { workerUrl: "https://example.invalid/worker.js", manifestUrl: "https://example.invalid/manifest.json", manifestSha256, artworkBaseUrl: "https://assets.example.invalid/" },
+    configuration: { workerUrl: "https://example.invalid/worker.js", manifestUrl: "https://example.invalid/manifest.json", manifestSha256 },
     image: { sourceId: "c".repeat(64), width: 1, height: 1, rgba: new ArrayBuffer(4) }, timeLimitMs: 100, isCurrent: () => true, onProgress() {} });
   now = 1025; client.cancel();
   expect(await pending).toMatchObject({ status: "cancelled", binding, sourceId: "c".repeat(64), elapsedMs: 25, cards: [] });

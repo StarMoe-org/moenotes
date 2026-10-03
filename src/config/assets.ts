@@ -1,7 +1,7 @@
 import { buildEnvOrigin } from "./build-env";
 
 const assetApi = (import.meta.env.PUBLIC_ASSET_API || "https://assets.bdon.moe").replace(/\/+$/, "");
-const recognitionBundle = "/recognition/74fe13edd68f9ae8f8f019a2bbb1b52fa775197469bb659515c572fd4d9980ab";
+const recognitionSite = (import.meta.env.PUBLIC_RECOGNITION_SITE || "https://storage.bdon.moe/moenotes").replace(/\/+$/, "");
 
 export const assetConfig = {
   /**
@@ -39,17 +39,16 @@ export const assetConfig = {
     en: import.meta.env.PUBLIC_GAME_UI_LIBRARY_EN || "",
   },
   /**
-   * Screenshot recognition per server: the Worker, its gallery manifest (SHA-256 of the exact file) and the optional
-   * visible-field reader. Gallery artwork is read from the asset service at `artworkBaseUrl`. See docs/card-box.md.
+   * Screenshot recognition, shared by every server. The Worker and its modules are served from this site
+   * (`public/recognition/`). The recognition site holds `recognition/current.json`, a pointer to the current bundle
+   * manifest by SHA-256 and size, and the content-addressed `assets/<sha256>.<ext>` files it lists: the gallery,
+   * OpenCV and ONNX Runtime WASM, the field model and the card artwork. A new bundle needs no rebuild of this site.
+   * See docs/card-box.md.
    */
-  boxRecognition: {
-    jp: { workerUrl: import.meta.env.PUBLIC_BOX_RECOGNITION_WORKER_JP || `${recognitionBundle}/browser/recognition-worker.js`,
-      manifestUrl: import.meta.env.PUBLIC_BOX_RECOGNITION_MANIFEST_JP || `${recognitionBundle}/assets/gallery-manifest.json`, manifestSha256: import.meta.env.PUBLIC_BOX_RECOGNITION_SHA256_JP || "fa30b27c573229788de32e00dc58bbbbd553e70a7157c2ca0ff989a72bf0f90a",
-      fieldManifestUrl: import.meta.env.PUBLIC_BOX_FIELD_MANIFEST_JP || `${recognitionBundle}/fields/field-manifest.json`, fieldManifestSha256: import.meta.env.PUBLIC_BOX_FIELD_SHA256_JP || "d543f0ca374869fbc71be82620740ec4cf1c097d17f1d02df9049b4c97336402",
-      artworkBaseUrl: `${assetApi}/` },
-    tw: { workerUrl: import.meta.env.PUBLIC_BOX_RECOGNITION_WORKER_TW || "", manifestUrl: import.meta.env.PUBLIC_BOX_RECOGNITION_MANIFEST_TW || "", manifestSha256: import.meta.env.PUBLIC_BOX_RECOGNITION_SHA256_TW || "", artworkBaseUrl: `${assetApi}/` },
-    kr: { workerUrl: import.meta.env.PUBLIC_BOX_RECOGNITION_WORKER_KR || "", manifestUrl: import.meta.env.PUBLIC_BOX_RECOGNITION_MANIFEST_KR || "", manifestSha256: import.meta.env.PUBLIC_BOX_RECOGNITION_SHA256_KR || "", artworkBaseUrl: `${assetApi}/` },
-    en: { workerUrl: import.meta.env.PUBLIC_BOX_RECOGNITION_WORKER_EN || "", manifestUrl: import.meta.env.PUBLIC_BOX_RECOGNITION_MANIFEST_EN || "", manifestSha256: import.meta.env.PUBLIC_BOX_RECOGNITION_SHA256_EN || "", artworkBaseUrl: `${assetApi}/` },
+  recognition: {
+    site: recognitionSite,
+    pointerUrl: `${recognitionSite}/recognition/current.json`,
+    workerUrl: "/recognition/recognition-worker.js",
   },
   /** Shared song-page modules; published at the storage site's root, beside the music-data directory. */
   musicPlayerSite: (import.meta.env.PUBLIC_MUSIC_PLAYER_SITE || import.meta.env.PUBLIC_STORY_SITE || "https://storage.bdon.moe/moenotes").replace(/\/+$/, ""),

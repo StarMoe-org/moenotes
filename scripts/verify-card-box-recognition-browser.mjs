@@ -18,7 +18,7 @@ const fixtureDigests = {};
 for (const name of ['member-training.jpg', 'member-performance.jpg', 'member-technic.jpg']) fixtureDigests[name] = sha(await readFile(path.join(fixtures, name)));
 const report = { format:'moenotes.actual-card-box-batch-browser-proof/2', origin, at:new Date().toISOString(), platform:process.platform,
   fixtures:fixtureDigests,
-  scope:'Chromium against a running Astro origin with the configured recognition Worker; /api/me is stubbed. An invalid JPEG and a delayed gallery manifest exercise failure and cancellation.',
+  scope:'Chromium against a running Astro origin with the configured recognition Worker; /api/me is stubbed. An invalid JPEG and a delayed bundle pointer exercise failure and cancellation.',
   cases:[], pageErrors:[], nativeErrors:[], writes:[], passed:false, error:null, finalDom:null };
 const browser = await chromium.launch({ headless:true });
 let page;
@@ -143,7 +143,7 @@ try {
   {
     const run=await start(390); page=run.page;
     const upload=run.dialog.locator('input[type=file][multiple]'); let delayed=false;
-    await page.route('**/assets/gallery-manifest.json',async route=>{if(!delayed){delayed=true;await new Promise(resolve=>setTimeout(resolve,2500));}await route.continue().catch(()=>{});});
+    await page.route('**/recognition/current.json',async route=>{if(!delayed){delayed=true;await new Promise(resolve=>setTimeout(resolve,2500));}await route.continue().catch(()=>{});});
     await upload.setInputFiles([training,training]);
     const first=run.dialog.locator('.dw-screenshot-queue-item').first();
     await expect(first).toHaveAttribute('data-status','preparing');
@@ -151,7 +151,7 @@ try {
     await settled(run.dialog);
     await expect(first).toHaveAttribute('data-status','cancelled');
     await expect(run.dialog.locator('.dw-screenshot-queue-item[data-status="complete"]')).toHaveCount(1);
-    await page.unroute('**/assets/gallery-manifest.json');
+    await page.unroute('**/recognition/current.json');
     await first.getByRole('button',{name:'Retry',exact:true}).click(); await settled(run.dialog);
     await expect(run.dialog.locator('.dw-screenshot-queue-item[data-status="complete"]')).toHaveCount(2);
     const tiles=run.dialog.locator('.dw-recognition-card'); await expect(tiles).toHaveCount(24);

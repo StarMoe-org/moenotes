@@ -54,7 +54,6 @@ export class RecognitionWorkerClient {
       worker.onerror = event => finish(empty("failed", event.message));
       try {
         worker.postMessage({ type: "recognize", binding: job.binding, configuration: { manifestUrl: new URL(job.configuration.manifestUrl, base).href, manifestSha256: job.configuration.manifestSha256,
-          artworkBaseUrl: new URL(job.configuration.artworkBaseUrl, base).href,
           ...(job.configuration.fieldManifestUrl && job.configuration.fieldManifestSha256 ? { fieldManifestUrl: new URL(job.configuration.fieldManifestUrl, base).href, fieldManifestSha256: job.configuration.fieldManifestSha256 } : {}) },
           image: job.image, budget: { timeLimitMs: job.timeLimitMs, deadlineEpochMs: deadline } }, [job.image.rgba]);
       } catch { finish(empty("failed", "Recognition input unavailable")); }

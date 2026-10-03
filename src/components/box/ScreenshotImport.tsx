@@ -5,10 +5,10 @@ import { assetConfig } from "@/config/assets";
 import { t } from "@/i18n";
 import { CARD_FIELDS, type CardBox, type CardFieldName } from "@/lib/box/model";
 import type { BoxMode } from "@/lib/box/session";
-import { bindRecognitionSource, decodeScreenshot, loadRecognitionManifest } from "@/lib/recognition/client";
+import { bindRecognitionSource, decodeScreenshot, loadRecognitionBundle } from "@/lib/recognition/client";
 import { RecognitionError } from "@/lib/recognition/errors";
 import { RecognitionBatch, type RecognitionFileSnapshot } from "@/lib/recognition/batch";
-import { correctRecognizedBoxIdentity, correctRecognizedValue, mergeRecognizedBox, type RecognitionBinding, type RecognitionSource } from "@/lib/recognition/protocol";
+import { correctRecognizedBoxIdentity, correctRecognizedValue, mergeRecognizedBox, type RecognitionBinding, type RecognitionConfiguration, type RecognitionSource } from "@/lib/recognition/protocol";
 import { RecognitionWorkerClient } from "@/lib/recognition/worker-client";
 import Modal from "@/components/shared/Modal";
 import CardIdentitySelection from "./CardIdentitySelection";
@@ -35,7 +35,7 @@ export default function ScreenshotImport({ locale, server, source, sourceIssue, 
   const input = useRef<HTMLInputElement>(null), client = useRef(new RecognitionWorkerClient());
   const reviewArea = useRef<HTMLElement>(null), revealReview = useRef(true);
   const images = useRef(new Map<string, ImageInput>()), bootstrap = useRef<RecognitionFileSnapshot[]>([]);
-  const batch = useRef<RecognitionBatch | null>(null), boundSource = useRef<RecognitionSource | null>(null);
+  const batch = useRef<RecognitionBatch | null>(null), bound = useRef<{ source: RecognitionSource; configuration: RecognitionConfiguration } | null>(null);
   const failures = useRef(new Map<string, RecognitionError>());
   const generation = useRef(0), pumping = useRef(false), origin = useRef<string | null>(null), savingRef = useRef(false);
   const active = useRef<{ key: string; jobId: string; controller: AbortController } | null>(null);
@@ -45,10 +45,9 @@ export default function ScreenshotImport({ locale, server, source, sourceIssue, 
   const consumedPendingFiles = useRef<readonly File[] | null>(null);
   const current = JSON.stringify([isOpen, server, source?.sourceId, source?.catalogueSignature, box?.id, box?.revision, mode]);
   const currentRef = useRef(current); currentRef.current = current;
-  const configured = assetConfig.boxRecognition[server];
-  const ready = (value: typeof configured) => !!value.workerUrl && !!value.manifestUrl && !!value.manifestSha256;
-  const config = ready(configured) ? configured : Object.values(assetConfig.boxRecognition).find(ready) ?? configured;
-  const supported = !!source && ready(config);
+  // One gallery serves every server; each batch pins the bundle it first loaded.
+  const config = assetConfig.recognition;
+  const supported = !!source && !!config.workerUrl && !!config.pointerUrl;
   const readRows = () => batch.current?.snapshot().files ?? bootstrap.current.map(row => ({ ...row,
     elapsedMs: pending(row) && row.startedAt !== undefined ? performance.now() - row.startedAt : row.elapsedMs }));
   const publish = () => setRows(readRows());
@@ -66,7 +65,7 @@ export default function ScreenshotImport({ locale, server, source, sourceIssue, 
   function clearBatch(update = true) {
     generation.current++; stopActive();
     for (const image of images.current.values()) URL.revokeObjectURL(image.url);
-    images.current.clear(); bootstrap.current = []; batch.current = null; boundSource.current = null; failures.current.clear(); origin.current = null;
+    images.current.clear(); bootstrap.current = []; batch.current = null; bound.current = null; failures.current.clear(); origin.current = null;
     revealReview.current = true;
     if (update) { setRows([]); setDraft(null); setExcluded([]); setSelectedImage(null); setEditingKey(null); setChoosingIdentity(false); setStale(false); setSaveError(false); }
   }
@@ -165,14 +164,15 @@ export default function ScreenshotImport({ locale, server, source, sourceIssue, 
             if (batch.current) batch.current.fail(row.key, "timeLimit", binding); else patchBootstrap(row.key, { status: "timeLimit", elapsedMs: performance.now() - startedAt });
             stopActive(); publish();
           }, 90000);
-          const [pixels, verifiedSource] = await Promise.all([decodeScreenshot(image.file), boundSource.current
-            ? Promise.resolve(boundSource.current)
-            : loadRecognitionManifest(config, controller.signal).then(manifest => bindRecognitionSource(manifest, source, config.manifestSha256))]);
+          const [pixels, runtime] = await Promise.all([decodeScreenshot(image.file), bound.current
+            ? Promise.resolve(bound.current)
+            : loadRecognitionBundle(config, controller.signal).then(loaded => ({ source: bindRecognitionSource(loaded.manifest, source), configuration: loaded.configuration }))]);
           if (!alive()) continue;
-          boundSource.current = verifiedSource;
+          bound.current = runtime;
+          const verifiedSource = runtime.source;
           if (!batch.current) {
             batch.current = new RecognitionBatch({ batchId: crypto.randomUUID(), inputRevision: String(box?.revision ?? 0), source: verifiedSource,
-              manifestSha256: config.manifestSha256, at: Date.now(), files: [...images.current.values()] });
+              manifestSha256: runtime.configuration.manifestSha256, at: Date.now(), files: [...images.current.values()] });
             for (const previous of bootstrap.current) {
               if (previous.status === "cancelled") batch.current.cancelFile(previous.key);
               else if (["failed", "timeLimit"].includes(previous.status)) batch.current.fail(previous.key, previous.error ?? (previous.status === "timeLimit" ? "timeLimit" : "failed"));
@@ -181,7 +181,7 @@ export default function ScreenshotImport({ locale, server, source, sourceIssue, 
           }
           binding = batch.current.begin(row.key, { jobId, sourceId: pixels.sourceId, width: pixels.width, height: pixels.height, startedAt, deadline });
           publish();
-          const output = await client.current.run({ source: verifiedSource, configuration: config, image: pixels, timeLimitMs: deadline - performance.now(), binding,
+          const output = await client.current.run({ source: verifiedSource, configuration: runtime.configuration, image: pixels, timeLimitMs: deadline - performance.now(), binding,
             isCurrent: alive, onProgress: phase => { if (alive() && binding) { batch.current?.progress(row.key, binding, phase); publish(); } } });
           if (!alive()) continue;
           const complete = batch.current.finish(row.key, output);

@@ -2,8 +2,7 @@ import { expect, test } from "bun:test";
 import { answerField, createBox, parseBox } from "../src/lib/box/model";
 import { correctRecognizedIdentity, correctRecognizedValue, mergeRecognizedBox, observedScreenshotBox, validateRecognitionResult, type RecognitionResult } from "../src/lib/recognition/protocol";
 import { RecognitionWorkerClient, type RecognitionJob, type WorkerLike } from "../src/lib/recognition/worker-client";
-import { bindRecognitionSource, loadRecognitionManifest, recognitionDigest, type RecognitionManifest } from "../src/lib/recognition/client";
-import galleryArtIdentity from "../src/lib/recognition/gallery-art-identity.json";
+import { bindRecognitionSource, type RecognitionManifest } from "../src/lib/recognition/client";
 import { createRecognitionContext } from "../src/lib/recognition/catalogue";
 import { listForServer, mergeServerLists } from "../src/lib/servers/facets";
 import type { CardViewModel } from "../src/lib/cards/data";
@@ -13,10 +12,10 @@ import type { SupportCardViewModel } from "../src/lib/support-cards/data";
 const source = { server: "jp" as const, masterVersion: "synthetic/1", sourceId: "ui-master-observation:synthetic", catalogueSignature: "synthetic-contract",
   cards: [{ kind: "member" as const, id: "1", assetId: "1", characterIds: ["1"], rarity: 2, cardType: 5 }] };
 const binding = { jobId: "9007199254740993", inputRevision: "9007199254740995", datasetId: source.sourceId, galleryId: "a".repeat(64) };
-const configuration = { workerUrl: "https://example.invalid/worker.js", manifestUrl: "https://example.invalid/manifest.json", manifestSha256: "b".repeat(64), artworkBaseUrl: "https://assets.example.invalid/" };
+const configuration = { workerUrl: "https://example.invalid/worker.js", manifestUrl: "https://example.invalid/manifest.json", manifestSha256: "b".repeat(64) };
 function result(): RecognitionResult {
   return { type: "result", binding, status: "complete", sourceId: "c".repeat(64), elapsedMs: 10,
-    scope: { region: "jp", masterVersion: "synthetic/1", galleryId: binding.galleryId, genuineOpenCvWasm: true, identityGeometryOnly: true, cultivationObserved: false, coverage: "observed_only", fullScanCertified: false },
+    scope: { galleryId: binding.galleryId, catalog: [{ region: "jp", masterVersion: "synthetic/1" }], genuineOpenCvWasm: true, identityGeometryOnly: true, cultivationObserved: false, coverage: "observed_only", fullScanCertified: false },
     cards: [{ kind: "member", id: "1", bbox: [10, 20, 30, 40], uiBBox: [9, 19, 32, 42], identityConfidence: 0.9, inliers: 20, visibleFraction: 1, identityMethod: "siftFlannWasm", review: true,
       level: { value: null, reason: "notObserved" }, card_rank: { value: null, reason: "notObserved" }, awake_count: { value: null, reason: "notObserved" } }] };
 }
@@ -35,7 +34,8 @@ test("a complete result creates observed identities and never invents cultivatio
   expect(Object.values(box.cards[0]!.fields).every(field => field.value === null && field.history.length === 0)).toBe(true);
   expect(box.coverage.member.complete).toBe(false);
   expect(parseBox(JSON.stringify(box)).cards[0]!.identity.history[0]!.screenshot).toMatchObject({ sourceId: found.sourceId, bbox: [10, 20, 30, 40], regionAssignment: "player-selected" });
-  expect(() => observedScreenshotBox(found, { ...source, server: "tw" }, configuration.manifestSha256)).toThrow("source differs");
+  const foreign = result(); foreign.scope = { ...foreign.scope!, galleryId: "d".repeat(64) };
+  expect(() => observedScreenshotBox(foreign, source, configuration.manifestSha256)).toThrow("source differs");
   const wrong = result(); wrong.binding = { ...binding, galleryId: "d".repeat(64) };
   expect(() => validateRecognitionResult(wrong, binding, source, wrong.sourceId)).toThrow("binding");
 });
@@ -72,45 +72,29 @@ test("cancel, stale box changes and expired monotonic deadlines discard late WAS
   }
 });
 
-test("the gallery format is accepted and fetch, integrity and format failures remain distinguishable", async () => {
-  const savedFetch = globalThis.fetch, savedLocation = globalThis.location;
-  Object.defineProperty(globalThis, "location", { configurable: true, value: { href: "https://example.invalid/" } });
-  const manifest = { format: "ournotes.browser-feature-gallery/2", region: "jp", masterVersion: "frozen-gallery-version", galleryId: "a".repeat(64), cards: [] };
-  const bytes = new TextEncoder().encode(JSON.stringify(manifest));
-  const config = { ...configuration, manifestSha256: await recognitionDigest(bytes.buffer) };
-  try {
-    globalThis.fetch = (async () => new Response(bytes)) as typeof fetch;
-    expect((await loadRecognitionManifest(config, new AbortController().signal)).format).toBe("ournotes.browser-feature-gallery/2");
-    await expect(loadRecognitionManifest(configuration, new AbortController().signal)).rejects.toMatchObject({ code: "manifestHash" });
-    globalThis.fetch = (async () => new Response("not found", { status: 404 })) as typeof fetch;
-    await expect(loadRecognitionManifest(config, new AbortController().signal)).rejects.toMatchObject({ code: "manifestFetch", detail: "HTTP 404" });
-    const incorrect = new TextEncoder().encode(JSON.stringify({ ...manifest, format: undefined, schema: manifest.format }));
-    globalThis.fetch = (async () => new Response(incorrect)) as typeof fetch;
-    await expect(loadRecognitionManifest({ ...config, manifestSha256: await recognitionDigest(incorrect.buffer) }, new AbortController().signal)).rejects.toMatchObject({ code: "manifestFormat" });
-  } finally {
-    globalThis.fetch = savedFetch;
-    if (savedLocation) Object.defineProperty(globalThis, "location", { configurable: true, value: savedLocation });
-    else Reflect.deleteProperty(globalThis, "location");
-  }
-});
-
-test("shared artwork binding compares actual art and semantics while retaining JP gallery and selected TW source", () => {
-  const directory = galleryArtIdentity;
-  const manifest: RecognitionManifest = { format: "ournotes.browser-feature-gallery/2", region: directory.sourceRegion, masterVersion: directory.sourceMasterVersion, galleryId: directory.galleryId,
-    cards: directory.cards.map(card => ({ kind: card.kind as "member" | "snap", id: card.id, art: { file: `files/${card.artSha256}`, sha256: card.artSha256 }, masterTableSha256: directory.sourceTables[card.kind as "member" | "snap"].sha256 })) };
-  const selected = { server: "tw" as const, sourceId: "ui-master-observation:synthetic-selected-tw", masterVersion: "different-current-version", catalogueSignature: "synthetic-tw-contract",
-    cards: directory.cards.map(card => ({ ...card, kind: card.kind as "member" | "snap" })) };
-  const bound = bindRecognitionSource(manifest, selected, directory.galleryManifestSha256);
-  expect(bound.server).toBe("tw"); expect(bound.masterVersion).toBe("different-current-version");
-  expect(bound.gallery?.region).toBe("jp"); expect(bound.gallery?.compatibleCardKeys).toHaveLength(127);
-  const changed = bindRecognitionSource(manifest, { ...selected, cards: selected.cards.map(card => card.id === "1" && card.kind === "member" ? { ...card, assetId: "999" } : card) }, directory.galleryManifestSha256);
-  expect(changed.gallery?.compatibleCardKeys).not.toContain("member:1");
-  const found = result(); found.binding = { ...binding, galleryId: directory.galleryId, datasetId: bound.sourceId };
-  found.scope = { ...found.scope!, region: "jp", masterVersion: directory.sourceMasterVersion, galleryId: directory.galleryId };
-  expect(observedScreenshotBox(found, bound, directory.galleryManifestSha256).server).toBe("tw");
+test("one gallery binds to each selected server by its actual Master art references", () => {
+  const identity = (assetId: string, characterIds: string[], rarity: number, cardType: number) => ({ assetId, characterIds, rarity, cardType });
+  const manifest: RecognitionManifest = { format: "ournotes.browser-feature-gallery/3", galleryId: "f".repeat(64),
+    catalog: [{ region: "hk-tw-mo", masterVersion: "synthetic-tw" }, { region: "jp", masterVersion: "synthetic-jp" }],
+    cards: [
+      { kind: "member", id: "1", identity: identity("1", ["1"], 2, 5), regions: ["hk-tw-mo", "jp"], art: { file: `${"1".repeat(64)}.webp`, sha256: "1".repeat(64) } },
+      { kind: "snap", id: "2", identity: identity("2", ["1", "2"], 4, 1), regions: ["hk-tw-mo", "jp"], art: { file: `${"2".repeat(64)}.webp`, sha256: "2".repeat(64) } },
+      { kind: "snap", id: "3", identity: identity("3", ["3"], 4, 1), regions: ["hk-tw-mo"], art: { file: `${"3".repeat(64)}.webp`, sha256: "3".repeat(64) } },
+    ] };
+  const selected = { server: "jp" as const, sourceId: "ui-master-observation:synthetic-selected-jp", masterVersion: "different-current-version", catalogueSignature: "synthetic-jp-contract",
+    cards: [{ kind: "member" as const, id: "1", ...identity("1", ["1"], 2, 5) }, { kind: "snap" as const, id: "2", ...identity("2", ["1", "2"], 4, 1) }] };
+  const bound = bindRecognitionSource(manifest, selected);
+  expect(bound.server).toBe("jp"); expect(bound.masterVersion).toBe("different-current-version");
+  expect(bound.gallery?.galleryId).toBe(manifest.galleryId); expect(bound.gallery?.catalog).toEqual(manifest.catalog);
+  expect(bound.gallery?.compatibleCardKeys).toEqual(["member:1", "snap:2"]);
+  expect(bound.gallery?.incompatibleCardReasons).toEqual([{ key: "snap:3", expected: JSON.stringify(["3", ["3"], 4, 1]), actual: "absent" }]);
+  const changed = bindRecognitionSource(manifest, { ...selected, cards: selected.cards.map(card => card.kind === "member" ? { ...card, assetId: "999" } : card) });
+  expect(changed.gallery?.compatibleCardKeys).toEqual(["snap:2"]);
+  const found = result(); found.binding = { ...binding, galleryId: manifest.galleryId, datasetId: bound.sourceId };
+  found.scope = { ...found.scope!, galleryId: manifest.galleryId, catalog: manifest.catalog };
+  expect(observedScreenshotBox(found, bound, configuration.manifestSha256).server).toBe("jp");
   expect(() => validateRecognitionResult(found, found.binding, changed, found.sourceId)).toThrow("art is not bound");
-  const differentArt = { ...manifest, cards: manifest.cards.map(card => card.id === "1" && card.kind === "member" ? { ...card, art: { ...card.art, sha256: "0".repeat(64) } } : card) };
-  expect(() => bindRecognitionSource(differentArt, selected, directory.galleryManifestSha256)).toThrow("catalogBinding");
+  expect(() => bindRecognitionSource(manifest, { ...selected, cards: [{ kind: "member" as const, id: "1", ...identity("9", ["9"], 2, 5) }] })).toThrow("catalogBinding");
 });
 
 test("actual parameter-read evidence is separate from identity and clipped crops remain unknown", () => {

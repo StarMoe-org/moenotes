@@ -226,7 +226,7 @@ export const zhTW = {
     "recognitionFailed": "辨識未完成，尚未儲存任何資料，可以重試。",
     "recognitionSharedCoverage": "共用卡面會與本區服實際卡牌目錄逐張校驗，圖庫之外的卡牌可能無法讀取。",
     "recognitionError": {
-      "configuration": "辨識 Worker 位址、圖庫位址或校驗值缺失，請在辨識資源設定後重新整理。",
+      "configuration": "辨識 Worker 位址或卡牌圖庫位址缺失，請在辨識資源設定後重新整理。",
       "manifestFetch": "無法下載卡牌圖庫，請檢查連線後重試。",
       "manifestHash": "卡牌圖庫未通過檔案完整性校驗，請在圖庫檔案修復後重新整理。",
       "manifestFormat": "下載的卡牌圖庫格式不受支援，請在圖庫更新後重新整理。",
@@ -243,7 +243,7 @@ export const zhTW = {
     "recognitionSaving": "正在儲存識別資料",
     "recognitionStale": "卡池或區服已改變，請重新識別後儲存。",
     "recognitionTimeLimit": "本次識別逾時，尚未儲存，可以重試。",
-    "recognitionUnavailable": "辨識 Worker 位址、圖庫位址或校驗值缺失，需要為目前預覽設定辨識資源。",
+    "recognitionUnavailable": "辨識 Worker 位址或卡牌圖庫位址缺失，需要為目前預覽設定辨識資源。",
     "recognitionUnknownCultivation": "本次已識別卡面，尚未讀取的等級、卡階、特訓和技能保持未知，可之後補充。",
     "recognizedCultivation": "只儲存實際讀到的養成值，未顯示或不確定的資料仍保持未知。",
     "recognizedIdentity": "第 {n} 張識別卡牌",

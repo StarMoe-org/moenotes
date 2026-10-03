@@ -50,14 +50,14 @@ export function rootSift(descriptors, rows) {
 
 const HEX64=/^[a-f0-9]{64}$/;
 
-// Gallery artwork is an immutable asset-service file (`file`, relative to the
-// service root; `assetPath` names the published asset it was taken from). Its
-// byte length and SHA-256 are checked before decoding. "fit" crops `box`
-// ([left, top, right, bottom] in source pixels) and resamples it to the card size;
-// "direct" uses the decoded image as is.
+// Gallery artwork is a content-addressed bundle file next to the gallery manifest
+// (`file` is `<sha256>.webp` or `.png`; `assetPath` names the published asset it was
+// taken from). Its byte length and SHA-256 are checked before decoding. "fit" crops
+// `box` ([left, top, right, bottom] in source pixels) and resamples it to the card
+// size; "direct" uses the decoded image as is.
 export function artworkRecord(card) {
   const art=card?.art, derive=art?.derive;
-  if (!art || typeof art.file!=='string' || !/^[A-Za-z0-9-]+(\/[A-Za-z0-9_.-]+)+$/.test(art.file) || art.file.split('/').includes('..') ||
+  if (!art || typeof art.file!=='string' || !/^[a-f0-9]{64}\.(webp|png)$/.test(art.file) || art.file.slice(0,64)!==art.sha256 ||
       !Number.isSafeInteger(art.bytes) || art.bytes<1 || !HEX64.test(art.sha256) ||
       !Number.isSafeInteger(art.width) || art.width<1 || !Number.isSafeInteger(art.height) || art.height<1) throw new Error('invalidGalleryArtwork');
   if (derive?.method==='direct') {
@@ -128,7 +128,7 @@ export class WasmDetector {
   constructor(cv, manifest, buffers, loadArt) {
     for (const key of ['Mat','SIFT','KeyPointVector','createBoxLensFlannMatcher','boxLensFlannKnnMatch',
       'estimateAffine2D','warpAffine','invertAffineTransform','resize','cvtColor']) if (!cv[key]) throw new Error('missingWasmBinding:'+key);
-    if (manifest.format !== 'ournotes.browser-feature-gallery/2') throw new Error('invalidGalleryFormat');
+    if (manifest.format !== 'ournotes.browser-feature-gallery/3') throw new Error('invalidGalleryFormat');
     const identities=new Set();
     for (const card of manifest.cards) {
       canonicalId(card.id);

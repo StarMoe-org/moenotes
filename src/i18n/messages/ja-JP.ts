@@ -226,7 +226,7 @@ export const jaJP = {
     "recognitionFailed": "認識が完了しませんでした。データは保存されていません。再試行できます。",
     "recognitionSharedCoverage": "共通のカード画像を、このサーバーの実際のカードデータと照合します。画像カタログにないカードは読み取れない場合があります。",
     "recognitionError": {
-      "configuration": "認識 Worker のURL、画像カタログのURL、または検証ハッシュが未設定です。設定後に再読み込みしてください。",
+      "configuration": "認識 Worker のURLまたはカード画像カタログのアドレスが未設定です。設定後に再読み込みしてください。",
       "manifestFetch": "カード画像カタログを取得できませんでした。接続を確認して再試行してください。",
       "manifestHash": "カード画像カタログの整合性検証に失敗しました。ファイル修復後に再読み込みしてください。",
       "manifestFormat": "取得したカード画像カタログの形式に対応していません。更新後に再読み込みしてください。",
@@ -243,7 +243,7 @@ export const jaJP = {
     "recognitionSaving": "認識結果を保存中",
     "recognitionStale": "カードボックスまたはサーバーが変わりました。保存前にもう一度認識してください。",
     "recognitionTimeLimit": "認識が時間切れになりました。未保存です。再試行できます。",
-    "recognitionUnavailable": "認識 Worker のURL、画像カタログのURL、または検証ハッシュが未設定です。プレビューの認識環境を設定してください。",
+    "recognitionUnavailable": "認識 Worker のURLまたはカード画像カタログのアドレスが未設定です。プレビューの認識環境を設定してください。",
     "recognitionUnknownCultivation": "カード画像を認識しました。未読のレベル・ランク・特訓・スキルは不明のままで、後から補足できます。",
     "recognizedCultivation": "実際に読み取った育成値だけ保存します。非表示や不確かな値は不明のままです。",
     "recognizedIdentity": "認識カード {n}",
