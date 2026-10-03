@@ -1,17 +1,23 @@
 ---
-// Placeholder reserved for the haneoka feature-parity work (.narrafork/plans/plan-parallel-weaving-hellman.md).
-import PageHeader from "@/components/route/PageHeader.astro";
+import ItemDetail from "@/components/items/ItemDetail";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
+import { getBuildItemDetail, getBuildItemNeighbors } from "@/lib/masterdata/build-item-sources";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
 
 interface Props {
   locale: AppLocale;
   itemId: number;
 }
 
-const { locale } = Astro.props;
+const { locale, itemId } = Astro.props;
+const [detail, neighbors, servers] = await Promise.all([
+  getBuildItemDetail(locale, itemId),
+  getBuildItemNeighbors(locale),
+  getBuildServers(),
+]);
 ---
 
 <PageLayout locale={locale} titleKey="seo.itemDetail.title" descriptionKey="seo.itemDetail.description">
-  <PageHeader locale={locale} titleKey="seo.itemDetail.title" descriptionKey="seo.itemDetail.description" />
+  <ItemDetail client:load servers={servers} locale={locale} detail={detail} neighbors={neighbors.get(itemId) ?? {}} />
 </PageLayout>

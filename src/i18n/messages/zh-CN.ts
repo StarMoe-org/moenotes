@@ -484,6 +484,7 @@ export const zhCN = {
     rarities: { "2": "R", "3": "SR", "4": "SSR", "10": "特殊", "20": "生日" },
     attributes: { "1": "红赤", "2": "绀碧", "3": "翡翠", "4": "山吹", "5": "紫苑" },
     growth: { level: "等级", levelValue: "Lv.{level} / {limit}", decrease: "降低等级", increase: "提升等级", max: "最大", training: "特训", awaken: "觉醒", power: "综合力", skillLevel: "技能等级", leaderSkillHint: "队长技能等级与觉醒次数联动，调整时会同步修改觉醒。" },
+    materials: {"title":"养成材料","cost":"所需材料","empty":"这张卡没有记录养成材料。","alternative":"觉醒也可以使用该稀有度的乐队成员星辉：","kinds":{"training":"特训","awaken":"觉醒","liveSkill":"Live 技能","gekisouSkill":"击奏技能"}},
   },
   supportCards: {
     searchPlaceholder: "搜索卡名、角色...",
@@ -506,6 +507,7 @@ export const zhCN = {
     },
     diaryTitle: "卡面手帐",
     growth: { limitBreak: "上限解锁", skillLevelHint: "随着上限的突破，寄宿于卡面中的心意与技能将进一步绽放。" },
+    materials: {"limitBreak":"上限解锁"},
   },
   events: {
     filterTitle: "筛选活动",
@@ -1113,6 +1115,10 @@ export const zhCN = {
       voices: "语音",
       growth: "成长",
     },
+    sections: {"label":"角色分区","profile":"资料","costumes":"服装","voices":"语音","bonds":"羁绊"},
+    rewards: {"rank":"等级","rankTitle":"角色评级奖励","friendshipTitle":"羁绊等级奖励","empty":"没有记录奖励。"},
+    costumes: {"empty":"这名角色没有记录服装。","openViewer":"在 Live2D 查看器中打开"},
+    voices: {"characterVoice":"养成与演出语音","empty":"这名角色没有记录语音。","types":{"levelUp":"升级","training":"特训","skillUp":"技能升级","awaken":"觉醒","clear":"演出完成","fullCombo":"Full Combo","allPerfect":"All Perfect","result":"结算","battleFirst":"对战第 1 名","battleHigh":"对战高名次","battleLow":"对战低名次","other":"其他"}},
   },
   story: {
     categories: {
@@ -2068,6 +2074,10 @@ export const zhCN = {
     emptyDescription: "行囊中未寻得对应的物品。重置筛选后，即可检视旅途中拾起的全部信物。",
     reset: "查看全部道具",
     quickFilter: "打开快捷筛选",
+    openDetail: "查看{name}",
+    detail: {"group":"分类","type":"类型","max":"持有上限","noMax":"无上限","id":"道具 ID","period":"开放时间","backToList":"返回持有物一览","showAll":"展开全部 {count} 项","showLess":"收起","notFoundTitle":"找不到这件道具","notFoundDescription":"任何服务器的数据中都没有这件道具。返回持有物一览看看其他道具吧。"},
+    sources: {"title":"获取途径","description":"根据游戏数据整理的发放这件道具的奖励、商店与奖品。","empty":"游戏数据中没有记录这件道具的获取途径。","total":"共 ×{count}","everyCharacter":"所有角色","kinds":{"event":"活动","exchange":"交换所","shop":"商店","gacha":"招募","seasonPass":"通行证","loginBonus":"登录奖励","limitedMission":"限时任务","mission":"任务","characterMission":"角色任务","characterRank":"角色评级奖励","friendshipRank":"羁绊等级奖励","story":"剧情奖励","music":"歌曲奖励"},"details":{"pointReward":"累计 pt 奖励","liveReward":"演出奖励","challengeLive":"挑战演出","eventMission":"活动任务","boxGacha":"箱型招募","ranking":"排名奖励","product":"商品","prize":"奖品","drawBonus":"招募赠品","free":"免费奖励","premium":"高级奖励","loginDay":"每日奖励","missionReward":"任务奖励","completeReward":"全部达成奖励","rankReward":"等级奖励","episodeReward":"章节奖励","scoreReward":"评分奖励","comboReward":"Full Combo 奖励"}},
+    usages: {"title":"用途","description":"消耗这件道具的养成项目，以及一张卡或一件装备从头养满所需的数量。","empty":"这件道具不作为养成材料使用。","perTarget":"每个 ×{count}","perTargetAlternative":"每个 ×{count}，可代替该卡专属的成员星辉","kinds":{"memberTraining":"成员特训","memberAwaken":"成员觉醒","memberLiveSkill":"Live 技能强化","memberGekisouSkill":"击奏技能强化","bandItem":"乐队道具强化"}},
   },
   bandItems: {
     searchPlaceholder: "搜索道具名称、乐队...",

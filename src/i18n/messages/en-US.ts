@@ -432,6 +432,7 @@ export const enUS = {
     rarities: { "2": "R", "3": "SR", "4": "SSR", "10": "Special", "20": "Birthday" },
     attributes: { "1": "Red", "2": "Blue", "3": "Green", "4": "Yellow", "5": "Purple" },
     growth: { level: "Level", levelValue: "Lv.{level} / {limit}", decrease: "Decrease level", increase: "Increase level", max: "MAX", training: "Training", awaken: "Awaken", power: "Total power", skillLevel: "Skill level", leaderSkillHint: "Leader skill level is tied to the Awaken count; changing it also changes Awaken." },
+    materials: {"title":"Upgrade materials","cost":"Materials","empty":"No upgrade materials are recorded for this card.","alternative":"Awakening also accepts the band's piece of this rarity:","kinds":{"training":"Training","awaken":"Awaken","liveSkill":"Live skill","gekisouSkill":"Gekiso skill"}},
   },
   supportCards: {
     searchPlaceholder: "Search titles, characters...",
@@ -454,6 +455,7 @@ export const enUS = {
     },
     diaryTitle: "Diary",
     growth: { limitBreak: "Limit Break", skillLevelHint: "As limits break, the quiet devotion and skill sleeping within the card bloom even brighter." },
+    materials: {"limitBreak":"Limit Break"},
   },
   events: {
     filterTitle: "Filter Events",
@@ -1061,6 +1063,10 @@ export const enUS = {
       voices: "Voices",
       growth: "Growth",
     },
+    sections: {"label":"Character sections","profile":"Profile","costumes":"Costumes","voices":"Voices","bonds":"Bonds"},
+    rewards: {"rank":"Rank","rankTitle":"Character rank rewards","friendshipTitle":"Bond rank rewards","empty":"No rewards are recorded."},
+    costumes: {"empty":"No costumes are recorded for this character.","openViewer":"Open in the Live2D viewer"},
+    voices: {"characterVoice":"Growth and live voices","empty":"No voice lines are recorded for this character.","types":{"levelUp":"Level up","training":"Training","skillUp":"Skill up","awaken":"Awaken","clear":"Live clear","fullCombo":"Full combo","allPerfect":"All perfect","result":"Result","battleFirst":"Battle: 1st place","battleHigh":"Battle: high place","battleLow":"Battle: low place","other":"Other"}},
   },
   story: {
     categories: {
@@ -1927,6 +1933,10 @@ export const enUS = {
     emptyDescription: "No matching items were found in your travel bag. Reset the filters to inspect all keepsakes collected along your journey.",
     reset: "View all items",
     quickFilter: "Open quick filters",
+    openDetail: "View {name}",
+    detail: {"group":"Category","type":"Type","max":"Holding limit","noMax":"No limit","id":"Item ID","period":"Available","backToList":"Back to items","showAll":"Show all {count}","showLess":"Show less","notFoundTitle":"No such item","notFoundDescription":"This item is not in any server's data. Return to the item list to look for another one."},
+    sources: {"title":"Where to get it","description":"Rewards, shops and prizes that hand this item out, read from the game data.","empty":"No source of this item is recorded in the game data.","total":"×{count} in total","everyCharacter":"Every character","kinds":{"event":"Events","exchange":"Exchanges","shop":"Shop","gacha":"Gacha","seasonPass":"Season passes","loginBonus":"Login bonuses","limitedMission":"Limited missions","mission":"Missions","characterMission":"Character missions","characterRank":"Character rank rewards","friendshipRank":"Bond rank rewards","story":"Story rewards","music":"Song rewards"},"details":{"pointReward":"Point rewards","liveReward":"Live rewards","challengeLive":"Challenge Live","eventMission":"Event missions","boxGacha":"Box gacha","ranking":"Ranking rewards","product":"Product","prize":"Prize","drawBonus":"Draw bonus","free":"Free track","premium":"Premium track","loginDay":"Daily reward","missionReward":"Mission reward","completeReward":"Completion reward","rankReward":"Rank reward","episodeReward":"Episode reward","scoreReward":"Score rank reward","comboReward":"Full combo reward"}},
+    usages: {"title":"Used for","description":"Upgrades that consume this item, and how many one card or gear needs from start to max.","empty":"This item is not used as an upgrade material.","perTarget":"×{count} each","perTargetAlternative":"×{count} each, in place of the card's own piece","kinds":{"memberTraining":"Member training","memberAwaken":"Member awakening","memberLiveSkill":"Live skill upgrades","memberGekisouSkill":"Gekiso skill upgrades","bandItem":"Band gear upgrades"}},
   },
   bandItems: {
     searchPlaceholder: "Search gear name, band...",

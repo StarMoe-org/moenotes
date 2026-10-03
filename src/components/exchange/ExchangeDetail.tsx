@@ -15,6 +15,7 @@ import { localizePath } from "@/i18n/routing";
 import type { ExchangeCurrency, ExchangeDetailViewModel, ExchangeProductViewModel } from "@/lib/exchange/data";
 import { eventPath } from "@/lib/events/links";
 import { buildDynamicPath, getRoutePathById } from "@/lib/route/registry";
+import { entityLinkPath } from "@/lib/route/entity-link";
 import { formatMasterDate, formatScheduleRange } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
 import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
@@ -183,7 +184,7 @@ function CurrencyLabel({ locale, currency }: { locale: AppLocale; currency: Exch
     </>
   );
   return currency.link
-    ? <a href={localizePath(getRoutePathById(currency.link.routeId), locale)} className="mn-focus inline-flex items-center gap-1.5 hover:text-[var(--mn-accent-deep)]">{content}</a>
+    ? <a href={localizePath(entityLinkPath(currency.link), locale)} className="mn-focus inline-flex items-center gap-1.5 hover:text-[var(--mn-accent-deep)]">{content}</a>
     : <span className="inline-flex items-center gap-1.5">{content}</span>;
 }
 

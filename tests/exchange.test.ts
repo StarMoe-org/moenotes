@@ -70,11 +70,11 @@ describe("exchange normalization", () => {
     expect(details.find((detail) => detail.id === 1)!.products.map((entry) => entry.id)).toEqual([21]);
   });
 
-  test("an item currency comes from the exchange row and links to the items page", () => {
+  test("an item currency comes from the exchange row and links to the item's page", () => {
     const shop = normalizeExchanges(sources(), "en-US").details[0]!;
     expect(shop.currency.name).toBe("Event Medal");
     expect(shop.currency.imageUrl).toEndWith("/Item/exchange/item_icon_medal/item_icon_medal.webp");
-    expect(shop.currency.link).toEqual({ routeId: "items" });
+    expect(shop.currency.link).toEqual({ routeId: "items", detailId: 43 });
   });
 
   test("gacha points (type 7) use the game's gacha_point text and icon", () => {

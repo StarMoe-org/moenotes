@@ -40,11 +40,15 @@ import {
   getCharacterFaceIconUrl,
 } from "@/lib/cards/assets";
 import { LevelControl, StepControl } from "@/components/shared/CardGrowthControls";
+import CardMaterialsPanel from "@/components/cards/CardMaterialsPanel";
+import type { CardMaterials } from "@/lib/cards/materials";
 
 interface Props {
   locale: AppLocale;
   supportCardId: number;
   initialData: ServerFacetedValue<DetailData>;
+  /** Limit break materials (build-card-materials.ts); null when no server has the card. */
+  materials?: ServerFacetedValue<CardMaterials> | null;
   servers: GameServer[];
 }
 
@@ -79,17 +83,18 @@ function estimateTabWidth(label: string): number {
 }
 
 /** The support card as the page's server has it (docs/servers.md). */
-export default function SupportCardDetail({ locale, initialData, servers }: Props) {
+export default function SupportCardDetail({ locale, initialData, materials: facetedMaterials = null, servers }: Props) {
   const [server, pickServer] = useContentServer(locale, servers);
   const data = useMemo(() => moveReleaseUrls(valueForServer(initialData, server), entityServer(initialData, server)), [initialData, server]);
+  const materials = useMemo(() => facetedMaterials && moveReleaseUrls(valueForServer(facetedMaterials, server), entityServer(facetedMaterials, server)), [facetedMaterials, server]);
   return (
     <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer} entityServers={initialData.servers}>
-      <SupportCardDetailView locale={locale} data={data} />
+      <SupportCardDetailView locale={locale} data={data} materials={materials} />
     </ServerScope>
   );
 }
 
-function SupportCardDetailView({ locale, data }: { locale: AppLocale; data: DetailData }) {
+function SupportCardDetailView({ locale, data, materials }: { locale: AppLocale; data: DetailData; materials: CardMaterials | null }) {
   const assetUrl = useAssetUrl();
   const timeZone = useDisplayTimeZone();
   const loading = false;
@@ -619,6 +624,8 @@ function SupportCardDetailView({ locale, data }: { locale: AppLocale; data: Deta
               </div>
             </div>
           )}
+
+          {materials && materials.groups.length > 0 && <CardMaterialsPanel locale={locale} groups={materials.groups} />}
 
           <div className="flex justify-start">
             <a href={localizePath(getRoutePathById("support-cards"), locale)} className="mn-focus mn-stamp-press inline-flex rounded-full border border-[var(--mn-border)] bg-[var(--mn-paper)] px-6 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]">

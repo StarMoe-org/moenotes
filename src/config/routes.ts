@@ -234,8 +234,7 @@ export const routeRegistry = [
             },
             nav: false,
             searchable: false,
-            // Filled by the feature pack that owns this page; a function, like every dynamic route (tests/masterdata-params).
-            staticParams: async () => [],
+            staticParams: async () => (await import("@/lib/route/masterdata-params")).getMasterdataItemParams(),
           },
         ],
       },

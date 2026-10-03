@@ -484,6 +484,7 @@ export const zhTW = {
     rarities: { "2": "R", "3": "SR", "4": "SSR", "10": "特殊", "20": "生日" },
     attributes: { "1": "紅赤", "2": "紺碧", "3": "翡翠", "4": "山吹", "5": "紫苑" },
     growth: { level: "等級", levelValue: "Lv.{level} / {limit}", decrease: "降低等級", increase: "提升等級", max: "上限", training: "特訓", awaken: "覺醒", power: "綜合力", skillLevel: "技能等級", leaderSkillHint: "隊長技能等級與覺醒次數連動，調整時會同步修改覺醒。" },
+    materials: {"title":"養成材料","cost":"所需材料","empty":"這張卡沒有記錄養成材料。","alternative":"覺醒也可以使用該稀有度的樂隊團員星輝：","kinds":{"training":"特訓","awaken":"覺醒","liveSkill":"Live 技能","gekisouSkill":"擊奏技能"}},
   },
   supportCards: {
     searchPlaceholder: "搜索卡名、角色...",
@@ -506,6 +507,7 @@ export const zhTW = {
     },
     diaryTitle: "卡面手帳",
     growth: { limitBreak: "開放上限", skillLevelHint: "隨著上限的突破，寄宿於卡面中的心意與技能將進一步綻放。" },
+    materials: {"limitBreak":"開放上限"},
   },
   events: {
     filterTitle: "篩選活動",
@@ -1113,6 +1115,10 @@ export const zhTW = {
       voices: "語音",
       growth: "成長",
     },
+    sections: {"label":"角色分區","profile":"資料","costumes":"服裝","voices":"語音","bonds":"羈絆"},
+    rewards: {"rank":"等級","rankTitle":"角色評級獎勵","friendshipTitle":"羈絆等級獎勵","empty":"沒有記錄獎勵。"},
+    costumes: {"empty":"這名角色沒有記錄服裝。","openViewer":"在 Live2D 檢視器中開啟"},
+    voices: {"characterVoice":"養成與演出語音","empty":"這名角色沒有記錄語音。","types":{"levelUp":"升級","training":"特訓","skillUp":"技能升級","awaken":"覺醒","clear":"演出完成","fullCombo":"Full Combo","allPerfect":"All Perfect","result":"結算","battleFirst":"對戰第 1 名","battleHigh":"對戰高名次","battleLow":"對戰低名次","other":"其他"}},
   },
   story: {
     categories: {
@@ -2068,6 +2074,10 @@ export const zhTW = {
     emptyDescription: "行囊中未尋得對應的物品。重置篩選後，即可檢視旅途中拾起的全部信物。",
     reset: "查看全部道具",
     quickFilter: "打開快捷篩選",
+    openDetail: "查看{name}",
+    detail: {"group":"分類","type":"類型","max":"持有上限","noMax":"無上限","id":"道具 ID","period":"開放時間","backToList":"返回持有物一覽","showAll":"展開全部 {count} 項","showLess":"收起","notFoundTitle":"找不到這件道具","notFoundDescription":"任何伺服器的資料中都沒有這件道具。返回持有物一覽看看其他道具吧。"},
+    sources: {"title":"取得途徑","description":"根據遊戲資料整理的發放這件道具的獎勵、商店與獎品。","empty":"遊戲資料中沒有記錄這件道具的取得途徑。","total":"共 ×{count}","everyCharacter":"所有角色","kinds":{"event":"活動","exchange":"交換所","shop":"商店","gacha":"轉蛋","seasonPass":"通行證","loginBonus":"登入獎勵","limitedMission":"限時任務","mission":"任務","characterMission":"角色任務","characterRank":"角色評級獎勵","friendshipRank":"羈絆等級獎勵","story":"劇情獎勵","music":"歌曲獎勵"},"details":{"pointReward":"累計 pt 獎勵","liveReward":"演出獎勵","challengeLive":"挑戰演出","eventMission":"活動任務","boxGacha":"箱型轉蛋","ranking":"排名獎勵","product":"商品","prize":"獎品","drawBonus":"轉蛋贈品","free":"免費獎勵","premium":"高級獎勵","loginDay":"每日獎勵","missionReward":"任務獎勵","completeReward":"全部達成獎勵","rankReward":"等級獎勵","episodeReward":"章節獎勵","scoreReward":"評分獎勵","comboReward":"Full Combo 獎勵"}},
+    usages: {"title":"用途","description":"消耗這件道具的養成項目，以及一張卡或一件裝備從頭養滿所需的數量。","empty":"這件道具不作為養成材料使用。","perTarget":"每個 ×{count}","perTargetAlternative":"每個 ×{count}，可代替該卡專屬的團員星輝","kinds":{"memberTraining":"團員特訓","memberAwaken":"團員覺醒","memberLiveSkill":"Live 技能強化","memberGekisouSkill":"擊奏技能強化","bandItem":"樂隊道具強化"}},
   },
   bandItems: {
     searchPlaceholder: "搜尋道具名稱、樂隊...",

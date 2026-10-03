@@ -4,6 +4,7 @@ import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
 import { getBuildSupportCardDetail } from "@/lib/masterdata/build-data";
 import { getBuildServers } from "@/lib/masterdata/build-servers";
+import { getBuildSupportCardMaterials } from "@/lib/masterdata/build-card-materials";
 
 interface Props {
   locale: AppLocale;
@@ -11,10 +12,13 @@ interface Props {
 }
 
 const { locale, supportCardId } = Astro.props;
-const initialData = await getBuildSupportCardDetail(locale, supportCardId);
-const servers = await getBuildServers();
+const [initialData, materials, servers] = await Promise.all([
+  getBuildSupportCardDetail(locale, supportCardId),
+  getBuildSupportCardMaterials(locale, supportCardId),
+  getBuildServers(),
+]);
 ---
 
 <PageLayout locale={locale} titleKey="seo.supportCardDetail.title" descriptionKey="seo.supportCardDetail.description">
-  <SupportCardDetail client:load servers={servers} locale={locale} supportCardId={supportCardId} initialData={initialData} />
+  <SupportCardDetail client:load servers={servers} locale={locale} supportCardId={supportCardId} initialData={initialData} materials={materials} />
 </PageLayout>

@@ -5,6 +5,7 @@ import { getItemIconUrl } from "@/lib/items/assets";
 import type { ItemViewModel } from "@/lib/items/data";
 import { localizeMasterText } from "@/lib/masterdata/localize-text";
 import type { RewardResolver, RewardViewModel } from "@/lib/rewards/resources";
+import type { EntityLink } from "@/lib/route/entity-link";
 
 /**
  * One shop of a category. The currency is the shop's: every product of it is paid in `paymentResourceType`/`Id`
@@ -82,7 +83,7 @@ export interface ExchangeCurrency {
   name: string;
   imageUrl: string;
   /** The item's page on this site (an item currency); gacha points have none of their own. */
-  link?: { routeId: string };
+  link?: EntityLink;
 }
 
 /** The event or gacha a shop belongs to: its points (type 7) or the event's own item. */
@@ -207,7 +208,7 @@ export function normalizeExchanges(sources: ExchangeSources, locale: AppLocale):
     }
     if (exchange.paymentResourceType === ITEM_RESOURCE_TYPE) {
       const item = items.get(exchange.paymentResourceId);
-      return item ? { name: item.name, imageUrl: getItemIconUrl(item.imagePath, locale), link: { routeId: "items" } } : { name: "", imageUrl: "" };
+      return item ? { name: item.name, imageUrl: getItemIconUrl(item.imagePath, locale), link: { routeId: "items", detailId: item.id } } : { name: "", imageUrl: "" };
     }
     return { name: "", imageUrl: "" };
   };

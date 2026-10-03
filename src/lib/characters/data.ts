@@ -136,8 +136,9 @@ export interface RawCharacterFriendshipRank {
   bonus: number;
 }
 
+/** Keyed by the pair (MasterCharacterFriendship id), not a character; 0 is every pair's reward. */
 export interface RawCharacterFriendshipRankReward {
-  characterId: number;
+  characterFriendshipId: number;
   rank: number;
   resourceType: number;
   resourceId: number;
@@ -225,28 +226,16 @@ export interface CharacterProgressionData {
   friendshipRewards: RankRewardGroup[];
 }
 
-const VOICE_TYPE_NAMES: Record<number, string> = {
-  1: "greeting",
-  2: "home",
-  3: "live_start",
-  4: "live_end",
-  5: "skill",
-  6: "full_combo",
-  7: "all_perfect",
-  8: "result_success",
-  9: "result_failure",
-  10: "level_up",
-  11: "rank_up",
-  12: "story",
-  13: "gacha",
-  14: "friendship",
-  15: "birthday",
-  16: "seasonal",
-  17: "event",
-};
+/**
+ * MasterCharacterVoice `type`, confirmed against the cue names (Growth_*_LevelUP, *_SpecialTraining, *_SkillUP,
+ * *_Awakening, Live_*_Finish_Clear/FC/AP, Result_*_Score_<rank> (one per scoreRank D–SS), Result_*_Battle_1st/high/low).
+ */
+export const CHARACTER_VOICE_TYPES = [
+  "levelUp", "training", "skillUp", "awaken", "clear", "fullCombo", "allPerfect", "result", "battleFirst", "battleHigh", "battleLow",
+] as const;
 
 export function getVoiceTypeName(type: number): string {
-  return VOICE_TYPE_NAMES[type] ?? `type_${type}`;
+  return CHARACTER_VOICE_TYPES[type] ?? "other";
 }
 
 export function normalizeCharacterCostumes(
@@ -294,13 +283,28 @@ export function normalizeCharacterVoices(
   }));
 }
 
-export function normalizeRankRewards(
-  rewards: RawCharacterRankReward[] | RawCharacterFriendshipRankReward[],
-  characterId: number,
-  resolve: (resource: { resourceType: number; resourceId: number; resourceCount: number }) => { kind: string; id: number; count: number; name: string; imageUrl: string; link?: EntityLink },
-): RankRewardGroup[] {
+type RankRewardResolver = (resource: { resourceType: number; resourceId: number; resourceCount: number }) => { kind: string; id: number; count: number; name: string; imageUrl: string; link?: EntityLink };
 
-  const filtered = rewards.filter((entry) => entry.characterId === 0 || entry.characterId === characterId);
+/** A character's rank rewards: its own rows plus the rows every character shares (characterId 0). */
+export function normalizeRankRewards(rewards: RawCharacterRankReward[], characterId: number, resolve: RankRewardResolver): RankRewardGroup[] {
+  return groupRankRewards(rewards.filter((entry) => entry.characterId === 0 || entry.characterId === characterId), resolve);
+}
+
+/** The MasterCharacterFriendship ids of the pairs a character belongs to. */
+export function characterFriendshipIds(friendships: ReadonlyArray<{ id: number; masterCharacterIdA: number; masterCharacterIdB: number }>, characterId: number): number[] {
+  return friendships.filter((pair) => pair.masterCharacterIdA === characterId || pair.masterCharacterIdB === characterId).map((pair) => pair.id);
+}
+
+/**
+ * Bond rank rewards of a character's pairs: MasterCharacterFriendshipRankReward is keyed by the pair
+ * (`characterFriendshipId`, a MasterCharacterFriendship id), with 0 for the rewards every pair shares.
+ */
+export function normalizeFriendshipRankRewards(rewards: RawCharacterFriendshipRankReward[], friendshipIds: readonly number[], resolve: RankRewardResolver): RankRewardGroup[] {
+  const own = new Set(friendshipIds);
+  return groupRankRewards(rewards.filter((entry) => entry.characterFriendshipId === 0 || own.has(entry.characterFriendshipId)), resolve);
+}
+
+function groupRankRewards(filtered: Array<{ rank: number; resourceType: number; resourceId: number; resourceCount: number }>, resolve: RankRewardResolver): RankRewardGroup[] {
   if (filtered.length === 0) return [];
 
   const rankSet = new Set(filtered.map((entry) => entry.rank));

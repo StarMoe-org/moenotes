@@ -431,6 +431,7 @@ export const koKR = {
     rarities: { "2": "R", "3": "SR", "4": "SSR", "10": "스페셜", "20": "생일" },
     attributes: { "1": "빨강", "2": "파랑", "3": "초록", "4": "노랑", "5": "보라" },
     growth: { level: "레벨", levelValue: "Lv.{level} / {limit}", decrease: "레벨 낮추기", increase: "레벨 올리기", max: "최대", training: "특훈", awaken: "각성", power: "종합력", skillLevel: "스킬 레벨", leaderSkillHint: "리더 스킬 레벨은 각성 횟수와 연동되어, 변경하면 각성도 함께 바뀝니다." },
+    materials: {"title":"육성 재료","cost":"필요 재료","empty":"이 카드의 육성 재료가 기록되어 있지 않습니다.","alternative":"각성에는 같은 레어도의 밴드 조각도 사용할 수 있습니다:","kinds":{"training":"특훈","awaken":"각성","liveSkill":"라이브 스킬","gekisouSkill":"격주 스킬"}},
   },
   supportCards: {
     searchPlaceholder: "타이틀, 캐릭터 검색...",
@@ -453,6 +454,7 @@ export const koKR = {
     },
     diaryTitle: "다이어리",
     growth: { limitBreak: "상한 해제", skillLevelHint: "스킬 레벨은 상한 해제 횟수에 따라 오릅니다." },
+    materials: {"limitBreak":"상한 해제"},
   },
   events: {
     filterTitle: "이벤트 필터",
@@ -1060,6 +1062,10 @@ export const koKR = {
       voices: "보이스",
       growth: "성장",
     },
+    sections: {"label":"캐릭터 항목","profile":"프로필","costumes":"의상","voices":"보이스","bonds":"인연"},
+    rewards: {"rank":"랭크","rankTitle":"캐릭터 랭크 보상","friendshipTitle":"인연 랭크 보상","empty":"기록된 보상이 없습니다."},
+    costumes: {"empty":"이 캐릭터의 의상이 기록되어 있지 않습니다.","openViewer":"Live2D 뷰어에서 열기"},
+    voices: {"characterVoice":"육성·라이브 보이스","empty":"이 캐릭터의 보이스가 기록되어 있지 않습니다.","types":{"levelUp":"레벨 업","training":"특훈","skillUp":"스킬 업","awaken":"각성","clear":"라이브 클리어","fullCombo":"풀 콤보","allPerfect":"올 퍼펙트","result":"결과","battleFirst":"대전 1위","battleHigh":"대전 상위","battleLow":"대전 하위","other":"기타"}},
   },
   story: {
     categories: {
@@ -1926,6 +1932,10 @@ export const koKR = {
     emptyDescription: "배낭에서 해당하는 물건을 찾지 못했습니다. 필터를 초기화하면 여정에서 주워 모은 모든 증표를 볼 수 있습니다.",
     reset: "모든 아이템 보기",
     quickFilter: "빠른 필터 열기",
+    openDetail: "{name} 보기",
+    detail: {"group":"분류","type":"유형","max":"보유 상한","noMax":"상한 없음","id":"아이템 ID","period":"기간","backToList":"아이템 목록으로 돌아가기","showAll":"전체 {count}개 보기","showLess":"접기","notFoundTitle":"아이템을 찾을 수 없습니다","notFoundDescription":"어느 서버의 데이터에도 이 아이템이 없습니다. 아이템 목록에서 다른 아이템을 찾아보세요."},
+    sources: {"title":"획득 방법","description":"게임 데이터에서 모은, 이 아이템을 주는 보상·상점·경품입니다.","empty":"게임 데이터에 이 아이템의 획득 방법이 기록되어 있지 않습니다.","total":"합계 ×{count}","everyCharacter":"모든 캐릭터","kinds":{"event":"이벤트","exchange":"교환소","shop":"상점","gacha":"뽑기","seasonPass":"시즌 패스","loginBonus":"로그인 보너스","limitedMission":"기간 한정 미션","mission":"미션","characterMission":"캐릭터 미션","characterRank":"캐릭터 랭크 보상","friendshipRank":"인연 랭크 보상","story":"스토리 보상","music":"곡 보상"},"details":{"pointReward":"누적 pt 보상","liveReward":"라이브 보상","challengeLive":"챌린지 라이브","eventMission":"이벤트 미션","boxGacha":"박스 뽑기","ranking":"랭킹 보상","product":"상품","prize":"경품","drawBonus":"뽑기 보너스","free":"무료 보상","premium":"프리미엄 보상","loginDay":"일별 보상","missionReward":"미션 보상","completeReward":"전체 달성 보상","rankReward":"랭크 보상","episodeReward":"에피소드 보상","scoreReward":"스코어 랭크 보상","comboReward":"풀 콤보 보상"}},
+    usages: {"title":"용도","description":"이 아이템을 소모하는 육성과, 카드나 장비 하나를 최대로 육성하는 데 필요한 수량입니다.","empty":"이 아이템은 육성 재료로 사용되지 않습니다.","perTarget":"1개당 ×{count}","perTargetAlternative":"1개당 ×{count} (카드 전용 조각 대신 사용)","kinds":{"memberTraining":"멤버 특훈","memberAwaken":"멤버 각성","memberLiveSkill":"라이브 스킬 강화","memberGekisouSkill":"격주 스킬 강화","bandItem":"밴드 장비 강화"}},
   },
   bandItems: {
     searchPlaceholder: "장비 이름, 밴드 검색...",

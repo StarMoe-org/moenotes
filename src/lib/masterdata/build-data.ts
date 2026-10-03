@@ -54,6 +54,8 @@ import {
   normalizeCharacters,
   normalizeCharacterVoices,
   normalizeRankRewards,
+  normalizeFriendshipRankRewards,
+  characterFriendshipIds,
   type CharacterProgressionData,
   type CharacterViewModel,
   type RawCharacterCostume,
@@ -278,6 +280,7 @@ export function characterProgressionOn(server: GameServer, locale: AppLocale): P
       rewardResolverOn(server, locale),
       table<RawCharacterDetail>("MasterCharacter.json", server),
     ]);
+    const friendships = await table<RawCharacterFriendship>("MasterCharacterFriendship.json", server).catch(() => ({ _allData: [] as RawCharacterFriendship[] }));
 
     const sheetNames = new Map(cueSheetTable._allData.map((sheet) => [sheet.id, sheet.cueSheetName]));
     const soundMap = new Map(soundTable._allData.map((sound) => [sound.id, sound]));
@@ -309,7 +312,7 @@ export function characterProgressionOn(server: GameServer, locale: AppLocale): P
       );
 
       const rankRewards = normalizeRankRewards(rankRewardTable._allData, charId, resolve);
-      const friendshipRewards = normalizeRankRewards(friendshipRewardTable._allData, charId, resolve);
+      const friendshipRewards = normalizeFriendshipRankRewards(friendshipRewardTable._allData, characterFriendshipIds(friendships._allData, charId), resolve);
 
       byCharacter.set(charId, { costumes, voices, rankRewards, friendshipRewards });
     }
