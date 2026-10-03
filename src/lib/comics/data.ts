@@ -10,6 +10,7 @@ export interface RawComic {
   isDefaultComics: boolean;
   order: number;
   startAt: string;
+  endAt?: string;
 }
 
 export interface ComicViewModel {
@@ -19,6 +20,8 @@ export interface ComicViewModel {
   bandIds: number[];
   name: string;
   imageUrl: string;
+  startAt: string;
+  endAt: string;
   searchText: string;
 }
 
@@ -83,6 +86,8 @@ export function normalizeComics(
         bandIds,
         name,
         imageUrl: getComicImageUrl(comic.imageAsset, locale),
+        startAt: comic.startAt ?? "",
+        endAt: comic.endAt ?? "",
         searchText: [name, ...charNames, comic.id].join(" ").toLowerCase(),
       };
     })

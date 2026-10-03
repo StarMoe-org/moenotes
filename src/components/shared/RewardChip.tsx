@@ -22,7 +22,10 @@ export function rewardName(reward: RewardViewModel, locale: AppLocale): string {
 
 function rewardHref(reward: RewardViewModel, locale: AppLocale): string | null {
   if (!reward.link) return null;
-  return localizePath(entityLinkPath(reward.link), locale);
+  // localizePath drops `?query`, which overlay links (`/stamps?id=3`) need: localize the path, keep the query.
+  const path = entityLinkPath(reward.link);
+  const cut = path.indexOf("?");
+  return cut < 0 ? localizePath(path, locale) : `${localizePath(path.slice(0, cut), locale)}${path.slice(cut)}`;
 }
 
 // Card and jacket art is cropped to fill; item icons and stickers keep their transparent silhouette.

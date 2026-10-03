@@ -6,7 +6,7 @@ import { DEFAULT_LOCALE } from "@/config/locales";
 
 type TableDetailKind = "cards" | "support-cards" | "characters" | "music" | "gacha" | "events";
 /** Detail kinds whose ids come from a list the build computes rather than one table. */
-type DetailKind = TableDetailKind | "exchange";
+type DetailKind = TableDetailKind | "exchange" | "help";
 interface DetailRow { id: number; rarity?: number; cardType?: number }
 const tables: Record<TableDetailKind, string> = {
   cards: "MasterMemberCard.json",
@@ -76,4 +76,11 @@ export async function getMasterdataRewardParams(): Promise<RouteStaticParamConfi
     }
   }
   return params;
+}
+
+/** Manual topics any server has (MasterHelpSubCategory under a known category), one `/help/:id` page each. */
+export async function getMasterdataHelpParams(): Promise<RouteStaticParamConfig[]> {
+  const { getBuildHelpTopics } = await import("@/lib/masterdata/build-help");
+  const topics = await getBuildHelpTopics(DEFAULT_LOCALE);
+  return detailParamsFromRows("help", topics.map((topic) => ({ id: topic.id })));
 }

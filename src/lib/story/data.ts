@@ -7,8 +7,9 @@ import {
   type RawText,
 } from "@/lib/cards/data";
 import { localizeMasterText } from "@/lib/masterdata/localize-text";
+import type { RewardResolver, RewardViewModel } from "@/lib/rewards/resources";
 
-export type StoryCategory = "main" | "event" | "friendship" | "live-result" | "home" | "tutorial";
+export type StoryCategory = "main" | "event" | "friendship" | "birthday" | "live-result" | "home" | "tutorial";
 /** A chapter's main episodes, its per-character another episodes and its extra episodes each number from 1. */
 export type StoryEpisodeKind = "main" | "another" | "extra";
 export type HomeStoryKind = "tap-talk" | "spot-intro";
@@ -50,6 +51,7 @@ export interface RawStoryEpisode {
   unlockEpisodeNumber: number;
   playerRank: number;
   bandRank: number;
+  startAt?: string;
 }
 
 export interface RawStoryFriendshipEpisode {
@@ -101,6 +103,34 @@ export interface RawHomeSpot {
   startAt: string;
 }
 
+/**
+ * What the game lands on at login on a given day (MasterStoryLoginLanding). A birthday's row points at the character's
+ * special story chapter and episode, with a `Birthday/…` effect prefab.
+ */
+export interface RawStoryLoginLanding {
+  id: number;
+  storyChapterId: number;
+  storyEpisodeId: number;
+  startAt: string;
+  endAt: string;
+  contentPrefabAddress: string;
+  characterId: number;
+}
+
+/** Length of an ADV's playback (MasterAdvPlayTime; id is the ADV id). */
+export interface RawAdvPlayTime {
+  id: number;
+  playTime: number;
+}
+
+/** A story episode's clear reward (MasterStoryReward), by the episode's storyRewardGroupId. */
+export interface RawStoryReward {
+  group: number;
+  resourceType: number;
+  resourceId: number;
+  resourceCount: number;
+}
+
 export interface RawCharacterFriendship {
   id: number;
   masterCharacterIdA: number;
@@ -131,6 +161,8 @@ export interface RawStoryCharacter {
   nameTextID: string;
   shortNameTextID: string;
   mainColorCode: string;
+  birthdayMonth?: number;
+  birthdayDay?: number;
 }
 
 export interface StoryMasterData {
@@ -147,6 +179,12 @@ export interface StoryMasterData {
   texts: RawText[];
   /** Event story chapters (MasterEvent._storyChapterId) and the event they belong to; other chapters are main story. */
   eventChapters?: Array<{ chapterId: number; eventId: number }>;
+  /** Login landings; the `Birthday/` ones mark birthday chapters (with isSpecialStory chapters). */
+  loginLandings?: RawStoryLoginLanding[];
+  playTimes?: RawAdvPlayTime[];
+  storyRewards?: RawStoryReward[];
+  /** Names and artwork of the clear rewards; without it stories carry no rewards. */
+  resolveReward?: RewardResolver;
 }
 
 export interface StoryUnlockCondition {
@@ -158,6 +196,16 @@ export interface StoryUnlockCondition {
   bandRank: number;
   releaseChapterId: number;
   releaseEpisodeId: number;
+  /** The ADV of `releaseEpisodeId` (the episode to read first), when the build knows it; 0 otherwise. */
+  releaseAdvId?: number;
+}
+
+/** The character whose birthday a birthday story celebrates. */
+export interface StoryBirthday {
+  characterId: number;
+  characterName: string;
+  month: number;
+  day: number;
 }
 
 export interface StoryAssetRefs {
@@ -199,6 +247,12 @@ export interface StoryViewModel {
   rewardGroupId: number;
   eventRewardGroupId: number;
   unlock: StoryUnlockCondition;
+  /** Clear rewards (storyRewardGroupId resolved); empty when the episode has none. */
+  rewards: RewardViewModel[];
+  /** Playback length in seconds (MasterAdvPlayTime), or null when unknown. */
+  playTime: number | null;
+  /** Set for a birthday story. */
+  birthday: StoryBirthday | null;
   startAt: string;
   endAt: string;
   assets: StoryAssetRefs;
@@ -221,8 +275,18 @@ export function normalizeStories(data: StoryMasterData, locale: AppLocale): Stor
   const characterNames = (ids: number[]) => ids.map((id) => resolveText(characterMap.get(id)?.nameTextID ?? ""));
   const bandName = (id: number) => resolveText(bandMap.get(id)?.nameTextID ?? "");
   const eventChapterMap = new Map((data.eventChapters ?? []).map((entry) => [entry.chapterId, entry.eventId]));
+  const birthdayChapters = birthdayChapterCharacters(data.chapters, data.loginLandings ?? []);
+  const playTimeMap = new Map((data.playTimes ?? []).filter((entry) => entry.playTime > 0).map((entry) => [entry.id, entry.playTime]));
+  const rewardsByGroup = groupStoryRewards(data.storyRewards ?? [], data.resolveReward);
+  const episodeAdvMap = new Map(data.episodes.map((entry) => [entry.id, entry.advId]));
   const stories: StoryViewModel[] = [];
   const referencedAdvIds = new Set<number>();
+  const extras = (advId: number, rewardGroupId = 0) => ({ playTime: playTimeMap.get(advId) ?? null, rewards: rewardsByGroup.get(rewardGroupId) ?? [] });
+  const birthdayOf = (characterId: number): StoryBirthday | null => {
+    const character = characterMap.get(characterId);
+    if (!character) return null;
+    return { characterId, characterName: resolveText(character.nameTextID), month: character.birthdayMonth ?? 0, day: character.birthdayDay ?? 0 };
+  };
 
   for (const episode of data.episodes) {
     const adv = advMap.get(episode.advId);
@@ -235,10 +299,14 @@ export function normalizeStories(data: StoryMasterData, locale: AppLocale): Stor
       ? [episode.characterId]
       : chapter?.mainCharacterIds ?? (episode.characterId ? [episode.characterId] : []);
     const eventId = eventChapterMap.get(episode.chapterId) ?? null;
+    // Birthday chapters are special chapters of their own, listed apart from the main story.
+    const birthdayCharacter = eventId === null ? birthdayChapters.get(episode.chapterId) : undefined;
     stories.push(buildStory({
       sourceId: episode.id,
-      category: eventId === null ? "main" : "event",
+      category: birthdayCharacter !== undefined ? "birthday" : eventId === null ? "main" : "event",
       eventId,
+      birthday: birthdayCharacter !== undefined ? birthdayOf(birthdayCharacter) : null,
+      ...extras(adv.id, episode.storyRewardGroupId),
       adv,
       title: resolveText(adv.titleTextId),
       description: resolveText(episode.descriptionTextId),
@@ -267,7 +335,7 @@ export function normalizeStories(data: StoryMasterData, locale: AppLocale): Stor
         releaseChapterId: 0,
         releaseEpisodeId: 0,
       },
-      startAt: chapter?.startAt ?? "",
+      startAt: episode.startAt || chapter?.startAt || "",
       endAt: chapter?.endAt ?? "",
       banner: episode.banner,
       image: episode.image,
@@ -291,6 +359,7 @@ export function normalizeStories(data: StoryMasterData, locale: AppLocale): Stor
       sourceId: episode.id,
       category: "friendship",
       adv,
+      ...extras(adv.id, episode.storyRewardGroupId),
       title,
       episodeNumber: episode.episodeNumber,
       groupId: `friendship:${episode.characterFriendshipId}`,
@@ -319,6 +388,7 @@ export function normalizeStories(data: StoryMasterData, locale: AppLocale): Stor
       sourceId: episode.id,
       category: "live-result",
       adv,
+      ...extras(adv.id),
       title: resolveText(adv.titleTextId),
       groupId: `live-result:${ids.join("-")}`,
       groupTitle: names.join(" & "),
@@ -343,6 +413,7 @@ export function normalizeStories(data: StoryMasterData, locale: AppLocale): Stor
       category: "home",
       homeKind: "tap-talk",
       adv,
+      ...extras(adv.id),
       title: resolveText(adv.titleTextId),
       groupId: `home:${episode.spotId}`,
       groupTitle: spot ? resolveText(spot.advNameTextId) : "",
@@ -369,6 +440,7 @@ export function normalizeStories(data: StoryMasterData, locale: AppLocale): Stor
       category: "home",
       homeKind: "spot-intro",
       adv,
+      ...extras(adv.id),
       title: resolveText(adv.titleTextId),
       groupId: `home:${spot.id}`,
       groupTitle: resolveText(spot.advNameTextId),
@@ -381,6 +453,7 @@ export function normalizeStories(data: StoryMasterData, locale: AppLocale): Stor
         bandRank: spot.releaseBandRank,
         releaseChapterId: spot.releaseStoryChapterId,
         releaseEpisodeId: spot.releaseStoryEpisodeId,
+        releaseAdvId: episodeAdvMap.get(spot.releaseStoryEpisodeId) ?? 0,
       }),
       startAt: spot.startAt,
       backgroundAssetPath: spot.backgroundAssetPath,
@@ -395,6 +468,7 @@ export function normalizeStories(data: StoryMasterData, locale: AppLocale): Stor
       sourceId: adv.id,
       category: "tutorial",
       adv,
+      ...extras(adv.id),
       title: resolveText(adv.titleTextId),
       groupId: "tutorial",
       groupTitle: "",
@@ -406,6 +480,37 @@ export function normalizeStories(data: StoryMasterData, locale: AppLocale): Stor
 }
 
 const EPISODE_KIND_ORDER: Readonly<Record<StoryEpisodeKind, number>> = { main: 0, another: 1, extra: 2 };
+
+/**
+ * Birthday chapters and whose birthday they are: the chapters a `Birthday/…` login landing opens (its character), and
+ * the chapters MasterStoryChapter marks as special stories (their first main character). The JP server's landing table
+ * may be empty; its special chapters still count.
+ */
+export function birthdayChapterCharacters(chapters: readonly RawStoryChapter[], landings: readonly RawStoryLoginLanding[]): Map<number, number> {
+  const result = new Map<number, number>();
+  for (const landing of landings) {
+    const address = landing.contentPrefabAddress ?? "";
+    if (!address.startsWith("Birthday/") || address.length <= "Birthday/".length || !landing.storyChapterId) continue;
+    if (!result.has(landing.storyChapterId)) result.set(landing.storyChapterId, landing.characterId);
+  }
+  for (const chapter of chapters) {
+    if (chapter.isSpecialStory && !result.has(chapter.id)) result.set(chapter.id, chapter.mainCharacterIds?.[0] ?? 0);
+  }
+  return result;
+}
+
+/** Clear rewards by reward group; nothing without a resolver. */
+function groupStoryRewards(rows: readonly RawStoryReward[], resolve: RewardResolver | undefined): Map<number, RewardViewModel[]> {
+  const groups = new Map<number, RewardViewModel[]>();
+  if (!resolve) return groups;
+  for (const row of rows) {
+    if (!row.group) continue;
+    const list = groups.get(row.group) ?? [];
+    list.push(resolve(row));
+    groups.set(row.group, list);
+  }
+  return groups;
+}
 
 /** The previous or next story of a detail page, in its category's reading order. */
 export interface StoryNeighbor {
@@ -468,6 +573,9 @@ interface BuildStoryInput {
   rewardGroupId?: number;
   eventRewardGroupId?: number;
   unlock?: StoryUnlockCondition;
+  rewards?: RewardViewModel[];
+  playTime?: number | null;
+  birthday?: StoryBirthday | null;
   startAt?: string;
   endAt?: string;
   banner?: string;
@@ -509,6 +617,9 @@ function buildStory(input: BuildStoryInput): StoryViewModel {
     rewardGroupId: input.rewardGroupId ?? 0,
     eventRewardGroupId: input.eventRewardGroupId ?? 0,
     unlock: input.unlock ?? emptyUnlock(),
+    rewards: input.rewards ?? [],
+    playTime: input.playTime ?? null,
+    birthday: input.birthday ?? null,
     startAt: input.startAt ?? "",
     endAt: input.endAt ?? "",
     assets: {
@@ -530,6 +641,7 @@ function buildStory(input: BuildStoryInput): StoryViewModel {
     story.groupTitle,
     story.bandName,
     ...names,
+    story.birthday?.characterName ?? "",
     story.advId,
   ].join(" ").toLocaleLowerCase();
   return story;

@@ -87,11 +87,11 @@ export function createRewardResolver(sources: RewardSources, locale: AppLocale):
       }
       case "stamp": {
         const stamp = stamps.get(id);
-        return stamp ? { ...base, name: stamp.name, imageUrl: stamp.imageUrl, link: { routeId: "stamps" } } : base;
+        return stamp ? { ...base, name: stamp.name, imageUrl: stamp.imageUrl, link: { routeId: "stamps", query: { id: String(id) } } } : base;
       }
       case "degree": {
         const degree = degrees.get(id);
-        return degree ? { ...base, name: degree.name, imageUrl: degree.imageUrl, link: { routeId: "titles" } } : base;
+        return degree ? { ...base, name: degree.name, imageUrl: degree.imageUrl, link: { routeId: "titles", query: { id: String(id) } } } : base;
       }
       case "spot": {
         const spot = spots.get(id);

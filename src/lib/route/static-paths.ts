@@ -16,6 +16,7 @@ import {
   getBuildStories,
   getBuildSupportCards,
 } from "@/lib/masterdata/build-data";
+import { getBuildHelpTopics } from "@/lib/masterdata/build-help";
 
 export interface StaticLocalizedPathProps {
   locale: AppLocale;
@@ -62,7 +63,7 @@ const byId = <T>(entries: readonly T[], id: (entry: T) => string | number, detai
     return value ? [[String(id(entry)), value] as const] : [];
   }));
 
-const storyCategoryRoutes: Record<string, string> = { main: "main-story", event: "event-story", friendship: "friendship-story" };
+const storyCategoryRoutes: Record<string, string> = { main: "main-story", event: "event-story", friendship: "friendship-story", birthday: "birthday-story" };
 
 const detailLabelLoaders: Record<string, (locale: AppLocale) => Promise<Map<string, BreadcrumbDetail>>> = {
   "card-detail": async (locale) => byId(await getBuildCards(locale), (card) => card.id, (card) => label(`${card.characterName} - ${card.title}`)),
@@ -77,6 +78,7 @@ const detailLabelLoaders: Record<string, (locale: AppLocale) => Promise<Map<stri
     const ancestors = [findRouteById("events"), findRouteById("event-list")].filter(Boolean) as AppRoute[];
     return byId(await getBuildEvents(locale), (event) => event.id, (event) => ({ label: event.name, ancestors }));
   },
+  "help-detail": async (locale) => byId(await getBuildHelpTopics(locale), (topic) => topic.id, (topic) => label(topic.title)),
   "story-detail": async (locale) => {
     const storyRoute = findRouteById("story");
     // An ADV in several lists takes its first one's title and category.

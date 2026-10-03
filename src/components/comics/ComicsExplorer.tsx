@@ -1,4 +1,3 @@
-import { SiriusIcon } from "@/components/shared/SiriusLoader";
 import { useListSort } from "@/lib/filter/use-list-sort";
 import { sortEntries } from "@/lib/filter/list-sort";
 import { useEffect, useMemo, useState, useCallback } from "react";
@@ -13,7 +12,9 @@ import BaseFilters, {
   CharacterFilter,
 } from "@/components/shared/BaseFilters";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
-import Modal from "@/components/shared/Modal";
+import CollectibleOverlay from "@/components/collectibles/CollectibleOverlay";
+import { imageFileName } from "@/lib/collectibles/image-client";
+import { parsePositiveIntParam, useQueryOverlay } from "@/lib/overlay/use-query-overlay";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 import type { ComicViewModel } from "@/lib/comics/data";
 
@@ -37,9 +38,11 @@ export default function ComicsExplorer({ locale, servers, initialComics, initial
   const [selectedBands, setSelectedBands] = useState<number[]>([]);
   const [selectedCharacters, setSelectedCharacters] = useState<number[]>([]);
   
-  const [selectedComic, setSelectedComic] = useState<ComicViewModel | null>(null);
-  const [copyState, setCopyState] = useState<"idle" | "copying" | "success" | "error">("idle");
-  const [downloadState, setDownloadState] = useState<"idle" | "downloading" | "success">("idle");
+  // `?id=<comic>` deep links (search, reward chips) open the comic's overlay; see useQueryOverlay.
+  const isListed = useCallback((id: number) => comics.some((entry) => entry.id === id), [comics]);
+  const overlay = useQueryOverlay("id", { parse: parsePositiveIntParam, isShown: isListed });
+  const selectedComic = useMemo(() => (overlay.value === null ? null : comics.find((entry) => entry.id === overlay.value) ?? null), [comics, overlay.value]);
+  const toImage = useCallback((entry: ComicViewModel) => ({ src: entry.imageUrl, alt: entry.name, caption: entry.name, downloadName: imageFileName(entry.imageUrl, `comic_${entry.id}.webp`) }), []);
 
   useEffect(() => {
     const remembered = parseRememberedFilters(memory.state?.filtersHash);
@@ -153,87 +156,6 @@ export default function ComicsExplorer({ locale, servers, initialComics, initial
     memory.clearState();
   };
 
-  const copySelectedAsset = async () => {
-    if (!selectedComic) return;
-    setCopyState("copying");
-    try {
-      const response = await fetch(selectedComic.imageUrl);
-      const blob = await response.blob();
-      if (navigator.clipboard.write && typeof ClipboardItem !== "undefined") {
-        await navigator.clipboard.write([new ClipboardItem({ [blob.type || "image/png"]: blob })]);
-        setCopyState("success");
-      } else {
-        await navigator.clipboard.writeText(selectedComic.imageUrl);
-        setCopyState("success");
-      }
-    } catch {
-      try {
-        await navigator.clipboard.writeText(selectedComic.imageUrl);
-        setCopyState("success");
-      } catch {
-        setCopyState("error");
-      }
-    }
-    window.setTimeout(() => setCopyState("idle"), 1800);
-  };
-
-  const handleDownload = async () => {
-    if (!selectedComic) return;
-    setDownloadState("downloading");
-    try {
-      const response = await fetch(selectedComic.imageUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      const filename = selectedComic.imageUrl.split("/").pop() || `comic_${selectedComic.id}`;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      setDownloadState("success");
-    } catch {
-      window.open(selectedComic.imageUrl, "_blank");
-      setDownloadState("success");
-    }
-    setTimeout(() => setDownloadState("idle"), 1500);
-  };
-
-  const previewActions = selectedComic ? (
-    <>
-      <button
-        type="button"
-        onClick={handleDownload}
-        disabled={downloadState === "downloading"}
-        className="grid h-8 w-8 place-items-center rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:text-[var(--mn-text)] disabled:opacity-50"
-      >
-        {downloadState === "idle" && (
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
-        )}
-        {downloadState === "downloading" && <SiriusIcon />}
-        {downloadState === "success" && <svg className="h-4 w-4 text-[var(--mn-mint)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
-      </button>
-      <button
-        type="button"
-        onClick={copySelectedAsset}
-        disabled={copyState === "copying"}
-        className="grid h-8 w-8 place-items-center rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:text-[var(--mn-text)] disabled:opacity-50"
-      >
-        {copyState === "idle" && (
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
-        )}
-        {copyState === "copying" && <SiriusIcon />}
-        {copyState === "success" && <svg className="h-4 w-4 text-[var(--mn-mint)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
-        {copyState === "error" && <svg className="h-4 w-4 text-[var(--mn-rose)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>}
-      </button>
-    </>
-  ) : null;
-
   const quickFilterContent = (
     <BaseFilters
       sort={sort}
@@ -294,8 +216,8 @@ export default function ComicsExplorer({ locale, servers, initialComics, initial
                   key={comic.id}
                   type="button"
                   onClick={() => {
-                    setSelectedComic(comic);
                     saveCurrentState();
+                    overlay.open(comic.id);
                   }}
                   className="mn-list-card group flex flex-col min-w-0 overflow-hidden border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)] text-left"
                   data-list-item-id={comic.id}
@@ -316,28 +238,19 @@ export default function ComicsExplorer({ locale, servers, initialComics, initial
           )}
         </section>
 
-        <Modal
-          isOpen={selectedComic !== null}
-          onClose={() => {
-            setSelectedComic(null);
-            setCopyState("idle");
-            setDownloadState("idle");
-          }}
+        <CollectibleOverlay
+          locale={locale}
+          servers={servers}
+          entry={selectedComic}
+          onClose={overlay.close}
           title={selectedComic?.name ?? ""}
           closeLabel={t(locale, "actions.close")}
-          size="lg"
-          headerActions={previewActions}
-        >
-          {selectedComic && (
-            <div className="w-full overflow-hidden rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] p-2">
-              <img
-                className="mx-auto max-h-[65vh] w-full object-contain"
-                src={selectedComic.imageUrl}
-                alt={selectedComic.name}
-              />
-            </div>
-          )}
-        </Modal>
+          results={sortedEntries}
+          toImage={toImage}
+          onNavigate={overlay.open}
+          frame="wide"
+          characters={selectedComic ? selectedComic.characterIds.map((id, index) => ({ id, name: selectedComic.characterNames[index] ?? "" })) : []}
+        />
       </>
     </ServerScope>
   );

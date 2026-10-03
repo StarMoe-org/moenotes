@@ -96,6 +96,7 @@ import {
   storyNeighbors,
   type RawAdv,
   type RawAdvChat,
+  type RawAdvPlayTime,
   type RawAnimeStillSubtitle,
   type RawCharacterFriendship,
   type RawHomeSpot,
@@ -105,6 +106,8 @@ import {
   type RawStoryFriendshipEpisode,
   type RawStoryHomeSpotTapTalkEpisode,
   type RawStoryLiveResultEpisode,
+  type RawStoryLoginLanding,
+  type RawStoryReward,
   type StoryNeighbor,
   type StoryViewModel,
 } from "@/lib/story/data";
@@ -524,12 +527,14 @@ export async function getBuildHomeData(locale: AppLocale): Promise<ServerFaceted
 
 export function degreesOn(server: GameServer, locale: AppLocale): Promise<DegreeViewModel[]> {
   return memo(`degrees:${server}:${locale}`, async () => {
-    const [degrees, characters, textTable] = await Promise.all([
+    const [degrees, characters, textTable, rankRewards] = await Promise.all([
       table<RawDegree>("MasterDegree.json", server),
       table<RawCharacter>("MasterCharacter.json", server),
       texts(server),
+      // Unlock conditions: the character rank rewards that hand a title out (resourceType 17).
+      table<RawCharacterRankReward>("MasterCharacterRankReward.json", server).catch(() => ({ _allData: [] as RawCharacterRankReward[] })),
     ]);
-    return normalizeDegrees(degrees._allData, characters._allData, textTable._allData, locale);
+    return normalizeDegrees(degrees._allData, characters._allData, textTable._allData, locale, rankRewards._allData);
   });
 }
 
@@ -799,7 +804,7 @@ export function getBuildBandNames(locale: AppLocale): Promise<Array<[number, str
 
 export function storiesOn(server: GameServer, locale: AppLocale): Promise<StoryViewModel[]> {
   return memo(`stories:${server}:${locale}`, async () => {
-    const [chapters, episodes, friendshipEpisodes, homeTapEpisodes, liveResultEpisodes, advs, homeSpots, friendships, characters, bands, textTable, events] = await Promise.all([
+    const [chapters, episodes, friendshipEpisodes, homeTapEpisodes, liveResultEpisodes, advs, homeSpots, friendships, characters, bands, textTable, events, loginLandings, playTimes, storyRewards, resolveReward] = await Promise.all([
       table<RawStoryChapter>("MasterStoryChapter.json", server),
       table<RawStoryEpisode>("MasterStoryEpisode.json", server),
       table<RawStoryFriendshipEpisode>("MasterStoryFriendshipEpisode.json", server),
@@ -812,8 +817,17 @@ export function storiesOn(server: GameServer, locale: AppLocale): Promise<StoryV
       table<RawBand>("MasterBand.json", server),
       texts(server),
       table<RawEvent>("MasterEvent.json", server),
+      // Birthday chapters, play times and clear rewards; tables a server may lack or serve broken read as empty.
+      table<RawStoryLoginLanding>("MasterStoryLoginLanding.json", server).catch(() => ({ _allData: [] as RawStoryLoginLanding[] })),
+      table<RawAdvPlayTime>("MasterAdvPlayTime.json", server).catch(() => ({ _allData: [] as RawAdvPlayTime[] })),
+      table<RawStoryReward>("MasterStoryReward.json", server).catch(() => ({ _allData: [] as RawStoryReward[] })),
+      rewardResolverOn(server, locale),
     ]);
     return normalizeStories({
+      loginLandings: loginLandings._allData,
+      playTimes: playTimes._allData,
+      storyRewards: storyRewards._allData,
+      resolveReward,
       eventChapters: events._allData.map((event) => ({ chapterId: event.storyChapterId, eventId: event.id })).filter((entry) => entry.chapterId > 0),
       chapters: chapters._allData,
       episodes: episodes._allData,

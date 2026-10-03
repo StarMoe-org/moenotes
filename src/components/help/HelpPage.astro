@@ -1,16 +1,18 @@
 ---
-// Placeholder reserved for the haneoka feature-parity work (.narrafork/plans/plan-parallel-weaving-hellman.md).
-import PageHeader from "@/components/route/PageHeader.astro";
+import HelpExplorer from "@/components/help/HelpExplorer";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
+import { getBuildHelp } from "@/lib/masterdata/build-help";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
 
 interface Props {
   locale: AppLocale;
 }
 
 const { locale } = Astro.props;
+const [help, servers] = await Promise.all([getBuildHelp(locale), getBuildServers()]);
 ---
 
 <PageLayout locale={locale} titleKey="seo.help.title" descriptionKey="seo.help.description">
-  <PageHeader locale={locale} titleKey="seo.help.title" descriptionKey="seo.help.description" />
+  <HelpExplorer client:load locale={locale} servers={servers} categories={help.categories} topics={help.topics} tips={help.tips} faq={help.faq} />
 </PageLayout>

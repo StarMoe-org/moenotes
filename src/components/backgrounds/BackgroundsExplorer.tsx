@@ -6,7 +6,9 @@ import type { ServerFaceted } from "@/lib/servers/facets";
 import { useServerFiles, useServerList } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
 import BaseFilters, { FilterButton, FilterSection, toggleArrayItem } from "@/components/shared/BaseFilters";
-import Modal from "@/components/shared/Modal";
+import CollectibleOverlay from "@/components/collectibles/CollectibleOverlay";
+import { imageFileName } from "@/lib/collectibles/image-client";
+import { parsePositiveIntParam, useQueryOverlay } from "@/lib/overlay/use-query-overlay";
 import type { BackgroundViewModel } from "@/lib/backgrounds/data";
 import { sortEntries } from "@/lib/filter/list-sort";
 import { useListSort } from "@/lib/filter/use-list-sort";
@@ -29,7 +31,11 @@ export default function BackgroundsExplorer({ locale, servers, initialBackground
   const [query, setQuery] = useState("");
   const sort = useListSort("backgrounds", locale);
   const [selectedTypes, setSelectedTypes] = useState<number[]>([]);
-  const [preview, setPreview] = useState<BackgroundViewModel | null>(null);
+  // `?id=<background>` deep links (search) open the background's overlay; see useQueryOverlay.
+  const isListed = useCallback((id: number) => backgrounds.some((background) => background.id === id), [backgrounds]);
+  const overlay = useQueryOverlay("id", { parse: parsePositiveIntParam, isShown: isListed });
+  const preview = useMemo(() => (overlay.value === null ? null : backgrounds.find((background) => background.id === overlay.value) ?? null), [backgrounds, overlay.value]);
+  const toImage = useCallback((background: BackgroundViewModel) => ({ src: background.imageUrl, alt: background.name, caption: background.name, downloadName: imageFileName(background.imageUrl, `background_${background.id}.webp`) }), []);
 
   useEffect(() => {
     const remembered = parseRememberedFilters(memory.state?.filtersHash);
@@ -134,7 +140,8 @@ export default function BackgroundsExplorer({ locale, servers, initialBackground
               <button
                 key={background.id}
                 type="button"
-                onClick={() => setPreview(background)}
+                onClick={() => { saveCurrentState(); overlay.open(background.id); }}
+                aria-haspopup="dialog"
                 data-list-item-id={background.id}
                 aria-label={t(locale, "backgrounds.openPreview", { name: background.name })}
                 className="mn-list-card group flex min-w-0 flex-col overflow-hidden border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] text-left shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)]"
@@ -151,25 +158,26 @@ export default function BackgroundsExplorer({ locale, servers, initialBackground
           </div>
         )}
 
-        <Modal
-          isOpen={preview !== null}
-          onClose={() => setPreview(null)}
+        <CollectibleOverlay
+          locale={locale}
+          servers={servers}
+          entry={preview}
+          onClose={overlay.close}
           title={preview?.name ?? ""}
           closeLabel={t(locale, "actions.close")}
-          size="xl"
-          headerActions={preview && (
-            <a href={preview.imageUrl} target="_blank" rel="noopener noreferrer" className="mn-focus rounded-full border border-[var(--mn-glass-border)] bg-[var(--mn-paper)] px-3 py-1.5 text-xs font-bold text-[var(--mn-accent-deep)] hover:bg-[var(--mn-accent-soft)]">
+          results={sortedBackgrounds}
+          toImage={toImage}
+          onNavigate={overlay.open}
+          frame="wide"
+          description={preview?.description || undefined}
+          facts={preview ? [{ label: t(locale, "backgrounds.type"), value: t(locale, `backgrounds.types.${preview.type}`) || `#${preview.type}` }] : []}
+        >
+          {preview ? (
+            <a href={preview.imageUrl} target="_blank" rel="noopener noreferrer" className="mn-focus inline-flex rounded-full border border-[var(--mn-glass-border)] bg-[var(--mn-paper)] px-3 py-1.5 text-xs font-bold text-[var(--mn-accent-deep)] hover:bg-[var(--mn-accent-soft)]">
               {t(locale, "backgrounds.openOriginal")}
             </a>
-          )}
-        >
-          {preview && (
-            <div className="space-y-3">
-              <img className="w-full rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-cream-deep)] object-contain" src={preview.imageUrl} alt={preview.name} />
-              {preview.description && <p className="text-sm text-[var(--mn-text-muted)]">{preview.description}</p>}
-            </div>
-          )}
-        </Modal>
+          ) : null}
+        </CollectibleOverlay>
       </section>
     </ServerScope>
   );

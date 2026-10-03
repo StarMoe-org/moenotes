@@ -9,7 +9,10 @@ import { localizePath } from "@/i18n/routing";
 import { getAssetUrl } from "@/lib/assets/url";
 import type { ParsedStoryScript } from "@/lib/story/parser";
 import type { RawStoryCharacter, StoryNeighbor, StoryViewModel } from "@/lib/story/data";
-import { storyEpisodeLabel } from "@/lib/story/labels";
+import { formatPlayTime, storyEpisodeLabel, storyUnlockLabels } from "@/lib/story/labels";
+import CharacterAvatarStack from "@/components/shared/CharacterAvatarStack";
+import RewardChip from "@/components/shared/RewardChip";
+import { storyPath } from "@/lib/story/paths";
 import type { RawText } from "@/lib/cards/data";
 import StoryScriptReader from "@/components/story/StoryScriptReader";
 import StoryPlayerLink from "@/components/story/StoryPlayerLink";
@@ -17,7 +20,7 @@ import StoryPlayerLink from "@/components/story/StoryPlayerLink";
 /** Main episodes have an illustration; bond stories only a banner. Banners carry lettering, so they follow the locale. */
 function storyArtworkUrl(story: StoryViewModel | null, locale: AppLocale): string {
   if (!story) return "";
-  if ((story.category === "main" || story.category === "event") && story.assets.image) return getAssetUrl({ path: `Story/Image/Episode/${story.assets.image}.png`, type: "raw", locale });
+  if ((story.category === "main" || story.category === "event" || story.category === "birthday") && story.assets.image) return getAssetUrl({ path: `Story/Image/Episode/${story.assets.image}.png`, type: "raw", locale });
   if (story.assets.banner) return getAssetUrl({ path: `Story/Banner/Episode/${story.assets.banner}.png`, type: "raw", locale });
   return "";
 }
@@ -53,7 +56,10 @@ export default function StoryDetail({ servers, advServers, story, ...props }: St
 function StoryDetailView({ locale, advId, initialTitle, initialScript, initialCharacters, initialTexts, story, previous, next }: Omit<StoryDetailProps, "story"> & { story: StoryViewModel | null }) {
   const [artworkFailed, setArtworkFailed] = useState(false);
   const artworkUrl = useAssetUrl()(storyArtworkUrl(story, locale));
-  const isChapter = story?.category === "main" || story?.category === "event";
+  const isChapter = story?.category === "main" || story?.category === "event" || story?.category === "birthday";
+  const playTime = formatPlayTime(story?.playTime);
+  const unlocks = story ? storyUnlockLabels(locale, story) : [];
+  const rewards = story?.rewards ?? [];
   const episodeLabel = story ? storyEpisodeLabel(locale, story) : "";
   const eyebrow = [story?.groupTitle || story?.bandName, episodeLabel].filter(Boolean).join(" · ");
 
@@ -71,7 +77,33 @@ function StoryDetailView({ locale, advId, initialTitle, initialScript, initialCh
         <p className="text-xs font-black text-[var(--mn-accent)]">{eyebrow || `ADV ${advId}`}</p>
         <h1 className="mt-2 text-2xl font-black text-[var(--mn-text)]">{initialTitle}</h1>
         {story?.description && <p className="mt-3 whitespace-pre-line text-sm leading-6 text-[var(--mn-text-muted)]">{story.description}</p>}
-        {eyebrow && <p className="mt-3 text-[11px] font-bold text-[var(--mn-text-muted)]">ADV {advId}</p>}
+        {story?.birthday && (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <CharacterAvatarStack locale={locale} characters={[{ id: story.birthday.characterId, name: story.birthday.characterName }]} size="md" showNames />
+            {story.birthday.month > 0 && <span className="text-xs font-bold text-[var(--mn-accent)]">{t(locale, "story.ui.birthdayDate", { month: story.birthday.month, day: story.birthday.day })}</span>}
+          </div>
+        )}
+        {(eyebrow || playTime) && <p className="mt-3 text-[11px] font-bold tabular-nums text-[var(--mn-text-muted)]">{[eyebrow ? `ADV ${advId}` : "", playTime ? t(locale, "story.ui.playTimeValue", { time: playTime }) : ""].filter(Boolean).join(" · ")}</p>}
+        {unlocks.length > 0 && (
+          <div className="mt-3">
+            <p className="text-[11px] font-black text-[var(--mn-text-muted)]">{t(locale, "story.ui.unlockTitle")}</p>
+            <ul className="mt-1 flex flex-wrap gap-1.5">
+              {unlocks.map((unlock) => (
+                <li key={unlock.key} className="rounded-full border border-[var(--mn-border)] bg-[var(--mn-surface)] px-2.5 py-0.5 text-[11px] font-bold text-[var(--mn-text)]">
+                  {unlock.advId ? <a className="hover:text-[var(--mn-accent-deep)] hover:underline" href={localizePath(storyPath(unlock.advId), locale)}>{unlock.text}</a> : unlock.text}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {rewards.length > 0 && (
+          <div className="mt-3">
+            <p className="text-[11px] font-black text-[var(--mn-text-muted)]">{t(locale, "story.ui.rewardsTitle")}</p>
+            <div className="mt-1.5 flex flex-wrap gap-2">
+              {rewards.map((reward, index) => <RewardChip key={`${reward.kind}-${reward.id}-${index}`} reward={reward} locale={locale} variant="icon" />)}
+            </div>
+          </div>
+        )}
         <StoryPlayerLink locale={locale} advId={advId} />
       </div>
     </div>
@@ -97,7 +129,7 @@ function NeighborLink({ neighbor, locale, direction }: { neighbor: StoryNeighbor
   const isNext = direction === "next";
   const detail = [neighbor.groupTitle, storyEpisodeLabel(locale, neighbor)].filter(Boolean).join(" · ");
   return <a
-    href={localizePath(`/story/${neighbor.advId}`, locale)}
+    href={localizePath(storyPath(neighbor.advId), locale)}
     rel={isNext ? "next" : "prev"}
     className={`group flex min-w-0 items-center gap-3 rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-4 shadow-[var(--mn-shadow-stamp-sm)] transition hover:-translate-y-0.5 hover:shadow-[var(--mn-shadow-stamp)] ${isNext ? "flex-row-reverse text-right sm:col-start-2" : ""}`}
   >
