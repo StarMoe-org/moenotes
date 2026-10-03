@@ -388,7 +388,7 @@ export const zhCN = {
     pause: "暂停自动播放",
     play: "继续自动播放",
     showSlide: "显示：{title}",
-    kinds: { event: "活动", gacha: "招募", live: "歌曲活动", mission: "限时任务", loginBonus: "登录奖励", seasonPass: "通行证", exchange: "交换所", story: "剧情" },
+    kinds: { event: "活动", gacha: "招募", live: "歌曲活动", mission: "限时任务", loginBonus: "登录奖励", seasonPass: "通行证", exchange: "交换所", story: "剧情", monthlyPass: "月卡", shop: "商店" },
     viewStory: "查看主线剧情",
     viewExchange: "查看交换所",
     currentEvent: "当前活动",
@@ -2209,7 +2209,7 @@ export const zhCN = {
     quickFilter: "打开快捷筛选",
     openDetail: "查看{name}",
     detail: {"group":"分类","type":"类型","max":"持有上限","noMax":"无上限","id":"道具 ID","period":"开放时间","backToList":"返回持有物一览","showAll":"展开全部 {count} 项","showLess":"收起","notFoundTitle":"找不到这件道具","notFoundDescription":"任何服务器的数据中都没有这件道具。返回持有物一览看看其他道具吧。"},
-    sources: {"title":"获取途径","description":"根据游戏数据整理的发放这件道具的奖励、商店与奖品。","empty":"游戏数据中没有记录这件道具的获取途径。","total":"共 ×{count}","everyCharacter":"所有角色","kinds":{"event":"活动","exchange":"交换所","shop":"商店","gacha":"招募","seasonPass":"通行证","loginBonus":"登录奖励","limitedMission":"限时任务","mission":"任务","characterMission":"角色任务","characterRank":"角色评级奖励","friendshipRank":"羁绊等级奖励","story":"剧情奖励","music":"歌曲奖励"},"details":{"pointReward":"累计 pt 奖励","liveReward":"演出奖励","challengeLive":"挑战演出","eventMission":"活动任务","boxGacha":"箱型招募","ranking":"排名奖励","product":"商品","prize":"奖品","drawBonus":"招募赠品","free":"免费奖励","premium":"高级奖励","loginDay":"每日奖励","missionReward":"任务奖励","completeReward":"全部达成奖励","rankReward":"等级奖励","episodeReward":"章节奖励","scoreReward":"评分奖励","comboReward":"Full Combo 奖励"}},
+    sources: {"title":"获取途径","description":"根据游戏数据整理的发放这件道具的奖励、商店与奖品。","empty":"游戏数据中没有记录这件道具的获取途径。","total":"共 ×{count}","everyCharacter":"所有角色","kinds":{"event":"活动","exchange":"交换所","shop":"商店","gacha":"招募","seasonPass":"通行证","monthlyPass":"月卡","loginBonus":"登录奖励","limitedMission":"限时任务","mission":"任务","characterMission":"角色任务","characterRank":"角色评级奖励","friendshipRank":"羁绊等级奖励","story":"剧情奖励","music":"歌曲奖励"},"details":{"pointReward":"累计 pt 奖励","liveReward":"演出奖励","challengeLive":"挑战演出","eventMission":"活动任务","boxGacha":"箱型招募","ranking":"排名奖励","product":"商品","prize":"奖品","drawBonus":"招募赠品","free":"免费奖励","premium":"高级奖励","loginDay":"每日奖励","missionReward":"任务奖励","completeReward":"全部达成奖励","rankReward":"等级奖励","episodeReward":"章节奖励","scoreReward":"评分奖励","comboReward":"Full Combo 奖励","firstPurchase":"首次购买","continuation":"续购"}},
     usages: {"title":"用途","description":"消耗这件道具的养成项目，以及一张卡或一件装备从头养满所需的数量。","empty":"这件道具不作为养成材料使用。","perTarget":"每个 ×{count}","perTargetAlternative":"每个 ×{count}，可代替该卡专属的成员星辉","kinds":{"memberTraining":"成员特训","memberAwaken":"成员觉醒","memberLiveSkill":"Live 技能强化","memberGekisouSkill":"击奏技能强化","bandItem":"乐队道具强化"}},
   },
   bandItems: {
@@ -2273,7 +2273,7 @@ export const zhCN = {
   },
   // ── pack F ──
   calendar: {
-    kinds: { event: "活动", gacha: "招募", loginBonus: "登录奖励", seasonPass: "通行证", mission: "限时任务", realLive: "现实演出", birthday: "生日" },
+    kinds: { event: "活动", gacha: "招募", loginBonus: "登录奖励", seasonPass: "通行证", monthlyPass: "月卡", mission: "限时任务", realLive: "现实演出", birthday: "生日" },
     kindFilter: "类型",
     characterFilter: "角色",
     filterTitle: "日历筛选",

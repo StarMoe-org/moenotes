@@ -514,7 +514,7 @@ export function getBuildGachaDetail(locale: AppLocale, gachaId: number): Promise
 
 export function homeOn(server: GameServer, locale: AppLocale): Promise<HomeData> {
   return memo(`home:${server}:${locale}`, async () => {
-    const [banners, gachas, rewards, music, cards, supportCards, events, { characters }, gachaDetails, exchanges, chapters, textTable] = await Promise.all([
+    const [banners, gachas, rewards, music, cards, supportCards, events, { characters }, gachaDetails, exchanges, chapters, textTable, shops, shopProducts, stories] = await Promise.all([
       table<RawHomeBanner>("MasterHomeBanner.json", server),
       gachasOn(server, locale),
       rewardEntriesOn(server, locale),
@@ -527,9 +527,24 @@ export function homeOn(server: GameServer, locale: AppLocale): Promise<HomeData>
       exchangesOn(server, locale),
       table<RawStoryChapter>("MasterStoryChapter.json", server),
       texts(server),
+      table<{ id: number; nameTextId: string }>("MasterShop.json", server).catch(() => ({ _allData: [] as Array<{ id: number; nameTextId: string }> })),
+      table<{ shopId: number; resourceType: number; resourceId: number }>("MasterShopProduct.json", server).catch(() => ({ _allData: [] as Array<{ shopId: number; resourceType: number; resourceId: number }> })),
+      storiesOn(server, locale),
     ]);
-    // Banner targets: exchange shops (displayType 3, 11) and story chapters (displayType 1).
+    // Banner targets: exchange shops (displayType 3, 11), story chapters (1), shop packs (4); birthday stories.
     const textMap = new Map(textTable._allData.map((entry) => [entry.id, entry]));
+    const productsByShop = new Map<number, Array<{ resourceType: number; resourceId: number }>>();
+    for (const product of shopProducts._allData) {
+      const list = productsByShop.get(product.shopId) ?? [];
+      list.push({ resourceType: product.resourceType, resourceId: product.resourceId });
+      productsByShop.set(product.shopId, list);
+    }
+    // A character's first birthday story (list order) opens from the home page's birthday entry.
+    const birthdayStories = new Map<number, number>();
+    for (const story of stories) {
+      const characterId = story.birthday?.characterId;
+      if (characterId && !birthdayStories.has(characterId)) birthdayStories.set(characterId, story.advId);
+    }
     return buildHomeData(banners._allData, gachas, rewards, music, cards, supportCards, Date.now(), {
       events,
       characters,
@@ -537,6 +552,8 @@ export function homeOn(server: GameServer, locale: AppLocale): Promise<HomeData>
       targets: {
         exchanges: new Map(exchanges.details.map((exchange) => [exchange.id, { id: exchange.id, title: exchange.name, link: { routeId: "exchange", detailId: exchange.id } }])),
         chapters: chapters._allData.map((chapter) => ({ id: chapter.id, banner: chapter.banner, title: localizeMasterText(textMap.get(chapter.nameTextId), locale) })),
+        shops: new Map(shops._allData.map((shop) => [shop.id, { title: localizeMasterText(textMap.get(shop.nameTextId), locale), products: productsByShop.get(shop.id) ?? [] }])),
+        birthdayStories,
       },
     });
   });

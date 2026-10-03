@@ -226,10 +226,32 @@ describe("home data", () => {
   const gachas = [{ id: 1, name: "MyGO Pickup" }] as Parameters<typeof buildHomeData>[1];
   const data = buildHomeData(banners, gachas, rewards, [], [], [], Date.parse("2026-09-24T12:00:00+08:00"));
 
-  test("carousel keeps live banners, drops shop packs and ended ones, and links to detail pages", () => {
+  test("carousel keeps live banners, drops ended ones, and links to detail pages", () => {
+    // A shop pack banner (displayType 4) stays, unlinked while the build knows no such pack.
     expect(data.slides.map((slide) => [slide.id, slide.kind, slide.title, slide.link])).toEqual([
       [4, "seasonPass", "season-pass-1", { routeId: "rewards", detailId: "season-pass-1" }],
       [1, "gacha", "MyGO Pickup", { routeId: "gacha", detailId: 1 }],
+      [5, "shop", "", undefined],
+    ]);
+  });
+
+  test("shop pack banners open the pass they sell, else the pack", () => {
+    const live: RawHomeBanner[] = [
+      { id: 5, imageAsset: "Image/Banner/home_banner_1100000001", displayType: 4, contentId: 9, displayOrder: 105, startAt: "2026-09-24 0:00:00", endAt: "2026-10-28 11:59:59" },
+      { id: 7, imageAsset: "Image/Banner/home_banner_1100000002", displayType: 4, contentId: 8, displayOrder: 104, startAt: "2026-09-24 0:00:00", endAt: "2026-10-28 11:59:59" },
+    ];
+    const passes = [entry("monthly-pass-3", "monthlyPass", 3, "", "")];
+    const home = buildHomeData(live, [], passes, [], [], [], Date.parse("2026-09-25T12:00:00+08:00"), {
+      targets: {
+        shops: new Map([
+          [9, { title: "Monthly Pass Pack", products: [{ resourceType: 6, resourceId: 3 }] }],
+          [8, { title: "Star Pack", products: [{ resourceType: 1, resourceId: 2 }] }],
+        ]),
+      },
+    });
+    expect(home.slides.map((slide) => [slide.id, slide.kind, slide.title, slide.link])).toEqual([
+      [5, "monthlyPass", "monthly-pass-3", { routeId: "rewards", detailId: "monthly-pass-3" }],
+      [7, "shop", "Star Pack", { routeId: "shop", detailId: 8 }],
     ]);
   });
 
@@ -285,6 +307,11 @@ describe("home events and birthdays", () => {
 
   test("collects every character's BD cards and the gacha picking them up", () => {
     expect(birthdays.map((entry) => [entry.characterId, entry.cards.map((item) => item.id), entry.gachas.map((item) => item.id)])).toEqual([[22, [64], [7, 8]], [1, [], []]]);
+  });
+
+  test("carries the character's birthday story when the story list has one", () => {
+    const withStory = homeBirthdays(characters, [bdCard], gachaList, [], new Map([[22, 33010]]));
+    expect(withStory.map((entry) => [entry.characterId, entry.birthdayStoryAdvId])).toEqual([[22, 33010], [1, undefined]]);
   });
 
   test("links the card and gacha released within 45 days of the birthday", () => {

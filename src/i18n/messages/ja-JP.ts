@@ -382,7 +382,7 @@ export const jaJP = {
     pause: "自動再生を停止",
     play: "自動再生を再開",
     showSlide: "{title} を表示",
-    kinds: { event: "イベント", gacha: "ガチャ", live: "楽曲イベント", mission: "期間限定ミッション", loginBonus: "ログインボーナス", seasonPass: "シーズンパス", exchange: "交換所", story: "ストーリー" },
+    kinds: { event: "イベント", gacha: "ガチャ", live: "楽曲イベント", mission: "期間限定ミッション", loginBonus: "ログインボーナス", seasonPass: "シーズンパス", exchange: "交換所", story: "ストーリー", monthlyPass: "マンスリーパス", shop: "ショップ" },
     viewStory: "メインストーリーを見る",
     viewExchange: "交換所を見る",
     currentEvent: "開催中のイベント",
@@ -2114,7 +2114,7 @@ export const jaJP = {
     quickFilter: "クイックフィルターを開く",
     openDetail: "{name}を見る",
     detail: {"group":"分類","type":"タイプ","max":"所持上限","noMax":"上限なし","id":"アイテム ID","period":"期間","backToList":"所持品一覧へ戻る","showAll":"すべて表示（{count} 件）","showLess":"折りたたむ","notFoundTitle":"アイテムが見つかりません","notFoundDescription":"どのサーバーのデータにもこのアイテムはありません。所持品一覧からほかのアイテムを探してみてください。"},
-    sources: {"title":"入手方法","description":"ゲームデータから集めた、このアイテムがもらえる報酬・ショップ・景品です。","empty":"ゲームデータにこのアイテムの入手方法は記録されていません。","total":"合計 ×{count}","everyCharacter":"全キャラクター","kinds":{"event":"イベント","exchange":"交換所","shop":"ショップ","gacha":"ガチャ","seasonPass":"シーズンパス","loginBonus":"ログインボーナス","limitedMission":"期間限定ミッション","mission":"ミッション","characterMission":"キャラクターミッション","characterRank":"キャラクターランク報酬","friendshipRank":"絆ランク報酬","story":"ストーリー報酬","music":"楽曲報酬"},"details":{"pointReward":"累計pt報酬","liveReward":"ライブ報酬","challengeLive":"チャレンジライブ","eventMission":"イベントミッション","boxGacha":"BOXガチャ","ranking":"ランキング報酬","product":"商品","prize":"景品","drawBonus":"ガチャおまけ","free":"無料報酬","premium":"プレミアム報酬","loginDay":"日別報酬","missionReward":"ミッション報酬","completeReward":"コンプリート報酬","rankReward":"ランク報酬","episodeReward":"エピソード報酬","scoreReward":"スコアランク報酬","comboReward":"フルコンボ報酬"}},
+    sources: {"title":"入手方法","description":"ゲームデータから集めた、このアイテムがもらえる報酬・ショップ・景品です。","empty":"ゲームデータにこのアイテムの入手方法は記録されていません。","total":"合計 ×{count}","everyCharacter":"全キャラクター","kinds":{"event":"イベント","exchange":"交換所","shop":"ショップ","gacha":"ガチャ","seasonPass":"シーズンパス","monthlyPass":"マンスリーパス","loginBonus":"ログインボーナス","limitedMission":"期間限定ミッション","mission":"ミッション","characterMission":"キャラクターミッション","characterRank":"キャラクターランク報酬","friendshipRank":"絆ランク報酬","story":"ストーリー報酬","music":"楽曲報酬"},"details":{"pointReward":"累計pt報酬","liveReward":"ライブ報酬","challengeLive":"チャレンジライブ","eventMission":"イベントミッション","boxGacha":"BOXガチャ","ranking":"ランキング報酬","product":"商品","prize":"景品","drawBonus":"ガチャおまけ","free":"無料報酬","premium":"プレミアム報酬","loginDay":"日別報酬","missionReward":"ミッション報酬","completeReward":"コンプリート報酬","rankReward":"ランク報酬","episodeReward":"エピソード報酬","scoreReward":"スコアランク報酬","comboReward":"フルコンボ報酬","firstPurchase":"初回購入","continuation":"継続購入"}},
     usages: {"title":"使い道","description":"このアイテムを消費する育成と、カードや装備 1 つを最大まで育てるのに必要な数です。","empty":"このアイテムは育成素材として使われません。","perTarget":"1 つにつき ×{count}","perTargetAlternative":"1 つにつき ×{count}（カード専用のピースの代わりに使用）","kinds":{"memberTraining":"メンバー特訓","memberAwaken":"メンバー覚醒","memberLiveSkill":"ライブスキル強化","memberGekisouSkill":"激奏スキル強化","bandItem":"バンド装備強化"}},
   },
   bandItems: {
@@ -2178,7 +2178,7 @@ export const jaJP = {
   },
   // ── pack F ──
   calendar: {
-    kinds: { event: "イベント", gacha: "ガチャ", loginBonus: "ログインボーナス", seasonPass: "シーズンパス", mission: "期間限定ミッション", realLive: "リアルライブ", birthday: "誕生日" },
+    kinds: { event: "イベント", gacha: "ガチャ", loginBonus: "ログインボーナス", seasonPass: "シーズンパス", monthlyPass: "マンスリーパス", mission: "期間限定ミッション", realLive: "リアルライブ", birthday: "誕生日" },
     kindFilter: "種類",
     characterFilter: "キャラクター",
     filterTitle: "カレンダーの絞り込み",

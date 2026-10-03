@@ -11,7 +11,7 @@ const ITEM_RESOURCE_TYPE = 1;
 
 /** Kinds of place an item is handed out, in the order the item page lists them. */
 export const ITEM_SOURCE_KINDS = [
-  "event", "exchange", "shop", "gacha", "seasonPass", "loginBonus", "limitedMission", "mission", "characterMission",
+  "event", "exchange", "shop", "gacha", "seasonPass", "monthlyPass", "loginBonus", "limitedMission", "mission", "characterMission",
   "characterRank", "friendshipRank", "story", "music",
 ] as const;
 export type ItemSourceKind = typeof ITEM_SOURCE_KINDS[number];
@@ -20,7 +20,7 @@ export type ItemSourceKind = typeof ITEM_SOURCE_KINDS[number];
 export type ItemSourceDetail =
   | "pointReward" | "liveReward" | "challengeLive" | "eventMission" | "boxGacha" | "ranking"
   | "product" | "prize" | "drawBonus" | "free" | "premium" | "loginDay" | "missionReward" | "completeReward"
-  | "rankReward" | "episodeReward" | "scoreReward" | "comboReward";
+  | "rankReward" | "episodeReward" | "scoreReward" | "comboReward" | "firstPurchase" | "continuation";
 
 export interface ItemSourceRef {
   kind: ItemSourceKind;
@@ -161,7 +161,8 @@ export function addGachaSources(collector: ItemSourceCollector, gachas: readonly
 export type RewardEntrySourceView =
   | { kind: "seasonPass"; slug: string; title: string; levels: Array<{ free: Reward[]; premium: Reward[] }>; missionGroups: Array<{ missions: Array<{ rewards: Reward[] }> }> }
   | { kind: "loginBonus"; slug: string; title: string; sheets: Array<{ days: Array<{ rewards: Reward[] }> }> }
-  | { kind: "mission"; slug: string; title: string; days: Array<{ missions: Array<{ rewards: Reward[] }> }>; completeRewards: Reward[] };
+  | { kind: "mission"; slug: string; title: string; days: Array<{ missions: Array<{ rewards: Reward[] }> }>; completeRewards: Reward[] }
+  | { kind: "monthlyPass"; slug: string; title: string; firstTimeRewards: Reward[]; dailyRewards: Array<{ rewards: Reward[] }>; continuationRewards: Array<{ rewards: Reward[] }> };
 
 export function addRewardEntrySources(collector: ItemSourceCollector, entries: readonly RewardEntrySourceView[]): void {
   for (const entry of entries) {
@@ -178,6 +179,10 @@ export function addRewardEntrySources(collector: ItemSourceCollector, entries: r
       for (const group of entry.missionGroups) for (const mission of group.missions) each(mission.rewards, "missionReward");
     } else if (entry.kind === "loginBonus") {
       for (const sheet of entry.sheets) for (const day of sheet.days) each(day.rewards, "loginDay");
+    } else if (entry.kind === "monthlyPass") {
+      each(entry.firstTimeRewards, "firstPurchase");
+      for (const day of entry.dailyRewards) each(day.rewards, "loginDay");
+      for (const purchase of entry.continuationRewards) each(purchase.rewards, "continuation");
     } else {
       for (const day of entry.days) for (const mission of day.missions) each(mission.rewards, "missionReward");
       each(entry.completeRewards, "completeReward");
@@ -315,7 +320,7 @@ export function addShopSources(
   shopName: (shopId: number) => string,
 ): void {
   for (const product of products) {
-    collector.addResource(product, { kind: "shop", key: String(product.shopId), name: shopName(product.shopId), detail: "product", link: { routeId: "shop" } });
+    collector.addResource(product, { kind: "shop", key: String(product.shopId), name: shopName(product.shopId), detail: "product", link: { routeId: "shop", detailId: product.shopId } });
   }
 }
 

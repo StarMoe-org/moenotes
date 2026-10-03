@@ -388,7 +388,7 @@ export const zhTW = {
     pause: "暫停自動播放",
     play: "繼續自動播放",
     showSlide: "顯示：{title}",
-    kinds: { event: "活動", gacha: "轉蛋", live: "歌曲活動", mission: "限時任務", loginBonus: "登入獎勵", seasonPass: "通行證", exchange: "交換所", story: "劇情" },
+    kinds: { event: "活動", gacha: "轉蛋", live: "歌曲活動", mission: "限時任務", loginBonus: "登入獎勵", seasonPass: "通行證", exchange: "交換所", story: "劇情", monthlyPass: "月卡", shop: "商店" },
     viewStory: "查看主線劇情",
     viewExchange: "查看交換所",
     currentEvent: "目前活動",
@@ -2209,7 +2209,7 @@ export const zhTW = {
     quickFilter: "打開快捷篩選",
     openDetail: "查看{name}",
     detail: {"group":"分類","type":"類型","max":"持有上限","noMax":"無上限","id":"道具 ID","period":"開放時間","backToList":"返回持有物一覽","showAll":"展開全部 {count} 項","showLess":"收起","notFoundTitle":"找不到這件道具","notFoundDescription":"任何伺服器的資料中都沒有這件道具。返回持有物一覽看看其他道具吧。"},
-    sources: {"title":"取得途徑","description":"根據遊戲資料整理的發放這件道具的獎勵、商店與獎品。","empty":"遊戲資料中沒有記錄這件道具的取得途徑。","total":"共 ×{count}","everyCharacter":"所有角色","kinds":{"event":"活動","exchange":"交換所","shop":"商店","gacha":"轉蛋","seasonPass":"通行證","loginBonus":"登入獎勵","limitedMission":"限時任務","mission":"任務","characterMission":"角色任務","characterRank":"角色評級獎勵","friendshipRank":"羈絆等級獎勵","story":"劇情獎勵","music":"歌曲獎勵"},"details":{"pointReward":"累計 pt 獎勵","liveReward":"演出獎勵","challengeLive":"挑戰演出","eventMission":"活動任務","boxGacha":"箱型轉蛋","ranking":"排名獎勵","product":"商品","prize":"獎品","drawBonus":"轉蛋贈品","free":"免費獎勵","premium":"高級獎勵","loginDay":"每日獎勵","missionReward":"任務獎勵","completeReward":"全部達成獎勵","rankReward":"等級獎勵","episodeReward":"章節獎勵","scoreReward":"評分獎勵","comboReward":"Full Combo 獎勵"}},
+    sources: {"title":"取得途徑","description":"根據遊戲資料整理的發放這件道具的獎勵、商店與獎品。","empty":"遊戲資料中沒有記錄這件道具的取得途徑。","total":"共 ×{count}","everyCharacter":"所有角色","kinds":{"event":"活動","exchange":"交換所","shop":"商店","gacha":"轉蛋","seasonPass":"通行證","monthlyPass":"月卡","loginBonus":"登入獎勵","limitedMission":"限時任務","mission":"任務","characterMission":"角色任務","characterRank":"角色評級獎勵","friendshipRank":"羈絆等級獎勵","story":"劇情獎勵","music":"歌曲獎勵"},"details":{"pointReward":"累計 pt 獎勵","liveReward":"演出獎勵","challengeLive":"挑戰演出","eventMission":"活動任務","boxGacha":"箱型轉蛋","ranking":"排名獎勵","product":"商品","prize":"獎品","drawBonus":"轉蛋贈品","free":"免費獎勵","premium":"高級獎勵","loginDay":"每日獎勵","missionReward":"任務獎勵","completeReward":"全部達成獎勵","rankReward":"等級獎勵","episodeReward":"章節獎勵","scoreReward":"評分獎勵","comboReward":"Full Combo 獎勵","firstPurchase":"首次購買","continuation":"續購"}},
     usages: {"title":"用途","description":"消耗這件道具的養成項目，以及一張卡或一件裝備從頭養滿所需的數量。","empty":"這件道具不作為養成材料使用。","perTarget":"每個 ×{count}","perTargetAlternative":"每個 ×{count}，可代替該卡專屬的團員星輝","kinds":{"memberTraining":"團員特訓","memberAwaken":"團員覺醒","memberLiveSkill":"Live 技能強化","memberGekisouSkill":"擊奏技能強化","bandItem":"樂隊道具強化"}},
   },
   bandItems: {
@@ -2273,7 +2273,7 @@ export const zhTW = {
   },
   // ── pack F ──
   calendar: {
-    kinds: { event: "活動", gacha: "轉蛋", loginBonus: "登入獎勵", seasonPass: "通行證", mission: "限時任務", realLive: "現實演出", birthday: "生日" },
+    kinds: { event: "活動", gacha: "轉蛋", loginBonus: "登入獎勵", seasonPass: "通行證", monthlyPass: "月卡", mission: "限時任務", realLive: "現實演出", birthday: "生日" },
     kindFilter: "類型",
     characterFilter: "角色",
     filterTitle: "日曆篩選",

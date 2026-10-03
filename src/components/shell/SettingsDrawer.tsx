@@ -17,7 +17,7 @@ import { formatBytes } from "@/lib/format/bytes";
 import { useOverlay } from "@/lib/overlay/use-overlay";
 import { defaultGameServer } from "@/lib/game-api/server";
 import { DENSITIES, GAME_SERVER_SETTINGS } from "@/lib/settings/schema";
-import { getForceJapaneseTitlesSetting, setForceJapaneseTitlesSetting, SONG_TITLE_PREFERENCE_EVENT } from "@/lib/settings/song-titles";
+import { getForceJapaneseTitles, setForceJapaneseTitles, SONG_TITLE_PREFERENCE_EVENT } from "@/lib/music/title-preference";
 import type { ThemeBandColor } from "@/lib/masterdata/build-settings";
 import { DEFAULT_ACCENT } from "@/config/settings";
 import { useSettings } from "@/lib/settings/use-settings";
@@ -371,8 +371,8 @@ function AccentPicker({ locale, bands, value, onChange }: { locale: AppLocale; b
 function JapaneseTitlesToggle({ locale }: { locale: AppLocale }) {
   const [on, setOn] = useState(false);
   useEffect(() => {
-    setOn(getForceJapaneseTitlesSetting());
-    const sync = () => setOn(getForceJapaneseTitlesSetting());
+    setOn(getForceJapaneseTitles());
+    const sync = () => setOn(getForceJapaneseTitles());
     window.addEventListener(SONG_TITLE_PREFERENCE_EVENT, sync);
     window.addEventListener("storage", sync);
     return () => {
@@ -392,7 +392,7 @@ function JapaneseTitlesToggle({ locale }: { locale: AppLocale }) {
         checked={on}
         onChange={(event) => {
           setOn(event.target.checked);
-          setForceJapaneseTitlesSetting(event.target.checked);
+          setForceJapaneseTitles(event.target.checked);
         }}
         className="mt-1 h-5 w-5 shrink-0 accent-[var(--mn-accent-deep)]"
       />

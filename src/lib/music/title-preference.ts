@@ -1,4 +1,5 @@
 import { useCallback, useSyncExternalStore } from "react";
+import { storageKeys } from "@/config/storage";
 import { safeGetLocalStorage, safeSetLocalStorage } from "@/lib/storage/safe-storage";
 
 /**
@@ -6,7 +7,7 @@ import { safeGetLocalStorage, safeSetLocalStorage } from "@/lib/storage/safe-sto
  * read titles through {@link useSongTitle}, which follows the setting live (the settings drawer's switch calls
  * {@link setForceJapaneseTitles}, which fires {@link SONG_TITLE_PREFERENCE_EVENT} on `window`).
  */
-export const SONG_TITLE_PREFERENCE_KEY = "moenotes:force-ja-titles";
+export const SONG_TITLE_PREFERENCE_KEY = storageKeys.forceJapaneseTitles;
 export const SONG_TITLE_PREFERENCE_EVENT = "moenotes:song-title-preference";
 
 /** Whether song titles show their Japanese MasterText cell (false during SSR and by default). */

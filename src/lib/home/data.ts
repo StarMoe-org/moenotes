@@ -4,7 +4,7 @@ import type { CharacterViewModel } from "@/lib/characters/data";
 import type { EventViewModel } from "@/lib/events/data";
 import type { GachaDetailViewModel, GachaViewModel } from "@/lib/gacha/data";
 import type { MusicViewModel } from "@/lib/music/data";
-import type { RewardEntryKind, RewardEntrySummary } from "@/lib/rewards/data";
+import { homeBannerPassSlug, type RewardEntryKind, type RewardEntrySummary } from "@/lib/rewards/data";
 import type { EntityLink } from "@/lib/route/entity-link";
 import { compareByStartDesc, parseMasterDate } from "@/lib/schedule";
 import type { SupportCardViewModel } from "@/lib/support-cards/data";
@@ -19,7 +19,7 @@ export interface RawHomeBanner {
   endAt: string;
 }
 
-export type HomeSlideKind = "event" | "gacha" | "live" | "mission" | "seasonPass" | "exchange" | "story";
+export type HomeSlideKind = "event" | "gacha" | "live" | "mission" | "seasonPass" | "monthlyPass" | "exchange" | "story" | "shop";
 
 /** Where a banner or a home module links: a route, optionally one entity's detail page (src/lib/route/entity-link.ts). */
 export type HomeLink = EntityLink;
@@ -47,6 +47,10 @@ export interface HomeBannerTargets {
   exchanges?: ReadonlyMap<number, HomeBannerTarget> | undefined;
   /** Story chapters (displayType 1) with their banner asset name (MasterStoryChapter.banner). */
   chapters?: ReadonlyArray<{ id: number; banner: string; title: string }> | undefined;
+  /** Shop packs by id (displayType 4), with what they sell, so a pass pack opens its pass. */
+  shops?: ReadonlyMap<number, { title: string; products: ReadonlyArray<{ resourceType: number; resourceId: number }> }> | undefined;
+  /** The first birthday story (ADV id) of each character, from the birthday story list. */
+  birthdayStories?: ReadonlyMap<number, number> | undefined;
 }
 
 /** The events the "current event" card picks from: running or upcoming at build time, the browser picks the one shown. */
@@ -98,11 +102,11 @@ export interface HomeData {
 }
 
 // MasterHomeBanner.displayType names the screen a banner opens (the TW/JP/EN/KR tables of 2026-10 agree):
-// 1 a story chapter, 2 a gacha, 3 and 11 an exchange shop (contentId = MasterExchange id), 24 limited missions,
-// 25 the season pass.
-const bannerKinds: Record<number, HomeSlideKind> = { 1: "story", 2: "gacha", 3: "exchange", 11: "exchange", 24: "mission", 25: "seasonPass" };
-// Shop packs and the placeholder banner are not promotions of game content.
-const hiddenBannerTypes = new Set([4, 17]);
+// 1 a story chapter, 2 a gacha, 3 and 11 an exchange shop (contentId = MasterExchange id), 4 a shop pack
+// (contentId = MasterShop id; a pack selling a pass opens the pass), 24 limited missions, 25 the season pass.
+const bannerKinds: Record<number, HomeSlideKind> = { 1: "story", 2: "gacha", 3: "exchange", 4: "shop", 11: "exchange", 24: "mission", 25: "seasonPass" };
+// The placeholder banner promotes nothing.
+const hiddenBannerTypes = new Set([17]);
 const rewardKindBySlide: Partial<Record<HomeSlideKind, RewardEntryKind>> = { mission: "mission", seasonPass: "seasonPass" };
 
 const LATEST_LIMIT = 6;
@@ -138,6 +142,7 @@ export function buildHomeData(
 ): HomeData {
   const gachaMap = new Map(gachas.map((gacha) => [gacha.id, gacha]));
   const rewardMap = new Map(rewards.map((entry) => [`${entry.kind}:${entry.id}`, entry]));
+  const rewardBySlug = new Map(rewards.map((entry) => [entry.slug, entry]));
   const { targets = {} } = extra;
 
   const slides = banners
@@ -169,6 +174,20 @@ export function buildHomeData(
         if (chapter) slide.title = chapter.title;
         // The chapter may open after its banner (a teaser), so the list of main chapters rather than an episode.
         slide.link = { routeId: "main-story" };
+      } else if (kind === "shop" || kind === "seasonPass") {
+        // A season pass banner, or a shop pack: the pass the pack sells when it sells one, else the pack itself.
+        const shop = targets.shops?.get(banner.contentId);
+        const products = (shop?.products ?? []).map((product) => ({ shopId: banner.contentId, ...product }));
+        const slug = homeBannerPassSlug(banner, products, new Set(rewardBySlug.keys()));
+        const entry = slug ? rewardBySlug.get(slug) : undefined;
+        if (entry) {
+          slide.kind = entry.kind === "monthlyPass" ? "monthlyPass" : "seasonPass";
+          slide.title = entry.title;
+          slide.link = { routeId: "rewards", detailId: entry.slug };
+        } else if (shop) {
+          slide.title = shop.title;
+          slide.link = { routeId: "shop", detailId: banner.contentId };
+        }
       } else if (rewardKind) {
         const entry = rewardMap.get(`${rewardKind}:${banner.contentId}`);
         if (entry) {
@@ -187,7 +206,7 @@ export function buildHomeData(
     latestCards: [...cards].sort(compareByStartDesc).slice(0, LATEST_LIMIT),
     latestSupportCards: [...supportCards].sort(compareByStartDesc).slice(0, LATEST_LIMIT),
     events: homeEvents(extra.events ?? [], now),
-    birthdays: homeBirthdays(extra.characters ?? [], cards, gachas, extra.gachaPickups ?? []),
+    birthdays: homeBirthdays(extra.characters ?? [], cards, gachas, extra.gachaPickups ?? [], targets.birthdayStories),
   };
 }
 
@@ -232,6 +251,7 @@ export function homeBirthdays(
   cards: readonly CardViewModel[],
   gachas: readonly GachaViewModel[],
   pickups: ReadonlyArray<Pick<GachaDetailViewModel, "id" | "pickupMemberIds">>,
+  birthdayStories?: ReadonlyMap<number, number>,
 ): HomeBirthday[] {
   const birthdayCards = cards.filter((card) => card.rarity === BIRTHDAY_RARITY && parseMasterDate(card.startAt) !== null);
   const cardCharacter = new Map(birthdayCards.map((card) => [card.id, card.characterId]));
@@ -260,6 +280,7 @@ export function homeBirthdays(
         .filter((card) => card.characterId === character.id)
         .map((card) => ({ id: card.id, title: card.title, assetId: card.assetId, startAt: card.startAt })),
       gachas: gachasByCharacter.get(character.id) ?? [],
+      ...(birthdayStories?.has(character.id) ? { birthdayStoryAdvId: birthdayStories.get(character.id)! } : {}),
     }));
 }
 

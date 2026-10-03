@@ -336,7 +336,7 @@ export const enUS = {
     pause: "Pause autoplay",
     play: "Resume autoplay",
     showSlide: "Show {title}",
-    kinds: { event: "Event", gacha: "Gacha", live: "Song event", mission: "Limited missions", loginBonus: "Login bonus", seasonPass: "Season pass", exchange: "Exchange shop", story: "Story" },
+    kinds: { event: "Event", gacha: "Gacha", live: "Song event", mission: "Limited missions", loginBonus: "Login bonus", seasonPass: "Season pass", exchange: "Exchange shop", story: "Story", monthlyPass: "Monthly pass", shop: "Shop" },
     viewStory: "View main story",
     viewExchange: "View exchange shop",
     currentEvent: "Current event",
@@ -2068,7 +2068,7 @@ export const enUS = {
     quickFilter: "Open quick filters",
     openDetail: "View {name}",
     detail: {"group":"Category","type":"Type","max":"Holding limit","noMax":"No limit","id":"Item ID","period":"Available","backToList":"Back to items","showAll":"Show all {count}","showLess":"Show less","notFoundTitle":"No such item","notFoundDescription":"This item is not in any server's data. Return to the item list to look for another one."},
-    sources: {"title":"Where to get it","description":"Rewards, shops and prizes that hand this item out, read from the game data.","empty":"No source of this item is recorded in the game data.","total":"×{count} in total","everyCharacter":"Every character","kinds":{"event":"Events","exchange":"Exchanges","shop":"Shop","gacha":"Gacha","seasonPass":"Season passes","loginBonus":"Login bonuses","limitedMission":"Limited missions","mission":"Missions","characterMission":"Character missions","characterRank":"Character rank rewards","friendshipRank":"Bond rank rewards","story":"Story rewards","music":"Song rewards"},"details":{"pointReward":"Point rewards","liveReward":"Live rewards","challengeLive":"Challenge Live","eventMission":"Event missions","boxGacha":"Box gacha","ranking":"Ranking rewards","product":"Product","prize":"Prize","drawBonus":"Draw bonus","free":"Free track","premium":"Premium track","loginDay":"Daily reward","missionReward":"Mission reward","completeReward":"Completion reward","rankReward":"Rank reward","episodeReward":"Episode reward","scoreReward":"Score rank reward","comboReward":"Full combo reward"}},
+    sources: {"title":"Where to get it","description":"Rewards, shops and prizes that hand this item out, read from the game data.","empty":"No source of this item is recorded in the game data.","total":"×{count} in total","everyCharacter":"Every character","kinds":{"event":"Events","exchange":"Exchanges","shop":"Shop","gacha":"Gacha","seasonPass":"Season passes","monthlyPass":"Monthly passes","loginBonus":"Login bonuses","limitedMission":"Limited missions","mission":"Missions","characterMission":"Character missions","characterRank":"Character rank rewards","friendshipRank":"Bond rank rewards","story":"Story rewards","music":"Song rewards"},"details":{"pointReward":"Point rewards","liveReward":"Live rewards","challengeLive":"Challenge Live","eventMission":"Event missions","boxGacha":"Box gacha","ranking":"Ranking rewards","product":"Product","prize":"Prize","drawBonus":"Draw bonus","free":"Free track","premium":"Premium track","loginDay":"Daily reward","missionReward":"Mission reward","completeReward":"Completion reward","rankReward":"Rank reward","episodeReward":"Episode reward","scoreReward":"Score rank reward","comboReward":"Full combo reward","firstPurchase":"First purchase","continuation":"Repeat purchase"}},
     usages: {"title":"Used for","description":"Upgrades that consume this item, and how many one card or gear needs from start to max.","empty":"This item is not used as an upgrade material.","perTarget":"×{count} each","perTargetAlternative":"×{count} each, in place of the card's own piece","kinds":{"memberTraining":"Member training","memberAwaken":"Member awakening","memberLiveSkill":"Live skill upgrades","memberGekisouSkill":"Gekiso skill upgrades","bandItem":"Band gear upgrades"}},
   },
   bandItems: {
@@ -2132,7 +2132,7 @@ export const enUS = {
   },
   // ── pack F ──
   calendar: {
-    kinds: { event: "Events", gacha: "Gacha", loginBonus: "Login bonuses", seasonPass: "Season passes", mission: "Limited missions", realLive: "Real lives", birthday: "Birthdays" },
+    kinds: { event: "Events", gacha: "Gacha", loginBonus: "Login bonuses", seasonPass: "Season passes", monthlyPass: "Monthly passes", mission: "Limited missions", realLive: "Real lives", birthday: "Birthdays" },
     kindFilter: "Type",
     characterFilter: "Character",
     filterTitle: "Calendar filters",

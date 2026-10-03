@@ -243,8 +243,7 @@ describe("calendar entries", () => {
         { slug: "login-bonus-1", kind: "loginBonus", id: 1, title: "Daily", bannerUrl: "", startAt: "2026/01/01 0:00:00", endAt: "", highlights: [], searchText: "" },
         { slug: "missions-2", kind: "mission", id: 2, title: "Limited", bannerUrl: "", startAt: "2026/10/02 0:00:00", endAt: "2026/10/30 0:00:00", highlights: [], searchText: "" },
       ],
-      realLives: [{ id: 1, bandIds: [3], startAt: "2026/10/11 0:00:00", endAt: "2026/10/11 18:00:00" }],
-      bandNames: new Map([[3, "Band 3"]]),
+      realLives: [{ id: 1, bands: [{ id: 3, name: "Band 3" }], startAt: "2026/10/11 0:00:00", endAt: "2026/10/11 18:00:00" }],
     }, "en-US");
     expect(entries.map((entry) => [entry.id, entry.kind, entry.link])).toEqual([
       ["event:3", "event", { routeId: "events", detailId: 3 }],

@@ -9,12 +9,13 @@ import {
 } from "@/lib/calendar/model";
 import type { EventViewModel } from "@/lib/events/data";
 import type { GachaViewModel } from "@/lib/gacha/data";
+import type { RealLiveViewModel } from "@/lib/real-lives/data";
 import type { RewardEntrySummary } from "@/lib/rewards/data";
 import type { EntityLink } from "@/lib/route/entity-link";
 import { parseMasterDate } from "@/lib/schedule";
 
 /** What a calendar entry is; also the type filter and the color of its bar. */
-export const CALENDAR_KINDS = ["event", "gacha", "loginBonus", "seasonPass", "mission", "realLive", "birthday"] as const;
+export const CALENDAR_KINDS = ["event", "gacha", "loginBonus", "seasonPass", "monthlyPass", "mission", "realLive", "birthday"] as const;
 export type CalendarKind = (typeof CALENDAR_KINDS)[number];
 
 /** Semantic colors of the kinds (CSS variables of the design tokens); birthdays use the character's color. */
@@ -23,6 +24,7 @@ export const CALENDAR_KIND_COLORS: Readonly<Record<CalendarKind, string>> = {
   gacha: "var(--mn-pink)",
   loginBonus: "var(--mn-mint)",
   seasonPass: "var(--mn-amber)",
+  monthlyPass: "var(--mn-amber)",
   mission: "var(--mn-cyan)",
   realLive: "var(--mn-rose)",
   birthday: "var(--mn-peach)",
@@ -61,8 +63,8 @@ export interface CalendarSources {
   events: readonly EventViewModel[];
   gachas: readonly GachaViewModel[];
   rewards: readonly RewardEntrySummary[];
-  realLives: ReadonlyArray<{ id: number; bandIds?: number[] | undefined; bandIDs?: number[] | undefined; startAt: string; endAt: string }>;
-  bandNames: ReadonlyMap<number, string>;
+  /** The real-lives page's view models (src/lib/real-lives/data.ts), bands already named. */
+  realLives: ReadonlyArray<Pick<RealLiveViewModel, "id" | "bands" | "startAt" | "endAt">>;
 }
 
 /** One server's dated entries: events, gacha, passes, login bonuses, limited missions and real live broadcasts. */
@@ -110,7 +112,7 @@ export function buildCalendarEntries(sources: CalendarSources, locale: AppLocale
   }
   for (const live of sources.realLives) {
     if (!dated(live.startAt)) continue;
-    const bands = (live.bandIds ?? live.bandIDs ?? []).map((id) => sources.bandNames.get(id)).filter(Boolean);
+    const bands = live.bands.map((band) => band.name).filter(Boolean);
     entries.push({
       id: `realLive:${live.id}`,
       kind: "realLive",

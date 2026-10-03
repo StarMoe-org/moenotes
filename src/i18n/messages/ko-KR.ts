@@ -335,7 +335,7 @@ export const koKR = {
     pause: "자동 재생 일시정지",
     play: "자동 재생 계속",
     showSlide: "{title} 보기",
-    kinds: { event: "이벤트", gacha: "뽑기", live: "곡 이벤트", mission: "기간 한정 미션", loginBonus: "로그인 보너스", seasonPass: "시즌 패스", exchange: "교환소", story: "스토리" },
+    kinds: { event: "이벤트", gacha: "뽑기", live: "곡 이벤트", mission: "기간 한정 미션", loginBonus: "로그인 보너스", seasonPass: "시즌 패스", exchange: "교환소", story: "스토리", monthlyPass: "월정액 패스", shop: "상점" },
     viewStory: "메인 스토리 보기",
     viewExchange: "교환소 보기",
     currentEvent: "진행 중인 이벤트",
@@ -2067,7 +2067,7 @@ export const koKR = {
     quickFilter: "빠른 필터 열기",
     openDetail: "{name} 보기",
     detail: {"group":"분류","type":"유형","max":"보유 상한","noMax":"상한 없음","id":"아이템 ID","period":"기간","backToList":"아이템 목록으로 돌아가기","showAll":"전체 {count}개 보기","showLess":"접기","notFoundTitle":"아이템을 찾을 수 없습니다","notFoundDescription":"어느 서버의 데이터에도 이 아이템이 없습니다. 아이템 목록에서 다른 아이템을 찾아보세요."},
-    sources: {"title":"획득 방법","description":"게임 데이터에서 모은, 이 아이템을 주는 보상·상점·경품입니다.","empty":"게임 데이터에 이 아이템의 획득 방법이 기록되어 있지 않습니다.","total":"합계 ×{count}","everyCharacter":"모든 캐릭터","kinds":{"event":"이벤트","exchange":"교환소","shop":"상점","gacha":"뽑기","seasonPass":"시즌 패스","loginBonus":"로그인 보너스","limitedMission":"기간 한정 미션","mission":"미션","characterMission":"캐릭터 미션","characterRank":"캐릭터 랭크 보상","friendshipRank":"인연 랭크 보상","story":"스토리 보상","music":"곡 보상"},"details":{"pointReward":"누적 pt 보상","liveReward":"라이브 보상","challengeLive":"챌린지 라이브","eventMission":"이벤트 미션","boxGacha":"박스 뽑기","ranking":"랭킹 보상","product":"상품","prize":"경품","drawBonus":"뽑기 보너스","free":"무료 보상","premium":"프리미엄 보상","loginDay":"일별 보상","missionReward":"미션 보상","completeReward":"전체 달성 보상","rankReward":"랭크 보상","episodeReward":"에피소드 보상","scoreReward":"스코어 랭크 보상","comboReward":"풀 콤보 보상"}},
+    sources: {"title":"획득 방법","description":"게임 데이터에서 모은, 이 아이템을 주는 보상·상점·경품입니다.","empty":"게임 데이터에 이 아이템의 획득 방법이 기록되어 있지 않습니다.","total":"합계 ×{count}","everyCharacter":"모든 캐릭터","kinds":{"event":"이벤트","exchange":"교환소","shop":"상점","gacha":"뽑기","seasonPass":"시즌 패스","monthlyPass":"월정액 패스","loginBonus":"로그인 보너스","limitedMission":"기간 한정 미션","mission":"미션","characterMission":"캐릭터 미션","characterRank":"캐릭터 랭크 보상","friendshipRank":"인연 랭크 보상","story":"스토리 보상","music":"곡 보상"},"details":{"pointReward":"누적 pt 보상","liveReward":"라이브 보상","challengeLive":"챌린지 라이브","eventMission":"이벤트 미션","boxGacha":"박스 뽑기","ranking":"랭킹 보상","product":"상품","prize":"경품","drawBonus":"뽑기 보너스","free":"무료 보상","premium":"프리미엄 보상","loginDay":"일별 보상","missionReward":"미션 보상","completeReward":"전체 달성 보상","rankReward":"랭크 보상","episodeReward":"에피소드 보상","scoreReward":"스코어 랭크 보상","comboReward":"풀 콤보 보상","firstPurchase":"첫 구매","continuation":"연속 구매"}},
     usages: {"title":"용도","description":"이 아이템을 소모하는 육성과, 카드나 장비 하나를 최대로 육성하는 데 필요한 수량입니다.","empty":"이 아이템은 육성 재료로 사용되지 않습니다.","perTarget":"1개당 ×{count}","perTargetAlternative":"1개당 ×{count} (카드 전용 조각 대신 사용)","kinds":{"memberTraining":"멤버 특훈","memberAwaken":"멤버 각성","memberLiveSkill":"라이브 스킬 강화","memberGekisouSkill":"격주 스킬 강화","bandItem":"밴드 장비 강화"}},
   },
   bandItems: {
@@ -2131,7 +2131,7 @@ export const koKR = {
   },
   // ── pack F ──
   calendar: {
-    kinds: { event: "이벤트", gacha: "뽑기", loginBonus: "로그인 보너스", seasonPass: "시즌 패스", mission: "기간 한정 미션", realLive: "리얼 라이브", birthday: "생일" },
+    kinds: { event: "이벤트", gacha: "뽑기", loginBonus: "로그인 보너스", seasonPass: "시즌 패스", monthlyPass: "월정액 패스", mission: "기간 한정 미션", realLive: "리얼 라이브", birthday: "생일" },
     kindFilter: "종류",
     characterFilter: "캐릭터",
     filterTitle: "캘린더 필터",
