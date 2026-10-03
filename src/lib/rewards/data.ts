@@ -90,6 +90,32 @@ export interface RawLoginBonusSlot extends RawResource {
   isDecorated: boolean;
 }
 
+/** MasterMonthlyPass: a 30-day pass bought in the shop (MasterShopProduct resourceType 6 names it). */
+export interface RawMonthlyPass {
+  id: number;
+  nameTextId: string;
+  /** Passes of one group share their first-purchase and continuation rewards. */
+  group: number;
+  descriptionTextId: string;
+  expireDays: number;
+  /** Extra live skips a day while the pass runs. */
+  addLiveSkip: number;
+  /** Extra uses a day of "use all" (MasterData `_addConsumeAllUsageCount`). */
+  addConsumeAllUsageCount: number;
+  canSkipAd: boolean;
+}
+
+export interface RawMonthlyPassDailyReward extends RawResource {
+  monthlyPassId: number;
+  dayCount: number;
+}
+
+export interface RawMonthlyPassGroupReward extends RawResource {
+  monthlyPassGroup: number;
+  /** MasterMonthlyPassContinuationReward only: the purchase (2nd, 3rd, …) that grants it. */
+  purchaseCount?: number;
+}
+
 export interface MissionLookupSources {
   exchanges: Array<{ id: number; nameTextId: string }>;
   chapters: Array<{ id: number; nameTextId: string }>;
@@ -111,10 +137,15 @@ export interface RewardsMasterData extends MissionLookupSources {
   missionRewards: RawRewardRow[];
   loginBonuses: RawLoginBonus[];
   loginBonusSlots: RawLoginBonusSlot[];
+  /** Monthly passes; optional so older fixtures (and servers without the tables) still normalize. */
+  monthlyPasses?: RawMonthlyPass[];
+  monthlyPassDailyRewards?: RawMonthlyPassDailyReward[];
+  monthlyPassFirstTimeRewards?: RawMonthlyPassGroupReward[];
+  monthlyPassContinuationRewards?: RawMonthlyPassGroupReward[];
   texts: RawText[];
 }
 
-export type RewardEntryKind = "seasonPass" | "loginBonus" | "mission";
+export type RewardEntryKind = "seasonPass" | "loginBonus" | "mission" | "monthlyPass";
 
 export interface RewardEntrySummary {
   /** Route parameter, e.g. "season-pass-1". */
@@ -165,12 +196,72 @@ export interface MissionGroupDetail extends RewardEntrySummary {
   completeRewards: RewardViewModel[];
 }
 
-export type RewardEntryDetail = SeasonPassDetail | LoginBonusDetail | MissionGroupDetail;
+export interface MonthlyPassDetail extends RewardEntrySummary {
+  kind: "monthlyPass";
+  description: string;
+  group: number;
+  /** Days one purchase runs. */
+  expireDays: number;
+  addLiveSkip: number;
+  addConsumeAllUsageCount: number;
+  canSkipAd: boolean;
+  /** Granted once, on the group's first purchase. */
+  firstTimeRewards: RewardViewModel[];
+  /** Granted on each login while the pass runs, by day of the pass. */
+  dailyRewards: Array<{ day: number; rewards: RewardViewModel[] }>;
+  /** Granted when the pass is bought again: the 2nd, 3rd, … purchase. */
+  continuationRewards: Array<{ purchaseCount: number; rewards: RewardViewModel[] }>;
+}
 
-const slugPrefix: Record<RewardEntryKind, string> = { seasonPass: "season-pass", loginBonus: "login-bonus", mission: "missions" };
+export type RewardEntryDetail = SeasonPassDetail | LoginBonusDetail | MissionGroupDetail | MonthlyPassDetail;
+
+const slugPrefix: Record<RewardEntryKind, string> = { seasonPass: "season-pass", loginBonus: "login-bonus", mission: "missions", monthlyPass: "monthly-pass" };
 
 export function rewardEntrySlug(kind: RewardEntryKind, id: number): string {
   return `${slugPrefix[kind]}-${id}`;
+}
+
+// MasterData resourceType of a pass handed out by a shop pack or a gacha product.
+const RESOURCE_MONTHLY_PASS = 6;
+const RESOURCE_SEASON_PASS = 10;
+// MasterHomeBanner.displayType: 25 opens a season pass (contentId = its id), 4 a shop pack (contentId = MasterShop id).
+const BANNER_SEASON_PASS = 25;
+const BANNER_SHOP = 4;
+
+/** The rewards page of a pass named as a resource (MasterShopProduct, gacha products): monthly 6, season 10; else null. */
+export function passRewardSlug(resourceType: number, resourceId: number): string | null {
+  if (!Number.isSafeInteger(resourceId) || resourceId <= 0) return null;
+  if (resourceType === RESOURCE_MONTHLY_PASS) return rewardEntrySlug("monthlyPass", resourceId);
+  if (resourceType === RESOURCE_SEASON_PASS) return rewardEntrySlug("seasonPass", resourceId);
+  return null;
+}
+
+/**
+ * The rewards page a home banner (MasterHomeBanner) promoting a pass leads to, or null. A season-pass banner
+ * (displayType 25) names the pass by `contentId`; a shop banner (displayType 4) names a pack, whose MasterShopProduct
+ * rows say which pass it sells (resourceType 6 monthly, 10 season). With `known` (the slugs the server's reward entries
+ * have), a slug without a page is null as well.
+ */
+export function homeBannerPassSlug(
+  banner: { displayType: number; contentId: number },
+  shopProducts: ReadonlyArray<{ shopId: number; resourceType: number; resourceId: number }> = [],
+  known?: ReadonlySet<string>,
+): string | null {
+  let slug: string | null = null;
+  if (banner.displayType === BANNER_SEASON_PASS) slug = passRewardSlug(RESOURCE_SEASON_PASS, banner.contentId);
+  else if (banner.displayType === BANNER_SHOP) {
+    for (const product of shopProducts) {
+      if (product.shopId !== banner.contentId) continue;
+      slug = passRewardSlug(product.resourceType, product.resourceId);
+      if (slug) break;
+    }
+  }
+  return slug && (!known || known.has(slug)) ? slug : null;
+}
+
+/** Banner of a monthly pass: the client formats `Shop/Pass/Banner/{id:00000}`. */
+export function monthlyPassBannerUrl(id: number, locale: AppLocale): string {
+  return getImageAssetUrl(`Shop/Pass/Banner/${String(id).padStart(5, "0")}`, locale);
 }
 
 // MasterSeasonPassMission.missionCategory: 1 is the daily rotation; the rest run for the whole pass.
@@ -323,7 +414,35 @@ export function normalizeRewardEntries(data: RewardsMasterData, resolve: RewardR
     };
   });
 
-  return [...seasonPasses, ...missionGroups, ...loginBonuses];
+  // Monthly passes: no window of their own (the shop pack selling them has one).
+  const passDaily = groupBy(data.monthlyPassDailyRewards ?? [], (row) => row.monthlyPassId);
+  const firstTimeByGroup = groupBy(data.monthlyPassFirstTimeRewards ?? [], (row) => row.monthlyPassGroup);
+  const continuationByGroup = groupBy(data.monthlyPassContinuationRewards ?? [], (row) => row.monthlyPassGroup);
+  const monthlyPasses = [...(data.monthlyPasses ?? [])].sort((a, b) => a.id - b.id).map((pass): MonthlyPassDetail => {
+    const dailyRewards = [...groupBy(passDaily.get(pass.id) ?? [], (row) => row.dayCount)]
+      .sort(([a], [b]) => a - b)
+      .map(([day, rows]) => ({ day, rewards: rows.map((row) => resolve(row)) }));
+    const firstTimeRewards = (firstTimeByGroup.get(pass.group) ?? []).map((row) => resolve(row));
+    const continuationRewards = [...groupBy(continuationByGroup.get(pass.group) ?? [], (row) => row.purchaseCount ?? 0)]
+      .sort(([a], [b]) => a - b)
+      .map(([purchaseCount, rows]) => ({ purchaseCount, rewards: rows.map((row) => resolve(row)) }));
+    const allRewards = [...firstTimeRewards, ...dailyRewards.flatMap((day) => day.rewards), ...continuationRewards.flatMap((entry) => entry.rewards)];
+    return {
+      ...summary("monthlyPass", pass.id, text(pass.nameTextId) || `#${pass.id}`, monthlyPassBannerUrl(pass.id, locale), "", "", allRewards),
+      kind: "monthlyPass",
+      description: text(pass.descriptionTextId),
+      group: pass.group,
+      expireDays: Math.max(0, pass.expireDays),
+      addLiveSkip: Math.max(0, pass.addLiveSkip),
+      addConsumeAllUsageCount: Math.max(0, pass.addConsumeAllUsageCount),
+      canSkipAd: Boolean(pass.canSkipAd),
+      firstTimeRewards,
+      dailyRewards,
+      continuationRewards,
+    };
+  });
+
+  return [...seasonPasses, ...monthlyPasses, ...missionGroups, ...loginBonuses];
 }
 
 export function toRewardEntrySummary(entry: RewardEntryDetail): RewardEntrySummary {

@@ -456,6 +456,8 @@ export const enUS = {
     growth: { limitBreak: "Limit Break", skillLevelHint: "As limits break, the quiet devotion and skill sleeping within the card bloom even brighter." },
   },
   events: {
+    relatedGacha: "Related gacha",
+    relatedGachaNote: "Gachas featuring this event's cards or its bonus cards among their rate-up prizes.",
     filterTitle: "Filter Events",
     searchPlaceholder: "Search events, characters or songs...",
     status: "Status",
@@ -529,6 +531,9 @@ export const enUS = {
     notFoundDescription: "This event has either drawn its curtain long ago or has yet to raise it. Head back to the event list to find another stage.",
   },
   gacha: {
+    category: "Draw type",
+    categories: { stars: "Stars", ticket: "Ticket", ad: "Ad", pass: "Pass", bonus: "T.G.W bonus", other: "Other" },
+    options: { title: "Draw options", draws: "{count} draws", firstTime: "First purchase", free: "Free", ad: "Watch an ad", pass: "With a pass", bonus: "T.G.W bonus", guarantee: "{count} guaranteed {rarity}+", ensuredNew: "New card guaranteed", limit: { once: "Limit {count}", daily: "{count} per day", weekly: "{count} per week", monthly: "{count} per month" }, points: "+{count} gacha pt" },
     searchPlaceholder: "Search gacha names, pickup characters, or card titles...",
     gachaId: "Gacha ID",
     viewAllCards: "View all {count}",
@@ -612,7 +617,8 @@ export const enUS = {
     searchPlaceholder: "Search names or rewards...",
     filterTitle: "Filter Missions & Rewards",
     kind: "Type",
-    kinds: { seasonPass: "Season pass", loginBonus: "Login bonus", mission: "Limited missions" },
+    kinds: { seasonPass: "Season pass", loginBonus: "Login bonus", mission: "Limited missions", monthlyPass: "Monthly pass" },
+    monthlyPass: { expireDays: "Duration", liveSkip: "Extra live skips", consumeAll: "Extra Consume All uses", skipAd: "Skip ads", perDay: "+{count} per day", yes: "Yes", no: "None", firstTime: "First purchase reward", continuation: "Renewal rewards", purchase: "Purchase {count}", dayRange: "Day {from}–{to}" },
     status: "Status",
     openDetail: "View: {title}",
     emptyTitle: "No matching promises",
@@ -1971,10 +1977,10 @@ export const enUS = {
   detailNav: { label: "Entry navigation", previous: "Previous", next: "Next", backToList: "Back to list" },
   collectionView: { label: "Display", grid: "Grid", list: "List", table: "Table", card: "Cards", square: "Icons", nameSeparator: ", " },
   // ── pack G ──
-  shop: {},
-  missions: {},
-  tgwCard: {},
-  realLives: {},
+  shop: { filterTitle: "Filter Shop", searchPlaceholder: "Search packs or their items...", payment: "Payment", limit: "Purchase limit", status: "Status", price: "Price", period: "On sale", sortPrice: "Price", openDetail: "View pack: {name}", noneOnServer: "This server's shop has no packs.", emptyTitle: "No matching packs", recommended: "Recommended", free: "Free", alwaysOpen: "Always on sale", vipRank: "T.G.W CARD rank", vipRankValue: "Rank {rank}+", vipRankShort: "T.G.W Rank {rank}", playerRank: "Player rank", playerRankValue: "Rank {rank}+", shopId: "Pack ID", contents: "Contents", noContents: "The data lists no contents for this pack.", bonus: "Bonus", description: "Description", storePrices: "Store prices", storePricesNote: "List prices of each storefront, as the game data records them; no exchange rates are applied.", notFoundTitle: "Pack not found", notFoundDescription: "No server's shop sells this pack. Head back to the shop to browse the packs on sale.", payments: { money: "Real money", star: "Stars", paidStar: "Paid Stars", ad: "Watch an ad", other: "Other" }, limits: { unlimited: "Unlimited", once: "Once", daily: "Daily", weekly: "Weekly", monthly: "Monthly" }, limitPer: { once: "Limit {count}", daily: "{count} per day", weekly: "{count} per week", monthly: "{count} per month" }, columns: { name: "Pack", price: "Price", limit: "Limit", status: "Status" }, currencies: { usd: "US dollar", twd: "New Taiwan dollar", hkd: "Hong Kong dollar", krw: "Korean won", jpy: "Japanese yen" } },
+  missions: { tabs: "Mission categories", limited: "Limited", empty: "No missions in this category.", noLimited: "This server has no limited mission groups.", categories: { daily: "Daily", normal: "Normal", titles: "Titles", songs: "Song unlocks", home: "Home unlocks", other: "Other" }, columns: { mission: "Mission", goal: "Goal", rewards: "Rewards" } },
+  tgwCard: { empty: "This server has no T.G.W CARD data.", ranks: "Ranks", rankCount: "{count} ranks", rank: "RANK", rankTitle: "T.G.W CARD rank {rank}", pointValue: "{count} pt", points: "Points", dailyRewards: "Daily rewards", rankUpRewards: "Rank-up rewards", benefits: "Benefits", unlocked: "Unlocked", bonusFallback: "Benefit {type}", percentUp: "+{value}%", percentDown: "-{value}%", units: { hours: "h", minutes: "m" }, colors: { normal: "Normal", gold: "Gold", platinum: "Platinum", black: "Black" }, dailyPoints: "Login points", consecutiveDays: "Consecutive logins", days: "Day {count}", daysOrMore: "Day {count}+", dailyPointsNote: "Points a daily login earns by how many days in a row you have logged in." },
+  realLives: { empty: "This server has no real lives scheduled.", ready: "Lobby open", readyAt: "Lobby opens", startAt: "Starts", endAt: "Ends" },
   // ── pack M ──
   help: {},
   // ── pack F ──

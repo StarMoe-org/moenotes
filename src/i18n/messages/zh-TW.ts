@@ -508,6 +508,8 @@ export const zhTW = {
     growth: { limitBreak: "開放上限", skillLevelHint: "隨著上限的突破，寄宿於卡面中的心意與技能將進一步綻放。" },
   },
   events: {
+    relatedGacha: "相關轉蛋",
+    relatedGachaNote: "PICK UP 獎品中包含本活動卡牌或加成卡牌的轉蛋。",
     filterTitle: "篩選活動",
     searchPlaceholder: "搜尋活動、角色或歌曲...",
     status: "狀態",
@@ -581,6 +583,9 @@ export const zhTW = {
     notFoundDescription: "這場活動或許已隨時光落幕，又或尚未拉開帷幕。回到活動一覽，看看其他的舞台吧。",
   },
   gacha: {
+    category: "轉蛋類型",
+    categories: { stars: "星鑽", ticket: "轉蛋券", ad: "廣告", pass: "月卡", bonus: "T.G.W 加成", other: "其他" },
+    options: { title: "轉蛋選項", draws: "{count} 連", firstTime: "首次", free: "免費", ad: "觀看廣告", pass: "月卡專享", bonus: "T.G.W 加成", guarantee: "保底 {count} 張 {rarity} 以上", ensuredNew: "保底新卡", limit: { once: "限 {count} 次", daily: "每日 {count} 次", weekly: "每週 {count} 次", monthly: "每月 {count} 次" }, points: "+{count} 轉蛋pt" },
     searchPlaceholder: "搜尋轉蛋名稱、Pick Up 角色或卡面...",
     gachaId: "轉蛋 ID",
     viewAllCards: "查看全部 {count} 張",
@@ -664,7 +669,8 @@ export const zhTW = {
     searchPlaceholder: "搜尋名稱或獎勵內容...",
     filterTitle: "篩選任務與獎勵",
     kind: "類型",
-    kinds: { seasonPass: "任務通行證", loginBonus: "登入獎勵", mission: "限定任務" },
+    kinds: { seasonPass: "任務通行證", loginBonus: "登入獎勵", mission: "限定任務", monthlyPass: "月卡" },
+    monthlyPass: { expireDays: "有效期", liveSkip: "演出跳過次數增加", consumeAll: "全消耗次數增加", skipAd: "跳過廣告", perDay: "每日 +{count}", yes: "可以", no: "無", firstTime: "首次購買獎勵", continuation: "續購獎勵", purchase: "第 {count} 次購買", dayRange: "第 {from}–{to} 天" },
     status: "開放狀態",
     openDetail: "查看：{title}",
     emptyTitle: "未找到契合的約定",
@@ -2112,10 +2118,10 @@ export const zhTW = {
   detailNav: { label: "條目導覽", previous: "上一個", next: "下一個", backToList: "返回列表" },
   collectionView: { label: "顯示方式", grid: "網格", list: "列表", table: "表格", card: "卡片", square: "圖示", nameSeparator: "、" },
   // ── pack G ──
-  shop: {},
-  missions: {},
-  tgwCard: {},
-  realLives: {},
+  shop: { filterTitle: "篩選商店", searchPlaceholder: "搜尋禮包或其中的道具...", payment: "支付方式", limit: "限購", status: "狀態", price: "價格", period: "販售時間", sortPrice: "價格", openDetail: "查看禮包：{name}", noneOnServer: "該伺服器的商店沒有禮包。", emptyTitle: "沒有符合條件的禮包", recommended: "推薦", free: "免費", alwaysOpen: "常駐販售", vipRank: "T.G.W CARD 等級", vipRankValue: "等級 {rank} 以上", vipRankShort: "T.G.W 等級 {rank}", playerRank: "玩家等級", playerRankValue: "等級 {rank} 以上", shopId: "禮包 ID", contents: "禮包內容", noContents: "資料中沒有該禮包的內容。", bonus: "附贈", description: "說明", storePrices: "各地區售價", storePricesNote: "遊戲資料記錄的各地區商店原價，不做匯率換算。", notFoundTitle: "找不到該禮包", notFoundDescription: "沒有伺服器的商店販售這個禮包。返回商店看看正在販售的禮包吧。", payments: { money: "現金", star: "星鑽", paidStar: "付費星鑽", ad: "觀看廣告", other: "其他" }, limits: { unlimited: "不限購", once: "限購", daily: "每日", weekly: "每週", monthly: "每月" }, limitPer: { once: "限購 {count} 次", daily: "每日 {count} 次", weekly: "每週 {count} 次", monthly: "每月 {count} 次" }, columns: { name: "禮包", price: "價格", limit: "限購", status: "狀態" }, currencies: { usd: "美元", twd: "新台幣", hkd: "港幣", krw: "韓元", jpy: "日圓" } },
+  missions: { tabs: "任務分類", limited: "限時任務", empty: "該分類下沒有任務。", noLimited: "該伺服器沒有限時任務組。", categories: { daily: "每日", normal: "通常", titles: "稱號", songs: "樂曲開放", home: "主頁開放", other: "其他" }, columns: { mission: "任務", goal: "目標", rewards: "報酬" } },
+  tgwCard: { empty: "該伺服器沒有 T.G.W CARD 資料。", ranks: "等級一覽", rankCount: "共 {count} 級", rank: "RANK", rankTitle: "T.G.W CARD 等級 {rank}", pointValue: "{count} pt", points: "點數", dailyRewards: "每日報酬", rankUpRewards: "升級報酬", benefits: "特典", unlocked: "已開放", bonusFallback: "特典 {type}", percentUp: "提升 {value}%", percentDown: "縮減 {value}%", units: { hours: "小時", minutes: "分鐘" }, colors: { normal: "普通", gold: "金卡", platinum: "白金卡", black: "黑卡" }, dailyPoints: "登入點數", consecutiveDays: "連續登入", days: "第 {count} 天", daysOrMore: "第 {count} 天起", dailyPointsNote: "每日登入可獲得的點數，隨連續登入天數增加。" },
+  realLives: { empty: "該伺服器暫無現實演出安排。", ready: "大廳開放中", readyAt: "大廳開放", startAt: "開始", endAt: "結束" },
   // ── pack M ──
   help: {},
   // ── pack F ──

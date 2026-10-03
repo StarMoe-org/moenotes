@@ -502,6 +502,8 @@ export const jaJP = {
     growth: { limitBreak: "上限解放", skillLevelHint: "スキルレベルは上限解放回数に応じて上がります。" },
   },
   events: {
+    relatedGacha: "関連ガチャ",
+    relatedGachaNote: "このイベントのカードやボーナス対象カードをピックアップしているガチャです。",
     filterTitle: "イベントを絞り込む",
     searchPlaceholder: "イベント名・キャラクター・楽曲で検索...",
     status: "状態",
@@ -575,6 +577,9 @@ export const jaJP = {
     notFoundDescription: "このイベントはすでに幕を下ろしたか、まだ幕が上がっていないようです。イベント一覧から他のステージを探してみましょう。",
   },
   gacha: {
+    category: "ガチャの種類",
+    categories: { stars: "スター", ticket: "チケット", ad: "広告", pass: "パス", bonus: "T.G.Wボーナス", other: "その他" },
+    options: { title: "ガチャの引き方", draws: "{count}回", firstTime: "初回", free: "無料", ad: "広告視聴", pass: "パス限定", bonus: "T.G.Wボーナス", guarantee: "{rarity}以上{count}枚確定", ensuredNew: "新規カード確定", limit: { once: "{count}回まで", daily: "1日{count}回", weekly: "1週間{count}回", monthly: "1ヶ月{count}回" }, points: "+{count} ガチャpt" },
     searchPlaceholder: "ガチャ名、ピックアップキャラ、カード名で検索...",
     gachaId: "ガチャ ID",
     viewAllCards: "全 {count} 枚を見る",
@@ -658,7 +663,8 @@ export const jaJP = {
     searchPlaceholder: "名称や報酬内容で検索...",
     filterTitle: "ミッション・報酬を絞り込む",
     kind: "種類",
-    kinds: { seasonPass: "シーズンミッションパス", loginBonus: "ログインボーナス", mission: "期間限定ミッション" },
+    kinds: { seasonPass: "シーズンミッションパス", loginBonus: "ログインボーナス", mission: "期間限定ミッション", monthlyPass: "マンスリーパス" },
+    monthlyPass: { expireDays: "有効期間", liveSkip: "ライブスキップ回数追加", consumeAll: "全消費回数追加", skipAd: "広告スキップ", perDay: "1日 +{count}", yes: "可", no: "なし", firstTime: "初回購入報酬", continuation: "継続購入報酬", purchase: "{count}回目の購入", dayRange: "{from}〜{to}日目" },
     status: "開催状況",
     openDetail: "詳細を見る：{title}",
     emptyTitle: "心に触れる約束が見つかりません",
@@ -2017,10 +2023,10 @@ export const jaJP = {
   detailNav: { label: "項目ナビゲーション", previous: "前へ", next: "次へ", backToList: "一覧に戻る" },
   collectionView: { label: "表示", grid: "グリッド", list: "リスト", table: "テーブル", card: "カード", square: "アイコン", nameSeparator: "、" },
   // ── pack G ──
-  shop: {},
-  missions: {},
-  tgwCard: {},
-  realLives: {},
+  shop: { filterTitle: "ショップを絞り込む", searchPlaceholder: "パックや中身のアイテムを検索...", payment: "支払い方法", limit: "購入制限", status: "状態", price: "価格", period: "販売期間", sortPrice: "価格", openDetail: "パックを見る：{name}", noneOnServer: "このサーバーのショップにはパックがありません。", emptyTitle: "条件に合うパックはありません", recommended: "おすすめ", free: "無料", alwaysOpen: "常設販売", vipRank: "T.G.W CARDランク", vipRankValue: "ランク{rank}以上", vipRankShort: "T.G.Wランク{rank}", playerRank: "プレイヤーランク", playerRankValue: "ランク{rank}以上", shopId: "パックID", contents: "内容", noContents: "このパックの内容はデータにありません。", bonus: "おまけ", description: "説明", storePrices: "各ストアの価格", storePricesNote: "ゲームデータに記録された各地域ストアの定価です。為替換算はしていません。", notFoundTitle: "パックが見つかりません", notFoundDescription: "どのサーバーのショップもこのパックを販売していません。ショップに戻って販売中のパックをご覧ください。", payments: { money: "現金", star: "スター", paidStar: "有償スター", ad: "広告視聴", other: "その他" }, limits: { unlimited: "制限なし", once: "回数限定", daily: "毎日", weekly: "毎週", monthly: "毎月" }, limitPer: { once: "{count}回まで", daily: "1日{count}回", weekly: "1週間{count}回", monthly: "1ヶ月{count}回" }, columns: { name: "パック", price: "価格", limit: "制限", status: "状態" }, currencies: { usd: "米ドル", twd: "台湾ドル", hkd: "香港ドル", krw: "韓国ウォン", jpy: "日本円" } },
+  missions: { tabs: "ミッション分類", limited: "期間限定", empty: "この分類にミッションはありません。", noLimited: "このサーバーには期間限定ミッションがありません。", categories: { daily: "デイリー", normal: "ノーマル", titles: "称号", songs: "楽曲解放", home: "ホーム解放", other: "その他" }, columns: { mission: "ミッション", goal: "目標", rewards: "報酬" } },
+  tgwCard: { empty: "このサーバーにはT.G.W CARDのデータがありません。", ranks: "ランク一覧", rankCount: "全{count}ランク", rank: "RANK", rankTitle: "T.G.W CARDランク{rank}", pointValue: "{count} pt", points: "ポイント", dailyRewards: "デイリー報酬", rankUpRewards: "ランクアップ報酬", benefits: "特典", unlocked: "解放", bonusFallback: "特典{type}", percentUp: "{value}% UP", percentDown: "{value}% 短縮", units: { hours: "時間", minutes: "分" }, colors: { normal: "ノーマル", gold: "ゴールド", platinum: "プラチナ", black: "ブラック" }, dailyPoints: "ログインポイント", consecutiveDays: "連続ログイン", days: "{count}日目", daysOrMore: "{count}日目以降", dailyPointsNote: "毎日のログインで獲得できるポイントです。連続ログイン日数に応じて増えます。" },
+  realLives: { empty: "このサーバーにはリアルライブの予定がありません。", ready: "ロビー開放中", readyAt: "ロビー開放", startAt: "開始", endAt: "終了" },
   // ── pack M ──
   help: {},
   // ── pack F ──

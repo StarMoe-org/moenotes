@@ -138,6 +138,9 @@ import {
   type RawLimitedMissionGroup,
   type RawLoginBonus,
   type RawLoginBonusSlot,
+  type RawMonthlyPass,
+  type RawMonthlyPassDailyReward,
+  type RawMonthlyPassGroupReward,
   type RawRewardRow,
   type RawSeasonPass,
   type RawSeasonPassLevel,
@@ -575,6 +578,7 @@ export function rewardEntryDetailsOn(server: GameServer, locale: AppLocale): Pro
       seasonPasses, seasonPassLevels, seasonPassLevelRewards, seasonPassRewards, seasonPassMissions,
       missionGroups, missions, missionRewards, loginBonuses, loginBonusSlots,
       exchanges, chapters, episodes, advs, bands, characters,
+      monthlyPasses, monthlyPassDailyRewards, monthlyPassFirstTimeRewards, monthlyPassContinuationRewards,
     ] = await Promise.all([
       rewardResolverOn(server, locale),
       musicOn(server, locale),
@@ -595,6 +599,11 @@ export function rewardEntryDetailsOn(server: GameServer, locale: AppLocale): Pro
       table<{ id: number; titleTextId: string }>("MasterAdv.json", server),
       table<RawBand>("MasterBand.json", server),
       table<RawCharacter>("MasterCharacter.json", server),
+      // Monthly passes: newer tables, read as empty where a server lacks them or serves them broken.
+      table<RawMonthlyPass>("MasterMonthlyPass.json", server).catch(() => ({ _allData: [] as RawMonthlyPass[] })),
+      table<RawMonthlyPassDailyReward>("MasterMonthlyPassDailyReward.json", server).catch(() => ({ _allData: [] as RawMonthlyPassDailyReward[] })),
+      table<RawMonthlyPassGroupReward>("MasterMonthlyPassFirstTimeReward.json", server).catch(() => ({ _allData: [] as RawMonthlyPassGroupReward[] })),
+      table<RawMonthlyPassGroupReward>("MasterMonthlyPassContinuationReward.json", server).catch(() => ({ _allData: [] as RawMonthlyPassGroupReward[] })),
     ]);
     return normalizeRewardEntries({
       seasonPasses: seasonPasses._allData,
@@ -607,6 +616,10 @@ export function rewardEntryDetailsOn(server: GameServer, locale: AppLocale): Pro
       missionRewards: missionRewards._allData,
       loginBonuses: loginBonuses._allData,
       loginBonusSlots: loginBonusSlots._allData,
+      monthlyPasses: monthlyPasses._allData,
+      monthlyPassDailyRewards: monthlyPassDailyRewards._allData,
+      monthlyPassFirstTimeRewards: monthlyPassFirstTimeRewards._allData,
+      monthlyPassContinuationRewards: monthlyPassContinuationRewards._allData,
       exchanges: exchanges._allData,
       chapters: chapters._allData,
       episodes: episodes._allData,
@@ -637,6 +650,7 @@ export function eventDetailsOn(server: GameServer, locale: AppLocale): Promise<E
       events, effects, pickUpCards, achievementRewards, loopRewards, livePoints, liveRewards, challengePoints, challengeRewards, rewards,
       eventMissions, exchanges, chapters, episodesRaw, advs, boxGachas, boxGachaRewards, rankingRewards, challengeMusic, challengeBoosts, challengeMusicRanking,
       characters, bands, textTable, resolve, cards, supportCards, music, stories,
+      rawGachas, gachaLots, gachaPrizes, gachaSummaries,
     ] = await Promise.all([
       table<RawEvent>("MasterEvent.json", server),
       table<RawEventEffect>("MasterEventEffect.json", server),
@@ -667,6 +681,11 @@ export function eventDetailsOn(server: GameServer, locale: AppLocale): Promise<E
       supportCardsOn(server, locale),
       musicOn(server, locale),
       storiesOn(server, locale),
+      // The gachas featuring each event's cards (relatedGachas).
+      table<RawGacha>("MasterGacha.json", server),
+      table<RawGachaLot>("MasterGachaLot.json", server),
+      table<RawGachaPrize>("MasterGachaPrize.json", server),
+      gachasOn(server, locale),
     ]);
     const missionLookups: EventMissionLookups = {
       exchanges: exchanges._allData,
@@ -674,6 +693,7 @@ export function eventDetailsOn(server: GameServer, locale: AppLocale): Promise<E
       episodes: episodesRaw._allData,
       advs: advs._allData.map((adv) => ({ id: adv.id, nameTextId: adv.titleTextId })),
     };
+    const gachaNames = new Map(gachaSummaries.map((gacha) => [gacha.id, gacha]));
     return normalizeEvents({
       events: events._allData,
       effects: effects._allData,
@@ -696,7 +716,17 @@ export function eventDetailsOn(server: GameServer, locale: AppLocale): Promise<E
       characters: characters._allData,
       bands: bands._allData,
       texts: textTable._allData,
-    }, { cards, supportCards, music, stories }, resolve, locale);
+    }, {
+      cards, supportCards, music, stories,
+      gachas: {
+        gachas: rawGachas._allData.flatMap((gacha) => {
+          const summary = gachaNames.get(gacha.id);
+          return summary ? [{ id: gacha.id, name: summary.name, bannerPath: summary.bannerPath, startAt: summary.startAt, endAt: summary.endAt, lotGroupId: gacha.lotGroupId }] : [];
+        }),
+        lots: gachaLots._allData,
+        prizes: gachaPrizes._allData,
+      },
+    }, resolve, locale);
   });
 }
 
@@ -1251,17 +1281,18 @@ export function getBuildContentSearchIndex(): Promise<ContentSearchEntry[]> {
       });
     }
 
-    // Rewards (season pass / login bonus / mission): title is the entry's name; the slug is the href param.
+    // Rewards (season pass / login bonus / mission / monthly pass): title is the entry's name; the slug is the href param.
     const defaultRewards = await getBuildRewardEntries(DEFAULT_LOCALE);
     const rewardNameIds = new Map<string, string>();
     const rewardTables: Array<[RewardEntryKind, string]> = [
       ["seasonPass", "MasterSeasonPass.json"],
       ["loginBonus", "MasterLoginBonus.json"],
       ["mission", "MasterLimitedMissionGroup.json"],
+      ["monthlyPass", "MasterMonthlyPass.json"],
     ];
     for (const [kind, file] of rewardTables) {
-      const tableRows = await table<{ id: number; nameTextId: string }>(file, PRIMARY_SERVER);
-      for (const row of tableRows._allData) rewardNameIds.set(rewardEntrySlug(kind, row.id), row.nameTextId);
+      const tableRows = await table<{ id: number; nameTextId?: string; nameTextID?: string }>(file, PRIMARY_SERVER).catch(() => ({ _allData: [] }));
+      for (const row of tableRows._allData) rewardNameIds.set(rewardEntrySlug(kind, row.id), row.nameTextId ?? row.nameTextID ?? "");
     }
     const rewardSearchTexts = await perLocaleSearchTexts(getBuildRewardEntries, (item) => item.slug);
     for (const reward of defaultRewards) {

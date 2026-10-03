@@ -13,7 +13,7 @@ import BannerImage from "@/components/shared/BannerImage";
 import RewardChip from "@/components/shared/RewardChip";
 import ScheduleBadge from "@/components/shared/ScheduleBadge";
 import { rewardBannerCrop } from "@/components/rewards/RewardsExplorer";
-import type { LoginBonusDetail, MissionGroupDetail, MissionViewModel, RewardEntryDetail, SeasonPassDetail } from "@/lib/rewards/data";
+import type { LoginBonusDetail, MissionGroupDetail, MissionViewModel, MonthlyPassDetail, RewardEntryDetail, SeasonPassDetail } from "@/lib/rewards/data";
 import { getRoutePathById } from "@/lib/route/registry";
 import { formatScheduleRange } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
@@ -62,7 +62,7 @@ function RewardDetailView({ locale, entry, schedules }: { locale: AppLocale; ent
             <div className="border-b border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_6%,transparent)] to-transparent p-6">
               <ScheduleBadge locale={locale} startAt={entry.startAt} endAt={entry.endAt} now={now} />
               <h2 className="mt-3 font-[var(--mn-font-display)] text-2xl leading-tight text-[var(--mn-text)] sm:text-3xl">{entry.title}</h2>
-              {entry.kind === "seasonPass" && entry.description && <p className="mt-3 whitespace-pre-line text-sm leading-7 text-[var(--mn-text-muted)]">{entry.description}</p>}
+              {(entry.kind === "seasonPass" || entry.kind === "monthlyPass") && entry.description && <p className="mt-3 whitespace-pre-line text-sm leading-7 text-[var(--mn-text-muted)]">{entry.description}</p>}
             </div>
             <div className="divide-y divide-dashed divide-[var(--mn-border)]/60 px-6 py-2">
               {facts.map(([label, value]) => (
@@ -81,6 +81,7 @@ function RewardDetailView({ locale, entry, schedules }: { locale: AppLocale; ent
           {entry.kind === "seasonPass" && <SeasonPassView entry={entry} locale={locale} />}
           {entry.kind === "loginBonus" && <LoginBonusView entry={entry} locale={locale} />}
           {entry.kind === "mission" && <MissionGroupView entry={entry} locale={locale} />}
+          {entry.kind === "monthlyPass" && <MonthlyPassView entry={entry} locale={locale} />}
           <div className="flex justify-start">
             <a href={localizePath(getRoutePathById("rewards"), locale)} className="mn-focus mn-stamp-press inline-flex rounded-full border border-[var(--mn-border)] bg-[var(--mn-paper)] px-6 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]">
               {t(locale, "rewards.backToList")}
@@ -103,6 +104,16 @@ function entryFacts(entry: RewardEntryDetail, locale: AppLocale): Array<[string,
   if (entry.kind === "loginBonus") {
     const days = entry.sheets.reduce((sum, sheet) => sum + sheet.days.length, 0);
     return [[t(locale, "rewards.dayCount"), t(locale, entry.isLoop ? "rewards.loopDays" : "rewards.days", { count: days })]];
+  }
+  if (entry.kind === "monthlyPass") {
+    const yes = t(locale, "rewards.monthlyPass.yes");
+    const no = t(locale, "rewards.monthlyPass.no");
+    return [
+      [t(locale, "rewards.monthlyPass.expireDays"), t(locale, "rewards.days", { count: entry.expireDays })],
+      [t(locale, "rewards.monthlyPass.liveSkip"), entry.addLiveSkip > 0 ? t(locale, "rewards.monthlyPass.perDay", { count: entry.addLiveSkip }) : no],
+      [t(locale, "rewards.monthlyPass.consumeAll"), entry.addConsumeAllUsageCount > 0 ? t(locale, "rewards.monthlyPass.perDay", { count: entry.addConsumeAllUsageCount }) : no],
+      [t(locale, "rewards.monthlyPass.skipAd"), entry.canSkipAd ? yes : no],
+    ];
   }
   const missions = entry.days.reduce((sum, day) => sum + day.missions.length, 0);
   return [[t(locale, "rewards.missions"), t(locale, "rewards.missionCount", { count: missions })]];
@@ -244,6 +255,57 @@ function MissionGroupView({ entry, locale }: { entry: MissionGroupDetail; locale
       {entry.completeRewards.length > 0 && (
         <Panel title={t(locale, "rewards.completeRewards")}>
           <RewardList rewards={entry.completeRewards} locale={locale} />
+        </Panel>
+      )}
+    </>
+  );
+}
+
+/** Days that hand out the same rewards as the day before fold into one range ("Day 1–30"). */
+function foldDays(days: MonthlyPassDetail["dailyRewards"]): Array<{ from: number; to: number; rewards: MonthlyPassDetail["dailyRewards"][number]["rewards"] }> {
+  const ranges: Array<{ from: number; to: number; rewards: MonthlyPassDetail["dailyRewards"][number]["rewards"]; key: string }> = [];
+  for (const day of days) {
+    const key = JSON.stringify(day.rewards.map((reward) => [reward.kind, reward.id, reward.count]));
+    const last = ranges[ranges.length - 1];
+    if (last && last.key === key && last.to === day.day - 1) last.to = day.day;
+    else ranges.push({ from: day.day, to: day.day, rewards: day.rewards, key });
+  }
+  return ranges.map(({ from, to, rewards }) => ({ from, to, rewards }));
+}
+
+function MonthlyPassView({ entry, locale }: { entry: MonthlyPassDetail; locale: AppLocale }) {
+  const ranges = foldDays(entry.dailyRewards);
+  return (
+    <>
+      {entry.firstTimeRewards.length > 0 && (
+        <Panel title={t(locale, "rewards.monthlyPass.firstTime")}>
+          <RewardList rewards={entry.firstTimeRewards} locale={locale} />
+        </Panel>
+      )}
+      {ranges.length > 0 && (
+        <Panel title={t(locale, "rewards.dailyRewards")}>
+          <ol className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+            {ranges.map((range) => (
+              <li key={range.from} className="mn-list-card-row flex min-w-0 flex-col gap-2.5 border border-[var(--mn-glass-border)] bg-[var(--mn-surface)] p-3">
+                <span className="text-xs font-black text-[var(--mn-text-muted)]">
+                  {range.from === range.to ? t(locale, "rewards.day", { day: range.from }) : t(locale, "rewards.monthlyPass.dayRange", { from: range.from, to: range.to })}
+                </span>
+                <RewardList rewards={range.rewards} locale={locale} />
+              </li>
+            ))}
+          </ol>
+        </Panel>
+      )}
+      {entry.continuationRewards.length > 0 && (
+        <Panel title={t(locale, "rewards.monthlyPass.continuation")}>
+          <ol className="divide-y divide-dashed divide-[var(--mn-border)]/60">
+            {entry.continuationRewards.map((step) => (
+              <li key={step.purchaseCount} className="grid gap-3 py-3 sm:grid-cols-[8rem_minmax(0,1fr)] sm:items-center">
+                <span className="text-sm font-black text-[var(--mn-text)]">{t(locale, "rewards.monthlyPass.purchase", { count: step.purchaseCount })}</span>
+                <RewardList rewards={step.rewards} locale={locale} />
+              </li>
+            ))}
+          </ol>
         </Panel>
       )}
     </>

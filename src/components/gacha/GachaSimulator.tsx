@@ -3,7 +3,8 @@ import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import ListCardBadge from "@/components/shared/ListCardBadge";
 import MemberCardArtwork from "@/components/shared/MemberCardArtwork";
-import type { GachaDetailViewModel, GachaDrawEntry, GachaDrawPlan } from "@/lib/gacha/data";
+import { DrawCurrencyIcon, drawOptionName } from "@/components/gacha/GachaDrawOptions";
+import { drawOptionCost, drawOptionPlan, type GachaDetailViewModel, type GachaDrawEntry, type GachaDrawOption, type GachaDrawPlan } from "@/lib/gacha/data";
 import { drawGacha } from "@/lib/gacha/simulate";
 import { formatCompactCount } from "@/lib/format/compact-count";
 import { getItemIconUrl } from "@/lib/items/assets";
@@ -19,9 +20,13 @@ interface Tally {
   total: number;
   byRarity: Record<number, number>;
   pickups: number;
+  /** Purchases made of each option (by slot), for first-purchase prices. */
+  purchases: Record<number, number>;
+  /** What the draws cost, by currency item id (options with an unknown currency under 0). */
+  spent: Record<number, number>;
 }
 
-const emptyTally: Tally = { total: 0, byRarity: {}, pickups: 0 };
+const emptyTally: Tally = { total: 0, byRarity: {}, pickups: 0, purchases: {}, spent: {} };
 const TOP_RARITY = 4;
 
 export default function GachaSimulator({ locale, gacha }: Props) {
@@ -36,16 +41,27 @@ export default function GachaSimulator({ locale, gacha }: Props) {
 
   if (gacha.draws.length === 0) return null;
 
-  const run = (plan: GachaDrawPlan) => {
+  const run = (plan: GachaDrawPlan, option?: GachaDrawOption) => {
     const drawn = drawGacha(gacha.draws, plan);
     setResults(drawn);
     setRound((value) => value + 1);
     setTally((current) => {
       const byRarity = { ...current.byRarity };
       for (const entry of drawn) if (entry.kind !== "item") byRarity[entry.rarity] = (byRarity[entry.rarity] ?? 0) + 1;
-      return { total: current.total + drawn.length, byRarity, pickups: current.pickups + drawn.filter((entry) => entry.pickup).length };
+      const purchases = { ...current.purchases };
+      const spent = { ...current.spent };
+      if (option) {
+        const purchase = (purchases[option.slot] ?? 0) + 1;
+        purchases[option.slot] = purchase;
+        const cost = drawOptionCost(option, purchase);
+        if (cost > 0) spent[option.currency?.id ?? 0] = (spent[option.currency?.id ?? 0] ?? 0) + cost;
+      }
+      return { total: current.total + drawn.length, byRarity, pickups: current.pickups + drawn.filter((entry) => entry.pickup).length, purchases, spent };
     });
   };
+  // Priced options in their slot order; free and ad draws are left to the game.
+  const options = gacha.drawOptions.filter((option) => option.drawCount > 0);
+  const currencies = new Map(options.flatMap((option) => (option.currency ? [[option.currency.id, option] as const] : [])));
   const reset = () => {
     setResults([]);
     setTally(emptyTally);
@@ -60,12 +76,26 @@ export default function GachaSimulator({ locale, gacha }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_6%,transparent)] to-transparent px-6 py-4 sm:px-8">
         <h3 className="font-[var(--mn-font-display)] text-xl text-[var(--mn-text)] sm:text-2xl">{t(locale, "gacha.simulator.title")}</h3>
         <div className="flex flex-wrap items-center gap-2">
-          <button type="button" onClick={() => run(gacha.drawPlans.single)} className={`${buttonBase} border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text)]`}>
-            {t(locale, "gacha.simulator.single")}
-          </button>
-          <button type="button" onClick={() => run(ten)} className={`${buttonBase} border-[var(--mn-border)] bg-[var(--mn-accent-deep)] text-[var(--mn-paper)]`}>
-            {t(locale, "gacha.simulator.ten")}
-          </button>
+          {options.length > 0 ? options.map((option) => (
+            <button
+              key={option.slot}
+              type="button"
+              onClick={() => run(drawOptionPlan(option), option)}
+              className={`${buttonBase} gap-1.5 border-[var(--mn-border)] ${option.drawCount >= 10 ? "bg-[var(--mn-accent-deep)] text-[var(--mn-paper)]" : "bg-[var(--mn-paper)] text-[var(--mn-text)]"}`}
+            >
+              <DrawCurrencyIcon locale={locale} option={option} />
+              {drawOptionName(locale, option)}
+            </button>
+          )) : (
+            <>
+              <button type="button" onClick={() => run(gacha.drawPlans.single)} className={`${buttonBase} border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text)]`}>
+                {t(locale, "gacha.simulator.single")}
+              </button>
+              <button type="button" onClick={() => run(ten)} className={`${buttonBase} border-[var(--mn-border)] bg-[var(--mn-accent-deep)] text-[var(--mn-paper)]`}>
+                {t(locale, "gacha.simulator.ten")}
+              </button>
+            </>
+          )}
           {tally.total > 0 && (
             <button type="button" onClick={reset} className="mn-focus rounded-full px-3 py-2 text-xs font-bold text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]">
               {t(locale, "gacha.simulator.reset")}
@@ -85,6 +115,16 @@ export default function GachaSimulator({ locale, gacha }: Props) {
               </span>
             ))}
             {tally.pickups > 0 && <span className="rounded-full bg-[var(--mn-accent-deep)] px-2.5 py-1 text-[var(--mn-paper)]">{t(locale, "gacha.simulator.pickups", { count: tally.pickups })}</span>}
+            {Object.entries(tally.spent).map(([currencyId, amount]) => {
+              const option = currencies.get(Number(currencyId));
+              return (
+                <span key={currencyId} className="inline-flex items-center gap-1 rounded-full border border-[var(--mn-glass-border)] bg-[var(--mn-paper)] px-2.5 py-1 text-[var(--mn-text)]" title={option?.currency?.name || undefined}>
+                  {t(locale, "gacha.simulator.spent")}
+                  {option && <DrawCurrencyIcon locale={locale} option={option} className="h-3.5 w-3.5" />}
+                  <span className="font-mono tabular-nums">{amount.toLocaleString(locale)}</span>
+                </span>
+              );
+            })}
           </div>
         )}
 

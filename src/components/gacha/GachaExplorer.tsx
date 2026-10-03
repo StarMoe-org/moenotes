@@ -9,13 +9,14 @@ import { localizePath } from "@/i18n/routing";
 import BaseFilters, { BandFilter, FilterButton, FilterSection, toggleArrayItem } from "@/components/shared/BaseFilters";
 import BannerImage from "@/components/shared/BannerImage";
 import ScheduleBadge from "@/components/shared/ScheduleBadge";
+import ScheduleCountdown from "@/components/shared/ScheduleCountdown";
 import LimitedChip from "@/components/gacha/LimitedChip";
 import { getImageAssetUrl } from "@/lib/assets/url";
 import { getCharacterFaceIconUrl } from "@/lib/cards/assets";
 import { sortEntries } from "@/lib/filter/list-sort";
 import { useListSort } from "@/lib/filter/use-list-sort";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
-import type { GachaPickupCharacter, GachaViewModel } from "@/lib/gacha/data";
+import type { GachaCategory, GachaPickupCharacter, GachaViewModel } from "@/lib/gacha/data";
 import { getRoutePathById } from "@/lib/route/registry";
 import { formatScheduleRange, scheduleStatus, type ScheduleStatus } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
@@ -30,6 +31,7 @@ interface Props {
 }
 
 const statuses: ScheduleStatus[] = ["ongoing", "upcoming", "permanent", "ended"];
+const categories: GachaCategory[] = ["stars", "ticket", "ad", "pass", "bonus", "other"];
 
 export default function GachaExplorer({ locale, servers, initialGachas, bands }: Props) {
   const memory = useListPageMemory("gacha");
@@ -37,9 +39,10 @@ export default function GachaExplorer({ locale, servers, initialGachas, bands }:
   const timeZone = useDisplayTimeZone();
   const { server, pickServer, items: gachas } = useServerList(locale, servers, initialGachas);
   const [query, setQuery] = useState("");
-  // Most pools have no start date, so only id and name orderings are meaningful.
-  const sort = useListSort("gacha", locale);
+  // Most pools have no start date, so the date ordering is left out; "ending soon" reads the end dates they do have.
+  const sort = useListSort("gacha", locale, "endingSoon");
   const [selectedStatuses, setSelectedStatuses] = useState<ScheduleStatus[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<GachaCategory[]>([]);
   const [selectedBands, setSelectedBands] = useState<number[]>([]);
 
   useEffect(() => {
@@ -47,6 +50,7 @@ export default function GachaExplorer({ locale, servers, initialGachas, bands }:
     setQuery(remembered.query);
     setSelectedStatuses(remembered.statuses);
     setSelectedBands(remembered.bands);
+    setSelectedCategories(remembered.categories);
   }, [memory.state?.filtersHash]);
 
   useEffect(() => {
@@ -61,9 +65,9 @@ export default function GachaExplorer({ locale, servers, initialGachas, bands }:
   }, [memory.state?.scrollY]);
 
   const saveCurrentState = useCallback(() => {
-    const filtersHash = JSON.stringify({ query, statuses: selectedStatuses, bands: selectedBands });
+    const filtersHash = JSON.stringify({ query, statuses: selectedStatuses, bands: selectedBands, categories: selectedCategories });
     memory.saveState({ scrollY: window.scrollY, filtersHash });
-  }, [query, selectedStatuses, selectedBands, memory]);
+  }, [query, selectedStatuses, selectedBands, selectedCategories, memory]);
 
   useEffect(() => {
     window.addEventListener("beforeunload", saveCurrentState);
@@ -77,6 +81,7 @@ export default function GachaExplorer({ locale, servers, initialGachas, bands }:
     const used = new Set(gachas.flatMap((gacha) => gacha.bandIds));
     return bands.filter(([id]) => used.has(id));
   }, [gachas, bands]);
+  const availableCategories = useMemo(() => categories.filter((category) => gachas.some((gacha) => gacha.category === category)), [gachas]);
 
   const filteredGachas = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase();
@@ -84,19 +89,21 @@ export default function GachaExplorer({ locale, servers, initialGachas, bands }:
       // Status depends on the visitor's clock, so it only filters once that is known.
       if (selectedStatuses.length > 0 && now !== null && !selectedStatuses.includes(scheduleStatus(gacha.startAt, gacha.endAt, now))) return false;
       if (selectedBands.length > 0 && !gacha.bandIds.some((id) => selectedBands.includes(id))) return false;
+      if (selectedCategories.length > 0 && !selectedCategories.includes(gacha.category)) return false;
       return !needle || gacha.searchText.includes(needle);
     });
-  }, [gachas, query, selectedStatuses, selectedBands, now]);
+  }, [gachas, query, selectedStatuses, selectedBands, selectedCategories, now]);
 
-  const sortedGachas = useMemo(() => sortEntries(filteredGachas, sort.value, locale), [filteredGachas, sort.value, locale]);
+  const sortedGachas = useMemo(() => sortEntries(filteredGachas, sort.value, locale, now === null ? {} : { now }), [filteredGachas, sort.value, locale, now]);
 
-  const hasActiveFilters = sort.value !== "default" || Boolean(query) || selectedStatuses.length > 0 || selectedBands.length > 0;
+  const hasActiveFilters = sort.value !== "default" || Boolean(query) || selectedStatuses.length > 0 || selectedBands.length > 0 || selectedCategories.length > 0;
 
   const resetFilters = () => {
     sort.onChange("default");
     setQuery("");
     setSelectedStatuses([]);
     setSelectedBands([]);
+    setSelectedCategories([]);
     memory.clearState();
   };
 
@@ -127,6 +134,19 @@ export default function GachaExplorer({ locale, servers, initialGachas, bands }:
         </div>
       </FilterSection>
 
+      {availableCategories.length > 1 && (
+        <FilterSection title={t(locale, "gacha.category")}>
+          <div className="flex flex-wrap gap-2">
+            <FilterButton active={selectedCategories.length === 0} onClick={() => setSelectedCategories([])}>ALL</FilterButton>
+            {availableCategories.map((category) => (
+              <FilterButton key={category} active={selectedCategories.includes(category)} onClick={() => setSelectedCategories((current) => toggleArrayItem(current, category))}>
+                {t(locale, `gacha.categories.${category}`)}
+              </FilterButton>
+            ))}
+          </div>
+        </FilterSection>
+      )}
+
       {pickupBands.length > 0 && (
         <BandFilter
           title={t(locale, "gacha.pickupBand")}
@@ -143,6 +163,8 @@ export default function GachaExplorer({ locale, servers, initialGachas, bands }:
     query,
     selectedStatuses,
     selectedBands,
+    selectedCategories,
+    availableCategories,
     pickupBands,
     hasActiveFilters,
     filteredGachas.length,
@@ -194,7 +216,11 @@ function GachaCard({ gacha, locale, now, timeZone, onClick }: { gacha: GachaView
         <div className="min-w-0">
           <h3 className="line-clamp-2 text-sm font-black leading-5 text-[var(--mn-text)] transition-colors group-hover:text-[var(--mn-accent-deep)]">{gacha.name}</h3>
           <p className="mt-1 truncate text-xs font-medium tabular-nums text-[var(--mn-text-muted)]">{schedule}</p>
-          <p className="mt-0.5 truncate text-xs font-medium text-[var(--mn-text-muted)]">{counts}</p>
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-2 truncate text-xs font-medium text-[var(--mn-text-muted)]">
+            <span>{t(locale, `gacha.categories.${gacha.category}`)}</span>
+            {counts && <span>· {counts}</span>}
+            <ScheduleCountdown locale={locale} startAt={gacha.startAt} endAt={gacha.endAt} now={now} />
+          </p>
         </div>
         {gacha.pickupCharacters.length > 0 && (
           <div className="mt-auto border-t border-dashed border-[var(--mn-text-muted)]/40 pt-2">
@@ -241,7 +267,7 @@ function EmptyState({ locale, onReset }: { locale: AppLocale; onReset: () => voi
 }
 
 function parseRememberedFilters(raw?: string) {
-  const fallback = { query: "", statuses: [] as ScheduleStatus[], bands: [] as number[] };
+  const fallback = { query: "", statuses: [] as ScheduleStatus[], bands: [] as number[], categories: [] as GachaCategory[] };
   if (!raw) return fallback;
   try {
     const parsed = JSON.parse(raw) as Partial<typeof fallback>;
@@ -249,6 +275,7 @@ function parseRememberedFilters(raw?: string) {
       query: typeof parsed.query === "string" ? parsed.query : "",
       statuses: Array.isArray(parsed.statuses) ? parsed.statuses.filter((status) => statuses.includes(status)) : [],
       bands: Array.isArray(parsed.bands) ? parsed.bands : [],
+      categories: Array.isArray(parsed.categories) ? parsed.categories.filter((category) => categories.includes(category)) : [],
     };
   } catch {
     return fallback;

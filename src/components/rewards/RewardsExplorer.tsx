@@ -26,7 +26,7 @@ interface Props {
   servers: GameServer[];
 }
 
-const kinds: RewardEntryKind[] = ["seasonPass", "mission", "loginBonus"];
+const kinds: RewardEntryKind[] = ["seasonPass", "monthlyPass", "mission", "loginBonus"];
 const statuses: ScheduleStatus[] = ["ongoing", "upcoming", "permanent", "ended"];
 
 export function rewardBannerCrop(kind: RewardEntryKind): string {

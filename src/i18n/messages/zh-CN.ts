@@ -508,6 +508,8 @@ export const zhCN = {
     growth: { limitBreak: "上限解锁", skillLevelHint: "随着上限的突破，寄宿于卡面中的心意与技能将进一步绽放。" },
   },
   events: {
+    relatedGacha: "相关招募",
+    relatedGachaNote: "PICK UP 奖品中包含本活动卡牌或加成卡牌的招募。",
     filterTitle: "筛选活动",
     searchPlaceholder: "搜索活动、角色或歌曲...",
     status: "状态",
@@ -581,6 +583,9 @@ export const zhCN = {
     notFoundDescription: "这场活动或许已随时光落幕，又或尚未拉开帷幕。回到活动一览，看看其他的舞台吧。",
   },
   gacha: {
+    category: "招募类型",
+    categories: { stars: "星钻", ticket: "招募券", ad: "广告", pass: "月卡", bonus: "T.G.W 加成", other: "其他" },
+    options: { title: "招募选项", draws: "{count} 连", firstTime: "首次", free: "免费", ad: "观看广告", pass: "月卡专享", bonus: "T.G.W 加成", guarantee: "保底 {count} 张 {rarity} 以上", ensuredNew: "保底新卡", limit: { once: "限 {count} 次", daily: "每日 {count} 次", weekly: "每周 {count} 次", monthly: "每月 {count} 次" }, points: "+{count} 招募pt" },
     searchPlaceholder: "搜索招募名称、Pick Up 角色或卡面...",
     gachaId: "招募 ID",
     viewAllCards: "查看全部 {count} 张",
@@ -664,7 +669,8 @@ export const zhCN = {
     searchPlaceholder: "搜索名称或奖励内容...",
     filterTitle: "筛选任务与奖励",
     kind: "类型",
-    kinds: { seasonPass: "任务通行证", loginBonus: "登录奖励", mission: "限定任务" },
+    kinds: { seasonPass: "任务通行证", loginBonus: "登录奖励", mission: "限定任务", monthlyPass: "月卡" },
+    monthlyPass: { expireDays: "有效期", liveSkip: "演出跳过次数增加", consumeAll: "全部消耗次数增加", skipAd: "跳过广告", perDay: "每日 +{count}", yes: "可以", no: "无", firstTime: "首次购买奖励", continuation: "续购奖励", purchase: "第 {count} 次购买", dayRange: "第 {from}–{to} 天" },
     status: "开放状态",
     openDetail: "查看：{title}",
     emptyTitle: "未找到契合的约定",
@@ -2112,10 +2118,10 @@ export const zhCN = {
   detailNav: { label: "条目导航", previous: "上一个", next: "下一个", backToList: "返回列表" },
   collectionView: { label: "显示方式", grid: "网格", list: "列表", table: "表格", card: "卡片", square: "图标", nameSeparator: "、" },
   // ── pack G ──
-  shop: {},
-  missions: {},
-  tgwCard: {},
-  realLives: {},
+  shop: { filterTitle: "筛选商店", searchPlaceholder: "搜索礼包或其中的道具...", payment: "支付方式", limit: "限购", status: "状态", price: "价格", period: "售卖时间", sortPrice: "价格", openDetail: "查看礼包：{name}", noneOnServer: "该服务器的商店没有礼包。", emptyTitle: "没有符合条件的礼包", recommended: "推荐", free: "免费", alwaysOpen: "常驻售卖", vipRank: "T.G.W CARD 等级", vipRankValue: "等级 {rank} 以上", vipRankShort: "T.G.W 等级 {rank}", playerRank: "玩家等级", playerRankValue: "等级 {rank} 以上", shopId: "礼包 ID", contents: "礼包内容", noContents: "数据中没有该礼包的内容。", bonus: "赠品", description: "说明", storePrices: "各地区售价", storePricesNote: "游戏数据记录的各地区商店原价，不做汇率换算。", notFoundTitle: "找不到该礼包", notFoundDescription: "没有服务器的商店出售这个礼包。返回商店看看正在出售的礼包吧。", payments: { money: "现金", star: "星钻", paidStar: "付费星钻", ad: "观看广告", other: "其他" }, limits: { unlimited: "不限购", once: "限购", daily: "每日", weekly: "每周", monthly: "每月" }, limitPer: { once: "限购 {count} 次", daily: "每日 {count} 次", weekly: "每周 {count} 次", monthly: "每月 {count} 次" }, columns: { name: "礼包", price: "价格", limit: "限购", status: "状态" }, currencies: { usd: "美元", twd: "新台币", hkd: "港币", krw: "韩元", jpy: "日元" } },
+  missions: { tabs: "任务分类", limited: "限时任务", empty: "该分类下没有任务。", noLimited: "该服务器没有限时任务组。", categories: { daily: "每日", normal: "常规", titles: "称号", songs: "乐曲解锁", home: "主页解锁", other: "其他" }, columns: { mission: "任务", goal: "目标", rewards: "奖励" } },
+  tgwCard: { empty: "该服务器没有 T.G.W CARD 数据。", ranks: "等级一览", rankCount: "共 {count} 级", rank: "RANK", rankTitle: "T.G.W CARD 等级 {rank}", pointValue: "{count} pt", points: "积分", dailyRewards: "每日奖励", rankUpRewards: "升级奖励", benefits: "特典", unlocked: "已解锁", bonusFallback: "特典 {type}", percentUp: "提升 {value}%", percentDown: "缩短 {value}%", units: { hours: "小时", minutes: "分钟" }, colors: { normal: "普通", gold: "金卡", platinum: "白金卡", black: "黑卡" }, dailyPoints: "登录积分", consecutiveDays: "连续登录", days: "第 {count} 天", daysOrMore: "第 {count} 天起", dailyPointsNote: "每日登录可获得的积分，随连续登录天数增加。" },
+  realLives: { empty: "该服务器暂无现实演出安排。", ready: "大厅开放中", readyAt: "大厅开放", startAt: "开始", endAt: "结束" },
   // ── pack M ──
   help: {},
   // ── pack F ──

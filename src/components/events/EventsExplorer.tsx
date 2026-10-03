@@ -6,6 +6,7 @@ import ServerScope from "@/components/shared/ServerScope";
 import ServerFlag from "@/components/shared/ServerFlag";
 import BaseFilters, { BandFilter, FilterButton, FilterSection, toggleArrayItem } from "@/components/shared/BaseFilters";
 import ScheduleBadge from "@/components/shared/ScheduleBadge";
+import ScheduleCountdown from "@/components/shared/ScheduleCountdown";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import { getCharacterFaceIconUrl } from "@/lib/cards/assets";
@@ -36,7 +37,7 @@ export default function EventsExplorer({ locale, servers, initialEvents, bands }
   const timeZone = useDisplayTimeZone();
   const { server, pickServer, items: events } = useServerList(locale, servers, initialEvents);
   const [query, setQuery] = useState("");
-  const sort = useListSort("event-list", locale, "date");
+  const sort = useListSort("event-list", locale, "date,endingSoon");
   const [selectedStatuses, setSelectedStatuses] = useState<ScheduleStatus[]>([]);
   const [selectedBands, setSelectedBands] = useState<number[]>([]);
 
@@ -89,7 +90,7 @@ export default function EventsExplorer({ locale, servers, initialEvents, bands }
     });
   }, [events, query, selectedStatuses, selectedBands, now]);
 
-  const sortedEvents = useMemo(() => sortEntries(filteredEvents, sort.value, locale), [filteredEvents, sort.value, locale]);
+  const sortedEvents = useMemo(() => sortEntries(filteredEvents, sort.value, locale, now === null ? {} : { now }), [filteredEvents, sort.value, locale, now]);
 
   const hasActiveFilters = sort.value !== "default" || Boolean(query) || selectedStatuses.length > 0 || selectedBands.length > 0;
 
@@ -189,6 +190,7 @@ function EventCard({ event, locale, now, timeZone, onClick }: { event: EventView
         <div className="min-w-0">
           <h3 className="line-clamp-2 text-sm font-black leading-5 text-[var(--mn-text)] transition-colors group-hover:text-[var(--mn-accent-deep)]">{event.name}</h3>
           <p className="mt-1 truncate text-xs font-medium tabular-nums text-[var(--mn-text-muted)]">{formatScheduleRange(event.startAt, event.endAt, locale, timeZone)}</p>
+          <ScheduleCountdown locale={locale} startAt={event.startAt} endAt={event.endAt} now={now} className="mt-1" />
         </div>
         {event.characters.length > 0 && (
           <div className="mt-auto border-t border-dashed border-[var(--mn-text-muted)]/40 pt-2">

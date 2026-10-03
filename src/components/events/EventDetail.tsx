@@ -4,6 +4,8 @@ import type { GameServer } from "@/config/servers";
 import MemberCardItem from "@/components/cards/MemberCardItem";
 import EventBanner, { EventScene } from "@/components/events/EventBanner";
 import BandLogo from "@/components/shared/BandLogo";
+import BannerImage from "@/components/shared/BannerImage";
+import ScheduleCountdown from "@/components/shared/ScheduleCountdown";
 import RewardChip from "@/components/shared/RewardChip";
 import ScheduleBadge from "@/components/shared/ScheduleBadge";
 import ServerSchedules from "@/components/shared/ServerSchedules";
@@ -13,7 +15,8 @@ import SupportCardItem from "@/components/support-cards/SupportCardItem";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import { moveReleaseUrls } from "@/lib/assets/release";
-import type { EventBonus, EventBonusGroup, EventBonusTarget, EventBoxGachaBox, EventBoxGachaItem, EventChallengeLive, EventDetailViewModel, EventLiveRow, EventMissionRow, EventRankingTier, EventStoryEpisode } from "@/lib/events/data";
+import type { EventBonus, EventBonusGroup, EventBonusTarget, EventBoxGachaBox, EventBoxGachaItem, EventChallengeLive, EventDetailViewModel, EventLiveRow, EventMissionRow, EventRankingTier, EventRelatedGacha, EventStoryEpisode } from "@/lib/events/data";
+import { getImageAssetUrl } from "@/lib/assets/url";
 import { formatCompactCount } from "@/lib/format/compact-count";
 import { getEventTrackerHref } from "@/lib/game-api/links";
 import type { MusicViewModel } from "@/lib/music/data";
@@ -74,6 +77,8 @@ function EventDetailView({ locale, server, event, schedules }: { locale: AppLoca
             <div className="border-b border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_6%,transparent)] to-transparent p-6">
               <ScheduleBadge locale={locale} startAt={event.startAt} endAt={event.endAt} now={now} />
               <h2 className="mt-3 font-[var(--mn-font-display)] text-2xl leading-tight text-[var(--mn-text)] sm:text-3xl">{event.name}</h2>
+              <ScheduleCountdown locale={locale} startAt={event.startAt} endAt={event.endAt} now={now} className="mt-2" />
+              {event.chapterDescription && <p className="mt-3 line-clamp-4 whitespace-pre-line text-sm leading-6 text-[var(--mn-text-muted)]">{event.chapterDescription}</p>}
             </div>
             <div className="divide-y divide-dashed divide-[var(--mn-border)]/60 px-6 py-2">
               {facts.map(([label, value]) => (
@@ -117,6 +122,8 @@ function EventDetailView({ locale, server, event, schedules }: { locale: AppLoca
             </Panel>
           )}
 
+          {event.relatedGachas.length > 0 && <RelatedGachaPanel locale={locale} gachas={event.relatedGachas} now={now} />}
+
           {event.story.length > 0 && <StoryPanel locale={locale} event={event} />}
           {event.missions.length > 0 && <MissionsPanel locale={locale} missions={event.missions} />}
           {event.pointRewards.length > 0 && <PointRewardsPanel locale={locale} event={event} />}
@@ -133,6 +140,34 @@ function EventDetailView({ locale, server, event, schedules }: { locale: AppLoca
         </section>
       </div>
     </div>
+  );
+}
+
+/** Gachas featuring the event's cards: the event's own cards and the cards its bonus names, among their rate-up prizes. */
+function RelatedGachaPanel({ locale, gachas, now }: { locale: AppLocale; gachas: EventRelatedGacha[]; now: number | null }) {
+  return (
+    <Panel title={t(locale, "events.relatedGacha")}>
+      <p className="mb-4 text-xs leading-6 text-[var(--mn-text-muted)]">{t(locale, "events.relatedGachaNote")}</p>
+      <ul className="grid gap-4 sm:grid-cols-2">
+        {gachas.map((gacha) => (
+          <li key={gacha.id} className="min-w-0">
+            <a
+              href={localizePath(entityLinkPath({ routeId: "gacha", detailId: gacha.id }), locale)}
+              className="mn-list-card group flex h-full min-w-0 flex-col overflow-hidden border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)]"
+            >
+              <BannerImage src={getImageAssetUrl(gacha.bannerPath, locale)} alt="" fallback={gacha.name} />
+              <div className="flex flex-1 flex-col gap-1.5 p-3">
+                <span className="line-clamp-2 text-sm font-black leading-5 text-[var(--mn-text)] group-hover:text-[var(--mn-accent-deep)]">{gacha.name}</span>
+                <span className="flex flex-wrap items-center gap-2">
+                  <ScheduleBadge locale={locale} startAt={gacha.startAt} endAt={gacha.endAt} now={now} countdown={false} />
+                  <ScheduleCountdown locale={locale} startAt={gacha.startAt} endAt={gacha.endAt} now={now} />
+                </span>
+              </div>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </Panel>
   );
 }
 
