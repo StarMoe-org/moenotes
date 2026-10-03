@@ -15,6 +15,8 @@ import {
   type ItemViewModel,
 } from "@/lib/items/data";
 import { getItemIconUrl } from "@/lib/items/assets";
+import { localizePath } from "@/i18n/routing";
+import { entityLinkPath } from "@/lib/route/entity-link";
 
 interface Props {
   locale: AppLocale;
@@ -172,7 +174,7 @@ export default function ItemsExplorer({ locale, servers, initialItems }: Props) 
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4xl:grid-cols-7 5xl:grid-cols-8">
             {sortedEntries.map((item) => (
-              <ItemCardItem key={item.id} item={item} locale={locale} />
+              <ItemCardItem key={item.id} item={item} locale={locale} onOpen={saveCurrentState} />
             ))}
           </div>
         )}
@@ -181,7 +183,7 @@ export default function ItemsExplorer({ locale, servers, initialItems }: Props) 
   );
 }
 
-function ItemCardItem({ item, locale }: { item: ItemViewModel; locale: AppLocale }) {
+function ItemCardItem({ item, locale, onOpen }: { item: ItemViewModel; locale: AppLocale; onOpen: () => void }) {
   const [failed, setFailed] = useState(false);
   const source = useAssetUrl()(getItemIconUrl(item.imagePath, locale));
 
@@ -190,8 +192,10 @@ function ItemCardItem({ item, locale }: { item: ItemViewModel; locale: AppLocale
   };
 
   return (
-    <div
+    <a
       className="mn-list-card group flex flex-col min-w-0 overflow-hidden border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)]"
+      href={localizePath(entityLinkPath({ routeId: "items", detailId: item.id }), locale)}
+      onClick={onOpen}
       data-list-item-id={item.id}
     >
       <div className="relative aspect-square overflow-hidden bg-[var(--mn-cream-deep)] flex items-center justify-center p-4">
@@ -225,7 +229,7 @@ function ItemCardItem({ item, locale }: { item: ItemViewModel; locale: AppLocale
           </span>
         </div>
       </div>
-    </div>
+    </a>
   );
 }
 

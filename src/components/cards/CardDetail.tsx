@@ -40,11 +40,16 @@ import {
   type SkillViewModel,
 } from "@/lib/cards/skills";
 import { LevelControl, StepControl } from "@/components/shared/CardGrowthControls";
+import AudioPlayButton from "@/components/shared/AudioPlayButton";
+import CardMaterialsPanel from "@/components/cards/CardMaterialsPanel";
+import type { CardMaterials } from "@/lib/cards/materials";
 
 interface Props {
   locale: AppLocale;
   cardId: number;
   initialData: ServerFacetedValue<DetailData>;
+  /** Upgrade materials and the gacha voice (build-card-materials.ts); null when no server has the card. */
+  materials?: ServerFacetedValue<CardMaterials> | null;
   servers: GameServer[];
 }
 
@@ -77,17 +82,18 @@ function estimateTabWidth(label: string): number {
 }
 
 /** The member card as the page's server has it (docs/servers.md). */
-export default function CardDetail({ locale, initialData, servers }: Props) {
+export default function CardDetail({ locale, initialData, materials: facetedMaterials = null, servers }: Props) {
   const [server, pickServer] = useContentServer(locale, servers);
   const data = useMemo(() => moveReleaseUrls(valueForServer(initialData, server), entityServer(initialData, server)), [initialData, server]);
+  const materials = useMemo(() => facetedMaterials && moveReleaseUrls(valueForServer(facetedMaterials, server), entityServer(facetedMaterials, server)), [facetedMaterials, server]);
   return (
     <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer} entityServers={initialData.servers}>
-      <CardDetailView locale={locale} data={data} />
+      <CardDetailView locale={locale} data={data} materials={materials} />
     </ServerScope>
   );
 }
 
-function CardDetailView({ locale, data }: { locale: AppLocale; data: DetailData }) {
+function CardDetailView({ locale, data, materials }: { locale: AppLocale; data: DetailData; materials: CardMaterials | null }) {
   const assetUrl = useAssetUrl();
   const timeZone = useDisplayTimeZone();
   const loading = false;
@@ -387,7 +393,12 @@ function CardDetailView({ locale, data }: { locale: AppLocale; data: DetailData 
                         <div className="absolute top-2 right-2 bg-[var(--mn-surface)] border border-[var(--mn-border)] px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-[var(--mn-accent-deep)] rounded">
                           QUOTE
                         </div>
-                        <p className="mt-2 italic">"{card.gachaVoice}"</p>
+                        <div className="mt-2 flex items-start gap-2">
+                          {materials?.gachaVoiceUrl && (
+                            <AudioPlayButton locale={locale} size="sm" track={{ id: `card-gacha-voice:${card.id}`, src: materials.gachaVoiceUrl, title: card.gachaVoice, subtitle: card.characterName }} />
+                          )}
+                          <p className="italic">"{card.gachaVoice}"</p>
+                        </div>
                       </div>
                     )}
 
@@ -580,6 +591,8 @@ function CardDetailView({ locale, data }: { locale: AppLocale; data: DetailData 
               ))}
             </div>
           </div>
+
+          {materials && materials.groups.length > 0 && <CardMaterialsPanel locale={locale} groups={materials.groups} />}
 
           <div className="flex justify-start">
             <a href={localizePath(getRoutePathById("cards"), locale)} className="mn-focus mn-stamp-press inline-flex rounded-full border border-[var(--mn-border)] bg-[var(--mn-paper)] px-6 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]">

@@ -27,9 +27,8 @@ import {
 import {
   type CharacterProgressionData,
   type CharacterViewModel,
-  type CostumeViewModel,
-  type VoiceViewModel,
 } from "@/lib/characters/data";
+import { CharacterSectionTabs, CostumesPanel, RankRewardsPanel, VoicesPanel, useCharacterSection } from "@/components/characters/CharacterSections";
 
 interface Props {
   locale: AppLocale;
@@ -69,18 +68,19 @@ function estimateTabWidth(label: string): number {
 }
 
 /** The character as the page's server has it (docs/servers.md). */
-export default function CharacterDetail({ locale, initialData, servers }: Props) {
+export default function CharacterDetail({ locale, initialData, progressionData, servers }: Props) {
   const [server, pickServer] = useContentServer(locale, servers);
   const data = useMemo(() => moveReleaseUrls(valueForServer(initialData, server), entityServer(initialData, server)), [initialData, server]);
   return (
     <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer} entityServers={initialData.servers}>
-      <CharacterDetailView locale={locale} data={data} />
+      <CharacterDetailView locale={locale} data={data} progression={progressionData} />
     </ServerScope>
   );
 }
 
-function CharacterDetailView({ locale, data }: { locale: AppLocale; data: DetailData }) {
+function CharacterDetailView({ locale, data, progression }: { locale: AppLocale; data: DetailData; progression: CharacterProgressionData | null }) {
   const assetUrl = useAssetUrl();
+  const [section, setSection] = useCharacterSection();
   const loading = false;
   const error = false;
   const [, setReloadKey] = useState(0);
@@ -408,6 +408,11 @@ function CharacterDetailView({ locale, data }: { locale: AppLocale; data: Detail
 
         {/* Right Column: Other Content */}
         <section className="flex-1 min-w-0 space-y-6">
+          <CharacterSectionTabs locale={locale} value={section} onChange={setSection} />
+          {section === "costumes" && <CostumesPanel locale={locale} costumes={progression?.costumes ?? []} />}
+          {section === "voices" && progression && <VoicesPanel locale={locale} characterId={character.id} data={progression} />}
+          {section === "bonds" && <RankRewardsPanel locale={locale} title={t(locale, "characters.rewards.friendshipTitle")} groups={progression?.friendshipRewards ?? []} />}
+          {section === "profile" && <>
           {/* Character Bio Info Card */}
           <div className="mn-paper overflow-hidden">
             {/* Title Section (Header Banner) */}
@@ -553,6 +558,9 @@ function CharacterDetailView({ locale, data }: { locale: AppLocale; data: Detail
               )}
             </div>
           </div>
+
+          <RankRewardsPanel locale={locale} title={t(locale, "characters.rewards.rankTitle")} groups={progression?.rankRewards ?? []} />
+          </>}
 
           <div className="flex justify-start">
             <a href={localizePath(getRoutePathById("characters"), locale)} className="mn-focus mn-stamp-press inline-flex rounded-full border border-[var(--mn-border)] bg-[var(--mn-paper)] px-6 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]">

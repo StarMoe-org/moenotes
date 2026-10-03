@@ -71,7 +71,7 @@ export function createRewardResolver(sources: RewardSources, locale: AppLocale):
     switch (kind) {
       case "item": {
         const item = items.get(id);
-        return item ? { ...base, name: item.name, imageUrl: getItemIconUrl(item.imagePath, locale), link: { routeId: "items" } } : base;
+        return item ? { ...base, name: item.name, imageUrl: getItemIconUrl(item.imagePath, locale), link: { routeId: "items", detailId: id } } : base;
       }
       case "member": {
         const card = cards.get(id);

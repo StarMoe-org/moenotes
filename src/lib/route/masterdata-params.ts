@@ -6,7 +6,7 @@ import { DEFAULT_LOCALE } from "@/config/locales";
 
 type TableDetailKind = "cards" | "support-cards" | "characters" | "music" | "gacha" | "events";
 /** Detail kinds whose ids come from a list the build computes rather than one table. */
-type DetailKind = TableDetailKind | "exchange";
+type DetailKind = TableDetailKind | "exchange" | "items";
 interface DetailRow { id: number; rarity?: number; cardType?: number }
 const tables: Record<TableDetailKind, string> = {
   cards: "MasterMemberCard.json",
@@ -76,4 +76,9 @@ export async function getMasterdataRewardParams(): Promise<RouteStaticParamConfi
     }
   }
   return params;
+}
+
+/** Items any server's MasterItem has (`/items/:id`). */
+export async function getMasterdataItemParams(): Promise<RouteStaticParamConfig[]> {
+  return detailParamsFromRows("items", await rowsOfEveryServer<DetailRow>("MasterItem.json"));
 }

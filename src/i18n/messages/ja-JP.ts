@@ -478,6 +478,7 @@ export const jaJP = {
     rarities: { "2": "R", "3": "SR", "4": "SSR", "10": "特別", "20": "バースデー" },
     attributes: { "1": "紅赤", "2": "紺碧", "3": "翡翠", "4": "山吹", "5": "紫苑" },
     growth: { level: "レベル", levelValue: "Lv.{level} / {limit}", decrease: "レベルを下げる", increase: "レベルを上げる", max: "最大", training: "特訓", awaken: "覚醒", power: "総合力", skillLevel: "スキルレベル", leaderSkillHint: "リーダースキルレベルは覚醒回数と連動しており、変更すると覚醒も変わります。" },
+    materials: {"title":"育成素材","cost":"必要素材","empty":"このカードの育成素材は記録されていません。","alternative":"覚醒には同じレアリティのバンド用ピースも使えます：","kinds":{"training":"特訓","awaken":"覚醒","liveSkill":"ライブスキル","gekisouSkill":"激奏スキル"}},
   },
   supportCards: {
     searchPlaceholder: "カード名・キャラクターを検索...",
@@ -500,6 +501,7 @@ export const jaJP = {
     },
     diaryTitle: "メンバー手帳",
     growth: { limitBreak: "上限解放", skillLevelHint: "スキルレベルは上限解放回数に応じて上がります。" },
+    materials: {"limitBreak":"上限解放"},
   },
   events: {
     filterTitle: "イベントを絞り込む",
@@ -1107,6 +1109,10 @@ export const jaJP = {
       voices: "ボイス",
       growth: "成長",
     },
+    sections: {"label":"キャラクターの項目","profile":"プロフィール","costumes":"衣装","voices":"ボイス","bonds":"絆"},
+    rewards: {"rank":"ランク","rankTitle":"キャラクターランク報酬","friendshipTitle":"絆ランク報酬","empty":"報酬は記録されていません。"},
+    costumes: {"empty":"このキャラクターの衣装は記録されていません。","openViewer":"Live2D ビューアーで開く"},
+    voices: {"characterVoice":"育成・ライブボイス","empty":"このキャラクターのボイスは記録されていません。","types":{"levelUp":"レベルアップ","training":"特訓","skillUp":"スキルアップ","awaken":"覚醒","clear":"ライブクリア","fullCombo":"フルコンボ","allPerfect":"オールパーフェクト","result":"リザルト","battleFirst":"対戦 1 位","battleHigh":"対戦 上位","battleLow":"対戦 下位","other":"その他"}},
   },
   story: {
     categories: {
@@ -1973,6 +1979,10 @@ export const jaJP = {
     emptyDescription: "リュックの中に対応する品は見当たりませんでした。絞り込みをリセットして、旅の途中で拾い集めたすべての証を眺めてみましょう。",
     reset: "すべてのアイテムを見る",
     quickFilter: "クイックフィルターを開く",
+    openDetail: "{name}を見る",
+    detail: {"group":"分類","type":"タイプ","max":"所持上限","noMax":"上限なし","id":"アイテム ID","period":"期間","backToList":"所持品一覧へ戻る","showAll":"すべて表示（{count} 件）","showLess":"折りたたむ","notFoundTitle":"アイテムが見つかりません","notFoundDescription":"どのサーバーのデータにもこのアイテムはありません。所持品一覧からほかのアイテムを探してみてください。"},
+    sources: {"title":"入手方法","description":"ゲームデータから集めた、このアイテムがもらえる報酬・ショップ・景品です。","empty":"ゲームデータにこのアイテムの入手方法は記録されていません。","total":"合計 ×{count}","everyCharacter":"全キャラクター","kinds":{"event":"イベント","exchange":"交換所","shop":"ショップ","gacha":"ガチャ","seasonPass":"シーズンパス","loginBonus":"ログインボーナス","limitedMission":"期間限定ミッション","mission":"ミッション","characterMission":"キャラクターミッション","characterRank":"キャラクターランク報酬","friendshipRank":"絆ランク報酬","story":"ストーリー報酬","music":"楽曲報酬"},"details":{"pointReward":"累計pt報酬","liveReward":"ライブ報酬","challengeLive":"チャレンジライブ","eventMission":"イベントミッション","boxGacha":"BOXガチャ","ranking":"ランキング報酬","product":"商品","prize":"景品","drawBonus":"ガチャおまけ","free":"無料報酬","premium":"プレミアム報酬","loginDay":"日別報酬","missionReward":"ミッション報酬","completeReward":"コンプリート報酬","rankReward":"ランク報酬","episodeReward":"エピソード報酬","scoreReward":"スコアランク報酬","comboReward":"フルコンボ報酬"}},
+    usages: {"title":"使い道","description":"このアイテムを消費する育成と、カードや装備 1 つを最大まで育てるのに必要な数です。","empty":"このアイテムは育成素材として使われません。","perTarget":"1 つにつき ×{count}","perTargetAlternative":"1 つにつき ×{count}（カード専用のピースの代わりに使用）","kinds":{"memberTraining":"メンバー特訓","memberAwaken":"メンバー覚醒","memberLiveSkill":"ライブスキル強化","memberGekisouSkill":"激奏スキル強化","bandItem":"バンド装備強化"}},
   },
   bandItems: {
     searchPlaceholder: "装備名やバンドで検索...",
