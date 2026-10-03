@@ -1,16 +1,18 @@
 ---
-// Placeholder reserved for the haneoka feature-parity work (.narrafork/plans/plan-parallel-weaving-hellman.md).
-import PageHeader from "@/components/route/PageHeader.astro";
+import PlaylistsView from "@/components/music/PlaylistsView";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
+import { getBuildMusic } from "@/lib/masterdata/build-data";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
 
 interface Props {
   locale: AppLocale;
 }
 
 const { locale } = Astro.props;
+const [songs, servers] = await Promise.all([getBuildMusic(locale), getBuildServers()]);
 ---
 
 <PageLayout locale={locale} titleKey="seo.playlists.title" descriptionKey="seo.playlists.description">
-  <PageHeader locale={locale} titleKey="seo.playlists.title" descriptionKey="seo.playlists.description" />
+  <PlaylistsView client:load locale={locale} servers={servers} initialSongs={songs} />
 </PageLayout>

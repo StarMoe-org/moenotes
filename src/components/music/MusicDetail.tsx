@@ -4,7 +4,7 @@ import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import ServerScope from "@/components/shared/ServerScope";
 import { moveReleaseUrls } from "@/lib/assets/release";
-import { entityServer, forServer, type ServerFaceted } from "@/lib/servers/facets";
+import { entityServer, forServer, valueForServer, type ServerFaceted, type ServerFacetedValue } from "@/lib/servers/facets";
 import { useAssetUrl, useContentServer } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
 import { formatMasterDay } from "@/lib/schedule";
@@ -20,6 +20,10 @@ import {
   type SongDifficultyModel,
 } from "@/lib/music/data";
 import type { MusicDetailData } from "@/lib/masterdata/build-data";
+import type { MusicLiveExtras } from "@/lib/masterdata/build-music";
+import { useSongTitle } from "@/lib/music/title-preference";
+import { useChartMetrics } from "@/lib/music/use-chart-metrics";
+import MusicChartPanel, { MusicExpRewards } from "@/components/music/MusicChartPanel";
 import { rewardName } from "@/components/shared/RewardChip";
 import {
   getCardTypeIconUrl,
@@ -29,7 +33,6 @@ import {
   getCharacterFaceIconUrl,
   type CardType,
 } from "@/lib/cards/assets";
-import { getMusicRankingHref } from "@/lib/game-api/links";
 
 interface Props {
   locale: AppLocale;
@@ -37,6 +40,8 @@ interface Props {
   initialSong: ServerFaceted<MusicViewModel> | null;
   /** Live-system extras joined from MasterLiveMusic*; per the first server in the merged list. */
   liveDetail?: MusicDetailData | null;
+  /** Combo tier and exp rewards (build-music.ts), per server. */
+  liveExtras?: ServerFacetedValue<MusicLiveExtras> | null;
   servers: GameServer[];
 }
 
@@ -45,18 +50,21 @@ interface DetailData {
 }
 
 /** The song as the page's server has it (docs/servers.md). */
-export default function MusicDetail({ locale, initialSong, liveDetail, servers }: Props) {
+export default function MusicDetail({ locale, initialSong, liveDetail, liveExtras, servers }: Props) {
   const [server, pickServer] = useContentServer(locale, servers);
   const song = useMemo(() => initialSong && moveReleaseUrls(forServer(initialSong, server), entityServer(initialSong, server)), [initialSong, server]);
+  const extras = useMemo(() => (liveExtras ? valueForServer(liveExtras, server) : null), [liveExtras, server]);
   return (
     <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer} entityServers={initialSong?.servers ?? []}>
-      <MusicDetailView locale={locale} song={song} liveDetail={liveDetail ?? null} />
+      <MusicDetailView locale={locale} song={song} liveDetail={liveDetail ?? null} extras={extras} />
     </ServerScope>
   );
 }
 
-function MusicDetailView({ locale, song: initial, liveDetail }: { locale: AppLocale; song: MusicViewModel | null; liveDetail: MusicDetailData | null }) {
+function MusicDetailView({ locale, song: initial, liveDetail, extras }: { locale: AppLocale; song: MusicViewModel | null; liveDetail: MusicDetailData | null; extras: MusicLiveExtras | null }) {
   const assetUrl = useAssetUrl();
+  const titleOf = useSongTitle();
+  const { index: metrics, status: metricsStatus } = useChartMetrics();
   const timeZone = useDisplayTimeZone();
   const data: DetailData = { song: initial };
   const loading = false;
@@ -126,6 +134,7 @@ function MusicDetailView({ locale, song: initial, liveDetail }: { locale: AppLoc
   }
 
   const attributeName = t(locale, `cards.attributes.${song.musicType}`);
+  const title = titleOf(song);
 
   const previewActions = (
     <>
@@ -210,7 +219,7 @@ function MusicDetailView({ locale, song: initial, liveDetail }: { locale: AppLoc
                     <img
                       className="h-full w-full object-cover transition duration-300 group-hover:scale-102"
                       src={song.jacketUrl}
-                      alt={song.title}
+                      alt={title}
                     />
                     <div className="absolute inset-0 bg-black/0 transition group-hover:bg-black/10 flex items-center justify-center">
                       <svg className="h-8 w-8 text-white opacity-0 transition group-hover:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m4-3H6" /></svg>
@@ -260,7 +269,7 @@ function MusicDetailView({ locale, song: initial, liveDetail }: { locale: AppLoc
           </div>
 
           <div className="mt-6 w-full">
-            <SongAudioPanel locale={locale} song={song} />
+            <SongAudioPanel locale={locale} song={song} title={title} />
           </div>
         </aside>
 
@@ -289,7 +298,8 @@ function MusicDetailView({ locale, song: initial, liveDetail }: { locale: AppLoc
                     />
                     <span className="font-[var(--mn-font-note)] text-sm text-[var(--mn-accent-deep)]">{song.bandName}</span>
                   </div>
-                  <h2 className="mt-1 font-[var(--mn-font-display)] text-3xl leading-tight text-[var(--mn-text)] sm:text-4xl">{song.title}</h2>
+                  <h2 className="mt-1 font-[var(--mn-font-display)] text-3xl leading-tight text-[var(--mn-text)] sm:text-4xl">{title}</h2>
+                  {title !== song.title && <p className="mt-1 text-sm font-semibold text-[var(--mn-text-muted)]">{song.title}</p>}
                 </div>
                 <img className="h-8 w-8 shrink-0" src={assetUrl(getCardTypeIconUrl(song.musicType as CardType))} alt="" aria-hidden="true" />
               </div>
@@ -382,15 +392,11 @@ function MusicDetailView({ locale, song: initial, liveDetail }: { locale: AppLoc
             </div>
           </div>
 
+          <MusicChartPanel locale={locale} song={song} metrics={metrics} status={metricsStatus} comboTiers={extras?.comboTiers ?? []} />
+
           {liveDetail && <LiveSystemSections locale={locale} detail={liveDetail} />}
 
-          <a
-            href={getMusicRankingHref(locale, song.id)}
-            className="mn-paper mn-focus group flex items-center justify-between gap-4 px-6 py-4 transition hover:-translate-y-0.5 sm:px-8"
-          >
-            <span className="font-[var(--mn-font-display)] text-lg text-[var(--mn-text)] group-hover:text-[var(--mn-accent-deep)]">{t(locale, "music.ranking.title")}</span>
-            <svg className="h-5 w-5 shrink-0 text-[var(--mn-text-muted)] transition group-hover:translate-x-0.5 group-hover:text-[var(--mn-accent-deep)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
-          </a>
+          {extras && <MusicExpRewards locale={locale} rewards={extras.expRewards} />}
 
           {/* Back Action */}
           <div className="flex justify-start">
@@ -409,7 +415,7 @@ function MusicDetailView({ locale, song: initial, liveDetail }: { locale: AppLoc
       <Modal
         isOpen={jacketModalOpen}
         onClose={() => setJacketModalOpen(false)}
-        title={song.title}
+        title={title}
         closeLabel={t(locale, "actions.close")}
         size="md"
         headerActions={previewActions}
@@ -418,7 +424,7 @@ function MusicDetailView({ locale, song: initial, liveDetail }: { locale: AppLoc
           <img
             className="mx-auto max-h-[65vh] w-full object-contain"
             src={song.jacketUrl}
-            alt={song.title}
+            alt={title}
           />
         </div>
       </Modal>
@@ -564,7 +570,7 @@ function safeFilename(value: string): string {
   return value.replace(/[\/:*?"<>|]+/g, "_").trim() || "audio";
 }
 
-function SongAudioPanel({ locale, song }: { locale: AppLocale; song: MusicViewModel }) {
+function SongAudioPanel({ locale, song, title }: { locale: AppLocale; song: MusicViewModel; title: string }) {
   const tracks = [
     song.audioUrl && { kind: "full" as const, url: song.audioUrl },
     song.previewAudioUrl && { kind: "preview" as const, url: song.previewAudioUrl },
@@ -586,7 +592,7 @@ function SongAudioPanel({ locale, song }: { locale: AppLocale; song: MusicViewMo
     setDownloading(item.kind);
     const suffix = item.kind === "preview" ? "_short" : "";
     // Release audio is published as AAC in M4A.
-    await saveRemoteFile(item.url, `${safeFilename(song.title)}${suffix}.m4a`);
+    await saveRemoteFile(item.url, `${safeFilename(title)}${suffix}.m4a`);
     setDownloading(null);
   };
 
@@ -607,7 +613,7 @@ function SongAudioPanel({ locale, song }: { locale: AppLocale; song: MusicViewMo
           ))}
         </div>
       )}
-      <AudioPlayer locale={locale} src={track.url} title={song.title} label={t(locale, `music.audio.${track.kind}`)} />
+      <AudioPlayer locale={locale} src={track.url} title={title} label={t(locale, `music.audio.${track.kind}`)} />
       <div className="flex flex-wrap gap-2">
         {tracks.map((item) => (
           <button
