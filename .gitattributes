@@ -1,0 +1,2 @@
+# Frozen recognition artifacts are verified by byte SHA, including JSON and JS.
+/public/recognition/** -text -diff

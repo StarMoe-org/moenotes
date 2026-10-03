@@ -1,0 +1,15 @@
+---
+import DeckWorkspace from "./DeckWorkspace";
+import type { AppLocale } from "@/config/locales";
+import { getBuildCards, getBuildSupportCards, getBuildMusic } from "@/lib/masterdata/build-data";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
+import { getBuildPlayerCatalogue } from "@/lib/masterdata/player-fields";
+import { getBuildRecognitionSource } from "@/lib/masterdata/recognition-source";
+import "@/styles/deck-workspace.css";
+interface Props { locale: AppLocale; page: "deck" | "box" }
+const { locale, page } = Astro.props;
+const [members, snaps, songs, servers] = await Promise.all([getBuildCards(locale), getBuildSupportCards(locale), getBuildMusic(locale), getBuildServers()]);
+const playerCatalogues = (await Promise.all(servers.map(getBuildPlayerCatalogue))).filter(value => value !== null);
+const recognitionSources = (await Promise.all(servers.map(getBuildRecognitionSource))).filter(value => value !== null);
+---
+<DeckWorkspace client:load locale={locale} page={page} members={members} snaps={snaps} songs={songs} servers={servers} playerCatalogues={playerCatalogues} recognitionSources={recognitionSources} />

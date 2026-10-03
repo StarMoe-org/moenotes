@@ -39,7 +39,7 @@ export function getCardSkillSpriteUrl(assetId: number): string {
   return getAssetUrl({ path: `MemberCard/${assetId}/skill_sprite_atlas.png` });
 }
 
-export function getCharacterThumbnailUrl(characterId: number): string {
+export function getCharacterThumbnailUrl(characterId: number | string): string {
   return getAssetUrl({ path: `Character/Image/${characterId}/character_thumbnail.png` });
 }
 
@@ -56,7 +56,7 @@ export function getCharacterBoardIconUrl(characterId: number): string {
 }
 
 // Some band logos are lettered per language.
-export function getBandLogoUrl(bandId: number, locale: AppLocale): string {
+export function getBandLogoUrl(bandId: number | string, locale: AppLocale): string {
   return getAssetUrl({ path: `Band/${bandId}/band_logo.png`, locale });
 }
 

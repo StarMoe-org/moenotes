@@ -1,0 +1,39 @@
+{
+  "format": "ournotes.browser-cultivation-assets/1",
+  "source": "https://github.com/empty-sekai/ournotes-boxlens/tree/v0.1.0",
+  "modules": {
+    "loader": {
+      "file": "field-runtime-loader.js",
+      "size": 2424,
+      "sha256": "05e4c9a2dcceb89e787bb51c77c0e1a41029c60f03b4bb795e037da521a9ab67"
+    },
+    "reader": {
+      "file": "field-reader.js",
+      "size": 8448,
+      "sha256": "b0ae124a5a0f3832faa1f41271deed88bf1d081207cb3e6516fdf72fb0e3f9dc"
+    }
+  },
+  "runtime": {
+    "glue": {
+      "file": "browser-assets/ort.wasm.min.js",
+      "size": 50196,
+      "sha256": "faece07e84faa9001f5104bbe4e5c70861d06cb2376a0dea1fa0ad33a67adc81"
+    },
+    "module": {
+      "file": "browser-assets/ort-wasm-simd-threaded.mjs",
+      "size": 24381,
+      "sha256": "e13f7f94fc51b4ca72b12faeb1ee95f4ace6dfbc8939bc718aabdc0a27c4299b"
+    },
+    "wasm": {
+      "file": "browser-assets/ort-wasm-simd-threaded.wasm",
+      "size": 14239897,
+      "sha256": "3398c10d07d229bd91b364548e130e0e51a8e5704b88c7c083ebbeb78842dee2"
+    }
+  },
+  "model": {
+    "file": "models/fields.onnx",
+    "size": 1356782,
+    "sha256": "768889db7b475dce28ed949299d2e7a624faa3ee18f3c28bb22deac2bcdd1a8d"
+  },
+  "scope": "BoxLens NumberReader field crops and decision rules on ONNX Runtime Web (WASM); low-confidence, ambiguous, hidden or cropped fields are reported as unknown."
+}

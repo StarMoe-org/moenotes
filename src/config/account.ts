@@ -13,9 +13,15 @@ export const accountApi = {
   me: "/api/me",
   avatar: "/api/me/avatar",
   gameAccounts: "/api/me/game-accounts",
+  cardBoxes: "/api/me/boxes",
   /** Public profiles: `/api/players/{server}/{profileId}`. */
   players: "/api/players",
 } as const;
+
+/** One private collection for the signed-in Passport account and selected game server. */
+export function cardBoxPath(server: GameServer): string {
+  return `${accountApi.cardBoxes}/${server}`;
+}
 
 /** One game account: DELETE removes it; `/code` and `/verify` (POST) below it refresh its code and verify it. */
 export function gameAccountPath(server: GameServer, profileId: string): string {

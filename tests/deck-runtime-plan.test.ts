@@ -10,14 +10,18 @@ describe("collection runtime plan", () => {
     expect(planDeckRuntime(local, noUpload)).toEqual({ recognition: "onnx-wasm", recommendation: "wasm-worker", uploads: { screenshots: false, roster: false } });
   });
   test("missing ONNX WASM support does not silently switch the recognition runtime", () => {
-    expect(() => planDeckRuntime({ ...local, onnxWasm: false }, noUpload)).toThrow("explicit screenshot upload consent");
+    expect(() => planDeckRuntime({ ...local, onnxWasm: false }, noUpload)).toThrow("supported browser runtime");
   });
   test("ONNX alone is insufficient for screenshot recognition and cannot authorize uploads", () => {
-    expect(() => planDeckRuntime({ ...local, browserRecognition: false }, noUpload)).toThrow("explicit screenshot upload consent");
+    expect(() => planDeckRuntime({ ...local, browserRecognition: false }, noUpload)).toThrow("supported browser runtime");
   });
-  test("each remote input requires its own consent", () => {
-    expect(() => planDeckRuntime({ ...local, browserSolver: false }, { uploadScreenshots: true, uploadRoster: false })).toThrow("explicit roster upload consent");
-    expect(planDeckRuntime({ ...local, browserRecognition: false }, { uploadScreenshots: true, uploadRoster: false }).uploads).toEqual({ screenshots: true, roster: false });
+  test("upload consent does not enable remote recognition or recommendation", () => {
+    expect(() => planDeckRuntime({ ...local, browserSolver: false }, { uploadScreenshots: true, uploadRoster: true })).toThrow("browser solver");
+    expect(() => planDeckRuntime({ ...local, browserRecognition: false }, { uploadScreenshots: true, uploadRoster: true })).toThrow("supported browser runtime");
+  });
+  test("a stored or manually entered box does not require screenshot recognition", () => {
+    expect(planDeckRuntime({ ...local, browserRecognition: false, onnxWasm: false }, noUpload, { recognizeScreenshots: false }))
+      .toEqual({ recognition: null, recommendation: "wasm-worker", uploads: { screenshots: false, roster: false } });
   });
   test("consent does not invent an available service", () => {
     expect(() => planDeckRuntime({ ...local, browserSolver: false, remoteSolver: false }, { uploadScreenshots: true, uploadRoster: true })).toThrow();

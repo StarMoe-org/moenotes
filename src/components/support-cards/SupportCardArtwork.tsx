@@ -46,6 +46,7 @@ export default function SupportCardArtwork({
       {!failed ? (
         <img
           className="h-full w-full object-cover"
+          crossOrigin="anonymous"
           src={source}
           alt={alt}
           loading={eager ? "eager" : "lazy"}

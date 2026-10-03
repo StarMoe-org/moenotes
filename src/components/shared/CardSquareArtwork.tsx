@@ -21,9 +21,9 @@ function useNativeUi(): boolean {
 }
 
 /** A member card as the game's 1:1 square icon (frame, attribute and rarity painted by the game where available). */
-export function MemberSquareArtwork({ locale, card, className = "" }: { locale: AppLocale; card: CardViewModel; className?: string }) {
+export function MemberSquareArtwork({ locale, card, className = "", level, rank }: { locale: AppLocale; card: CardViewModel; className?: string; level?: number | undefined; rank?: number | undefined }) {
   return useNativeUi() && card.rarity !== 20
-    ? <NativeMemberArtwork locale={locale} card={card} className={className} />
+    ? <NativeMemberArtwork locale={locale} card={card} className={className} level={level} rank={rank} />
     : <SquareImage
       sources={[memberSquareUrl(card, locale), getCardThumbnailUrl(card.assetId), getCharacterFaceIconUrl(card.characterId)]}
       frameUrl={getCardSquareFrameUrl(card.rarity)} typeIconUrl={getCardTypeIconUrl(card.cardType)} attributeLabel={t(locale, `cards.attributes.${card.cardType}`)}
@@ -31,31 +31,33 @@ export function MemberSquareArtwork({ locale, card, className = "" }: { locale: 
 }
 
 /** A support card (Snap) as the game's 1:1 square icon; the wide Snap art is cropped by the square, not stretched. */
-export function SupportSquareArtwork({ locale, card, className = "" }: { locale: AppLocale; card: SupportCardViewModel; className?: string }) {
+export function SupportSquareArtwork({ locale, card, className = "", level, rank }: { locale: AppLocale; card: SupportCardViewModel; className?: string; level?: number | undefined; rank?: number | undefined }) {
   const face = card.characterIds[0];
   return useNativeUi() && card.rarity !== 10
-    ? <NativeSupportArtwork card={card} className={className} />
+    ? <NativeSupportArtwork card={card} className={className} level={level} rank={rank} />
     : <SquareImage
       sources={[getSupportCardThumbnailUrl(card.assetId), ...(face ? [getCharacterFaceIconUrl(face)] : [])]}
       frameUrl={getSupportCardSquareFrameUrl(card.rarity)} typeIconUrl={getSupportCardTypeIconUrl(card.cardType)} attributeLabel={t(locale, `cards.attributes.${card.cardType}`)}
       label={card.name} className={className} />;
 }
 
-export function NativeMemberArtwork({ locale, card, className }: { locale: AppLocale; card: CardViewModel; className: string }) {
+export function NativeMemberArtwork({ locale, card, className, level, rank }: { locale: AppLocale; card: CardViewModel; className: string; level?: number | undefined; rank?: number | undefined }) {
   const assetUrl = useAssetUrl();
   const data = useMemo(() => ({ leader: false, member: { rarity: card.rarity, cardType: card.cardType,
+    ...(level !== undefined ? { level } : {}), ...(rank !== undefined ? { rank } : {}),
     thumbnailUrl: assetUrl(memberSquareUrl(card, locale)),
     thumbnailSpriteKey: `MemberCard/${card.assetId}/member_thumbnail[square]`,
-  } }), [card, locale, assetUrl]);
+  } }), [card, locale, assetUrl, level, rank]);
   return <NativeGameCard entry="memberSquare" data={data} label={`${card.characterName} ${card.title}`} className={className} />;
 }
 
-export function NativeSupportArtwork({ card, className }: { card: SupportCardViewModel; className: string }) {
+export function NativeSupportArtwork({ card, className, level, rank }: { card: SupportCardViewModel; className: string; level?: number | undefined; rank?: number | undefined }) {
   const assetUrl = useAssetUrl();
   const data = useMemo(() => ({ leader: false, support: { rarity: card.rarity, cardType: card.cardType,
+    ...(level !== undefined ? { level } : {}), ...(rank !== undefined ? { rank } : {}),
     thumbnailUrl: assetUrl(getSupportCardThumbnailUrl(card.assetId)),
     thumbnailSpriteKey: `SupportCard/${card.assetId}/snap_thumbnail[snap_thumbnail]`,
-  } }), [card, assetUrl]);
+  } }), [card, assetUrl, level, rank]);
   return <NativeGameCard entry="supportSquare" data={data} label={card.name} className={className} />;
 }
 
@@ -69,7 +71,7 @@ function SquareImage({ sources, frameUrl, typeIconUrl, attributeLabel, label, cl
   return (
     <div className={`relative aspect-square overflow-hidden rounded-[12%] bg-[var(--mn-cream-deep)] ${className}`.trim()}>
       {source ? (
-        <img className="h-full w-full object-cover" src={assetUrl(source)} alt={label} loading="lazy" onError={() => setAttempt((current) => current + 1)} />
+        <img className="h-full w-full object-cover" crossOrigin="anonymous" src={assetUrl(source)} alt={label} loading="lazy" onError={() => setAttempt((current) => current + 1)} />
       ) : (
         <span className="grid h-full place-items-center p-2 text-center text-xs font-medium text-[var(--mn-text-muted)]">{label}</span>
       )}

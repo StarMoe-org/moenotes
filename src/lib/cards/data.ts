@@ -66,8 +66,8 @@ export interface CardViewModel {
   leaderSkillId: number;
   gekisouSkillId: number;
   searchText: string;
-  /** The game's exact Addressables key, including its formation Sprite label. */
-  formationBackgroundKey?: string;
+  /** The game's exact Addressables key; explicit absence cannot inherit another server's background. */
+  formationBackgroundKey?: string | null;
 }
 
 export function validateMasterTable<T>(raw: unknown): MasterTable<T> {
@@ -104,6 +104,8 @@ export function normalizeCards(
       const title = resolveText(card.subtitleTextID);
       const characterName = resolveText(card.nameTextID || character?.nameTextID || "");
       const bandName = band ? resolveText(band.nameTextID) : "";
+      const formationBackgroundKey = card.rarity === 2 ? band?.memberRarityRBackgroundAssetPath
+        : `MemberCard/${card.assetID}/member_background[formation]`;
 
       return {
         id: card.id,
@@ -126,6 +128,7 @@ export function normalizeCards(
         leaderSkillId: card.leaderSkillID,
         gekisouSkillId: card.gekisouSkillID,
         searchText: [title, characterName, bandName, card.id].join(" ").toLocaleLowerCase(),
+        formationBackgroundKey: formationBackgroundKey || null,
       };
     })
     .sort((a, b) => b.rarity - a.rarity || b.id - a.id);

@@ -21,26 +21,27 @@ export interface DeckRuntimeConsent {
 }
 
 export interface DeckRuntimePlan {
-  recognition: "onnx-wasm" | "remote";
-  recommendation: "wasm-worker" | "remote";
-  uploads: { screenshots: boolean; roster: boolean };
+  recognition: "onnx-wasm" | null;
+  recommendation: "wasm-worker";
+  uploads: { screenshots: false; roster: false };
 }
 
-/** Unavailable local capabilities never implicitly authorize sending private inputs to a service. */
+/** Screenshots and solver inputs stay in the browser. A stored or manually entered box needs no
+ * image-recognition runtime. Saving a box to an account is a separate, explicit action.
+ */
 export function planDeckRuntime(
   capabilities: DeckRuntimeCapabilities,
-  consent: DeckRuntimeConsent,
+  _consent: DeckRuntimeConsent,
+  options: { recognizeScreenshots: boolean } = { recognizeScreenshots: true },
 ): DeckRuntimePlan {
   const localRecognition = capabilities.browserRecognition && capabilities.onnxWasm;
-  if (!localRecognition && !(capabilities.remoteRecognition && consent.uploadScreenshots)) {
-    throw new Error("Recognition requires a supported local runtime or explicit screenshot upload consent");
+  if (options.recognizeScreenshots && !localRecognition) {
+    throw new Error("Screenshot recognition requires the supported browser runtime; use manual entry or box import");
   }
-  if (!capabilities.browserSolver && !(capabilities.remoteSolver && consent.uploadRoster)) {
-    throw new Error("Recommendation requires a supported local runtime or explicit roster upload consent");
+  if (!capabilities.browserSolver) {
+    throw new Error("Recommendation requires the browser solver");
   }
-  const recognition = localRecognition ? "onnx-wasm" : "remote";
-  const recommendation = capabilities.browserSolver ? "wasm-worker" : "remote";
-  return { recognition, recommendation, uploads: { screenshots: recognition === "remote", roster: recommendation === "remote" } };
+  return { recognition: options.recognizeScreenshots ? "onnx-wasm" : null, recommendation: "wasm-worker", uploads: { screenshots: false, roster: false } };
 }
 
 export function assertDeckDataIdentity(roster: DeckDataIdentity, runtime: DeckDataIdentity): void {

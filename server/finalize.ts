@@ -25,7 +25,7 @@ export const ENCODINGS = [
 ] as const;
 
 export const COMPRESSIBLE_EXTENSIONS: ReadonlySet<string> = new Set([
-  ".html", ".js", ".mjs", ".css", ".json", ".map", ".svg", ".xml", ".txt", ".wasm", ".webmanifest", ".ico", ".ttf", ".otf",
+  ".html", ".js", ".mjs", ".css", ".json", ".map", ".svg", ".xml", ".txt", ".wasm", ".bin", ".onnx", ".webmanifest", ".ico", ".ttf", ".otf",
 ]);
 
 const MIN_BYTES = 1024;

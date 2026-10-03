@@ -4,6 +4,9 @@ import AccountPanel from "@/components/account/AccountPanel";
 import type { AppLocale } from "@/config/locales";
 import { getAvatarBands } from "@/lib/account/avatar-options";
 import { getProfileCards } from "@/lib/account/profile-cards";
+import { t } from "@/i18n";
+import { localizePath } from "@/i18n/routing";
+import { getRoutePathById } from "@/lib/route/registry";
 
 interface Props {
   locale: AppLocale;
@@ -14,5 +17,6 @@ const [bands, cards] = await Promise.all([getAvatarBands(locale), getProfileCard
 ---
 
 <PageLayout locale={locale} titleKey="account.title" descriptionKey="account.description">
+  <a href={localizePath(getRoutePathById("card-box"), locale)} class="inline-flex mb-5 rounded-xl border border-[var(--mn-border)] px-4 py-2 font-semibold text-[var(--mn-accent)]">{t(locale, "deckWorkspace.boxTitle")}</a>
   <AccountPanel client:load locale={locale} bands={bands} cards={cards} />
 </PageLayout>

@@ -1,5 +1,10 @@
 import { useMemo, useState } from "react";
 import { isGameServer, PRIMARY_SERVER } from "@/config/servers";
+import { t } from "@/i18n";
+import { localizePath } from "@/i18n/routing";
+import { getRoutePathById } from "@/lib/route/registry";
+import { useCardBox } from "@/components/box/use-card-box";
+import { ownedSnapChoices } from "@/lib/box/snap-selection";
 import { assetConfig } from "@/config/assets";
 import { ContentServerProvider } from "@/lib/servers/use-content-server";
 import { snapProfileKey, snapSourceKey, type SnapRankingCatalogue, type SnapRankingState } from "@/lib/chart-data/snap-client";
@@ -27,16 +32,26 @@ export default function SnapRankingPanel({ ctx, catalogue, measurement, loading,
   const [rejected, setRejected] = useState<SnapLegalityIssue | null>(null);
   const region = ctx.data.provenance?.region;
   const server = isGameServer(region) ? region : PRIMARY_SERVER;
+  const collection = useCardBox(server);
+  const [boxOnly, setBoxOnly] = useState(false);
+  const boxTr = (key: string) => t(locale, `deckWorkspace.${key}`);
   const nativeUi = !!assetConfig.gameUiLibraries[server].trim();
   const cards = useMemo(() => catalogue ? buildSnapSourceCards(catalogue.data, ctx.data, catalogue.labelSource, locale) : null, [catalogue, ctx.data, locale]);
   const choices = useMemo(() => catalogue ? labelSnapRankingCatalogue(catalogue.choices, catalogue.data, ctx.data, catalogue.labelSource, locale) : [], [catalogue, ctx.data, locale]);
+  const offeredChoices = useMemo(() => boxOnly && collection.box ? ownedSnapChoices(choices, collection.box) : choices, [boxOnly, collection.box, choices]);
+  const ownedIds = new Set(collection.box?.cards.filter(card => card.kind === "member").map(card => card.identity.value) ?? []);
+  const offeredMembers = boxOnly ? (cards?.members ?? []).filter(member => ownedIds.has(String(member.id))) : cards?.members ?? [];
   const active = state.snapSkills.some(Boolean);
   const current = ctx.snap?.source && snapProfileKey(ctx.snap.profile) === measurement.profileKey && snapSourceKey(ctx.snap.source) === measurement.sourceKey;
   const catalogueStatus = !available ? "loadUnavailable" : catalogueError ? "calculationError" : null;
   const status = invalidMembers.length ? "invalidMember" : catalogueStatus ?? (current && measurement.status === "error" ? "calculationError"
     : current && measurement.status === "needs-context" ? "needsContext" : current && measurement.status === "unsupported" ? "unsupportedScenario" : null);
   return <ContentServerProvider server={server} servers={[server]}><div className="mn-cd-snap-area">
-    <SnapSkillPicker locale={locale} choices={choices} selections={state.snapSkills} cards={cards?.snaps}
+    <div className="mn-cd-box-read"><label><input type="checkbox" checked={boxOnly} disabled={collection.busy || !collection.box} onChange={event => setBoxOnly(event.target.checked)} />{boxTr("useBox")}</label>
+      <a href={localizePath(getRoutePathById("card-box"), locale)}>{boxTr("boxTitle")}</a>
+      <p className="mn-cd-note">{boxTr(collection.box ? "boxFilterNote" : "boxFilterMissing")}</p>
+    </div>
+    <SnapSkillPicker locale={locale} choices={offeredChoices} selections={state.snapSkills} cards={cards?.snaps}
       loading={loading && !catalogueStatus} error={catalogueStatus ? tr(`snap.${catalogueStatus}`) : null} onOpen={onOpen}
       canReset={active || state.snapMembers.some(Boolean)}
       validateSelection={(slot, selection) => legality ? validateSnapSkillReplacement(state, legality, slot, selection) : null} onReject={setRejected}
@@ -50,7 +65,7 @@ export default function SnapRankingPanel({ ctx, catalogue, measurement, loading,
         member: cards?.members.find(member => member.id === state.snapMembers[slot]?.memberId)?.vm,
         support: cards?.snaps.get(resolveSnapSupportCardId(selection, choices) ?? -1),
       }))} label={tr("snap.title")} /> } : {})}
-      renderContext={(slot) => <SnapPairedMemberControls locale={locale} members={cards?.members ?? []} value={state.snapMembers[slot] ?? null}
+      renderContext={(slot) => <SnapPairedMemberControls locale={locale} members={offeredMembers} value={state.snapMembers[slot] ?? null}
         variant={nativeUi ? "overlay" : "card"} onOpen={onOpen}
         validateSelection={(member) => legality ? validateSnapMemberReplacement(state, legality, slot, member) : null} onReject={setRejected}
         onChange={(member) => {

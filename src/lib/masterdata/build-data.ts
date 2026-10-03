@@ -172,7 +172,7 @@ export interface StoryReaderLookup {
 }
 
 // Versioned: a dev server keeps this state across reloads, and the merged selectors reuse the earlier keys.
-const buildDataKey = Symbol.for("moenotes.masterdata.build-data.v2");
+const buildDataKey = Symbol.for("moenotes.masterdata.build-data.v3");
 const globalState = globalThis as typeof globalThis & { [buildDataKey]?: BuildDataState };
 const state = globalState[buildDataKey] ??= { tables: new Map(), selectors: new Map() };
 

@@ -79,6 +79,8 @@ directory Astro keeps intermediate output in `<cwd>/.astro/` and renames it into
 
 ### In-cluster origins
 
+The card box serves its screenshot-recognition runtime from `public/recognition/` on the same origin; the default URLs need no separate recognition server. The runtime files total 33,348,312 bytes. Feature, ONNX and WASM files take part in the background gzip/brotli compression and are served uncompressed until their variants are ready. Card artwork for pixel correlation is read from the asset service's immutable `/files/{id}` routes when a candidate needs it. See [card-box.md](card-box.md) for the bundle identity, coverage, license locations and optional `PUBLIC_BOX_*` overrides.
+
 `MOENOTES_ASSET_INTERNAL` and `MOENOTES_MASTERDATA_INTERNAL` (`src/config/assets.ts`,
 `src/config/masterdata.ts`) replace the public origins for every request the build and the server make
 themselves: MasterData tables, story tables and both version manifests. They go through

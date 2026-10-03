@@ -12,6 +12,8 @@ export interface ModalProps {
   size?: "sm" | "md" | "lg" | "xl";
   children: ReactNode;
   headerActions?: ReactNode;
+  /** Embedded multi-dialog flows own their URL and can avoid per-dialog history entries. */
+  historyNavigation?: boolean;
 }
 
 const sizeClasses: Record<string, string> = {
@@ -40,6 +42,7 @@ export default function Modal({
   size = "md",
   children,
   headerActions,
+  historyNavigation = true,
 }: ModalProps) {
   const [mounted, setMounted] = useState(false);
   const reactId = useId();
@@ -91,7 +94,7 @@ export default function Modal({
     };
 
     const hasModalState = window.history.state?.modal;
-    if (!hasModalState) {
+    if (historyNavigation && !hasModalState) {
       window.history.pushState({ modal: true }, "");
       didPushHistory = true;
     }
@@ -116,7 +119,7 @@ export default function Modal({
         requestAnimationFrame(() => restoreTarget.focus({ preventScroll: true }));
       }
     };
-  }, [isOpen, modalKey, stableOnClose]);
+  }, [isOpen, modalKey, stableOnClose, historyNavigation]);
 
   if (!mounted) return null;
 

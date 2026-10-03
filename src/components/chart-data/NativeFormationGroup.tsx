@@ -9,21 +9,24 @@ import { useAssetUrl } from "@/lib/servers/use-content-server";
 import NativeGameCard from "@/components/shared/NativeGameCard";
 
 export default function NativeFormationGroup({ locale, slots, label }: {
-  locale: AppLocale; slots: readonly { member?: CardViewModel | undefined; support?: SupportCardViewModel | undefined }[]; label: string;
+  locale: AppLocale; slots: readonly { member?: CardViewModel | undefined; support?: SupportCardViewModel | undefined; memberLevel?: number | undefined; memberRank?: number | undefined; supportLevel?: number | undefined; supportRank?: number | undefined }[]; label: string;
 }) {
   const assetUrl = useAssetUrl();
   const host = useRef<HTMLDivElement>(null);
-  const data = useMemo(() => ({ hideSlotBackdrop: true, slots: slots.map(({ member, support }) => {
+  const data = useMemo(() => ({ hideSlotBackdrop: true, slots: slots.map(({ member, support, memberLevel, memberRank, supportLevel, supportRank }) => {
     const background = member?.formationBackgroundKey?.match(/^(.+)\[([^\[\]]+)\]$/);
     return {
       ...(member ? { member: { rarity: member.rarity, cardType: member.cardType,
+        ...(memberLevel !== undefined ? { level: memberLevel } : {}), ...(memberRank !== undefined ? { rank: memberRank } : {}),
         characterUrl: assetUrl(releaseFileUrl(`MemberCard/${member.assetId}/member_character`, "formation.webp", locale)),
         characterSpriteKey: `MemberCard/${member.assetId}/member_character[formation]`,
         backgroundUrl: background ? assetUrl(releaseFileUrl(background[1]!, `${background[2]}.webp`, locale)) : "",
         ...(member.formationBackgroundKey ? { backgroundSpriteKey: member.formationBackgroundKey } : {}),
         bandLogoUrl: assetUrl(getBandLogoWhiteUrl(member.bandId, locale)),
+        bandLogoSpriteKey: `Band/${member.bandId}/band_logo_white[band_logo_white]`,
       } } : {}),
       ...(support ? { support: { rarity: support.rarity, cardType: support.cardType, thumbnailUrl: assetUrl(getSupportCardThumbnailUrl(support.assetId)),
+        ...(supportLevel !== undefined ? { level: supportLevel } : {}), ...(supportRank !== undefined ? { rank: supportRank } : {}),
         thumbnailSpriteKey: `SupportCard/${support.assetId}/snap_thumbnail[snap_thumbnail]` } } : {}),
     };
   }) }), [slots, locale, assetUrl]);
