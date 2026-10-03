@@ -2,7 +2,7 @@ import type { MessageTree } from "@/i18n/translate";
 
 export const jaJP = {
   loader: { loading: "読み込み中" },
-  sorting: { default: "既定の順序", id: "ID", name: "名前", date: "公開日", rarity: "レアリティ", ascending: "昇順", descending: "降順" },
+  sorting: { default: "既定の順序", id: "ID", name: "名前", date: "公開日", rarity: "レアリティ", ascending: "昇順", descending: "降順", endingSoon: "終了が近い順" },
   assetBrowser: {
     noLanguages: "利用可能なコンテンツの言語はまだありません。",
     "filterTitle": "アセットの絞り込み",
@@ -1870,13 +1870,15 @@ export const jaJP = {
     sirius: {"stars": "星空", "nebula": "星雲", "orbit": "軌道", "grid": "座標グリッド", "card": "コンテンツパネル", "raised": "浮遊パネル", "surface": "ベースパネル"},
     title: "デザインシステム",
     subtitle: "星の軌道に響く音符。サインの流れを画面の方向に、軌道の断面をパネルの形に、星の光を現在地の印に。",
-    sections: { colors: "カラー", typography: "タイポグラフィ", components: "コンポーネント", modals: "モーダル", filters: "フィルター", animations: "アニメーション" },
+    sections: { colors: "カラー", typography: "タイポグラフィ", components: "コンポーネント", modals: "モーダル", filters: "フィルター", animations: "アニメーション", foundation: "共通部品" },
     colors: { accent: "シリウスブルー", "accent-deep": "ディープアクセント", "accent-soft": "ソフトアクセント", pink: "星雲パープル", "pink-soft": "星雲の霞", cyan: "アイスブルー", amber: "アンバー", peach: "ピーチ", mint: "ミント", "mint-deep": "ディープミント", "mint-soft": "ソフトミント", yellow: "イエロー", rose: "ローズ", "cream-deep": "レイヤー", "ink-soft": "補助文字色", paper: "パネル", background: "背景", surface: "サーフェス", border: "ボーダー", text: "テキスト", muted: "ミュート" },
     typography: { display: "ディスプレイ", body: "本文", hand: "ラベル書体", note: "座標書体" },
     components: { buttons: "ボタン", inputs: "入力", badges: "バッジ", cards: "カード", select: "セレクト", checkbox: "チェックボックス", textures: "テクスチャ", primary: "プライマリ", outline: "アウトライン", ghost: "ゴースト", stamp: "バッジ", selectPlaceholder: "選択してください...", optA: "オプション A", optB: "オプション B", optC: "オプション C" },
     modals: { openSm: "小モーダル", openMd: "中モーダル", openLg: "大モーダル", openXl: "特大モーダル", title: "モーダル例", body: "汎用モーダルコンポーネントのデモです。複数のサイズバリアントに対応。", currentSize: "現在のサイズ", copyModal: "コピーモーダル", copyModalTitle: "画像プレビュー", copy: "コピー", save: "保存" },
     filters: { title: "フィルターデモ", searchPlaceholder: "検索例...", category: "カテゴリ", all: "すべて", typeA: "タイプ A", typeB: "タイプ B", sort: "ソート", sortBy: "並び順", language: "言語", name: "名前", date: "日付", level: "レベル", onlyComplete: "完了のみ", reset: "リセット" },
     animations: { spring: "スプリング", springDesc: "わずかな浮上と穏やかなスプリング遷移", tap: "タップフィードバック", tapDesc: "クリックでスケール —— 触覚フィードバック", stagger: "スタッガー", staggerDesc: "順次フェードイン —— リスト項目が順番に出現", wobble: "星の輝き", wobbleDesc: "ホバー時に淡い青の光でパネルを強調します。" },
+    foundation: { title: "共通コンポーネント", hint: "各機能パックが使う第1弾の基盤コンポーネントです。以下はサンプルデータです。", collectionView: "表示切り替え", dataTable: "データテーブル", sortExtensions: "並び替え：終了が近い順と数値項目", dateRange: "期間フィルター", avatarStack: "キャラクターアイコンの重ね表示", countdown: "スケジュールのカウントダウン", serverBadge: "サーバーごとの提供状況", lightbox: "画像ビューアー", openLightbox: "画像ビューアーを開く", upgradeCost: "強化素材表", levelSwitch: "レベル切り替え", audioButton: "音声再生ボタン", entityPager: "前へ / 次へ", detailOverlay: "詳細オーバーレイ", openOverlay: "詳細オーバーレイを開く", overlayBody: "開いている間はアドレスバーに ?demo= が付き、戻るか閉じると消えます。", sampleName: "名前", sampleLevel: "レベル", samplePower: "総合力", sampleBpm: "BPM", sampleDuration: "長さ", sampleEmpty: "該当する項目がありません。", sampleCount: "期間内 {count} / {total} 件", sampleItem: "サンプル項目 {n}", sampleTrack: "サンプル曲 {n}", sampleCaption: "サンプル画像 {n}：ホイールかピンチで拡大、ドラッグで移動、ダブルクリックでリセット。", ongoing: "開催中", upcoming: "開催前", ended: "終了", allServers: "全サーバーで提供（表示なし）：", someServers: "一部サーバーのみ：", skillLevel: "スキルレベル", rank: "ランク", level: "レベル", decrease: "下げる", increase: "上げる", max: "MAX" },
+    upgrade: { step: "段階", cost: "必要素材", empty: "強化素材はありません。", cumulative: "累計" },
   },
   filter: {
     title: "フィルター",
@@ -1890,6 +1892,7 @@ export const jaJP = {
     drawerHintTitle: "フィルターがサイドに移動しました",
     drawerHintBody: "左のタブをそっとタップすれば、いつでもこの星屑のフィルターを引き出したり収めたりできます。",
     drawerHintDismiss: "了解",
+    dateRange: "期間", dateFrom: "開始", dateTo: "終了", dateClear: "クリア",
   },
   browserNotice: {
     title: "このブラウザではサイトが正しく表示されない可能性があります",
@@ -2009,10 +2012,10 @@ export const jaJP = {
     techStackDesc: "手帳をめくる指先がいつでも紙のように軽やかで温かくあるよう、モダンでしなやかな技術を用いて丁寧に装丁されています。",
   },
   // ── W1 foundation ──
-  audio: {},
-  lightbox: {},
-  detailNav: {},
-  collectionView: {},
+  audio: { play: "再生", pause: "一時停止", loading: "読み込み中", retry: "再生に失敗しました。再試行", previous: "前の曲", next: "次の曲", modes: { sequential: "順番に再生", "repeat-all": "全曲リピート", "repeat-one": "1曲リピート", shuffle: "シャッフル" } },
+  lightbox: { label: "画像ビューアー", counter: "{current} / {total}", previous: "前の画像", next: "次の画像", zoomIn: "拡大", zoomOut: "縮小", reset: "ズームをリセット", download: "ダウンロード", close: "閉じる", loading: "画像を読み込み中…", failed: "画像を読み込めませんでした" },
+  detailNav: { label: "項目ナビゲーション", previous: "前へ", next: "次へ", backToList: "一覧に戻る" },
+  collectionView: { label: "表示", grid: "グリッド", list: "リスト", table: "テーブル", card: "カード", square: "アイコン", nameSeparator: "、" },
   // ── pack G ──
   shop: {},
   missions: {},

@@ -10,8 +10,9 @@ import Popover from "@/components/shared/Popover";
 import BaseFilters, { FilterSection, FilterButton, FilterToggle } from "@/components/shared/BaseFilters";
 import QuickFilterButton, { QuickFilterProvider } from "@/components/shared/QuickFilterButton";
 import { useSpringAnimation } from "@/lib/animation/use-animation";
+import FoundationSection from "./FoundationSection";
 
-const TABS = ["colors", "typography", "components", "modals", "filters", "animations"] as const;
+const TABS = ["colors", "typography", "components", "modals", "filters", "animations", "foundation"] as const;
 type TabId = (typeof TABS)[number];
 
 interface Props {
@@ -122,6 +123,12 @@ export default function DesignSystemPage({ locale }: Props) {
         />
       )}
       {activeTab === "animations" && <AnimationsSection locale={locale} />}
+      {activeTab === "foundation" && (
+        <SectionCard>
+          <SectionTitle title={t(locale, "designSystem.sections.foundation")} />
+          <FoundationSection locale={locale} />
+        </SectionCard>
+      )}
       <QuickFilterButton
         title={t(locale, "designSystem.sections.filters")}
         buttonLabel={t(locale, "filter.title")}

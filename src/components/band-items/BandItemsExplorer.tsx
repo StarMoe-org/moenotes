@@ -1,6 +1,6 @@
 import { useListSort } from "@/lib/filter/use-list-sort";
 import { sortEntries } from "@/lib/filter/list-sort";
-import { useEffect, useLayoutEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import ServerScope from "@/components/shared/ServerScope";
@@ -12,27 +12,8 @@ import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 import type { BandItemViewModel } from "@/lib/band-items/data";
 import { describeBandItemEffect, formatBandItemEffectPercent, getBandItemIconUrl } from "@/lib/band-items/assets";
+import { parsePositiveIntParam, useQueryOverlay } from "@/lib/overlay/use-query-overlay";
 import BandItemOverlay from "./BandItemOverlay";
-
-/** The item a `?item=<id>` deep link opens (read only; the parameter is cleared by the explorer's layout effect). */
-function readItemParam(): number | null {
-  if (typeof window === "undefined") return null;
-  const raw = new URLSearchParams(window.location.search).get("item");
-  if (raw === null) return null;
-  const id = Number(raw);
-  return Number.isInteger(id) && id > 0 ? id : null;
-}
-
-/**
- * Sets or clears `?item=` on the current history entry, keeping its state object: Modal marks the entry it pushes with
- * `{ modal: true }` and steps back over it on close, which a replaced state would break.
- */
-function replaceItemParam(id: number | null) {
-  const url = new URL(window.location.href);
-  if (id === null) url.searchParams.delete("item");
-  else url.searchParams.set("item", String(id));
-  window.history.replaceState(window.history.state, "", url.toString());
-}
 
 interface Props {
   locale: AppLocale;
@@ -47,26 +28,15 @@ export default function BandItemsExplorer({ locale, servers, initialItems, initi
   const [query, setQuery] = useState("");
   const sort = useListSort("band-items", locale, "");
   const [selectedBands, setSelectedBands] = useState<number[]>([]);
-  const [activeItemId, setActiveItemId] = useState<number | null>(readItemParam);
-
-  const openItem = useCallback((id: number) => setActiveItemId(id), []);
-  const closeItem = useCallback(() => setActiveItemId(null), []);
+  // `?item=<id>` deep links and history: see useQueryOverlay. Only an id the current server's list has opens (and is
+  // written back to the URL).
+  const isListedItem = useCallback((id: number) => items.some((item) => item.id === id), [items]);
+  const { value: activeItemId, open: openItem, close: closeItem } = useQueryOverlay("item", { parse: parsePositiveIntParam, isShown: isListedItem });
 
   const activeItem = useMemo(
     () => (activeItemId === null ? null : items.find((item) => item.id === activeItemId) ?? null),
     [items, activeItemId],
   );
-
-  // History entries for the overlay: a deep link's `?item=` leaves the landing entry before Modal pushes its own
-  // (a layout effect runs before every passive effect, Modal's included), so closing — Modal steps back — lands on a
-  // clean list URL. The parameter is then shown on Modal's entry, after its push, while an item is actually open.
-  useLayoutEffect(() => {
-    if (new URLSearchParams(window.location.search).has("item")) replaceItemParam(null);
-  }, []);
-  const openItemId = activeItem?.id ?? null;
-  useEffect(() => {
-    if (openItemId !== null) replaceItemParam(openItemId);
-  }, [openItemId]);
 
   useEffect(() => {
     const remembered = parseRememberedFilters(memory.state?.filtersHash);

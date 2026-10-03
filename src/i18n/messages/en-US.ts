@@ -2,7 +2,7 @@ import type { MessageTree } from "@/i18n/translate";
 
 export const enUS = {
   loader: { loading: "Loading" },
-  sorting: { default: "Default order", id: "ID", name: "Name", date: "Release date", rarity: "Rarity", ascending: "Ascending", descending: "Descending" },
+  sorting: { default: "Default order", id: "ID", name: "Name", date: "Release date", rarity: "Rarity", ascending: "Ascending", descending: "Descending", endingSoon: "Ending soon" },
   assetBrowser: {
     noLanguages: "No content languages are available yet.",
     "filterTitle": "Filter assets",
@@ -1824,13 +1824,15 @@ export const enUS = {
     sirius: {"stars": "Starfield", "nebula": "Nebula", "orbit": "Orbits", "grid": "Coordinates", "card": "Content panel", "raised": "Raised panel", "surface": "Quiet surface"},
     title: "Design System",
     subtitle: "Orbit / Score: the signature sets the direction, orbital cuts shape the panels, and starlight marks your place.",
-    sections: { colors: "Colors", typography: "Typography", components: "Components", modals: "Modals", filters: "Filters", animations: "Animations" },
+    sections: { colors: "Colors", typography: "Typography", components: "Components", modals: "Modals", filters: "Filters", animations: "Animations", foundation: "Shared" },
     colors: { accent: "Sirius blue", "accent-deep": "Accent Deep", "accent-soft": "Accent Soft", pink: "Nebula violet", "pink-soft": "Nebula mist", cyan: "Ice blue", amber: "Amber", peach: "Peach", mint: "Mint", "mint-deep": "Mint Deep", "mint-soft": "Mint Soft", yellow: "Yellow", rose: "Rose", "cream-deep": "Layer", "ink-soft": "Secondary ink", paper: "Panel", background: "Background", surface: "Surface", border: "Border", text: "Text", muted: "Muted" },
     typography: { display: "Display Font", body: "Body Font", hand: "Label font", note: "Coordinate font" },
     components: { buttons: "Buttons", inputs: "Inputs", badges: "Badges", cards: "Cards", select: "Select", checkbox: "Checkbox", textures: "Textures", primary: "Primary", outline: "Outline", ghost: "Ghost", stamp: "Badge", selectPlaceholder: "Choose option...", optA: "Option A", optB: "Option B", optC: "Option C" },
     modals: { openSm: "Small Modal", openMd: "Medium Modal", openLg: "Large Modal", openXl: "Extra Large Modal", title: "Modal Example", body: "This is a demo of the generic modal component. Supports multiple size variants.", currentSize: "Current size", copyModal: "Copy Modal", copyModalTitle: "Image Preview", copy: "Copy", save: "Save" },
     filters: { title: "Filter Demo", searchPlaceholder: "Search example...", category: "Category", all: "All", typeA: "Type A", typeB: "Type B", sort: "Sort", sortBy: "Sort by", language: "Language", name: "Name", date: "Date", level: "Level", onlyComplete: "Completed only", reset: "Reset" },
     animations: { spring: "Spring Interaction", springDesc: "Subtle lift with a soft spring transition", tap: "Tap Feedback", tapDesc: "Click scale — haptic feedback simulation", stagger: "Stagger Animation", staggerDesc: "Staggered fade-in — list items appear in sequence", wobble: "Starlight glow", wobbleDesc: "A soft blue glow highlights the hovered surface." },
+    foundation: { title: "Shared building blocks", hint: "Wave 1 components every feature pack builds on. Data below is sample data.", collectionView: "Collection view switch", dataTable: "Data table", sortExtensions: "Sort: ending soon and numeric fields", dateRange: "Date range filter", avatarStack: "Character avatar stack", countdown: "Schedule countdown", serverBadge: "Server availability", lightbox: "Lightbox", openLightbox: "Open the image viewer", upgradeCost: "Upgrade cost table", levelSwitch: "Level switch", audioButton: "Audio play button", entityPager: "Previous / next pager", detailOverlay: "Detail overlay", openOverlay: "Open a detail overlay", overlayBody: "The overlay writes ?demo= to the address bar while open; Back or Close removes it.", sampleName: "Name", sampleLevel: "Level", samplePower: "Power", sampleBpm: "BPM", sampleDuration: "Length", sampleEmpty: "Nothing matches.", sampleCount: "{count} of {total} in range", sampleItem: "Sample item {n}", sampleTrack: "Sample track {n}", sampleCaption: "Sample image {n}: wheel or pinch to zoom, drag to pan, double-click to reset.", ongoing: "Ongoing", upcoming: "Upcoming", ended: "Ended", allServers: "On every server (renders nothing):", someServers: "On some servers:", skillLevel: "Skill level", rank: "Rank", level: "Level", decrease: "Decrease", increase: "Increase", max: "MAX" },
+    upgrade: { step: "Step", cost: "Materials", empty: "No upgrade materials.", cumulative: "Running total" },
   },
   filter: {
     title: "Filter",
@@ -1844,6 +1846,7 @@ export const enUS = {
     drawerHintTitle: "Filters moved to the side",
     drawerHintBody: "Tap the tab on the left to reveal or fold this starry filter drawer anytime.",
     drawerHintDismiss: "Got it",
+    dateRange: "Date range", dateFrom: "From", dateTo: "To", dateClear: "Clear",
   },
   browserNotice: {
     title: "This browser may not show the site properly",
@@ -1963,10 +1966,10 @@ export const enUS = {
     techStackDesc: "Bound delicately with modern, lightweight technologies, ensuring that every touch and turn of the page feels as warm, fluid, and effortless as real paper.",
   },
   // ── W1 foundation ──
-  audio: {},
-  lightbox: {},
-  detailNav: {},
-  collectionView: {},
+  audio: { play: "Play", pause: "Pause", loading: "Loading", retry: "Playback failed, retry", previous: "Previous track", next: "Next track", modes: { sequential: "Play in order", "repeat-all": "Repeat all", "repeat-one": "Repeat one", shuffle: "Shuffle" } },
+  lightbox: { label: "Image viewer", counter: "{current} / {total}", previous: "Previous image", next: "Next image", zoomIn: "Zoom in", zoomOut: "Zoom out", reset: "Reset zoom", download: "Download", close: "Close", loading: "Loading image…", failed: "The image could not be loaded" },
+  detailNav: { label: "Entry navigation", previous: "Previous", next: "Next", backToList: "Back to list" },
+  collectionView: { label: "Display", grid: "Grid", list: "List", table: "Table", card: "Cards", square: "Icons", nameSeparator: ", " },
   // ── pack G ──
   shop: {},
   missions: {},

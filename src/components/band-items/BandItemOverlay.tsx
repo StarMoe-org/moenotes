@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
-import Modal from "@/components/shared/Modal";
+import DetailOverlay from "@/components/shared/DetailOverlay";
 import { t } from "@/i18n";
 import { getBandItemIconUrl } from "@/lib/band-items/assets";
 import { resolveBandItemUpgradeSteps, type BandItemUpgradeStep, type BandItemViewModel } from "@/lib/band-items/data";
@@ -21,7 +21,7 @@ type UpgradeState = { status: "loading" } | { status: "ready"; steps: BandItemUp
 
 /**
  * One band item's detail: its artwork and the per-level upgrade materials, fetched from `/band-item-upgrades.json`
- * on first open. Built on the shared Modal (focus trap, scroll lock, Escape, and a history entry Back closes).
+ * on first open. Built on the shared DetailOverlay (Modal: focus trap, scroll lock, Escape, and a history entry Back closes).
  */
 export default function BandItemOverlay({ locale, server, item, onClose }: Props) {
   const assetUrl = useAssetUrl();
@@ -46,7 +46,7 @@ export default function BandItemOverlay({ locale, server, item, onClose }: Props
   const artUrl = item ? assetUrl(getBandItemIconUrl(item, locale)) : "";
 
   return (
-    <Modal isOpen={item !== null} onClose={onClose} title={item?.name} closeLabel={t(locale, "bandItems.overlayClose")} size="lg">
+    <DetailOverlay locale={locale} open={item !== null} onClose={onClose} title={item?.name} closeLabel={t(locale, "bandItems.overlayClose")} size="lg">
       {item ? (
         <div className="grid gap-5 sm:grid-cols-[9rem_minmax(0,1fr)]">
           <div className="flex justify-center sm:block">
@@ -79,6 +79,6 @@ export default function BandItemOverlay({ locale, server, item, onClose }: Props
           </div>
         </div>
       ) : null}
-    </Modal>
+    </DetailOverlay>
   );
 }

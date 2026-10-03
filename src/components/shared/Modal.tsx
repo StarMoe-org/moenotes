@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent as 
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/overlay/body-scroll-lock";
+import { isTopOverlayLayer, pushOverlayLayer, removeOverlayLayer } from "@/lib/overlay/layer-stack";
 import { useSpringAnimation } from "@/lib/animation/use-animation";
 
 export interface ModalProps {
@@ -29,8 +30,6 @@ const focusableSelector = [
   "select:not([disabled])",
   "[tabindex]:not([tabindex='-1'])",
 ].join(",");
-
-const modalStack: string[] = [];
 
 export default function Modal({
   isOpen,
@@ -63,13 +62,13 @@ export default function Modal({
   useEffect(() => {
     if (!isOpen) return;
     lockBodyScroll(modalKey);
-    modalStack.push(modalKey);
+    pushOverlayLayer(modalKey);
     restoreFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
     let didPushHistory = false;
     let rafId: number | null = null;
 
-    const isTopModal = () => modalStack[modalStack.length - 1] === modalKey;
+    const isTopModal = () => isTopOverlayLayer(modalKey);
     const focusInitialElement = () => {
       const panel = panelRef.current;
       if (!panel || !isTopModal()) return;
@@ -104,7 +103,7 @@ export default function Modal({
 
     return () => {
       if (rafId !== null) cancelAnimationFrame(rafId);
-      removeFromStack(modalKey);
+      removeOverlayLayer(modalKey);
       unlockBodyScroll(modalKey);
       window.removeEventListener("popstate", handlePopState);
       document.removeEventListener("keydown", handleKeyDown);
@@ -184,12 +183,12 @@ export default function Modal({
   );
 }
 
-function getFocusableElements(container: HTMLElement): HTMLElement[] {
+export function getFocusableElements(container: HTMLElement): HTMLElement[] {
   return Array.from(container.querySelectorAll<HTMLElement>(focusableSelector))
     .filter((element) => !element.hasAttribute("disabled") && element.getAttribute("aria-hidden") !== "true");
 }
 
-function trapFocus(event: KeyboardEvent, panel: HTMLElement | null): void {
+export function trapFocus(event: KeyboardEvent, panel: HTMLElement | null): void {
   if (!panel) return;
   const focusable = getFocusableElements(panel);
   if (focusable.length === 0) {
@@ -209,9 +208,4 @@ function trapFocus(event: KeyboardEvent, panel: HTMLElement | null): void {
     event.preventDefault();
     first.focus({ preventScroll: true });
   }
-}
-
-function removeFromStack(key: string): void {
-  const index = modalStack.lastIndexOf(key);
-  if (index >= 0) modalStack.splice(index, 1);
 }

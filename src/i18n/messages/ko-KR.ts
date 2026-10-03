@@ -2,7 +2,7 @@ import type { MessageTree } from "@/i18n/translate";
 
 export const koKR = {
   loader: { loading: "불러오는 중" },
-  sorting: { default: "기본 순서", id: "ID", name: "이름", date: "공개일", rarity: "희귀도", ascending: "오름차순", descending: "내림차순" },
+  sorting: { default: "기본 순서", id: "ID", name: "이름", date: "공개일", rarity: "희귀도", ascending: "오름차순", descending: "내림차순", endingSoon: "종료 임박순" },
   assetBrowser: {
     noLanguages: "아직 이용 가능한 콘텐츠 언어가 없습니다.",
     "filterTitle": "에셋 필터",
@@ -1823,13 +1823,15 @@ export const koKR = {
     sirius: {"stars": "별하늘", "nebula": "성운", "orbit": "궤도", "grid": "좌표 격자", "card": "콘텐츠 패널", "raised": "플로팅 패널", "surface": "기본 패널"},
     title: "디자인 시스템",
     subtitle: "별의 궤도 위 음표. 서명의 흐름은 화면의 방향이 되고, 궤도의 단면은 패널의 형태가 되며, 별빛은 현재 위치를 표시합니다.",
-    sections: { colors: "색상", typography: "타이포그래피", components: "컴포넌트", modals: "모달", filters: "필터", animations: "애니메이션" },
+    sections: { colors: "색상", typography: "타이포그래피", components: "컴포넌트", modals: "모달", filters: "필터", animations: "애니메이션", foundation: "공통 컴포넌트" },
     colors: { accent: "시리우스 블루", "accent-deep": "Accent Deep", "accent-soft": "Accent Soft", pink: "성운 보라", "pink-soft": "성운 안개", cyan: "아이스 블루", amber: "Amber", peach: "Peach", mint: "Mint", "mint-deep": "Mint Deep", "mint-soft": "Mint Soft", yellow: "Yellow", rose: "Rose", "cream-deep": "레이어", "ink-soft": "보조 글자색", paper: "패널", background: "Background", surface: "Surface", border: "Border", text: "Text", muted: "Muted" },
     typography: { display: "Display Font", body: "Body Font", hand: "라벨 글꼴", note: "좌표 글꼴" },
     components: { buttons: "버튼", inputs: "입력", badges: "배지", cards: "카드", select: "셀렉트", checkbox: "체크박스", textures: "텍스처", primary: "Primary", outline: "Outline", ghost: "Ghost", stamp: "배지", selectPlaceholder: "옵션 선택...", optA: "옵션 A", optB: "옵션 B", optC: "옵션 C" },
     modals: { openSm: "작은 모달", openMd: "중간 모달", openLg: "큰 모달", openXl: "초대형 모달", title: "모달 예시", body: "범용 모달 컴포넌트 데모입니다. 여러 크기 변형을 지원합니다.", currentSize: "현재 크기", copyModal: "복사 모달", copyModalTitle: "이미지 미리보기", copy: "복사", save: "저장" },
     filters: { title: "필터 데모", searchPlaceholder: "검색 예시...", category: "카테고리", all: "전체", typeA: "타입 A", typeB: "타입 B", sort: "정렬", sortBy: "정렬 기준", language: "언어", name: "이름", date: "날짜", level: "레벨", onlyComplete: "완료만", reset: "초기화" },
     animations: { spring: "스프링 인터랙션", springDesc: "살짝 떠오르는 부드러운 스프링 전환", tap: "탭 피드백", tapDesc: "클릭 스케일 — 햅틱 피드백 시뮬레이션", stagger: "스태거 애니메이션", staggerDesc: "순차 페이드인 — 리스트 항목이 차례로 나타남", wobble: "별빛 효과", wobbleDesc: "마우스를 올리면 은은한 푸른 빛으로 패널을 강조합니다." },
+    foundation: { title: "공통 컴포넌트", hint: "모든 기능 팩이 함께 쓰는 1차 기반 컴포넌트입니다. 아래는 예시 데이터입니다.", collectionView: "보기 전환", dataTable: "데이터 표", sortExtensions: "정렬: 종료 임박순과 숫자 항목", dateRange: "기간 필터", avatarStack: "캐릭터 아이콘 겹침", countdown: "일정 카운트다운", serverBadge: "서버별 제공 여부", lightbox: "이미지 뷰어", openLightbox: "이미지 뷰어 열기", upgradeCost: "강화 재료표", levelSwitch: "레벨 전환", audioButton: "오디오 재생 버튼", entityPager: "이전 / 다음", detailOverlay: "상세 오버레이", openOverlay: "상세 오버레이 열기", overlayBody: "열려 있는 동안 주소창에 ?demo=가 붙고, 뒤로 가기나 닫기를 하면 사라집니다.", sampleName: "이름", sampleLevel: "레벨", samplePower: "종합력", sampleBpm: "BPM", sampleDuration: "길이", sampleEmpty: "조건에 맞는 항목이 없습니다.", sampleCount: "기간 내 {count} / {total}개", sampleItem: "예시 항목 {n}", sampleTrack: "예시 곡 {n}", sampleCaption: "예시 이미지 {n}: 휠이나 핀치로 확대, 드래그로 이동, 더블클릭으로 초기화.", ongoing: "진행 중", upcoming: "예정", ended: "종료", allServers: "모든 서버에 있음(표시 안 함):", someServers: "일부 서버에만 있음:", skillLevel: "스킬 레벨", rank: "랭크", level: "레벨", decrease: "낮추기", increase: "높이기", max: "MAX" },
+    upgrade: { step: "단계", cost: "필요 재료", empty: "강화 재료가 없습니다.", cumulative: "누적" },
   },
   filter: {
     title: "필터",
@@ -1843,6 +1845,7 @@ export const koKR = {
     drawerHintTitle: "필터가 사이드로 이동했습니다",
     drawerHintBody: "왼쪽 탭을 살짝 터치하면 언제든 이 별빛 필터를 열거나 접을 수 있습니다.",
     drawerHintDismiss: "확인",
+    dateRange: "기간", dateFrom: "시작", dateTo: "종료", dateClear: "지우기",
   },
   browserNotice: {
     title: "이 브라우저에서는 사이트가 제대로 표시되지 않을 수 있습니다",
@@ -1962,10 +1965,10 @@ export const koKR = {
     techStackDesc: "노트를 넘기는 손끝이 언제나 종이처럼 가볍고 따스하도록, 현대적이고 유연한 기술로 정성껏 장정했습니다.",
   },
   // ── W1 foundation ──
-  audio: {},
-  lightbox: {},
-  detailNav: {},
-  collectionView: {},
+  audio: { play: "재생", pause: "일시정지", loading: "불러오는 중", retry: "재생 실패, 다시 시도", previous: "이전 곡", next: "다음 곡", modes: { sequential: "순서대로 재생", "repeat-all": "전체 반복", "repeat-one": "한 곡 반복", shuffle: "셔플" } },
+  lightbox: { label: "이미지 뷰어", counter: "{current} / {total}", previous: "이전 이미지", next: "다음 이미지", zoomIn: "확대", zoomOut: "축소", reset: "확대 초기화", download: "다운로드", close: "닫기", loading: "이미지를 불러오는 중…", failed: "이미지를 불러올 수 없습니다" },
+  detailNav: { label: "항목 탐색", previous: "이전", next: "다음", backToList: "목록으로" },
+  collectionView: { label: "보기 방식", grid: "그리드", list: "목록", table: "표", card: "카드", square: "아이콘", nameSeparator: ", " },
   // ── pack G ──
   shop: {},
   missions: {},

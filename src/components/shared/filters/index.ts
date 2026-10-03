@@ -5,3 +5,4 @@ export * from "./CharacterFilter";
 export * from "./AttributeFilter";
 export * from "./RarityFilter";
 export * from "./RangeFilter";
+export * from "./DateRangeFilter";

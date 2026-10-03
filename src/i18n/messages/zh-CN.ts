@@ -2,7 +2,7 @@ import type { MessageTree } from "@/i18n/translate";
 
 export const zhCN = {
   loader: { loading: "正在加载" },
-  sorting: { default: "默认顺序", id: "编号", name: "名称", date: "发布时间", rarity: "稀有度", ascending: "升序", descending: "降序" },
+  sorting: { default: "默认顺序", id: "编号", name: "名称", date: "发布时间", rarity: "稀有度", ascending: "升序", descending: "降序", endingSoon: "即将结束" },
   assetBrowser: {
     noLanguages: "暂时没有可用的资源语言。",
     "filterTitle": "资产筛选",
@@ -1883,6 +1883,7 @@ export const zhCN = {
       modals: "弹窗",
       filters: "筛选器",
       animations: "动画",
+      foundation: "通用组件",
     },
     colors: {
       accent: "天狼星蓝",
@@ -1969,6 +1970,8 @@ export const zhCN = {
       wobble: "星光辉映",
       wobbleDesc: "悬停时以柔和的蓝色光晕突出面板。",
     },
+    foundation: { title: "通用组件", hint: "各功能包共用的第一波基础组件，下方均为示例数据。", collectionView: "视图切换", dataTable: "数据表格", sortExtensions: "排序：即将结束与数值字段", dateRange: "日期范围筛选", avatarStack: "角色头像叠放", countdown: "日程倒计时", serverBadge: "服务器可用性", lightbox: "图片查看器", openLightbox: "打开图片查看器", upgradeCost: "升级材料表", levelSwitch: "等级切换", audioButton: "音频播放按钮", entityPager: "上一个 / 下一个", detailOverlay: "详情弹层", openOverlay: "打开详情弹层", overlayBody: "弹层打开时地址栏会写入 ?demo=，后退或关闭后会清除。", sampleName: "名称", sampleLevel: "等级", samplePower: "综合力", sampleBpm: "BPM", sampleDuration: "时长", sampleEmpty: "没有符合条件的条目。", sampleCount: "范围内 {count} / {total} 条", sampleItem: "示例条目 {n}", sampleTrack: "示例曲目 {n}", sampleCaption: "示例图片 {n}：滚轮或双指缩放，拖动平移，双击还原。", ongoing: "进行中", upcoming: "未开始", ended: "已结束", allServers: "全服都有（不渲染）：", someServers: "仅部分服务器：", skillLevel: "技能等级", rank: "阶级", level: "等级", decrease: "减少", increase: "增加", max: "MAX" },
+    upgrade: { step: "阶段", cost: "所需材料", empty: "没有升级材料。", cumulative: "累计" },
   },
   filter: {
     title: "筛选",
@@ -1982,6 +1985,7 @@ export const zhCN = {
     drawerHintTitle: "筛选器已移至侧边",
     drawerHintBody: "轻触左侧标签，便可随时唤出或收拢这片星芒筛选器。",
     drawerHintDismiss: "知道了",
+    dateRange: "日期范围", dateFrom: "开始", dateTo: "结束", dateClear: "清除",
   },
   browserNotice: {
     title: "当前浏览器可能无法正常显示本站",
@@ -2103,10 +2107,10 @@ export const zhCN = {
     techStackDesc: "选用轻快灵动的现代化技术精巧装帧，只为让翻阅手帐的每一次指尖停留，都如翻开纸页般流畅而温暖。",
   },
   // ── W1 foundation ──
-  audio: {},
-  lightbox: {},
-  detailNav: {},
-  collectionView: {},
+  audio: { play: "播放", pause: "暂停", loading: "加载中", retry: "播放失败，重试", previous: "上一首", next: "下一首", modes: { sequential: "顺序播放", "repeat-all": "列表循环", "repeat-one": "单曲循环", shuffle: "随机播放" } },
+  lightbox: { label: "图片查看器", counter: "{current} / {total}", previous: "上一张", next: "下一张", zoomIn: "放大", zoomOut: "缩小", reset: "还原缩放", download: "下载", close: "关闭", loading: "图片加载中…", failed: "图片加载失败" },
+  detailNav: { label: "条目导航", previous: "上一个", next: "下一个", backToList: "返回列表" },
+  collectionView: { label: "显示方式", grid: "网格", list: "列表", table: "表格", card: "卡片", square: "图标", nameSeparator: "、" },
   // ── pack G ──
   shop: {},
   missions: {},

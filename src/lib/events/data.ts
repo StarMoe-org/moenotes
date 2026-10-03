@@ -5,7 +5,8 @@ import type { CardViewModel, RawBand, RawCharacter, RawText } from "@/lib/cards/
 import { t } from "@/i18n";
 import { localizeMasterText } from "@/lib/masterdata/localize-text";
 import type { MusicViewModel } from "@/lib/music/data";
-import { scoreRankLabel, type RawRewardRow } from "@/lib/rewards/data";
+import type { RawRewardRow } from "@/lib/rewards/data";
+import { describeMission, scoreRankLabel, type MissionDescribeContext } from "@/lib/missions/describe";
 import type { RawResource, RewardResolver, RewardViewModel } from "@/lib/rewards/resources";
 import type { StoryEpisodeKind, StoryViewModel } from "@/lib/story/data";
 import { getSupportCardThumbnailUrl } from "@/lib/support-cards/assets";
@@ -418,25 +419,22 @@ export function normalizeEvents(data: EventMasterData, sources: EventSources, re
   const missionAdvs = new Map(missionLookups.advs.map((adv) => [adv.id, text(adv.nameTextId)]));
   const missionMusic = new Map(sources.music.map((song) => [song.id, song.title]));
   const missionDifficulty = [1, 2, 3, 4].map((value) => t(locale, `music.difficulties.${value}`));
-  const describeMission = (mission: RawEventMission): string => {
-    const episode = missionEpisodes.get(mission.episodeId);
-    const values: Record<string, string> = {
-      AchievementCount: mission.achievementCount.toLocaleString(locale),
-      Value: String(mission.value),
-      ExchangeId: missionExchanges.get(mission.exchangeId) ?? "",
-      StoryChapterId: missionChapters.get(mission.storyChapterId) ?? "",
-      EpisodeId: episode ? (missionAdvs.get(episode.advId) ?? "") : "",
-      "EpisodeId.Value": episode ? String(episode.episodeNumber) : "",
-      BandId: missionBands.get(mission.bandId) ?? "",
-      CharacterId: missionCharacters.get(mission.characterId) ?? "",
-      MusicId: missionMusic.get(mission.musicId) ?? "",
-      MusicDifficulty: missionDifficulty[mission.musicDifficulty - 1] ?? "",
-      ScoreRank: scoreRankLabel(mission.scoreRank),
-      CardType: mission.cardType ? t(locale, `cards.attributes.${mission.cardType}`) : "",
-    };
-    // Unknown placeholders drop out; the sentence still reads naturally.
-    return text(mission.descriptionTextId).replace(/\{([^}]+)\}/g, (_, key: string) => values[key] ?? "").replace(/[ \t]{2,}/g, " ").trim();
+  // Placeholder filling is shared with rewards/data.ts (lib/missions/describe.ts); only the lookups differ.
+  const missionContext: MissionDescribeContext = {
+    locale,
+    text,
+    exchangeName: (id) => missionExchanges.get(id),
+    chapterName: (id) => missionChapters.get(id),
+    episode: (id) => {
+      const episode = missionEpisodes.get(id);
+      return episode ? { number: episode.episodeNumber, title: missionAdvs.get(episode.advId) ?? "" } : undefined;
+    },
+    bandName: (id) => missionBands.get(id),
+    characterName: (id) => missionCharacters.get(id),
+    musicTitle: (id) => missionMusic.get(id),
+    difficulty: (value) => missionDifficulty[value - 1] ?? "",
   };
+  const describeEventMission = (mission: RawEventMission): string => describeMission(mission, missionContext);
 
   const rewardsOf = (ids: number[]) => ids.flatMap((id) => {
     const row = rewardRows.get(id);
@@ -599,7 +597,7 @@ export function normalizeEvents(data: EventMasterData, sources: EventSources, re
         live: liveRows(data.livePoints, data.liveRewards, event.liveEventPointGroup, event.liveEventRewardGroup),
         challengeLive: liveRows(data.challengePoints, data.challengeRewards, event.challengeLiveEventPointGroup, event.challengeLiveEventRewardGroup),
         rankings: { score: !event.isRankingDisabled, music: !event.isMusicRankingDisabled, totalMusic: !event.isTotalMusicRankingDisabled },
-        missions: eventMissions.map((mission) => ({ id: mission.id, description: describeMission(mission), rewards: rewardsOf(mission.missionRewardIds) })),
+        missions: eventMissions.map((mission) => ({ id: mission.id, description: describeEventMission(mission), rewards: rewardsOf(mission.missionRewardIds) })),
         boxGacha: boxGachaSection(event, boxGachasByEvent.get(event.id) ?? []),
         rankingRewards: rankingTier(eventRankingRewards),
         challengeMusic: challengeSongs.length ? { boosts: challengeBoosts, songs: challengeSongs } : null,

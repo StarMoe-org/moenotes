@@ -1,8 +1,8 @@
 import type { AppLocale } from "@/config/locales";
-import { t } from "@/i18n";
 import { getImageAssetUrl } from "@/lib/assets/url";
 import type { RawText } from "@/lib/cards/data";
 import { localizeMasterText } from "@/lib/masterdata/localize-text";
+import { describeMission, scoreRankLabel, type MissionDescribeContext } from "@/lib/missions/describe";
 import type { RawResource, RewardKind, RewardResolver, RewardViewModel } from "@/lib/rewards/resources";
 
 export interface RawSeasonPass {
@@ -175,12 +175,8 @@ export function rewardEntrySlug(kind: RewardEntryKind, id: number): string {
 
 // MasterSeasonPassMission.missionCategory: 1 is the daily rotation; the rest run for the whole pass.
 const DAILY_MISSION_CATEGORY = 1;
-// MasterLiveScoreRank.liveScoreRank 2–7, matching the D–SS rank icons.
-const scoreRankLabels: Record<number, string> = { 2: "D", 3: "C", 4: "B", 5: "A", 6: "S", 7: "SS" };
-
-export function scoreRankLabel(scoreRank: number): string {
-  return scoreRankLabels[scoreRank] ?? "";
-}
+// MasterLiveScoreRank.liveScoreRank 2–7, matching the D–SS rank icons (labels live with the shared mission helper).
+export { scoreRankLabel };
 const difficultyTextIds = ["ui_difficulty_easy", "ui_difficulty_normal", "ui_difficulty_hard", "ui_difficulty_expert"];
 const highlightOrder: Record<RewardKind, number> = { member: 0, support: 1, music: 2, degree: 3, stamp: 4, spot: 5, item: 6, other: 7 };
 
@@ -221,26 +217,21 @@ export function normalizeRewardEntries(data: RewardsMasterData, resolve: RewardR
   const advTitles = new Map(data.advs.map((adv) => [adv.id, adv.titleTextId]));
   const music = new Map(data.music.map((song) => [song.id, song.title]));
 
-  const describe = (mission: RawMissionFields): string => {
-    const episode = episodes.get(mission.episodeId);
-    const values: Record<string, string> = {
-      AchievementCount: mission.achievementCount.toLocaleString(locale),
-      Value: String(mission.value),
-      ExchangeId: exchanges.get(mission.exchangeId) ?? "",
-      StoryChapterId: chapters.get(mission.storyChapterId) ?? "",
-      // "Episode {EpisodeId.Value} \"{EpisodeId}\"": the number, then the episode's story title.
-      EpisodeId: episode ? text(advTitles.get(episode.advId)) : "",
-      "EpisodeId.Value": episode ? String(episode.episodeNumber) : "",
-      BandId: bands.get(mission.bandId) ?? "",
-      CharacterId: characters.get(mission.characterId) ?? "",
-      MusicId: music.get(mission.musicId) ?? "",
-      MusicDifficulty: text(difficultyTextIds[mission.musicDifficulty]),
-      ScoreRank: scoreRankLabel(mission.scoreRank),
-      CardType: mission.cardType ? t(locale, `cards.attributes.${mission.cardType}`) : "",
-    };
-    // Unknown placeholders (e.g. {MissionCategory}) drop out; the sentence still reads naturally.
-    return text(mission.descriptionTextId).replace(/\{([^}]+)\}/g, (_, key: string) => values[key] ?? "").replace(/[ \t]{2,}/g, " ").trim();
+  const describeContext: MissionDescribeContext = {
+    locale,
+    text: (id) => text(id),
+    exchangeName: (id) => exchanges.get(id),
+    chapterName: (id) => chapters.get(id),
+    episode: (id) => {
+      const episode = episodes.get(id);
+      return episode ? { number: episode.episodeNumber, title: text(advTitles.get(episode.advId)) } : undefined;
+    },
+    bandName: (id) => bands.get(id),
+    characterName: (id) => characters.get(id),
+    musicTitle: (id) => music.get(id),
+    difficulty: (value) => text(difficultyTextIds[value]),
   };
+  const describe = (mission: RawMissionFields): string => describeMission(mission, describeContext);
 
   const resolveRows = (rowsById: Map<number, RawRewardRow>, ids: readonly number[]) =>
     ids.flatMap((id) => {

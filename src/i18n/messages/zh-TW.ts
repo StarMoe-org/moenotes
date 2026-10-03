@@ -2,7 +2,7 @@ import type { MessageTree } from "@/i18n/translate";
 
 export const zhTW = {
   loader: { loading: "正在載入" },
-  sorting: { default: "預設順序", id: "編號", name: "名稱", date: "發布時間", rarity: "稀有度", ascending: "升冪", descending: "降冪" },
+  sorting: { default: "預設順序", id: "編號", name: "名稱", date: "發布時間", rarity: "稀有度", ascending: "升冪", descending: "降冪", endingSoon: "即將結束" },
   assetBrowser: {
     noLanguages: "暫時沒有可用的資源語言。",
     "filterTitle": "資產篩選",
@@ -1883,6 +1883,7 @@ export const zhTW = {
       modals: "彈窗",
       filters: "篩選器",
       animations: "動畫",
+      foundation: "通用元件",
     },
     colors: {
       accent: "天狼星藍",
@@ -1969,6 +1970,8 @@ export const zhTW = {
       wobble: "星光輝映",
       wobbleDesc: "懸停時以柔和的藍色光暈突出面板。",
     },
+    foundation: { title: "通用元件", hint: "各功能包共用的第一波基礎元件，下方皆為範例資料。", collectionView: "檢視切換", dataTable: "資料表格", sortExtensions: "排序：即將結束與數值欄位", dateRange: "日期範圍篩選", avatarStack: "角色頭像疊放", countdown: "日程倒數", serverBadge: "伺服器可用性", lightbox: "圖片檢視器", openLightbox: "開啟圖片檢視器", upgradeCost: "升級材料表", levelSwitch: "等級切換", audioButton: "音訊播放按鈕", entityPager: "上一個 / 下一個", detailOverlay: "詳情彈出層", openOverlay: "開啟詳情彈出層", overlayBody: "彈出層開啟時網址列會寫入 ?demo=，返回或關閉後會清除。", sampleName: "名稱", sampleLevel: "等級", samplePower: "綜合力", sampleBpm: "BPM", sampleDuration: "長度", sampleEmpty: "沒有符合條件的項目。", sampleCount: "範圍內 {count} / {total} 筆", sampleItem: "範例項目 {n}", sampleTrack: "範例曲目 {n}", sampleCaption: "範例圖片 {n}：滾輪或雙指縮放，拖曳平移，雙擊還原。", ongoing: "進行中", upcoming: "未開始", ended: "已結束", allServers: "全服皆有（不顯示）：", someServers: "僅部分伺服器：", skillLevel: "技能等級", rank: "階級", level: "等級", decrease: "減少", increase: "增加", max: "MAX" },
+    upgrade: { step: "階段", cost: "所需材料", empty: "沒有升級材料。", cumulative: "累計" },
   },
   filter: {
     title: "篩選",
@@ -1982,6 +1985,7 @@ export const zhTW = {
     drawerHintTitle: "篩選器已移至側邊",
     drawerHintBody: "輕觸左側標籤，便可隨時喚出或收攏這片星芒篩選器。",
     drawerHintDismiss: "知道了",
+    dateRange: "日期範圍", dateFrom: "開始", dateTo: "結束", dateClear: "清除",
   },
   browserNotice: {
     title: "目前的瀏覽器可能無法正常顯示本站",
@@ -2103,10 +2107,10 @@ export const zhTW = {
     techStackDesc: "選用輕快靈動的現代化技術精巧裝幀，只為讓翻閱手帳的每一次指尖停留，都如翻開紙頁般流暢而溫暖。",
   },
   // ── W1 foundation ──
-  audio: {},
-  lightbox: {},
-  detailNav: {},
-  collectionView: {},
+  audio: { play: "播放", pause: "暫停", loading: "載入中", retry: "播放失敗，重試", previous: "上一首", next: "下一首", modes: { sequential: "依序播放", "repeat-all": "清單循環", "repeat-one": "單曲循環", shuffle: "隨機播放" } },
+  lightbox: { label: "圖片檢視器", counter: "{current} / {total}", previous: "上一張", next: "下一張", zoomIn: "放大", zoomOut: "縮小", reset: "還原縮放", download: "下載", close: "關閉", loading: "圖片載入中…", failed: "圖片載入失敗" },
+  detailNav: { label: "條目導覽", previous: "上一個", next: "下一個", backToList: "返回列表" },
+  collectionView: { label: "顯示方式", grid: "網格", list: "列表", table: "表格", card: "卡片", square: "圖示", nameSeparator: "、" },
   // ── pack G ──
   shop: {},
   missions: {},
