@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import { createBox, parseBox } from "../src/lib/box/model";
-import { answerFurnitureLevel, answerFurnitureOwnership, answerPlayerEvents, answerPlayerField, answerPlayerMemory, exportBandItemFacts, exportPlayerContexts, playerCatalogueIssues, serializePlayerBonusFacts } from "../src/lib/box/player-catalog";
+import { answerFurnitureLevel, answerFurnitureOwnership, answerPlayerEvents, answerPlayerField, answerPlayerMemory, exportBandItemFacts, exportPlayerContexts, exportPlayerRankFacts, playerCatalogueIssues, serializePlayerBonusFacts } from "../src/lib/box/player-catalog";
+import { deriveGameSaveBox, parseGameSave, type GameSaveTables } from "../src/lib/box/game-save";
 import { playerProfileGroups } from "../src/lib/box/player-profile-data";
 import { buildPlayerCatalogue, type PlayerMasterTables } from "../src/lib/masterdata/player-fields";
 
@@ -76,4 +77,22 @@ test("memory and events distinguish unknown from an explicit empty choice with v
   expect(exportPlayerContexts(box, { ...source, masterVersion: "synthetic/2" })).toEqual({ memory: null, eventIds: null });
   expect(() => answerPlayerEvents(box, source, ["5"])).toThrow("outside matching");
   expect(() => answerPlayerMemory(box, source, { musicRanks: { "5": 1 }, unlockedMembers: [], unlockedSnaps: [] })).toThrow("Invalid memory");
+});
+
+test("a linked save shows character ranks, furniture and memory read-only while VIP stays editable", async () => {
+  const source = await catalog();
+  const saveTables: GameSaveTables = { server: "tw", members: {}, snaps: {}, memberLevels: {}, snapLevels: {}, characterRanks: [[1, 0], [2, 5], [3, 9]],
+    characters: ["1", "2"], bandItems: { "9007199254740993": [1, 2, 4] }, memoryMusicGroups: [], memoryMusics: {} };
+  const stored = answerPlayerField(createBox("tw", "profile"), source, "characterRank.1", 3, 1);
+  const link = { server: "intl" as const, accountId: "20000000001", sha256: "a".repeat(64), uploadedAt: 10 };
+  const save = parseGameSave(JSON.stringify({ _characters: [{ _masterId: 2, _exp: 6 }], _bandItems: [{ _masterId: "9007199254740993", _level: 4 }] }));
+  const { box: view } = deriveGameSaveBox({ ...stored, save: link }, link, save, saveTables, source);
+  const groups = playerProfileGroups(view, source, "en-US", url => url, { gameSave: true });
+  const field = (key: string) => groups.flatMap(group => [...group.entities.flatMap(entity => entity.fields), ...group.summaryFields ?? []]).find(item => item.key === key)!;
+  expect([field("characterRank.1").value, field("characterRank.2").value, field("bandItem.9007199254740993").value]).toEqual([1, 2, 4]);
+  expect([field("characterRank.1").readOnly, field("bandItem.9007199254740993").readOnly, field("memory").readOnly]).toEqual([true, true, true]);
+  expect(field("vipRank").readOnly).toBeUndefined();
+  expect(exportPlayerRankFacts(view, source).characterRanks).toEqual({ coverage: "complete", values: [{ id: "1", value: 1 }, { id: "2", value: 2 }] });
+  expect(exportBandItemFacts(view, source)).toEqual({ coverage: "complete", values: [{ id: "9007199254740993", owned: true, level: 4 }] });
+  expect(stored.player.characterRanks["1"]?.value).toBe(3);
 });

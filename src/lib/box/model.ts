@@ -1,9 +1,11 @@
 import { isGameServer, type GameServer } from "@/config/servers";
+import { gameSaveServer, type GameSaveServer } from "@/config/account";
 
 export const BOX_FORMAT = "moenotes.card-box/1" as const;
 export type CardKind = "member" | "snap";
 export type FieldStatus = "unknown" | "observed" | "manual" | "conflict";
-export type FieldSource = "screenshot" | "manual" | "deck-answer";
+/** `game-save` evidence is derived in memory from a linked save and never stored in a Box. */
+export type FieldSource = "screenshot" | "manual" | "deck-answer" | "game-save";
 export type CardFieldName = "level" | "awake" | "rank" | "liveSkillLevel" | "gekisouSkillLevel";
 export const CARD_FIELDS: readonly CardFieldName[] = ["level", "awake", "rank", "liveSkillLevel", "gekisouSkillLevel"];
 export interface PlayerCatalogIdentity { format: "moenotes.player-fields/1"; server: GameServer; masterVersion: string; sha256: string }
@@ -51,6 +53,16 @@ export interface BoxPlayer {
   memory: BoxField<BoxMemory>;
   eventIds: BoxField<string[]>;
 }
+/** The uploaded game save a Box reads its cards and player growth from. */
+export interface BoxSaveLink {
+  server: GameSaveServer;
+  /** The player ID shown in game, as decimal text; it names the save in the account. */
+  accountId: string;
+  /** SHA-256 of the save bytes this Box reads. */
+  sha256: string;
+  /** Unix milliseconds. */
+  uploadedAt: number;
+}
 export interface CardBox {
   format: typeof BOX_FORMAT;
   id: string;
@@ -61,6 +73,8 @@ export interface CardBox {
   cards: BoxCard[];
   player: BoxPlayer;
   baseline: { members: string[]; snaps: (string | null)[] } | null;
+  /** While linked, cards and player growth come from this save; the Box's own facts stay stored but unused. */
+  save: BoxSaveLink | null;
 }
 
 export const unknownField = <T>(): BoxField<T> => ({ status: "unknown", value: null, history: [], needsReview: false });
@@ -138,7 +152,7 @@ export function createCard(kind: CardKind, key: string, masterId: string | null 
 
 export function createBox(server: GameServer, id: string, at = Date.now()): CardBox {
   return { format: BOX_FORMAT, id, server, revision: 0, updatedAt: at,
-    coverage: { member: { complete: false, declaredAt: null }, snap: { complete: false, declaredAt: null } }, cards: [], baseline: null,
+    coverage: { member: { complete: false, declaredAt: null }, snap: { complete: false, declaredAt: null } }, cards: [], baseline: null, save: null,
     player: { characterRanks: {}, characterCoverage: "partial", characterTotalRank: unknownField(), vipRank: unknownField(),
       bandItems: {}, bandItemStates: {}, catalogFields: {}, catalogIdentity: null, bandItemsComplete: false, memory: unknownField(), eventIds: unknownField() } };
 }
@@ -226,6 +240,12 @@ function checkField(value: unknown, accepts: (item: unknown) => boolean): void {
   if (["manual", "observed"].includes(String(value.status)) && !value.history.some(item => record(item) && same(item.value, value.value) && (value.status === "observed" ? item.source === "screenshot" : item.source !== "screenshot"))) throw new Error("Known field is missing its source evidence");
 }
 const idValue = (value: unknown) => typeof value === "string" && /^[1-9][0-9]*$/.test(value);
+const i64Value = (value: unknown) => idValue(value) && BigInt(value as string) <= 9223372036854775807n;
+function checkSaveLink(value: unknown, server: GameServer): void {
+  if (!record(value) || value.server !== gameSaveServer(server) || !i64Value(value.accountId)
+    || typeof value.sha256 !== "string" || !/^[a-f0-9]{64}$/.test(value.sha256) || !numberValue(value.uploadedAt)) throw new Error("Invalid game save link");
+  onlyKeys(value, ["server", "accountId", "sha256", "uploadedAt"]);
+}
 const numberValue = (value: unknown) => typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
 function checkCatalogIdentity(value: unknown, extra: string[] = []): void {
   if (!record(value) || value.format !== "moenotes.player-fields/1" || !isGameServer(value.server) || typeof value.masterVersion !== "string" || !value.masterVersion || typeof value.sha256 !== "string" || !/^[a-f0-9]{64}$/.test(value.sha256)) throw new Error("Invalid player field catalog identity");
@@ -237,7 +257,10 @@ export function parseBox(text: string): CardBox {
   if (text.length > 20_000_000) throw new Error("Card box import is too large");
   const value: unknown = JSON.parse(text);
   if (!record(value) || value.format !== BOX_FORMAT || !isGameServer(value.server) || typeof value.id !== "string" || !value.id || !numberValue(value.revision) || !numberValue(value.updatedAt) || !Array.isArray(value.cards) || value.cards.length > 10000 || !record(value.coverage) || !record(value.player)) throw new Error("Invalid card box");
-  onlyKeys(value, ["format", "id", "server", "revision", "updatedAt", "coverage", "cards", "player", "baseline"]);
+  onlyKeys(value, ["format", "id", "server", "revision", "updatedAt", "coverage", "cards", "player", "baseline", "save"]);
+  // A Box without a save field reads as unlinked.
+  if (!("save" in value)) value.save = null;
+  if (value.save !== null) checkSaveLink(value.save, value.server);
   onlyKeys(value.coverage, ["member", "snap"]);
   for (const kind of ["member", "snap"]) {
     const coverage = value.coverage[kind];

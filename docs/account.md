@@ -38,6 +38,9 @@ browser ── bdon.moe ── server/main.ts ── static build
   the public profile through the game gateway to see it. Once bound they can rename back. `isGameProfileId`
   mirrors the API's ID check so obvious typos never leave the page. Accounts are unverified (with a code the user
   can swap for a new one) or verified; a verified account opens its profile.
+- **Game saves.** Saves uploaded with the StarMoe Box app are listed at `/api/me/saves` and read at
+  `/api/me/saves/{server}/{accountId}` (client in `src/lib/account/game-saves.ts`). The card box links one and reads
+  its cards and player growth from it; see [card-box.md](card-box.md#game-save-import).
 - **Player profiles.** starmoe-api stores each verified account's gateway answers as a JSON file and serves it as
   is (its README, "Player profiles"); `src/lib/account/player-profile.ts` reads it (int64 values arrive as strings).
   `PlayerProfileCard.tsx` shows it; the favorite card comes from a build-time card index (`profile-cards.ts`)

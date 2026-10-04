@@ -5,7 +5,7 @@ import Popover from "@/components/shared/Popover";
 import CollectionIcon from "./CollectionIcon";
 
 export default function CollectionActionMenu({ locale, busy, onAdd, onExport, onImport, onStorage, onDelete }: {
-  locale: AppLocale; busy: boolean; onAdd: () => void; onImport: () => void;
+  locale: AppLocale; busy: boolean; onAdd?: (() => void) | undefined; onImport?: (() => void) | undefined;
   onExport?: (() => void) | undefined; onStorage?: (() => void) | undefined; onDelete?: (() => void) | undefined;
 }) {
   const label = (key: string) => t(locale, `deckWorkspace.collection.${key}`);
@@ -25,10 +25,10 @@ export default function CollectionActionMenu({ locale, busy, onAdd, onExport, on
         if (next === null) return;
         event.preventDefault(); entries[next]!.focus();
       }}>
-        <button type="button" role="menuitem" disabled={busy} onClick={() => finish(onAdd)}><CollectionIcon name="add" />{label("add")}</button>
+        {onAdd && <button type="button" role="menuitem" disabled={busy} onClick={() => finish(onAdd)}><CollectionIcon name="add" />{label("add")}</button>}
         <div className="cb-menu-label">{label("backup")}</div>
         {onExport && <button type="button" role="menuitem" disabled={busy} onClick={() => finish(onExport)}><CollectionIcon name="export" />{label("export")}</button>}
-        <button type="button" role="menuitem" disabled={busy} onClick={() => finish(onImport)}><CollectionIcon name="import" />{label("import")}</button>
+        {onImport && <button type="button" role="menuitem" disabled={busy} onClick={() => finish(onImport)}><CollectionIcon name="import" />{label("import")}</button>}
         <p>{label("backupNote")}</p>
         {onStorage && <button type="button" role="menuitem" disabled={busy} onClick={() => finish(onStorage)}><CollectionIcon name="storage" />{label("storage")}</button>}
         {onDelete && <button type="button" role="menuitem" className="cb-delete-action" disabled={busy} onClick={() => finish(onDelete)}><CollectionIcon name="delete" />{label("delete")}</button>}

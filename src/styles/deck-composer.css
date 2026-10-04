@@ -69,6 +69,10 @@
 .dc-collection-stats { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; min-width: 0; }
 .dc-collection-stats > * { display: inline-flex; align-items: baseline; gap: 5px; }
 .dc-collection-stats strong { font-size: 18px; font-weight: 800; }
+.dc-collection-stats .dc-collection-source { align-items: center; gap: 6px; padding: 4px 10px; border-radius: 3px 10px 3px 10px; background: var(--mn-accent-soft); color: var(--mn-accent-deep); font-size: 12px; font-weight: 600; }
+.dc-collection-stats .dc-collection-source[data-source=box] { background: transparent; color: var(--mn-text-muted); padding-inline: 0; }
+.dc-collection-source > svg { flex-shrink: 0; }
+.dc-collection-stats .dc-collection-source small { color: var(--mn-text-muted); font-weight: 400; }
 .dc-collection-stats span, .dc-collection-stats small { color: var(--mn-text-muted); font-size: 11px; }
 .dc-collection-actions { display: flex; gap: 7px; flex-wrap: wrap; margin-left: auto; }
 .dc-collection-actions button { font-size: 12px; }

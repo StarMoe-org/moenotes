@@ -6,11 +6,11 @@ Local boxes use IndexedDB with one key per server. Writes compare revisions and 
 
 Fields retain independent `unknown`, screenshot observation, manual answer and conflict states, with evidence histories. Later screenshots cannot replace manual values. Independent conflicting manual branches require a decision. A resolution or explicit clear dominates its own old snapshot; clearing does not revive older values during merge. Rank and training use the documented 1–5 contract. Ordinary and Gekisou skills remain independent. Flow answers write back with `deck-answer` evidence. Ownership completeness and per-search exclusions are separate; excluding a card never removes it from the box.
 
-The collection has one screenshot-import action, a five-step guide illustrated with card artwork from the asset service, and one menu for manual supplements, backup export/import, save location and deletion. Member, Snap, review and player-growth tabs share the same saved Box. Player growth is entered manually: character Rank, furniture ownership/levels, VIP and other player facts are not read from card-list screenshots. The guide's Rank badge is an explicitly labelled example. R/SR/SSR/BD/EX rarity comes from the Master entry of the identified card; numerical cultivation Lv. is a separate nullable fact.
+The collection imports from a game save (see [Game save import](#game-save-import)) when the signed-in account holds one for the server, and otherwise from screenshots. It also has a five-step guide illustrated with card artwork from the asset service, and one menu for manual supplements, backup export/import, save location and deletion. Member, Snap, review and player-growth tabs share the same saved Box. Without a linked save, player growth is entered manually: character Rank, furniture ownership/levels, VIP and other player facts are not read from card-list screenshots. The guide's Rank badge is an explicitly labelled example. R/SR/SSR/BD/EX rarity comes from the Master entry of the identified card; numerical cultivation Lv. is a separate nullable fact.
 
 ## Screenshot import
 
-Screenshot upload is the primary entry point. The browser decodes each image to local RGBA pixels; a classic Worker matches them against the SIFT gallery with OpenCV (WASM) and, when configured, reads visible levels with the BoxLens NumberReader on ONNX Runtime Web (WASM). Recognition runs entirely in the browser; screenshots are never uploaded or persisted. The original file's SHA-256 identifies the observation, and only confirmed facts enter the Box.
+Screenshot upload is the entry point for a Box without a linked game save. The browser decodes each image to local RGBA pixels; a classic Worker matches them against the SIFT gallery with OpenCV (WASM) and, when configured, reads visible levels with the BoxLens NumberReader on ONNX Runtime Web (WASM). Recognition runs entirely in the browser; screenshots are never uploaded or persisted. The original file's SHA-256 identifies the observation, and only confirmed facts enter the Box.
 
 ### Recognition runtime
 
@@ -60,6 +60,69 @@ Successful images aggregate with one observation timestamp, preserving contradic
 `scripts/verify-card-box-recognition-browser.mjs` runs the batch pipeline at 800 and 390 CSS pixels with three JP member-list screenshots (`member-training.jpg`, `member-performance.jpg`, `member-technic.jpg`) and records their SHA-256 values. It uploads several images plus an invalid JPEG, cancels and retries preparation, appends more images, corrects identities through the shared catalogue controls, and saves/reloads IndexedDB. It also corrects to an already-present identity and checks the combined evidence. Native square snapshots can be PNG images; verification waits for actual image decode and reads their painted pixels, rather than requiring every offscreen lazy tile to be ready. The first card must have a real visible intersection with the modal viewport and pass hit testing; the verifier does not scroll it into view itself.
 
 Set `PLAYWRIGHT_MODULE` to a package name, absolute module path or file URL, `CARD_BOX_ORIGIN` to the running dev origin, `CARD_BOX_SCREENSHOT_DIR` to a directory with those screenshots, and `CARD_BOX_PROOF_DIR` to an ignored output directory. Screenshots are not part of the repository.
+
+## Game save import
+
+A game save holds the player's whole collection, so a Box can read its cards and player growth from one instead of from screenshots. Saves are uploaded to the signed-in account with the StarMoe Box app and served by the account API (docs/account.md); `src/lib/account/game-saves.ts` is the client.
+
+| Request | Answer |
+| --- | --- |
+| `GET /api/me/saves` | `{"saves":[{server, accountId, sha256, size, storedSize, uploadedAt, checkedAt, client}]}`, newest first |
+| `GET /api/me/saves/{server}/{accountId}` | The save's `_player` object as uploaded, `ETag: "<sha256>"`; `If-None-Match` answers 304 |
+| `DELETE /api/me/saves/{server}/{accountId}` | 204 |
+
+`server` is `jp` or `intl`: one international client serves TW/HK/MO, EN and KR, so the `tw`, `en` and `kr` Boxes read `intl` saves and the `jp` Box reads `jp` saves (`gameSaveServer` in `src/config/account.ts`). `accountId` is the player ID shown in game, as decimal text; the picker shows it to tell several accounts apart. Signed out, the API answers 401 `signed_out`; an unknown save answers 404 `not_found`.
+
+### Download and cache
+
+The page hashes the downloaded bytes with SHA-256 and accepts them only when the digest equals the SHA-256 the ETag names. Accepted bytes go to the IndexedDB database `moenotes-game-saves`, store `saves`, one record per `<server>/<accountId>` with the bytes, their SHA-256 and the upload time. A read hashes the bytes again and drops a record that no longer matches. A linked Box therefore opens after a reload and offline. When the linked version is not cached, the page downloads it, provided the account still holds that exact version. Unlinking removes the cached copy unless another server's Box in the same browser links the same account.
+
+### Link
+
+`moenotes.card-box/1` has a `save` field: `{"server", "accountId", "sha256", "uploadedAt"}` or `null`. A Box file without the field reads as unlinked. While a Box is linked:
+
+- Members, Snaps, character ranks, furniture and memory come from the save and are shown read-only. Screenshot import, manual card entry, backup import and completeness declarations are unavailable; the card details dialog lists the values without editing controls.
+- The Box keeps its screenshot and manual facts unchanged. They take effect again after unlinking.
+- VIP rank is not part of a save; it stays a manual answer of the Box, as do events and profile ratings.
+- The view is derived in memory on every load (`deriveGameSaveBox` in `src/lib/box/game-save.ts`). Derived evidence has the source `game-save` and is never written to a Box: `parseBox` accepts only screenshot, manual and deck-answer evidence.
+
+"Check for updates" lists the account's saves again. When the save of the linked account has another SHA-256, one action downloads it, checks it, caches it and moves the link to it.
+
+### Reading a save
+
+Only these fields of `_player` are read; the rest of the save is ignored:
+
+| Field | Read as |
+| --- | --- |
+| `_memberCards[]` `_masterId`, `_exp`, `_awakeCount`, `_rank`, `_liveSkillLevel`, `_performanceSkillLevel` | One member card. `_performanceSkillLevel` is the Gekisou skill level. Awake count, rank and skill levels start at 1 and match the Box's 1–5 fields. |
+| `_supportCards[]` `_masterId`, `_exp`, `_rank` | One Snap. |
+| `_characters[]` `_masterId`, `_exp` | A character's rank. |
+| `_bandItems[]` `_masterId`, `_level` | Furniture; level 0 is not built. |
+| `_memory` `_musicGroups[]` (`_id`, `_musics[]` with `_id`, `_unlockedScoreRank`), `_members[]` and `_supports[]` (`_id`, `_unlocked`) | Memory progress. |
+
+Every list is complete: a card the save does not list is not owned, an unlisted character has experience 0, and an unlisted band item is not built. Long fields (`_masterId`, `_id`) are integers or decimal text, int fields are 32-bit integers, and a missing or `null` value is unknown.
+
+Levels come from experience. A member card's `memberCardLevelGroup` (`MasterMemberCard`) selects its rows of `MasterMemberCardLevel`; a Snap's `supportCardLevelGroup` (`MasterSupportCard`) selects its rows of `MasterSupportCardLevel`. The rows are taken in order of their cumulative `exp` (stable for equal values), and the card's level is the last row whose `exp` does not exceed `_exp`. A character's rank is read the same way from the `MasterCharacterRank` rows in rank order. `src/lib/masterdata/save-tables.ts` builds this subset of each server's Master at build time and the page carries it.
+
+Entries whose ID is not in the server's Master, repeated IDs and values out of range (a negative experience, a level that reaches no row, a count outside 1–5, a furniture level without a level row) stay unknown and are counted in the banner of the linked save.
+
+## Deck account input
+
+`src/lib/deck/account-envelope.ts` writes the account input of the deck core, `ournotes.account/1`:
+
+```json
+{"format":"ournotes.account/1","datasetId":"<sha256 of the deck data>","server":"intl","revision":"…",
+ "coverage":{"_player._memberCards":"complete","_player._supportCards":"complete","_player._characters":"complete","_player._bandItems":"complete",
+  "_player._memory._musicGroups":"complete","_player._memory._members":"complete","_player._memory._supports":"complete"},
+ "assumptions":[],"declared":{"_vip":{"_rank":7}},"account":{"_player":{…}}}
+```
+
+The caller supplies `datasetId` and `server`. `declared` holds the Box's VIP rank, or `null` when it is unknown.
+
+- **Linked save** (`gameSaveAccountJson`): `_player` is the downloaded save text itself, inserted by string concatenation, so int64 values above 2^53 keep every digit. Every coverage entry is `complete`, `assumptions` is empty and `revision` is the save's SHA-256.
+- **Screenshots and manual answers** (`boxAccountJson`): `_player` is assembled from the Box. Unknown values are `null`. A known card level or character rank becomes the cumulative experience that level or rank needs, and an assumption records it with its path. IDs are written as integer tokens. Coverage follows the Box's declarations: member and Snap completeness, character-rank and furniture coverage, and memory as `complete` once its progress is answered.
+
+The Worker request carries this text as `accountJson` (`src/lib/deck/runtime-plan.ts`); its answer has the format `ournotes-deck.account-recommendation/1`.
 
 ## Fixed comparison team
 

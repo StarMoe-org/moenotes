@@ -61,7 +61,8 @@ export interface DeckWorkerRequest {
   jobId: string;
   inputRevision: number;
   identity: DeckDataIdentity;
-  rosterJson: string;
+  /** `ournotes.account/1` text (src/lib/deck/account-envelope.ts). */
+  accountJson: string;
   requestJson: string;
 }
 
@@ -70,6 +71,7 @@ export interface DeckWorkerReply {
   jobId: string;
   inputRevision: number;
   identity: DeckDataIdentity;
+  /** `ournotes-deck.account-recommendation/1` text. */
   resultJson: string;
 }
 

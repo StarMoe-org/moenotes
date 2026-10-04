@@ -33,7 +33,7 @@ describe("collection runtime plan", () => {
     expect(() => assertDeckDataIdentity(identity, { ...identity, deckDataSha256: "self-reported" })).toThrow();
   });
   test("late results cannot overwrite changed collection or target", () => {
-    const request: DeckWorkerRequest = { protocol: "moenotes.deck-worker/1", jobId: "job-1", inputRevision: 2, identity, rosterJson: "{}", requestJson: '{"maxCandidates":9007199254740993}' };
+    const request: DeckWorkerRequest = { protocol: "moenotes.deck-worker/1", jobId: "job-1", inputRevision: 2, identity, accountJson: "{}", requestJson: '{"maxCandidates":9007199254740993}' };
     const reply = { ...request, resultJson: "{}" };
     expect(isCurrentDeckReply(request, reply, 2)).toBe(true);
     expect(isCurrentDeckReply(request, reply, 3)).toBe(false);

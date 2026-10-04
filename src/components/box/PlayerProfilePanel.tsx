@@ -47,11 +47,12 @@ function ProfileField({ field, labels, canEdit, busy, onChange, onPresenceChange
   onChange: PlayerProfilePanelProps["onChange"]; onPresenceChange: PlayerProfilePanelProps["onPresenceChange"];
 }) {
   const inputId = `${id}-value`;
+  const editable = canEdit && !field.readOnly;
   const hasEditor = !!field.editor || !!onChange && (!!field.options || !!field.range);
-  const hasPresenceEditor = canEdit && !!onPresenceChange;
+  const hasPresenceEditor = editable && !!onPresenceChange;
   const levelUnavailable = field.presence?.value === "not-owned";
   return <div className={`pp-field${field.needsReview ? " pp-field-review" : ""}`} data-field-key={field.key}>
-    <div className="pp-field-heading"><label htmlFor={canEdit && hasEditor && !field.editor ? inputId : undefined}>{field.label}</label>
+    <div className="pp-field-heading"><label htmlFor={editable && hasEditor && !field.editor ? inputId : undefined}>{field.label}</label>
       {field.statusLabel && <small className="pp-source">{field.statusLabel}</small>}
     </div>
     {field.presence && <div className="pp-presence">
@@ -62,7 +63,7 @@ function ProfileField({ field, labels, canEdit, busy, onChange, onPresenceChange
       </select> : <span className="pp-presence-label" data-presence={field.presence.value ?? "unknown"}>{field.presence.label}</span>}
     </div>}
     <div className="pp-value-shell" data-value-state={field.value === null ? "unknown" : "known"}>
-      {canEdit && hasEditor ? field.editor ?? <FieldEditor field={field} id={inputId} labels={labels}
+      {editable && hasEditor ? field.editor ?? <FieldEditor field={field} id={inputId} labels={labels}
         disabled={busy || levelUnavailable} onChange={onChange!} /> : <strong className="pp-value">{field.displayValue}</strong>}
     </div>
     {field.needsReview && <p className="pp-review-note">{labels.review}</p>}

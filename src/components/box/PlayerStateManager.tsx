@@ -8,8 +8,12 @@ import { playerProfileGroups } from "@/lib/box/player-profile-data";
 import { answerFurnitureLevel, answerFurnitureOwnership, answerPlayerEvents, answerPlayerField, answerPlayerMemory, validatePlayerCatalogue, type PlayerFieldCatalogue } from "@/lib/box/player-catalog";
 import PlayerProfilePanel from "./PlayerProfilePanel";
 
-export default function PlayerStateManager({ locale, box, catalogue, busy, commit, mode, embedded = false }: {
-  locale: AppLocale; box: CardBox; catalogue?: PlayerFieldCatalogue | null; busy: boolean; commit: (next: CardBox) => Promise<boolean>;
+/**
+ * Answers are written to `box`. With `view` (the Box as its linked game save describes it), the panel shows the view
+ * and keeps the save's character ranks, furniture and memory read-only.
+ */
+export default function PlayerStateManager({ locale, box, view, catalogue, busy, commit, mode, embedded = false }: {
+  locale: AppLocale; box: CardBox; view?: CardBox | undefined; catalogue?: PlayerFieldCatalogue | null; busy: boolean; commit: (next: CardBox) => Promise<boolean>;
   mode?: "read-only" | "edit";
   embedded?: boolean;
 }) {
@@ -40,7 +44,7 @@ export default function PlayerStateManager({ locale, box, catalogue, busy, commi
     if (!catalogue || !valid || busy || currentMode === "read-only") return;
     try { await save(answerPlayerEvents(box, catalogue, value)); } catch { setError(true); }
   }
-  const groups = valid && catalogue ? playerProfileGroups(box, catalogue, locale, assetUrl) : [];
+  const groups = valid && catalogue ? playerProfileGroups(view ?? box, catalogue, locale, assetUrl, { gameSave: !!view }) : [];
   const eventField = groups.find(group => group.section === "global")?.entities.find(entity => entity.id === "eventIds")?.fields[0];
   if (eventField && catalogue?.profile?.events && currentMode === "edit") eventField.editor = <div className="pp-events-editor">
     <div className="pp-events-actions"><button type="button" disabled={busy} aria-pressed={box.player.eventIds.value?.length === 0} onClick={() => void events([])}>{pp("eventsOff")}</button>
@@ -49,10 +53,10 @@ export default function PlayerStateManager({ locale, box, catalogue, busy, commi
       onChange={change => void events(change.target.checked ? [...(box.player.eventIds.value ?? []), event.id] : (box.player.eventIds.value ?? []).filter(id => id !== event.id))} />{localizeMasterText(event.label, locale)}</label>)}
   </div>;
   return <PlayerProfilePanel server={box.server} currentCatalog={valid && catalogue ? catalogue : null} mode={currentMode} busy={busy} groups={groups}
-    showTitle={!embedded} labels={{ title: pp("title"), description: `${tr("collection.manualGrowth")} · ${pp("description")}`, characters: pp("characters"), bands: pp("bands"), global: pp("global"), unknown: tr("unknown"), owned: tr("bandItemStates.owned"), notOwned: tr("bandItemStates.not-owned"), history: pp("history"), review: tr("chooseObservation"), unavailable: tr("playerCatalogUnavailable"), catalogVersion: t(locale, `account.games.servers.${box.server}`) }}
+    showTitle={!embedded} labels={{ title: pp("title"), description: view ? tr("gameSave.playerNote") : `${tr("collection.manualGrowth")} · ${pp("description")}`, characters: pp("characters"), bands: pp("bands"), global: pp("global"), unknown: tr("unknown"), owned: tr("bandItemStates.owned"), notOwned: tr("bandItemStates.not-owned"), history: pp("history"), review: tr("chooseObservation"), unavailable: tr("playerCatalogUnavailable"), catalogVersion: t(locale, `account.games.servers.${box.server}`) }}
     onChange={(key, value) => void answer(key, value)} onPresenceChange={(key, value) => void presence(key, value)} footer={section => <>
       {error && <p className="dw-alert" role="alert">{tr("playerValueError")}</p>}
-      {valid && currentMode === "edit" && <>
+      {valid && currentMode === "edit" && !view && <>
         {section === "bands" && <label><input type="checkbox" disabled={busy} checked={box.player.bandItemsComplete} onChange={event => void save({ ...box, player: { ...box.player, bandItemsComplete: event.target.checked } })} />{tr("furnitureCoverage")}</label>}
         {section === "characters" && <label><input type="checkbox" disabled={busy} checked={box.player.characterCoverage === "complete"} onChange={event => void save({ ...box, player: { ...box.player, characterCoverage: event.target.checked ? "complete" : "partial" } })} />{tr("characterRankCoverage")}</label>}
       </>}

@@ -15,6 +15,8 @@ export interface PlayerProfileFieldView {
   statusLabel?: string;
   needsReview?: boolean;
   presence?: { value: "owned" | "not-owned" | null; label: string };
+  /** Shown but not editable, e.g. a value read from a linked game save. */
+  readOnly?: boolean;
   history?: readonly PlayerProfileHistory[];
   description?: string | undefined;
   editor?: ReactNode;
