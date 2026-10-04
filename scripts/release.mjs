@@ -1,5 +1,5 @@
-// Prepares a release: sets the package.json version, regenerates CHANGELOG.md with git-cliff, then commits
-// `chore(release): vX.Y.Z` and creates the annotated tag. Pushing is left to the caller.
+// Prepares a release: sets the package.json version, commits `chore(release): vX.Y.Z` and creates the annotated tag.
+// Pushing is left to the caller; the release workflow then publishes the GitHub release with git-cliff notes.
 //
 //   bun run release           # next version from the commits since the last tag (see [bump] in cliff.toml)
 //   bun run release 0.3.0     # explicit version
@@ -28,8 +28,7 @@ const pkgPath = "package.json";
 const pkg = readFileSync(pkgPath, "utf8");
 writeFileSync(pkgPath, pkg.replace(/^(\s*"version":\s*)"[^"]*"/m, `$1"${version}"`));
 
-run("git-cliff", ["--tag", tag, "--output", "CHANGELOG.md"]);
-run("git", ["add", pkgPath, "CHANGELOG.md"]);
+run("git", ["add", pkgPath]);
 run("git", ["commit", "--message", `chore(release): ${tag}`]);
 run("git", ["tag", "--annotate", tag, "--message", tag]);
 

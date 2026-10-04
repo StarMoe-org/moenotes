@@ -1,12 +1,8 @@
-# git-cliff configuration: CHANGELOG.md and the release notes from conventional commits.
+# git-cliff configuration: GitHub release notes from conventional commits.
 # https://git-cliff.org/docs/configuration
 
 [changelog]
-header = """
-# Changelog
-
-All notable changes to this project are listed here. Versions follow [Semantic Versioning](https://semver.org/).\n
-"""
+header = ""
 body = """
 {%- macro commit_link(id) -%}
 [{{ id | truncate(length=7, end="") }}](https://github.com/StarMoe-org/moenotes/commit/{{ id }})
