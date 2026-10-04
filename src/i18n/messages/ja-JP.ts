@@ -2,7 +2,7 @@ import type { MessageTree } from "@/i18n/translate";
 
 export const jaJP = {
   openPlatform: {
-    title: "オープンプラットフォーム", pageDescription: "開発者アプリを管理します。ユーザーのセーブ許可はアカウントページにあります。",
+    title: "オープンプラットフォーム", pageDescription: "Moenotes オープンプラットフォームで開発者アプリを作成・管理し、clientID と API キーを取得します。ユーザーのセーブ許可はアカウントページで管理します。",
     docs: {
       limits: "公開 profile の region は tw/jp/en/kr、ID は10進数の文字列です。Authorization: Bearer <Secret> を送信し、clientID ヘッダーは不要です。セーブの saveServer は intl/jp、accountID はアップロードしたセーブの最上位 _profileId です。saves:read と個別セーブの許可が必要です。公開 API の既定値は Passport ユーザーごとにアプリ・キー全体で毎分30件、毎日1000件、同時実行はユーザーごと4件・全体32件です。設定により異なります。503 はサービス停止です。ゲーム API のエラーは {error:{kind}}、セーブ・管理 API は {error:string} です。",
       title: "オープンプラットフォーム API ガイド",

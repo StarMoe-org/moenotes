@@ -2,7 +2,7 @@ import type { MessageTree } from "@/i18n/translate";
 
 export const zhTW = {
   openPlatform: {
-    title: "開放平台", pageDescription: "開發者應用程式管理。使用者的存檔授權在帳號頁。",
+    title: "開放平台", pageDescription: "在 Moenotes 開放平台建立與管理開發者應用程式，取得 clientID 與 API 金鑰；使用者的存檔授權在帳號頁管理。",
     docs: {
       limits: "公開 profile：region 為 tw/jp/en/kr，ID 使用十進位字串。傳送 Authorization: Bearer <Secret>，無需 clientID 標頭。存檔：saveServer 為 intl/jp，accountID 為上傳存檔頂層 _profileId；需要 saves:read 與該指定存檔的明確授權。公開 API 預設每 Passport 使用者跨應用程式與金鑰共用每分鐘 30 次、每日 1000 次，並行上限為每使用者 4、全域 32；實際設定可調整。503 表示服務或准入系統無法使用。遊戲介面錯誤格式為 {error:{kind}}，存檔與管理介面為 {error:string}。",
       title: "開放平台接入文件",

@@ -2,7 +2,7 @@ import type { MessageTree } from "@/i18n/translate";
 
 export const zhCN = {
   openPlatform: {
-    title: "开放平台", pageDescription: "开发者应用管理。用户的存档授权在账号页。",
+    title: "开放平台", pageDescription: "在 Moenotes 开放平台创建和管理开发者应用，获取 clientID 与 API 密钥；用户的存档授权在账号页管理。",
     docs: {
       limits: "公开 profile：region 为 tw/jp/en/kr，ID 使用十进制字符串。发送 Authorization: Bearer <Secret>，无需 clientID 请求头。存档：saveServer 为 intl/jp，accountID 为上传存档顶层 _profileId；需要 saves:read 和该具体存档的明确授权。公开 API 默认每 Passport 用户跨应用与密钥共享每分钟 30 次、每日 1000 次，并发上限为每用户 4、全局 32；实际配置可调整。503 表示服务或准入系统不可用。游戏接口错误格式为 {error:{kind}}，存档与管理接口为 {error:string}。",
       title: "开放平台接入文档",
