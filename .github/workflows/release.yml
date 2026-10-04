@@ -1,0 +1,37 @@
+name: Release
+
+# Pushing a vX.Y.Z tag (see `bun run release`) publishes a GitHub release whose notes git-cliff generates from the
+# commits since the previous tag.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  github-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Check the tag against package.json
+        run: |
+          version=$(jq -r .version package.json)
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "tag $GITHUB_REF_NAME and package.json version $version differ" >&2
+            exit 1
+          fi
+      - name: Release notes
+        uses: orhun/git-cliff-action@v4
+        with:
+          version: v2.14.2
+          config: cliff.toml
+          args: --latest --strip header
+        env:
+          OUTPUT: RELEASE_NOTES.md
+          GITHUB_REPO: ${{ github.repository }}
+      - uses: softprops/action-gh-release@v3
+        with:
+          body_path: RELEASE_NOTES.md
