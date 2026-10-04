@@ -30,6 +30,7 @@ const allowedFetchFiles = new Set([
   "src/lib/chart-data/client.ts",
   "src/lib/game-ui/client.ts",
   "src/lib/recognition/client.ts",
+  "src/lib/deck/runtime-source.ts",
 ]);
 
 const allowedDomainFiles = new Set([
