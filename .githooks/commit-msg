@@ -1,0 +1,8 @@
+#!/bin/sh
+# Rejects commit messages that are not Conventional Commits. `bun install` points core.hooksPath here.
+commitlint=node_modules/.bin/commitlint
+if [ ! -e "$commitlint" ] && [ ! -e "$commitlint.exe" ]; then
+  echo "commit-msg: commitlint is not installed; run \`bun install\` first" >&2
+  exit 1
+fi
+exec "$commitlint" --edit "$1"
