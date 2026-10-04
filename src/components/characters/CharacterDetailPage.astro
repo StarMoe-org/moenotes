@@ -4,6 +4,7 @@ import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
 import { getBuildCharacterDetail, getBuildCharacterProgression } from "@/lib/masterdata/build-data";
 import { getBuildServers } from "@/lib/masterdata/build-servers";
+import { getBuildCharacterExtras } from "@/lib/masterdata/build-character-extras";
 
 interface Props {
   locale: AppLocale;
@@ -11,13 +12,14 @@ interface Props {
 }
 
 const { locale, characterId } = Astro.props;
-const [initialData, progressionData, servers] = await Promise.all([
+const [initialData, progressionData, extrasData, servers] = await Promise.all([
   getBuildCharacterDetail(locale, characterId),
   getBuildCharacterProgression(locale, characterId),
+  getBuildCharacterExtras(locale, characterId),
   getBuildServers(),
 ]);
 ---
 
 <PageLayout locale={locale} titleKey="seo.characterDetail.title" descriptionKey="seo.characterDetail.description">
-  <CharacterDetail client:load servers={servers} locale={locale} characterId={characterId} initialData={initialData} progressionData={progressionData} />
+  <CharacterDetail client:load servers={servers} locale={locale} characterId={characterId} initialData={initialData} progressionData={progressionData} extrasData={extrasData} />
 </PageLayout>

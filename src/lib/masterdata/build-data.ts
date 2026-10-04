@@ -1,7 +1,6 @@
 import { DEFAULT_LOCALE, type AppLocale } from "@/config/locales";
 import { PRIMARY_SERVER, type GameServer } from "@/config/servers";
 import { serverReleaseFetcher } from "@/lib/assets/release";
-import { getVoiceAudioUrl } from "@/lib/assets/voice";
 import { buildFetch } from "@/lib/build/fetch";
 import { getBuildServers } from "@/lib/masterdata/build-servers";
 import {
@@ -52,7 +51,6 @@ import {
   costumeCharacterId,
   normalizeCharacterCostumes,
   normalizeCharacters,
-  normalizeCharacterVoices,
   normalizeRankRewards,
   normalizeFriendshipRankRewards,
   characterFriendshipIds,
@@ -62,7 +60,6 @@ import {
   type RawCharacterCostumeGroup,
   type RawCharacterFriendshipRankReward,
   type RawCharacterRankReward,
-  type RawCharacterVoice,
   type RawCharacter as RawCharacterDetail,
 } from "@/lib/characters/data";
 import { normalizeSupportCards, type RawSupportCard, type SupportCardViewModel } from "@/lib/support-cards/data";
@@ -258,45 +255,30 @@ export function getBuildCards(locale: AppLocale): Promise<ServerFaceted<CardView
 }
 
 /**
- * Character progression: costumes, voices, rank / friendship rewards, from the
- * MasterCharacterCostume / MasterCharacterVoice / MasterCharacterRank / MasterCharacterFriendshipRank tables.
+ * Character progression: costumes, rank / friendship rewards, from the MasterCharacterCostume /
+ * MasterCharacterRank / MasterCharacterFriendshipRank tables. Voice lines are `/character-voices.json`
+ * (build-character-voices.ts), loaded when the page's voice section opens.
  */
 export function characterProgressionOn(server: GameServer, locale: AppLocale): Promise<Map<number, CharacterProgressionData>> {
   return memo(`character-progression:${server}:${locale}`, async () => {
     const [
       costumeTable,
       costumeGroupTable,
-      voiceTable,
       rankRewardTable,
       friendshipRewardTable,
-      soundTable,
-      cueSheetTable,
       textTable,
       resolve,
       characters,
     ] = await Promise.all([
       table<RawCharacterCostume>("MasterCharacterCostume.json", server),
       table<RawCharacterCostumeGroup>("MasterCharacterCostumeGroup.json", server),
-      table<RawCharacterVoice>("MasterCharacterVoice.json", server),
       table<RawCharacterRankReward>("MasterCharacterRankReward.json", server),
       table<RawCharacterFriendshipRankReward>("MasterCharacterFriendshipRankReward.json", server),
-      table<{ id: number; cueName: string; soundCueSheetID: number }>("MasterSound.json", server),
-      table<{ id: number; cueSheetName: string }>("MasterSoundCueSheet.json", server),
       texts(server),
       rewardResolverOn(server, locale),
       table<RawCharacterDetail>("MasterCharacter.json", server),
     ]);
     const friendships = await table<RawCharacterFriendship>("MasterCharacterFriendship.json", server).catch(() => ({ _allData: [] as RawCharacterFriendship[] }));
-
-    const sheetNames = new Map(cueSheetTable._allData.map((sheet) => [sheet.id, sheet.cueSheetName]));
-    const soundMap = new Map(soundTable._allData.map((sound) => [sound.id, sound]));
-    const soundUrlOf = (soundId: number): string => {
-      const sound = soundMap.get(soundId);
-      if (!sound) return "";
-      const cueSheetName = sheetNames.get(sound.soundCueSheetID) ?? "";
-      if (!cueSheetName || !sound.cueName) return "";
-      return getVoiceAudioUrl(soundId, sound.cueName, cueSheetName, locale);
-    };
 
     const byCharacter = new Map<number, CharacterProgressionData>();
 
@@ -310,17 +292,10 @@ export function characterProgressionOn(server: GameServer, locale: AppLocale): P
         locale,
       );
 
-      const voices = normalizeCharacterVoices(
-        voiceTable._allData.filter((entry) => entry.characterId === charId),
-        textTable._allData,
-        locale,
-        soundUrlOf,
-      );
-
       const rankRewards = normalizeRankRewards(rankRewardTable._allData, charId, resolve);
       const friendshipRewards = normalizeFriendshipRankRewards(friendshipRewardTable._allData, characterFriendshipIds(friendships._allData, charId), resolve);
 
-      byCharacter.set(charId, { costumes, voices, rankRewards, friendshipRewards });
+      byCharacter.set(charId, { costumes, rankRewards, friendshipRewards });
     }
 
     return byCharacter;

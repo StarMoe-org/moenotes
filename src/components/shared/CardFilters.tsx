@@ -13,7 +13,7 @@ import {
   type CardFilterSubject,
 } from "@/lib/filter/card-filter";
 import { sortEntries } from "@/lib/filter/list-sort";
-import { useListSort } from "@/lib/filter/use-list-sort";
+import { useListSort, type NumericSortField } from "@/lib/filter/use-list-sort";
 
 export type CardFilterKind = "member" | "support";
 
@@ -25,6 +25,11 @@ interface CardFilterOptions<T> {
   match?: ((item: T) => boolean) | undefined;
   active?: boolean | undefined;
   onReset?: (() => void) | undefined;
+  /**
+   * Extra numeric sort fields (stats, totals) next to date and rarity, with their readers. Both must be stable
+   * (module-level or memoized).
+   */
+  numericSort?: { fields: readonly NumericSortField[]; read: Readonly<Record<string, (item: T) => number | null | undefined>> } | undefined;
 }
 
 /**
@@ -39,9 +44,13 @@ export function useCardFilters<T>(
   options: CardFilterOptions<T> = {},
 ) {
   const [filters, setFilters] = useState<CardFilterState>(EMPTY_CARD_FILTERS);
-  const sort = useListSort(sortPage, locale, "date rarity");
+  const { match, active: extraActive = false, onReset: extraReset, numericSort } = options;
+  const sort = useListSort(sortPage, locale, "date rarity", numericSort ? { numeric: numericSort.fields } : {});
   const { onChange: setSort } = sort;
-  const { match, active: extraActive = false, onReset: extraReset } = options;
+  const numericReaders = useMemo(() => {
+    if (!numericSort) return undefined;
+    return Object.fromEntries(Object.entries(numericSort.read).map(([key, read]) => [key, (row: { item: T }) => read(row.item)]));
+  }, [numericSort]);
 
   const entries = useMemo(() => items.map((item) => ({ item, subject: describe(item) })), [items, describe]);
   const subjects = useMemo(() => entries.map((entry) => entry.subject), [entries]);
@@ -58,7 +67,8 @@ export function useCardFilters<T>(
       ...(subject.startAt ? { startAt: subject.startAt } : {}), ...(subject.rarity ? { rarity: subject.rarity } : {}) })),
     sort.value,
     locale,
-  ).map((row) => row.item), [filteredEntries, sort.value, locale]);
+    numericReaders ? { numeric: numericReaders } : {},
+  ).map((row) => row.item), [filteredEntries, sort.value, locale, numericReaders]);
   const hasActiveFilters = sort.value !== "default" || hasCardFilters(filters) || extraActive;
 
   /** Choosing bands keeps only the chosen characters that belong to them. */

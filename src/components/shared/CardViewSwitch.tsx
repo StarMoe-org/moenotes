@@ -12,7 +12,7 @@ export default function CardViewSwitch({ locale, value, onChange }: { locale: Ap
       value={value}
       onChange={onChange}
       label={t(locale, "cards.view.label")}
-      labels={{ card: t(locale, "cards.view.card"), square: t(locale, "cards.view.square") }}
+      labels={{ card: t(locale, "cards.view.card"), square: t(locale, "cards.view.square"), table: t(locale, "collectionView.table") }}
     />
   );
 }

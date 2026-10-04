@@ -1,8 +1,8 @@
 import { useCollectionView } from "@/lib/collection/use-collection-view";
 
-/** How a card list shows its cards: the full list card, or the game's 1:1 square icon. */
-export type CardView = "card" | "square";
-export const CARD_VIEWS: readonly CardView[] = ["card", "square"];
+/** How a card list shows its cards: the full list card, the game's 1:1 square icon, or a sortable table. */
+export type CardView = "card" | "square" | "table";
+export const CARD_VIEWS: readonly CardView[] = ["card", "square", "table"];
 
 /**
  * The reader's remembered view of a card list page (`card` while the page hydrates). Kept in local storage under its
