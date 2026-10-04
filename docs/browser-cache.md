@@ -19,7 +19,9 @@ remain part of that same validated snapshot. The parsed object is reused in memo
 load. A reader's abort rejects only its own wait; the shared load may finish and warm the cache. Corrupt, incompatible
 or expired cache entries fall back to a fresh request. Writes run in the background, and unavailable storage falls
 back to memory and network. The developer cache-bypass switch skips this cache too. This does not change the release
-assets' seven-day policy or add caching to replay JSON/WASM resources.
+assets' seven-day policy or add caching to replay JSON/WASM resources. The deck solver reads `music-data.json` through the same
+loader when `build.json` names no replay manifest; its Worker downloads the deck data and engine files with the
+browser's HTTP cache only (deck-worker.md).
 
 ## Categories
 

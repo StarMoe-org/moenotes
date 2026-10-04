@@ -71,6 +71,8 @@ directory Astro keeps intermediate output in `<cwd>/.astro/` and renames it into
 | `PUBLIC_ASSET_API`, `PUBLIC_CHART_SITE`, `PUBLIC_CUBISM_CORE` | public origins | Public URLs written into pages (`src/config/assets.ts`; the Live2D viewer loads Cubism Core from the last one, see live2d-viewer.md) |
 | `PUBLIC_STORY_SITE` | public origin | The story site the story player reads (default `https://storage.bdon.moe/moenotes`; story-player.md) |
 | `PUBLIC_MUSIC_DATA_SITE` | public origin | The music data site whose `music-data.json` the chart data tool reads in the browser (default `https://storage.bdon.moe/moenotes/music-data`); in development any copy served with CORS, e.g. `https://ournotes-songs.pages.dev` |
+| `PUBLIC_MUSIC_DATA_SITE_JP` | public origin | The JP music data site, whose `build.json` and `music-data.json` the deck solver reads for the JP server (default `https://storage.bdon.moe/moenotes/jp/music-data`; deck-worker.md). The tw, kr and en servers read `PUBLIC_MUSIC_DATA_SITE` |
+| `PUBLIC_DECK_RECOMMEND_ENGINE` | optional URL | Development builds only: an engine descriptor that replaces the published deck recommendation engine (deck-worker.md); production builds ignore it |
 | `PUBLIC_MUSIC_PLAYER_SITE` | story-site origin | Shared song-page modules at `/songs/`, separate from the music-data directory; defaults to `PUBLIC_STORY_SITE` or `https://storage.bdon.moe/moenotes` |
 | `PUBLIC_RECOGNITION_SITE` | public origin | The recognition site whose `recognition/current.json` names the card box's current screenshot-recognition bundle and whose `assets/` holds its files (default `https://storage.bdon.moe/moenotes`; card-box.md) |
 | `PUBLIC_STORY_SITE_JP` | public origin | The JP story site, listed beside it (default `https://storage.bdon.moe/moenotes/jp`; story-player.md) |
@@ -79,6 +81,8 @@ directory Astro keeps intermediate output in `<cwd>/.astro/` and renames it into
 | `PUBLIC_SPINE_RUNTIME` | optional URL | A Spine 4.2 spine-core build for home spot talks; unset, stories play without it (story-player.md) |
 
 ### In-cluster origins
+
+The deck solver Worker is served from `public/deck/` on the same origin. The solver engine and its deck data are files of the music data sites, found through `build.json` (or `music-data.json`) and the replay manifest it names; a new engine or data needs no rebuild or redeployment. See [deck-worker.md](deck-worker.md).
 
 The card box serves its screenshot-recognition Worker and modules from `public/recognition/` on the same origin. The gallery, OpenCV and ONNX Runtime WASM, the field model and the card artwork are content-addressed files on the recognition site (`PUBLIC_RECOGNITION_SITE`), found through its `recognition/current.json` pointer; a new gallery needs no rebuild or redeployment. See [card-box.md](card-box.md) for the bundle format, integrity checks and license locations.
 
