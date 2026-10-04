@@ -175,7 +175,7 @@
 .dc-mini-card strong, .dc-mini-card > span { font-size: 11px; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dc-mini-card small { color: var(--mn-text-muted); font-size: 11px; }
 .dc-composer .dc-view-all { margin-top: 12px; width: 100%; color: var(--dc-accent); }
-.dc-composer .dc-storage-label { min-height: 40px; padding: 5px 7px; font-size: 11px; font-weight: 600; color: var(--mn-text-muted); }
+.dc-composer .dc-storage-label { align-items: center; min-height: 40px; padding: 5px 7px; font-size: 11px; font-weight: 600; color: var(--mn-text-muted); }
 
 .dc-option-tabs { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
 .dc-option-tabs button[aria-selected="true"], .dc-option-tabs button[aria-pressed="true"] { border-color: #4166a9; background: color-mix(in oklab, #4166a9 8%, var(--mn-paper)); color: #4166a9; }
