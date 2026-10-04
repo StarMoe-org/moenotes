@@ -97,3 +97,9 @@ bun run check:search-seo
 ```
 
 Full suite: `bun run lint`.
+
+## Commits and releases
+
+- Commit messages and pull request titles follow Conventional Commits (`type(scope): subject`), checked by commitlint (`commitlint.config.mjs`) in the commit-msg hook and in CI. Types: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `build`, `ci`, `chore`, `style`, `revert`. The subject may be Chinese or English; an English subject starts lowercase.
+- `bun install` sets `core.hooksPath` to `.githooks`. Do not bypass the hook with `--no-verify`.
+- Releases: `bun run release [version]` updates `package.json` and `CHANGELOG.md` (git-cliff, `cliff.toml`), commits `chore(release): vX.Y.Z` and tags it; pushing the tag publishes the GitHub release. Do not edit `CHANGELOG.md` by hand.

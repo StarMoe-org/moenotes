@@ -69,6 +69,19 @@ Run i18n key alignment, route registry, and architecture checks:
 bun run lint
 ```
 
+## Commits and Releases
+
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/), for example `feat(events): add exchange detail page` or `fix: stop dark mode flicker`. `bun install` enables the repository's commit-msg hook, which rejects other messages; CI also checks pull request titles, the commits in a pull request and commits pushed to `main`.
+
+Versions follow Semantic Versioning, and [git-cliff](https://git-cliff.org/) generates `CHANGELOG.md` from the commits:
+
+```bash
+bun run release          # next version from the commits; updates package.json and CHANGELOG.md, commits and tags
+git push origin HEAD v0.2.0
+```
+
+Pushing a `v*` tag makes CI publish the matching GitHub release.
+
 ## A Note on Astro
 
 We originally picked Astro for its static-first approach and Islands architecture. However, for a game database viewer with lots of interactive features and heavy client-side state, developing with it is honestly quite inconvenient (lol). Next.js would probably have been a lot more convenient for something like this.
