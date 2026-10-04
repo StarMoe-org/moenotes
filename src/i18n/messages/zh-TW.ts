@@ -2,6 +2,15 @@ import type { MessageTree } from "@/i18n/translate";
 
 export const zhTW = {
   openPlatform: {
+    docsMoved: "API 文件已移至獨立文件站。", docsPending: "獨立文件站尚待部署，應用程式管理仍可在本站使用。",
+    partialLoadError: "部分存檔或授權載入失敗，請重試。已載入的授權仍可撤銷。",
+    appsTitle: "應用程式清單", createTitle: "建立應用程式", createHint: "只需輸入應用程式名稱，建立時會自動啟用所有可用權限與地區。",
+    permissionsHint: "可用權限會自動啟用；讀取使用者存檔仍需使用者明確授權。",
+    scopesLabel: "權限範圍", regionsLabel: "地區", scopesCount: "項權限", regionsCount: "個地區", keysCount: "個有效金鑰",
+    loading: "正在載入…", retry: "重試", permissions: "權限與地區", keysTitle: "金鑰", emptyKeys: "尚無有效金鑰。", keysLoadError: "金鑰清單載入失敗，無法確認是否有有效金鑰。",
+    createdKeyFailed: "應用程式已建立，但無法簽發第一個金鑰。請在詳細資訊區域重試。", copyFailed: "複製失敗，請手動選取並複製。",
+    confirm: "確認", confirmRotateTitle: "確認輪替金鑰", confirmRevokeTitle: "確認撤銷", applicationFound: "已找到應用程式", currentGrants: "目前授權", saveServer: "存檔伺服器",
+    overviewTitle: "帳號概覽", gameAccountsTitle: "遊戲帳號", authorizationsTitle: "存檔授權", securitySectionTitle: "帳號安全",
     title: "開放平台", pageDescription: "在 Moenotes 開放平台建立與管理開發者應用程式，取得 clientID 與 API 金鑰；使用者的存檔授權在帳號頁管理。",
     docs: {
       title: "開放平台接入文件",
