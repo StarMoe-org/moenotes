@@ -2045,6 +2045,7 @@ export const enUS = {
     disclaimer: "Materials archived in this notebook are presented solely for display and appreciation. Game copyrights belong to Bushiroad / Craft Egg / Ishimori. This is an unofficial fan-made notebook crafted with love to cherish every memory of music and youth.",
     copyright: "© 2026 Moenotes · A Notebook of Girls and Starlight",
     legal: "Legal",
+    version: "Version",
   },
   stamps: {
     fallbackNameNoChar: "Sticker #{id}",

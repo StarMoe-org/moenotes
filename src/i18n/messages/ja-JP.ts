@@ -2,17 +2,7 @@ import type { MessageTree } from "@/i18n/translate";
 
 export const jaJP = {
   openPlatform: {
-    docsMoved: "API ドキュメントは専用サイトへ移転しました。", docsPending: "ドキュメントサイトは公開準備中です。アプリの管理は引き続きこちらで利用できます。",
-
-    title: "オープンプラットフォーム", pageDescription: "開発者アプリを管理します。ユーザーのセーブ許可はアカウントページにあります。",
-    partialLoadError: "一部のセーブや許可を読み込めませんでした。再試行してください。表示済みの許可は取り消せます。",
-    appsTitle: "アプリ", createTitle: "アプリを作成", createHint: "アプリ名を入力するだけで、作成時に利用可能なすべての権限とリージョンが自動で有効になります。",
-    permissionsHint: "利用可能な権限は自動で有効になります。ユーザーのセーブの読み取りには明示的な許可が必要です。",
-    scopesLabel: "スコープ", regionsLabel: "リージョン", scopesCount: "スコープ", regionsCount: "リージョン", keysCount: "有効なキー",
-    loading: "読み込み中…", retry: "再試行", permissions: "権限とリージョン", keysTitle: "キー", emptyKeys: "有効なキーはありません。", keysLoadError: "キー一覧を読み込めないため、空として表示していません。",
-    createdKeyFailed: "アプリは作成されましたが、最初のキーを発行できませんでした。詳細欄から再試行してください。", copyFailed: "コピーに失敗しました。手動で選択してコピーしてください。",
-    confirm: "確認", confirmRotateTitle: "キーのローテーションを確認", confirmRevokeTitle: "取り消しを確認", applicationFound: "アプリが見つかりました", currentGrants: "現在の許可", saveServer: "セーブサーバー",
-    overviewTitle: "アカウント概要", gameAccountsTitle: "ゲームアカウント", authorizationsTitle: "セーブの許可", securitySectionTitle: "アカウントの安全",
+    title: "オープンプラットフォーム", pageDescription: "Moenotes オープンプラットフォームで開発者アプリを作成・管理し、clientID と API キーを取得します。ユーザーのセーブ許可はアカウントページで管理します。",
     docs: {
       title: "オープンプラットフォーム API ガイド",
       description: "Moenotes API で公開プロフィール、ランキング、ガチャ情報、許可された gzip セーブを取得します。",
@@ -2081,6 +2071,7 @@ export const jaJP = {
     disclaimer: "本手帳に収めた素材は展示および鑑賞のみを目的としており、ゲームの著作権はすべて Bushiroad / Craft Egg / Ishimori に帰属します。音楽と少女たちのかけがえのない記憶を分かち合うため、ファンが真心を込めて編んだ非公式ノートです。",
     copyright: "© 2026 Moenotes · 少女と星の光の手帳",
     legal: "規約など",
+    version: "バージョン",
   },
   stamps: {
     fallbackNameNoChar: "スタンプ #{id}",

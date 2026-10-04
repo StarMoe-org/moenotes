@@ -20,7 +20,9 @@
     "lint:emoji": "node scripts/scan-emoji.mjs",
     "fonts:nowar": "python scripts/subset-nowar-font.py",
     "fonts:inspect": "python scripts/subset-nowar-font.py --inspect",
-    "sync:chart-renderer": "node scripts/sync-chart-renderer.mjs"
+    "sync:chart-renderer": "node scripts/sync-chart-renderer.mjs",
+    "release": "bun scripts/release.mjs",
+    "prepare": "git config core.hooksPath .githooks 2>/dev/null || true"
   },
   "dependencies": {
     "@astrojs/react": "7.0.0",
@@ -34,8 +36,11 @@
   },
   "devDependencies": {
     "@astrojs/check": "0.9.10",
+    "@commitlint/cli": "21.2.3",
+    "@commitlint/config-conventional": "21.2.3",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "git-cliff": "2.14.2",
     "typescript": "^5.9.3"
   },
   "patchedDependencies": {

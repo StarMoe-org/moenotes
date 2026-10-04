@@ -20,6 +20,12 @@ const exploreLinks = [
   { id: "asset-viewer", labelKey: "nav.items.assetViewer" },
 ];
 
+// Release and commit this build comes from; they link to the repository when it is configured.
+const build = __MOENOTES_BUILD__;
+const versionTag = `v${build.version}`;
+const shortRevision = build.revision.slice(0, 7);
+const repository = siteConfig.repository;
+
 const legalLinks = [
   { id: "license", labelKey: "nav.items.license" },
   { id: "terms", labelKey: "nav.items.terms" },
@@ -179,6 +185,20 @@ const legalLinks = [
         <a href={localizePath(getRoutePathById("open-platform"), locale)} class="mn-focus font-bold hover:text-[var(--mn-accent-deep)]">{t(locale, "openPlatform.title")}</a>
       </nav>
       {t(locale, "footer.disclaimer")}
+      <p class="mt-3 font-mono text-[11px] text-[var(--mn-text-muted)]/70">
+        {t(locale, "footer.version")}{" "}
+        {repository ? (
+          <a href={`${repository}/releases/tag/${versionTag}`} target="_blank" rel="noopener noreferrer" class="mn-focus hover:text-[var(--mn-accent-deep)]">{versionTag}</a>
+        ) : versionTag}
+        {shortRevision && (
+          <>
+            {" · "}
+            {repository ? (
+              <a href={`${repository}/commit/${build.revision}`} target="_blank" rel="noopener noreferrer" class="mn-focus hover:text-[var(--mn-accent-deep)]">{shortRevision}</a>
+            ) : shortRevision}
+          </>
+        )}
+      </p>
     </div>
   </div>
 </footer>

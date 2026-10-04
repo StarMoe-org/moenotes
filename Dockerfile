@@ -13,6 +13,13 @@ COPY patches/ ./patches/
 RUN bun install --frozen-lockfile
 
 COPY . .
+
+# The commit the footer names; the image has no .git. Zeabur provides ZEABUR_GIT_COMMIT_SHA at build time, other
+# builds pass --build-arg MOENOTES_REVISION=$(git rev-parse HEAD).
+ARG ZEABUR_GIT_COMMIT_SHA=""
+ARG MOENOTES_REVISION=${ZEABUR_GIT_COMMIT_SHA}
+ENV MOENOTES_REVISION=${MOENOTES_REVISION}
+
 # Offline smoke test of the server: a broken server fails the image build, so the running deployment stays up.
 RUN bun server/main.ts --self-check
 

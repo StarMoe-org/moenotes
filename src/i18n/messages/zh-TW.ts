@@ -2,17 +2,7 @@ import type { MessageTree } from "@/i18n/translate";
 
 export const zhTW = {
   openPlatform: {
-    docsMoved: "API 文件已遷移至獨立文件站。", docsPending: "獨立文件站等待部署中，應用程式管理仍可在本站使用。",
-
-    title: "開放平台", pageDescription: "開發者應用程式管理。使用者的存檔授權在帳號頁。",
-    partialLoadError: "部分存檔或授權載入失敗，請重試。已載入的授權仍可撤銷。",
-    appsTitle: "應用程式", createTitle: "建立應用程式", createHint: "只需填寫應用程式名稱，建立時自動啟用全部可用權限與地區。",
-    permissionsHint: "可用權限自動啟用；讀取使用者存檔仍需使用者明確授權。",
-    scopesLabel: "權限範圍", regionsLabel: "地區", scopesCount: "項權限", regionsCount: "個地區", keysCount: "把有效金鑰",
-    loading: "載入中…", retry: "重試", permissions: "權限與地區", keysTitle: "金鑰", emptyKeys: "目前沒有有效金鑰。", keysLoadError: "金鑰清單載入失敗，因此不會假裝是空清單。",
-    createdKeyFailed: "應用程式已建立，但第一把金鑰簽發失敗。請在詳細資料區重試。", copyFailed: "複製失敗，請手動選取並複製。",
-    confirm: "確認", confirmRotateTitle: "確認輪替金鑰", confirmRevokeTitle: "確認撤銷", applicationFound: "已找到應用程式", currentGrants: "目前授權", saveServer: "存檔伺服器",
-    overviewTitle: "帳號概覽", gameAccountsTitle: "遊戲帳號", authorizationsTitle: "存檔授權", securitySectionTitle: "帳號安全",
+    title: "開放平台", pageDescription: "在 Moenotes 開放平台建立與管理開發者應用程式，取得 clientID 與 API 金鑰；使用者的存檔授權在帳號頁管理。",
     docs: {
       title: "開放平台接入文件",
       description: "透過 Moenotes API 接入公開玩家資料、排行榜、卡池資料與經過使用者授權的 gzip 存檔下載。",
@@ -2178,6 +2168,7 @@ export const zhTW = {
     disclaimer: "本手帳收錄素材僅作展示與欣賞，遊戲相關版權皆歸屬於 Bushiroad / Craft Egg / Ishimori。這是一個由同好傾心搭建的非官方粉絲筆記本，願與你一同珍藏每一段關於音樂與少女的記憶。",
     copyright: "© 2026 Moenotes · 少女與星光的手帳",
     legal: "法律資訊",
+    version: "版本",
   },
   stamps: {
     fallbackNameNoChar: "貼紙 #{id}",
