@@ -122,7 +122,7 @@ The caller supplies `datasetId` and `server`. `declared` holds the Box's VIP ran
 - **Linked save** (`gameSaveAccountJson`): `_player` is the downloaded save text itself, inserted by string concatenation, so int64 values above 2^53 keep every digit. Every coverage entry is `complete`, `assumptions` is empty and `revision` is the save's SHA-256.
 - **Screenshots and manual answers** (`boxAccountJson`): `_player` is assembled from the Box. Unknown values are `null`. A known card level or character rank becomes the cumulative experience that level or rank needs, and an assumption records it with its path. IDs are written as integer tokens. Coverage follows the Box's declarations: member and Snap completeness, character-rank and furniture coverage, and memory as `complete` once its progress is answered.
 
-The Worker request carries this text as `accountJson` (`src/lib/deck/runtime-plan.ts`); its answer has the format `ournotes-deck.account-recommendation/1`.
+The Worker run message carries this text as `accountJson` (`docs/deck-worker.md`); its answer has the format `ournotes-deck.account-recommendation/1`.
 
 ## Fixed comparison team
 

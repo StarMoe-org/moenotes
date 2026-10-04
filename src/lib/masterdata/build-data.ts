@@ -35,6 +35,7 @@ import {
   type RawMemberCardRank,
 } from "@/lib/cards/growth";
 import type { DeckCardLookup } from "@/lib/game-api/music-ranking";
+import type { DeckEvent } from "@/lib/deck/goals";
 import { buildSupportCardGrowth, type RawSupportCardRank, type SupportCardGrowth } from "@/lib/support-cards/growth";
 import { normalizeCharacters, type CharacterViewModel, type RawCharacter as RawCharacterDetail } from "@/lib/characters/data";
 import { normalizeSupportCards, type RawSupportCard, type SupportCardViewModel } from "@/lib/support-cards/data";
@@ -558,6 +559,21 @@ function eventsOn(server: GameServer, locale: AppLocale): Promise<EventViewModel
 
 export function getBuildEvents(locale: AppLocale): Promise<ServerFaceted<EventViewModel>[]> {
   return mergedList(`events:${locale}`, (server) => eventsOn(server, locale), (event) => event.id);
+}
+
+interface RawChallengeMusic { id: number; eventId: number; liveMusicId: number }
+
+/** Per server, the events the deck page offers event goals for, with their challenge songs. */
+export function getBuildDeckEvents(locale: AppLocale): Promise<{ server: GameServer; events: DeckEvent[] }[]> {
+  return memo(`deck-events:${locale}`, async () => (await eachServer(async (server) => {
+    const [events, challengeMusics, summaries] = await Promise.all([
+      table<RawEvent>("MasterEvent.json", server), table<RawChallengeMusic>("MasterChallengeMusic.json", server), eventsOn(server, locale)]);
+    return events._allData.map((event): DeckEvent => ({
+      id: event.id, name: summaries.find((summary) => summary.id === event.id)?.name ?? String(event.id), startAt: event.startAt, endAt: event.endAt,
+      itemId: event.eventItemId || null,
+      challengeMusics: challengeMusics._allData.filter((row) => row.eventId === event.id).map((row) => ({ id: row.id, musicId: row.liveMusicId })),
+    }));
+  })).map(([server, events]) => ({ server, events })));
 }
 
 export function getBuildEventDetail(locale: AppLocale, eventId: number): Promise<ServerFacetedValue<EventDetailViewModel> | null> {

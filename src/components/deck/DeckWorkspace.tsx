@@ -12,6 +12,13 @@ import { ContentServerProvider, useContentServer } from "@/lib/servers/use-conte
 import { mergeBoxes, parseBox, type BoxCard, type CardBox, type CardFieldName, type CardKind } from "@/lib/box/model";
 import { answerDeckFields } from "@/lib/box/deck-answers";
 import { createDeckPreview } from "@/lib/box/deck-preview";
+import { boxAccountJson, gameSaveAccountJson } from "@/lib/deck/account-envelope";
+import { CHALLENGE_POINT_COSTS, DECK_VENUES, DEFAULT_DECK_GOAL, EVENT_GOALS, EVERYDAY_GOALS, MAX_BOOST, computes, computesGoal, defaultDeckGoalInput, goalGap, heldEvent, isEventGoal,
+  playsGekisou, readsAccuracy, recommendationRequest, solverGoalKind, type ChallengePointCost, type DeckEvent, type DeckGoal, type DeckGoalInput, type DeckVenue } from "@/lib/deck/goals";
+import { parseMasterDate } from "@/lib/schedule";
+import { safeGetLocalStorage, safeSetLocalStorage } from "@/lib/storage/safe-storage";
+import { useDeckSolver } from "./use-deck-solver";
+import DeckResult from "./DeckResult";
 import { useCardBox } from "@/components/box/use-card-box";
 import BoxManager, { BoxArtwork, BoxCardEditor, cardTitle, cardSubtitle } from "@/components/box/BoxManager";
 import PlayerStateManager from "@/components/box/PlayerStateManager";
@@ -47,9 +54,18 @@ export interface DeckWorkspaceProps {
   recognitionSources?: readonly RecognitionSourceStamp[];
   /** Per server, the Master subset a linked game save is read with. */
   saveTables?: readonly GameSaveTables[];
+  /** Per server, the events that offer event goals. */
+  deckEvents?: readonly { server: GameServer; events: readonly DeckEvent[] }[];
 }
-const goals = ["score", "gekisou", "stable", "skip", "power", "event"] as const;
-type Goal = typeof goals[number];
+const GOAL_STORAGE_KEY = "moenotes.deck.goal";
+const GOAL_ICONS: Readonly<Record<DeckGoal, string>> = {
+  challenge: "M5 21V4m0 0h11l-2 4 2 4H5", eventPoints: "m12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7Z", eventItems: "M4 8h16v12H4zM2 4h20v4H2zM12 4v16",
+  battle: "M4 19 19 4M9 4h10v10", free: "m8 4 12 8-12 8V4Z", power: "m12 3 9 9-9 9-9-9 9-9Z",
+};
+function readStoredGoal(): DeckGoal {
+  const value = safeGetLocalStorage(GOAL_STORAGE_KEY);
+  return value && ([...EVENT_GOALS, ...EVERYDAY_GOALS] as string[]).includes(value) ? value as DeckGoal : DEFAULT_DECK_GOAL;
+}
 export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const { locale, servers } = props;
   const [page, setPage] = useState(props.page);
@@ -80,18 +96,16 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
     try { return { context: createRecognitionContext(rawRecognitionSource, catalog), issue: "" }; }
     catch (error) { return { context: undefined, issue: error instanceof Error ? error.message : "Invalid card catalogue" }; }
   }, [rawRecognitionSource, catalog]);
-  const [goal, setGoal] = useState<Goal>("score");
-  const [song, setSong] = useState("");
-  const [difficulty, setDifficulty] = useState<MusicDifficulty>("expert");
-  const [scene, setScene] = useState("gekisou");
-  const [rank, setRank] = useState("1");
-  const [just, setJust] = useState(95);
-  const [great, setGreat] = useState(3);
-  const [threshold, setThreshold] = useState("1000000");
-  const [duration, setDuration] = useState("10");
+  const [goalInput, setGoalInput] = useState<DeckGoalInput>(() => defaultDeckGoalInput());
+  const updateGoal = (patch: Partial<DeckGoalInput>) => setGoalInput(previous => ({ ...previous, ...patch }));
+  useEffect(() => { updateGoal({ goal: readStoredGoal() }); }, []);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 60_000); return () => clearInterval(timer); }, []);
+  const event = useMemo(() => heldEvent(props.deckEvents?.find(value => value.server === server)?.events ?? [], now, parseMasterDate), [props.deckEvents, server, now]);
+  const solver = useDeckSolver(server, page === "deck");
+  const capabilities = solver.engine.status === "ready" ? solver.engine.capabilities : null;
   const [excluded, setExcluded] = useState<string[]>([]);
   const [required, setRequired] = useState<string[]>([]);
-  const [step, setStep] = useState<"goal" | "need" | "result">("goal");
   const [setup, setSetup] = useState(false);
   const [management, setManagement] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -109,11 +123,6 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const [editingCardKey, setEditingCardKey] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [choice, setChoice] = useState<"local" | "temporary">("local");
-  const [resultSnapshot, setResultSnapshot] = useState("");
-  const [resultBox, setResultBox] = useState<CardBox | null>(null);
-  const [resultConstraints, setResultConstraints] = useState<{ excluded: string[]; required: string[] }>({ excluded: [], required: [] });
-  const [questionKeys, setQuestionKeys] = useState<string[]>([]);
-  const [sameSkill, setSameSkill] = useState<Record<string, boolean>>({});
   const [baselineMembers, setBaselineMembers] = useState<string[]>(Array(5).fill(""));
   const [baselineSnaps, setBaselineSnaps] = useState<(string | null)[]>(Array(5).fill(null));
   const [baselineSaved, setBaselineSaved] = useState(false);
@@ -121,11 +130,8 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const [baselineSaveError, setBaselineSaveError] = useState(false);
   const baselineEditorEpoch = useRef(0);
   const [baselineTarget, setBaselineTarget] = useState<{ slot: number; kind: CardKind } | null>(null);
-  const [copied, setCopied] = useState(false);
-  const questionPanel = useRef<HTMLDivElement>(null);
+  const [runError, setRunError] = useState("");
   const teamPanel = useRef<HTMLDivElement>(null);
-  const fingerprint = JSON.stringify([server, box?.id, box?.revision, mode, goal, song, difficulty, scene, rank, just, great, threshold, duration, excluded, required]);
-  const stale = step === "result" && resultSnapshot !== fingerprint;
   const ownedMembers = box?.cards.filter(card => card.kind === "member") ?? [];
   const ownedSnaps = box?.cards.filter(card => card.kind === "snap") ?? [];
   const baselineCatalog = useMemo(() => {
@@ -139,11 +145,8 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
     && baselineSnaps.length === 5 && baselineSnaps.every(id => id === null || baselineCatalog.snaps.some(card => String(card.id) === id))
     && new Set(baselineSnaps.filter(id => id !== null)).size === baselineSnaps.filter(id => id !== null).length;
   const baselineChanged = options && (baselineScope?.server !== server || baselineScope?.boxId !== box?.id || baselineScope?.revision !== box?.revision);
-  // An owned team preview, never an evaluated or ranked recommendation.
-  const sampleBox = step === "result" ? resultBox : box;
-  const sampleExcluded = step === "result" ? resultConstraints.excluded : excluded;
-  const sampleRequired = step === "result" ? resultConstraints.required : required;
-  const preview = createDeckPreview(sampleBox, catalog, { excluded: sampleExcluded, required: sampleRequired });
+  // The owned team shown before a run: the saved formation, or the first eligible cards; never a ranked recommendation.
+  const preview = createDeckPreview(box, catalog, { excluded, required });
   const sample = preview.members.filter((card): card is BoxCard => card !== null);
   const sampleSlots = Array.from({ length: 5 }, (_, index) => ({
     member: members.find(card => String(card.id) === preview.members[index]?.identity.value),
@@ -151,18 +154,42 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
     memberLevel: preview.members[index]?.fields.level.value ?? undefined, memberRank: preview.members[index]?.fields.rank.value ?? undefined,
     supportLevel: preview.snaps[index]?.fields.level.value ?? undefined, supportRank: preview.snaps[index]?.fields.rank.value ?? undefined,
   }));
-  const askedFields: CardFieldName[] = ["level", "awake", "rank", ...(goal === "score" || goal === "stable" || goal === "gekisou" ? ["liveSkillLevel" as const] : []),
-    ...(goal === "gekisou" || ((goal === "score" || goal === "stable") && scene === "gekisou") ? ["gekisouSkillLevel" as const] : [])];
-  const currentTeam = createDeckPreview(box, catalog, { excluded, required });
-  // A linked save answers for its cards; values it leaves unknown are not asked here.
-  const missing = linked ? [] : currentTeam.members.filter((card): card is BoxCard => card !== null)
-    .filter(card => askedFields.some(name => card.fields[name].value === null || card.fields[name].needsReview || card.fields[name].status === "conflict"));
-  const questions = step === "need" ? ownedMembers.filter(card => questionKeys.includes(card.key)) : missing;
-  function showResult() { setResultSnapshot(fingerprint); setResultBox(box ? structuredClone(box) : null); setResultConstraints({ excluded: [...excluded], required: [...required] }); setStep("result"); setCopied(false);
-    requestAnimationFrame(() => teamPanel.current?.closest<HTMLElement>(".dc-team")?.scrollIntoView({ block: "start" })); }
-  async function answerSkills(keys: string[], name: CardFieldName, value: number | null) {
+  /** Event goals need a held event; accuracy the engine does not compute runs at the default play style. */
+  const offered = (value: DeckGoal) => (!isEventGoal(value) || !!event) && (!capabilities || computesGoal(capabilities, value));
+  const goal: DeckGoal = offered(goalInput.goal) ? goalInput.goal : [...EVERYDAY_GOALS, ...EVENT_GOALS].find(offered) ?? DEFAULT_DECK_GOAL;
+  const effectiveInput: DeckGoalInput = { ...goalInput, goal,
+    greatPercent: capabilities && !capabilities.accuracy.great ? 0 : goalInput.greatPercent,
+    justPercent: capabilities && !capabilities.accuracy.just ? 100 : goalInput.justPercent };
+  const gap = goalGap(effectiveInput, event);
+  const supported = !capabilities || computes(capabilities, effectiveInput);
+  const idsOf = (keys: readonly string[], kind: CardKind) => keys.flatMap(key => {
+    const card = box?.cards.find(item => item.key === key && item.kind === kind);
+    return card?.identity.value ? [card.identity.value] : [];
+  });
+  const constraints = { includeMembers: idsOf(required, "member"), excludeMembers: idsOf(excluded, "member"), excludeSnaps: idsOf(excluded, "snap") };
+  const runKey = JSON.stringify([server, box?.id, box?.revision, stored?.save?.sha256 ?? null, solver.engine.status === "ready" ? solver.engine.datasetId : null, effectiveInput, constraints, event?.id ?? null]);
+  const job = solver.job;
+  const stale = job.status !== "idle" && job.status !== "running" && job.key !== runKey;
+  function runSolver() {
+    setRunError("");
+    if (solver.engine.status !== "ready" || !box || gap || !supported) return;
+    try {
+      const target = { datasetId: solver.engine.datasetId, server: gameSaveServer(server) };
+      let accountJson: string;
+      if (stored?.save) {
+        if (linkedSave.state.status !== "ready") throw new Error(tr("solver.saveNotReady"));
+        accountJson = gameSaveAccountJson(target, stored, linkedSave.state.save);
+      } else {
+        if (!saveTables) throw new Error(tr("solver.tablesUnavailable"));
+        accountJson = boxAccountJson(target, box, saveTables);
+      }
+      solver.run(runKey, accountJson, recommendationRequest(effectiveInput, { event, now: Date.now(), constraints }));
+      requestAnimationFrame(() => teamPanel.current?.closest<HTMLElement>(".dc-team")?.scrollIntoView({ block: "start", behavior: "smooth" }));
+    } catch (error) { setRunError(error instanceof Error ? error.message : String(error)); }
+  }
+  async function answerAll(keys: string[], name: CardFieldName, value: number) {
     if (!stored || linked) return;
-    await storage.commit(answerDeckFields(stored, keys, name, value, askedFields.includes("gekisouSkillLevel") ? sameSkill : {}));
+    await storage.commit(answerDeckFields(stored, keys, name, value, {}));
   }
   function changePage(event: MouseEvent<HTMLAnchorElement>, next: "deck" | "box") {
     if (mode !== "temporary" || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -190,15 +217,15 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
     const saved = await storage.commit({ ...stored, baseline: { members: baselineMembers, snaps: baselineSnaps } }, baselineScope.revision);
     if (epoch !== baselineEditorEpoch.current) return;
     setBaselineSaveError(!saved); setBaselineSaved(saved);
-    if (saved) { setBaselineScope({ ...baselineScope, revision: baselineScope.revision + 1 }); setStep("goal"); }
+    if (saved) setBaselineScope({ ...baselineScope, revision: baselineScope.revision + 1 });
   }
   useEffect(() => {
     const back = () => setPage(normalizePathname(window.location.pathname) === href("card-box") ? "box" : "deck");
     window.addEventListener("popstate", back);
     return () => window.removeEventListener("popstate", back);
   }, [locale]);
-  useEffect(() => { setStep("goal"); setExcluded([]); setRequired([]); setSong(""); setManagement(false); setSetup(false); setDeleting(false); setImporting(false);
-    baselineEditorEpoch.current++; setOptions(false); setBaselineTarget(null); setBaselineScope(null); setEditingCardKey(null); setPlayerSettings(false); setGuideOpen(false); setBackupError(false); setSongPicker(false); setQuestionKeys([]); setSameSkill({}); setConstraintQuery(""); setConstraintFilter("all"); setPendingScreenshots([]); setDraggingScreenshots(false); setSavePicker(false); }, [server]);
+  useEffect(() => { setExcluded([]); setRequired([]); updateGoal({ musicId: null, challengeMusicId: null }); setRunError(""); setManagement(false); setSetup(false); setDeleting(false); setImporting(false);
+    baselineEditorEpoch.current++; setOptions(false); setBaselineTarget(null); setBaselineScope(null); setEditingCardKey(null); setPlayerSettings(false); setGuideOpen(false); setBackupError(false); setSongPicker(false); setConstraintQuery(""); setConstraintFilter("all"); setPendingScreenshots([]); setDraggingScreenshots(false); setSavePicker(false); }, [server]);
   function openScreenshotImport() { if (linked) return; setManagement(false); setGuideOpen(false); setImporting(true); }
   function openGuide() { setManagement(false); setGuideOpen(true); }
   function openStorage() { setChoice(mode); setSetup(true); }
@@ -286,14 +313,28 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const saveBanner = stored?.save ? <GameSaveBanner locale={locale} link={stored.save} state={linkedSave.state} derivation={derivation} list={saveList} busy={busy}
     returnTo={returnTo} onRetry={linkedSave.retry} onUpdate={updateGameSave} onUnlink={unlinkGameSave} /> : null;
   const saveNotice = saveBanner ?? <GameSaveHint locale={locale} server={server} list={saveList} returnTo={returnTo} />;
-  function reviewDetails() {
-    setQuestionKeys(missing.map(card => card.key)); setStep("need");
-    requestAnimationFrame(() => questionPanel.current?.closest<HTMLElement>(".dc-questions")?.scrollIntoView({ block: "start" }));
-  }
-  const selectedSong = songs.find(item => String(item.id) === song);
-  const needsSong = goal === "score" || goal === "gekisou" || goal === "stable";
+  const selectedSong = songs.find(item => item.id === goalInput.musicId);
   const composer = (key: string, values?: Record<string, string | number>) => tr(`composer.${key}`, values);
   const collection = (key: string, values?: Record<string, string | number>) => tr(`collection.${key}`, values);
+  function goalCard(value: DeckGoal) {
+    const coming = !!capabilities && !computesGoal(capabilities, value);
+    return { id: value, title: tr(`goals.${value}`), description: tr(`goalNotes.${value}`), disabled: coming, badge: coming ? tr("comingSoon") : undefined,
+      icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d={GOAL_ICONS[value]} /></svg> };
+  }
+  const formatEnd = (endAt: string) => {
+    const time = parseMasterDate(endAt);
+    return time === null ? endAt : new Intl.DateTimeFormat(locale, { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(time);
+  };
+  const engine = solver.engine;
+  const saveReady = !linked || linkedSave.state.status === "ready";
+  const canRun = engine.status === "ready" && supported && !gap && saveReady;
+  const blocker = engine.status === "loading" ? tr("solver.loading") : engine.status === "unavailable" ? tr(`solver.unavailable.${engine.reason}`)
+    : engine.status === "failed" ? "" : !supported ? tr("comingSoon") : gap ? tr(`solver.gap.${gap}`) : !saveReady ? tr("solver.saveNotReady") : "";
+  function engineNotice() {
+    if (engine.status === "failed") return <p className="dc-engine-note" role="alert">{tr(`solver.failure.${engine.code}`)} <button type="button" onClick={solver.retry}>{tr("retry")}</button></p>;
+    if (runError) return <p className="dc-engine-note" role="alert">{runError}</p>;
+    return null;
+  }
   function toggle(values: string[], key: string, update: (value: string[]) => void) { update(values.includes(key) ? values.filter(value => value !== key) : [...values, key]); }
   return <ContentServerProvider server={server} servers={servers}><div className={`dw-workspace ${page === "box" ? "dw-collection" : "dw-deck"}`} data-testid="deck-workspace">
     <header className="dw-header"><div><h1>{tr(page === "box" ? "boxTitle" : "title")}</h1><p>{page === "box" ? tr("boxDescription") : composer("workspaceNote")}</p></div><div className="dw-actions"><label className="dw-server">{tr("server")}<select aria-label={tr("server")} value={server} disabled={busy} onChange={event => pickServer(event.target.value as GameServer)}>{servers.map(value => <option key={value} value={value}>{t(locale, `gameServer.names.${value}`)}</option>)}</select></label><a className="dw-button" href={href(page === "box" ? "deck" : "card-box")} onClick={event => changePage(event, page === "box" ? "deck" : "box")}>{tr(page === "box" ? "goDeck" : "boxTitle")}</a></div></header>
@@ -318,9 +359,12 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
       <DeckComposer
         labels={{ goal: composer("goalTitle"), conditions: composer("conditionsTitle"), collection: composer("collectionTitle"),
           team: composer("teamTitle"), cards: composer("cardsTitle"), questions: composer("questionsTitle") }}
-        goals={goals.map((value, index) => ({ id: value, title: tr(`goals.${value}`), description: tr(`goalNotes.${value}`), disabled: value === "event",
-          icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d={["M4 19 19 4M9 4h10v10", "m12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7Z", "M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16Zm0 5a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z", "m8 4 12 8-12 8V4Z", "m12 3 9 9-9 9-9-9 9-9Z", "M4 6h16M4 12h16M4 18h16"][index]} /></svg> }))}
-        selectedGoal={goal} onGoalChange={value => { setGoal(value as Goal); setStep("goal"); }}
+        goalGroups={[
+          { id: "event", title: event ? tr("goalGroups.event", { name: event.name, end: formatEnd(event.endAt) }) : tr("goalGroups.eventNone"),
+            goals: event ? EVENT_GOALS.map(value => goalCard(value)) : [] },
+          { id: "everyday", title: tr("goalGroups.everyday"), goals: EVERYDAY_GOALS.map(value => goalCard(value)) },
+        ]}
+        selectedGoal={goal} onGoalChange={value => { updateGoal({ goal: value as DeckGoal }); safeSetLocalStorage(GOAL_STORAGE_KEY, value); }}
         collection={<div className="dc-collection-summary">
           <div className="dc-collection-stats"><span><strong>{ownedMembers.length}</strong> {tr("member")}</span><span><strong>{ownedSnaps.length}</strong> {tr("snap")}</span>
             {box && <span className="dc-collection-source" data-source={linked ? "game-save" : "box"}><CollectionIcon name={linked ? "game" : "image"} />{tr(linked ? "gameSave.sourceSave" : "gameSave.sourceBox")}
@@ -332,60 +376,67 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
             {box && <button type="button" disabled={busy} onClick={() => setManagement(true)}>{tr("manage")}</button>}</div>
         </div>}
         conditions={<>
-          {needsSong ? <>
-            <button type="button" className="dc-song-button" onClick={() => setSongPicker(true)} aria-haspopup="dialog">
+          {goal === "eventPoints" || goal === "eventItems" ? <label>{tr("venue")}<select aria-label={tr("venue")} value={goalInput.venue} onChange={change => updateGoal({ venue: change.target.value as DeckVenue })}>
+            {DECK_VENUES.map(value => <option key={value} value={value} disabled={!!capabilities && !computes(capabilities, { goal, venue: value })}>{tr(`venues.${value}`)}</option>)}</select></label> : null}
+          {solverGoalKind(effectiveInput) === "challengeLive" ? <div className="dc-challenge-songs" role="group" aria-label={tr("challengeSong")}>
+            {(event?.challengeMusics ?? []).map(row => {
+              const music = songs.find(item => item.id === row.musicId);
+              return <button type="button" key={row.id} className="dc-song-button" aria-pressed={goalInput.challengeMusicId === row.id} onClick={() => updateGoal({ challengeMusicId: row.id })}>
+                {music ? <img className="dc-song-cover" src={music.jacketUrl} alt="" /> : <span className="dc-song-cover" aria-hidden="true" />}
+                <span className="dc-song-summary"><strong>{music?.title ?? row.musicId}</strong></span></button>;
+            })}</div>
+            : (goal !== "power" || goalInput.powerSong) && <button type="button" className="dc-song-button" onClick={() => setSongPicker(true)} aria-haspopup="dialog">
               {selectedSong ? <img className="dc-song-cover" src={selectedSong.jacketUrl} alt="" /> : <svg className="dc-song-cover" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M12 23V9l15-3v14M12 9l15-3M12 23c0 2-2 4-4 4s-4-1-4-3 2-4 4-4 4 1 4 3Zm15-3c0 2-2 4-4 4s-4-1-4-3 2-4 4-4 4 1 4 3Z" /></svg>}
               <span className="dc-song-summary"><small>{tr("song")}</small><strong>{selectedSong?.title ?? composer("emptySong")}</strong></span>
-            </button>
-            <div className="dc-field-pair"><label>{tr("difficulty")}<select aria-label={tr("difficulty")} value={difficulty} onChange={event => setDifficulty(event.target.value as MusicDifficulty)}>
-              {MUSIC_DIFFICULTIES.filter(value => !selectedSong || selectedSong.difficulties.some(entry => entry.difficulty === value)).map(value => <option key={value} value={value}>{value.toUpperCase()}</option>)}</select></label>
-              <label>{tr("scene")}<select aria-label={tr("scene")} value={goal === "gekisou" ? "gekisou" : scene} disabled={goal === "gekisou"} onChange={event => setScene(event.target.value)}><option value="free">{tr("free")}</option><option value="gekisou">{tr("gekisou")}</option></select></label></div>
-            {(scene === "gekisou" || goal === "gekisou") && <label>{tr("rankAssumption")}<select aria-label={tr("rankAssumption")} value={rank} onChange={event => setRank(event.target.value)}>{["1", "2", "3"].map(value => <option key={value} value={value}>{tr("rankN", { n: value })}</option>)}</select></label>}
-            {goal === "stable" && <label>{tr("threshold")}<input aria-label={tr("threshold")} type="number" min={1} value={threshold} onChange={event => setThreshold(event.target.value)} /></label>}
-            <details className="dc-play-style"><summary>{composer("advanced")}</summary><label>{tr("justRate", { n: just })}<input aria-label={tr("justRate", { n: just })} type="range" min={0} max={100 - great} value={just} onChange={event => setJust(Number(event.target.value))} /></label>
-              <label>{tr("greatRate", { n: great })}<input aria-label={tr("greatRate", { n: great })} type="range" min={0} max={100 - just} value={great} onChange={event => setGreat(Number(event.target.value))} /></label></details>
-          </> : <p className="dw-muted">{composer("noSongNeeded")}</p>}
+            </button>}
+          {goal !== "power" && <div className="dc-field-pair">
+            <label>{tr("difficulty")}<select aria-label={tr("difficulty")} value={goalInput.difficulty} onChange={change => updateGoal({ difficulty: change.target.value as MusicDifficulty })}>
+              {MUSIC_DIFFICULTIES.filter(value => solverGoalKind(effectiveInput) === "challengeLive" || !selectedSong || selectedSong.difficulties.some(entry => entry.difficulty === value)).map(value => <option key={value} value={value}>{value.toUpperCase()}</option>)}</select></label>
+            {(goal === "eventPoints" || goal === "eventItems") && <label>{tr("consumption")}{solverGoalKind(effectiveInput) === "challengeLive"
+              ? <select aria-label={tr("consumption")} value={goalInput.challengePoints} onChange={change => updateGoal({ challengePoints: Number(change.target.value) as ChallengePointCost })}>
+                {CHALLENGE_POINT_COSTS.map(value => <option key={value} value={value}>{tr("challengePoints", { n: value })}</option>)}</select>
+              : <select aria-label={tr("consumption")} value={goalInput.boosts} onChange={change => updateGoal({ boosts: Number(change.target.value) })}>
+                {Array.from({ length: MAX_BOOST + 1 }, (_, value) => <option key={value} value={value}>{tr("boosts", { n: value })}</option>)}</select>}</label>}
+          </div>}
+          {goal === "power" && <div className="dc-checks">
+            <label><input type="checkbox" checked={goalInput.powerSong} onChange={change => updateGoal({ powerSong: change.target.checked })} />{tr("powerSong")}</label>
+            {event && <label><input type="checkbox" checked={goalInput.eventParameter} onChange={change => updateGoal({ eventParameter: change.target.checked })} />{tr("powerEvent")}</label>}
+          </div>}
+          {playsGekisou(effectiveInput) && <p className="dw-muted">{tr("rankFixed")}</p>}
+          {readsAccuracy(effectiveInput) && <details className="dc-play-style"><summary>{composer("advanced")}</summary>
+            <label>{tr("greatRate", { n: effectiveInput.greatPercent })}<input aria-label={tr("greatRate", { n: effectiveInput.greatPercent })} type="range" min={0} max={playsGekisou(effectiveInput) ? 100 - effectiveInput.justPercent : 100}
+              value={effectiveInput.greatPercent} disabled={!!capabilities && !capabilities.accuracy.great} onChange={change => updateGoal({ greatPercent: Number(change.target.value) })} /></label>
+            {playsGekisou(effectiveInput) && <label>{tr("justRate", { n: effectiveInput.justPercent })}<input aria-label={tr("justRate", { n: effectiveInput.justPercent })} type="range" min={0} max={100 - effectiveInput.greatPercent}
+              value={effectiveInput.justPercent} disabled={!!capabilities && !capabilities.accuracy.just} onChange={change => updateGoal({ justPercent: Number(change.target.value) })} /></label>}
+            {capabilities && (!capabilities.accuracy.great || playsGekisou(effectiveInput) && !capabilities.accuracy.just) && <p className="dw-muted">{tr("accuracyComing")}</p>}
+            {(goal === "eventPoints" || goal === "eventItems") && playsGekisou(effectiveInput) && <label>{tr("othersAverage")}<input type="number" min={0} inputMode="numeric" placeholder={tr("othersAverageSame")}
+              value={goalInput.othersAverageScore ?? ""} onChange={change => updateGoal({ othersAverageScore: change.target.value === "" ? null : Number(change.target.value) })} /></label>}
+          </details>}
           <div className="dc-condition-actions"><button type="button" disabled={!box || busy} onClick={() => openOptions("constraints")}>{composer("searchConstraints")}{required.length + excluded.length > 0 && <span> · {required.length + excluded.length}</span>}</button>
             <button type="button" disabled={!box || busy} onClick={() => setPlayerSettings(true)}>{composer("playerBonuses")}</button></div>
         </>}
         team={<div ref={teamPanel} className="dc-team-body">
-          {sample.length > 0 ? <>
+          {job.status !== "idle" ? <DeckResult locale={locale} job={job} goal={goal} stale={stale} box={box} catalog={catalog} linked={linked} busy={busy}
+            onStop={solver.stop} onRerun={runSolver} onEditCard={setEditingCardKey} onPlayer={() => setPlayerSettings(true)} onAnswerAll={(keys, name, value) => void answerAll(keys, name, value)} />
+          : sample.length > 0 ? <>
             <p className="dc-team-caption" data-team-source={preview.source}>{composer(preview.source === "baseline" ? "currentTeam" : "fromCollection")}</p>
             <div className="dc-stage"><NativeFormationGroup locale={locale} slots={sampleSlots} label={composer("teamTitle")} /></div>
             <div className="dc-slot-labels">{preview.members.map((card, index) => <div key={index} title={card ? cardTitle(card, catalog) : tr("emptySlot")}>
               <span className={index === 2 ? "dc-leader" : ""}>{index === 2 ? composer("leaderShort") : index + 1}</span>
               <strong>{card ? cardTitle(card, catalog) : tr("emptySlot")}</strong></div>)}</div>
-            {sample.length < 5 && <p className="dc-team-caption">{composer("partialTeam")}</p>}
           </> : <div className="dc-empty-team"><div className="dc-empty-slots" aria-hidden="true">{Array.from({ length: 5 }, (_, index) => <span key={index} className={index === 2 ? "is-leader" : ""}>+</span>)}</div>
             <h3>{composer("emptyTitle")}</h3><p>{composer("emptyDescription")}</p></div>}
-          {stale && <div className="dc-stale" role="status"><strong>{tr("staleTitle")}</strong><button type="button" onClick={showResult}>{composer("refreshPreview")}</button></div>}
         </div>}
-        teamActions={box && <button type="button" disabled={busy || !ownedMembers.length} onClick={() => openOptions("team")}>{composer("editTeam")}</button>}
-        notice={sample.length > 0 && <p className="dc-engine-note">{composer("engineNote")}</p>}
+        teamActions={box && job.status === "idle" && <button type="button" disabled={busy || !ownedMembers.length} onClick={() => openOptions("team")}>{composer("editTeam")}</button>}
+        notice={engineNotice()}
         primaryAction={<div className="dc-main-actions">
-          <button type="button" className="dc-primary" disabled={busy || linked && !ownedMembers.length} onClick={() => {
-            if (!ownedMembers.length) { if (canImportSave) openSavePicker(); else openScreenshotImport(); return; }
-            if (missing.length && step !== "need" && step !== "result") reviewDetails(); else showResult();
-          }}>{!ownedMembers.length ? tr(linked ? "gameSave.loadingShort" : canImportSave ? "gameSave.importAction" : "screenshotImport") : step === "need" ? composer("skipDetails") : step === "result" ? composer("refreshPreview") : missing.length ? composer("reviewDetails", { count: missing.length }) : composer("previewTeam")}</button>
-          {step === "result" && missing.length > 0 && <button type="button" onClick={reviewDetails}>{composer("reviewDetails", { count: missing.length })}</button>}
-          {step === "result" && <button type="button" disabled={stale} onClick={async () => {
-            try { await navigator.clipboard.writeText([composer("engineNote"), ...sampleSlots.map((slot, index) => `${index + 1}: ${slot.member?.characterName ?? "—"} / ${slot.support?.name ?? "—"}`)].join("\n")); setCopied(true); } catch { setCopied(false); }
-          }}>{tr(copied ? "copied" : "copyLayout")}</button>}
+          {job.status === "running" ? <button type="button" className="dc-primary" onClick={solver.stop}>{tr("solver.stop")}</button>
+            : <button type="button" className="dc-primary" disabled={busy || (!!ownedMembers.length && !canRun)} onClick={() => {
+              if (!ownedMembers.length) { if (canImportSave) openSavePicker(); else if (!linked) openScreenshotImport(); return; }
+              runSolver();
+            }}>{!ownedMembers.length ? tr(linked ? "gameSave.loadingShort" : canImportSave ? "gameSave.importAction" : "screenshotImport") : tr(job.status === "idle" ? "solver.start" : "solver.rerun")}</button>}
+          {ownedMembers.length > 0 && job.status !== "running" && blocker && <small className="dc-blocker">{blocker}</small>}
           {!ownedMembers.length && !linked && <button type="button" className="dc-manual-start" onClick={() => box ? setManagement(true) : setSetup(true)}>{composer("manualShort")}</button>}
-        </div>}
-        questions={step === "need" && <div ref={questionPanel} className="dc-question-list">
-          <p className="dc-question-intro">{tr("unknownPreserved")}</p>
-          {askedFields.includes("liveSkillLevel") && <div className="dc-bulk-skills"><strong>{tr("liveSkillLevel")}</strong><div>{([1, 5, null] as const).map(value => <button type="button" key={value ?? "clear"} disabled={busy} onClick={() => void answerSkills(questionKeys, "liveSkillLevel", value)}>{tr(value === null ? "clear" : value === 1 ? "allLv1" : "allLv5")}</button>)}</div></div>}
-          {questions.map(card => <article className="dc-question-card" key={card.key} data-card-key={card.key}>
-            <div className="dc-question-header"><BoxArtwork card={card} catalog={catalog} locale={locale} /><div><strong>{cardTitle(card, catalog)}</strong><small>{cardSubtitle(card, catalog)}</small></div>
-              <button type="button" disabled={busy} aria-label={composer("editThisCard", { name: cardTitle(card, catalog) })} onClick={() => setEditingCardKey(card.key)}>{tr("edit")}</button></div>
-            <dl className="dc-question-facts">{askedFields.filter(name => name !== "liveSkillLevel" && name !== "gekisouSkillLevel").map(name => <div key={name}><dt>{tr(name)}</dt><dd>{card.fields[name].value ?? composer("unfilled")}</dd></div>)}</dl>
-            {askedFields.includes("gekisouSkillLevel") && <label className="dc-same-skill"><input type="checkbox" checked={sameSkill[card.key] ?? false} disabled={busy} onChange={event => setSameSkill(previous => ({ ...previous, [card.key]: event.target.checked }))} />{tr("sameSkill")}</label>}
-            <div className="dc-question-skills">{(["liveSkillLevel", "gekisouSkillLevel"] as const).filter(name => askedFields.includes(name)).map(name => <div key={name} className="dc-skill-field"><strong>{tr(name)}</strong><div className="dc-skill-levels" role="group" aria-label={tr(name)}>
-              {[1, 2, 3, 4, 5].map(value => <button type="button" key={value} disabled={busy} aria-pressed={card.fields[name].value === value} onClick={() => void answerSkills([card.key], name, value)}>{value}</button>)}<button type="button" disabled={busy} aria-pressed={card.fields[name].value === null} onClick={() => void answerSkills([card.key], name, null)}>{tr("clear")}</button>
-            </div></div>)}</div>
-          </article>)}
-          <div className="dc-question-actions"><button type="button" className="dc-details-finish" disabled={busy} onClick={showResult}>{composer("previewTeam")}</button></div>
         </div>}
         cards={box && ownedMembers.length + ownedSnaps.length > 0 && <>
           <div className="dc-mini-cards">{[...ownedMembers.slice(0, 5), ...ownedSnaps.slice(0, 3)].map(card => <button type="button" className="dc-mini-card" key={card.key} disabled={busy} aria-label={composer("editThisCard", { name: cardTitle(card, catalog) })} onClick={() => setEditingCardKey(card.key)}>
@@ -398,8 +449,8 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
     <Modal historyNavigation={false} isOpen={management && box !== null} onClose={() => setManagement(false)} title={tr("boxTitle")} closeLabel={tr("close")} size="xl">{stored && box && <BoxManager key={`${server}:${stored.id}`} locale={locale} box={stored} view={linked ? box : undefined} notice={saveNotice} mode={mode} busy={busy} commit={storage.commit} playerCatalogue={playerCatalogue} onRecognize={openScreenshotImport} onImportSave={canImportSave ? openSavePicker : undefined} onGuide={openGuide} onStorage={() => { setManagement(false); openStorage(); }} onDelete={() => { setManagement(false); setDeleting(true); }} {...catalog} />}</Modal>
     {box && <BoxCardEditor locale={locale} box={box} cardKey={editingCardKey} busy={busy} commit={storage.commit} onClose={() => setEditingCardKey(null)} readOnly={linked} {...catalog} />}
     <MusicSelectDialog key={server} locale={locale} songs={songs} open={songPicker} onClose={() => setSongPicker(false)}
-      current={selectedSong ? { musicId: selectedSong.id, difficulty } : null} sortPage="deck-song"
-      onSelect={selection => { setSong(String(selection.song.id)); setDifficulty(selection.difficulty); }} />
+      current={selectedSong ? { musicId: selectedSong.id, difficulty: goalInput.difficulty } : null} sortPage="deck-song"
+      onSelect={selection => updateGoal({ musicId: selection.song.id, difficulty: selection.difficulty })} />
     <Modal historyNavigation={false} isOpen={playerSettings && box !== null} onClose={() => setPlayerSettings(false)} title={tr("playerTitle")} closeLabel={tr("close")} size="lg">
       {stored && <PlayerStateManager key={`${server}:${stored.id}`} locale={locale} box={stored} view={linked ? box ?? undefined : undefined} catalogue={playerCatalogue} busy={busy} commit={storage.commit} embedded />}
     </Modal>
@@ -414,8 +465,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
         <div className="dc-option-tabs" role="group" aria-label={composer("constraintsTitle")}>{(["all", "required", "excluded"] as const).map(value => <button type="button" key={value} aria-pressed={constraintFilter === value} onClick={() => setConstraintFilter(value)}>{composer(value === "all" ? "constraintAll" : value === "required" ? "constraintRequired" : "constraintExcluded")}</button>)}</div>
         {(box?.cards ?? []).filter(card => (constraintFilter === "all" || (constraintFilter === "required" ? required : excluded).includes(card.key))
           && `${cardTitle(card, catalog)} ${cardSubtitle(card, catalog)} ${card.identity.value ?? ""}`.toLowerCase().includes(constraintQuery.toLowerCase())).map(card => <div key={card.key} className="dc-constraint-card"><BoxArtwork card={card} catalog={catalog} locale={locale} /><div><strong>{cardTitle(card, catalog)}</strong><small>{cardSubtitle(card, catalog)}</small></div>
-            <label><input type="checkbox" checked={required.includes(card.key)} disabled={excluded.includes(card.key) || required.filter(key => box?.cards.find(other => other.key === key)?.kind === card.kind).length >= 5 && !required.includes(card.key)} onChange={() => toggle(required, card.key, setRequired)} />{tr("required")}</label><label><input type="checkbox" checked={excluded.includes(card.key)} disabled={required.includes(card.key)} onChange={() => toggle(excluded, card.key, setExcluded)} />{tr("excluded")}</label></div>)}
-        <label>{tr("searchTime")}<select value={duration} onChange={event => setDuration(event.target.value)}>{["3", "10", "30"].map(value => <option key={value} value={value}>{tr("seconds", { n: value })}</option>)}</select></label>
+            {card.kind === "member" && <label><input type="checkbox" checked={required.includes(card.key)} disabled={excluded.includes(card.key) || required.filter(key => box?.cards.find(other => other.key === key)?.kind === card.kind).length >= 5 && !required.includes(card.key)} onChange={() => toggle(required, card.key, setRequired)} />{tr("required")}</label>}<label><input type="checkbox" checked={excluded.includes(card.key)} disabled={required.includes(card.key)} onChange={() => toggle(excluded, card.key, setExcluded)} />{tr("excluded")}</label></div>)}
       </> : box && <><p className="dw-muted">{composer("savedTeamDescription")}</p>
         {baselineChanged && <p role="alert" className="dw-alert">{composer("teamChanged")} <button type="button" onClick={() => openOptions("team")}>{composer("reloadTeam")}</button></p>}
         {baselineSaveError && <p role="alert" className="dw-alert">{composer("teamSaveFailed")}</p>}
