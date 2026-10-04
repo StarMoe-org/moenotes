@@ -201,6 +201,10 @@ export const zhTW = {
       "stale": "資料已改變"
     },
     "imageCardCount": "辨識到 {count} 張卡牌",
+    "unidentifiedHint": "未確認的卡框不會自動儲存，請點「校對卡牌」選好卡牌。",
+    "unidentifiedCandidate": "最接近：{name}",
+    "unidentifiedCard": "未確認",
+    "imageUnidentifiedCount": "另有 {count} 張未能確認",
     "duplicateScreenshot": "重複截圖 · 卡牌會合併",
     "failureDetails": "查看失敗原因",
     "retryScreenshot": "重試",
@@ -224,7 +228,7 @@ export const zhTW = {
     "recognitionElapsed": "已用時 {seconds} 秒",
     "recognitionEmpty": "沒有識別到卡牌，請使用清晰的卡牌列表截圖重試。",
     "recognitionFailed": "辨識未完成，尚未儲存任何資料，可以重試。",
-    "recognitionSharedCoverage": "共用卡面會與本區服實際卡牌目錄逐張校驗，圖庫之外的卡牌可能無法讀取。",
+    "recognitionSharedCoverage": "卡面圖庫會與本區服實際卡牌目錄逐張校驗；圖庫之外或看不清的卡牌列為未確認，由你選擇。",
     "recognitionError": {
       "configuration": "辨識 Worker 位址或卡牌圖庫位址缺失，請在辨識資源設定後重新整理。",
       "manifestFetch": "無法下載卡牌圖庫，請檢查連線後重試。",

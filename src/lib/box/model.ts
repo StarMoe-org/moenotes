@@ -15,8 +15,8 @@ export interface Observation<T> {
   source: FieldSource;
   at: number;
   screenshot?: { sourceId: string; bbox: [number, number, number, number]; confidence?: number; regionAssignment?: "player-selected";
-    recognition?: { galleryId: string; manifestSha256: string; uiMasterSourceId: string; method: "siftFlannWasm" };
-    parameterRecognition?: { method: "boxLensNumberReaderOrtWasm"; modelSha256: string; runtimeId: string } };
+    recognition?: { galleryId: string; manifestSha256: string; uiMasterSourceId: string; method: "boxLensEncoderOrtWasm" };
+    parameterRecognition?: { method: "boxLensClassifierOrtWasm"; modelSha256: string; runtimeId: string } };
   catalog?: PlayerCatalogIdentity & { fieldKey: string; sourceEvidence: string };
 }
 export interface BoxField<T> {
@@ -208,12 +208,12 @@ function checkField(value: unknown, accepts: (item: unknown) => boolean): void {
       const recognition = item.screenshot.recognition;
       if (recognition !== undefined) {
         if (!record(recognition) || !/^[a-f0-9]{64}$/.test(String(recognition.galleryId)) || !/^[a-f0-9]{64}$/.test(String(recognition.manifestSha256))
-          || typeof recognition.uiMasterSourceId !== "string" || !recognition.uiMasterSourceId || recognition.method !== "siftFlannWasm") throw new Error("Invalid recognition source");
+          || typeof recognition.uiMasterSourceId !== "string" || !recognition.uiMasterSourceId || recognition.method !== "boxLensEncoderOrtWasm") throw new Error("Invalid recognition source");
         onlyKeys(recognition, ["galleryId", "manifestSha256", "uiMasterSourceId", "method"]);
       }
       const parameters = item.screenshot.parameterRecognition;
       if (parameters !== undefined) {
-        if (!record(parameters) || parameters.method !== "boxLensNumberReaderOrtWasm" || !/^[a-f0-9]{64}$/.test(String(parameters.modelSha256))
+        if (!record(parameters) || parameters.method !== "boxLensClassifierOrtWasm" || !/^[a-f0-9]{64}$/.test(String(parameters.modelSha256))
           || typeof parameters.runtimeId !== "string" || !parameters.runtimeId) throw new Error("Invalid parameter recognition source");
         onlyKeys(parameters, ["method", "modelSha256", "runtimeId"]);
       }

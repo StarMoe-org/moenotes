@@ -201,6 +201,10 @@ export const koKR = {
       "stale": "입력 변경됨"
     },
     "imageCardCount": "카드 {count}장 발견",
+    "unidentifiedHint": "미확인 카드 칸은 자동으로 저장되지 않습니다. \"카드 수정\"에서 카드를 골라 주세요.",
+    "unidentifiedCandidate": "가장 가까운 카드: {name}",
+    "unidentifiedCard": "미확인",
+    "imageUnidentifiedCount": "그 외 {count}장은 미확인",
     "duplicateScreenshot": "중복 이미지 · 카드는 병합됩니다",
     "failureDetails": "중지 원인 보기",
     "retryScreenshot": "다시 시도",
@@ -224,7 +228,7 @@ export const koKR = {
     "recognitionElapsed": "경과 시간 {seconds}초",
     "recognitionEmpty": "카드를 인식하지 못했습니다. 선명한 카드 목록 스크린샷으로 다시 시도하세요.",
     "recognitionFailed": "인식이 완료되지 않았습니다. 자료는 저장되지 않았으며 다시 시도할 수 있습니다.",
-    "recognitionSharedCoverage": "공유 카드 이미지를 이 서버의 실제 카드 자료와 대조합니다. 이미지 목록에 없는 카드는 읽지 못할 수 있습니다.",
+    "recognitionSharedCoverage": "카드 이미지 목록을 이 서버의 실제 카드 자료와 대조합니다. 목록에 없거나 알아보기 어려운 카드는 미확인으로 표시되며 직접 고를 수 있습니다.",
     "recognitionError": {
       "configuration": "인식 Worker URL 또는 카드 이미지 목록 주소가 없습니다. 설정 후 새로 고침하세요.",
       "manifestFetch": "카드 이미지 목록을 다운로드하지 못했습니다. 연결을 확인하고 다시 시도하세요.",
