@@ -2292,6 +2292,7 @@ export const zhCN = {
     disclaimer: "本手帐收录素材仅作展示与欣赏，游戏相关版权皆归属于 Bushiroad / Craft Egg / Ishimori。这是一个由同好倾心搭建的非官方粉丝笔记本，愿与你一同珍藏每一段关于音乐与少女的记忆。",
     copyright: "© 2026 Moenotes · 少女与星光的手帐",
     legal: "法律信息",
+    version: "版本",
   },
   stamps: {
     fallbackNameNoChar: "贴纸 #{id}",

@@ -2148,6 +2148,7 @@ export const koKR = {
     disclaimer: "본 노트에 수록된 자료는 전시와 감상 목적으로만 제공되며, 게임 관련 저작권은 모두 Bushiroad / Craft Egg / Ishimori에 귀속됩니다. 음악과 소녀들의 소중한 기억을 나누기 위해 팬들이 마음을 담아 엮은 비공식 노트입니다.",
     copyright: "© 2026 Moenotes · 소녀와 별빛의 노트",
     legal: "법적 고지",
+    version: "버전",
   },
   stamps: {
     fallbackNameNoChar: "스티커 #{id}",

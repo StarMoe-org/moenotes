@@ -16,7 +16,7 @@ install. The player patch is part of the deployable application; copying it only
 layer would leave installation without the referenced patch file.
 
 ```bash
-docker build -t moenotes .
+docker build --build-arg MOENOTES_REVISION=$(git rev-parse HEAD) -t moenotes .
 docker run -p 8080:80 -v moenotes-data:/data \
   -e MOENOTES_ASSET_INTERNAL=http://moenotes-assets.moenotes.svc.cluster.local:8080 \
   -e MOENOTES_MASTERDATA_INTERNAL=http://moenotes-metadata.moenotes.svc.cluster.local:8080 \
@@ -29,6 +29,10 @@ the builds and their state on the volume belong to a single server. TLS terminat
 container (Ingress, Cloudflare); the server speaks plain HTTP.
 
 Locally: `MOENOTES_DATA_DIR=../moenotes-data PORT=8080 bun run start`.
+
+The footer shows the site version (`package.json`) and the commit the build comes from. The image has no `.git`,
+so the commit comes from the `MOENOTES_REVISION` build argument; on Zeabur it defaults to `ZEABUR_GIT_COMMIT_SHA`.
+Without it the footer shows the version alone.
 
 ## When it rebuilds
 

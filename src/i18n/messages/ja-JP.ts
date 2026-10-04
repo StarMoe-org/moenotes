@@ -2195,6 +2195,7 @@ export const jaJP = {
     disclaimer: "本手帳に収めた素材は展示および鑑賞のみを目的としており、ゲームの著作権はすべて Bushiroad / Craft Egg / Ishimori に帰属します。音楽と少女たちのかけがえのない記憶を分かち合うため、ファンが真心を込めて編んだ非公式ノートです。",
     copyright: "© 2026 Moenotes · 少女と星の光の手帳",
     legal: "規約など",
+    version: "バージョン",
   },
   stamps: {
     fallbackNameNoChar: "スタンプ #{id}",

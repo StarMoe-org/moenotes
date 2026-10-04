@@ -2292,6 +2292,7 @@ export const zhTW = {
     disclaimer: "本手帳收錄素材僅作展示與欣賞，遊戲相關版權皆歸屬於 Bushiroad / Craft Egg / Ishimori。這是一個由同好傾心搭建的非官方粉絲筆記本，願與你一同珍藏每一段關於音樂與少女的記憶。",
     copyright: "© 2026 Moenotes · 少女與星光的手帳",
     legal: "法律資訊",
+    version: "版本",
   },
   stamps: {
     fallbackNameNoChar: "貼紙 #{id}",

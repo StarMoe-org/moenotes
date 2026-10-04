@@ -1,3 +1,5 @@
+import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "astro/config";
 import react from "@astrojs/react";
@@ -22,6 +24,24 @@ function playerPages() {
   };
 }
 
+/**
+ * The site version (package.json, set by each release) and the commit the build comes from, shown in the footer.
+ * The commit is MOENOTES_REVISION (the image sets it, see Dockerfile), else the checkout's HEAD; without either the
+ * footer shows the version alone.
+ */
+function buildInfo() {
+  const { version } = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
+  let revision = process.env.MOENOTES_REVISION ?? "";
+  if (!revision) {
+    try {
+      revision = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    } catch {
+      revision = "";
+    }
+  }
+  return { version, revision };
+}
+
 export default defineConfig({
   trailingSlash: "ignore",
   // Story pages spend most of their render time waiting on story-table fetches from our own
@@ -32,6 +52,9 @@ export default defineConfig({
   integrations: [react()],
   vite: {
     plugins: [tailwindcss(), playerPages()],
+    define: {
+      __MOENOTES_BUILD__: JSON.stringify(buildInfo()),
+    },
     // `astro dev` forwards the account API like the deploy server does (docs/account.md). Without starmoe-api
     // running the requests fail and the header simply shows no account button.
     server: {
