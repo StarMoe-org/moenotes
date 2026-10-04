@@ -73,6 +73,7 @@ export const enUS = {
       "errors": {
         "signed_out": "Sign in to download the linked save.",
         "not_found": "Your account no longer has this save. Unlink it to use screenshots and manual entry again.",
+        "save_unavailable": "The save cannot be read right now. Please try again later.",
         "integrity": "The downloaded save did not match its checksum. Please try again.",
         "invalid": "The save could not be read.",
         "unavailable": "Could not reach the save service. Check your connection and try again.",

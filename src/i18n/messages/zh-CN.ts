@@ -73,6 +73,7 @@ export const zhCN = {
       "errors": {
         "signed_out": "登录后才能下载关联的存档。",
         "not_found": "账号里已没有这份存档。解除关联后可以继续使用截图和手动填写的资料。",
+        "save_unavailable": "存档暂时无法读取，请稍后重试。",
         "integrity": "下载的存档未通过校验，请重试。",
         "invalid": "无法读取这份存档。",
         "unavailable": "无法连接存档服务，请检查网络后重试。",

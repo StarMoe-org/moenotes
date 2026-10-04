@@ -14,7 +14,8 @@ export interface GameSaveMeta {
   client: string | null;
 }
 
-export type GameSaveErrorCode = "signed_out" | "not_found" | "integrity" | "invalid" | "unavailable";
+/** `save_unavailable`: the account lists the save but its bytes cannot be read right now (500 from the API). */
+export type GameSaveErrorCode = "signed_out" | "not_found" | "save_unavailable" | "integrity" | "invalid" | "unavailable";
 export class GameSaveError extends Error {
   constructor(readonly code: GameSaveErrorCode) { super(`Game save request: ${code}`); }
 }
@@ -57,7 +58,10 @@ async function request(path: string, init: RequestInit, fetcher: typeof fetch): 
   } catch { throw new GameSaveError("unavailable"); }
   if (response.status === 401) throw new GameSaveError("signed_out");
   if (response.status === 404) throw new GameSaveError("not_found");
-  if (response.status >= 500) throw new GameSaveError("unavailable");
+  if (response.status >= 500) {
+    const body = await response.json().catch(() => null) as { error?: unknown } | null;
+    throw new GameSaveError(body?.error === "save_unavailable" ? "save_unavailable" : "unavailable");
+  }
   return response;
 }
 

@@ -73,6 +73,7 @@ export const zhTW = {
       "errors": {
         "signed_out": "登入後才能下載關聯的存檔。",
         "not_found": "帳號裡已沒有這份存檔。解除關聯後可以繼續使用截圖和手動填寫的資料。",
+        "save_unavailable": "存檔暫時無法讀取，請稍後重試。",
         "integrity": "下載的存檔未通過校驗，請重試。",
         "invalid": "無法讀取這份存檔。",
         "unavailable": "無法連線存檔服務，請檢查網路後重試。",

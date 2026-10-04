@@ -71,7 +71,7 @@ A game save holds the player's whole collection, so a Box can read its cards and
 | `GET /api/me/saves/{server}/{accountId}` | The save's `_player` object as uploaded, `ETag: "<sha256>"`; `If-None-Match` answers 304 |
 | `DELETE /api/me/saves/{server}/{accountId}` | 204 |
 
-`server` is `jp` or `intl`: one international client serves TW/HK/MO, EN and KR, so the `tw`, `en` and `kr` Boxes read `intl` saves and the `jp` Box reads `jp` saves (`gameSaveServer` in `src/config/account.ts`). `accountId` is the player ID shown in game, as decimal text; the picker shows it to tell several accounts apart. Signed out, the API answers 401 `signed_out`; an unknown save answers 404 `not_found`.
+`server` is `jp` or `intl`: one international client serves TW/HK/MO, EN and KR, so the `tw`, `en` and `kr` Boxes read `intl` saves and the `jp` Box reads `jp` saves (`gameSaveServer` in `src/config/account.ts`). `accountId` is the player ID shown in game, as decimal text; the picker shows it to tell several accounts apart. Signed out, the API answers 401 `signed_out`; an unknown save answers 404 `not_found`; a listed save whose bytes cannot be read answers 500 `save_unavailable`, which the page reports as temporary and offers to retry.
 
 ### Download and cache
 

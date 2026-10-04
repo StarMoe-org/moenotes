@@ -259,3 +259,11 @@ describe("account envelope", () => {
     expect(() => boxAccountJson({ ...target, server: "jp" }, box, tables)).toThrow();
   });
 });
+
+describe("game save service errors", () => {
+  test("a listed save whose bytes are missing reports save_unavailable; other 5xx stay unavailable", async () => {
+    await expect(downloadGameSave("intl", "20000000001", { fetch: fetchOf(() => json({ error: "save_unavailable" }, 500)) })).rejects.toMatchObject({ code: "save_unavailable" });
+    await expect(downloadGameSave("intl", "20000000001", { fetch: fetchOf(() => new Response("bad gateway", { status: 502 })) })).rejects.toMatchObject({ code: "unavailable" });
+    await expect(listGameSaves(fetchOf(() => json({ error: "internal" }, 500)))).rejects.toMatchObject({ code: "unavailable" });
+  });
+});
