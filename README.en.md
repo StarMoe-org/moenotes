@@ -71,7 +71,7 @@ bun run lint
 
 ## Commits and Releases
 
-Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/), for example `feat(events): add exchange detail page` or `fix: stop dark mode flicker`. `bun install` enables the repository's commit-msg hook, which rejects other messages; CI also checks pull request titles, the commits in a pull request and commits pushed to `main`.
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/) and are written in English (no CJK characters or full-width punctuation in the header or body), for example `feat(events): add exchange detail page` or `fix: stop dark mode flicker`. `bun install` enables the repository's commit-msg hook, which rejects other messages; CI also checks pull request titles, the commits in a pull request and commits pushed to `main`.
 
 Versions follow Semantic Versioning, and [git-cliff](https://git-cliff.org/) generates `CHANGELOG.md` from the commits:
 

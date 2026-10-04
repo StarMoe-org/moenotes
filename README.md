@@ -71,7 +71,7 @@ bun run lint
 
 ## 提交与发版
 
-提交信息遵循 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/)，例如 `feat(events): 新增交换所详情页`、`fix: 修复深色模式闪烁`。`bun install` 会启用仓库自带的 commit-msg 钩子，不合规的提交信息会被拒绝；CI 也会检查 Pull Request 标题、PR 内的提交和推送到 `main` 的提交。
+提交信息遵循 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/)，并且用英文书写（标题与正文不能含中日韩文字或全角标点），例如 `feat(events): add exchange detail page`、`fix: stop dark mode flicker`。`bun install` 会启用仓库自带的 commit-msg 钩子，不合规的提交信息会被拒绝；CI 也会检查 Pull Request 标题、PR 内的提交和推送到 `main` 的提交。
 
 版本号遵循语义化版本，`CHANGELOG.md` 由 [git-cliff](https://git-cliff.org/) 根据提交生成：
 
