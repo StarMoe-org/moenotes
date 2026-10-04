@@ -28,7 +28,7 @@ jobs:
         with:
           version: v2.14.2
           config: cliff.toml
-          args: --latest --strip header
+          args: --latest
         env:
           OUTPUT: RELEASE_NOTES.md
           GITHUB_REPO: ${{ github.repository }}

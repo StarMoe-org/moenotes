@@ -73,14 +73,14 @@ bun run lint
 
 提交信息遵循 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/)，并且用英文书写（标题与正文不能含中日韩文字或全角标点），例如 `feat(events): add exchange detail page`、`fix: stop dark mode flicker`。`bun install` 会启用仓库自带的 commit-msg 钩子，不合规的提交信息会被拒绝；CI 也会检查 Pull Request 标题、PR 内的提交和推送到 `main` 的提交。
 
-版本号遵循语义化版本，`CHANGELOG.md` 由 [git-cliff](https://git-cliff.org/) 根据提交生成：
+版本号遵循语义化版本，每个版本的更新说明见 [GitHub Releases](https://github.com/StarMoe-org/moenotes/releases)，由 [git-cliff](https://git-cliff.org/) 根据提交生成：
 
 ```bash
-bun run release          # 按提交推算下一个版本，更新 package.json 与 CHANGELOG.md，提交并打标签
+bun run release          # 按提交推算下一个版本，更新 package.json，提交并打标签
 git push origin HEAD v0.2.0
 ```
 
-推送 `v*` 标签后，CI 会创建对应的 GitHub Release。
+推送 `v*` 标签后，CI 会创建对应的 GitHub Release 并生成更新说明。
 
 ## 关于 Astro 的一点吐槽
 
