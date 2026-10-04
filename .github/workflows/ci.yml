@@ -1,0 +1,27 @@
+name: CI
+
+# Lint, search/SEO registry and type checks on every push to main and every pull request. The site itself is built
+# by the deploy server (docs/deployment.md), so this workflow does not run `astro build`.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      - run: bun run check:search-seo
+      - run: bun run check
