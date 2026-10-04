@@ -176,6 +176,7 @@ const legalLinks = [
         {legalLinks.map((link) => (
           <a href={localizePath(getRoutePathById(link.id), locale)} class="font-bold hover:text-[var(--mn-accent-deep)]">{t(locale, link.labelKey)}</a>
         ))}
+        <a href={localizePath(getRoutePathById("open-platform"), locale)} class="mn-focus font-bold hover:text-[var(--mn-accent-deep)]">{t(locale, "openPlatform.title")}</a>
       </nav>
       {t(locale, "footer.disclaimer")}
     </div>

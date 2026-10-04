@@ -26,6 +26,7 @@ const allowedFetchFiles = new Set([
   "src/lib/story/player-client.ts",
   "src/lib/account/client.ts",
   "src/lib/account/game-accounts.ts",
+  "src/lib/account/open-platform.ts",
   "src/lib/game-api/client.ts",
   "src/lib/chart-data/client.ts",
   "src/lib/game-ui/client.ts",

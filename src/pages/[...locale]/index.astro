@@ -13,6 +13,8 @@ import SupportCardDetailPage from "@/components/support-cards/SupportCardDetailP
 import CharactersPage from "@/components/characters/CharactersPage.astro";
 import CharacterDetailPage from "@/components/characters/CharacterDetailPage.astro";
 import AboutPage from "@/components/about/AboutPage.astro";
+import OpenPlatformPage from "@/components/account/OpenPlatformPage.astro";
+import OpenPlatformDocsPage from "@/components/account/OpenPlatformDocsPage.astro";
 import AccountPage from "@/components/account/AccountPage.astro";
 import PlayerPage from "@/components/account/PlayerPage.astro";
 import NewsPage from "@/components/news/NewsPage.astro";
@@ -156,6 +158,10 @@ const component = match.item.component ?? "page";
     <MusicRankingPage locale={locale} />
   ) : component === "chart-data" ? (
     <ChartDataPage locale={locale} />
+  ) : component === "open-platform" ? (
+    <OpenPlatformPage locale={locale} />
+  ) : component === "open-platform-docs" ? (
+    <OpenPlatformDocsPage locale={locale} />
   ) : component === "account" ? (
     <AccountPage locale={locale} />
   ) : component === "player" ? (

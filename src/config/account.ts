@@ -15,6 +15,10 @@ export const accountApi = {
   gameAccounts: "/api/me/game-accounts",
   /** Public profiles: `/api/players/{server}/{profileId}`. */
   players: "/api/players",
+  developerApps: "/api/developer/apps",
+  saves: "/api/me/saves",
+  saveAuthorizations: "/api/me/save-authorizations",
+  publicApps: "/api/open/v1/apps",
 } as const;
 
 /** One game account: DELETE removes it; `/code` and `/verify` (POST) below it refresh its code and verify it. */

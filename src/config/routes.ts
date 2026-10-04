@@ -945,6 +945,26 @@ export const routeRegistry = [
     ],
   },
   {
+    id: "open-platform",
+    path: "/open-platform",
+    labelKey: "openPlatform.title",
+    component: "open-platform",
+    seo: { titleKey: "openPlatform.title", descriptionKey: "openPlatform.pageDescription", keywords: ["Moenotes developer API", "open platform", "clientID", "developer application", "API key"], sitemap: { priority: 0.4, changefreq: "monthly" } },
+    nav: false,
+    searchable: false,
+    keywords: ["developer", "clientID", "API"],
+    children: [{
+      id: "open-platform-docs",
+      path: "/open-platform/docs",
+      labelKey: "openPlatform.docs.title",
+      component: "open-platform-docs",
+      seo: { titleKey: "openPlatform.docs.title", descriptionKey: "openPlatform.docs.description", keywords: ["Moenotes API", "Open Platform", "developer documentation", "archive authorization", "gzip download"], sitemap: { priority: 0.5, changefreq: "monthly" } },
+      nav: false,
+      searchable: true,
+      keywords: ["API", "developer", "documentation", "clientID", "gzip", "integration", "open platform", "archive download"],
+    }],
+  },
+  {
     // Per-user page: the content is fetched from the account API in the browser, so there is nothing to index.
     id: "account",
     path: "/account",

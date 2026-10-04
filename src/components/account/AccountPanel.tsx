@@ -1,5 +1,6 @@
 import SiriusLoader from "@/components/shared/SiriusLoader";
 import { useEffect, useState } from "react";
+import SaveAuthorizations from "@/components/account/SaveAuthorizations";
 import AccountAvatar from "@/components/account/AccountAvatar";
 import GameAccounts from "@/components/account/GameAccounts";
 import Modal from "@/components/shared/Modal";
@@ -38,6 +39,11 @@ export default function AccountPanel({ locale, bands, cards }: Props) {
   // The panel keeps its own copy: it is the only place that changes the profile.
   const [user, setUser] = useState<AccountUser | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [returnPath, setReturnPath] = useState<string>(localizePath(getRoutePathById("account"), locale));
+
+  useEffect(() => {
+    setReturnPath(window.location.pathname + window.location.search);
+  }, []);
 
   useEffect(() => {
     if (account?.status === "signed-in") setUser(account.user);
@@ -57,7 +63,7 @@ export default function AccountPanel({ locale, bands, cards }: Props) {
     return (
       <div className={`${panel} text-center`}>
         <p className="mb-4 text-sm text-[var(--mn-text-muted)]">{t(locale, "account.signedOutHint")}</p>
-        <a href={accountLoginUrl(locale, localizePath(getRoutePathById("account"), locale))} className={stampButton}>
+        <a href={accountLoginUrl(locale, returnPath)} className={stampButton}>
           {t(locale, "account.signIn")}
         </a>
       </div>
@@ -82,8 +88,9 @@ export default function AccountPanel({ locale, bands, cards }: Props) {
 
       <GameAccounts locale={locale} panel={panel} stampButton={stampButton} cards={cards} />
 
-      <PassportSecurity locale={locale} />
+      <SaveAuthorizations locale={locale} panel={panel} />
 
+      <PassportSecurity locale={locale} />
 
       <AvatarPicker
         locale={locale}
@@ -112,7 +119,7 @@ const securityTasks = [
  */
 function PassportSecurity({ locale }: { locale: AppLocale }) {
   // Only rendered once signed in, which happens in the browser.
-  const returnTo = new URL(localizePath(getRoutePathById("account"), locale), window.location.origin).href;
+  const returnTo = window.location.href;
   const row = "flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0";
 
   return (
