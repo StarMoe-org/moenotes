@@ -1,6 +1,5 @@
 ---
 import CalendarView from "@/components/calendar/CalendarView";
-import PageHeader from "@/components/route/PageHeader.astro";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
 import { monthKey, monthOf, calendarDayAt } from "@/lib/calendar/model";
@@ -21,6 +20,5 @@ const buildMonth = monthKey(monthOf(calendarDayAt(Date.now(), MASTER_TIME_ZONE))
 ---
 
 <PageLayout locale={locale} titleKey="seo.calendar.title" descriptionKey="seo.calendar.description">
-  <PageHeader locale={locale} titleKey="seo.calendar.title" descriptionKey="seo.calendar.description" />
   <CalendarView client:load locale={locale} data={data} birthdays={birthdays} servers={servers} characters={characterOptions} buildMonth={buildMonth} />
 </PageLayout>

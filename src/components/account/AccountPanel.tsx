@@ -84,15 +84,6 @@ export default function AccountPanel({ locale, bands, cards }: Props) {
 
       <PassportSecurity locale={locale} />
 
-      <div className={panel}>
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-sm font-black text-[var(--mn-text)]">{t(locale, "account.comingSoonTitle")}</h2>
-          <span className="rounded-full border border-[color-mix(in_oklab,var(--mn-accent)_40%,transparent)] bg-[var(--mn-accent-soft)] px-2 py-0.5 text-[11px] font-black text-[var(--mn-accent-deep)]">
-            {t(locale, "account.comingSoonBadge")}
-          </span>
-        </div>
-        <p className="mt-2 text-sm text-[var(--mn-text-muted)]">{t(locale, "account.comingSoonBody")}</p>
-      </div>
 
       <AvatarPicker
         locale={locale}

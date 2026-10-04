@@ -287,22 +287,6 @@ export const routeRegistry = [
           },
         ],
       },
-      {
-        // Every browsable collection of the site with how many entries it holds.
-        id: "catalog",
-        path: "/catalog",
-        labelKey: "nav.items.catalog",
-        component: "catalog",
-        seo: {
-          titleKey: "seo.catalog.title",
-          descriptionKey: "seo.catalog.description",
-          keywords: ["BanG Dream! Our Notes catalog", "Our Notes database index", "Our Notes collections", "Moenotes catalog", "game data overview"],
-          sitemap: { priority: 0.6, changefreq: "daily" },
-        },
-        nav: { order: 5, icon: "database" },
-        searchable: true,
-        keywords: ["catalog", "index", "collections", "overview"],
-      },
     ],
   },
   {
@@ -351,22 +335,6 @@ export const routeRegistry = [
             staticParams: async () => (await import("@/lib/route/masterdata-params")).getMasterdataDetailParams("music"),
           },
         ],
-      },
-      {
-        // One row per chart: per-difficulty metrics (normal / gekisou), loaded in the browser from the music data site.
-        id: "song-meta",
-        path: "/music/meta",
-        labelKey: "nav.items.songMeta",
-        component: "song-meta",
-        seo: {
-          titleKey: "seo.songMeta.title",
-          descriptionKey: "seo.songMeta.description",
-          keywords: ["BanG Dream! Our Notes chart table", "Our Notes song meta", "chart BPM and notes", "gekisou chart metrics", "chart difficulty table"],
-          sitemap: { priority: 0.6, changefreq: "weekly" },
-        },
-        nav: { order: 12, icon: "music" },
-        searchable: true,
-        keywords: ["meta", "charts", "bpm", "notes", "nps", "gekisou"],
       },
       {
         // Each band's songs as a playlist, in the game's own order.

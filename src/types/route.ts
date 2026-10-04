@@ -6,7 +6,7 @@ export type RouteIcon = "home" | "database" | "music" | "users" | "calendar" | "
 export type RouteKind = "static" | "dynamic";
 export type RouteComponent = "home" | "page" | "cards" | "card-detail" | "design-system" | "characters" | "character-detail" | "support-cards" | "support-card-detail" | "about" | "music" | "song-detail" | "stamps" | "comics" | "items" | "band-items" | "gacha" | "gacha-detail" | "rewards" | "reward-detail" | "event-list" | "event-detail" | "titles" | "backgrounds" | "story-main" | "story-event" | "story-friendship" | "story-other" | "story-detail" | "asset-viewer" | "chart-preview" | "live2d-viewer" | "story-player" | "account" | "player" | "news" | "news-detail" | "event-tracker" | "music-ranking" | "chart-data" | "search" | "exchange" | "exchange-detail"
   // haneoka feature parity (docs: .narrafork/plans/plan-parallel-weaving-hellman.md)
-  | "item-detail" | "shop" | "shop-detail" | "missions" | "tgw-card" | "real-lives" | "story-birthday" | "help" | "help-detail" | "song-meta" | "playlists" | "calendar" | "catalog" | "legal";
+  | "item-detail" | "shop" | "shop-detail" | "missions" | "tgw-card" | "real-lives" | "story-birthday" | "help" | "help-detail" | "playlists" | "calendar" | "legal";
 export type RouteParams = Record<string, string>;
 
 export interface RouteSeoConfig {

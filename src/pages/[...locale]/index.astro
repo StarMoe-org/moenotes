@@ -47,13 +47,10 @@ import RealLivesPage from "@/components/real-lives/RealLivesPage.astro";
 import BirthdayStoryPage from "@/components/story/BirthdayStoryPage.astro";
 import HelpPage from "@/components/help/HelpPage.astro";
 import HelpDetailPage from "@/components/help/HelpDetailPage.astro";
-import SongMetaPage from "@/components/music/SongMetaPage.astro";
 import PlaylistsPage from "@/components/music/PlaylistsPage.astro";
 import CalendarPage from "@/components/calendar/CalendarPage.astro";
-import CatalogPage from "@/components/catalog/CatalogPage.astro";
 import LegalPage, { type LegalDocument } from "@/components/legal/LegalPage.astro";
 import GroupLanding from "@/components/route/GroupLanding.astro";
-import PageHeader from "@/components/route/PageHeader.astro";
 import AppLayout from "@/layouts/AppLayout.astro";
 import PageLayout from "@/layouts/PageLayout.astro";
 import { DEFAULT_LOCALE, PATH_PREFIX_LOCALE, type AppLocale } from "@/config/locales";
@@ -187,23 +184,15 @@ const component = match.item.component ?? "page";
     <HelpPage locale={locale} />
   ) : component === "help-detail" ? (
     <HelpDetailPage locale={locale} helpId={Number(match.params.id)} />
-  ) : component === "song-meta" ? (
-    <SongMetaPage locale={locale} />
   ) : component === "playlists" ? (
     <PlaylistsPage locale={locale} />
   ) : component === "calendar" ? (
     <CalendarPage locale={locale} />
-  ) : component === "catalog" ? (
-    <CatalogPage locale={locale} />
   ) : component === "legal" ? (
     <LegalPage locale={locale} document={match.item.id as LegalDocument} />
   ) : (
     <PageLayout locale={locale} titleKey={match.item.seo.titleKey} descriptionKey={match.item.seo.descriptionKey}>
-      {match.isGroupLanding ? (
-        <GroupLanding locale={locale} group={match.item} />
-      ) : (
-        <PageHeader locale={locale} titleKey={match.item.seo.titleKey} descriptionKey={match.item.seo.descriptionKey} />
-      )}
+      {match.isGroupLanding && <GroupLanding locale={locale} group={match.item} />}
     </PageLayout>
   )}
 </AppLayout>

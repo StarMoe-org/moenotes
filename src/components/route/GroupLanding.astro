@@ -19,12 +19,7 @@ const children = getNavChildren(group);
     <p class="mb-6 max-w-3xl font-medium leading-8 text-[var(--mn-text-muted)]">{t(locale, "page.groupIntro")}</p>
   ) : null}
   <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-    {children.length === 0 ? (
-      <article class="relative rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface-strong)] p-6 shadow-[var(--mn-shadow-stamp)]">
-        <h2 class="text-lg font-black text-[var(--mn-text)]">{t(locale, "page.placeholderTitle")}</h2>
-        <p class="mt-2 text-sm font-medium leading-7 text-[var(--mn-text-muted)]">{t(locale, "page.placeholderDescription")}</p>
-      </article>
-    ) : children.map((item) => (
+    {children.map((item) => (
       <a href={localizePath(item.path, locale)} class="mn-list-card group relative rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface-strong)] p-6 shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:bg-[var(--mn-cream-deep)]">
         <h2 class="text-lg font-black text-[var(--mn-text)] group-hover:text-[var(--mn-accent-deep)]">{t(locale, item.labelKey)}</h2>
         <p class="mt-2 text-sm font-medium leading-7 text-[var(--mn-text-muted)]">{t(locale, item.seo.descriptionKey)}</p>

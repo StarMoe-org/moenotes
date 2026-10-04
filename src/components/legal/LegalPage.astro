@@ -1,5 +1,4 @@
 ---
-import PageHeader from "@/components/route/PageHeader.astro";
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
 import { siteConfig } from "@/config/site";
@@ -22,7 +21,6 @@ const parts = (text: string) => text.split("{repo}");
 ---
 
 <PageLayout locale={locale} titleKey={`seo.${document}.title`} descriptionKey={`seo.${document}.description`}>
-  <PageHeader locale={locale} titleKey={`seo.${document}.title`} descriptionKey={`seo.${document}.description`} />
   <article class="mn-paper max-w-4xl p-5 sm:p-8">
     <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--mn-text-muted)]">
       <time datetime={texts.updated}>{texts.updatedLabel.replace("{date}", updated)}</time>
