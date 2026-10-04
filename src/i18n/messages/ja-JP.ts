@@ -2,6 +2,15 @@ import type { MessageTree } from "@/i18n/translate";
 
 export const jaJP = {
   openPlatform: {
+    docsMoved: "API ドキュメントは専用サイトに移転しました。", docsPending: "ドキュメントサイトは公開準備中です。アプリの管理は引き続きこちらで利用できます。",
+    partialLoadError: "一部のセーブデータまたはアクセス許可を読み込めませんでした。再試行してください。読み込み済みのアクセス許可は引き続き取り消せます。",
+    appsTitle: "アプリ一覧", createTitle: "アプリを作成", createHint: "アプリ名を入力すると、作成時に利用可能な権限と地域がすべて自動で有効になります。",
+    permissionsHint: "利用可能な権限は自動で有効になります。ユーザーのセーブデータを読み取るには、ユーザーによる明示的な許可が必要です。",
+    scopesLabel: "権限範囲", regionsLabel: "地域", scopesCount: "件の権限", regionsCount: "地域", keysCount: "有効なキー",
+    loading: "読み込み中…", retry: "再試行", permissions: "権限と地域", keysTitle: "キー", emptyKeys: "有効なキーはありません。", keysLoadError: "キー一覧を読み込めませんでした。キーの有無を確認できません。",
+    createdKeyFailed: "アプリは作成されましたが、最初のキーを発行できませんでした。詳細欄から再試行してください。", copyFailed: "コピーできませんでした。値を選択して手動でコピーしてください。",
+    confirm: "確認", confirmRotateTitle: "キーのローテーションを確認", confirmRevokeTitle: "取り消しを確認", applicationFound: "アプリが見つかりました", currentGrants: "現在のアクセス許可", saveServer: "セーブデータのサーバー",
+    overviewTitle: "アカウント概要", gameAccountsTitle: "ゲームアカウント", authorizationsTitle: "セーブの許可", securitySectionTitle: "アカウントの安全",
     title: "オープンプラットフォーム", pageDescription: "Moenotes オープンプラットフォームで開発者アプリを作成・管理し、clientID と API キーを取得します。ユーザーのセーブ許可はアカウントページで管理します。",
     docs: {
       title: "オープンプラットフォーム API ガイド",

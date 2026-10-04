@@ -4,7 +4,7 @@ export const zhCN = {
   openPlatform: {
     docsMoved: "API 文档已迁移到独立文档站。", docsPending: "独立文档站等待部署中，应用管理仍可在本站使用。",
 
-    title: "开放平台", pageDescription: "开发者应用管理。用户的存档授权在账号页。",
+    title: "开放平台", pageDescription: "在 Moenotes 开放平台创建和管理开发者应用，获取 clientID 与 API 密钥；用户的存档授权在账号页管理。",
     partialLoadError: "部分存档或授权加载失败，请重试。已加载的授权仍可撤销。",
     appsTitle: "应用列表", createTitle: "创建应用", createHint: "只需填写应用名，创建时自动启用全部可用权限与地区。",
     permissionsHint: "可用权限自动启用；读取用户存档仍需用户明确授权。",
