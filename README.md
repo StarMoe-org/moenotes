@@ -69,6 +69,19 @@ bun run preview
 bun run lint
 ```
 
+## 提交与发版
+
+提交信息遵循 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/)，例如 `feat(events): 新增交换所详情页`、`fix: 修复深色模式闪烁`。`bun install` 会启用仓库自带的 commit-msg 钩子，不合规的提交信息会被拒绝；CI 也会检查 Pull Request 标题、PR 内的提交和推送到 `main` 的提交。
+
+版本号遵循语义化版本，`CHANGELOG.md` 由 [git-cliff](https://git-cliff.org/) 根据提交生成：
+
+```bash
+bun run release          # 按提交推算下一个版本，更新 package.json 与 CHANGELOG.md，提交并打标签
+git push origin HEAD v0.2.0
+```
+
+推送 `v*` 标签后，CI 会创建对应的 GitHub Release。
+
 ## 关于 Astro 的一点吐槽
 
 当初选型看中了 Astro 的静态优先与 Islands 架构，但面对游戏资料站这样重交互、重客户端状态的场景，实际开发起来真的挺不方便的（笑）。还是NEXT开发这种东西方便一点。
