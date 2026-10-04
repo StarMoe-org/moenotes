@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useMemo } from "react";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import { t } from "@/i18n";
@@ -7,6 +7,10 @@ import CardViewSwitch from "@/components/shared/CardViewSwitch";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import SupportCardItem, { SupportCardTile } from "@/components/support-cards/SupportCardItem";
 import ServerScope from "@/components/shared/ServerScope";
+import CardTable from "@/components/shared/CardTable";
+import { CARD_SORT_FIELDS, cardSortReaders } from "@/lib/cards/list-sort";
+import type { CardSkillNames } from "@/lib/masterdata/build-card-skill-names";
+import { supportCardTableRow } from "@/lib/cards/table-rows";
 import type { ServerFaceted } from "@/lib/servers/facets";
 import { serverOnlyLabel, useServerList } from "@/lib/servers/use-content-server";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
@@ -18,12 +22,16 @@ interface Props {
   locale: AppLocale;
   initialSupportCards: ServerFaceted<SupportCardViewModel>[];
   servers: GameServer[];
+  /** Skill names by id (table view and skill sort). */
+  skillNames: CardSkillNames;
 }
 
-export default function SupportCardsExplorer({ locale, servers, initialSupportCards }: Props) {
+export default function SupportCardsExplorer({ locale, servers, initialSupportCards, skillNames }: Props) {
   const memory = useListPageMemory("support-cards");
   const { server, pickServer, items: cards } = useServerList(locale, servers, initialSupportCards);
-  const controller = useCardFilters(cards, locale, "support-cards", supportCardSubject);
+  const skillOf = useCallback((card: SupportCardViewModel) => skillNames.support[String(card.supportSkillId01)] ?? "", [skillNames]);
+  const numericSort = useMemo(() => ({ fields: CARD_SORT_FIELDS, read: cardSortReaders(skillOf, Object.values(skillNames.support), locale) }), [skillOf, skillNames, locale]);
+  const controller = useCardFilters(cards, locale, "support-cards", supportCardSubject, { numericSort });
   const { filters, setFilters, sorted, filtered, reset, hasActiveFilters, bands, characters } = controller;
   const [view, setView] = useCardView("support-cards");
 
@@ -77,6 +85,8 @@ export default function SupportCardsExplorer({ locale, servers, initialSupportCa
       <section className="min-w-0" aria-live="polite">
         {filtered.length === 0 ? (
           <EmptyState locale={locale} onReset={resetFilters} />
+        ) : view === "table" ? (
+          <CardTable locale={locale} rows={sorted.map((card) => supportCardTableRow(card, skillOf(card)))} routeId="support-cards" servers={servers} sort={controller.sort.value} onSortChange={controller.sort.onChange} onOpen={saveCurrentState} />
         ) : view === "square" ? (
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 3xl:grid-cols-10 4xl:grid-cols-12">
             {sorted.map((card) => (

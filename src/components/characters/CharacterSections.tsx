@@ -1,18 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
-import AudioPlayButton from "@/components/shared/AudioPlayButton";
 import LevelSwitch from "@/components/shared/LevelSwitch";
 import RewardChip from "@/components/shared/RewardChip";
 import { getCostumeIconUrl } from "@/lib/assets/costume";
 import { getLive2DViewerHref } from "@/lib/live2d/models";
 import { readQueryParam, replaceQueryParam } from "@/lib/route/url-state";
 import { useAssetUrl } from "@/lib/servers/use-content-server";
-import { getVoiceTypeName, type CharacterProgressionData, type CostumeViewModel, type RankRewardGroup } from "@/lib/characters/data";
+import type { CostumeViewModel, RankRewardGroup } from "@/lib/characters/data";
 import type { RewardViewModel } from "@/lib/rewards/resources";
 
 /** Sections of the character page below its profile (`?section=`). */
-export const CHARACTER_SECTIONS = ["profile", "costumes", "voices", "bonds"] as const;
+export const CHARACTER_SECTIONS = ["profile", "costumes", "voices", "bonds", "missions", "related"] as const;
 export type CharacterSection = typeof CHARACTER_SECTIONS[number];
 
 /** The page's section, mirrored in `?section=` (profile, the default, leaves it out). */
@@ -51,16 +50,16 @@ export function CharacterSectionTabs({ locale, value, onChange }: { locale: AppL
 const panelHeader = "border-b border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_6%,transparent)] to-transparent px-6 py-4 sm:px-8";
 const panelTitle = "font-[var(--mn-font-display)] text-xl text-[var(--mn-text)] sm:text-2xl";
 
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
+export function Panel({ title, actions, children }: { title: string; actions?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="mn-paper overflow-hidden">
-      <div className={panelHeader}><h3 className={panelTitle}>{title}</h3></div>
+      <div className={`${panelHeader} flex flex-wrap items-center justify-between gap-3`}><h3 className={panelTitle}>{title}</h3>{actions}</div>
       <div className="p-6 sm:p-8">{children}</div>
     </div>
   );
 }
 
-function Empty({ text }: { text: string }) {
+export function Empty({ text }: { text: string }) {
   return <p className="py-2 text-center text-sm font-medium text-[var(--mn-text-muted)]">{text}</p>;
 }
 
@@ -114,32 +113,6 @@ export function CostumesPanel({ locale, costumes }: { locale: AppLocale; costume
                 {modelId
                   ? <a href={getLive2DViewerHref(locale, modelId)} title={t(locale, "characters.costumes.openViewer")} className="mn-focus block rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-cream-deep)]/40 p-3 transition hover:-translate-y-0.5 hover:border-[var(--mn-accent)]">{body}</a>
                   : <div className="rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-cream-deep)]/40 p-3">{body}</div>}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </Panel>
-  );
-}
-
-export function VoicesPanel({ locale, characterId, data }: { locale: AppLocale; characterId: number; data: CharacterProgressionData }) {
-  const assetUrl = useAssetUrl();
-  return (
-    <Panel title={t(locale, "characters.voices.characterVoice")}>
-      {data.voices.length === 0 ? <Empty text={t(locale, "characters.voices.empty")} /> : (
-        <ul className="divide-y divide-dashed divide-[var(--mn-border)]/60">
-          {data.voices.map((voice) => {
-            const typeName = t(locale, `characters.voices.types.${getVoiceTypeName(voice.type)}`);
-            return (
-              <li key={voice.id} className="flex items-start gap-3 py-3">
-                {voice.soundUrl
-                  ? <AudioPlayButton locale={locale} size="sm" track={{ id: `character-voice:${characterId}:${voice.id}`, src: assetUrl(voice.soundUrl), title: voice.text, subtitle: typeName }} />
-                  : <span className="h-8 w-8 shrink-0" />}
-                <div className="min-w-0">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--mn-accent-deep)]">{typeName}</p>
-                  <p className="mt-0.5 whitespace-pre-line text-sm font-medium text-[var(--mn-text)]">{voice.text}</p>
-                </div>
               </li>
             );
           })}

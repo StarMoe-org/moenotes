@@ -4,15 +4,16 @@ import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
 import { getBuildCards } from "@/lib/masterdata/build-data";
 import { getBuildServers } from "@/lib/masterdata/build-servers";
+import { getBuildCardSkillNames } from "@/lib/masterdata/build-card-skill-names";
 
 interface Props {
   locale: AppLocale;
 }
 
 const { locale } = Astro.props;
-const [cards, servers] = await Promise.all([getBuildCards(locale), getBuildServers()]);
+const [cards, servers, skillNames] = await Promise.all([getBuildCards(locale), getBuildServers(), getBuildCardSkillNames(locale)]);
 ---
 
 <PageLayout locale={locale} titleKey="seo.cards.title" descriptionKey="seo.cards.description">
-  <CardsExplorer client:load locale={locale} initialCards={cards} servers={servers} />
+  <CardsExplorer client:load locale={locale} initialCards={cards} servers={servers} skillNames={skillNames} />
 </PageLayout>

@@ -7,11 +7,9 @@ import { moveReleaseUrls } from "@/lib/assets/release";
 import { entityServer, valueForServer, type ServerFacetedValue } from "@/lib/servers/facets";
 import { useAssetUrl, useContentServer } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
-import { getImageAssetUrl } from "@/lib/assets/url";
 import { localizePath } from "@/i18n/routing";
 import { getRoutePathById } from "@/lib/route/registry";
 import Modal from "@/components/shared/Modal";
-import MemberCardArtwork from "@/components/shared/MemberCardArtwork";
 import {
   getBandLogoUrl,
   getBandLogoWhiteUrl,
@@ -19,7 +17,6 @@ import {
   getCharacterThumbnailUrl,
   getCharacterFaceIconUrl,
   getCharacterBoardIconUrl,
-  getRarityIconUrl,
 } from "@/lib/cards/assets";
 import {
   type CardViewModel,
@@ -28,13 +25,18 @@ import {
   type CharacterProgressionData,
   type CharacterViewModel,
 } from "@/lib/characters/data";
-import { CharacterSectionTabs, CostumesPanel, RankRewardsPanel, VoicesPanel, useCharacterSection } from "@/components/characters/CharacterSections";
+import { CharacterSectionTabs, CostumesPanel, RankRewardsPanel, useCharacterSection } from "@/components/characters/CharacterSections";
+import CharacterVoicesSection from "@/components/characters/CharacterVoices";
+import { BondPartnersPanel, CharacterMissionsPanel, RelatedPanels } from "@/components/characters/CharacterExtraSections";
+import type { CharacterExtrasData } from "@/lib/characters/relations";
 
 interface Props {
   locale: AppLocale;
   characterId: number;
   initialData: ServerFacetedValue<DetailData>;
   progressionData: CharacterProgressionData | null;
+  /** Bonds, missions and related entries (build-character-extras.ts). */
+  extrasData: ServerFacetedValue<CharacterExtrasData>;
   servers: GameServer[];
 }
 
@@ -68,17 +70,18 @@ function estimateTabWidth(label: string): number {
 }
 
 /** The character as the page's server has it (docs/servers.md). */
-export default function CharacterDetail({ locale, initialData, progressionData, servers }: Props) {
+export default function CharacterDetail({ locale, initialData, progressionData, extrasData, servers }: Props) {
   const [server, pickServer] = useContentServer(locale, servers);
   const data = useMemo(() => moveReleaseUrls(valueForServer(initialData, server), entityServer(initialData, server)), [initialData, server]);
+  const extras = useMemo(() => moveReleaseUrls(valueForServer(extrasData, server), entityServer(extrasData, server)), [extrasData, server]);
   return (
     <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer} entityServers={initialData.servers}>
-      <CharacterDetailView locale={locale} data={data} progression={progressionData} />
+      <CharacterDetailView locale={locale} data={data} progression={progressionData} extras={extras} />
     </ServerScope>
   );
 }
 
-function CharacterDetailView({ locale, data, progression }: { locale: AppLocale; data: DetailData; progression: CharacterProgressionData | null }) {
+function CharacterDetailView({ locale, data, progression, extras }: { locale: AppLocale; data: DetailData; progression: CharacterProgressionData | null; extras: CharacterExtrasData }) {
   const assetUrl = useAssetUrl();
   const [section, setSection] = useCharacterSection();
   const loading = false;
@@ -102,6 +105,7 @@ function CharacterDetailView({ locale, data, progression }: { locale: AppLocale;
   }, []);
 
   const character = data.character;
+  const characterNames = useMemo(() => new Map(extras.characters.map((entry) => [entry.id, entry.name])), [extras.characters]);
 
   const assets = useMemo<AssetPreview[]>(() => {
     if (!character) return [];
@@ -410,8 +414,13 @@ function CharacterDetailView({ locale, data, progression }: { locale: AppLocale;
         <section className="flex-1 min-w-0 space-y-6">
           <CharacterSectionTabs locale={locale} value={section} onChange={setSection} />
           {section === "costumes" && <CostumesPanel locale={locale} costumes={progression?.costumes ?? []} />}
-          {section === "voices" && progression && <VoicesPanel locale={locale} characterId={character.id} data={progression} />}
-          {section === "bonds" && <RankRewardsPanel locale={locale} title={t(locale, "characters.rewards.friendshipTitle")} groups={progression?.friendshipRewards ?? []} />}
+          {section === "voices" && <CharacterVoicesSection locale={locale} characterId={character.id} characterNames={characterNames} cards={data.cards} />}
+          {section === "bonds" && <>
+            <BondPartnersPanel locale={locale} extras={extras} />
+            <RankRewardsPanel locale={locale} title={t(locale, "characters.rewards.friendshipTitle")} groups={progression?.friendshipRewards ?? []} />
+          </>}
+          {section === "missions" && <CharacterMissionsPanel locale={locale} characterName={character.name} extras={extras} />}
+          {section === "related" && <RelatedPanels locale={locale} cards={data.cards} extras={extras} />}
           {section === "profile" && <>
           {/* Character Bio Info Card */}
           <div className="mn-paper overflow-hidden">
@@ -491,72 +500,14 @@ function CharacterDetailView({ locale, data, progression }: { locale: AppLocale;
             </div>
           )}
 
-          {/* Associated Cards Section */}
-          <div className="mn-paper overflow-hidden">
-            <div className="border-b border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_6%,transparent)] to-transparent px-6 py-4 sm:px-8">
-              <h3 className="font-[var(--mn-font-display)] text-xl text-[var(--mn-text)] sm:text-2xl">
-                {t(locale, "characters.cardsTitle")}
-              </h3>
-            </div>
-            <div className="p-6 sm:p-8 bg-[var(--mn-paper)]">
-              {data.cards.length === 0 ? (
-                <p className="text-sm font-medium text-[var(--mn-text-muted)] text-center py-4">
-                  {t(locale, "characters.noCards")}
-                </p>
-              ) : (
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
-                  {data.cards.map((card) => {
-                    const cardAlt = t(locale, "cards.cardImageAlt", { title: card.title, character: card.characterName });
-                    return (
-                      <a
-                        key={card.id}
-                        href={localizePath(`/cards/${card.id}`, locale)}
-                        className="mn-list-card group flex flex-col min-w-0 overflow-hidden border border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)]"
-                        aria-label={t(locale, "cards.openDetail", { title: card.title, character: card.characterName })}
-                      >
-                        <MemberCardArtwork
-                          assetId={card.assetId}
-                          characterId={card.characterId}
-                          rarity={card.rarity}
-                          cardType={card.cardType}
-                          alt={cardAlt}
-                          attributeLabel={t(locale, `cards.attributes.${card.cardType}`)}
-                          fallbackLabel={card.characterName}
-                        />
-                        <div className="flex flex-col flex-1 min-w-0 p-3 sm:p-4 bg-[var(--mn-paper)]">
-                          <div className="flex min-w-0 items-start gap-2">
-                            <span className="mt-1 h-3 w-3 shrink-0 rounded-full border border-[var(--mn-border)]" style={{ backgroundColor: card.characterColor }} aria-hidden="true" />
-                            <div className="min-w-0">
-                              <h3 className="line-clamp-2 text-sm font-black leading-5 text-[var(--mn-text)]">{card.title}</h3>
-                              <p className="mt-1 truncate text-xs font-medium text-[var(--mn-text-muted)]">{card.characterName}</p>
-                            </div>
-                          </div>
-                          <div className="mt-auto pt-2 flex items-center justify-between gap-2 border-t border-solid border-[var(--mn-text-muted)]/40">
-                            <img className="h-5 w-auto max-w-14 object-contain" src={assetUrl(getRarityIconUrl(card.rarity))} alt={t(locale, `cards.rarities.${card.rarity}`)} />
-                            <div className="flex items-center min-w-0">
-                              <img
-                                className="h-4 w-auto max-w-[70px] object-contain block dark:hidden"
-                                src={assetUrl(getBandLogoUrl(card.bandId, locale))}
-                                alt=""
-                                aria-hidden="true"
-                                onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-                              />
-                              <img
-                                className="h-4 w-auto max-w-[70px] object-contain hidden dark:block"
-                                src={assetUrl(getBandLogoWhiteUrl(card.bandId, locale))}
-                                alt=""
-                                aria-hidden="true"
-                                onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </a>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+          {/* The full card lists live in the related section; the profile keeps the counts. */}
+          <div className="mn-paper flex flex-wrap items-center justify-between gap-3 px-6 py-4 sm:px-8">
+            <p className="text-sm font-bold text-[var(--mn-text)]">
+              {t(locale, "characters.related.summary", { cards: data.cards.length, supportCards: extras.supportCards.length, stories: extras.stories.length + extras.friendshipStories.length })}
+            </p>
+            <button type="button" onClick={() => setSection("related")} className="mn-focus mn-stamp-press rounded-full border border-[var(--mn-border)] bg-[var(--mn-paper)] px-4 py-1.5 text-xs font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp-sm)] hover:text-[var(--mn-accent-deep)]">
+              {t(locale, "characters.related.open")}
+            </button>
           </div>
 
           <RankRewardsPanel locale={locale} title={t(locale, "characters.rewards.rankTitle")} groups={progression?.rankRewards ?? []} />

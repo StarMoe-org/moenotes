@@ -50,6 +50,8 @@ export interface CharacterViewModel {
   hobby: string;
   schoolClass: string;
   school: string;
+  /** The school's MasterText id: a stable key for the list's school filter (names differ by locale). */
+  schoolKey: string;
   voiceActor: string;
   bandName: string;
   searchText: string;
@@ -106,6 +108,7 @@ export function normalizeCharacters(
       hobby,
       schoolClass,
       school,
+      schoolKey: char.schoolTextId ?? "",
       voiceActor,
       bandName,
       searchText: [name, enName, shortName, bandName, voiceActor, char.bandPart].join(" ").toLowerCase(),
@@ -114,7 +117,7 @@ export function normalizeCharacters(
 }
 
 
-// ---- Character progression (rank, friendship, voice, costume) ----
+// ---- Character progression (rank, friendship, costume; voices: src/lib/characters/voices.ts) ----
 
 export interface RawCharacterRank {
   rank: number;
@@ -143,16 +146,6 @@ export interface RawCharacterFriendshipRankReward {
   resourceType: number;
   resourceId: number;
   resourceCount: number;
-}
-
-export interface RawCharacterVoice {
-  id: number;
-  characterId: number;
-  type: number;
-  textId: string;
-  soundId: number;
-  scoreRank: number;
-  startAt: string;
 }
 
 /**
@@ -204,16 +197,6 @@ export interface CostumeViewModel {
   costumeType: number;
 }
 
-export interface VoiceViewModel {
-  id: number;
-  type: number;
-  typeName: string;
-  text: string;
-  soundUrl: string;
-  scoreRank: number;
-  startAt: string;
-}
-
 export interface RankRewardGroup {
   rank: number;
   rewards: Array<{ kind: string; id: number; count: number; name: string; imageUrl: string; link?: EntityLink }>;
@@ -221,7 +204,6 @@ export interface RankRewardGroup {
 
 export interface CharacterProgressionData {
   costumes: CostumeViewModel[];
-  voices: VoiceViewModel[];
   rankRewards: RankRewardGroup[];
   friendshipRewards: RankRewardGroup[];
 }
@@ -262,25 +244,6 @@ export function normalizeCharacterCostumes(
       costumeType: costume.costumeType,
     };
   });
-}
-
-export function normalizeCharacterVoices(
-  voices: RawCharacterVoice[],
-  texts: RawText[],
-  locale: AppLocale,
-  soundUrlOf: (soundId: number) => string,
-): VoiceViewModel[] {
-  const textMap = new Map(texts.map((entry) => [entry.id, entry]));
-
-  return voices.map((voice) => ({
-    id: voice.id,
-    type: voice.type,
-    typeName: getVoiceTypeName(voice.type),
-    text: localizeMasterText(textMap.get(voice.textId), locale) || voice.textId,
-    soundUrl: soundUrlOf(voice.soundId),
-    scoreRank: voice.scoreRank,
-    startAt: voice.startAt,
-  }));
 }
 
 type RankRewardResolver = (resource: { resourceType: number; resourceId: number; resourceCount: number }) => { kind: string; id: number; count: number; name: string; imageUrl: string; link?: EntityLink };
