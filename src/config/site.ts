@@ -69,6 +69,9 @@ export const siteConfig: SiteConfig = {
   },
 };
 
+/** Independent static documentation; application management stays on bdon.moe. */
+export const openPlatformDocsUrl = "https://open-platform.bdon.moe/";
+
 export const LICENSE_URLS = {
   cc: "https://creativecommons.org/licenses/by-nc/4.0/",
 };

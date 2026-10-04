@@ -3,12 +3,17 @@ import PageLayout from "@/layouts/PageLayout.astro";
 import OpenPlatformPanel from "@/components/account/OpenPlatformPanel";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
-import { localizePath } from "@/i18n/routing";
-import { getRoutePathById } from "@/lib/route/registry";
+import { openPlatformDocsUrl } from "@/config/site";
+
 interface Props { locale: AppLocale }
 const { locale } = Astro.props;
 ---
 <PageLayout locale={locale} titleKey="openPlatform.title" descriptionKey="openPlatform.pageDescription">
-  <a class="mn-focus mb-5 inline-block font-bold underline" href={localizePath(getRoutePathById("open-platform-docs"), locale)}>{t(locale, "openPlatform.docs.title")}</a>
+  <section class="mn-system-section mb-6 rounded-3xl border border-[var(--mn-border)] bg-[var(--mn-paper)] p-4 shadow-[var(--mn-shadow-stamp-lg)] sm:p-6 md:p-8">
+    <a class="mn-focus mn-list-card mn-sticker relative flex items-center justify-between gap-4 p-5" href={openPlatformDocsUrl}>
+      <span><span class="block font-[var(--mn-font-display)] text-lg">{t(locale, "openPlatform.docs.title")}</span><span class="mt-1 block text-sm text-[var(--mn-text-muted)]">{t(locale, "openPlatform.docs.description")}</span></span>
+      <span aria-hidden="true" class="shrink-0 text-xl text-[var(--mn-accent-deep)]">→</span>
+    </a>
+  </section>
   <OpenPlatformPanel client:load locale={locale} />
 </PageLayout>

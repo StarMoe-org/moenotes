@@ -1,85 +1,50 @@
 ---
 import AppLayout from "@/layouts/AppLayout.astro";
+import PageLayout from "@/layouts/PageLayout.astro";
 import { t } from "@/i18n";
 import { siteConfig } from "@/config/site";
+import { getRoutePathById } from "@/lib/route/registry";
+import { localizePath } from "@/i18n/routing";
 
 const locale = "zh-CN" as const;
 const pathname = "/404";
-const copy = {
-  metaTitle: t(locale, "notFound.metaTitle"),
-  metaDescription: t(locale, "notFound.description"),
-  eyebrow: "LOST SIGNAL / 404",
-  title: t(locale, "notFound.title"),
-  description: t(locale, "notFound.description"),
-  note: t(locale, "notFound.note"),
-  home: t(locale, "notFound.home"),
-  retry: t(locale, "actions.refresh"),
-  feedback: t(locale, "notFound.feedback"),
-};
+const homePath = localizePath(getRoutePathById("home"), locale);
+const searchPath = localizePath(getRoutePathById("search"), locale);
 ---
-
-<AppLayout
-  locale={locale}
-  pathname={pathname}
-  meta={{ title: copy.metaTitle, description: copy.metaDescription, indexable: false }}
->
-  <section class="mx-auto flex min-h-[62vh] max-w-5xl items-center justify-center py-8 sm:py-14">
-    <div class="relative w-full overflow-hidden rounded-[2rem] border border-[var(--mn-border)] bg-[var(--mn-paper)] px-6 py-10 shadow-[var(--mn-shadow-stamp)] sm:px-12 sm:py-14">
-      <div class="mn-texture-stars pointer-events-none absolute inset-0 opacity-25"></div>
-
-      <div class="relative grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_16rem]">
-        <div class="order-2 lg:order-1">
-          <span class="mn-stamp inline-flex rounded-xl px-4 py-1.5 text-xs tracking-[0.18em]">
-            {copy.eyebrow}
-          </span>
-          <h1 class="mt-7 max-w-3xl font-[var(--mn-font-display)] text-4xl leading-tight text-[var(--mn-text)] sm:text-6xl">
-            {copy.title}
-          </h1>
-          <p class="mt-6 max-w-2xl text-base font-semibold leading-8 text-[var(--mn-text-muted)] sm:text-lg">
-            {copy.description}
-          </p>
-
-          <div class="mt-7 max-w-2xl rounded-2xl border border-solid border-[var(--mn-border)] bg-[var(--mn-cream-deep)] p-4 text-sm font-medium leading-7 text-[var(--mn-text-muted)]">
-            {copy.note}
+<AppLayout locale={locale} pathname={pathname} meta={{ title: t(locale, "notFound.metaTitle"), description: t(locale, "notFound.description"), indexable: false }}>
+  <div class="mx-auto w-full max-w-5xl py-4 sm:py-8">
+    <PageLayout locale={locale} titleKey="notFound.title" descriptionKey="notFound.description" showDescription={false}>
+      <section class="mn-system-section relative overflow-hidden p-6 sm:p-8">
+        <div class="grid items-center gap-6 sm:grid-cols-[minmax(0,1fr)_12rem] sm:gap-10">
+          <div class="min-w-0">
+            <p class="font-[var(--mn-font-display)] text-6xl leading-none tracking-tight text-[var(--mn-accent-deep)] sm:text-7xl" aria-hidden="true">404</p>
+            <p class="mt-5 max-w-xl text-base leading-8 text-[var(--mn-text)]">{t(locale, "notFound.description")}</p>
+            <p class="mt-3 max-w-xl text-sm leading-7 text-[var(--mn-text-muted)]">{t(locale, "notFound.note")}</p>
           </div>
-
-          <div class="mt-8 flex flex-wrap gap-3">
-            <a
-              href="/"
-              class="mn-focus mn-stamp-press inline-flex items-center justify-center rounded-xl border border-[var(--mn-border)] bg-[var(--mn-accent-deep)] px-6 py-3 text-sm font-bold text-[var(--mn-bg)] shadow-[var(--mn-shadow-stamp)]"
-            >
-              {copy.home}
-            </a>
-            <button
-              type="button"
-              onclick="window.location.reload()"
-              class="mn-focus mn-stamp-press inline-flex items-center justify-center rounded-xl border border-[var(--mn-border)] bg-[var(--mn-paper)] px-6 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp-sm)]"
-            >
-              {copy.retry}
-            </button>
-            <a
-              href={siteConfig.contact.bugReportUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="mn-focus mn-stamp-press inline-flex items-center justify-center rounded-xl border border-[var(--mn-border)] bg-[var(--mn-accent-soft)] px-6 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp-sm)]"
-            >
-              {copy.feedback}
-            </a>
-          </div>
+          <svg class="hidden h-44 w-full text-[var(--mn-accent)] sm:block" viewBox="0 0 180 180" fill="none" aria-hidden="true">
+            <circle cx="90" cy="90" r="60" stroke="var(--mn-border)" stroke-dasharray="3 8" />
+            <ellipse cx="90" cy="90" rx="84" ry="30" transform="rotate(-30 90 90)" stroke="currentColor" />
+            <path d="m90 46 10 34 34 10-34 10-10 34-10-34-34-10 34-10z" fill="var(--mn-accent-soft)" stroke="currentColor" />
+            <circle cx="152" cy="43" r="4" fill="var(--mn-pink)" />
+          </svg>
         </div>
-
-        <div class="mx-auto w-full max-w-48 lg:max-w-[15rem] order-1 lg:order-2" aria-hidden="true">
-          <div class="relative rounded-[2rem] border border-[var(--mn-border)] bg-[var(--mn-cream-deep)] p-6 shadow-[var(--mn-shadow-stamp)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[var(--mn-shadow-stamp-lg)]">
-            <svg viewBox="0 0 260 260" class="h-auto w-full" fill="none">
-              <circle cx="130" cy="130" r="78" stroke="var(--mn-border)" stroke-dasharray="3 9" />
-              <ellipse cx="130" cy="130" rx="116" ry="45" transform="rotate(-35 130 130)" stroke="var(--mn-accent)" />
-              <path d="m130 55 14 61 61 14-61 14-14 61-14-61-61-14 61-14z" fill="var(--mn-accent-soft)" stroke="var(--mn-accent)" />
-              <circle cx="220" cy="74" r="6" fill="var(--mn-pink)" />
-            </svg>
-            <p class="mt-3 text-center font-[var(--mn-font-note)] text-5xl font-bold text-[var(--mn-accent-deep)]">404</p>
-          </div>
-        </div>
+        <nav class="mt-8 grid gap-4 sm:grid-cols-2" aria-label={t(locale, "notFound.title")}>
+          <a href={homePath} class="mn-list-card mn-card mn-focus flex min-w-0 items-center gap-4 p-5 text-[var(--mn-text)]">
+            <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" aria-hidden="true"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9 21v-9h6v9"/></svg></span>
+            <span class="min-w-0 flex-1 font-[var(--mn-font-display)] text-base">{t(locale, "notFound.home")}</span>
+            <span aria-hidden="true" class="text-[var(--mn-accent-deep)]">→</span>
+          </a>
+          <a href={searchPath} class="mn-list-card mn-card mn-focus flex min-w-0 items-center gap-4 p-5 text-[var(--mn-text)]">
+            <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[var(--mn-cream-deep)] text-[var(--mn-accent-deep)]" aria-hidden="true"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></span>
+            <span class="min-w-0 flex-1 font-[var(--mn-font-display)] text-base">{t(locale, "nav.items.search")}</span>
+            <span aria-hidden="true" class="text-[var(--mn-accent-deep)]">→</span>
+          </a>
+        </nav>
+      </section>
+      <div class="mt-5 flex flex-wrap items-center gap-3 text-sm">
+        <button type="button" onclick="window.location.reload()" class="mn-focus min-h-11 rounded-xl px-4 text-[var(--mn-text-muted)] transition hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]">{t(locale, "actions.refresh")}</button>
+        <a href={siteConfig.contact.bugReportUrl} target="_blank" rel="noopener noreferrer" class="mn-focus inline-flex min-h-11 items-center rounded-xl px-4 text-[var(--mn-text-muted)] transition hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]">{t(locale, "notFound.feedback")}</a>
       </div>
-    </div>
-  </section>
+    </PageLayout>
+  </div>
 </AppLayout>

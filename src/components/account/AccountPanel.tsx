@@ -14,6 +14,7 @@ import type { ProfileCardInfo } from "@/lib/account/profile-cards";
 import { useAccount } from "@/lib/account/use-account";
 import { getCharacterFaceIconUrl } from "@/lib/cards/assets";
 import { getRoutePathById } from "@/lib/route/registry";
+import SectionHeading from "@/components/shared/SectionHeading";
 
 /** Build time data from avatar-options.ts. */
 export interface AvatarBand {
@@ -30,7 +31,7 @@ interface Props {
   cards: ProfileCardInfo[];
 }
 
-const panel = "rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-5 shadow-[var(--mn-shadow-stamp)] sm:p-6";
+import { accountSection as panel } from "./ui-styles";
 const stampButton =
   "mn-focus mn-stamp-press inline-flex h-10 items-center rounded-xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-4 text-sm font-black text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)] hover:bg-[var(--mn-cream-deep)]";
 
@@ -73,7 +74,8 @@ export default function AccountPanel({ locale, bands, cards }: Props) {
   const displayName = user.name ?? user.username ?? t(locale, "account.passport");
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-7">
+      <SectionHeading title={t(locale, "account.overviewTitle")} />
       <div className={`${panel} flex flex-wrap items-center gap-4`}>
         <AccountAvatar url={accountAvatarUrl(user)} name={displayName} className="h-16 w-16 rounded-2xl text-xl" />
         <div className="min-w-0 flex-1">
@@ -86,11 +88,20 @@ export default function AccountPanel({ locale, bands, cards }: Props) {
         </button>
       </div>
 
-      <GameAccounts locale={locale} panel={panel} stampButton={stampButton} cards={cards} />
+      <section>
+        <SectionHeading title={t(locale, "account.gameAccountsTitle")} />
+        <div className="mt-4"><GameAccounts locale={locale} panel={panel} stampButton={stampButton} cards={cards} /></div>
+      </section>
 
-      <SaveAuthorizations locale={locale} panel={panel} />
+      <section>
+        <SectionHeading title={t(locale, "account.authorizationsTitle")} />
+        <div className="mt-4"><SaveAuthorizations locale={locale} panel={panel} /></div>
+      </section>
 
-      <PassportSecurity locale={locale} />
+      <section>
+        <SectionHeading title={t(locale, "account.securitySectionTitle")} />
+        <div className="mt-4"><PassportSecurity locale={locale} /></div>
+      </section>
 
       <AvatarPicker
         locale={locale}

@@ -116,3 +116,11 @@ Run starmoe-api on port 8787 with `PUBLIC_ORIGIN=http://localhost:4321` (its REA
 `bun run dev`. `astro dev` forwards `/api` to `http://localhost:8787`; override the target with `MOENOTES_API_DEV`.
 The passport app needs `http://localhost:4321/api/auth/callback` as a redirect URI and `http://localhost:4321/` as a
 post sign-out redirect URI.
+
+## Independent developer documentation
+
+The static documentation now lives in the sibling `moenotes-open-platform-docs` repository. The main site keeps application creation, key management and explicit user save consent; no login/session credentials are sent to the documentation site.
+
+The documentation URL is fixed to `https://open-platform.bdon.moe/` in `src/config/site.ts`; no documentation environment variables are required. The main site remains `https://bdon.moe`. The old localized `/open-platform/docs` pages remain as non-indexable migration entry points; known section bookmarks map to the new reference pages and unsupported documentation languages fall back to English.
+
+The authentication API is `https://passport.bdon.moe`; public ranking snapshots use `https://api.bdon.moe/api/v1`. These are not the documentation site's domain, and application management remains on `https://bdon.moe/open-platform`.

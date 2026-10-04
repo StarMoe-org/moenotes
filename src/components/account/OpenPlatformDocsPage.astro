@@ -1,59 +1,36 @@
 ---
 import PageLayout from "@/layouts/PageLayout.astro";
 import type { AppLocale } from "@/config/locales";
+import { openPlatformDocsUrl } from "@/config/site";
+import { resolveDocsUrl } from "@/lib/account/docs-url";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import { getRoutePathById } from "@/lib/route/registry";
-import { OPEN_PLATFORM_SCOPES, OPEN_PLATFORM_ARCHIVE, openPlatformPath, type OpenPlatformScopeDoc } from "@/lib/account/open-platform-docs";
 
 interface Props { locale: AppLocale }
 const { locale } = Astro.props;
+const target = resolveDocsUrl(openPlatformDocsUrl, locale);
 const consolePath = localizePath(getRoutePathById("open-platform"), locale);
-const accountPath = localizePath(getRoutePathById("account"), locale);
-const sections = ["overview", "stepsTitle", "scopesTitle", "archiveTitle", "securityTitle", "errorsTitle"] as const;
-const profileExample = 'curl "$ORIGIN/api/open/v1/moenotes/jp/profile/$PROFILE_ID" \\\n  -H "Authorization: Bearer $CLIENT_SECRET"';
-const label = (scope: OpenPlatformScopeDoc, key: string) => t(locale, `openPlatform.docs.scopes.${scope.id}.${key}`);
-const pre = "overflow-x-auto rounded-xl bg-[var(--mn-cream-deep)] p-4 text-xs";
-const table = "w-full border-collapse text-xs";
-const cell = "border-b border-[var(--mn-border)] py-1.5 pr-3 text-left align-top";
 ---
 <PageLayout locale={locale} titleKey="openPlatform.docs.title" descriptionKey="openPlatform.docs.description">
-  <div class="grid gap-6 lg:grid-cols-[13rem_minmax(0,1fr)]">
-    <nav aria-label={t(locale, "openPlatform.docs.title")} class="h-fit rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)] p-4 lg:sticky lg:top-24">
-      <a href={consolePath} class="mn-focus mb-4 block font-black text-[var(--mn-accent-deep)]">{t(locale, "openPlatform.title")}</a>
-      <ul class="space-y-3 text-sm">{sections.map((section) => <li><a class="mn-focus hover:underline" href={`#${section}`}>{t(locale, `openPlatform.docs.${section}`)}</a></li>)}{OPEN_PLATFORM_SCOPES.map((scope) => <li><a class="mn-focus hover:underline" href={`#${scope.id}`}>{label(scope, "name")}</a></li>)}</ul>
-    </nav>
-    <article class="min-w-0 space-y-10 rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-5 text-sm leading-7 shadow-[var(--mn-shadow-stamp)] sm:p-8">
-      <section id="overview" class="scroll-mt-24"><h2 class="mb-3 text-xl font-black">{t(locale, "openPlatform.docs.overview")}</h2><p>{t(locale, "openPlatform.docs.intro")}</p></section>
-
-      <section id="stepsTitle" class="scroll-mt-24"><h2 class="mb-3 text-xl font-black">{t(locale, "openPlatform.docs.stepsTitle")}</h2>
-        <ol class="list-decimal space-y-4 pl-5"><li><p>{t(locale, "openPlatform.docs.stepRegister")}</p><a class="mn-focus font-bold underline" href={consolePath}>{t(locale, "openPlatform.developer")}</a></li><li><p>{t(locale, "openPlatform.docs.stepProfile")}</p><pre class={`my-3 ${pre}`}><code>{profileExample}</code></pre></li><li><p>{t(locale, "openPlatform.docs.stepInvite")}</p><code class="break-all">{`${accountPath}?invite=clientID`}</code></li><li>{t(locale, "openPlatform.docs.stepDownload")}</li></ol>
-      </section>
-
-      <section id="scopesTitle" class="scroll-mt-24"><h2 class="mb-3 text-xl font-black">{t(locale, "openPlatform.docs.scopesTitle")}</h2><p>{t(locale, "openPlatform.docs.scopesHint")}</p><p class="mt-3">{t(locale, "openPlatform.docs.regionHint")}</p><p class="mt-3">{t(locale, "openPlatform.docs.regionServers")}</p><p class="mt-3">{t(locale, "openPlatform.docs.regionCaution")}</p></section>
-
-      {OPEN_PLATFORM_SCOPES.map((scope) => (
-        <section id={scope.id} class="scroll-mt-24 border-t border-dashed border-[var(--mn-border)] pt-8">
-          <h2 class="mb-2 text-xl font-black">{label(scope, "name")}</h2>
-          <p>{label(scope, "description")}</p>
-          <p class="mt-3"><code class="rounded bg-[var(--mn-cream-deep)] px-2 py-0.5 text-xs">{scope.scope}</code></p>
-          <h3 class="mt-5 mb-2 text-sm font-black">{t(locale, "openPlatform.docs.routeTitle")}</h3>
-          <ul class="space-y-1">{scope.endpoints.map((endpoint) => <li><code class="break-all text-xs">{`${endpoint.method} ${openPlatformPath(endpoint)}`}</code></li>)}</ul>
-          <h3 class="mt-5 mb-2 text-sm font-black">{t(locale, "openPlatform.docs.paramsTitle")}</h3>
-          <table class={table}><tbody>{scope.params.map((param) => <tr><td class={`${cell} font-black`}><code>{param.name}</code></td><td class={cell}>{param.required ? t(locale, "openPlatform.docs.required") : t(locale, "openPlatform.docs.optional")}</td><td class={cell}>{label(scope, `params.${param.name}`)}</td></tr>)}</tbody></table>
-          <h3 class="mt-5 mb-2 text-sm font-black">{t(locale, "openPlatform.docs.exampleTitle")}</h3>
-          <pre class={pre}><code>{scope.example}</code></pre>
-          <h3 class="mt-5 mb-2 text-sm font-black">{t(locale, "openPlatform.docs.notesTitle")}</h3>
-          <p class="mb-2 font-black">{t(locale, "openPlatform.docs.regionTitle")}</p>
-          <p>{label(scope, "region")}</p><p class="mt-2">{label(scope, "notes")}</p><p class="mt-2">{label(scope, "errors")}</p>
-        </section>
-      ))}
-
-      <section id="archiveTitle" class="scroll-mt-24 border-t border-dashed border-[var(--mn-border)] pt-8"><h2 class="mb-3 text-xl font-black">{t(locale, "openPlatform.docs.archiveTitle")}</h2><code class="break-all">{OPEN_PLATFORM_ARCHIVE.path}</code><p class="mt-3">{t(locale, "openPlatform.docs.archiveHint")}</p><p class="mt-3 font-black">{t(locale, "openPlatform.docs.regionTitle")}</p><p>{t(locale, "openPlatform.docs.archiveAxis")}</p><ul class="mt-2 list-disc space-y-1 pl-5"><li><code class="text-xs">intl</code> — {t(locale, "openPlatform.docs.archiveServerIntl")}</li><li><code class="text-xs">jp</code> — {t(locale, "openPlatform.docs.archiveServerJp")}</li></ul><pre class={`mt-3 ${pre}`}><code>{OPEN_PLATFORM_ARCHIVE.example}</code></pre></section>
-
-      <section id="securityTitle" class="scroll-mt-24"><h2 class="mb-3 text-xl font-black">{t(locale, "openPlatform.docs.securityTitle")}</h2><p>{t(locale, "openPlatform.docs.security")}</p></section>
-
-      <section id="errorsTitle" class="scroll-mt-24"><h2 class="mb-3 text-xl font-black">{t(locale, "openPlatform.docs.errorsTitle")}</h2><p>{t(locale, "openPlatform.docs.errors")}</p><p class="mt-3">{t(locale, "openPlatform.docs.limits")}</p></section>
-    </article>
-  </div>
+  <section class="mn-paper max-w-3xl space-y-5 p-6 sm:p-8" data-docs-migration data-docs-base={target ? openPlatformDocsUrl : undefined} data-docs-locale={locale}>
+    <p class="text-sm leading-7">{t(locale, target ? "openPlatform.docsMoved" : "openPlatform.docsPending")}</p>
+    {target && <a data-docs-target class="mn-focus inline-flex min-h-11 items-center rounded-full border border-[var(--mn-accent)] bg-[var(--mn-accent-soft)] px-5 text-sm font-bold text-[var(--mn-accent-deep)]" href={target}>{t(locale, "openPlatform.docs.title")}</a>}
+    <p><a class="mn-focus text-sm font-bold underline" href={consolePath}>{t(locale, "openPlatform.developer")}</a></p>
+  </section>
 </PageLayout>
+<script>
+  import { resolveDocsUrl } from "@/lib/account/docs-url";
+  function migrateDocumentation() {
+    const entry = document.querySelector<HTMLElement>("[data-docs-migration]");
+    const base = entry?.dataset.docsBase;
+    if (!base) return;
+    const target = resolveDocsUrl(base, entry.dataset.docsLocale ?? "en-US", window.location.hash);
+    if (!target || target === window.location.href) return;
+    const link = entry.querySelector<HTMLAnchorElement>("[data-docs-target]");
+    if (link) link.href = target;
+    window.location.replace(target);
+  }
+  migrateDocumentation();
+  document.addEventListener("astro:page-load", migrateDocumentation);
+</script>
