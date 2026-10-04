@@ -23,6 +23,9 @@
 .dw-screenshot-preview{position:relative;overflow:hidden;background:#171b25;border-radius:8px;width:min(100%,600px);margin:12px auto 0}
 .dw-screenshot-preview>img{display:block;width:100%;height:100%;object-fit:contain}
 .dw-screenshot-bbox{position:absolute;border:2px solid #54a3f2;pointer-events:none;color:white;font-size:10px;text-shadow:0 1px 3px #000;background:#4166a920}
+.dw-screenshot-bbox.is-unidentified{border-style:dashed;border-color:#e8a33c;background:#e8a33c20}
+.dw-screenshot-tile{position:relative;overflow:hidden;border-radius:6px;background:#0002}
+.dw-screenshot-tile img{position:absolute;max-width:none;height:auto}
 .dw-recognition-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:14px}
 .dw-recognition-card{display:flex;flex-direction:column;min-width:0;border:1px solid var(--mn-border);border-radius:12px;padding:10px;gap:5px;transition:opacity .15s}
 .dw-recognition-card.is-excluded{opacity:.5}

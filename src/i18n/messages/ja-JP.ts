@@ -201,6 +201,10 @@ export const jaJP = {
       "stale": "入力が変更されました"
     },
     "imageCardCount": "カード {count} 枚を検出",
+    "unidentifiedHint": "未確定のカード枠は自動では保存されません。「カードを修正」でカードを選んでください。",
+    "unidentifiedCandidate": "近いカード：{name}",
+    "unidentifiedCard": "未確定",
+    "imageUnidentifiedCount": "ほかに {count} 枚は未確定",
     "duplicateScreenshot": "同じ画像 · カードは統合されます",
     "failureDetails": "停止した理由",
     "retryScreenshot": "再試行",
@@ -224,7 +228,7 @@ export const jaJP = {
     "recognitionElapsed": "経過時間 {seconds} 秒",
     "recognitionEmpty": "カードを認識できませんでした。鮮明なカード一覧の画像で再試行してください。",
     "recognitionFailed": "認識が完了しませんでした。データは保存されていません。再試行できます。",
-    "recognitionSharedCoverage": "共通のカード画像を、このサーバーの実際のカードデータと照合します。画像カタログにないカードは読み取れない場合があります。",
+    "recognitionSharedCoverage": "カード画像カタログを、このサーバーの実際のカードデータと照合します。カタログにないカードや判別できないカードは未確定として表示し、選択できます。",
     "recognitionError": {
       "configuration": "認識 Worker のURLまたはカード画像カタログのアドレスが未設定です。設定後に再読み込みしてください。",
       "manifestFetch": "カード画像カタログを取得できませんでした。接続を確認して再試行してください。",

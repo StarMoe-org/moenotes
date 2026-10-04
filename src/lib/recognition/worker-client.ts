@@ -38,7 +38,7 @@ export class RecognitionWorkerClient {
         resolve(result);
       };
       const empty = (status: RecognitionResult["status"], error?: string): RecognitionResult => ({ type: "result", binding: job.binding, status,
-        cards: [], sourceId: job.image.sourceId, elapsedMs: this.clock() - started, ...(error ? { error } : {}) });
+        cards: [], unidentified: [], sourceId: job.image.sourceId, elapsedMs: this.clock() - started, ...(error ? { error } : {}) });
       const timer = setTimeout(() => finish(empty("timeLimit")), job.timeLimitMs);
       this.active = { worker, binding: job.binding, finish, empty };
       worker.onmessage = event => {
@@ -53,8 +53,12 @@ export class RecognitionWorkerClient {
       };
       worker.onerror = event => finish(empty("failed", event.message));
       try {
-        worker.postMessage({ type: "recognize", binding: job.binding, configuration: { manifestUrl: new URL(job.configuration.manifestUrl, base).href, manifestSha256: job.configuration.manifestSha256,
-          ...(job.configuration.fieldManifestUrl && job.configuration.fieldManifestSha256 ? { fieldManifestUrl: new URL(job.configuration.fieldManifestUrl, base).href, fieldManifestSha256: job.configuration.fieldManifestSha256 } : {}) },
+        const configuration = job.configuration;
+        // The Worker matches tiles only against the selected server's cards that the gallery holds.
+        const cards = job.source.gallery?.compatibleCardKeys ?? job.source.cards.map(card => `${card.kind}:${card.id}`);
+        worker.postMessage({ type: "recognize", binding: job.binding, cards: [...cards],
+          configuration: { galleryUrl: new URL(configuration.galleryUrl, base).href, gallerySha256: configuration.gallerySha256,
+            modelsUrl: new URL(configuration.modelsUrl, base).href, modelsSha256: configuration.modelsSha256 },
           image: job.image, budget: { timeLimitMs: job.timeLimitMs, deadlineEpochMs: deadline } }, [job.image.rgba]);
       } catch { finish(empty("failed", "Recognition input unavailable")); }
     });
