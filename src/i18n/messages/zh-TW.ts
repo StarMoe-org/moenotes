@@ -473,8 +473,6 @@ export const zhTW = {
       "start": "開始組卡",
       "rerun": "重新計算",
       "stop": "停止",
-      "retry": "重試",
-      "restart": "重新開始",
       "loading": "正在載入組卡引擎…",
       "saveNotReady": "存檔還沒有讀好，請稍候。",
       "tablesUnavailable": "此區服的等級表暫不可用，無法計算。",
@@ -553,7 +551,7 @@ export const zhTW = {
         "failed": "計算失敗"
       },
       "statusNote": {
-        "incomplete": "補齊下面這些卡的資訊後重新計算。",
+        "incomplete": "補齊下面這些資訊後重新計算。",
         "invalid": "下面這些資訊有誤，修正後重新計算。",
         "failed": "這組條件暫時算不出來。",
         "incompleteLinked": "存檔裡缺這些資訊，請在遊戲裡更新存檔後重新上傳。",

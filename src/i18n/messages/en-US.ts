@@ -473,8 +473,6 @@ export const enUS = {
       "start": "Build team",
       "rerun": "Recalculate",
       "stop": "Stop",
-      "retry": "Retry",
-      "restart": "Start over",
       "loading": "Loading the team engine…",
       "saveNotReady": "The game save is still loading.",
       "tablesUnavailable": "Level tables for this server are unavailable, so the team cannot be calculated.",
@@ -553,7 +551,7 @@ export const enUS = {
         "failed": "Calculation failed"
       },
       "statusNote": {
-        "incomplete": "Fill in these cards, then recalculate.",
+        "incomplete": "Fill in these details, then recalculate.",
         "invalid": "Fix these details, then recalculate.",
         "failed": "These conditions cannot be calculated right now.",
         "incompleteLinked": "The game save lacks these details. Update it in the game and upload it again.",

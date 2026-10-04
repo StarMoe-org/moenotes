@@ -473,8 +473,6 @@ export const zhCN = {
       "start": "开始组卡",
       "rerun": "重新计算",
       "stop": "停止",
-      "retry": "重试",
-      "restart": "重新开始",
       "loading": "正在加载组卡引擎…",
       "saveNotReady": "存档还没有读好，请稍候。",
       "tablesUnavailable": "此区服的等级表暂不可用，无法计算。",
@@ -553,7 +551,7 @@ export const zhCN = {
         "failed": "计算失败"
       },
       "statusNote": {
-        "incomplete": "补齐下面这些卡的信息后重新计算。",
+        "incomplete": "补齐下面这些信息后重新计算。",
         "invalid": "下面这些信息有误，修正后重新计算。",
         "failed": "这组条件暂时算不出来。",
         "incompleteLinked": "存档里缺这些信息，请在游戏里更新存档后重新上传。",

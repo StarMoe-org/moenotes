@@ -35,10 +35,9 @@ export default function DeckResult(props: DeckResultProps) {
   if (job.status === "failed") {
     const memory = job.code === "runtime" && isOutOfMemory(job.message);
     return <div className="dr-result" data-state="failed"><div className="dr-alert" role="alert"><strong>{tr(memory ? "outOfMemory" : "runFailed")}</strong>
-      {!memory && <small>{job.message}</small>}</div><div className="dr-actions"><button type="button" onClick={props.onRerun}>{tr("retry")}</button></div></div>;
+      {!memory && <small>{job.message}</small>}</div></div>;
   }
-  if (job.status === "stopped") return <div className="dr-result" data-state="stopped"><p className="dr-muted">{tr("stoppedEmpty")}</p>
-    <div className="dr-actions"><button type="button" onClick={props.onRerun}>{tr("restart")}</button></div></div>;
+  if (job.status === "stopped") return <div className="dr-result" data-state="stopped"><p className="dr-muted">{tr("stoppedEmpty")}</p></div>;
   const answer = job.status === "running" ? job.progress : job.answer;
   const running = job.status === "running";
   if (answer && answer.status !== "ok") return <Issues {...props} answer={answer} />;
@@ -131,7 +130,7 @@ function Issues(props: DeckResultProps & { answer: DeckAnswer }) {
   const editable = groups.cards.filter((entry): entry is typeof entry & { card: BoxCard } => entry.card !== null);
   const skillFields = SKILL_FIELDS.filter(name => editable.some(entry => entry.fields.includes(name)));
   return <div className="dr-result" data-state={answer.status}>
-    <div className="dr-issues-head" role="status"><strong>{tr(`status.${answer.status}`)}</strong><p>{tr(`statusNote.${answer.status}${linked ? "Linked" : ""}`)}</p></div>
+    <div className="dr-issues-head" role="status"><strong>{tr(`status.${answer.status}`)}</strong><p>{tr(`statusNote.${answer.status}${linked && (groups.cards.length > 0 || groups.player.length > 0) ? "Linked" : ""}`)}</p></div>
     {!linked && skillFields.map(name => <div className="dc-bulk-skills" key={name}><strong>{field(name)}</strong><div>
       {[1, 5].map(value => <button type="button" key={value} disabled={busy} onClick={() => props.onAnswerAll(editable.filter(entry => entry.fields.includes(name)).map(entry => entry.card.key), name, value)}>
         {t(locale, value === 1 ? "deckWorkspace.allLv1" : "deckWorkspace.allLv5")}</button>)}</div></div>)}
@@ -146,6 +145,5 @@ function Issues(props: DeckResultProps & { answer: DeckAnswer }) {
       <button type="button" disabled={busy} onClick={props.onPlayer}>{tr("openPlayer")}</button></div>}
     {(groups.request.length > 0 || groups.other.length > 0) && <details className="dr-issue-details"><summary>{tr("details")}</summary>
       <ul>{[...groups.request, ...groups.other].map((issue, index) => <li key={index}><code>{issue.path}</code> {issue.message}</li>)}</ul></details>}
-    <div className="dr-actions"><button type="button" className="dc-primary" disabled={busy} onClick={props.onRerun}>{tr("rerun")}</button></div>
   </div>;
 }

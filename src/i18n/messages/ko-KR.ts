@@ -473,8 +473,6 @@ export const koKR = {
       "start": "편성 계산",
       "rerun": "다시 계산",
       "stop": "중지",
-      "retry": "다시 시도",
-      "restart": "처음부터",
       "loading": "편성 엔진을 불러오는 중…",
       "saveNotReady": "세이브 데이터를 불러오는 중입니다.",
       "tablesUnavailable": "이 서버의 레벨 표를 불러올 수 없어 계산할 수 없습니다.",
@@ -553,7 +551,7 @@ export const koKR = {
         "failed": "계산하지 못했습니다"
       },
       "statusNote": {
-        "incomplete": "아래 카드의 정보를 입력한 뒤 다시 계산하세요.",
+        "incomplete": "아래 정보를 입력한 뒤 다시 계산하세요.",
         "invalid": "아래 정보를 수정한 뒤 다시 계산하세요.",
         "failed": "이 조건은 지금 계산할 수 없습니다.",
         "incompleteLinked": "세이브 데이터에 이 정보가 없습니다. 게임에서 갱신한 뒤 다시 업로드하세요.",

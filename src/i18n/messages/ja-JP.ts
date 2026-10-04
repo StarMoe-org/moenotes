@@ -473,8 +473,6 @@ export const jaJP = {
       "start": "編成を計算",
       "rerun": "再計算",
       "stop": "停止",
-      "retry": "再試行",
-      "restart": "やり直す",
       "loading": "編成エンジンを読み込み中…",
       "saveNotReady": "セーブデータを読み込み中です。",
       "tablesUnavailable": "このサーバーのレベル表を読み込めないため計算できません。",
@@ -553,7 +551,7 @@ export const jaJP = {
         "failed": "計算できませんでした"
       },
       "statusNote": {
-        "incomplete": "以下のカードの情報を入力してから再計算してください。",
+        "incomplete": "以下の情報を入力してから再計算してください。",
         "invalid": "以下の情報に誤りがあります。修正してから再計算してください。",
         "failed": "この条件は現在計算できません。",
         "incompleteLinked": "セーブデータにこれらの情報がありません。ゲームでデータを更新して再アップロードしてください。",
