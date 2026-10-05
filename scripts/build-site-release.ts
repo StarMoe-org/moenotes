@@ -170,6 +170,7 @@ async function build(input: BuildInput): Promise<void> {
 
 interface Release {
   id: number;
+  tag_name: string;
   draft: boolean;
   prerelease: boolean;
   target_commitish: string;
@@ -189,8 +190,31 @@ async function optionalApi(path: string): Promise<unknown | null> {
     throw error;
   }
 }
-async function release(input: BuildInput): Promise<Release | null> {
-  return await optionalApi(`releases/tags/site-${input.key}`) as Release | null;
+export async function lookupRelease(
+  tag: string,
+  includeDrafts: boolean,
+  request: (path: string) => Promise<unknown | null>,
+): Promise<Release | null> {
+  const published = await request(`releases/tags/${tag}`) as Release | null;
+  if (published) {
+    if (published.tag_name !== tag) throw new Error("Release tag mismatch");
+    return published;
+  }
+  if (!includeDrafts) return null;
+  // GitHub's by-tag REST endpoint can return 404 for an existing draft. The authenticated list
+  // includes drafts; match tag_name, never its temporary untagged-* browser URL or title.
+  for (let page = 1; page <= 10; page++) {
+    const entries = await request(`releases?per_page=100&page=${page}`);
+    if (!Array.isArray(entries)) throw new Error("Unable to list Releases; refusing to create a duplicate draft");
+    const matches = (entries as Release[]).filter(entry => entry.tag_name === tag);
+    if (matches.length > 1) throw new Error("Multiple Releases share the requested tag; refusing to overwrite");
+    if (matches[0]) return matches[0];
+    if (entries.length < 100) return null;
+  }
+  throw new Error("Release lookup exceeded pagination limit; refusing to create an unverified draft");
+}
+async function release(input: BuildInput, includeDrafts = false): Promise<Release | null> {
+  return lookupRelease(`site-${input.key}`, includeDrafts, optionalApi);
 }
 async function verifyTag(input: BuildInput, create = false): Promise<void> {
   const tag = `site-${input.key}`;
@@ -230,7 +254,7 @@ async function completeRelease(input: BuildInput, existing: Release): Promise<bo
   } finally { await rm(directory, { recursive: true, force: true }); }
 }
 async function publish(input: BuildInput): Promise<void> {
-  let existing = await release(input);
+  let existing = await release(input, true);
   if (existing && await completeRelease(input, existing)) return;
   await verifyFiles(input, OUTPUT);
   await verifyTag(input, true);
@@ -240,7 +264,7 @@ async function publish(input: BuildInput): Promise<void> {
       "--verify-tag", "--draft", "--prerelease", "--latest=false", "--title", tag,
       "--notes", "Static site build. Retained until a future manual retention policy; never automatically deleted."]);
   }
-  existing = await release(input);
+  existing = await release(input, true);
   if (!existing?.draft || existing.target_commitish !== input.commit) throw new Error("Release is not the expected draft; cannot overwrite");
   await command(["gh", "release", "upload", tag, join(OUTPUT, ARCHIVE), join(OUTPUT, MANIFEST), "--repo", repository(), "--clobber"]);
   // Only publish after both assets have been uploaded and verified from GitHub.

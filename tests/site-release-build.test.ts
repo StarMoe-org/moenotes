@@ -5,7 +5,7 @@ import { extractSiteTarGzip, validateSiteManifest } from "../server/site-artifac
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import {
-  applyBuildEnvironment, assertDataVersion, command, measuredCommand, hashArchive, parseInput, validateManifest,
+  applyBuildEnvironment, assertDataVersion, command, measuredCommand, lookupRelease, hashArchive, parseInput, validateManifest,
   type SiteManifest,
 } from "../scripts/build-site-release";
 import { SUPPORTED_LOCALES } from "../src/config/locales";
@@ -162,6 +162,42 @@ describe("build subprocess reporting", () => {
       await expect(measuredCommand([process.execPath, "-e", "process.exit(7)"], report)).rejects.toThrow("failed (7)");
       expect(await Bun.file(report).text()).toContain("Exit status: 7");
     } finally { await rm(root, { recursive: true, force: true }); }
+  });
+});
+describe("draft Release lookup", () => {
+  const tag = `site-${key}`;
+  const draft = { id: 123, tag_name: tag, draft: true, prerelease: true, target_commitish: commit, assets: [], html_url: "https://github.com/example/repo/releases/tag/untagged-temporary" };
+  test("finds an existing draft when the by-tag endpoint returns 404", async () => {
+    const calls: string[] = [];
+    const found = await lookupRelease(tag, true, async path => { calls.push(path); return path.startsWith("releases/tags/") ? null : [draft]; });
+    expect(found).toEqual(draft);
+    expect(calls).toEqual([`releases/tags/${tag}`, "releases?per_page=100&page=1"]);
+  });
+  test("read-only inspection does not need draft permissions", async () => {
+    const calls: string[] = [];
+    expect(await lookupRelease(tag, false, async path => { calls.push(path); return null; })).toBeNull();
+    expect(calls).toEqual([`releases/tags/${tag}`]);
+  });
+  test("returns published releases directly without listing or overwriting", async () => {
+    const published = { ...draft, draft: false };
+    const calls: string[] = [];
+    expect(await lookupRelease(tag, true, async path => { calls.push(path); return published; })).toEqual(published);
+    expect(calls.length).toBe(1);
+  });
+  test("paginates older drafts and matches tag_name rather than title", async () => {
+    expect(await lookupRelease(tag, true, async path => {
+      if (path.startsWith("releases/tags/")) return null;
+      if (path.endsWith("page=1")) return Array.from({ length: 100 }, (_, i) => ({ ...draft, tag_name: `other-${i}`, name: tag }));
+      return [draft];
+    })).toEqual(draft);
+  });
+  test("missing releases return null but failed draft listings propagate", async () => {
+    expect(await lookupRelease(tag, true, async path => path.startsWith("releases/tags/") ? null : [])).toBeNull();
+    await expect(lookupRelease(tag, true, async path => {
+      if (path.startsWith("releases/tags/")) return null;
+      throw new Error("HTTP 403");
+    })).rejects.toThrow("HTTP 403");
+    await expect(lookupRelease(tag, true, async () => null)).rejects.toThrow("Unable to list");
   });
 });
 test("workflow pins source, isolates publication permissions and has no retention deletion", async () => {
