@@ -37,13 +37,13 @@ export const assetConfig = {
   musicDataSiteJp: (import.meta.env.PUBLIC_MUSIC_DATA_SITE_JP || "https://storage.bdon.moe/moenotes/jp/music-data").replace(/\/+$/, ""),
   /**
    * The deck solver runtime (docs/deck-worker.md). The Worker and its core module are this site's own files
-   * (`public/deck/`); the solver engine and its data come from the music data sites. `devRecommendEngine` is the URL of
-   * an engine descriptor that replaces the published `recommendEngine` entry, read from `PUBLIC_DECK_RECOMMEND_ENGINE`
-   * in development builds only.
+   * (`public/deck/`); the deck data comes from the music data sites. `recommendEngine` is the URL of an engine
+   * descriptor that replaces the published `recommendEngine` entry: the engine build this site serves
+   * (`public/deck/engine/`), or `PUBLIC_DECK_RECOMMEND_ENGINE`.
    */
   deck: {
     workerUrl: "/deck/deck-worker.js",
-    devRecommendEngine: String((import.meta.env.DEV && import.meta.env.PUBLIC_DECK_RECOMMEND_ENGINE) || ""),
+    recommendEngine: String(import.meta.env.PUBLIC_DECK_RECOMMEND_ENGINE || "/deck/engine/recommend-engine.json"),
   },
   /** Region-specific nnnotes prefab libraries. Keep the game files outside the application source repository. */
   gameUiLibraries: {

@@ -5,7 +5,7 @@ export const enUS = {
     "arenaSong": "Arena song",
     "chooseArena": "Choose an Arena song",
     "noArena": "No Arena songs in this server’s current data",
-    conditions: {"objective": "Optimize for", "threshold": "Target score", "finalLife": "Minimum life at the end", "play": "Play assumption", "accuracy": "Great / Just rates, no Misses", "pattern": "Declare a complete play with Misses", "missEvery": "Miss every N judged notes (0 = no Misses)", "noMiss": "Explicit complete play: no Misses.", "missPattern": "Every {n}th judged note is a Miss.", "patternNote": "Great and Just rates below are applied before replacing those notes with Misses. This fixed pattern is not a distribution of human errors.", "lifeNote": "Choose an explicit complete play. This goal checks score and final life; it does not predict clearing without a continue.", "rewardContext": "Reward conditions", "rewardNote": "Choose the reward entries assumed to be selected for this result. The result is conditional on this list; drop probabilities and cumulative rewards are not predicted.", "reward": "Reward {id} · base amount {n}", "currentPoints": "Current event points", "currentCP": "Current challenge points", "rewardConfirm": "Use these reward entries and current balances", "emptyRewardConfirm": "Explicitly assume no selected event rewards", "metrics": {"score": "Expected score", "scoreAtLeast": "Chance of reaching the target", "cappedScore": "Expected score capped at the target", "scoreAndLife": "Chance of reaching score and final life targets"}},
+    conditions: {"objective": "Optimize for", "threshold": "Target score", "finalLife": "Minimum life at the end", "play": "Play assumption", "accuracy": "Great / Just rates, no Misses", "pattern": "Declare a complete play with Misses", "missEvery": "Miss every N judged notes (0 = no Misses)", "noMiss": "Explicit complete play: no Misses.", "missPattern": "Every {n}th judged note is a Miss.", "patternNote": "Great and Just rates below are applied before replacing those notes with Misses. This fixed pattern is not a distribution of human errors.", "lifeNote": "Choose an explicit complete play. This goal checks score and final life; it does not predict clearing without a continue.", "rewardContext": "Reward conditions", "rewardNote": "Choose the reward entries assumed to be selected for this result. The result is conditional on this list; drop probabilities and cumulative rewards are not predicted.", "reward": "Reward {id} · base amount {n}", "currentPoints": "Current event points", "currentCP": "Current challenge points", "rewardConfirm": "Use these reward entries and current balances", "emptyRewardConfirm": "Explicitly assume no selected event rewards", "timeLimit": "Time limit", "timeLimitNote": "When time runs out, the best teams found so far are shown, marked as not proven optimal.", "timeLimits": {"30": "30 s", "60": "1 min", "120": "2 min", "300": "5 min", "none": "No limit"}, "metrics": {"score": "Expected score", "scoreAtLeast": "Chance of reaching the target", "cappedScore": "Expected score capped at the target", "scoreAndLife": "Chance of reaching score and final life targets"}},
 
     cloud: {
       "accountChanged": "Your signed-in account changed. Confirm the account shown below before saving this device's collection.",
@@ -569,8 +569,10 @@ export const enUS = {
       "elapsed": "{n} s",
       "progressLabel": "Search progress",
       "proven": "Proven optimal",
-      "unproven": "Not proven optimal",
-      "stoppedUnproven": "Stopped, not proven optimal",
+      "unproven": "Best so far (not proven)",
+      "stoppedUnproven": "Stopped · best so far (not proven)",
+      "timedOutUnproven": "Time limit reached · best so far (not proven)",
+      "remaining": "{n} s left",
       "bounds": "Best so far {best}; the optimum is at most {limit}",
       "gapPercent": "gap {n}%",
       "partialBox": "Optimal among the cards entered so far.",

@@ -1,2 +1,5 @@
 # Third-party license texts are kept byte for byte as published.
 /public/recognition/licenses/** -text -diff
+
+# Solver engine builds are kept byte for byte; the descriptor names their SHA-256.
+/public/deck/engine/** -text -diff

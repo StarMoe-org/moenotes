@@ -5,7 +5,7 @@ export const zhTW = {
     "arenaSong": "Arena 歌曲",
     "chooseArena": "選擇 Arena 歌曲",
     "noArena": "目前伺服器資料中沒有 Arena 歌曲",
-    conditions: {"objective": "推薦目標", "threshold": "目標分數", "finalLife": "結束時最低生命", "play": "演奏條件", "accuracy": "Great / Just 比例，無 Miss", "pattern": "明確指定含 Miss 的完整演奏", "missEvery": "每 N 個判定音符出現一次 Miss（0 為無 Miss）", "noMiss": "明確指定完整演奏：無 Miss。", "missPattern": "每第 {n} 個判定音符記為 Miss。", "patternNote": "先套用下方 Great、Just 比例，再將指定音符改為 Miss。這是固定演奏條件，不代表真人失誤的機率分布。", "lifeNote": "請明確指定完整演奏。此目標檢查分數和結束時生命，不表示無需接關的通關機率。", "rewardContext": "獎勵條件", "rewardNote": "選擇本次結算假定已抽中的獎勵項目。結果以這份清單為條件，不預測掉落機率或累計獎勵。", "reward": "獎勵 {id} · 基礎數量 {n}", "currentPoints": "目前活動 PT", "currentCP": "目前挑戰點數", "rewardConfirm": "使用這些獎勵項目與目前點數", "emptyRewardConfirm": "明確假定本次沒有抽中活動獎勵", "metrics": {"score": "期望分數", "scoreAtLeast": "達到目標分數的機率", "cappedScore": "以目標分數為上限的期望分數", "scoreAndLife": "同時達到分數與結束生命目標的機率"}},
+    conditions: {"objective": "推薦目標", "threshold": "目標分數", "finalLife": "結束時最低生命", "play": "演奏條件", "accuracy": "Great / Just 比例，無 Miss", "pattern": "明確指定含 Miss 的完整演奏", "missEvery": "每 N 個判定音符出現一次 Miss（0 為無 Miss）", "noMiss": "明確指定完整演奏：無 Miss。", "missPattern": "每第 {n} 個判定音符記為 Miss。", "patternNote": "先套用下方 Great、Just 比例，再將指定音符改為 Miss。這是固定演奏條件，不代表真人失誤的機率分布。", "lifeNote": "請明確指定完整演奏。此目標檢查分數和結束時生命，不表示無需接關的通關機率。", "rewardContext": "獎勵條件", "rewardNote": "選擇本次結算假定已抽中的獎勵項目。結果以這份清單為條件，不預測掉落機率或累計獎勵。", "reward": "獎勵 {id} · 基礎數量 {n}", "currentPoints": "目前活動 PT", "currentCP": "目前挑戰點數", "rewardConfirm": "使用這些獎勵項目與目前點數", "emptyRewardConfirm": "明確假定本次沒有抽中活動獎勵", "timeLimit": "最長計算時間", "timeLimitNote": "到時間後給出目前找到的最佳隊伍，並標明尚未證明最優。", "timeLimits": {"30": "30 秒", "60": "1 分鐘", "120": "2 分鐘", "300": "5 分鐘", "none": "不限"}, "metrics": {"score": "期望分數", "scoreAtLeast": "達到目標分數的機率", "cappedScore": "以目標分數為上限的期望分數", "scoreAndLife": "同時達到分數與結束生命目標的機率"}},
 
     cloud: {
       "accountChanged": "登入帳號發生了變更。儲存本機卡池前，請確認下方顯示的帳號。",
@@ -569,8 +569,10 @@ export const zhTW = {
       "elapsed": "{n} 秒",
       "progressLabel": "搜尋進度",
       "proven": "已證明最優",
-      "unproven": "未證明最優",
-      "stoppedUnproven": "已停止，未證明最優",
+      "unproven": "目前最佳（未證明）",
+      "stoppedUnproven": "已停止 · 目前最佳（未證明）",
+      "timedOutUnproven": "已到時間上限 · 目前最佳（未證明）",
+      "remaining": "剩餘 {n} 秒",
       "bounds": "目前最好 {best}，最優不超過 {limit}",
       "gapPercent": "差距 {n}%",
       "partialBox": "只在已錄入的卡裡最優。",

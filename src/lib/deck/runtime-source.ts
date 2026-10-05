@@ -39,7 +39,7 @@ export interface DeckSolverRuntime {
    * deck data's `provenance.deck.commit` against it. `null` with a development engine override, which skips that check.
    */
   modelCommit: string | null;
-  /** True when a development override replaced the published `recommendEngine`. */
+  /** True when an engine descriptor (this site's engine build) replaced the published `recommendEngine`. */
   override: boolean;
 }
 
@@ -66,7 +66,7 @@ export interface DeckRuntimeSourceOptions {
   sites?: Readonly<Record<DeckServer, string>>;
   /**
    * Replaces the manifest's `recommendEngine`: a descriptor URL (relative to the page) or a descriptor. Defaults to
-   * `assetConfig.deck.devRecommendEngine`, which only development builds set; `null` turns it off.
+   * `assetConfig.deck.recommendEngine`, the engine build this site serves; `null` turns it off.
    */
   engineOverride?: string | DeckEngineOverride | null;
   fetch?: (url: string, init: RequestInit) => Promise<Response>;
@@ -205,7 +205,7 @@ async function replayPointer(site: URL, transport: Transport, loadMusicData: Non
 export async function resolveDeckRuntime(server: GameServer, options: DeckRuntimeSourceOptions = {}): Promise<DeckRuntimeResolution> {
   const deckServer = DECK_SERVER_OF[server];
   const sites = options.sites ?? { intl: assetConfig.musicDataSite, jp: assetConfig.musicDataSiteJp };
-  const override = options.engineOverride === undefined ? assetConfig.deck.devRecommendEngine || null : options.engineOverride;
+  const override = options.engineOverride === undefined ? assetConfig.deck.recommendEngine || null : options.engineOverride;
   const transport: Transport = { fetch: options.fetch ?? ((url, init) => getNativeFetch()(url, init)), signal: options.signal };
   try {
     const site = new URL(`${sites[deckServer].replace(/\/+$/, "")}/`, pageBase());

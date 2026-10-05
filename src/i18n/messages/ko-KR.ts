@@ -5,7 +5,7 @@ export const koKR = {
     "arenaSong": "아레나 곡",
     "chooseArena": "아레나 곡 선택",
     "noArena": "현재 서버 데이터에 아레나 곡이 없습니다",
-    conditions: {"objective": "최적화 목표", "threshold": "목표 점수", "finalLife": "종료 시 최소 라이프", "play": "연주 조건", "accuracy": "Great / Just 비율, Miss 없음", "pattern": "Miss를 포함한 전체 연주 지정", "missEvery": "판정 노트 N개마다 Miss (0 = Miss 없음)", "noMiss": "전체 연주 명시: Miss 없음.", "missPattern": "판정 노트 {n}개마다 Miss로 처리합니다.", "patternNote": "아래 Great·Just 비율을 적용한 후 지정한 노트를 Miss로 바꿉니다. 고정된 연주 조건이며 사람의 실수 확률 분포가 아닙니다.", "lifeNote": "전체 연주를 명시해 주세요. 점수와 종료 시 라이프를 확인하며 이어하기 없는 클리어 확률을 예측하지 않습니다.", "rewardContext": "보상 조건", "rewardNote": "이번 결과에서 선택되었다고 가정할 보상 항목을 지정하세요. 결과는 이 목록을 조건으로 하며 드롭 확률과 누적 보상은 예측하지 않습니다.", "reward": "보상 {id} · 기본 수량 {n}", "currentPoints": "현재 이벤트 PT", "currentCP": "현재 챌린지 포인트", "rewardConfirm": "이 보상 항목과 현재 포인트 사용", "emptyRewardConfirm": "선택된 이벤트 보상 없음으로 명시", "metrics": {"score": "기대 점수", "scoreAtLeast": "목표 점수 달성 확률", "cappedScore": "목표 점수로 제한한 기대 점수", "scoreAndLife": "점수와 종료 라이프 동시 달성 확률"}},
+    conditions: {"objective": "최적화 목표", "threshold": "목표 점수", "finalLife": "종료 시 최소 라이프", "play": "연주 조건", "accuracy": "Great / Just 비율, Miss 없음", "pattern": "Miss를 포함한 전체 연주 지정", "missEvery": "판정 노트 N개마다 Miss (0 = Miss 없음)", "noMiss": "전체 연주 명시: Miss 없음.", "missPattern": "판정 노트 {n}개마다 Miss로 처리합니다.", "patternNote": "아래 Great·Just 비율을 적용한 후 지정한 노트를 Miss로 바꿉니다. 고정된 연주 조건이며 사람의 실수 확률 분포가 아닙니다.", "lifeNote": "전체 연주를 명시해 주세요. 점수와 종료 시 라이프를 확인하며 이어하기 없는 클리어 확률을 예측하지 않습니다.", "rewardContext": "보상 조건", "rewardNote": "이번 결과에서 선택되었다고 가정할 보상 항목을 지정하세요. 결과는 이 목록을 조건으로 하며 드롭 확률과 누적 보상은 예측하지 않습니다.", "reward": "보상 {id} · 기본 수량 {n}", "currentPoints": "현재 이벤트 PT", "currentCP": "현재 챌린지 포인트", "rewardConfirm": "이 보상 항목과 현재 포인트 사용", "emptyRewardConfirm": "선택된 이벤트 보상 없음으로 명시", "timeLimit": "최대 계산 시간", "timeLimitNote": "시간이 다 되면 지금까지 찾은 최선의 덱을 최적 미증명으로 표시합니다.", "timeLimits": {"30": "30초", "60": "1분", "120": "2분", "300": "5분", "none": "제한 없음"}, "metrics": {"score": "기대 점수", "scoreAtLeast": "목표 점수 달성 확률", "cappedScore": "목표 점수로 제한한 기대 점수", "scoreAndLife": "점수와 종료 라이프 동시 달성 확률"}},
 
     cloud: {
       "accountChanged": "로그인한 계정이 변경되었습니다. 이 기기의 컬렉션을 저장하기 전에 아래 계정을 확인하세요.",
@@ -569,8 +569,10 @@ export const koKR = {
       "elapsed": "{n}초",
       "progressLabel": "탐색 진행도",
       "proven": "최적 증명됨",
-      "unproven": "최적 미증명",
-      "stoppedUnproven": "중지됨, 최적 미증명",
+      "unproven": "현재 최선 (최적 미증명)",
+      "stoppedUnproven": "중지됨 · 현재 최선 (최적 미증명)",
+      "timedOutUnproven": "시간 제한 도달 · 현재 최선 (최적 미증명)",
+      "remaining": "{n}초 남음",
       "bounds": "현재 최선 {best} · 최적값은 {limit} 이하",
       "gapPercent": "차이 {n}%",
       "partialBox": "입력한 카드 중에서의 최적입니다.",

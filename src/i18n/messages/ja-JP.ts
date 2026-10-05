@@ -5,7 +5,7 @@ export const jaJP = {
     "arenaSong": "アリーナ楽曲",
     "chooseArena": "アリーナ楽曲を選択",
     "noArena": "現在のサーバーデータにアリーナ楽曲はありません",
-    conditions: {"objective": "最適化する目標", "threshold": "目標スコア", "finalLife": "終了時の最低ライフ", "play": "演奏条件", "accuracy": "Great / Just の割合、Miss なし", "pattern": "Miss を含む完全な演奏を明示", "missEvery": "判定ノーツ N 個ごとに Miss（0 は Miss なし）", "noMiss": "完全な演奏を明示：Miss なし。", "missPattern": "判定ノーツ {n} 個ごとに Miss とします。", "patternNote": "下の Great・Just 割合を適用後、指定ノーツを Miss に置換します。固定の演奏条件であり、人のミスの確率分布ではありません。", "lifeNote": "完全な演奏条件を明示してください。スコアと終了時ライフを判定し、コンティニューなしのクリア確率を予測するものではありません。", "rewardContext": "報酬条件", "rewardNote": "今回選ばれたと仮定する報酬を指定します。この一覧を条件とする結果で、ドロップ確率や累積報酬は予測しません。", "reward": "報酬 {id} · 基本個数 {n}", "currentPoints": "現在のイベント PT", "currentCP": "現在のチャレンジポイント", "rewardConfirm": "この報酬と現在のポイントを使用", "emptyRewardConfirm": "イベント報酬の選出なしと明示", "metrics": {"score": "期待スコア", "scoreAtLeast": "目標スコア達成確率", "cappedScore": "目標を上限とする期待スコア", "scoreAndLife": "スコアと終了時ライフの同時達成確率"}},
+    conditions: {"objective": "最適化する目標", "threshold": "目標スコア", "finalLife": "終了時の最低ライフ", "play": "演奏条件", "accuracy": "Great / Just の割合、Miss なし", "pattern": "Miss を含む完全な演奏を明示", "missEvery": "判定ノーツ N 個ごとに Miss（0 は Miss なし）", "noMiss": "完全な演奏を明示：Miss なし。", "missPattern": "判定ノーツ {n} 個ごとに Miss とします。", "patternNote": "下の Great・Just 割合を適用後、指定ノーツを Miss に置換します。固定の演奏条件であり、人のミスの確率分布ではありません。", "lifeNote": "完全な演奏条件を明示してください。スコアと終了時ライフを判定し、コンティニューなしのクリア確率を予測するものではありません。", "rewardContext": "報酬条件", "rewardNote": "今回選ばれたと仮定する報酬を指定します。この一覧を条件とする結果で、ドロップ確率や累積報酬は予測しません。", "reward": "報酬 {id} · 基本個数 {n}", "currentPoints": "現在のイベント PT", "currentCP": "現在のチャレンジポイント", "rewardConfirm": "この報酬と現在のポイントを使用", "emptyRewardConfirm": "イベント報酬の選出なしと明示", "timeLimit": "最大計算時間", "timeLimitNote": "時間になると、その時点で最良の編成を「最適未証明」として表示します。", "timeLimits": {"30": "30 秒", "60": "1 分", "120": "2 分", "300": "5 分", "none": "無制限"}, "metrics": {"score": "期待スコア", "scoreAtLeast": "目標スコア達成確率", "cappedScore": "目標を上限とする期待スコア", "scoreAndLife": "スコアと終了時ライフの同時達成確率"}},
 
     cloud: {
       "accountChanged": "ログイン中のアカウントが変わりました。この端末のコレクションを保存する前に、下のアカウントを確認してください。",
@@ -569,8 +569,10 @@ export const jaJP = {
       "elapsed": "{n} 秒",
       "progressLabel": "探索の進み具合",
       "proven": "最適と証明済み",
-      "unproven": "最適は未証明",
-      "stoppedUnproven": "停止しました（最適は未証明）",
+      "unproven": "現時点の最良（最適未証明）",
+      "stoppedUnproven": "停止 · 現時点の最良（最適未証明）",
+      "timedOutUnproven": "時間上限 · 現時点の最良（最適未証明）",
+      "remaining": "残り {n} 秒",
       "bounds": "現在の最良 {best}・最適値は {limit} 以下",
       "gapPercent": "差 {n}%",
       "partialBox": "登録済みのカードの中での最適です。",

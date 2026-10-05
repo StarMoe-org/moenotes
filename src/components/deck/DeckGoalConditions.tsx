@@ -1,6 +1,6 @@
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
-import { SCORE_METRICS, isChallengeInput, isEventPayoffGoal, readsAccuracy, solverGoalKind, type DeckEvent, type DeckGoalInput, type DeckScoreMetric, type DeckSolverCapabilities } from "@/lib/deck/goals";
+import { SCORE_METRICS, TIME_LIMIT_CHOICES, isChallengeInput, isEventPayoffGoal, readsAccuracy, solverGoalKind, type DeckEvent, type DeckGoalInput, type DeckScoreMetric, type DeckSolverCapabilities } from "@/lib/deck/goals";
 
 /** Inputs that belong to the selected objective; the native engine resolves the declared play. */
 export default function DeckGoalConditions({ locale, input, event, capabilities, onChange }: {
@@ -45,5 +45,10 @@ export default function DeckGoalConditions({ locale, input, event, capabilities,
           value={input.localChallengePoints ?? ""} onChange={e => onChange({ rewardContextConfirmed: false, localChallengePoints: e.target.value === "" ? null : Number(e.target.value) })} /></label></div>
       <label><input type="checkbox" checked={input.rewardContextConfirmed} onChange={e => onChange({ rewardContextConfirmed: e.target.checked })} />{tr(input.selectedRewards.length ? "rewardConfirm" : "emptyRewardConfirm")}</label>
     </fieldset>}
+    <label>{tr("timeLimit")}<select value={input.timeLimit === null ? "none" : String(input.timeLimit)}
+      onChange={e => onChange({ timeLimit: e.target.value === "none" ? null : Number(e.target.value) as DeckGoalInput["timeLimit"] })}>
+      {TIME_LIMIT_CHOICES.map(seconds => <option key={String(seconds)} value={seconds === null ? "none" : String(seconds)}>{tr(`timeLimits.${seconds === null ? "none" : seconds}`)}</option>)}
+    </select></label>
+    <p className="dw-muted">{tr("timeLimitNote")}</p>
   </>;
 }

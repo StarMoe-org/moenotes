@@ -349,9 +349,15 @@ describe("deck Worker protocol and files", () => {
     expect(isCurrentDeckWorkerReply({ jobId: "k", inputRevision: 2 }, progress)).toBe(false);
   });
 
-  test("the site serves the Worker shell and its core module, and nothing else, from public/deck", () => {
+  test("the site serves the Worker shell, its core module and the engine build from public/deck", () => {
     expect(assetConfig.deck.workerUrl).toBe("/deck/deck-worker.js");
-    expect(readdirSync(runtimeDir).sort()).toEqual(["deck-worker-core.mjs", "deck-worker.js"]);
+    expect(readdirSync(runtimeDir).sort()).toEqual(["deck-worker-core.mjs", "deck-worker.js", "engine"]);
+    const descriptor = JSON.parse(readFileSync(path.join(runtimeDir, "engine", "recommend-engine.json"), "utf8"));
+    for (const file of [descriptor.js, descriptor.wasm]) {
+      const bytes = readFileSync(path.join(runtimeDir, "engine", file.url));
+      expect(bytes.byteLength).toBe(file.bytes);
+      expect(new Bun.CryptoHasher("sha256").update(bytes).digest("hex")).toBe(file.sha256);
+    }
     expect(readFileSync(path.join(runtimeDir, "deck-worker.js"), "utf8")).toContain("import('./deck-worker-core.mjs')");
   });
 

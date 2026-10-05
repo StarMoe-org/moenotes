@@ -423,7 +423,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
             <button type="button" disabled={!box || busy} onClick={() => setPlayerSettings(true)}>{composer("playerBonuses")}</button></div>
         </>}
         team={<div ref={teamPanel} className="dc-team-body">
-          {job.status !== "idle" ? <DeckResult locale={locale} job={job} goal={goal} stale={stale} box={box} catalog={catalog} linked={linked} busy={busy}
+          {job.status !== "idle" ? <DeckResult locale={locale} job={job} goal={goal} stale={stale} timeLimit={goalInput.timeLimit} box={box} catalog={catalog} linked={linked} busy={busy}
             onStop={solver.stop} onRerun={runSolver} onEditCard={setEditingCardKey} onPlayer={() => setPlayerSettings(true)} onAnswerAll={(keys, name, value) => void answerAll(keys, name, value)} />
           : sample.length > 0 ? <>
             <p className="dc-team-caption" data-team-source={preview.source}>{composer(preview.source === "baseline" ? "currentTeam" : "fromCollection")}</p>

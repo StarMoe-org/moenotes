@@ -23,7 +23,7 @@ test("a stale score-goal selection cannot relabel a probability result or round 
       value: { score: 999999, exact: null, interval: null, payoff: { score: 0, exact, interval: null } }, orders: null,
       layout: { members: [1, 2, 3, 4, 5], snaps: [null, null, null, null, null] } }] } }));
   const noop = () => {};
-  const html = renderToStaticMarkup(<DeckResult locale="en-US" goal="power" stale box={null} catalog={{ members: [], snaps: [] }} linked={false} busy={false}
+  const html = renderToStaticMarkup(<DeckResult locale="en-US" goal="power" stale timeLimit={null} box={null} catalog={{ members: [], snaps: [] }} linked={false} busy={false}
     job={{ status: "done", key: "old", answer, stopped: false }} onStop={noop} onRerun={noop} onEditCard={noop} onPlayer={noop} onAnswerAll={noop} />);
   expect(html).toContain("Score and final-life probability");
   expect(html).toContain("0.333333 – 0.333334");

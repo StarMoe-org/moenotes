@@ -16,6 +16,8 @@ export interface DeckResultProps {
   goal: DeckGoal;
   /** The current inputs differ from the run's. */
   stale: boolean;
+  /** The run's search time limit in seconds, or null without one. */
+  timeLimit: number | null;
   box: CardBox | null;
   catalog: BoxCatalog;
   /** A linked save answers for its cards; missing card values are fixed by uploading a newer save. */
@@ -50,12 +52,13 @@ export default function DeckResult(props: DeckResultProps) {
     <div className="dr-status">
       {running ? <>
         <div className="dr-phase"><span className="dr-spinner" aria-hidden="true" /><strong>{tr(`phase.${result?.phase ?? "preprocess"}`)}</strong>
-          <small>{tr("elapsed", { n: ((result?.elapsedMs ?? 0) / 1000).toFixed(1) })}</small></div>
+          <small>{tr("elapsed", { n: ((result?.elapsedMs ?? 0) / 1000).toFixed(1) })}</small>
+          {props.timeLimit !== null && <small className="dr-remaining">{tr("remaining", { n: Math.max(0, props.timeLimit - (result?.elapsedMs ?? 0) / 1000).toFixed(0) })}</small>}</div>
         <progress className="dr-progress" max={1} value={optimality?.fraction ?? undefined} aria-label={tr("progressLabel")} />
         <button type="button" className="dr-stop" onClick={props.onStop}>{tr("stop")}</button>
       </> : optimality?.proven ? <div className="dr-proven"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true"><path d="m3.5 8 3 3 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
         <strong>{tr("proven")}</strong>{result?.elapsedMs !== null && result?.elapsedMs !== undefined && <small>{tr("elapsed", { n: (result.elapsedMs / 1000).toFixed(1) })}</small>}</div>
-        : <div className="dr-unproven"><strong>{tr(job.status === "done" && job.stopped ? "stoppedUnproven" : "unproven")}</strong></div>}
+        : <div className="dr-unproven"><strong>{tr(job.status === "done" && job.stopped ? "stoppedUnproven" : props.timeLimit !== null ? "timedOutUnproven" : "unproven")}</strong></div>}
       {optimality && !optimality.proven && optimality.upperBound !== null && optimality.lowerBound !== null && <p className="dr-bounds">
         {tr("bounds", { best: formatValue(optimality.lowerBound, metric, locale), limit: formatValue(optimality.upperBound, metric, locale) })}
         {optimality.bestGap !== null && <span> · {tr("gapPercent", { n: (optimality.bestGap * 100).toFixed(optimality.bestGap < 0.01 ? 2 : 1) })}</span>}</p>}

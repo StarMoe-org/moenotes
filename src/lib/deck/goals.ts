@@ -25,6 +25,10 @@ export type ChallengePointCost = typeof CHALLENGE_POINT_COSTS[number];
 export const REQUEST_FORMAT = "ournotes-deck.recommendation-request/2";
 /** Teams returned per run. */
 export const RECOMMENDATION_COUNT = 5;
+/** Search time limits a player can choose, in seconds; null searches until the optimum is proven. */
+export const TIME_LIMIT_CHOICES = [30, 60, 120, 300, null] as const;
+export type DeckTimeLimit = typeof TIME_LIMIT_CHOICES[number];
+export const DEFAULT_TIME_LIMIT: DeckTimeLimit = 60;
 /** `MasterReward` resource type of an item. */
 const ITEM_RESOURCE_TYPE = 1;
 
@@ -75,6 +79,8 @@ export interface DeckGoalInput {
   localEventPoints: number | null;
   localChallengePoints: number | null;
   boosts: number;
+  /** When the search stops with its best teams so far, unproven; null runs until it proves the optimum. */
+  timeLimit: DeckTimeLimit;
   challengePoints: ChallengePointCost;
   /** Whole percents. */
   greatPercent: number;
@@ -88,7 +94,7 @@ export interface DeckGoalInput {
 }
 
 export const defaultDeckGoalInput = (goal: DeckGoal = DEFAULT_DECK_GOAL): DeckGoalInput => ({
-  goal, musicId: null, difficulty: "expert", challengeMusicId: null, venue: "freeLive", boosts: 0, challengePoints: 200,
+  goal, musicId: null, difficulty: "expert", challengeMusicId: null, venue: "freeLive", boosts: 0, challengePoints: 200, timeLimit: DEFAULT_TIME_LIMIT,
   arenaMusicId: null, scoreMetric: "score", threshold: 1000000, minFinalLife: 1,
   playMode: "accuracy", missEvery: 0, selectedRewards: [], rewardContextConfirmed: false,
   localEventPoints: null, localChallengePoints: null,
@@ -228,6 +234,6 @@ export function recommendationRequest(input: DeckGoalInput, context: { event: De
   const { includeMembers, excludeMembers, excludeSnaps } = context.constraints;
   parts.push(`"eventIds":[${event ? event.id : ""}]`,
     `"constraints":{"leader":null,"includeMembers":[${ids(includeMembers).join(",")}],"excludeMembers":[${ids(excludeMembers).join(",")}],"excludeSnaps":[${ids(excludeSnaps).join(",")}],"noSnaps":false}`,
-    `"k":${RECOMMENDATION_COUNT}`, `"limits":{"timeLimitMs":60000}`);
+    `"k":${RECOMMENDATION_COUNT}`, `"limits":{"timeLimitMs":${input.timeLimit === null ? "null" : input.timeLimit * 1000}}`);
   return `{${parts.join(",")}}`;
 }
