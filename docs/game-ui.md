@@ -22,9 +22,13 @@ Three UI atlases are repacked without resizing, rotation, quantization or alpha 
 
 The [publication run](https://github.com/StarMoe-org/nnnotes/actions/runs/36965273225) verified all 17 public objects, including transport and decoded hashes, sizes, MIME types and CORS. PNGs return one-year immutable caching. All nine JSON objects currently return `Cache-Control: max-age=0`, despite requesting one-year immutable caching through the existing S3 channel; no bucket or gateway policy was changed. The content-addressed URL and decoded SHA checks remain the version contract.
 
-Override `PUBLIC_GAME_UI_LIBRARY_TW` with another published `moenotes.game-ui-library/1` manifest URL, or set it to an empty string to use ordinary artwork. Configure the corresponding JP/KR/EN variable only when a matching regional export exists. A local preview may instead serve an ignored artifact directory. Game resource dumps and private configuration do not belong in this repository.
+JP defaults to its own [published compact UI library](https://storage.bdon.moe/moenotes/game-ui/jp/07ae20b788d94a6db8111f10614db08072f5edc0ac9630087aefa6e51a2e29b6/manifest.json), exported from JP client 1.0.4 (10053). Its 17 files total 6,433,332 decoded bytes and 959,672 transport bytes. All 157 Sprite identities and all 152 repacked RGBA crops are preserved. It uses website fonts and the site's published JP artwork rather than duplicating a frozen card image catalog.
 
-Regions without a configured UI library keep the ordinary five-slot layout and existing member/Snap artwork components. Their selection buttons and selected cards remain visible, and they do not borrow another region's native library.
+TW, KR and EN use the same international client prefab library. The loader validates its actual TW source identity while card artwork, masterdata and text remain bound to the selected content server. They share the library cache and do not require three identical uploads. JP retains its independent prefab source.
+
+Override `PUBLIC_GAME_UI_LIBRARY_TW` to replace the shared international source. Explicit JP/KR/EN overrides must match their own exported region; an empty string disables that server's native library. Unset KR/EN overrides inherit TW, including an explicitly disabled TW source. A local preview may serve an ignored artifact directory. Game resource dumps and private configuration do not belong in this repository.
+
+Explicitly disabled libraries use ordinary member/Snap artwork where the consumer provides a fallback. Published source manifests retain their original region and are never relabeled to bypass validation.
 
 The full formation scales to its available container width, with selection directly on the five painted slots. The projected card quadrilaterals position the member and Snap controls. Below 560 pixels, Snap hit targets expand to the slot width and at least 44 pixels high for touch; the card artwork and camera geometry stay unchanged. Regions using ordinary artwork wrap their five slot cards into two columns on small screens.
 
