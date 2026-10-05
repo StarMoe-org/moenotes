@@ -22,13 +22,12 @@ function harness(keys = ["first", "second", "third"]) {
 }
 function reply(binding: RecognitionBinding, sha: string, level: number | null = null, kind: "member" | "snap" = "member"): RecognitionResult {
   return { type: "result", binding, sourceId: sha, status: "complete", elapsedMs: 10,
-    scope: { galleryId, catalog: [{ region: "jp", masterVersion: "synthetic/1" }], genuineOpenCvWasm: true,
-      identityGeometryOnly: level === null, cultivationObserved: level !== null, coverage: "observed_only", fullScanCertified: false },
-    cards: [{ kind, id: kind === "member" ? largeId : "2", bbox: [10, 20, 30, 40], uiBBox: [10, 20, 30, 40],
-      identityConfidence: 0.9, inliers: 10, visibleFraction: 1, identityMethod: "siftFlannWasm", review: true,
+    scope: { galleryId, modelsSha256: "9".repeat(64), catalog: [{ region: "jp", masterVersion: "synthetic/1" }], coverage: "observed_only", fullScanCertified: false },
+    cards: [{ kind, id: kind === "member" ? largeId : "2", bbox: [10, 20, 30, 40], locatorScore: 0.97, visibleFraction: 1,
+      identitySimilarity: 0.95, identityMargin: 0.3, displayMode: level === null ? "unknown" : "level", identityMethod: "boxLensEncoderOrtWasm", review: true,
       level: level === null ? { value: null } : { value: level, confidence: 1, bbox: [10, 70, 30, 10],
-        method: "boxLensNumberReaderOrtWasm", modelSha256: "f".repeat(64), runtimeId: "synthetic-parameter-reader" },
-      card_rank: { value: null }, awake_count: { value: null } }] };
+        method: "boxLensClassifierOrtWasm", modelSha256: "f".repeat(64), runtimeId: "synthetic-parameter-reader" },
+      card_rank: { value: null }, awake_count: { value: null } }], unidentified: [] };
 }
 
 function observedCard(key: string, id: string, sha: string, level: number | null = null, kind: "member" | "snap" = "member") {
@@ -246,7 +245,7 @@ test("non-complete worker replies cannot leak candidate cards into a successful 
   const h = harness(["first", "second"]), a = h.begin("first"), b = h.begin("second");
   h.batch.finish("first", reply(a, "c".repeat(64)));
   expect(h.batch.finish("second", { ...reply(b, "d".repeat(64), null, "snap"), status: "failed", error: "runtime unavailable" })).toBe(false);
-  expect(h.batch.snapshot().files[1]).toMatchObject({ status: "failed", result: { cards: [] } });
+  expect(h.batch.snapshot().files[1]).toMatchObject({ status: "failed", result: { cards: [], unidentified: [] } });
   expect(h.batch.draft().cards.map(card => card.kind)).toEqual(["member"]);
 });
 
@@ -311,9 +310,10 @@ test("worker cancellation retains the exact image SHA and monotonic elapsed time
   const client = new RecognitionWorkerClient(() => worker, () => now), selected = source();
   const binding = { jobId: "9007199254740993", inputRevision: revision, datasetId: selected.sourceId, galleryId };
   const pending = client.run({ binding, source: selected,
-    configuration: { workerUrl: "https://example.invalid/worker.js", manifestUrl: "https://example.invalid/manifest.json", manifestSha256 },
+    configuration: { workerUrl: "https://example.invalid/worker.js", galleryUrl: "https://example.invalid/gallery.json", gallerySha256: manifestSha256,
+      modelsUrl: "https://example.invalid/models.json", modelsSha256: "9".repeat(64) },
     image: { sourceId: "c".repeat(64), width: 1, height: 1, rgba: new ArrayBuffer(4) }, timeLimitMs: 100, isCurrent: () => true, onProgress() {} });
   now = 1025; client.cancel();
-  expect(await pending).toMatchObject({ status: "cancelled", binding, sourceId: "c".repeat(64), elapsedMs: 25, cards: [] });
+  expect(await pending).toMatchObject({ status: "cancelled", binding, sourceId: "c".repeat(64), elapsedMs: 25, cards: [], unidentified: [] });
   expect(terminated).toBe(1);
 });

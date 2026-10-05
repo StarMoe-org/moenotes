@@ -320,6 +320,10 @@ export const zhCN = {
       "stale": "资料已改变"
     },
     "imageCardCount": "识别到 {count} 张卡牌",
+    "unidentifiedHint": "未确认的卡框不会自动保存，请点“校对卡牌”选好卡牌。",
+    "unidentifiedCandidate": "最接近：{name}",
+    "unidentifiedCard": "未确认",
+    "imageUnidentifiedCount": "另有 {count} 张未能确认",
     "duplicateScreenshot": "重复截图 · 卡牌会合并",
     "failureDetails": "查看失败原因",
     "retryScreenshot": "重试",
@@ -343,7 +347,7 @@ export const zhCN = {
     "recognitionElapsed": "已用时 {seconds} 秒",
     "recognitionEmpty": "没有识别到卡牌，请使用清晰的卡牌列表截图重试。",
     "recognitionFailed": "识别未完成，尚未保存任何资料，可以重试。",
-    "recognitionSharedCoverage": "共享卡面会与本区服实际卡牌目录逐张校验，图库之外的卡牌可能无法读取。",
+    "recognitionSharedCoverage": "卡面图库会与本区服实际卡牌目录逐张校验；图库之外或看不清的卡牌列为未确认，由你选择。",
     "recognitionError": {
       "configuration": "识别 Worker 地址或卡牌图库地址缺失，请在识别资源配置后刷新。",
       "manifestFetch": "无法下载卡牌图库，请检查连接后重试。",

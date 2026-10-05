@@ -122,7 +122,7 @@ export class RecognitionBatch {
         return true;
       }
       file.status = result.status;
-      file.result = structuredClone({ ...result, cards: [] });
+      file.result = structuredClone({ ...result, cards: [], unidentified: [] });
       if (result.error) file.error = result.error;
     } catch (error) {
       file.status = "failed"; file.error = error instanceof Error ? error.message : "Invalid recognition reply";

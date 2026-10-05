@@ -4,15 +4,15 @@ import { RecognitionError } from "./errors";
 /** A gallery card's Master art reference, as recorded when the gallery was built. */
 export type RecognitionGalleryIdentity = Pick<RecognitionArtIdentity, "assetId" | "characterIds" | "rarity" | "cardType">;
 export interface RecognitionManifest {
-  format: "ournotes.browser-feature-gallery/3"; galleryId: string;
+  format: "moenotes.embedding-gallery/1"; galleryId: string;
   catalog: readonly { region: string; masterVersion: string }[];
-  cards: readonly { kind: "member" | "snap"; id: string; identity: RecognitionGalleryIdentity; regions: readonly string[]; art: { file: string; sha256: string } }[];
+  cards: readonly { kind: "member" | "snap"; id: string; identity: RecognitionGalleryIdentity; regions: readonly string[]; levelLimit: number }[];
 }
 /** Where the page finds the recognition runtime: the same-origin Worker and the recognition site's bundle pointer. */
 export interface RecognitionSiteConfig { site: string; pointerUrl: string; workerUrl: string }
 export interface RecognitionFileRecord { path: string; sha256: string; bytes: number; contentType: string }
 export interface RecognitionBundle {
-  format: "moenotes.recognition-bundle/1"; entries: { gallery: string; fields?: string };
+  format: "moenotes.recognition-bundle/2"; entries: { gallery: string; models: string };
   files: Readonly<Record<string, RecognitionFileRecord>>;
 }
 export interface LoadedRecognitionBundle { bundleSha256: string; manifest: RecognitionManifest; configuration: RecognitionConfiguration }
@@ -51,27 +51,27 @@ export function parseRecognitionPointer(value: unknown): { sha256: string; bytes
 
 /** Every bundle file is content-addressed: `assets/<sha256>.<ext>` below the recognition site. */
 export function parseRecognitionBundle(value: unknown): RecognitionBundle {
-  if (!record(value) || value.format !== "moenotes.recognition-bundle/1" || !record(value.entries) || !record(value.files)) throw new RecognitionError("manifestFormat");
+  if (!record(value) || value.format !== "moenotes.recognition-bundle/2" || !record(value.entries) || !record(value.files)) throw new RecognitionError("manifestFormat");
   const files = value.files as Record<string, unknown>, entries = value.entries;
   for (const file of Object.values(files)) {
     const path = record(file) && typeof file.path === "string" ? OBJECT_PATH.exec(file.path) : null;
     if (!record(file) || !path || path[1] !== file.sha256 || !Number.isSafeInteger(file.bytes) || (file.bytes as number) < 0 || typeof file.contentType !== "string") throw new RecognitionError("manifestFormat");
   }
-  if (typeof entries.gallery !== "string" || !files[entries.gallery] || entries.fields !== undefined && (typeof entries.fields !== "string" || !files[entries.fields])) throw new RecognitionError("manifestFormat");
+  if (typeof entries.gallery !== "string" || !files[entries.gallery] || typeof entries.models !== "string" || !files[entries.models]) throw new RecognitionError("manifestFormat");
   return value as unknown as RecognitionBundle;
 }
 
 function galleryCard(value: unknown): boolean {
   if (!record(value) || typeof value.kind !== "string" || !["member", "snap"].includes(value.kind) || !decimal(value.id)) return false;
-  const identity = value.identity, art = value.art;
+  const identity = value.identity;
   return record(identity) && decimal(identity.assetId) && Array.isArray(identity.characterIds) && identity.characterIds.every(decimal)
     && Number.isSafeInteger(identity.rarity) && Number.isSafeInteger(identity.cardType)
     && Array.isArray(value.regions) && value.regions.every(region => typeof region === "string")
-    && record(art) && typeof art.file === "string" && typeof art.sha256 === "string" && HEX64.test(art.sha256);
+    && Number.isSafeInteger(value.levelLimit) && (value.levelLimit as number) >= 1;
 }
 
 export function parseRecognitionManifest(value: unknown): RecognitionManifest {
-  if (!record(value) || value.format !== "ournotes.browser-feature-gallery/3" || typeof value.galleryId !== "string" || !HEX64.test(value.galleryId)
+  if (!record(value) || value.format !== "moenotes.embedding-gallery/1" || typeof value.galleryId !== "string" || !HEX64.test(value.galleryId)
     || !Array.isArray(value.catalog) || value.catalog.some(entry => !record(entry) || typeof entry.region !== "string" || typeof entry.masterVersion !== "string")
     || !Array.isArray(value.cards) || !value.cards.every(galleryCard)) throw new RecognitionError("manifestFormat");
   const manifest = value as unknown as RecognitionManifest;
@@ -81,7 +81,8 @@ export function parseRecognitionManifest(value: unknown): RecognitionManifest {
 
 /**
  * Pointer (revalidated on every load) -> bundle manifest -> gallery manifest, each checked against the SHA-256 and size
- * the previous one names. Only public runtime files travel over the network; screenshot pixels never enter fetch().
+ * the previous one names. The Worker fetches and checks the models manifest it is handed. Only public runtime files
+ * travel over the network; screenshot pixels never enter fetch().
  */
 export async function loadRecognitionBundle(config: RecognitionSiteConfig, signal: AbortSignal): Promise<LoadedRecognitionBundle> {
   if (!config.workerUrl || !config.pointerUrl || !config.site) throw new RecognitionError("configuration");
@@ -89,11 +90,11 @@ export async function loadRecognitionBundle(config: RecognitionSiteConfig, signa
   const site = new URL(`${config.site.replace(/\/+$/, "")}/`, base);
   const pointer = parseRecognitionPointer(json(await download(new URL(config.pointerUrl, base).href, signal, { cache: "no-cache" })));
   const bundle = parseRecognitionBundle(json(await verified(new URL(`assets/${pointer.sha256}.json`, site).href, pointer, signal)));
-  const gallery = bundle.files[bundle.entries.gallery]!, fields = bundle.entries.fields ? bundle.files[bundle.entries.fields] : undefined;
-  const manifestUrl = new URL(gallery.path, site).href;
-  const manifest = parseRecognitionManifest(json(await verified(manifestUrl, gallery, signal)));
-  return { bundleSha256: pointer.sha256, manifest, configuration: { workerUrl: new URL(config.workerUrl, base).href, manifestUrl, manifestSha256: gallery.sha256,
-    ...(fields ? { fieldManifestUrl: new URL(fields.path, site).href, fieldManifestSha256: fields.sha256 } : {}) } };
+  const gallery = bundle.files[bundle.entries.gallery]!, models = bundle.files[bundle.entries.models]!;
+  const galleryUrl = new URL(gallery.path, site).href;
+  const manifest = parseRecognitionManifest(json(await verified(galleryUrl, gallery, signal)));
+  return { bundleSha256: pointer.sha256, manifest, configuration: { workerUrl: new URL(config.workerUrl, base).href,
+    galleryUrl, gallerySha256: gallery.sha256, modelsUrl: new URL(models.path, site).href, modelsSha256: models.sha256 } };
 }
 
 /** A gallery entry applies to the selected server when its Master art reference (asset, characters, rarity, type) matches. */
@@ -112,7 +113,7 @@ export function bindRecognitionSource(manifest: RecognitionManifest, source: Rec
   return { ...source, gallery: { galleryId: manifest.galleryId, catalog: manifest.catalog.map(({ region, masterVersion }) => ({ region, masterVersion })), compatibleCardKeys, incompatibleCardReasons } };
 }
 
-/** Browser-native decoding, with original orientation; recognition itself runs in the WASM Worker. */
+/** Browser-native decoding, with original orientation; recognition itself runs in the Worker. */
 export async function decodeScreenshot(file: File): Promise<{ width: number; height: number; rgba: ArrayBuffer; sourceId: string }> {
   if (file.size > 25_000_000 || !["image/png", "image/jpeg", "image/webp"].includes(file.type)) throw new RecognitionError("imageType");
   const sourceId = await recognitionDigest(await file.arrayBuffer());

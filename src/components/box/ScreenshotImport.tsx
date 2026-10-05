@@ -8,7 +8,7 @@ import type { BoxMode } from "@/lib/box/session";
 import { bindRecognitionSource, decodeScreenshot, loadRecognitionBundle } from "@/lib/recognition/client";
 import { RecognitionError } from "@/lib/recognition/errors";
 import { RecognitionBatch, type RecognitionFileSnapshot } from "@/lib/recognition/batch";
-import { correctRecognizedBoxIdentity, correctRecognizedValue, mergeRecognizedBox, type RecognitionBinding, type RecognitionConfiguration, type RecognitionSource } from "@/lib/recognition/protocol";
+import { correctRecognizedBoxIdentity, correctRecognizedValue, mergeRecognizedBox, unidentifiedCardKey, type RecognitionBinding, type RecognitionBox, type RecognitionConfiguration, type RecognitionSource } from "@/lib/recognition/protocol";
 import { RecognitionWorkerClient } from "@/lib/recognition/worker-client";
 import Modal from "@/components/shared/Modal";
 import CardIdentitySelection from "./CardIdentitySelection";
@@ -16,7 +16,16 @@ import { ObservedLevelControl, StepControl } from "@/components/shared/CardGrowt
 import { BoxArtwork, cardTitle, cardSubtitle, cardRarityLabel, type BoxCatalog } from "./BoxManager";
 
 interface ImageInput { key: string; name: string; file: File; url: string }
+interface TileCrop { url: string; bbox: RecognitionBox; width: number; height: number }
 const pending = (row: RecognitionFileSnapshot) => ["queued", "preparing", "running"].includes(row.status);
+
+/** The tile as it appears in the screenshot: the picture scaled so the tile fills the frame. */
+function ScreenshotTile({ crop }: { crop: TileCrop }) {
+  const [x, y, w, h] = crop.bbox;
+  return <div className="dw-card-art dw-screenshot-tile" style={{ aspectRatio: `${w} / ${h}` }}>
+    <img src={crop.url} alt="" style={{ width: `${crop.width / w * 100}%`, left: `${-x / w * 100}%`, top: `${-y / h * 100}%` }} />
+  </div>;
+}
 
 export default function ScreenshotImport({ locale, server, source, sourceIssue, box, mode, catalog, isOpen, onClose, onSave, pendingFiles, onPendingFilesConsumed }: {
   locale: AppLocale; server: GameServer; source: RecognitionSource | undefined; box: CardBox | null; mode: BoxMode;
@@ -172,7 +181,7 @@ export default function ScreenshotImport({ locale, server, source, sourceIssue, 
           const verifiedSource = runtime.source;
           if (!batch.current) {
             batch.current = new RecognitionBatch({ batchId: crypto.randomUUID(), inputRevision: String(box?.revision ?? 0), source: verifiedSource,
-              manifestSha256: runtime.configuration.manifestSha256, at: Date.now(), files: [...images.current.values()] });
+              manifestSha256: runtime.configuration.gallerySha256, at: Date.now(), files: [...images.current.values()] });
             for (const previous of bootstrap.current) {
               if (previous.status === "cancelled") batch.current.cancelFile(previous.key);
               else if (["failed", "timeLimit"].includes(previous.status)) batch.current.fail(previous.key, previous.error ?? (previous.status === "timeLimit" ? "timeLimit" : "failed"));
@@ -235,6 +244,15 @@ export default function ScreenshotImport({ locale, server, source, sourceIssue, 
   const editing = draft?.cards.find(card => card.key === editingKey);
   const selectedCount = draft?.cards.filter(card => !excluded.includes(card.key) && card.identity.value !== null).length ?? 0;
   const growthFields = editing ? CARD_FIELDS.filter(field => editing.kind === "member" || field === "level" || field === "rank") : [];
+  // Review cards made from unidentified tiles show the tile itself until a card is chosen.
+  const tileCrops = new Map<string, TileCrop>();
+  for (const row of rows) {
+    const image = images.current.get(row.key);
+    if (row.status !== "complete" || !row.result || !row.binding || !image || !row.width || !row.height) continue;
+    row.result.unidentified.forEach((tile, index) => tileCrops.set(unidentifiedCardKey(row.binding!.jobId, index), { url: image.url, bbox: tile.bbox, width: row.width!, height: row.height! }));
+  }
+  const unidentifiedCount = draft?.cards.filter(card => card.identity.value === null && tileCrops.has(card.key)).length ?? 0;
+  const candidateName = (card: CardBox["cards"][number]) => card.candidates[0] ? cardTitle({ ...card, identity: { ...card.identity, value: card.candidates[0] } }, catalog) : null;
   const close = () => { clearBatch(); onClose(); };
 
   return <>
@@ -261,6 +279,7 @@ export default function ScreenshotImport({ locale, server, source, sourceIssue, 
               <strong className="dw-small" role="status">{tr(`batchStatus.${row.status}`)}</strong>
               {(row.status === "preparing" || row.status === "running") && <small>{tr("recognitionElapsed", { seconds: Math.floor(row.elapsedMs / 1000) })}</small>}
               {row.status === "complete" && <small>{tr("imageCardCount", { count: row.result?.cards.length ?? 0 })}</small>}
+              {row.status === "complete" && !!row.result?.unidentified.length && <small>{tr("imageUnidentifiedCount", { count: row.result.unidentified.length })}</small>}
               {row.duplicateOf && <small>{tr("duplicateScreenshot")}</small>}
               {failure && <details className="dw-queue-error"><summary>{tr("failureDetails")}</summary><p>{tr(failure.code === "timeLimit" ? "recognitionTimeLimit" : `recognitionError.${failure.code}`)}</p>{failure.detail && <p className="dw-recognition-error-detail">{failure.detail.slice(0, 240)}</p>}</details>}
               {pending(row) && <button type="button" onClick={() => cancelFile(row.key)}>{tr("cancelRecognition")}</button>}
@@ -272,21 +291,23 @@ export default function ScreenshotImport({ locale, server, source, sourceIssue, 
           <summary>{tr("viewOriginal", { name: selectedInput.name })}</summary>
           <div className="dw-screenshot-preview" style={selectedRow?.width && selectedRow.height ? { aspectRatio: `${selectedRow.width} / ${selectedRow.height}` } : undefined}>
             <img src={selectedInput.url} alt={tr("screenshotPreview")} />
-            {selectedRow?.result?.cards.map((card, index) => { const frame = card.frameBBox ?? card.uiBBox; return <span className="dw-screenshot-bbox" key={index}
+            {selectedRow?.result && [...selectedRow.result.cards, ...selectedRow.result.unidentified].map((card, index) => { const frame = card.bbox; return <span className={`dw-screenshot-bbox${"id" in card ? "" : " is-unidentified"}`} key={index}
               style={{ left: `${frame[0] / selectedRow.width! * 100}%`, top: `${frame[1] / selectedRow.height! * 100}%`, width: `${frame[2] / selectedRow.width! * 100}%`, height: `${frame[3] / selectedRow.height! * 100}%` }}>{index + 1}</span>; })}
           </div>
         </details>}
         {draft && <section ref={reviewArea} className="dw-recognition-review">
           <div className="dw-toolbar"><h3>{tr("recognitionReview", { count: draft.cards.length })}</h3><button type="button" disabled={stale || saving} onClick={() => setExcluded(selectedCount ? draft.cards.map(card => card.key) : [])}>{tr(selectedCount ? "deselectAllCards" : "selectAllCards")}</button></div>
           <p className="dw-small dw-muted">{tr("recognizedCultivation")}</p>
+          {unidentifiedCount > 0 && <p className="dw-small dw-warning">{tr("unidentifiedHint")}</p>}
           {!draft.cards.length && <p className="dw-alert">{tr("recognitionEmpty")}</p>}
           <div className="dw-recognition-cards">{draft.cards.map((card, index) => {
             const conflict = card.identity.status === "conflict" || CARD_FIELDS.some(field => card.fields[field].status === "conflict");
+            const crop = card.identity.value === null ? tileCrops.get(card.key) : undefined, candidate = crop ? candidateName(card) : null;
             return <article className={`dw-recognition-card${excluded.includes(card.key) ? " is-excluded" : ""}`} key={card.key} data-card-key={card.key} data-card-id={card.identity.value ?? ""} data-card-kind={card.kind}>
               <label className="dw-recognition-choice"><input type="checkbox" checked={!excluded.includes(card.key)} disabled={stale || saving} aria-label={tr("selectRecognizedCard", { n: index + 1 })}
-                onChange={event => setExcluded(previous => event.target.checked ? previous.filter(key => key !== card.key) : [...previous, card.key])} /><span>{index + 1}</span>{conflict && <span className="dw-tag dw-warning">{tr("conflict")}</span>}</label>
-              <BoxArtwork card={card} catalog={catalog} locale={locale} />
-              <strong className="dw-recognized-name">{cardTitle(card, catalog)}</strong><span className="dw-card-subtitle">{cardSubtitle(card, catalog)}</span>
+                onChange={event => setExcluded(previous => event.target.checked ? previous.filter(key => key !== card.key) : [...previous, card.key])} /><span>{index + 1}</span>{conflict && <span className="dw-tag dw-warning">{tr("conflict")}</span>}{crop && <span className="dw-tag dw-warning">{tr("unidentifiedCard")}</span>}</label>
+              {crop ? <ScreenshotTile crop={crop} /> : <BoxArtwork card={card} catalog={catalog} locale={locale} />}
+              <strong className="dw-recognized-name">{crop ? tr("unidentifiedCard") : cardTitle(card, catalog)}</strong><span className="dw-card-subtitle">{crop ? candidate ? tr("unidentifiedCandidate", { name: candidate }) : "" : cardSubtitle(card, catalog)}</span>
               <span className="cb-card-rarity" aria-label={`${tr(card.kind)} · ${t(locale, "cards.rarity")} ${cardRarityLabel(card, catalog) ?? tr("review")}`}>{tr(card.kind)} · {cardRarityLabel(card, catalog) ?? tr("review")}</span>
               <dl className="dw-recognition-facts">{(["level", "rank", ...(card.kind === "member" ? ["awake" as const] : [])] as const).map(field => <div key={field}>
                 <dt>{card.kind === "snap" && field === "rank" ? t(locale, "supportCards.growth.limitBreak") : t(locale, `cards.growth.${field === "level" ? "level" : field === "rank" ? "awaken" : "training"}`)}</dt>
@@ -307,7 +328,7 @@ export default function ScreenshotImport({ locale, server, source, sourceIssue, 
       </section>
     </Modal>
     <Modal historyNavigation={false} isOpen={isOpen && !!editing && !choosingIdentity} onClose={() => setEditingKey(null)} title={tr("reviewCard")} closeLabel={tr("close")} size="lg">
-      {editing && <div className="dw-edit dw-recognized-edit"><div><BoxArtwork card={editing} catalog={catalog} locale={locale} /><h3>{cardTitle(editing, catalog)}</h3><p className="dw-card-subtitle">{cardSubtitle(editing, catalog)}</p><button type="button" onClick={() => setChoosingIdentity(true)}>{tr("changeCard")}</button></div>
+      {editing && <div className="dw-edit dw-recognized-edit"><div>{editing.identity.value === null && tileCrops.has(editing.key) ? <ScreenshotTile crop={tileCrops.get(editing.key)!} /> : <BoxArtwork card={editing} catalog={catalog} locale={locale} />}<h3>{cardTitle(editing, catalog)}</h3><p className="dw-card-subtitle">{editing.identity.value === null && candidateName(editing) ? tr("unidentifiedCandidate", { name: candidateName(editing)! }) : cardSubtitle(editing, catalog)}</p><button type="button" onClick={() => setChoosingIdentity(true)}>{tr("changeCard")}</button></div>
         <div className="dw-dialog"><p className="dw-small dw-muted">{tr("recognitionUnknownCultivation")}</p>
           {growthFields.map(field => <div className="dw-field" key={field}>
             {field === "level" ? <ObservedLevelControl locale={locale} label={tr(field)} value={editing.fields[field].value} onChange={value => correctField(editing.key, field, value)} />

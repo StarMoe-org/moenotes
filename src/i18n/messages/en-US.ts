@@ -320,6 +320,10 @@ export const enUS = {
       "stale": "Input changed"
     },
     "imageCardCount": "{count} cards found",
+    "unidentifiedHint": "Tiles that are not identified are not saved until you pick their card with \"Correct card\".",
+    "unidentifiedCandidate": "Closest: {name}",
+    "unidentifiedCard": "Not identified",
+    "imageUnidentifiedCount": "{count} more not identified",
     "duplicateScreenshot": "Repeated image · cards will merge",
     "failureDetails": "Why this image stopped",
     "retryScreenshot": "Retry",
@@ -343,7 +347,7 @@ export const enUS = {
     "recognitionElapsed": "{seconds} seconds elapsed",
     "recognitionEmpty": "No cards were recognized. Try a clear screenshot of the card list.",
     "recognitionFailed": "Recognition did not finish. No facts were saved. Try again.",
-    "recognitionSharedCoverage": "Shared card artwork is checked against this server's card catalogue. Cards outside the gallery may remain unread.",
+    "recognitionSharedCoverage": "The card artwork gallery is checked against this server's card catalogue. Cards outside the gallery or hard to see are listed as not identified for you to choose.",
     "recognitionError": {
       "configuration": "The recognition Worker URL or the card gallery address is missing. Reload after the runtime is configured.",
       "manifestFetch": "The card gallery could not be downloaded. Check the connection and retry.",
