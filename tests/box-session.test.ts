@@ -24,6 +24,18 @@ function backend() {
   return { api, boxes, writes: () => writes };
 }
 describe("shared collection sessions", () => {
+  test("reviewed cloud import is persisted without losing local identity or overwriting newer drafts", async () => {
+    const store = backend(), session = new CardBoxSession("jp", store.api);
+    const cloud = createBox("jp", "remote", 100); cloud.cards.push(createCard("member", "remote-card", "1", 100));
+    await session.load(); expect(await session.adopt(cloud, null)).toBe(true);
+    expect(store.boxes.get("jp")?.cards).toHaveLength(1);
+    const expected = { id: session.getSnapshot().box!.id, revision: session.getSnapshot().box!.revision };
+    const replacement = { ...cloud, id: "other-storage-id" };
+    expect(await session.adopt(replacement, expected)).toBe(true);
+    expect(session.getSnapshot().box!.id).toBe(expected.id);
+    expect(await session.adopt(createBox("jp", "stale"), expected)).toBe(false);
+    expect(session.getSnapshot().box!.cards).toHaveLength(1);
+  });
   test("temporary answers are shared by subscribers and never written to the local adapter", async () => {
     const store = backend(), session = new CardBoxSession("jp", store.api);
     await session.load();

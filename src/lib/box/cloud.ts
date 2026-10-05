@@ -75,7 +75,8 @@ export class CloudBoxClient {
     let response: Response;
     try {
       response = await this.fetcher(this.url, { method, credentials: "same-origin", cache: "no-store", redirect: "error",
-        headers: { accept: "application/json", ...(body === undefined ? {} : { "content-type": "application/json" }) },
+        headers: { accept: "application/json", "x-card-box-user": this.scope.userId,
+          ...(body === undefined ? {} : { "content-type": "application/json" }) },
         ...(body === undefined ? {} : { body }) });
     } catch {
       this.check();
@@ -95,11 +96,12 @@ export class CloudBoxClient {
     if (response.status === 401) throw new CloudBoxError("signed_out");
     if (response.status === 409) {
       const data = await this.json(response);
+      if (object(data) && data.error === "stale_scope") throw new CloudBoxError("stale_scope");
       if (!object(data) || !["revision_conflict", "mutation_conflict"].includes(String(data.error))) throw new CloudBoxError("invalid");
-      const current = parseCloudBoxEnvelope(data.current, this.scope.server);
+      const current = data.current === undefined && data.error === "mutation_conflict" ? undefined : parseCloudBoxEnvelope(data.current, this.scope.server);
       throw new CloudBoxError(data.error as "revision_conflict" | "mutation_conflict", current);
     }
-    throw new CloudBoxError(response.status >= 500 ? "unavailable" : "invalid");
+    throw new CloudBoxError(response.status >= 500 || response.status === 404 ? "unavailable" : "invalid");
   }
   async read(): Promise<CloudBoxEnvelope> {
     const response = await this.request("GET");
@@ -131,11 +133,18 @@ export class CloudBoxClient {
     if (!this.requests.has(prepared)) throw new CloudBoxError("invalid");
     const response = await this.request(prepared.method, prepared.body);
     if (!response.ok) return this.failure(response);
-    if (prepared.method === "DELETE") {
-      if (response.status !== 204) throw new CloudBoxError("invalid");
-      // Even a replayed deletion can be followed by another device's recreation.
-      return this.read();
+    try {
+      if (prepared.method === "DELETE") {
+        if (response.status !== 204) throw new CloudBoxError("invalid");
+        // Even a replayed deletion can be followed by another device's recreation.
+        return await this.read();
+      }
+      return parseCloudBoxEnvelope(await this.json(response), this.scope.server);
+    } catch (error) {
+      this.check();
+      if (error instanceof CloudBoxError && ["signed_out", "stale_scope"].includes(error.code)) throw error;
+      // A successful write with an unreadable response has an uncertain outcome. Replay the same mutation.
+      throw new CloudBoxError("unavailable");
     }
-    return parseCloudBoxEnvelope(await this.json(response), this.scope.server);
   }
 }

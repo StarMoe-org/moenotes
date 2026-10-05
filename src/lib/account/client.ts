@@ -6,6 +6,8 @@ export interface AccountAvatar {
 }
 
 export interface AccountUser {
+  /** Stable Passport partition. Older API deployments may omit it. */
+  id?: string;
   name: string | null;
   username: string | null;
   picture: string | null;
@@ -43,6 +45,15 @@ export function loadAccount(): Promise<AccountState> {
     })
     .catch((): AccountState => ({ status: "unavailable" }));
   return pending;
+}
+
+/** Re-check a shared-cookie account change; a cloud response never supplies the new identity itself. */
+export async function refreshAccount(): Promise<AccountState> {
+  pending = undefined;
+  const request = loadAccount();
+  const state = await request;
+  if (pending === request) publish(state);
+  return state;
 }
 
 /** Stores the avatar choice (null goes back to the passport picture) and tells every subscriber. */

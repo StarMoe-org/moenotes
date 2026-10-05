@@ -28,6 +28,11 @@ export const accountApi = {
  * `intl`; JP has its own client.
  */
 export const GAME_SAVE_SERVERS = ["jp", "intl"] as const;
+/** Official Android release and the project's upload instructions. */
+export const STARMOE_BOX_APP = {
+  download: "https://github.com/StarMoe-org/StarMoe-box/releases/download/v0.1.2/app-release.apk",
+  guide: "https://github.com/StarMoe-org/StarMoe-box#how-it-works",
+} as const;
 export type GameSaveServer = typeof GAME_SAVE_SERVERS[number];
 
 /** The save server whose saves hold a game server's collection. */

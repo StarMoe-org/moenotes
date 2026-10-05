@@ -35,7 +35,7 @@ import {
   type RawMemberCardRank,
 } from "@/lib/cards/growth";
 import type { DeckCardLookup } from "@/lib/game-api/music-ranking";
-import type { DeckEvent } from "@/lib/deck/goals";
+import type { DeckEvent, DeckArenaMusic } from "@/lib/deck/goals";
 import { buildSupportCardGrowth, type RawSupportCardRank, type SupportCardGrowth } from "@/lib/support-cards/growth";
 import { normalizeCharacters, type CharacterViewModel, type RawCharacter as RawCharacterDetail } from "@/lib/characters/data";
 import { normalizeSupportCards, type RawSupportCard, type SupportCardViewModel } from "@/lib/support-cards/data";
@@ -566,14 +566,27 @@ interface RawChallengeMusic { id: number; eventId: number; liveMusicId: number }
 /** Per server, the events the deck page offers event goals for, with their challenge songs. */
 export function getBuildDeckEvents(locale: AppLocale): Promise<{ server: GameServer; events: DeckEvent[] }[]> {
   return memo(`deck-events:${locale}`, async () => (await eachServer(async (server) => {
-    const [events, challengeMusics, summaries] = await Promise.all([
-      table<RawEvent>("MasterEvent.json", server), table<RawChallengeMusic>("MasterChallengeMusic.json", server), eventsOn(server, locale)]);
+    const [events, challengeMusics, summaries, normalRewards, challengeRewards] = await Promise.all([
+      table<RawEvent>("MasterEvent.json", server), table<RawChallengeMusic>("MasterChallengeMusic.json", server), eventsOn(server, locale),
+      table<RawLiveEventReward>("MasterLiveEventReward.json", server), table<RawLiveEventReward>("MasterChallengeLiveEventReward.json", server)]);
     return events._allData.map((event): DeckEvent => ({
       id: event.id, name: summaries.find((summary) => summary.id === event.id)?.name ?? String(event.id), startAt: event.startAt, endAt: event.endAt,
       itemId: event.eventItemId || null,
+      rewards: [...normalRewards._allData.map(row => ({ ...row, challenge: false })), ...challengeRewards._allData.map(row => ({ ...row, challenge: true }))]
+        .filter(row => row.resourceType === 1 && row.resourceId === event.eventItemId
+          && row.eventGroup === (row.challenge ? event.challengeLiveEventRewardGroup : event.liveEventRewardGroup))
+        .map(row => ({ id: row.id, amount: row.resourceCount, challenge: row.challenge })),
       challengeMusics: challengeMusics._allData.filter((row) => row.eventId === event.id).map((row) => ({ id: row.id, musicId: row.liveMusicId })),
     }));
   })).map(([server, events]) => ({ server, events })));
+}
+
+/** Arena songs use their own scene IDs, never ordinary song IDs. */
+export function getBuildDeckArenas(): Promise<{ server: GameServer; songs: DeckArenaMusic[] }[]> {
+  return memo("deck-arenas", async () => (await eachServer(async server => {
+    const rows = await table<{ id: number; liveMusicId: number }>("MasterArenaMusic.json", server);
+    return rows._allData.map(row => ({ id: row.id, musicId: row.liveMusicId }));
+  })).map(([server, songs]) => ({ server, songs })));
 }
 
 export function getBuildEventDetail(locale: AppLocale, eventId: number): Promise<ServerFacetedValue<EventDetailViewModel> | null> {

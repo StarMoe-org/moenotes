@@ -1,13 +1,15 @@
 import type { BoxCard, CardBox, CardFieldName, CardKind } from "@/lib/box/model";
+import { parseFraction, parseInterval, type DeckFraction, type DeckInterval } from "./interval";
 
 /** The answer of a recommendation, `ournotes-deck.account-recommendation/1`, as the page reads it. */
 export const ANSWER_FORMAT = "ournotes-deck.account-recommendation/1";
 
 export interface DeckPair { member: number; snap: number | null }
-export interface DeckValue { score: number; interval: { lower: number; upper: number } | null; payoff: { score: number; interval: { lower: number; upper: number } | null } | null }
+export interface DeckValue { score: number; exact: DeckFraction | null; interval: DeckInterval | null; payoff: { score: number; exact: DeckFraction | null; interval: DeckInterval | null } | null }
 export interface DeckOrderStat { score: number; order: number[] }
 export interface DeckTeam {
   rank: number;
+  rankCertified: boolean;
   leader: DeckPair;
   others: DeckPair[];
   power: number;
@@ -30,6 +32,8 @@ export interface DeckAnswer {
     optimality: DeckOptimality;
     teams: DeckTeam[];
     coversAllOwnedCards: boolean;
+    metric?: string;
+    play?: { judged: number; misses: number } | null;
   };
 }
 
@@ -41,24 +45,21 @@ function pair(value: unknown): DeckPair {
   if (!record(value)) throw new Error("Invalid team member");
   return { member: int(value.member), snap: value.snap === null || value.snap === undefined ? null : int(value.snap) };
 }
-function interval(value: unknown): { lower: number; upper: number } | null {
-  return record(value) && num(value.lower) !== null && num(value.upper) !== null ? { lower: value.lower as number, upper: value.upper as number } : null;
-}
 function value(raw: unknown): DeckValue | null {
   if (!record(raw) || num(raw.score) === null) return null;
-  const payoff = record(raw.payoff) && num(raw.payoff.score) !== null ? { score: raw.payoff.score as number, interval: interval(raw.payoff.interval) } : null;
-  return { score: raw.score as number, interval: interval(raw.interval), payoff };
+  const payoff = record(raw.payoff) && num(raw.payoff.score) !== null ? { score: raw.payoff.score as number, exact: parseFraction(raw.payoff.exact), interval: parseInterval(raw.payoff.interval) } : null;
+  return { score: raw.score as number, exact: parseFraction(raw.exact), interval: parseInterval(raw.interval), payoff };
 }
 function stat(raw: unknown): DeckOrderStat {
   if (!record(raw) || num(raw.score) === null || !Array.isArray(raw.order)) throw new Error("Invalid order statistic");
   return { score: raw.score as number, order: raw.order.map(int) };
 }
-function team(raw: unknown, index: number): DeckTeam {
+function team(raw: unknown, index: number, inheritedRankProof: boolean): DeckTeam {
   if (!record(raw) || !record(raw.layout) || !Array.isArray(raw.others)) throw new Error("Invalid team");
   const layout = raw.layout as Record<string, unknown>;
   if (!Array.isArray(layout.members) || layout.members.length !== 5 || !Array.isArray(layout.snaps) || layout.snaps.length !== 5) throw new Error("Invalid layout");
   const orders = record(raw.orders) ? { count: int(raw.orders.count), min: stat(raw.orders.min), median: stat(raw.orders.median), max: stat(raw.orders.max) } : null;
-  return { rank: num(raw.rank) ?? index + 1, leader: pair(raw.leader), others: raw.others.map(pair), power: num(raw.power) ?? 0, value: value(raw.value), orders,
+  return { rank: num(raw.rank) ?? index + 1, rankCertified: raw.rankCertified === undefined ? inheritedRankProof : raw.rankCertified === true, leader: pair(raw.leader), others: raw.others.map(pair), power: num(raw.power) ?? 0, value: value(raw.value), orders,
     layout: { members: layout.members.map(int), snaps: layout.snaps.map(item => item === null ? null : int(item)) } };
 }
 function issues(raw: unknown): DeckIssue[] {
@@ -79,8 +80,11 @@ export function parseDeckAnswer(json: string): DeckAnswer {
     const account = record(r.account) && record(r.account.cards) ? r.account.cards : {};
     result = {
       phase, elapsedMs: num(r.elapsedMs),
+      metric: record(r.metric) && typeof r.metric.kind === "string" ? r.metric.kind : record(r.goal) && r.goal.kind === "power" ? "power" : "score",
+      play: record(r.goal) && record(r.goal.play) && num(r.goal.play.judged) !== null && num(r.goal.play.misses) !== null
+        ? { judged: r.goal.play.judged as number, misses: r.goal.play.misses as number } : null,
       optimality: { proven: o.proven === true, lowerBound: num(o.lowerBound), upperBound: num(o.upperBound), bestGap: num(o.bestGap), fraction: num(o.fraction) },
-      teams: Array.isArray(r.teams) ? r.teams.map(team) : [],
+      teams: Array.isArray(r.teams) ? r.teams.map((raw, index) => team(raw, index, o.proven === true)) : [],
       coversAllOwnedCards: account.coversAllOwnedCards !== false,
     };
   }

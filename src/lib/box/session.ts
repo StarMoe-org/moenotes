@@ -128,6 +128,24 @@ export class CardBoxSession {
       await this.settle(epoch);
     }
   }
+  /** Explicitly adopt reviewed cloud facts. An intervening local edit always wins. */
+  async adopt(incoming: CardBox, expected: { id: string; revision: number } | null): Promise<boolean> {
+    const { box, busy, mode } = this.state;
+    if (busy || incoming.server !== this.server) return false;
+    if ((box?.id ?? null) !== (expected?.id ?? null) || (box?.revision ?? null) !== (expected?.revision ?? null)) {
+      this.update({ error: "conflict" }); return false;
+    }
+    if (box) return this.commit({ ...incoming, id: box.id, revision: box.revision }, box.revision);
+    const epoch = ++this.epoch;
+    this.update({ busy: true, error: null });
+    try {
+      const clean = parseBox(JSON.stringify(incoming));
+      const saved = mode === "local" ? await this.backend.save(clean, null) : { ...clean, revision: 1, updatedAt: Date.now() };
+      if (epoch === this.epoch) this.update({ box: saved });
+      return true;
+    } catch (error) { this.fail(error); return false; }
+    finally { await this.settle(epoch); }
+  }
 }
 
 const sessions = new Map<GameServer, CardBoxSession>();

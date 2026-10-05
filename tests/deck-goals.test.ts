@@ -26,7 +26,7 @@ describe("recommendation request", () => {
     expect(body.goal).toEqual({ kind: "battleLive", musicId: 245, difficulty: "expert", rank: 1, accuracy: { greatFraction: 0.03, justFraction: 0.95 } });
     expect(body.metric).toEqual({ kind: "score" });
     expect(body.eventIds).toEqual([7]);
-    expect(body.limits).toEqual({ timeLimitMs: null });
+    expect(body.limits).toEqual({ timeLimitMs: 60000 });
     expect(body.k).toBe(5);
   });
   test("a live without gekisou sends Great only", () => {
@@ -43,12 +43,31 @@ describe("recommendation request", () => {
     const body = request({ goal: "eventPoints", venue: "freeLive", musicId: 245, boosts: 3 });
     expect(body.metric).toEqual({ kind: "eventPoints", eventId: 7, consumption: 3 });
     expect(body.eventContext.resultClock.kind).toBe("played");
+    expect(body.eventContext.rewardProjection).toBe(true);
     expect(body.room).toBeUndefined();
-    const challenge = request({ goal: "eventItems", venue: "challengeLive", challengeMusicId: 1, challengePoints: 800 });
+    const challenge = request({ goal: "eventItems", venue: "challengeLive", challengeMusicId: 1, challengePoints: 800, rewardContextConfirmed: true, localEventPoints: 17, localChallengePoints: 800 });
     expect(challenge.metric).toEqual({ kind: "eventItems", eventId: 7, resourceType: 1, resourceId: 90, consumption: 800 });
     const battle = request({ goal: "eventPoints", venue: "battleLive", musicId: 245 });
     expect(battle.room).toEqual({ players: 5, othersAverageScore: null });
     expect(request({ goal: "eventPoints", venue: "skip", musicId: 245 }).eventContext.resultClock.kind).toBe("skip");
+  });
+  test("challenge points use ordinary result ranks and the chosen Live Boost consumption", () => {
+    for (const venue of ["freeLive", "battleLive", "skip"] as const) {
+      const body = request({ goal: "challengePoints", venue, musicId: 245, boosts: 3 });
+      expect(body.goal.kind).toBe(venue);
+      expect(body.metric).toEqual({ kind: "challengePoints", eventId: 7, consumption: 3 });
+      expect(body.eventContext.resultClock.kind).toBe(venue === "skip" ? "skip" : "played");
+      expect(body.eventContext.rewardProjection).toBe(true);
+      expect(body.eventContext.localEvents).toBeUndefined();
+    }
+    expect(() => request({ goal: "challengePoints", venue: "challengeLive", challengeMusicId: 1 })).toThrow();
+  });
+  test("the event song ranking is the challenge song's score, without a PT consumption metric", () => {
+    const body = request({ goal: "challenge", challengeMusicId: 2, difficulty: "hard", boosts: 10, challengePoints: 1600 });
+    expect(body.goal).toMatchObject({ kind: "challengeLive", challengeMusicId: 2, difficulty: "hard" });
+    expect(body.metric).toEqual({ kind: "score" });
+    expect(body.eventIds).toEqual([7]);
+    expect(body.eventContext).toBeUndefined();
   });
   test("the result clock is in JST DateTime ticks", () => {
     expect(jstTicks(0)).toBe(String(621_355_968_000_000_000n + 9n * 3_600_000n * 10_000n));
@@ -85,4 +104,65 @@ describe("capabilities", () => {
     expect(parseCapabilities(null)).toBeNull();
     expect(parseCapabilities("not json")).toBeNull();
   });
+});
+
+
+describe("all public scene and objective inputs", () => {
+  test("mission and arena keep their distinct scene IDs and Just rules", () => {
+    expect(request({ goal: "mission", musicId: 100 }).goal).toEqual({ kind: "missionLive", musicId: 100, difficulty: "expert", accuracy: { greatFraction: 0, justFraction: 1 } });
+    const arena = request({ goal: "arena", arenaMusicId: 42, musicId: 100 });
+    expect(arena.goal.arenaMusicId).toBe(42);
+    expect(arena.goal.musicId).toBeUndefined();
+    expect(arena.goal.rank).toBe(1);
+    expect(goalGap({ ...defaultDeckGoalInput("arena"), musicId: 100 }, null)).toBe("arenaSong");
+  });
+  test("challenge Skip spends CP and never requests CP earnings", () => {
+    const body = request({ goal: "eventPoints", venue: "challengeSkip", challengeMusicId: 1, challengePoints: 800, boosts: 3 });
+    expect(body.goal).toEqual({ kind: "skip", challengeMusicId: 1, difficulty: "expert" });
+    expect(body.metric.consumption).toBe(800);
+    expect(body.eventContext.resultClock.kind).toBe("skip");
+    expect(() => request({ goal: "challengePoints", venue: "challengeSkip", challengeMusicId: 1 })).toThrow();
+    expect(request({ goal: "challengeSkip", challengeMusicId: 1 }).metric).toEqual({ kind: "score" });
+  });
+  test("score thresholds and caps carry their objective, and life requires an explicit play", () => {
+    for (const scoreMetric of ["scoreAtLeast", "cappedScore"] as const) {
+      expect(request({ goal: "skip", musicId: 100, scoreMetric, threshold: 12345 }).metric).toEqual({ kind: scoreMetric, threshold: 12345 });
+    }
+    expect(() => request({ goal: "free", musicId: 100, scoreMetric: "scoreAndLife" })).toThrow();
+    const body = request({ goal: "free", musicId: 100, scoreMetric: "scoreAndLife", threshold: 500, minFinalLife: 200, playMode: "pattern", missEvery: 10, greatPercent: 5 });
+    expect(body.goal.play).toEqual({ kind: "pattern", greatFraction: 0.05, justFraction: 0, missEvery: 10 });
+    expect(body.goal.accuracy).toBeUndefined();
+    expect(body.metric).toEqual({ kind: "scoreAndLife", threshold: 500, minFinalLife: 200 });
+    for (const threshold of [NaN, Infinity, -1, 0.5, 2147483648]) expect(() => request({ goal: "free", musicId: 100, scoreMetric: "scoreAtLeast", threshold })).toThrow();
+  });
+  test("conditional rewards need an explicit verified route and entered balances", () => {
+    const withReward = { ...event, rewards: [{ id: 12, amount: 10, challenge: true }, { id: 13, amount: 10, challenge: false }] };
+    const patch: Partial<DeckGoalInput> = { goal: "eventItems", venue: "challengeSkip", challengeMusicId: 1,
+      selectedRewards: [12], rewardContextConfirmed: true, localEventPoints: 100, localChallengePoints: 800 };
+    const body = request(patch, withReward);
+    expect(body.eventContext.localEvents).toEqual([{ eventId: 7, points: 100, challengePoints: 800, added: [] }]);
+    expect(body.eventContext.selectedRewards).toEqual([{ eventId: 7, rewardId: 12 }]);
+    expect(body.eventContext.rewardProjection).toBeUndefined();
+    expect(() => request({ ...patch, selectedRewards: [13] }, withReward)).toThrow();
+    expect(() => request({ ...patch, rewardContextConfirmed: false }, withReward)).toThrow();
+    expect(() => request({ ...patch, localEventPoints: null }, withReward)).toThrow();
+  });
+  test("pattern capabilities prevent sending new play requests to an old engine", () => {
+    const cap = { goals: ["freeLive"], metrics: { freeLive: ["scoreAndLife"] }, accuracy: { great: true, just: false } };
+    const input = { goal: "free" as const, venue: "freeLive" as const, scoreMetric: "scoreAndLife" as const, playMode: "pattern" as const };
+    expect(computes(cap, input)).toBe(false);
+    expect(computes(parseCapabilities(JSON.stringify({ ...cap, patternPlay: { required: ["missEvery"] } }))!, input)).toBe(true);
+  });
+});
+
+
+test("unsupported accuracy is rejected without mutating the player's goal or declared rates", () => {
+  const cap = { goals: ["battleLive", "freeLive"], metrics: { battleLive: ["score"], freeLive: ["score"] }, accuracy: { great: false, just: false } };
+  const input = { ...defaultDeckGoalInput("battle"), musicId: 100, greatPercent: 5, justPercent: 90 };
+  expect(computes(cap, input)).toBe(false);
+  expect(input.greatPercent).toBe(5);
+  expect(input.justPercent).toBe(90);
+  expect(input.goal).toBe("battle");
+  expect(computes(cap, { ...input, greatPercent: 0, justPercent: 100 })).toBe(true);
+  expect(computes(cap, { ...input, goal: "free", greatPercent: 0 })).toBe(true);
 });

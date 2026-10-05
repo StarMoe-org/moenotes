@@ -3,6 +3,7 @@ import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import type { BoxCard, CardBox, CardFieldName } from "@/lib/box/model";
 import type { DeckAnswer, DeckIssueGroups, DeckPair, DeckTeam } from "@/lib/deck/answer";
+import { formatDeckInterval, parseInterval } from "@/lib/deck/interval";
 import { groupIssues, isOutOfMemory } from "@/lib/deck/answer";
 import type { DeckGoal } from "@/lib/deck/goals";
 import type { DeckJobState } from "./use-deck-solver";
@@ -43,6 +44,7 @@ export default function DeckResult(props: DeckResultProps) {
   if (answer && answer.status !== "ok") return <Issues {...props} answer={answer} />;
   const result = answer?.result ?? null;
   const optimality = result?.optimality;
+  const metric = result?.metric ?? (props.goal === "power" ? "power" : ["eventPoints", "challengePoints", "eventItems"].includes(props.goal) ? props.goal : "score");
   return <div className="dr-result" data-state={running ? "running" : "done"} aria-busy={running}>
     {props.stale && !running && <div className="dr-stale" role="status"><strong>{tr("stale")}</strong><button type="button" onClick={props.onRerun}>{tr("rerun")}</button></div>}
     <div className="dr-status">
@@ -55,31 +57,35 @@ export default function DeckResult(props: DeckResultProps) {
         <strong>{tr("proven")}</strong>{result?.elapsedMs !== null && result?.elapsedMs !== undefined && <small>{tr("elapsed", { n: (result.elapsedMs / 1000).toFixed(1) })}</small>}</div>
         : <div className="dr-unproven"><strong>{tr(job.status === "done" && job.stopped ? "stoppedUnproven" : "unproven")}</strong></div>}
       {optimality && !optimality.proven && optimality.upperBound !== null && optimality.lowerBound !== null && <p className="dr-bounds">
-        {tr("bounds", { best: formatValue(optimality.lowerBound, props.goal, locale), limit: formatValue(optimality.upperBound, props.goal, locale) })}
+        {tr("bounds", { best: formatValue(optimality.lowerBound, metric, locale), limit: formatValue(optimality.upperBound, metric, locale) })}
         {optimality.bestGap !== null && <span> · {tr("gapPercent", { n: (optimality.bestGap * 100).toFixed(optimality.bestGap < 0.01 ? 2 : 1) })}</span>}</p>}
       {result && !result.coversAllOwnedCards && <p className="dr-note">{tr("partialBox")}</p>}
     </div>
-    {result && result.teams.length > 0 ? <ol className="dr-teams">{result.teams.map((team, index) => <TeamCard key={index} {...props} team={team} first={index === 0} final={!running} />)}</ol>
+    {result?.play && <p className="dr-note">{tr("playSummary", { notes: result.play.judged, misses: result.play.misses })}</p>}
+    {result && result.teams.length > 0 ? <ol className="dr-teams">{result.teams.map((team, index) => <TeamCard key={index} {...props} team={team} metric={metric} first={index === 0} final={!running} />)}</ol>
       : <p className="dr-muted">{tr(running ? "searching" : "noTeam")}</p>}
   </div>;
 }
 
-function formatValue(value: number, goal: DeckGoal, locale: AppLocale): string {
-  const decimals = goal === "eventPoints" || goal === "eventItems" ? 2 : 0;
+function formatValue(value: number, goal: string, locale: AppLocale): string {
+  const decimals = goal === "scoreAtLeast" || goal === "scoreAndLife" ? 6 : goal === "challengePoints" || goal === "eventPoints" || goal === "eventItems" ? 2 : 0;
   return new Intl.NumberFormat(locale, { maximumFractionDigits: decimals }).format(decimals ? value : Math.floor(value));
 }
 
-function TeamCard(props: DeckResultProps & { team: DeckTeam; first: boolean; final: boolean }) {
-  const { locale, team, goal, box, catalog } = props;
+function TeamCard(props: DeckResultProps & { team: DeckTeam; metric: string; first: boolean; final: boolean }) {
+  const { locale, team, metric, box, catalog } = props;
   const tr = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.solver.${key}`, values);
   const [copied, setCopied] = useState(false);
   const cardOf = (kind: "member" | "snap", id: number | null) => id === null ? null : box?.cards.find(card => card.kind === kind && card.identity.value === String(id)) ?? null;
   const memberView = (id: number) => catalog.members.find(card => card.id === id);
   const snapView = (id: number | null) => id === null ? undefined : catalog.snaps.find(card => card.id === id);
   const value = team.value;
-  const payoff = goal === "eventPoints" || goal === "eventItems";
-  const main = goal === "power" ? team.power : payoff ? value?.payoff?.score ?? null : value?.score ?? null;
-  const interval = payoff ? value?.payoff?.interval ?? null : goal === "power" ? null : value?.interval ?? null;
+  const payoff = metric !== "score" && metric !== "power";
+  const probability = metric === "scoreAtLeast" || metric === "scoreAndLife";
+  const main = metric === "power" ? team.power : payoff ? value?.payoff?.score ?? null : value?.score ?? null;
+  const interval = payoff ? value?.payoff?.interval ?? null : metric === "power" ? null : value?.interval ?? null;
+  const exact = payoff ? value?.payoff?.exact : value?.exact;
+  const displayInterval = interval ?? (probability && exact ? parseInterval({ lower: exact, upper: exact }) : null);
   const slots = team.layout.members.map((id, slot) => {
     const member = cardOf("member", id), snap = cardOf("snap", team.layout.snaps[slot] ?? null);
     return { member: memberView(id), support: snapView(team.layout.snaps[slot] ?? null),
@@ -96,10 +102,10 @@ function TeamCard(props: DeckResultProps & { team: DeckTeam; first: boolean; fin
   }
   return <li className="dr-team" data-first={props.first}>
     <div className="dr-team-head">
-      <span className="dr-rank">#{team.rank}</span>
-      <div className="dr-value"><small>{tr(`valueLabel.${goal}`)}</small>
-        <strong>{main === null ? "—" : interval ? `${formatValue(interval.lower, goal, locale)} – ${formatValue(interval.upper, goal, locale)}` : formatValue(main, goal, locale)}</strong></div>
-      {goal !== "power" && <div className="dr-power"><small>{tr("power")}</small><span>{formatValue(team.power, "power", locale)}</span></div>}
+      <span className="dr-rank">{team.rankCertified ? `#${team.rank}` : tr("candidateRank", { n: team.rank })}</span>
+      <div className="dr-value"><small>{tr(["score", "scoreAtLeast", "cappedScore", "scoreAndLife"].includes(metric) ? `metricLabel.${metric}` : `valueLabel.${metric}`)}</small>
+        <strong>{main === null ? "—" : displayInterval ? formatDeckInterval(displayInterval, locale, probability ? 6 : payoff ? 2 : 0) : formatValue(main, metric, locale)}</strong></div>
+      {metric !== "power" && <div className="dr-power"><small>{tr("power")}</small><span>{formatValue(team.power, "power", locale)}</span></div>}
     </div>
     {props.first ? <>
       <div className="dc-stage"><NativeFormationGroup locale={locale} slots={slots} label={tr("formation")} /></div>
