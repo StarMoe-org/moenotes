@@ -100,6 +100,7 @@ export async function sourceRevision(appDir: string): Promise<string> {
   return hasher.digest("hex").slice(0, 16);
 }
 
-export function buildKey(revision: string, data: DataVersion): string {
-  return new Bun.CryptoHasher("sha256").update(`${revision}\n${data.fingerprint}`).digest("hex").slice(0, 16);
+export function buildKey(revision: string, data: DataVersion, commit?: string): string {
+  // CI artifacts bind the exact checkout too, even when only server/workflow files changed.
+  return new Bun.CryptoHasher("sha256").update(`${revision}\n${data.fingerprint}${commit ? `\n${commit}` : ""}`).digest("hex").slice(0, 16);
 }

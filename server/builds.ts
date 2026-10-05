@@ -1,6 +1,8 @@
 import { createWriteStream } from "node:fs";
 import { link, mkdir, readdir, rename, rm, symlink } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
+import { GithubBuild } from "./github-build";
+import { installSiteArtifact } from "./site-artifact";
 import { CORE_LOCALES } from "../src/config/build-locales";
 import { SUPPORTED_LOCALES } from "../src/config/locales";
 import type { ServerConfig } from "./config";
@@ -138,6 +140,7 @@ export class BuildStore {
   private compression: Promise<void> = Promise.resolve();
   private readonly processes = new Set<Bun.Subprocess>();
   private stopping = false;
+  private readonly abort = new AbortController();
 
   constructor(private readonly config: ServerConfig) {}
 
@@ -211,7 +214,57 @@ export class BuildStore {
     await this.run(FINALIZE_STEP, finalize, logFile);
   }
 
+  /** CI owns rendering; this process only verifies, stages and links a published immutable artifact. */
+  private async buildFromGithub(key: string, revision: string, data: DataVersion): Promise<BuildRecord> {
+    const startedAt = Date.now();
+    const id = `${new Date(startedAt).toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z")}-${key.slice(0, 8)}-github`;
+    const staging = join(this.config.buildsDir, `${STAGING_PREFIX}${id}`);
+    const logPath = join(this.config.logsDir, `${id}.log`);
+    const logFile = Bun.file(logPath).writer();
+    this.progress = new BuildProgress(id, null);
+    const client = new GithubBuild({ repo: this.config.githubRepo, ref: this.config.githubRef,
+      token: this.config.githubToken, commit: this.config.githubCommit,
+      pendingPath: join(this.config.dataDir, "github-build.json"), pollMs: this.config.githubPollMs,
+      timeoutMs: this.config.buildTimeoutMs });
+    const ticker = setInterval(() => log(`build ${id}: ${this.progress?.describe()}`), PROGRESS_INTERVAL_MS);
+    const signal = AbortSignal.any([this.abort.signal, AbortSignal.timeout(this.config.buildTimeoutMs)]);
+    try {
+      await this.linkLatestLog(logPath);
+      const release = await client.wait({ key, revision, commit: this.config.githubCommit, data }, step => {
+        if (this.progress!.step !== step) {
+          logFile.write(`${new Date().toISOString()} ${step}\n`);
+          log(`build ${id}: ${step}`);
+        }
+        this.progress!.step = step;
+      }, signal);
+      this.progress.step = "downloading and verifying Release";
+      await mkdir(staging, { recursive: true });
+      await installSiteArtifact(release.archiveUrl, staging, release.manifest, { signal });
+      this.progress.pages = release.manifest.pages ?? 0;
+      // Compression must finish before linking its variants, never alongside a second renderer.
+      this.progress.step = COMPRESSION_WAIT_STEP;
+      await this.compression;
+      signal.throwIfAborted();
+      this.progress.step = FINALIZE_STEP;
+      const args = [process.execPath, this.finalizeScript(), "link", join(staging, "site"), join(staging, "files.json")];
+      if (this.current) args.push(this.siteDir(this.current.id), join(this.buildDir(this.current.id), "files.json"));
+      await this.run(FINALIZE_STEP, args, logFile);
+      signal.throwIfAborted();
+      await rename(staging, this.buildDir(id));
+      return { id, key, revision, data: data.label, builtAt: release.manifest.builtAt,
+        durationMs: Date.now() - startedAt, pages: release.manifest.pages,
+        stage: "full", localesRendered: [...release.manifest.locales] };
+    } catch (error) {
+      await rm(staging, { recursive: true, force: true }).catch(() => {});
+      throw new Error(`${errorMessage(error)} (log: ${logPath})`);
+    } finally {
+      clearInterval(ticker);
+      this.progress = null;
+      await logFile.end();
+    }
+  }
   async build(key: string, revision: string, data: DataVersion): Promise<BuildRecord> {
+    if (this.config.buildMode === "github") return this.buildFromGithub(key, revision, data);
     const split = this.config.splitLocales;
     const startedAt = Date.now();
     const baseId = `${new Date(startedAt).toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z")}-${key.slice(0, 8)}`;
@@ -333,6 +386,7 @@ export class BuildStore {
   /** Stops the build and the compression; an interrupted compression resumes at the next start. */
   stopProcesses(): void {
     this.stopping = true;
+    this.abort.abort(new Error("Server is stopping"));
     for (const child of this.processes) child.kill("SIGTERM");
   }
 

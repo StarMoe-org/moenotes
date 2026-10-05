@@ -16,10 +16,18 @@ function positiveNumber(name: string, fallback: number): number {
 }
 
 const dataDir = resolve(env("MOENOTES_DATA_DIR") ?? "/data");
+const buildMode = env("MOENOTES_BUILD_MODE") ?? "github";
+if (buildMode !== "github" && buildMode !== "local") throw new Error("MOENOTES_BUILD_MODE must be github or local");
 
 /** Deploy server settings; every value comes from the environment (see docs/deployment.md). */
 export const config = {
   appDir: resolve(import.meta.dir, ".."),
+  buildMode: buildMode as "github" | "local",
+  githubToken: env("MOENOTES_GITHUB_TOKEN"),
+  githubRepo: env("MOENOTES_GITHUB_REPO") ?? "StarMoe-org/moenotes",
+  githubRef: env("MOENOTES_GITHUB_REF") ?? "main",
+  githubCommit: env("MOENOTES_REVISION") ?? "",
+  githubPollMs: positiveNumber("MOENOTES_GITHUB_POLL_SECONDS", 30) * 1000,
   host: env("HOST") ?? "0.0.0.0",
   port: positiveNumber("PORT", 80),
   dataDir,
