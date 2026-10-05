@@ -4,11 +4,17 @@ import { Heading } from "./shared";
 import ModelSourceText from "./ModelSourceText";
 
 const no = (i: number) => String(i + 1).padStart(2, "0");
+const anchor = (section: ChartDataGuide["sections"][number], i: number) => section.id ?? `mn-cd-g${i}`;
 
 /** The guide: definitions, derivations and conditions behind every figure, with contents that follow the reading. */
 export default function GuideView({ guide }: { guide: ChartDataGuide }) {
   const [current, setCurrent] = useState(0);
   const body = useRef<HTMLElement>(null);
+  // a link into a section lands on it once the page has its final layout
+  useEffect(() => {
+    const id = decodeURIComponent(location.hash.slice(1));
+    if (id) document.getElementById(id)?.scrollIntoView();
+  }, []);
   useEffect(() => {
     const root = body.current;
     if (!root || typeof IntersectionObserver === "undefined") return;
@@ -16,7 +22,7 @@ export default function GuideView({ guide }: { guide: ChartDataGuide }) {
     const seen = new Set<string>();
     const spy = new IntersectionObserver((entries) => {
       for (const e of entries) (e.isIntersecting ? seen.add(e.target.id) : seen.delete(e.target.id));
-      const first = guide.sections.findIndex((_, i) => seen.has(`mn-cd-g${i}`));
+      const first = guide.sections.findIndex((x, i) => seen.has(anchor(x, i)));
       if (first >= 0) setCurrent(first);
     }, { rootMargin: "-90px 0px -55% 0px" });
     root.querySelectorAll(".mn-cd-g-section").forEach((x) => spy.observe(x));
@@ -32,13 +38,13 @@ export default function GuideView({ guide }: { guide: ChartDataGuide }) {
       <div className="mn-cd-guide">
         <nav className="mn-cd-toc" aria-label={guide.title}>
           {guide.sections.map((x, i) => (
-            <a key={x.title} href={`#mn-cd-g${i}`} aria-current={i === current ? "true" : "false"}><span>{no(i)}</span>{x.title}</a>
+            <a key={x.title} href={`#${anchor(x, i)}`} aria-current={i === current ? "true" : "false"}><span>{no(i)}</span>{x.title}</a>
           ))}
         </nav>
-        <details className="mn-cd-toc-mobile"><summary>{guide.contentsLabel}</summary><nav aria-label={guide.title}>{guide.sections.map((x,i)=><a key={x.title} href={`#mn-cd-g${i}`} onClick={(e)=>{e.currentTarget.closest("details")?.removeAttribute("open");}}><span>{no(i)}</span>{x.title}</a>)}</nav></details>
+        <details className="mn-cd-toc-mobile"><summary>{guide.contentsLabel}</summary><nav aria-label={guide.title}>{guide.sections.map((x,i)=><a key={x.title} href={`#${anchor(x, i)}`} onClick={(e)=>{e.currentTarget.closest("details")?.removeAttribute("open");}}><span>{no(i)}</span>{x.title}</a>)}</nav></details>
         <article ref={body} className="mn-cd-g-body">
           {guide.sections.map((x, i) => (
-            <section key={x.title} id={`mn-cd-g${i}`} className="mn-cd-g-section">
+            <section key={x.title} id={anchor(x, i)} className="mn-cd-g-section">
               <header className="mn-cd-guide-section-head"><span className="mn-cd-g-no">{no(i)}</span><h2>{x.title}</h2></header>
               {!x.table ? (x.body ?? []).map((p) => <p key={p}>{p}</p>) : null}
               {x.math?.length ? <div className="mn-cd-formula">{x.math.map((m) => <code key={m}>{m}</code>)}</div> : null}

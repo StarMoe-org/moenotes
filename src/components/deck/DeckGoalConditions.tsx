@@ -1,6 +1,6 @@
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
-import { SCORE_METRICS, TIME_LIMIT_CHOICES, isChallengeInput, isEventPayoffGoal, readsAccuracy, solverGoalKind, type DeckEvent, type DeckGoalInput, type DeckScoreMetric, type DeckSolverCapabilities } from "@/lib/deck/goals";
+import { TIME_LIMIT_CHOICES, isChallengeInput, readsAccuracy, type DeckEvent, type DeckGoalInput, type DeckSolverCapabilities } from "@/lib/deck/goals";
 
 /** Inputs that belong to the selected objective; the native engine resolves the declared play. */
 export default function DeckGoalConditions({ locale, input, event, capabilities, onChange }: {
@@ -11,16 +11,6 @@ export default function DeckGoalConditions({ locale, input, event, capabilities,
   const played = readsAccuracy(input);
   const number = (text: string) => text === "" ? NaN : Number(text);
   return <>
-    {input.goal !== "power" && !isEventPayoffGoal(input.goal) && <>
-      <label>{tr("objective")}<select value={input.scoreMetric} onChange={e => onChange({ scoreMetric: e.target.value as DeckScoreMetric })}>
-        {SCORE_METRICS.filter(metric => played || metric !== "scoreAndLife").map(metric => <option key={metric} value={metric}
-          disabled={!!capabilities && !(capabilities.metrics[solverGoalKind(input)] ?? []).includes(metric)}>{tr(`metrics.${metric}`)}</option>)}
-      </select></label>
-      {input.scoreMetric !== "score" && <label>{tr("threshold")}<input type="number" inputMode="numeric" min={0} max={2147483647} step={1}
-        value={Number.isFinite(input.threshold) ? input.threshold : ""} onChange={e => onChange({ threshold: number(e.target.value) })} /></label>}
-      {input.scoreMetric === "scoreAndLife" && <label>{tr("finalLife")}<input type="number" inputMode="numeric" min={0} max={2147483647} step={1}
-        value={Number.isFinite(input.minFinalLife) ? input.minFinalLife : ""} onChange={e => onChange({ minFinalLife: number(e.target.value) })} /></label>}
-    </>}
     {played && <>
       <label>{tr("play")}<select value={input.playMode} onChange={e => onChange({ playMode: e.target.value as DeckGoalInput["playMode"] })}>
         <option value="accuracy">{tr("accuracy")}</option><option value="pattern" disabled={!capabilities?.patternPlay}>{tr("pattern")}</option>
@@ -31,7 +21,6 @@ export default function DeckGoalConditions({ locale, input, event, capabilities,
         <p className="dw-muted">{tr(input.missEvery === 0 ? "noMiss" : "missPattern", { n: input.missEvery })}</p>
         <p className="dw-muted">{tr("patternNote")}</p>
       </>}
-      {input.scoreMetric === "scoreAndLife" && !isEventPayoffGoal(input.goal) && <p className="dw-muted">{tr("lifeNote")}</p>}
     </>}
     {input.goal === "eventItems" && <fieldset className="dc-reward-context"><legend>{tr("rewardContext")}</legend>
       <p className="dw-muted">{tr("rewardNote")}</p>

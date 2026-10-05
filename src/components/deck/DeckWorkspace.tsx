@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import { t } from "@/i18n";
@@ -61,6 +61,11 @@ export interface DeckWorkspaceProps {
   deckArenas?: readonly { server: GameServer; songs: readonly DeckArenaMusic[] }[];
 }
 const GOAL_STORAGE_KEY = "moenotes.deck.goal";
+/** Public sources of the deck engine: the scoring model and the search over teams. */
+const DECK_SOURCES = [
+  { key: "model", url: "https://github.com/empty-sekai/ournotes-deck/tree/main/crates/ournotes-sim" },
+  { key: "search", url: "https://github.com/empty-sekai/ournotes-deck/tree/main/crates/ournotes-search" },
+] as const;
 const GOAL_ICONS: Readonly<Record<DeckGoal, string>> = {
   challenge: "M5 21V4m0 0h11l-2 4 2 4H5", challengePoints: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 4v10m-3-5h6", eventPoints: "m12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7Z", eventItems: "M4 8h16v12H4zM2 4h20v4H2zM12 4v16",
   mission: "M4 4h16v16H4zM8 12l3 3 5-6", arena: "M4 20V8l8-5 8 5v12M8 20v-8h8v8", skip: "m4 4 12 8-12 8V4Zm16 0v16", challengeSkip: "m4 4 12 8-12 8V4Zm16 0v16",
@@ -342,7 +347,8 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   }
   function toggle(values: string[], key: string, update: (value: string[]) => void) { update(values.includes(key) ? values.filter(value => value !== key) : [...values, key]); }
   return <ContentServerProvider server={server} servers={servers}><div className={`dw-workspace ${page === "box" ? "dw-collection" : "dw-deck"}`} data-testid="deck-workspace">
-    <header className="dw-header"><div><h1>{tr(page === "box" ? "boxTitle" : "title")}</h1><p>{page === "box" ? tr("boxDescription") : composer("workspaceNote")}</p></div><div className="dw-actions"><label className="dw-server">{tr("server")}<select aria-label={tr("server")} value={server} disabled={busy} onChange={event => pickServer(event.target.value as GameServer)}>{servers.map(value => <option key={value} value={value}>{t(locale, `gameServer.names.${value}`)}</option>)}</select></label><a className="dw-button" href={href(page === "box" ? "deck" : "card-box")} onClick={event => changePage(event, page === "box" ? "deck" : "box")}>{tr(page === "box" ? "goDeck" : "boxTitle")}</a></div></header>
+    <header className="dw-header"><div><h1>{tr(page === "box" ? "boxTitle" : "title")}{page === "deck" && <span className="dw-beta">{tr("beta")}</span>}</h1><p>{page === "box" ? tr("boxDescription") : composer("workspaceNote")}</p>
+      {page === "deck" && <p className="dw-sources"><a href={href("deck-guide")}>{tr("deckGuide.link")}</a> · {tr("sources.label")}: {DECK_SOURCES.map((source, index) => <Fragment key={source.key}>{index > 0 && " · "}<a href={source.url} target="_blank" rel="noopener noreferrer">{tr(`sources.${source.key}`)}</a></Fragment>)}</p>}</div><div className="dw-actions"><label className="dw-server">{tr("server")}<select aria-label={tr("server")} value={server} disabled={busy} onChange={event => pickServer(event.target.value as GameServer)}>{servers.map(value => <option key={value} value={value}>{t(locale, `gameServer.names.${value}`)}</option>)}</select></label><a className="dw-button" href={href(page === "box" ? "deck" : "card-box")} onClick={event => changePage(event, page === "box" ? "deck" : "box")}>{tr(page === "box" ? "goDeck" : "boxTitle")}</a></div></header>
     {storage.error && <p role="alert" className="dw-alert">{tr(`storageErrors.${storage.error}`)} <button disabled={busy || mode === "temporary"} onClick={() => void storage.reload()}>{tr("retry")}</button></p>}
     <CloudBoxPanel locale={locale} server={server} box={stored} busy={busy} returnTo={returnTo} />
     {page === "box" ? <section className={`cb-workspace dw-box-main${draggingScreenshots ? " is-dragging-screenshots" : ""}`} onDragOver={event => {
@@ -370,7 +376,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
             goals: event ? EVENT_GOALS.map(value => goalCard(value)) : [] },
           { id: "everyday", title: tr("goalGroups.everyday"), goals: EVERYDAY_GOALS.map(value => goalCard(value)) },
         ]}
-        selectedGoal={goal} onGoalChange={value => { updateGoal({ goal: value as DeckGoal, scoreMetric: "score", ...(value === "challengePoints" && ["challengeLive", "challengeSkip"].includes(goalInput.venue) ? { venue: "freeLive" } : {}) }); safeSetLocalStorage(GOAL_STORAGE_KEY, value); }}
+        selectedGoal={goal} onGoalChange={value => { updateGoal({ goal: value as DeckGoal, ...(value === "challengePoints" && ["challengeLive", "challengeSkip"].includes(goalInput.venue) ? { venue: "freeLive" } : {}) }); safeSetLocalStorage(GOAL_STORAGE_KEY, value); }}
         collection={<div className="dc-collection-summary">
           <div className="dc-collection-stats"><span><strong>{ownedMembers.length}</strong> {tr("member")}</span><span><strong>{ownedSnaps.length}</strong> {tr("snap")}</span>
             {box && <span className="dc-collection-source" data-source={linked ? "game-save" : "box"}><CollectionIcon name={linked ? "game" : "image"} />{tr(linked ? "gameSave.sourceSave" : "gameSave.sourceBox")}
@@ -415,7 +421,8 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
               value={effectiveInput.greatPercent} onChange={change => updateGoal({ greatPercent: Number(change.target.value) })} /></label>
             {playsGekisou(effectiveInput) && <label>{tr("justRate", { n: effectiveInput.justPercent })}<input aria-label={tr("justRate", { n: effectiveInput.justPercent })} type="range" min={0} max={100 - effectiveInput.greatPercent}
               value={effectiveInput.justPercent} onChange={change => updateGoal({ justPercent: Number(change.target.value) })} /></label>}
-            {capabilities && (!capabilities.accuracy.great || playsGekisou(effectiveInput) && !capabilities.accuracy.just) && <p className="dw-muted">{tr("accuracyComing")}</p>}
+            {capabilities && (!capabilities.accuracy.great || playsGekisou(effectiveInput) && !capabilities.accuracy.just) ? <p className="dw-muted">{tr("accuracyComing")}</p>
+              : <p className="dw-muted">{tr(playsGekisou(effectiveInput) ? "accuracyNoteGekisou" : "accuracyNote")}</p>}
             {isEventPayoffGoal(goal) && isNetworkInput(effectiveInput) && <label>{tr("othersAverage")}<input type="number" min={0} inputMode="numeric" placeholder={tr("othersAverageSame")}
               value={goalInput.othersAverageScore ?? ""} onChange={change => updateGoal({ othersAverageScore: change.target.value === "" ? null : Number(change.target.value) })} /></label>}
           </details>}

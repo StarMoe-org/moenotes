@@ -5,7 +5,7 @@ export const jaJP = {
     "arenaSong": "アリーナ楽曲",
     "chooseArena": "アリーナ楽曲を選択",
     "noArena": "現在のサーバーデータにアリーナ楽曲はありません",
-    conditions: {"objective": "最適化する目標", "threshold": "目標スコア", "finalLife": "終了時の最低ライフ", "play": "演奏条件", "accuracy": "Great / Just の割合、Miss なし", "pattern": "Miss を含む完全な演奏を明示", "missEvery": "判定ノーツ N 個ごとに Miss（0 は Miss なし）", "noMiss": "完全な演奏を明示：Miss なし。", "missPattern": "判定ノーツ {n} 個ごとに Miss とします。", "patternNote": "下の Great・Just 割合を適用後、指定ノーツを Miss に置換します。固定の演奏条件であり、人のミスの確率分布ではありません。", "lifeNote": "完全な演奏条件を明示してください。スコアと終了時ライフを判定し、コンティニューなしのクリア確率を予測するものではありません。", "rewardContext": "報酬条件", "rewardNote": "今回選ばれたと仮定する報酬を指定します。この一覧を条件とする結果で、ドロップ確率や累積報酬は予測しません。", "reward": "報酬 {id} · 基本個数 {n}", "currentPoints": "現在のイベント PT", "currentCP": "現在のチャレンジポイント", "rewardConfirm": "この報酬と現在のポイントを使用", "emptyRewardConfirm": "イベント報酬の選出なしと明示", "timeLimit": "最大計算時間", "timeLimitNote": "時間になると、その時点で最良の編成を「最適未証明」として表示します。", "timeLimits": {"30": "30 秒", "60": "1 分", "120": "2 分", "300": "5 分", "none": "無制限"}, "metrics": {"score": "期待スコア", "scoreAtLeast": "目標スコア達成確率", "cappedScore": "目標を上限とする期待スコア", "scoreAndLife": "スコアと終了時ライフの同時達成確率"}},
+    conditions: {"play": "演奏条件", "accuracy": "Great / Just の割合、Miss なし", "pattern": "Miss を含む完全な演奏を明示", "missEvery": "判定ノーツ N 個ごとに Miss（0 は Miss なし）", "noMiss": "完全な演奏を明示：Miss なし。", "missPattern": "判定ノーツ {n} 個ごとに Miss とします。", "patternNote": "下の Great・Just 割合を適用後、指定ノーツを Miss に置換します。固定の演奏条件であり、人のミスの確率分布ではありません。", "rewardContext": "報酬条件", "rewardNote": "今回選ばれたと仮定する報酬を指定します。この一覧を条件とする結果で、ドロップ確率や累積報酬は予測しません。", "reward": "報酬 {id} · 基本個数 {n}", "currentPoints": "現在のイベント PT", "currentCP": "現在のチャレンジポイント", "rewardConfirm": "この報酬と現在のポイントを使用", "emptyRewardConfirm": "イベント報酬の選出なしと明示", "timeLimit": "最大計算時間", "timeLimitNote": "時間になると、その時点で最良の編成を「最適未証明」として表示します。", "timeLimits": {"30": "30 秒", "60": "1 分", "120": "2 分", "300": "5 分", "none": "無制限"}},
 
     cloud: {
       "accountChanged": "ログイン中のアカウントが変わりました。この端末のコレクションを保存する前に、下のアカウントを確認してください。",
@@ -415,6 +415,9 @@ export const jaJP = {
     "signedOutNote": "ログイン不要です。ローカル・一時カード一覧はアップロードしません。",
     "accountLink": "アカウント設定",
     "goDeck": "編成へ",
+    "beta": "Beta",
+    "sources": {"label": "ソースコード", "model": "計算モデル", "search": "探索アルゴリズム"},
+    "deckGuide": {"title": "編成ガイド", "description": "編成ページが最適化する目標、「最適と証明済み」の定義、探索がどう証明するか。", "link": "編成ガイド", "proofLink": "「最適と証明済み」と「未証明」の定義を見る"},
     "storageErrors": {
       "unavailable": "ブラウザー保存を利用できません。再試行するか「今回のみ」を選んでください。",
       "conflict": "別の画面やタブで一覧が更新されました。下書きは上書き保存されていません。最新の内容を確認してください。",
@@ -551,10 +554,12 @@ export const jaJP = {
     "powerEvent": "イベントボーナスを含める",
     "rankFixed": "激走区間はすべて1位として計算します。",
     "accuracyComing": "このエンジンは一部の判定割合に対応していません。選択は保持され、未対応の条件では実行できません。",
+    "accuracyNote": "Great 率は計算に反映されます。その割合の Great を譜面全体に均等に配置します。",
+    "accuracyNoteGekisou": "Great 率と Just 率は計算に反映されます。その割合の Great と Just 以外の判定を譜面全体に均等に配置します。",
     "othersAverage": "ルームの他プレイヤーの平均スコア",
     "othersAverageSame": "空欄なら自分と同じスコア",
     "solver": {
-      "metricLabel": {"score": "期待スコア", "scoreAtLeast": "達成確率（0–1）", "cappedScore": "上限付き期待スコア", "scoreAndLife": "スコア・終了時ライフ達成確率（0–1）"},
+      "metricLabel": {"score": "期待スコア"},
       "playSummary": "指定演奏：判定ノーツ {notes} 個 · Miss {misses} 個",
       "start": "編成を計算",
       "rerun": "再計算",
@@ -581,13 +586,10 @@ export const jaJP = {
       "power": "総合力",
       "formation": "おすすめ編成",
       "leaderShort": "リーダー",
-      "leaderSlot": "リーダー（3枠目）",
-      "slotN": "{n}枠目",
       "freeSeating": "リーダー以外の並びは自由です。",
+      "meta": {"slot": "位置", "member": "メンバーカード", "training": "育成", "snap": "Snap", "noSnap": "Snap なし", "level": "Lv {n}", "awake": "特訓 {n}", "rank": "ランク {n}", "skill": "通常スキル Lv {n}", "gekisou": "撃奏スキル Lv {n}"},
       "orders": "出演順 {n} 通り",
       "ordersNote": "出演順はランダムで、上のスコアはその平均です。",
-      "copied": "コピーしました",
-      "copyLayout": "編成をコピー",
       "unknownCard": "カード {id}",
       "fill": "入力する",
       "vipMissing": "VIPランクが未入力です",
@@ -610,8 +612,7 @@ export const jaJP = {
       },
       "gap": {
       "arenaSong": "現在のサーバーデータからアリーナ楽曲を選択してください。",
-      "play": "完全な演奏と有効な終了時ライフ目標を指定してください。",
-      "threshold": "目標スコアは 0～2,147,483,647 の整数で指定してください。",
+      "play": "Miss の間隔を 0 以上の整数で入力してください。",
       "rewardContext": "報酬条件を選択・確認し、現在のイベント PT とチャレンジポイントを入力してください。",
 
         "song": "曲を選んでください。",

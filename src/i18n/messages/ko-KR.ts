@@ -5,7 +5,7 @@ export const koKR = {
     "arenaSong": "아레나 곡",
     "chooseArena": "아레나 곡 선택",
     "noArena": "현재 서버 데이터에 아레나 곡이 없습니다",
-    conditions: {"objective": "최적화 목표", "threshold": "목표 점수", "finalLife": "종료 시 최소 라이프", "play": "연주 조건", "accuracy": "Great / Just 비율, Miss 없음", "pattern": "Miss를 포함한 전체 연주 지정", "missEvery": "판정 노트 N개마다 Miss (0 = Miss 없음)", "noMiss": "전체 연주 명시: Miss 없음.", "missPattern": "판정 노트 {n}개마다 Miss로 처리합니다.", "patternNote": "아래 Great·Just 비율을 적용한 후 지정한 노트를 Miss로 바꿉니다. 고정된 연주 조건이며 사람의 실수 확률 분포가 아닙니다.", "lifeNote": "전체 연주를 명시해 주세요. 점수와 종료 시 라이프를 확인하며 이어하기 없는 클리어 확률을 예측하지 않습니다.", "rewardContext": "보상 조건", "rewardNote": "이번 결과에서 선택되었다고 가정할 보상 항목을 지정하세요. 결과는 이 목록을 조건으로 하며 드롭 확률과 누적 보상은 예측하지 않습니다.", "reward": "보상 {id} · 기본 수량 {n}", "currentPoints": "현재 이벤트 PT", "currentCP": "현재 챌린지 포인트", "rewardConfirm": "이 보상 항목과 현재 포인트 사용", "emptyRewardConfirm": "선택된 이벤트 보상 없음으로 명시", "timeLimit": "최대 계산 시간", "timeLimitNote": "시간이 다 되면 지금까지 찾은 최선의 덱을 최적 미증명으로 표시합니다.", "timeLimits": {"30": "30초", "60": "1분", "120": "2분", "300": "5분", "none": "제한 없음"}, "metrics": {"score": "기대 점수", "scoreAtLeast": "목표 점수 달성 확률", "cappedScore": "목표 점수로 제한한 기대 점수", "scoreAndLife": "점수와 종료 라이프 동시 달성 확률"}},
+    conditions: {"play": "연주 조건", "accuracy": "Great / Just 비율, Miss 없음", "pattern": "Miss를 포함한 전체 연주 지정", "missEvery": "판정 노트 N개마다 Miss (0 = Miss 없음)", "noMiss": "전체 연주 명시: Miss 없음.", "missPattern": "판정 노트 {n}개마다 Miss로 처리합니다.", "patternNote": "아래 Great·Just 비율을 적용한 후 지정한 노트를 Miss로 바꿉니다. 고정된 연주 조건이며 사람의 실수 확률 분포가 아닙니다.", "rewardContext": "보상 조건", "rewardNote": "이번 결과에서 선택되었다고 가정할 보상 항목을 지정하세요. 결과는 이 목록을 조건으로 하며 드롭 확률과 누적 보상은 예측하지 않습니다.", "reward": "보상 {id} · 기본 수량 {n}", "currentPoints": "현재 이벤트 PT", "currentCP": "현재 챌린지 포인트", "rewardConfirm": "이 보상 항목과 현재 포인트 사용", "emptyRewardConfirm": "선택된 이벤트 보상 없음으로 명시", "timeLimit": "최대 계산 시간", "timeLimitNote": "시간이 다 되면 지금까지 찾은 최선의 덱을 최적 미증명으로 표시합니다.", "timeLimits": {"30": "30초", "60": "1분", "120": "2분", "300": "5분", "none": "제한 없음"}},
 
     cloud: {
       "accountChanged": "로그인한 계정이 변경되었습니다. 이 기기의 컬렉션을 저장하기 전에 아래 계정을 확인하세요.",
@@ -415,6 +415,9 @@ export const koKR = {
     "signedOutNote": "로그인이 필요 없습니다. 로컬 및 임시 목록은 업로드되지 않습니다.",
     "accountLink": "계정 설정",
     "goDeck": "덱 편성으로",
+    "beta": "Beta",
+    "sources": {"label": "소스 코드", "model": "계산 모델", "search": "탐색 알고리즘"},
+    "deckGuide": {"title": "덱 가이드", "description": "덱 페이지가 최적화하는 목표, ‘최적 증명됨’의 정의, 탐색이 증명하는 방법.", "link": "덱 가이드", "proofLink": "‘최적 증명됨’과 ‘미증명’의 정의 보기"},
     "storageErrors": {
       "unavailable": "브라우저 저장소를 사용할 수 없습니다. 다시 시도하거나 이번 방문만 사용하세요.",
       "conflict": "다른 화면이나 탭에서 목록이 변경되었습니다. 초안이 덮어쓰지 않았으니 최신 내용을 확인하세요.",
@@ -551,10 +554,12 @@ export const koKR = {
     "powerEvent": "이벤트 보너스 포함",
     "rankFixed": "모든 격주 구간을 1위로 계산합니다.",
     "accuracyComing": "이 엔진은 일부 사용자 지정 판정 비율을 지원하지 않습니다. 선택은 유지되며 지원하지 않는 조건은 제출할 수 없습니다.",
+    "accuracyNote": "Great 비율은 계산에 반영됩니다. 그 비율만큼의 Great를 채보 전체에 고르게 배치합니다.",
+    "accuracyNoteGekisou": "Great 비율과 Just 비율은 계산에 반영됩니다. 그 비율만큼의 Great와 Just가 아닌 판정을 채보 전체에 고르게 배치합니다.",
     "othersAverage": "방의 다른 플레이어 평균 점수",
     "othersAverageSame": "비워 두면 내 점수와 같음",
     "solver": {
-      "metricLabel": {"score": "기대 점수", "scoreAtLeast": "달성 확률 (0–1)", "cappedScore": "상한 적용 기대 점수", "scoreAndLife": "점수·종료 라이프 달성 확률 (0–1)"},
+      "metricLabel": {"score": "기대 점수"},
       "playSummary": "지정 연주: 판정 노트 {notes}개 · Miss {misses}개",
       "start": "편성 계산",
       "rerun": "다시 계산",
@@ -581,13 +586,10 @@ export const koKR = {
       "power": "종합력",
       "formation": "추천 편성",
       "leaderShort": "리더",
-      "leaderSlot": "리더 (3번 칸)",
-      "slotN": "{n}번 칸",
       "freeSeating": "리더 외의 배치는 자유입니다.",
+      "meta": {"slot": "위치", "member": "멤버 카드", "training": "육성", "snap": "Snap", "noSnap": "Snap 없음", "level": "Lv {n}", "awake": "특훈 {n}", "rank": "랭크 {n}", "skill": "일반 스킬 Lv {n}", "gekisou": "격주 스킬 Lv {n}"},
       "orders": "출연 순서 {n}가지",
       "ordersNote": "출연 순서는 무작위이며 위 점수는 그 평균입니다.",
-      "copied": "복사됨",
-      "copyLayout": "편성 복사",
       "unknownCard": "카드 {id}",
       "fill": "입력",
       "vipMissing": "VIP 랭크 미입력",
@@ -610,8 +612,7 @@ export const koKR = {
       },
       "gap": {
       "arenaSong": "현재 서버 데이터에서 아레나 곡을 선택하세요.",
-      "play": "전체 연주와 유효한 종료 라이프 목표를 지정하세요.",
-      "threshold": "목표 점수는 0부터 2,147,483,647까지의 정수여야 합니다.",
+      "play": "유효한 Miss 간격을 입력하세요: 0 또는 양의 정수.",
       "rewardContext": "보상 조건을 선택하고 확인한 후 현재 이벤트 PT와 챌린지 포인트를 입력하세요.",
 
         "song": "곡을 먼저 선택하세요.",

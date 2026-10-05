@@ -5,7 +5,7 @@ export const zhCN = {
     "arenaSong": "Arena 歌曲",
     "chooseArena": "选择 Arena 歌曲",
     "noArena": "当前服务器数据中没有 Arena 歌曲",
-    conditions: {"objective": "推荐目标", "threshold": "目标分数", "finalLife": "结束时最低生命", "play": "演奏条件", "accuracy": "Great / Just 比例，无 Miss", "pattern": "明确指定含 Miss 的完整演奏", "missEvery": "每 N 个判定音符出现一次 Miss（0 为无 Miss）", "noMiss": "明确指定完整演奏：无 Miss。", "missPattern": "每第 {n} 个判定音符记为 Miss。", "patternNote": "先应用下方 Great、Just 比例，再把指定音符改为 Miss。这是固定演奏条件，不代表真人失误的概率分布。", "lifeNote": "请明确指定完整演奏。此目标检查分数和结束时生命，不表示无需续关的通关概率。", "rewardContext": "奖励条件", "rewardNote": "选择本次结算假定已抽中的奖励条目。结果以这份清单为条件，不预测掉落概率或累计奖励。", "reward": "奖励 {id} · 基础数量 {n}", "currentPoints": "当前活动 PT", "currentCP": "当前挑战点数", "rewardConfirm": "使用这些奖励条目与当前点数", "emptyRewardConfirm": "明确假定本次没有抽中活动奖励", "timeLimit": "最长计算时间", "timeLimitNote": "到时间后给出目前找到的最好队伍，并标明尚未证明最优。", "timeLimits": {"30": "30 秒", "60": "1 分钟", "120": "2 分钟", "300": "5 分钟", "none": "不限"}, "metrics": {"score": "期望分数", "scoreAtLeast": "达到目标分数的概率", "cappedScore": "以目标分数为上限的期望分数", "scoreAndLife": "同时达到分数与结束生命目标的概率"}},
+    conditions: {"play": "演奏条件", "accuracy": "Great / Just 比例，无 Miss", "pattern": "明确指定含 Miss 的完整演奏", "missEvery": "每 N 个判定音符出现一次 Miss（0 为无 Miss）", "noMiss": "明确指定完整演奏：无 Miss。", "missPattern": "每第 {n} 个判定音符记为 Miss。", "patternNote": "先应用下方 Great、Just 比例，再把指定音符改为 Miss。这是固定演奏条件，不代表真人失误的概率分布。", "rewardContext": "奖励条件", "rewardNote": "选择本次结算假定已抽中的奖励条目。结果以这份清单为条件，不预测掉落概率或累计奖励。", "reward": "奖励 {id} · 基础数量 {n}", "currentPoints": "当前活动 PT", "currentCP": "当前挑战点数", "rewardConfirm": "使用这些奖励条目与当前点数", "emptyRewardConfirm": "明确假定本次没有抽中活动奖励", "timeLimit": "最长计算时间", "timeLimitNote": "到时间后给出目前找到的最好队伍，并标明尚未证明最优。", "timeLimits": {"30": "30 秒", "60": "1 分钟", "120": "2 分钟", "300": "5 分钟", "none": "不限"}},
 
     cloud: {
       "accountChanged": "登录账号发生了变化。保存本机卡池前，请确认下方显示的账号。",
@@ -415,6 +415,9 @@ export const zhCN = {
     "signedOutNote": "不需要登录。本机和临时卡池不会上传。",
     "accountLink": "账号设置",
     "goDeck": "前往组卡",
+    "beta": "Beta",
+    "sources": {"label": "源码", "model": "计算模型", "search": "搜索算法"},
+    "deckGuide": {"title": "组卡说明", "description": "组卡页优化的目标、“已证明最优”的定义，以及搜索怎样完成证明。", "link": "组卡说明", "proofLink": "查看“已证明最优”与“未证明”的定义"},
     "storageErrors": {
       "unavailable": "浏览器存储不可用。可重试，或选择只用这一次。",
       "conflict": "另一页面或标签页已更新卡池。当前草稿未覆盖它，请检查最新版本。",
@@ -551,10 +554,12 @@ export const zhCN = {
     "powerEvent": "计入活动加成",
     "rankFixed": "每个激走区间按第 1 名计算。",
     "accuracyComing": "此引擎不支持部分自定义判定比例。你的选择会保留，不支持的条件无法提交。",
+    "accuracyNote": "Great 率会进入计算：按比例把 Great 均匀分布到整张谱面上。",
+    "accuracyNoteGekisou": "Great 率和 Just 率会进入计算：按比例把 Great 和非 Just 的判定均匀分布到整张谱面上。",
     "othersAverage": "房间里其他人的平均分",
     "othersAverageSame": "留空表示与你同分",
     "solver": {
-      "metricLabel": {"score": "期望分数", "scoreAtLeast": "达分概率（0–1）", "cappedScore": "封顶期望分数", "scoreAndLife": "达分及结束生命达标概率（0–1）"},
+      "metricLabel": {"score": "期望分数"},
       "playSummary": "指定演奏：{notes} 个判定音符 · {misses} 个 Miss",
       "start": "开始组卡",
       "rerun": "重新计算",
@@ -581,13 +586,10 @@ export const zhCN = {
       "power": "综合力",
       "formation": "推荐编队",
       "leaderShort": "队长",
-      "leaderSlot": "队长（第 3 槽）",
-      "slotN": "第 {n} 槽",
       "freeSeating": "除队长外，站位随意。",
+      "meta": {"slot": "位置", "member": "成员卡", "training": "养成", "snap": "Snap", "noSnap": "未带 Snap", "level": "Lv {n}", "awake": "特训 {n}", "rank": "卡阶 {n}", "skill": "普通技能 Lv {n}", "gekisou": "撃奏技能 Lv {n}"},
       "orders": "{n} 种出场顺序",
       "ordersNote": "出场顺序随机，上面的分数是这些顺序的平均。",
-      "copied": "已复制",
-      "copyLayout": "复制编队",
       "unknownCard": "卡片 {id}",
       "fill": "补填",
       "vipMissing": "缺 VIP 等级",
@@ -610,8 +612,7 @@ export const zhCN = {
       },
       "gap": {
       "arenaSong": "请从当前服务器数据中选择 Arena 歌曲。",
-      "play": "请明确指定完整演奏，并填写有效的结束生命目标。",
-      "threshold": "目标分数须为 0 至 2,147,483,647 的整数。",
+      "play": "请填写有效的 Miss 间隔：0 或正整数。",
       "rewardContext": "请选择并确认奖励条件，填写当前活动 PT 和挑战点数。",
 
         "song": "先选一首歌。",

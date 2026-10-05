@@ -80,6 +80,9 @@
 .dw-header{display:flex;justify-content:space-between;gap:24px;align-items:flex-end;margin:8px 0 28px}
 .dw-header h1{font-size:30px;font-weight:800;letter-spacing:-.035em;margin:4px 0}
 .dw-header p{color:var(--mn-text-muted);max-width:640px}
+.dw-beta{display:inline-block;margin-left:10px;padding:2px 8px;border-radius:6px;background:var(--mn-accent-soft);color:var(--mn-accent-deep);font-size:12px;font-weight:700;letter-spacing:.04em;vertical-align:middle}
+.dw-header .dw-sources{margin-top:6px;font-size:12px}
+.dw-sources a{color:var(--mn-accent-deep)}
 .dw-eyebrow{font-size:11px;letter-spacing:.09em;text-transform:uppercase;font-weight:800;color:var(--dw-blue)}
 .dw-workspace h2,.dw-dialog h2{font-size:19px;font-weight:800;line-height:1.4}
 .dw-workspace h3,.dw-dialog h3{font-size:15px;font-weight:800}

@@ -124,16 +124,13 @@ describe("all public scene and objective inputs", () => {
     expect(() => request({ goal: "challengePoints", venue: "challengeSkip", challengeMusicId: 1 })).toThrow();
     expect(request({ goal: "challengeSkip", challengeMusicId: 1 }).metric).toEqual({ kind: "score" });
   });
-  test("score thresholds and caps carry their objective, and life requires an explicit play", () => {
-    for (const scoreMetric of ["scoreAtLeast", "cappedScore"] as const) {
-      expect(request({ goal: "skip", musicId: 100, scoreMetric, threshold: 12345 }).metric).toEqual({ kind: scoreMetric, threshold: 12345 });
-    }
-    expect(() => request({ goal: "free", musicId: 100, scoreMetric: "scoreAndLife" })).toThrow();
-    const body = request({ goal: "free", musicId: 100, scoreMetric: "scoreAndLife", threshold: 500, minFinalLife: 200, playMode: "pattern", missEvery: 10, greatPercent: 5 });
+  test("live goals ask for the expected score, and a pattern play replaces the accuracy", () => {
+    expect(request({ goal: "skip", musicId: 100 }).metric).toEqual({ kind: "score" });
+    const body = request({ goal: "free", musicId: 100, playMode: "pattern", missEvery: 10, greatPercent: 5 });
     expect(body.goal.play).toEqual({ kind: "pattern", greatFraction: 0.05, justFraction: 0, missEvery: 10 });
     expect(body.goal.accuracy).toBeUndefined();
-    expect(body.metric).toEqual({ kind: "scoreAndLife", threshold: 500, minFinalLife: 200 });
-    for (const threshold of [NaN, Infinity, -1, 0.5, 2147483648]) expect(() => request({ goal: "free", musicId: 100, scoreMetric: "scoreAtLeast", threshold })).toThrow();
+    expect(body.metric).toEqual({ kind: "score" });
+    for (const missEvery of [NaN, -1, 0.5]) expect(() => request({ goal: "free", musicId: 100, playMode: "pattern", missEvery })).toThrow();
   });
   test("conditional rewards need an explicit verified route and entered balances", () => {
     const withReward = { ...event, rewards: [{ id: 12, amount: 10, challenge: true }, { id: 13, amount: 10, challenge: false }] };
@@ -148,8 +145,8 @@ describe("all public scene and objective inputs", () => {
     expect(() => request({ ...patch, localEventPoints: null }, withReward)).toThrow();
   });
   test("pattern capabilities prevent sending new play requests to an old engine", () => {
-    const cap = { goals: ["freeLive"], metrics: { freeLive: ["scoreAndLife"] }, accuracy: { great: true, just: false } };
-    const input = { goal: "free" as const, venue: "freeLive" as const, scoreMetric: "scoreAndLife" as const, playMode: "pattern" as const };
+    const cap = { goals: ["freeLive"], metrics: { freeLive: ["score"] }, accuracy: { great: true, just: false } };
+    const input = { goal: "free" as const, venue: "freeLive" as const, playMode: "pattern" as const };
     expect(computes(cap, input)).toBe(false);
     expect(computes(parseCapabilities(JSON.stringify({ ...cap, patternPlay: { required: ["missEvery"] } }))!, input)).toBe(true);
   });

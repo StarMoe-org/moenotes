@@ -22,7 +22,7 @@ function useNativeUi(): boolean {
 
 /** A member card as the game's 1:1 square icon (frame, attribute and rarity painted by the game where available). */
 export function MemberSquareArtwork({ locale, card, className = "", level, rank }: { locale: AppLocale; card: CardViewModel; className?: string; level?: number | undefined; rank?: number | undefined }) {
-  return useNativeUi() && card.rarity !== 20
+  return useNativeUi()
     ? <NativeMemberArtwork locale={locale} card={card} className={className} level={level} rank={rank} />
     : <SquareImage
       sources={[memberSquareUrl(card, locale), getCardThumbnailUrl(card.assetId), getCharacterFaceIconUrl(card.characterId)]}

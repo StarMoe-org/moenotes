@@ -35,8 +35,6 @@ const ITEM_RESOURCE_TYPE = 1;
 export interface DeckChallengeMusic { id: number; musicId: number }
 export interface DeckArenaMusic { id: number; musicId: number }
 export interface DeckRewardChoice { id: number; amount: number; challenge: boolean }
-export const SCORE_METRICS = ["score", "scoreAtLeast", "cappedScore", "scoreAndLife"] as const;
-export type DeckScoreMetric = typeof SCORE_METRICS[number];
 /** A master event as the deck page reads it; times are master dates with their server offset. */
 export interface DeckEvent {
   id: number;
@@ -69,9 +67,6 @@ export interface DeckGoalInput {
   challengeMusicId: number | null;
   venue: DeckVenue;
   arenaMusicId: number | null;
-  scoreMetric: DeckScoreMetric;
-  threshold: number;
-  minFinalLife: number;
   playMode: "accuracy" | "pattern";
   missEvery: number;
   selectedRewards: number[];
@@ -95,7 +90,7 @@ export interface DeckGoalInput {
 
 export const defaultDeckGoalInput = (goal: DeckGoal = DEFAULT_DECK_GOAL): DeckGoalInput => ({
   goal, musicId: null, difficulty: "expert", challengeMusicId: null, venue: "freeLive", boosts: 0, challengePoints: 200, timeLimit: DEFAULT_TIME_LIMIT,
-  arenaMusicId: null, scoreMetric: "score", threshold: 1000000, minFinalLife: 1,
+  arenaMusicId: null,
   playMode: "accuracy", missEvery: 0, selectedRewards: [], rewardContextConfirmed: false,
   localEventPoints: null, localChallengePoints: null,
   greatPercent: 0, justPercent: 100, powerSong: false, eventParameter: true, othersAverageScore: null,
@@ -114,9 +109,9 @@ export function solverGoalKind(input: Pick<DeckGoalInput, "goal" | "venue">): st
     case "challengePoints": case "eventPoints": case "eventItems": return input.venue === "challengeSkip" ? "skip" : input.venue;
   }
 }
-/** The solver metric kind, or null for power. */
-export function solverMetricKind(goal: DeckGoal, metric: DeckScoreMetric = "score"): string | null {
-  return goal === "power" ? null : isEventPayoffGoal(goal) ? goal : metric;
+/** The solver metric kind, or null for power: the event payoff of event goals, otherwise the expected score. */
+export function solverMetricKind(goal: DeckGoal): string | null {
+  return goal === "power" ? null : isEventPayoffGoal(goal) ? goal : "score";
 }
 /** Whether the goal input plays a live with gekisou (only a battle live does). */
 export const playsGekisou = (input: Pick<DeckGoalInput, "goal" | "venue">): boolean => ["battleLive", "missionLive", "arenaLive"].includes(solverGoalKind(input));
@@ -147,9 +142,9 @@ export function parseCapabilities(json: string | null): DeckSolverCapabilities |
 }
 
 /** Whether the engine computes a goal input's goal kind and metric. */
-export function computes(capabilities: DeckSolverCapabilities, input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "scoreMetric" | "playMode" | "greatPercent" | "justPercent">>): boolean {
+export function computes(capabilities: DeckSolverCapabilities, input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "playMode" | "greatPercent" | "justPercent">>): boolean {
   if (input.goal === "challengePoints" && ["challengeLive", "challengeSkip"].includes(input.venue)) return false;
-  const kind = solverGoalKind(input), metric = solverMetricKind(input.goal, input.scoreMetric);
+  const kind = solverGoalKind(input), metric = solverMetricKind(input.goal);
   if (input.playMode === "pattern" && readsAccuracy(input) && !capabilities.patternPlay) return false;
   if (readsAccuracy(input) && input.playMode !== "pattern") {
     if ((input.greatPercent ?? 0) !== 0 && !capabilities.accuracy.great) return false;
@@ -165,16 +160,12 @@ export function computesGoal(capabilities: DeckSolverCapabilities, goal: DeckGoa
 }
 
 /** What the goal input still needs before it can run. */
-export type DeckGoalGap = "song" | "challengeSong" | "event" | "eventItem" | "arenaSong" | "play" | "threshold" | "rewardContext" | null;
+export type DeckGoalGap = "song" | "challengeSong" | "event" | "eventItem" | "arenaSong" | "play" | "rewardContext" | null;
 export function goalGap(input: DeckGoalInput, event: DeckEvent | null): DeckGoalGap {
   if (isEventGoal(input.goal) && !event) return "event";
   if (input.goal === "eventItems" && !event?.itemId) return "eventItem";
   const kind = solverGoalKind(input);
   const int32 = (n: number | null): boolean => n !== null && Number.isInteger(n) && n >= 0 && n <= 2147483647;
-  if (!isEventPayoffGoal(input.goal) && kind !== "power") {
-    if (input.scoreMetric !== "score" && !int32(input.threshold)) return "threshold";
-    if (input.scoreMetric === "scoreAndLife" && (!readsAccuracy(input) || input.playMode !== "pattern" || !int32(input.minFinalLife))) return "play";
-  }
   if (readsAccuracy(input) && input.playMode === "pattern" && (!Number.isSafeInteger(input.missEvery) || input.missEvery < 0)) return "play";
   if (input.goal === "eventItems" && (!input.rewardContextConfirmed || !int32(input.localEventPoints) || !int32(input.localChallengePoints)
     || input.selectedRewards.some(id => !event?.rewards?.some(row => row.id === id && row.challenge === isChallengeInput(input))))) return "rewardContext";
@@ -230,7 +221,7 @@ export function recommendationRequest(input: DeckGoalInput, context: { event: De
       : `{"kind":"played","liveStartJstTicks":null,"serverNowJstTicks":${jstTicks(context.now)}}`;
     parts.push(`"metric":${metric}`, `"eventContext":{"resultClock":${clock}${input.goal === "eventItems" ? `,"localEvents":[{"eventId":${event!.id},"points":${input.localEventPoints},"challengePoints":${input.localChallengePoints},"added":[]}],"selectedRewards":[${input.selectedRewards.map(id => `{"eventId":${event!.id},"rewardId":${id}}`).join(",")}]` : ',"rewardProjection":true'}}`);
     if (isNetworkInput(input)) parts.push(`"room":{"players":5,"othersAverageScore":${input.othersAverageScore === null ? "null" : Math.max(0, Math.trunc(input.othersAverageScore))}}`);
-  } else if (kind !== "power") parts.push(`"metric":{"kind":"${input.scoreMetric}"${input.scoreMetric === "score" ? "" : `,"threshold":${input.threshold}`}${input.scoreMetric === "scoreAndLife" ? `,"minFinalLife":${input.minFinalLife}` : ""}}`);
+  } else if (kind !== "power") parts.push(`"metric":{"kind":"score"}`);
   const { includeMembers, excludeMembers, excludeSnaps } = context.constraints;
   parts.push(`"eventIds":[${event ? event.id : ""}]`,
     `"constraints":{"leader":null,"includeMembers":[${ids(includeMembers).join(",")}],"excludeMembers":[${ids(excludeMembers).join(",")}],"excludeSnaps":[${ids(excludeSnaps).join(",")}],"noSnaps":false}`,

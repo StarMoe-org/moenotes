@@ -7,6 +7,7 @@ import StoryPlayerPage from "@/components/tools/StoryPlayerPage.astro";
 import MusicRankingPage from "@/components/tools/MusicRankingPage.astro";
 import ChartDataPage from "@/components/tools/ChartDataPage.astro";
 import DeckWorkspacePage from "@/components/deck/DeckWorkspacePage.astro";
+import DeckGuidePage from "@/components/deck/DeckGuidePage.astro";
 import CardsPage from "@/components/cards/CardsPage.astro";
 import CardDetailPage from "@/components/cards/CardDetailPage.astro";
 import SupportCardsPage from "@/components/support-cards/SupportCardsPage.astro";
@@ -136,6 +137,8 @@ const component = match.item.component ?? "page";
     <AccountPage locale={locale} />
   ) : component === "deck" || component === "card-box" ? (
     <DeckWorkspacePage locale={locale} page={component === "deck" ? "deck" : "box"} />
+  ) : component === "deck-guide" ? (
+    <DeckGuidePage locale={locale} />
   ) : component === "player" ? (
     <PlayerPage locale={locale} />
   ) : component === "news" ? (

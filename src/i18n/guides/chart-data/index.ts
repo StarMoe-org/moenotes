@@ -14,6 +14,8 @@ import { zhTW } from "./zh-TW";
  * that order. Numbers, formulas, table and field names are the same in every language.
  */
 export interface ChartDataGuideSection {
+  /** A stable anchor for links into the guide; sections without one are numbered. */
+  id?: string;
   title: string;
   body?: readonly string[];
   math?: readonly string[];

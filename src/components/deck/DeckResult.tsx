@@ -1,13 +1,14 @@
-import { useState } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
+import { localizePath } from "@/i18n/routing";
+import { getRoutePathById } from "@/lib/route/registry";
 import type { BoxCard, CardBox, CardFieldName } from "@/lib/box/model";
-import type { DeckAnswer, DeckIssueGroups, DeckPair, DeckTeam } from "@/lib/deck/answer";
-import { formatDeckInterval, parseInterval } from "@/lib/deck/interval";
+import type { DeckAnswer, DeckIssueGroups, DeckTeam } from "@/lib/deck/answer";
+import { formatDeckInterval } from "@/lib/deck/interval";
 import { groupIssues, isOutOfMemory } from "@/lib/deck/answer";
 import type { DeckGoal } from "@/lib/deck/goals";
 import type { DeckJobState } from "./use-deck-solver";
-import { BoxArtwork, cardTitle, type BoxCatalog } from "@/components/box/BoxManager";
+import { BoxArtwork, cardRarityLabel, cardTitle, type BoxCatalog } from "@/components/box/BoxManager";
 import NativeFormationGroup from "@/components/chart-data/NativeFormationGroup";
 
 export interface DeckResultProps {
@@ -57,8 +58,8 @@ export default function DeckResult(props: DeckResultProps) {
         <progress className="dr-progress" max={1} value={optimality?.fraction ?? undefined} aria-label={tr("progressLabel")} />
         <button type="button" className="dr-stop" onClick={props.onStop}>{tr("stop")}</button>
       </> : optimality?.proven ? <div className="dr-proven"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true"><path d="m3.5 8 3 3 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
-        <strong>{tr("proven")}</strong>{result?.elapsedMs !== null && result?.elapsedMs !== undefined && <small>{tr("elapsed", { n: (result.elapsedMs / 1000).toFixed(1) })}</small>}</div>
-        : <div className="dr-unproven"><strong>{tr(job.status === "done" && job.stopped ? "stoppedUnproven" : props.timeLimit !== null ? "timedOutUnproven" : "unproven")}</strong></div>}
+        <ProofLink locale={locale} anchor="proven" label={tr("proven")} />{result?.elapsedMs !== null && result?.elapsedMs !== undefined && <small>{tr("elapsed", { n: (result.elapsedMs / 1000).toFixed(1) })}</small>}</div>
+        : <div className="dr-unproven"><ProofLink locale={locale} anchor="unproven" label={tr(job.status === "done" && job.stopped ? "stoppedUnproven" : props.timeLimit !== null ? "timedOutUnproven" : "unproven")} /></div>}
       {optimality && !optimality.proven && optimality.upperBound !== null && optimality.lowerBound !== null && <p className="dr-bounds">
         {tr("bounds", { best: formatValue(optimality.lowerBound, metric, locale), limit: formatValue(optimality.upperBound, metric, locale) })}
         {optimality.bestGap !== null && <span> · {tr("gapPercent", { n: (optimality.bestGap * 100).toFixed(optimality.bestGap < 0.01 ? 2 : 1) })}</span>}</p>}
@@ -70,65 +71,76 @@ export default function DeckResult(props: DeckResultProps) {
   </div>;
 }
 
+/** The optimality label; its asterisk leads to the guide's definition, in a new tab so the result stays. */
+function ProofLink({ locale, anchor, label }: { locale: AppLocale; anchor: "proven" | "unproven"; label: string }) {
+  return <a className="dr-proof-link" href={`${localizePath(getRoutePathById("deck-guide"), locale)}#${anchor}`} target="_blank" rel="noopener"
+    title={t(locale, "deckWorkspace.deckGuide.proofLink")}><strong>{label}</strong><sup aria-hidden="true">*</sup></a>;
+}
+
 function formatValue(value: number, goal: string, locale: AppLocale): string {
-  const decimals = goal === "scoreAtLeast" || goal === "scoreAndLife" ? 6 : goal === "challengePoints" || goal === "eventPoints" || goal === "eventItems" ? 2 : 0;
+  const decimals = goal === "challengePoints" || goal === "eventPoints" || goal === "eventItems" ? 2 : 0;
   return new Intl.NumberFormat(locale, { maximumFractionDigits: decimals }).format(decimals ? value : Math.floor(value));
 }
 
 function TeamCard(props: DeckResultProps & { team: DeckTeam; metric: string; first: boolean; final: boolean }) {
   const { locale, team, metric, box, catalog } = props;
   const tr = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.solver.${key}`, values);
-  const [copied, setCopied] = useState(false);
   const cardOf = (kind: "member" | "snap", id: number | null) => id === null ? null : box?.cards.find(card => card.kind === kind && card.identity.value === String(id)) ?? null;
   const memberView = (id: number) => catalog.members.find(card => card.id === id);
   const snapView = (id: number | null) => id === null ? undefined : catalog.snaps.find(card => card.id === id);
   const value = team.value;
   const payoff = metric !== "score" && metric !== "power";
-  const probability = metric === "scoreAtLeast" || metric === "scoreAndLife";
   const main = metric === "power" ? team.power : payoff ? value?.payoff?.score ?? null : value?.score ?? null;
   const interval = payoff ? value?.payoff?.interval ?? null : metric === "power" ? null : value?.interval ?? null;
-  const exact = payoff ? value?.payoff?.exact : value?.exact;
-  const displayInterval = interval ?? (probability && exact ? parseInterval({ lower: exact, upper: exact }) : null);
   const slots = team.layout.members.map((id, slot) => {
     const member = cardOf("member", id), snap = cardOf("snap", team.layout.snaps[slot] ?? null);
     return { member: memberView(id), support: snapView(team.layout.snaps[slot] ?? null),
       memberLevel: member?.fields.level.value ?? undefined, memberRank: member?.fields.rank.value ?? undefined,
       supportLevel: snap?.fields.level.value ?? undefined, supportRank: snap?.fields.rank.value ?? undefined };
   });
-  const name = (pair: DeckPair) => {
-    const member = cardOf("member", pair.member), snap = cardOf("snap", pair.snap);
-    return `${member ? cardTitle(member, catalog) : memberView(pair.member)?.characterName ?? pair.member}${pair.snap === null ? "" : ` / ${snap ? cardTitle(snap, catalog) : snapView(pair.snap)?.name ?? pair.snap}`}`;
-  };
-  async function copy() {
-    const lines = team.layout.members.map((id, slot) => `${tr(slot === 2 ? "leaderSlot" : "slotN", { n: slot + 1 })}: ${name({ member: id, snap: team.layout.snaps[slot] ?? null })}`);
-    try { await navigator.clipboard.writeText([...lines, tr("freeSeating")].join("\n")); setCopied(true); } catch { setCopied(false); }
-  }
+  const sequence = (order: number[]) => order.map(id => memberView(id)?.characterName ?? String(id)).join(" → ");
   return <li className="dr-team" data-first={props.first}>
     <div className="dr-team-head">
       <span className="dr-rank">{team.rankCertified ? `#${team.rank}` : tr("candidateRank", { n: team.rank })}</span>
-      <div className="dr-value"><small>{tr(["score", "scoreAtLeast", "cappedScore", "scoreAndLife"].includes(metric) ? `metricLabel.${metric}` : `valueLabel.${metric}`)}</small>
-        <strong>{main === null ? "—" : displayInterval ? formatDeckInterval(displayInterval, locale, probability ? 6 : payoff ? 2 : 0) : formatValue(main, metric, locale)}</strong></div>
+      <div className="dr-value"><small>{tr(metric === "score" ? "metricLabel.score" : `valueLabel.${metric}`)}</small>
+        <strong>{main === null ? "—" : interval ? formatDeckInterval(interval, locale, payoff ? 2 : 0) : formatValue(main, metric, locale)}</strong></div>
       {metric !== "power" && <div className="dr-power"><small>{tr("power")}</small><span>{formatValue(team.power, "power", locale)}</span></div>}
     </div>
-    {props.first ? <>
+    <div className="dr-formation" data-compact={!props.first}>
       <div className="dc-stage"><NativeFormationGroup locale={locale} slots={slots} label={tr("formation")} /></div>
-      <div className="dc-slot-labels">{team.layout.members.map((id, slot) => <div key={slot} title={name({ member: id, snap: team.layout.snaps[slot] ?? null })}>
-        <span className={slot === 2 ? "dc-leader" : ""}>{slot === 2 ? tr("leaderShort") : slot + 1}</span><strong>{name({ member: id, snap: null })}</strong></div>)}</div>
-    </> : <ul className="dr-pairs">{[team.leader, ...team.others].map((pair, index) => {
-      const member = cardOf("member", pair.member), snap = cardOf("snap", pair.snap);
-      return <li key={pair.member} className={index === 0 ? "is-leader" : ""}>
-        {member ? <BoxArtwork card={member} catalog={catalog} locale={locale} /> : <span className="dw-card-art dw-card-unknown">?</span>}
-        {snap && <BoxArtwork card={snap} catalog={catalog} locale={locale} />}
-        <span>{index === 0 && <b>{tr("leaderShort")}</b>}{name(pair)}</span></li>;
-    })}</ul>}
+    </div>
+    <table className="dr-meta">
+      <thead><tr><th scope="col">{tr("meta.slot")}</th><th scope="col">{tr("meta.member")}</th><th scope="col">{tr("meta.training")}</th><th scope="col">{tr("meta.snap")}</th></tr></thead>
+      <tbody>{team.layout.members.map((id, slot) => <SlotRow key={slot} locale={locale} catalog={catalog} slot={slot} member={cardOf("member", id)} memberId={id}
+        snap={cardOf("snap", team.layout.snaps[slot] ?? null)} snapId={team.layout.snaps[slot] ?? null} />)}</tbody>
+    </table>
     <p className="dr-note">{tr("freeSeating")}</p>
-    {props.final && <div className="dr-team-foot">
-      {team.orders && <details className="dr-orders"><summary>{tr("orders", { n: team.orders.count })}</summary>
-        <dl>{(["min", "median", "max"] as const).map(key => <div key={key}><dt>{tr(`order.${key}`)}</dt><dd>{formatValue(team.orders![key].score, "battle", locale)}</dd></div>)}</dl>
-        <p className="dr-muted">{tr("ordersNote")}</p></details>}
-      <button type="button" onClick={() => void copy()}>{tr(copied ? "copied" : "copyLayout")}</button>
-    </div>}
+    {props.final && team.orders && <section className="dr-orders" aria-label={tr("orders", { n: team.orders.count })}>
+      <h4>{tr("orders", { n: team.orders.count })}</h4>
+      <dl>{(["min", "median", "max"] as const).map(key => <div key={key}><dt>{tr(`order.${key}`)}</dt>
+        <dd><strong>{formatValue(team.orders![key].score, "battle", locale)}</strong><small>{sequence(team.orders![key].order)}</small></dd></div>)}</dl>
+      <p className="dr-muted">{tr("ordersNote")}</p></section>}
   </li>;
+}
+
+/** One formation slot: the member card with its progress and the Snap paired with it. */
+function SlotRow({ locale, catalog, slot, member, memberId, snap, snapId }: { locale: AppLocale; catalog: BoxCatalog; slot: number; member: BoxCard | null; memberId: number; snap: BoxCard | null; snapId: number | null }) {
+  const tr = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.solver.${key}`, values);
+  const view = catalog.members.find(card => card.id === memberId);
+  const snapView = snapId === null ? undefined : catalog.snaps.find(card => card.id === snapId);
+  const fact = (card: BoxCard, field: CardFieldName, key: string) => tr(`meta.${key}`, { n: card.fields[field].value ?? "?" });
+  return <tr data-leader={slot === 2}>
+    <th scope="row"><span className={slot === 2 ? "dc-leader" : ""}>{slot === 2 ? tr("leaderShort") : slot + 1}</span></th>
+    <td><div className="dr-meta-card">{member && <BoxArtwork card={member} catalog={catalog} locale={locale} />}
+      <div><strong>{view?.characterName ?? memberId}</strong>{view && <span>{view.title}</span>}
+        {view && <small>{[member && cardRarityLabel(member, catalog), t(locale, `cards.attributes.${view.cardType}`), view.bandName].filter(Boolean).join(" · ")}</small>}</div></div></td>
+    <td>{member ? <div className="dr-meta-facts">{([["level", "level"], ["awake", "awake"], ["rank", "rank"], ["liveSkillLevel", "skill"], ["gekisouSkillLevel", "gekisou"]] as const)
+      .map(([field, key]) => <span key={field}>{fact(member, field, key)}</span>)}</div> : <span className="dr-muted">—</span>}</td>
+    <td>{snapId === null ? <span className="dr-muted">{tr("meta.noSnap")}</span>
+      : <div className="dr-meta-card">{snap && <BoxArtwork card={snap} catalog={catalog} locale={locale} />}
+        <div><strong>{snapView?.name ?? snapId}</strong>{snapView && <span>{snapView.characters.map(character => character.name).join(" · ")}</span>}
+          {snap && <small>{[cardRarityLabel(snap, catalog), fact(snap, "level", "level"), fact(snap, "rank", "rank")].filter(Boolean).join(" · ")}</small>}</div></div>}</td>
+  </tr>;
 }
 
 function Issues(props: DeckResultProps & { answer: DeckAnswer }) {

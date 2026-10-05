@@ -4,7 +4,7 @@ import type { PageMetadata } from "@/lib/seo/metadata";
 export type RouteGroupId = "database" | "musics" | "events" | "story" | "tools" | "community";
 export type RouteIcon = "home" | "database" | "music" | "users" | "calendar" | "newspaper" | "book" | "wrench" | "sparkles" | "info" | "palette" | "archive" | "folder-open";
 export type RouteKind = "static" | "dynamic";
-export type RouteComponent = "home" | "page" | "cards" | "card-detail" | "design-system" | "characters" | "character-detail" | "support-cards" | "support-card-detail" | "about" | "music" | "song-detail" | "stamps" | "comics" | "items" | "gacha" | "gacha-detail" | "rewards" | "reward-detail" | "event-list" | "event-detail" | "titles" | "backgrounds" | "story-main" | "story-event" | "story-friendship" | "story-other" | "story-detail" | "asset-viewer" | "chart-preview" | "live2d-viewer" | "story-player" | "account" | "player" | "news" | "news-detail" | "event-tracker" | "music-ranking" | "chart-data" | "deck" | "card-box";
+export type RouteComponent = "home" | "page" | "cards" | "card-detail" | "design-system" | "characters" | "character-detail" | "support-cards" | "support-card-detail" | "about" | "music" | "song-detail" | "stamps" | "comics" | "items" | "gacha" | "gacha-detail" | "rewards" | "reward-detail" | "event-list" | "event-detail" | "titles" | "backgrounds" | "story-main" | "story-event" | "story-friendship" | "story-other" | "story-detail" | "asset-viewer" | "chart-preview" | "live2d-viewer" | "story-player" | "account" | "player" | "news" | "news-detail" | "event-tracker" | "music-ranking" | "chart-data" | "deck" | "deck-guide" | "card-box";
 export type RouteParams = Record<string, string>;
 
 export interface RouteSeoConfig {

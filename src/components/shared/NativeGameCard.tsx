@@ -7,6 +7,7 @@ import { loadNativeUiLibrary, type NativeUiEntry, type NativeFormationLayout } f
 import { createNativeCardFixture, type NativeCardFixtureData } from "@/lib/game-ui/card-fixture";
 import { createNativeFormationFixture, type NativeFormationFixtureData } from "@/lib/game-ui/formation-fixture";
 import { bindNativeSprites } from "@/lib/game-ui/sprite-binding";
+import { browserImageSize, completeSpriteGeometries } from "@/lib/game-ui/sprite-geometry";
 import type { UIPlayer, UIRenderResult } from "ournotes-player/ui";
 
 type NativeData = NativeCardFixtureData | NativeFormationFixtureData;
@@ -19,9 +20,10 @@ async function renderNative(target: HTMLElement, entry: NativeUiEntry, data: Nat
   await document.fonts.ready;
   const pack = library.pack(entry);
   pack.resources.browserFontFamily = fontFamily;
+  const { geometries: spriteGeometries, data: checked } = await completeSpriteGeometries(library.spriteGeometries, bound, browserImageSize);
   const fixture = entry === "formationGroup"
-    ? createNativeFormationFixture(pack, { ...bound as NativeFormationFixtureData, catalogs: library.catalogs, spriteGeometries: library.spriteGeometries })
-    : createNativeCardFixture(pack, { ...bound as NativeCardFixtureData, catalogs: library.catalogs, spriteGeometries: library.spriteGeometries });
+    ? createNativeFormationFixture(pack, { ...checked as NativeFormationFixtureData, catalogs: library.catalogs, spriteGeometries })
+    : createNativeCardFixture(pack, { ...checked as NativeCardFixtureData, catalogs: library.catalogs, spriteGeometries });
   const session = new UISession(pack, { bindings: true });
   for (const patch of fixture.patches) session.edit(patch.node, patch.component ?? null, patch.field, patch.value);
   const player = new UIPlayer(target, { bindings: true, assetBase: library.assetBase,

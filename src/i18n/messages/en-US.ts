@@ -5,7 +5,7 @@ export const enUS = {
     "arenaSong": "Arena song",
     "chooseArena": "Choose an Arena song",
     "noArena": "No Arena songs in this server’s current data",
-    conditions: {"objective": "Optimize for", "threshold": "Target score", "finalLife": "Minimum life at the end", "play": "Play assumption", "accuracy": "Great / Just rates, no Misses", "pattern": "Declare a complete play with Misses", "missEvery": "Miss every N judged notes (0 = no Misses)", "noMiss": "Explicit complete play: no Misses.", "missPattern": "Every {n}th judged note is a Miss.", "patternNote": "Great and Just rates below are applied before replacing those notes with Misses. This fixed pattern is not a distribution of human errors.", "lifeNote": "Choose an explicit complete play. This goal checks score and final life; it does not predict clearing without a continue.", "rewardContext": "Reward conditions", "rewardNote": "Choose the reward entries assumed to be selected for this result. The result is conditional on this list; drop probabilities and cumulative rewards are not predicted.", "reward": "Reward {id} · base amount {n}", "currentPoints": "Current event points", "currentCP": "Current challenge points", "rewardConfirm": "Use these reward entries and current balances", "emptyRewardConfirm": "Explicitly assume no selected event rewards", "timeLimit": "Time limit", "timeLimitNote": "When time runs out, the best teams found so far are shown, marked as not proven optimal.", "timeLimits": {"30": "30 s", "60": "1 min", "120": "2 min", "300": "5 min", "none": "No limit"}, "metrics": {"score": "Expected score", "scoreAtLeast": "Chance of reaching the target", "cappedScore": "Expected score capped at the target", "scoreAndLife": "Chance of reaching score and final life targets"}},
+    conditions: {"play": "Play assumption", "accuracy": "Great / Just rates, no Misses", "pattern": "Declare a complete play with Misses", "missEvery": "Miss every N judged notes (0 = no Misses)", "noMiss": "Explicit complete play: no Misses.", "missPattern": "Every {n}th judged note is a Miss.", "patternNote": "Great and Just rates below are applied before replacing those notes with Misses. This fixed pattern is not a distribution of human errors.", "rewardContext": "Reward conditions", "rewardNote": "Choose the reward entries assumed to be selected for this result. The result is conditional on this list; drop probabilities and cumulative rewards are not predicted.", "reward": "Reward {id} · base amount {n}", "currentPoints": "Current event points", "currentCP": "Current challenge points", "rewardConfirm": "Use these reward entries and current balances", "emptyRewardConfirm": "Explicitly assume no selected event rewards", "timeLimit": "Time limit", "timeLimitNote": "When time runs out, the best teams found so far are shown, marked as not proven optimal.", "timeLimits": {"30": "30 s", "60": "1 min", "120": "2 min", "300": "5 min", "none": "No limit"}},
 
     cloud: {
       "accountChanged": "Your signed-in account changed. Confirm the account shown below before saving this device's collection.",
@@ -415,6 +415,9 @@ export const enUS = {
     "signedOutNote": "No account is required. Local and temporary collections are never uploaded.",
     "accountLink": "Account settings",
     "goDeck": "Open deck builder",
+    "beta": "Beta",
+    "sources": {"label": "Source", "model": "Scoring model", "search": "Search algorithm"},
+    "deckGuide": {"title": "Deck guide", "description": "What the deck page optimizes, what “proven optimal” means and how the search proves it.", "link": "Deck guide", "proofLink": "Definitions of “proven optimal” and “not proven”"},
     "storageErrors": {
       "unavailable": "Browser storage is unavailable. Try again, or choose this visit only.",
       "conflict": "The collection changed in another view or tab. Your draft was not saved over it. Review the latest copy.",
@@ -551,10 +554,12 @@ export const enUS = {
     "powerEvent": "Count the event bonus",
     "rankFixed": "Every gekisou section counts as 1st place.",
     "accuracyComing": "This engine does not support some custom judgement rates. Your choices are kept; unsupported conditions cannot be submitted.",
+    "accuracyNote": "The Great rate is computed: that share of Greats is spread evenly over the whole chart.",
+    "accuracyNoteGekisou": "The Great and Just rates are computed: that share of Greats and non-Just judgements is spread evenly over the whole chart.",
     "othersAverage": "Other players' average score",
     "othersAverageSame": "Leave empty for the same as yours",
     "solver": {
-      "metricLabel": {"score": "Expected score", "scoreAtLeast": "Target probability (0–1)", "cappedScore": "Expected capped score", "scoreAndLife": "Score and final-life probability (0–1)"},
+      "metricLabel": {"score": "Expected score"},
       "playSummary": "Declared play: {notes} judged notes · {misses} Misses",
       "start": "Build team",
       "rerun": "Recalculate",
@@ -581,13 +586,10 @@ export const enUS = {
       "power": "Power",
       "formation": "Recommended formation",
       "leaderShort": "Leader",
-      "leaderSlot": "Leader (slot 3)",
-      "slotN": "Slot {n}",
       "freeSeating": "Apart from the leader, any seating works.",
+      "meta": {"slot": "Slot", "member": "Member card", "training": "Progress", "snap": "Snap", "noSnap": "No Snap", "level": "Lv {n}", "awake": "Training {n}", "rank": "Rank {n}", "skill": "Ordinary skill Lv {n}", "gekisou": "Gekisou skill Lv {n}"},
       "orders": "{n} performance orders",
       "ordersNote": "The performance order is random; the score above is the average over these orders.",
-      "copied": "Copied",
-      "copyLayout": "Copy formation",
       "unknownCard": "Card {id}",
       "fill": "Fill in",
       "vipMissing": "VIP rank missing",
@@ -610,8 +612,7 @@ export const enUS = {
       },
       "gap": {
       "arenaSong": "Choose an Arena song from this server’s data.",
-      "play": "Declare a complete play and a valid final-life target.",
-      "threshold": "Enter a whole target score from 0 to 2,147,483,647.",
+      "play": "Enter a valid Miss interval: 0 or a positive whole number.",
       "rewardContext": "Choose and confirm reward conditions, and enter current event and challenge points.",
 
         "song": "Choose a song first.",

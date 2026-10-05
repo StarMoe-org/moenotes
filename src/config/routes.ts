@@ -581,6 +581,17 @@ export const routeRegistry = [
         keywords: ["deck", "card box", "formation"],
       },
       {
+        // What a deck recommendation optimizes, what "proven optimal" means and how the search proves it.
+        id: "deck-guide",
+        path: "/tools/deck/guide",
+        labelKey: "deckWorkspace.deckGuide.title",
+        component: "deck-guide",
+        seo: { titleKey: "deckWorkspace.deckGuide.title", descriptionKey: "deckWorkspace.deckGuide.description", indexable: false },
+        nav: false,
+        searchable: false,
+        keywords: ["deck", "optimality", "search"],
+      },
+      {
         id: "live2d-viewer",
         path: "/tools/live2d",
         labelKey: "nav.items.live2dViewer",
