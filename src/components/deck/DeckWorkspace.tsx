@@ -16,7 +16,7 @@ import { boxAccountJson, gameSaveAccountJson } from "@/lib/deck/account-envelope
 import { CHALLENGE_POINT_COSTS, DEFAULT_DECK_GOAL, EVENT_GOALS, EVERYDAY_GOALS, MAX_BOOST, computes, computesGoal, defaultDeckGoalInput, goalGap, heldEvent,
   playsGekisou, readsAccuracy, isChallengeInput, isNetworkInput, recommendationRequest, solverGoalKind, goalVenues, isEventPayoffGoal, type ChallengePointCost, type DeckEvent, type DeckGoal, type DeckGoalInput, type DeckVenue, type DeckArenaMusic } from "@/lib/deck/goals";
 import { parseMasterDate } from "@/lib/schedule";
-import { safeGetLocalStorage, safeSetLocalStorage } from "@/lib/storage/safe-storage";
+import { safeGetLocalStorage, safeRemoveLocalStorage, safeSetLocalStorage } from "@/lib/storage/safe-storage";
 import { useDeckSolver } from "./use-deck-solver";
 import DeckResult from "./DeckResult";
 import { useCardBox } from "@/components/box/use-card-box";
@@ -42,7 +42,8 @@ import { gameSaveServer } from "@/config/account";
 import { GAME_SERVERS } from "@/config/servers";
 import type { GameSaveMeta } from "@/lib/account/game-saves";
 import { deriveGameSaveBox, unavailableGameSaveBox, type GameSaveTables } from "@/lib/box/game-save";
-import { fetchGameSave, forgetLoadedGameSave, keepGameSave, type LoadedGameSave } from "@/lib/box/game-save-source";
+import { defaultGameSave, fetchGameSave, forgetLoadedGameSave, keepGameSave, type LoadedGameSave } from "@/lib/box/game-save-source";
+import { loadGameAccounts } from "@/lib/account/game-accounts";
 import { deleteCachedGameSave } from "@/lib/box/save-cache";
 import { readLocalBox } from "@/lib/box/store";
 import { GameSaveBanner, GameSaveHint, GameSavePicker } from "@/components/box/GameSave";
@@ -61,6 +62,21 @@ export interface DeckWorkspaceProps {
   deckArenas?: readonly { server: GameServer; songs: readonly DeckArenaMusic[] }[];
 }
 const GOAL_STORAGE_KEY = "moenotes.deck.goal";
+/** Set per server after the user unlinks the uploaded save: the Box then keeps its own facts until a save is linked again. */
+const OWN_FACTS_KEY = "moenotes.box.own-facts";
+/** One automatic save action, keyed by the listed version it acts on. */
+interface AutoAttempt { key: string; tries: number; running: boolean }
+function startAttempt(slot: { current: AutoAttempt | null }, key: string): AutoAttempt | null {
+  const attempt = slot.current?.key === key ? slot.current : { key, tries: 0, running: false };
+  if (attempt.running || attempt.tries >= 2) return null;
+  attempt.running = true; attempt.tries++;
+  slot.current = attempt;
+  return attempt;
+}
+function finishAttempt(attempt: AutoAttempt, done: boolean): void {
+  attempt.running = false;
+  if (done) attempt.tries = 2;
+}
 /** Public sources of the deck engine: the scoring model and the search over teams. */
 const DECK_SOURCES = [
   { key: "model", url: "https://github.com/empty-sekai/ournotes-deck/tree/main/crates/ournotes-sim" },
@@ -99,6 +115,10 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   /** What the page shows: the stored Box, or while a save is linked, the Box the save describes. */
   const box = useMemo(() => !stored?.save ? stored : derivation?.box ?? unavailableGameSaveBox(stored), [stored, derivation]);
   const [savePicker, setSavePicker] = useState(false);
+  const ownFactsKey = `${OWN_FACTS_KEY}.${server}`;
+  /** Null until read. While false, a signed-in Box reads the account's uploaded save. */
+  const [ownFacts, setOwnFacts] = useState<boolean | null>(null);
+  useEffect(() => { setOwnFacts(safeGetLocalStorage(ownFactsKey) === "1"); }, [ownFactsKey]);
   const rawRecognitionSource = props.recognitionSources?.find(value => value.server === server);
   const recognition = useMemo(() => {
     if (!rawRecognitionSource) return { context: undefined, issue: "Master source stamp is unavailable" };
@@ -309,17 +329,70 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
     }
     return false;
   }
+  /** The user's own choice in the picker; it also ends an earlier opt-out. */
+  async function pickGameSave(meta: GameSaveMeta, save: LoadedGameSave): Promise<boolean> {
+    const linked = await linkGameSave(meta, save);
+    if (linked) { safeRemoveLocalStorage(ownFactsKey); setOwnFacts(false); }
+    return linked;
+  }
   async function unlinkGameSave(): Promise<boolean> {
     if (!stored?.save) return false;
     const link = stored.save;
-    if (!await storage.commit({ ...stored, save: null })) return false;
+    // Opt out first: the render that sees the unlinked Box must not link the upload again.
+    safeSetLocalStorage(ownFactsKey, "1"); setOwnFacts(true);
+    if (!await storage.commit({ ...stored, save: null })) { safeRemoveLocalStorage(ownFactsKey); setOwnFacts(false); return false; }
     forgetLoadedGameSave(link.server, link.accountId);
     if (!await linkedElsewhere(server, link.server, link.accountId)) await deleteCachedGameSave(link.server, link.accountId).catch(() => undefined);
     return true;
   }
+  // Signed in, the uploaded save comes first: link the default upload when the Box has no save, and follow newer
+  // uploads of the linked player. Each listed version gets at most two attempts (a write can meet a busy session);
+  // the picker and the banner's update remain for anything later.
+  const autoLink = useRef<AutoAttempt | null>(null);
+  useEffect(() => {
+    const saves = saveList.saves;
+    if (busy || stored?.save || ownFacts !== false || saveList.access !== "signed-in" || !saves?.length) return;
+    const attempt = startAttempt(autoLink, `${server}:${saves.map(save => save.sha256).join(",")}`);
+    if (!attempt) return;
+    void (async () => {
+      const players = new Set(saves.map(save => save.accountId));
+      const verified = players.size > 1 ? (await loadGameAccounts()).accounts.filter(account => account.server === server && account.verified).map(account => account.profileId) : [];
+      const meta = defaultGameSave(saves, verified);
+      if (!meta) return true;
+      const save = await fetchGameSave(meta.server, meta.accountId);
+      if (save.sha256 !== meta.sha256) { await saveList.refresh(); return true; }
+      return safeGetLocalStorage(ownFactsKey) === "1" || await linkGameSave(meta, save);
+    })().catch(() => false).then(done => finishAttempt(attempt, done));
+  }, [busy, stored?.save, ownFacts, saveList.access, saveList.saves, server]);
+  const follow = useRef<AutoAttempt | null>(null);
+  useEffect(() => {
+    const link = stored?.save;
+    if (busy || !link || saveList.access !== "signed-in" || !saveList.saves) return;
+    const meta = saveList.saves.find(save => save.accountId === link.accountId);
+    if (!meta || meta.sha256 === link.sha256 || meta.uploadedAt < link.uploadedAt) return;
+    const attempt = startAttempt(follow, `${server}:${meta.sha256}`);
+    if (!attempt) return;
+    void updateGameSave(meta).catch(() => false).then(done => finishAttempt(attempt, done));
+  }, [busy, stored?.save, saveList.access, saveList.saves, server]);
+  // The linked version left the account: list again so the newer upload is followed.
+  useEffect(() => { if (linkedSave.state.status === "changed") void saveList.refresh(); }, [linkedSave.state.status]);
+  // Uploads happen in the App, usually while this page is in the background.
+  useEffect(() => {
+    if (saveList.access !== "signed-in") return;
+    let listedAt = Date.now();
+    const relist = () => {
+      if (document.visibilityState !== "visible" || Date.now() - listedAt < 30_000) return;
+      listedAt = Date.now();
+      void saveList.refresh();
+    };
+    document.addEventListener("visibilitychange", relist);
+    return () => document.removeEventListener("visibilitychange", relist);
+  }, [saveList.access]);
   const saveBanner = stored?.save ? <GameSaveBanner locale={locale} link={stored.save} state={linkedSave.state} derivation={derivation} list={saveList} busy={busy}
     returnTo={returnTo} onRetry={linkedSave.retry} onUpdate={updateGameSave} onUnlink={unlinkGameSave} /> : null;
-  const saveNotice = saveBanner ?? <GameSaveHint locale={locale} server={server} list={saveList} returnTo={returnTo} />;
+  /** Uploads exist but the Box reads none on its own: the user unlinked, or several players uploaded. */
+  const pickPrompt = !stored?.save && !!saveList.saves?.length && (ownFacts === true || new Set(saveList.saves.map(save => save.accountId)).size > 1);
+  const saveNotice = saveBanner ?? <GameSaveHint locale={locale} server={server} list={saveList} returnTo={returnTo} onPick={pickPrompt ? openSavePicker : undefined} />;
   const arenas = props.deckArenas?.find(row => row.server === server)?.songs ?? [];
   const selectedSong = songs.find(item => item.id === (isChallengeInput(effectiveInput)
     ? event?.challengeMusics.find(row => row.id === goalInput.challengeMusicId)?.musicId
@@ -470,7 +543,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
     </Modal>
     <ScreenshotImport locale={locale} server={server} source={recognition.context?.source} sourceIssue={recognition.issue} box={box} mode={mode} catalog={catalog} isOpen={importing} onClose={() => { setImporting(false); setPendingScreenshots([]); }} onSave={saveScreenshot} pendingFiles={pendingScreenshots} onPendingFilesConsumed={() => setPendingScreenshots([])} />
     <CardBoxGuide key={`guide:${server}`} locale={locale} members={members} snaps={snaps} isOpen={guideOpen} onClose={() => setGuideOpen(false)} onStartImport={openScreenshotImport} />
-    <GameSavePicker locale={locale} server={server} isOpen={savePicker} onClose={() => setSavePicker(false)} list={saveList} busy={busy} onLink={linkGameSave} returnTo={returnTo} onScreenshot={openScreenshotImport} />
+    <GameSavePicker locale={locale} server={server} isOpen={savePicker} onClose={() => setSavePicker(false)} list={saveList} busy={busy} onLink={pickGameSave} returnTo={returnTo} onScreenshot={openScreenshotImport} />
     <Modal historyNavigation={false} isOpen={options} onClose={closeOptions} title={composer(optionsTab === "team" ? "teamEditorTitle" : "constraintsTitle")} closeLabel={tr("close")} size="lg"><div className="dw-dialog dc-options">
       <div className="dc-option-tabs" role="group" aria-label={composer("searchConstraints")}><button type="button" aria-pressed={optionsTab === "team"} onClick={() => setOptionsTab("team")}>{composer("editTeam")}</button><button type="button" aria-pressed={optionsTab === "constraints"} onClick={() => setOptionsTab("constraints")}>{composer("searchConstraints")}</button></div>
       {optionsTab === "constraints" ? <>

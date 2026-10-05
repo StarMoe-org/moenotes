@@ -14,13 +14,17 @@ import type { GameSaveList, LinkedGameSaveState } from "./use-game-save";
 const dateTime = (locale: AppLocale, at: number) => new Date(at).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" });
 const errorCode = (error: unknown): GameSaveErrorCode => error instanceof GameSaveError ? error.code : "invalid";
 
-/** The App is also discoverable before the user has uploaded a first save. */
-export function GameSaveHint({ locale, server, list, returnTo }: { locale: AppLocale; server: GameServer; list: GameSaveList; returnTo: string }) {
+/**
+ * The App is also discoverable before the user has uploaded a first save. `onPick` is set when uploads exist but none
+ * is read without the user's choice.
+ */
+export function GameSaveHint({ locale, server, list, returnTo, onPick }: { locale: AppLocale; server: GameServer; list: GameSaveList; returnTo: string; onPick?: (() => void) | undefined }) {
   const gs = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.gameSave.${key}`, values);
   if (list.access === "signed-out") return <p className="cb-save-hint"><CollectionIcon name="game" /><span>{gs("signInPrompt")}</span><a href={accountLoginUrl(locale, returnTo)}>{gs("signIn")}</a></p>;
   if (list.access !== "signed-in") return null;
   if (list.error) return <p className="cb-save-hint"><CollectionIcon name="game" /><span>{gs("listError")}</span><button type="button" className="cb-save-hint-action" onClick={() => void list.refresh()}>{gs("retry")}</button></p>;
   if (list.saves?.length === 0) return <p className="cb-save-hint"><CollectionIcon name="game" /><span>{gs("noSaves", { server: t(locale, `gameServer.names.${server}`) })}</span><a href={STARMOE_BOX_APP.download}>{gs("appDownload")}</a><button type="button" className="cb-save-hint-action" onClick={() => void list.refresh()}>{gs("refreshUploads")}</button></p>;
+  if (onPick && list.saves?.length) return <p className="cb-save-hint"><CollectionIcon name="game" /><span>{gs("pickPrompt")}</span><button type="button" className="cb-save-hint-action" onClick={onPick}>{gs("importAction")}</button></p>;
   return null;
 }
 
