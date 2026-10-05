@@ -5,7 +5,7 @@ import { extractSiteTarGzip, validateSiteManifest } from "../server/site-artifac
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import {
-  applyBuildEnvironment, assertDataVersion, hashArchive, parseInput, validateManifest,
+  applyBuildEnvironment, assertDataVersion, command, measuredCommand, hashArchive, parseInput, validateManifest,
   type SiteManifest,
 } from "../scripts/build-site-release";
 import { SUPPORTED_LOCALES } from "../src/config/locales";
@@ -140,6 +140,29 @@ test("real CI ustar output round-trips through the deployment parser", async () 
     expect(await Bun.file(join(target, "site", "index.html")).text()).toContain("fixture");
     expect(await Bun.file(join(target, "site", "_astro", "app.js")).text()).toContain("fixture");
   } finally { await rm(root, { recursive: true, force: true }); }
+});
+describe("build subprocess reporting", () => {
+  test("captures machine output while preserving real child failures", async () => {
+    expect(await command([process.execPath, "-e", "process.stdout.write('ok')"], true)).toBe("ok");
+    await expect(command([process.execPath, "-e", "process.stderr.write('child failed');process.exit(7)"], true)).rejects.toThrow("failed (7): child failed");
+  });
+  test("inherited build output does not turn warnings into failures or swallow exit codes", async () => {
+    await expect(command([process.execPath, "-e", "process.stderr.write('test warning\\n')"])).resolves.toBe("");
+    await expect(command([process.execPath, "-e", "process.exit(7)"])).rejects.toThrow("failed (7)");
+  });
+  // Production runs GNU time on Linux; Windows development cannot execute /usr/bin/time.
+  test.skipIf(process.platform !== "linux")("GNU time saves complete RSS and exit status without a stderr pipe", async () => {
+    const root = await mkdtemp(join(tmpdir(), "site-time-test-"));
+    try {
+      const report = join(root, "metrics.txt");
+      await measuredCommand([process.execPath, "-e", "process.stderr.write('measured warning\\n')"], report);
+      const success = await Bun.file(report).text();
+      expect(success).toContain("Maximum resident set size (kbytes):");
+      expect(success).toContain("Exit status: 0");
+      await expect(measuredCommand([process.execPath, "-e", "process.exit(7)"], report)).rejects.toThrow("failed (7)");
+      expect(await Bun.file(report).text()).toContain("Exit status: 7");
+    } finally { await rm(root, { recursive: true, force: true }); }
+  });
 });
 test("workflow pins source, isolates publication permissions and has no retention deletion", async () => {
   const workflow = await Bun.file(new URL("../.github/workflows/build-site.yml", import.meta.url)).text();

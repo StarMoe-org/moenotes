@@ -101,25 +101,35 @@ export async function hashArchive(path: string): Promise<{ sha256: string; size:
   return { sha256: hash.digest("hex"), size };
 }
 
-async function command(args: string[], capture = false): Promise<string> {
+export async function command(args: string[], capture = false): Promise<string> {
   return await new Promise((resolve, reject) => {
-    const child = spawn(args[0]!, args.slice(1), { stdio: ["ignore", capture ? "pipe" : "inherit", "pipe"], shell: false });
+    // Build/tar logs go straight to the runner. Only short machine-readable gh/git output needs pipes.
+    const child = spawn(args[0]!, args.slice(1), { stdio: ["ignore", capture ? "pipe" : "inherit", capture ? "pipe" : "inherit"], shell: false });
     let stdout = "";
     let stderr = "";
     child.stdout?.on("data", (chunk: Buffer) => { stdout += chunk.toString(); });
     child.stderr?.on("data", (chunk: Buffer) => {
-      if (!capture) process.stderr.write(chunk);
       // Keep diagnostics bounded even if the site emits a long error log.
       stderr = (stderr + chunk.toString()).slice(-65_536);
     });
     child.on("error", reject);
-    child.on("close", (code) => {
-      if (code !== 0) reject(new Error(`${args[0]} failed (${code}): ${stderr}`));
+    child.on("close", (code, signal) => {
+      if (code !== 0) reject(new Error(`${args[0]} failed (${signal ?? code})${stderr ? `: ${stderr}` : "; see command output above"}`));
       else resolve(stdout);
     });
   });
 }
 
+export async function measuredCommand(args: string[], reportPath: string): Promise<void> {
+  try {
+    // time's diagnostics must not share Bun's subprocess stderr pipe. A regular file also preserves
+    // the complete RSS/exit status report if logging fails. A nonzero measured command still fails CI.
+    await command(["/usr/bin/time", "-v", "-o", reportPath, ...args]);
+  } finally {
+    try { console.log(await readFile(reportPath, "utf8")); }
+    catch { console.warn("Build resource report is unavailable; see the command exit status above"); }
+  }
+}
 async function build(input: BuildInput): Promise<void> {
   applyBuildEnvironment(input);
   if ((await command(["git", "rev-parse", "HEAD"], true)).trim() !== input.commit) {
@@ -141,7 +151,7 @@ async function build(input: BuildInput): Promise<void> {
   await rm(OUTPUT, { recursive: true, force: true });
   await mkdir(OUTPUT, { recursive: true });
   const cli = join(dirname(createRequire(import.meta.url).resolve("astro/package.json")), "bin", "astro.mjs");
-  await command(["/usr/bin/time", "-v", process.execPath, "--bun", cli, "build", "--root", process.cwd(), "--outDir", join(OUTPUT, "site")]);
+  await measuredCommand([process.execPath, "--bun", cli, "build", "--root", process.cwd(), "--outDir", join(OUTPUT, "site")], join(OUTPUT, "build-metrics.txt"));
   await access(join(OUTPUT, "site", "index.html"));
   await currentData();
   await command(["tar", "--format=ustar", "-czf", join(OUTPUT, ARCHIVE), "-C", OUTPUT, "site"]);

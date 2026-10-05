@@ -83,6 +83,16 @@ jobs:
         env:
           SITE_BUILD_MODE: build
           MOENOTES_FETCH_CACHE_DIR: ${{ runner.temp }}/moenotes-fetch
+      - name: Preserve resource report even when the build fails
+        if: ${{ !cancelled() && steps.inspect.outputs.reuse != 'true' }}
+        continue-on-error: true
+        uses: actions/upload-artifact@v7
+        with:
+          name: build-metrics
+          path: .site-release/build-metrics.txt
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 7
       - name: Save only non-sensitive fetch responses
         if: success() && steps.inspect.outputs.reuse != 'true'
         uses: actions/cache/save@v6
