@@ -87,7 +87,8 @@ function status() {
     stage: store.current?.stage ?? null,
     localesRendered: store.current?.localesRendered ?? null,
     pendingRest: store.current?.pendingRest ?? false,
-    splitLocales: config.splitLocales,
+    buildMode: config.buildMode,
+    splitLocales: config.buildMode === "local" && config.splitLocales,
     building: scheduler.building && { ...scheduler.building, ...store.progress?.toJSON() },
     compressing: store.compressing,
     waiting: scheduler.waiting && { reason: scheduler.waiting.reason, since: new Date(scheduler.waiting.since).toISOString() },
@@ -116,25 +117,25 @@ async function tick(): Promise<void> {
   const manifest = await fetchJson<AssetManifest>(config.assetVersionUrl);
   scheduler.lastCheck = { at: new Date().toISOString(), ok: true };
   const data = describeData(manifest);
-  const key = buildKey(revision, data);
+  const key = buildKey(revision, data, config.buildMode === "github" ? config.githubCommit : undefined);
+  // Apply backoff before the core-resume branch as well as new builds.
+  if (scheduler.failure?.key === key && Date.now() < scheduler.failure.retryAt) return;
   if (store.current?.key === key) {
     scheduler.waiting = null;
-    // A core batch that never got its full complement (server restart between the two Astro runs) finishes here:
-    // rerunning the whole split build re-links the unchanged core half, so only the rest locales cost real work.
-    if (store.current.pendingRest && config.splitLocales) {
+    // Local mode still resumes an interrupted split rollout, but only after the failure backoff.
+    if (store.current.pendingRest && (config.buildMode === "github" || config.splitLocales)) {
       log(`resuming the interrupted full build for ${store.current.id} (stage=core)`);
       await runBuild(key, data);
     }
     return;
   }
-  if (scheduler.failure?.key === key && Date.now() < scheduler.failure.retryAt) return;
 
   const lag = await assetExportLag(manifest, config.masterdataVersionUrl);
   if (lag) {
     const since = scheduler.waiting?.key === key ? scheduler.waiting.since : Date.now();
     if (scheduler.waiting?.reason !== lag) log(`waiting to build ${data.label}: ${lag}`);
     scheduler.waiting = { key, since, reason: lag };
-    if (Date.now() - since < config.syncWaitMs) return;
+    if (config.buildMode === "github" || Date.now() - since < config.syncWaitMs) return;
     log(`the asset export has not caught up after ${config.syncWaitMs / 60_000} min; building anyway`);
   }
   scheduler.waiting = null;
@@ -145,7 +146,15 @@ async function runBuild(key: string, data: DataVersion): Promise<void> {
   scheduler.building = { data: data.label, startedAt: new Date().toISOString() };
   try {
     const record = await store.build(key, revision, data);
-    // A split-locale rollout already activates the core batch inside build(); here we swap the full batch in.
+    // Do not install an artifact for superseded data after a long queue/build/download.
+    if (config.buildMode === "github") {
+      const latest = await fetchJson<AssetManifest>(config.assetVersionUrl);
+      if (describeData(latest).fingerprint !== data.fingerprint || await assetExportLag(latest, config.masterdataVersionUrl)) {
+        throw new Error("Release data changed while waiting for CI; keeping the live build until the next version is ready");
+      }
+    }
+    if (stopping) return;
+    // A split-locale local rollout already activates core inside build(); CI installs all locales together.
     await store.activate(record);
     scheduler.failure = null;
     log(`build ${record.id} is live after ${Math.round(record.durationMs / 1000)}s (${record.pages} pages, stage=${record.stage ?? "full"}); compressing it in the background`);

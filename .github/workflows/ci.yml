@@ -1,7 +1,7 @@
 name: CI
 
-# Lint, search/SEO registry and type checks on every push to main and every pull request. The site itself is built
-# by the deploy server (docs/deployment.md), so this workflow does not run `astro build`.
+# Checks on every push to main and every pull request. The deploy server dispatches build-site.yml
+# for rendering and publishing; this workflow validates the installation and scheduling protocols offline.
 on:
   push:
     branches: [main]
@@ -25,3 +25,5 @@ jobs:
       - run: bun run lint
       - run: bun run check:search-seo
       - run: bun run check
+      - run: bun test tests/github-build.test.ts tests/site-artifact.test.ts tests/site-release-build.test.ts tests/build-store-ci.test.ts
+      - run: bun server/main.ts --self-check

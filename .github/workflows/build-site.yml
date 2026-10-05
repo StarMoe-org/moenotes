@@ -1,0 +1,131 @@
+name: Build site Release
+run-name: site-${{ inputs.key }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      key:
+        description: Site build key (16 lowercase hex)
+        required: true
+        type: string
+      revision:
+        description: Source revision (16 lowercase hex)
+        required: true
+        type: string
+      commit:
+        description: Pinned source commit (40 lowercase hex)
+        required: true
+        type: string
+      fingerprint:
+        description: describeData fingerprint
+        required: true
+        type: string
+      public_env:
+        description: JSON object containing PUBLIC_* string variables only
+        required: true
+        type: string
+
+# One producer per key; queued attempts reuse the completed Release.
+concurrency:
+  group: site-${{ inputs.key }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  SITE_BUILD_KEY: ${{ inputs.key }}
+  SITE_BUILD_REVISION: ${{ inputs.revision }}
+  SITE_BUILD_COMMIT: ${{ inputs.commit }}
+  SITE_BUILD_FINGERPRINT: ${{ inputs.fingerprint }}
+  SITE_PUBLIC_ENV: ${{ inputs.public_env }}
+
+jobs:
+  build:
+    # The dispatcher selects the workflow ref (main by default); source is always pinned below.
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    outputs:
+      reuse: ${{ steps.inspect.outputs.reuse }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.commit }}
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Validate inputs and reuse a complete Release
+        id: inspect
+        run: bun scripts/build-site-release.ts
+        env:
+          SITE_BUILD_MODE: inspect
+          GH_TOKEN: ${{ github.token }}
+      - name: Restore public fetch responses (approximately 1 GiB)
+        if: steps.inspect.outputs.reuse != 'true'
+        id: fetch-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ runner.temp }}/moenotes-fetch
+          key: site-fetch-${{ runner.os }}-${{ inputs.key }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            site-fetch-${{ runner.os }}-${{ inputs.key }}-
+            site-fetch-${{ runner.os }}-
+      - name: Install locked dependencies
+        if: steps.inspect.outputs.reuse != 'true'
+        run: bun install --frozen-lockfile
+      - name: Build and verify pinned site (no GitHub token)
+        if: steps.inspect.outputs.reuse != 'true'
+        run: bun scripts/build-site-release.ts
+        env:
+          SITE_BUILD_MODE: build
+          MOENOTES_FETCH_CACHE_DIR: ${{ runner.temp }}/moenotes-fetch
+      - name: Save only non-sensitive fetch responses
+        if: success() && steps.inspect.outputs.reuse != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ runner.temp }}/moenotes-fetch
+          key: ${{ steps.fetch-cache.outputs.cache-primary-key }}
+      - name: Transfer verified output to isolated publisher
+        if: steps.inspect.outputs.reuse != 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: site-release
+          path: |
+            .site-release/site.tar.gz
+            .site-release/site-manifest.json
+          include-hidden-files: true
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: build
+    if: needs.build.outputs.reuse != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      # This fresh job never installs dependencies or executes the site build.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.commit }}
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - uses: actions/download-artifact@v8
+        with:
+          name: site-release
+          path: .site-release
+      - name: Upload draft assets, verify, then publish prerelease
+        run: bun scripts/build-site-release.ts
+        env:
+          SITE_BUILD_MODE: publish
+          GH_TOKEN: ${{ github.token }}
+      # No Release cleanup: the active site and polling consumers can still need old tags.
+      # Retention is deliberately deferred to a future manually controlled policy.

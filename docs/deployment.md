@@ -4,8 +4,13 @@ The image (`Dockerfile`) holds the Bun runtime and the site sources; it does not
 container runs `server/main.ts`, which:
 
 1. serves the live build from the `/data` volume right away (before any network access), and
-2. rebuilds the site in the background whenever the asset service publishes a new release or the image
-   brings changed code, then swaps the new build in atomically.
+2. dispatches the repository's GitHub Actions site build whenever the asset service publishes a new release
+   or the image brings changed code, downloads its verified GitHub Release artifact, then swaps it in atomically.
+
+**Rendering runs on GitHub-hosted runners, not the serving container.** The default build mode is `github`.
+Missing credentials, CI failure, invalid artifacts or network errors leave the previous site running; none of
+these automatically start an Astro process on the server. `MOENOTES_BUILD_MODE=local` is an explicit opt-in
+fallback for hosts with enough build memory.
 
 A failed build never replaces the live one: the site keeps serving the previous build and the failure is
 retried later. On Zeabur every commit produces a new image; the restarted container serves the previous
@@ -18,6 +23,7 @@ layer would leave installation without the referenced patch file.
 ```bash
 docker build --build-arg MOENOTES_REVISION=$(git rev-parse HEAD) -t moenotes .
 docker run -p 8080:80 -v moenotes-data:/data \
+  -e MOENOTES_GITHUB_TOKEN \
   -e MOENOTES_ASSET_INTERNAL=http://moenotes-assets.moenotes.svc.cluster.local:8080 \
   -e MOENOTES_MASTERDATA_INTERNAL=http://moenotes-metadata.moenotes.svc.cluster.local:8080 \
   moenotes
@@ -28,7 +34,7 @@ starts from an empty site and answers 503 until the first build (about 10 minute
 the builds and their state on the volume belong to a single server. TLS terminates in front of the
 container (Ingress, Cloudflare); the server speaks plain HTTP.
 
-Locally: `MOENOTES_DATA_DIR=../moenotes-data PORT=8080 bun run start`.
+Locally (opt-in rendering): `MOENOTES_BUILD_MODE=local MOENOTES_DATA_DIR=../moenotes-data PORT=8080 bun run start`.
 
 The footer shows the site version (`package.json`) and the commit the build comes from. The image has no `.git`,
 so the commit comes from the `MOENOTES_REVISION` build argument; on Zeabur it defaults to `ZEABUR_GIT_COMMIT_SHA`.
@@ -41,7 +47,51 @@ file only changes once a release has been exported (`regions.{id}` is the latest
 so every story table and image the new MasterData refers to is already published. MasterData's own version
 is not a trigger: it moves first, and building on it would render pages whose files are not exported yet.
 
-### Split locale rollout (default)
+### GitHub Actions and Release (default)
+
+1. Merge `.github/workflows/build-site.yml` into `main` **before** deploying the new image. GitHub must know
+   this workflow on the default branch before it can be dispatched. Deploy an image built from that commit;
+   `MOENOTES_REVISION` must be its full 40-character Git commit SHA, not the server's source-content hash.
+2. Create a fine-grained GitHub token restricted to **StarMoe-org/moenotes**, with **Actions: read and write**
+   and **Contents: read** (plus the automatically granted Metadata: read). Complete organization approval if
+   required. Store it only in the hosting platform's secret/environment configuration as `MOENOTES_GITHUB_TOKEN`;
+   do not commit it, put it in `PUBLIC_*`, paste it in logs, or copy the server's root SSH key into Actions.
+3. Set `MOENOTES_BUILD_MODE=github` (the default). The default repo is `StarMoe-org/moenotes`, workflow is
+   `build-site.yml`, and workflow ref is `main`. No server SSH credentials are needed by Actions.
+4. Once exported assets and MasterData agree, the server dispatches the workflow with the build key,
+   source-content hash, exact image commit, asset fingerprint and **only** `PUBLIC_*` build settings. CI checks
+   out that commit and builds all 13 locales in one run. It validates the source hash and checks data versions
+   before and after rendering; changing data fails the attempt instead of publishing a mislabeled artifact.
+5. CI packages `site.tar.gz` and `site-manifest.json` as a `site-<key>` prerelease, separate from `v*` software
+   releases. The prerelease does not become GitHub's latest release. Upload happens in a draft; only a complete
+   pair is published. An already-published release is immutable and reused. The rendering job has read-only
+   permissions; only the publishing job gets `contents: write`.
+6. The server polls Actions and the Release, downloads without its GitHub token on asset/CDN requests,
+   verifies identity, locales, size and SHA-256, and validates/extracts the archive in a staging directory.
+   It links unchanged files, rechecks that upstream data has not moved, then activates all languages together.
+   Existing compression, rollback files and old `_astro` assets remain available.
+
+The build key in GitHub mode includes the exact commit as well as the source-content hash and data fingerprint.
+A server restart reconciles `/data/github-build.json` with active Actions runs before dispatching again.
+Failures use the same 10-minute-to-3-hour retry backoff. GitHub mode never proceeds while asset export is behind
+MasterData, even when `MOENOTES_SYNC_WAIT_SECONDS` expires. Cancellation/timeout does not delete a running CI
+job; the next attempt finds it or its finished Release. Workflow logs and `/usr/bin/time` memory measurements
+are on the repository's Actions page; server logs show polling, validation and installation progress.
+
+Release assets and Actions inputs/logs in this public repository are public. `PUBLIC_*` must contain public
+configuration only. Other build overrides (`MOENOTES_SERVERS`, `MOENOTES_VERSION_URL`, `MOENOTES_MASTERDATA_DIR`)
+are rejected in GitHub mode rather than silently producing a different site. Internal service origins remain
+useful for the server's version checks but are not forwarded to CI. CI needs the public data endpoints reachable.
+
+Actions caches upstream fetch responses between runs. The first run has a cold cache; cache eviction is normal.
+CI still has finite memory and can fail: keep the serving container's memory limit and monitor runner peak RSS.
+Moving rendering off the node isolates failures; it is not a substitute for fixing unbounded build caches.
+
+Site prereleases are **not automatically deleted**, to avoid deleting an in-flight download or needed retry.
+Keep current and recent `site-*` releases; delete older ones manually only when no deployment is waiting for them.
+Do not delete `v*` releases or repurpose a published `site-*` tag. Removing a Release does not remove local builds.
+
+### Split locale rollout (local mode only)
 
 One release is built by **two** full Astro runs, because Astro empties its `outDir` each time and cannot
 append:
@@ -68,7 +118,7 @@ exported release count: a build shows a game server once its region's first rele
 completion is a new build key.
 
 A failed build is retried after 10 minutes, doubling up to 3 hours; a new release or image retries at once.
-The build runs `astro build` (no `astro check`) with the same environment as the server. It runs from the
+In **local mode only**, the build runs `astro build` (no `astro check`) with the same environment as the server. It runs from the
 staging directory with `--root` pointing at the image's project: with an `--outDir` outside its working
 directory Astro keeps intermediate output in `<cwd>/.astro/` and renames it into the output, which fails with
 `EXDEV` when the volume is a different filesystem than the image.
@@ -77,6 +127,12 @@ directory Astro keeps intermediate output in `<cwd>/.astro/` and renames it into
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
+| `MOENOTES_BUILD_MODE` | `github` | GitHub-hosted rendering; `local` explicitly enables on-server Astro builds. No automatic fallback |
+| `MOENOTES_GITHUB_TOKEN` | _(unset)_ | Fine-grained repository token: Actions read/write, Contents read. Required to build in GitHub mode, never exposed by status |
+| `MOENOTES_GITHUB_REPO` | `StarMoe-org/moenotes` | Public repository owning workflow and site Releases |
+| `MOENOTES_GITHUB_REF` | `main` | Ref containing the workflow; the site checkout is independently pinned to `MOENOTES_REVISION` |
+| `MOENOTES_REVISION` | image build argument | Full Git commit SHA; required in GitHub mode |
+| `MOENOTES_GITHUB_POLL_SECONDS` | `30` | Interval while waiting for Actions and Release |
 | `MOENOTES_ASSET_INTERNAL` | _(unset)_ | In-cluster origin of the asset service, e.g. its k3s Service address |
 | `MOENOTES_MASTERDATA_INTERNAL` | _(unset)_ | In-cluster origin of the metadata service |
 | `MOENOTES_API_INTERNAL` | _(unset)_ | Origin of starmoe-api, with its scheme: in-cluster, or public `https://` when it runs on another server. `/api/*` is forwarded there. It answers 404 while the variable is unset or invalid; an invalid value is logged at startup ([account.md](account.md)) |
@@ -84,7 +140,7 @@ directory Astro keeps intermediate output in `<cwd>/.astro/` and renames it into
 | `PORT` / `HOST` | `80` / `0.0.0.0` | Listen address |
 | `MOENOTES_POLL_SECONDS` | `60` | Release manifest poll interval |
 | `MOENOTES_SYNC_WAIT_SECONDS` | `7200` | Longest wait for the export to catch up with MasterData |
-| `MOENOTES_BUILD_TIMEOUT_SECONDS` | `3600` | A build step running longer is stopped and counts as failed |
+| `MOENOTES_BUILD_TIMEOUT_SECONDS` | `3600` | CI wait/install attempt deadline, or local build step timeout; errors keep the live site |
 | `MOENOTES_KEEP_BUILDS` | `4` | Builds kept on disk (see [Disk](#disk)) |
 | `MOENOTES_SPLIT_LOCALES` | `1` | `0` disables the two-batch core→full rollout for a single full `astro build` |
 | `MOENOTES_VERSION_URL` | _(asset service)_`/versions/current_version.json` | Override of the release manifest URL; the build reads it too, to pick the game servers it shows |
@@ -174,8 +230,10 @@ older builds reduced to their `_astro/` directory. A build in progress needs roo
 
 ## Operations
 
-- **Force a rebuild** without new data or code: set `current.key` in `/data/state.json` to `""` and restart.
-  The live build keeps serving until the new one is ready.
+- **Reinstall a build** without new data or code: set `current.key` in `/data/state.json` to `""` and restart.
+  GitHub mode reuses the verified `site-<key>` Release; it does not overwrite or rebuild that immutable artifact.
+  To build changed code, deploy a new image commit. In local mode the cleared key starts a new Astro build.
+  The live build keeps serving until the replacement is ready.
 - **Logs**: the container prints the server's decisions and Astro's output without the per-page lines;
   `/data/logs/<id>.log` has everything, with the background compression appended after the build, and
   `/data/logs/latest.log` always names the newest attempt (`tail -F /data/logs/latest.log` follows the next
