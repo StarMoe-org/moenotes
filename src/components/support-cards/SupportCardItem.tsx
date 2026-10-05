@@ -5,6 +5,7 @@ import BandLogo from "@/components/shared/BandLogo";
 import ListCardBadge from "@/components/shared/ListCardBadge";
 import SupportCardArtwork from "@/components/support-cards/SupportCardArtwork";
 import { SupportSquareArtwork } from "@/components/shared/CardSquareArtwork";
+import CardItemSurface, { type CardItemSelection } from "@/components/shared/CardItemSurface";
 import { getRoutePathById } from "@/lib/route/registry";
 import { getSupportRarityIconUrl } from "@/lib/support-cards/assets";
 import type { SupportCardViewModel } from "@/lib/support-cards/data";
@@ -15,20 +16,22 @@ interface Props {
   onClick?: () => void;
   /** Short overlay label such as "PICK UP". */
   badge?: string | undefined;
+  selection?: CardItemSelection | undefined;
 }
 
-export default function SupportCardItem({ card, locale, onClick, badge }: Props) {
+export default function SupportCardItem({ card, locale, onClick, badge, selection }: Props) {
   const alt = t(locale, "supportCards.cardImageAlt", { title: card.title, character: card.name });
   const rarityLabel = t(locale, `cards.rarities.${card.rarity}`);
   const rarityIcon = getSupportRarityIconUrl(card.rarity);
 
   return (
-    <a
+    <CardItemSurface
       href={localizePath(`${getRoutePathById("support-cards")}/${card.id}`, locale)}
       onClick={onClick}
-      className="mn-list-card group flex flex-col min-w-0 overflow-hidden border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)]"
-      data-list-item-id={card.id}
-      aria-label={t(locale, "supportCards.openDetail", { title: card.title, character: card.name })}
+      selection={selection}
+      className="mn-list-card group flex w-full flex-col min-w-0 overflow-hidden border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] text-left shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)]"
+      cardId={card.id}
+      label={t(locale, "supportCards.openDetail", { title: card.title, character: card.name })}
     >
       <div className="relative">
         <SupportCardArtwork
@@ -61,19 +64,20 @@ export default function SupportCardItem({ card, locale, onClick, badge }: Props)
           <BandLogo bandId={card.bandId} bandName={card.bandName} locale={locale} />
         </div>
       </div>
-    </a>
+    </CardItemSurface>
   );
 }
 
 /** The square view's tile: the game's 1:1 Snap icon with the name below. */
-export function SupportCardTile({ card, locale, onClick, badge }: Props) {
+export function SupportCardTile({ card, locale, onClick, badge, selection }: Props) {
   return (
-    <a
+    <CardItemSurface
       href={localizePath(`${getRoutePathById("support-cards")}/${card.id}`, locale)}
       onClick={onClick}
+      selection={selection}
       className="mn-focus group flex min-w-0 flex-col items-center gap-1.5 rounded-2xl p-1.5 text-center transition hover:-translate-y-0.5 hover:bg-[var(--mn-paper)] hover:shadow-[var(--mn-shadow-stamp)]"
-      data-list-item-id={card.id}
-      aria-label={t(locale, "supportCards.openDetail", { title: card.title, character: card.name })}
+      cardId={card.id}
+      label={t(locale, "supportCards.openDetail", { title: card.title, character: card.name })}
     >
       <span className="relative block w-full">
         <SupportSquareArtwork locale={locale} card={card} />
@@ -83,6 +87,6 @@ export function SupportCardTile({ card, locale, onClick, badge }: Props) {
         <span className="block truncate text-xs font-black text-[var(--mn-text)]">{card.name}</span>
         <span className="block truncate text-[10px] font-medium text-[var(--mn-text-muted)]">{card.title}</span>
       </span>
-    </a>
+    </CardItemSurface>
   );
 }

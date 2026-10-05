@@ -59,6 +59,7 @@ export default function ScrollToTop() {
           {...stampHoverProps}
           {...stampTapProps}
           onClick={scrollToTop}
+          data-scroll-to-top=""
           className="fixed bottom-8 right-8 z-30 grid h-11 w-11 place-items-center rounded-xl border border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)] transition-colors hover:bg-[var(--mn-cream-deep)] hover:shadow-[var(--mn-shadow-stamp-sm)]"
           aria-label="Scroll to top"
         >

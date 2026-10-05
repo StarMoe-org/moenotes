@@ -108,9 +108,9 @@ WASM 计分保留 Rust 的整数和声明 binary32 运算，共用经过校准�
 
 ## 接口与回退
 
-`src/lib/deck/runtime-plan.ts` 定义运行端选择和消息绑定。浏览器完整识别能力、ONNX provider 和浏览器完整搜索是三个独立 capability，不能互相代替。远端识别与远端搜索也分别要求截图上传/卡池上传选择；本地失败不自动上传。可选远端服务采用有界队列、取消和原始输入绑定，运行同一 Rust 模型。该 Draft 不定义未经实现的生产服务 URL。
+求解运行时的来源、Worker 协议和生命周期见 `docs/deck-worker.md`。浏览器完整识别能力、ONNX provider 和浏览器完整搜索是三个独立 capability，不能互相代替。远端识别与远端搜索也分别要求截图上传/卡池上传选择；本地失败不自动上传。可选远端服务采用有界队列、取消和原始输入绑定，运行同一 Rust 模型。该 Draft 不定义未经实现的生产服务 URL。
 
-Worker 传输 `rosterJson`、`requestJson`、`resultJson` 原始 UTF-8 文本。不能先经过 `JSON.parse`/`JSON.stringify` 丢失超过 `2^53` 的整数、活动时钟或明确 f32 数值 token。新 bridge 需要在原始文本边界验证语法与递归重复键；现有 typed request 重复字段已有检查，但 Roster 的任意字典键仍需补回归，不能提前声称全部严格拒绝。大文件用 Transferable ArrayBuffer 降低拷贝，首版协议文本用于保证输入语义。消息绑定 `jobId`、`inputRevision` 和 dataset identity，迟到响应及跨版本响应丢弃。
+Worker 传输 `accountJson`（`ournotes.account/1`）、`requestJson`、`resultJson` 原始 UTF-8 文本。不能先经过 `JSON.parse`/`JSON.stringify` 丢失超过 `2^53` 的整数、活动时钟或明确 f32 数值 token。新 bridge 需要在原始文本边界验证语法与递归重复键；现有 typed request 重复字段已有检查，但 Roster 的任意字典键仍需补回归，不能提前声称全部严格拒绝。大文件用 Transferable ArrayBuffer 降低拷贝，首版协议文本用于保证输入语义。消息绑定 `jobId`、`inputRevision` 和 dataset identity，迟到响应及跨版本响应丢弃。
 
 搜索返回 `Complete`/`TimedOut`/candidate termination 和 optimality 原样保留。“Complete”仅是所给卡池、约束、打法、外部条件、有限根分布下的证明；候选策略是精确计分的启发式推荐。平均分、范围、P10/P50/P90、达标概率使用整数质量和精确分数，展示层不参与排名。联合分数/血量目标的达标概率读取 `expectedPayoff`，`scoreSummary.probabilityAtLeast` 仅是分数达标，不能混用。实际 TickCount 分布未知时不能称无条件最优。
 

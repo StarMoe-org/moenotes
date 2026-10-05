@@ -1,11 +1,14 @@
 import { buildEnvOrigin } from "./build-env";
 
+const assetApi = (import.meta.env.PUBLIC_ASSET_API || "https://assets.bdon.moe").replace(/\/+$/, "");
+const recognitionSite = (import.meta.env.PUBLIC_RECOGNITION_SITE || "https://storage.bdon.moe/moenotes").replace(/\/+$/, "");
+
 export const assetConfig = {
   /**
    * moenotes-assets service: published files by asset path (/{region}/{language}/{key}/{label}.{ext}, see
    * src/lib/assets/release.ts and docs/release-assets.md) and the bundle browser API.
    */
-  api: (import.meta.env.PUBLIC_ASSET_API || "https://assets.bdon.moe").replace(/\/+$/, ""),
+  api: assetApi,
   /**
    * Build-time origin of the same service, e.g. its k3s Service address (`MOENOTES_ASSET_INTERNAL`). The build
    * and the deploy server fetch through it; pages still link to `api`. See docs/deployment.md.
@@ -27,6 +30,21 @@ export const assetConfig = {
    * story site. A new file needs no rebuild of this site.
    */
   musicDataSite: (import.meta.env.PUBLIC_MUSIC_DATA_SITE || "https://storage.bdon.moe/moenotes/music-data").replace(/\/+$/, ""),
+  /**
+   * The JP music data site, published separately from `musicDataSite` (which the tw, kr and en servers share) by the
+   * same workflows: `{musicDataSiteJp}/music-data.json` and `build.json`.
+   */
+  musicDataSiteJp: (import.meta.env.PUBLIC_MUSIC_DATA_SITE_JP || "https://storage.bdon.moe/moenotes/jp/music-data").replace(/\/+$/, ""),
+  /**
+   * The deck solver runtime (docs/deck-worker.md). The Worker and its core module are this site's own files
+   * (`public/deck/`); the deck data comes from the music data sites. `recommendEngine` is the URL of an engine
+   * descriptor that replaces the published `recommendEngine` entry: the engine build this site serves
+   * (`public/deck/engine/`), or `PUBLIC_DECK_RECOMMEND_ENGINE`.
+   */
+  deck: {
+    workerUrl: "/deck/deck-worker.js",
+    recommendEngine: String(import.meta.env.PUBLIC_DECK_RECOMMEND_ENGINE || "/deck/engine/recommend-engine.json"),
+  },
   /** Region-specific nnnotes prefab libraries. Keep the game files outside the application source repository. */
   gameUiLibraries: {
     tw: import.meta.env.PUBLIC_GAME_UI_LIBRARY_TW
@@ -34,6 +52,18 @@ export const assetConfig = {
     jp: import.meta.env.PUBLIC_GAME_UI_LIBRARY_JP || "",
     kr: import.meta.env.PUBLIC_GAME_UI_LIBRARY_KR || "",
     en: import.meta.env.PUBLIC_GAME_UI_LIBRARY_EN || "",
+  },
+  /**
+   * Screenshot recognition, shared by every server. The Worker and its modules are served from this site
+   * (`public/recognition/`). The recognition site holds `recognition/current.json`, a pointer to the current bundle
+   * manifest by SHA-256 and size, and the content-addressed `assets/<sha256>.<ext>` files it lists: the gallery,
+   * OpenCV and ONNX Runtime WASM, the field model and the card artwork. A new bundle needs no rebuild of this site.
+   * See docs/card-box.md.
+   */
+  recognition: {
+    site: recognitionSite,
+    pointerUrl: `${recognitionSite}/recognition/current.json`,
+    workerUrl: "/recognition/recognition-worker.js",
   },
   /** Shared song-page modules; published at the storage site's root, beside the music-data directory. */
   musicPlayerSite: (import.meta.env.PUBLIC_MUSIC_PLAYER_SITE || import.meta.env.PUBLIC_STORY_SITE || "https://storage.bdon.moe/moenotes").replace(/\/+$/, ""),

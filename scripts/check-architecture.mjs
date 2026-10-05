@@ -33,6 +33,8 @@ const allowedFetchFiles = new Set([
   "src/lib/band-items/upgrades-client.ts",
   "src/lib/characters/voices-client.ts",
   "src/lib/collectibles/image-client.ts",
+  "src/lib/recognition/client.ts",
+  "src/lib/deck/runtime-source.ts",
 ]);
 
 const allowedDomainFiles = new Set([

@@ -81,7 +81,7 @@ function imageUrl(value: string | undefined, label: string): string {
     let url: URL;
     try { url = new URL(value); }
     catch { return fail(`invalid ${label} image URL`); }
-    if (url.protocol !== "http:" && url.protocol !== "https:") fail(`invalid ${label} image protocol`);
+    if (!["http:", "https:", "blob:"].includes(url.protocol)) fail(`invalid ${label} image protocol`);
   } else if (/^(?:\/\/|\\)/.test(value)) fail(`invalid ${label} image protocol`);
   return value;
 }

@@ -34,6 +34,8 @@ The loader first verifies the required JSON documents, then loads only texture r
 
 The manifest includes four prefab entries (`formationSlot`, `formationGroup`, `memberSquare`, `supportSquare`), exact binding catalogs, a Sprite geometry sidecar, and the original camera source. Each runtime file has a size and SHA-256 digest. Layout references pin the formation pack and camera; the loader checks region, client identity, file bytes and CanvasScaler resolution before activating the library. Gzip transport is compatible with this contract: hashes and declared sizes describe the decoded bytes returned by browser fetch.
 
+New exports can include `dynamicSprites`, mapping each exact `addressable-key[decoded Sprite name]` to `{file,sha256,size,mime}`. Every record must match the manifest's file closure. Static prefab resources are verified once; dynamic gallery images are fetched and SHA-checked only when requested, with concurrent callers sharing the resulting blob. A configured dynamic directory replaces release URLs for member, Snap, background and band artwork before fixture assembly. Missing keys or a file mismatch fail rendering rather than selecting another version. Bundle-only requests, used for furniture, character icons and band logos, are accepted only when the exporter has narrowed that Addressables target to one actual Sprite. Geometry uses the resulting full key.
+
 The current observed library is TW client 1.0.1/build 25. Its legacy index lacks modern APK provenance; the manifest records that limitation instead of fabricating it. The static reference-resolution renderer does not certify Unity runtime pixel parity, custom camera matrices, motion, or current JP UI compatibility.
 
 Reproducible upstream components:

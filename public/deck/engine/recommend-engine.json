@@ -1,0 +1,4 @@
+{
+  "js": {"url": "72804353/ournotes_recommend_wasm.js", "sha256": "969b1adb7b6b923613f1eb2b58c4a065f54c86ffbc38166818ef21f421295c55", "bytes": 13913},
+  "wasm": {"url": "72804353/ournotes_recommend_wasm_bg.wasm", "sha256": "72804353b8dbaaf31f248f8bfc49fcadde77b152d0796fd94eeee35e9f6b5c9f", "bytes": 4643249}
+}
