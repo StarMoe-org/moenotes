@@ -2,6 +2,8 @@
    site's Sirius theme. Everything is scoped under .mn-cd (the tool, and the chart detail inside the modal); the
    --mn-* tokens are the site's, the difficulty accents are the difficulty chips' (Tailwind cyan / emerald / amber /
    rose), and the cut corners are the orbit shapes. */
+.mn-cd-box-read{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 16px;border:1px solid var(--mn-border);border-radius:12px;background:var(--mn-paper);margin-bottom:12px;font-size:12px}
+.mn-cd-box-read label{display:flex;align-items:center;gap:8px;font-weight:700}.mn-cd-box-read a{margin-left:auto;color:var(--mn-accent);text-decoration:underline}.mn-cd-box-read p{flex-basis:100%;margin:0}
 .mn-cd {
   --mn-cd-easy: #06b6d4; --mn-cd-normal: #10b981; --mn-cd-hard: #f59e0b; --mn-cd-expert: #f43f5e;
   --mn-cd-easy-bg: #cffafe; --mn-cd-easy-ink: #155e75; --mn-cd-easy-line: #a5f3fc;

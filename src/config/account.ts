@@ -13,6 +13,12 @@ export const accountApi = {
   me: "/api/me",
   avatar: "/api/me/avatar",
   gameAccounts: "/api/me/game-accounts",
+  cardBoxes: "/api/me/boxes",
+  /**
+   * Game saves uploaded with StarMoe Box: `GET` lists them, `/{saveServer}/{accountId}` is one save. `accountId` is
+   * the player ID shown in game.
+   */
+  gameSaves: "/api/me/saves",
   /** Public profiles: `/api/players/{server}/{profileId}`. */
   players: "/api/players",
   developerApps: "/api/developer/apps",
@@ -20,6 +26,33 @@ export const accountApi = {
   saveAuthorizations: "/api/me/save-authorizations",
   publicApps: "/api/open/v1/apps",
 } as const;
+
+/**
+ * Servers of uploaded game saves. One international client serves TW/HK/MO, EN and KR, so their saves share
+ * `intl`; JP has its own client.
+ */
+export const GAME_SAVE_SERVERS = ["jp", "intl"] as const;
+/** Official Android release and the project's upload instructions. */
+export const STARMOE_BOX_APP = {
+  download: "https://github.com/StarMoe-org/StarMoe-box/releases/download/v0.1.2/app-release.apk",
+  guide: "https://github.com/StarMoe-org/StarMoe-box#how-it-works",
+} as const;
+export type GameSaveServer = typeof GAME_SAVE_SERVERS[number];
+
+/** The save server whose saves hold a game server's collection. */
+export function gameSaveServer(server: GameServer): GameSaveServer {
+  return server === "jp" ? "jp" : "intl";
+}
+
+/** One uploaded save: `GET` answers its bytes as uploaded (`ETag: "<sha256>"`), `DELETE` removes it. */
+export function gameSavePath(server: GameSaveServer, accountId: string): string {
+  return `${accountApi.gameSaves}/${server}/${encodeURIComponent(accountId)}`;
+}
+
+/** One private collection for the signed-in Passport account and selected game server. */
+export function cardBoxPath(server: GameServer): string {
+  return `${accountApi.cardBoxes}/${server}`;
+}
 
 /** One game account: DELETE removes it; `/code` and `/verify` (POST) below it refresh its code and verify it. */
 export function gameAccountPath(server: GameServer, profileId: string): string {

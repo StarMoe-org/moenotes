@@ -819,6 +819,27 @@ export const routeRegistry = [
     keywords: ["tools", "calculator"],
     children: [
       {
+        id: "deck",
+        path: "/tools/deck",
+        labelKey: "deckWorkspace.title",
+        component: "deck",
+        seo: { titleKey: "deckWorkspace.title", descriptionKey: "deckWorkspace.description", indexable: false },
+        nav: { order: 40, icon: "sparkles" },
+        searchable: false,
+        keywords: ["deck", "card box", "formation"],
+      },
+      {
+        // What a deck recommendation optimizes, what "proven optimal" means and how the search proves it.
+        id: "deck-guide",
+        path: "/tools/deck/guide",
+        labelKey: "deckWorkspace.deckGuide.title",
+        component: "deck-guide",
+        seo: { titleKey: "deckWorkspace.deckGuide.title", descriptionKey: "deckWorkspace.deckGuide.description", indexable: false },
+        nav: false,
+        searchable: false,
+        keywords: ["deck", "optimality", "search"],
+      },
+      {
         id: "live2d-viewer",
         path: "/tools/live2d",
         labelKey: "nav.items.live2dViewer",
@@ -995,5 +1016,14 @@ export const routeRegistry = [
     nav: false,
     searchable: false,
     keywords: ["player", "profile"],
+  },
+  {
+    id: "card-box",
+    path: "/account/box",
+    labelKey: "deckWorkspace.boxTitle",
+    component: "card-box",
+    seo: { titleKey: "deckWorkspace.boxTitle", descriptionKey: "deckWorkspace.boxDescription", indexable: false },
+    nav: false,
+    searchable: false,
   },
 ] as const satisfies readonly AppRoute[];

@@ -1,0 +1,21 @@
+---
+import GuideView from "@/components/chart-data/GuideView";
+import PageLayout from "@/layouts/PageLayout.astro";
+import type { AppLocale } from "@/config/locales";
+import { t } from "@/i18n";
+import { localizePath } from "@/i18n/routing";
+import { getDeckGuide } from "@/i18n/guides/deck";
+import { getRoutePathById } from "@/lib/route/registry";
+
+interface Props {
+  locale: AppLocale;
+}
+
+const { locale } = Astro.props;
+const guide = getDeckGuide(locale);
+---
+
+<PageLayout locale={locale} titleKey="deckWorkspace.deckGuide.title" descriptionKey="deckWorkspace.deckGuide.description" showDescription={false}>
+  <a slot="title-badge" href={localizePath(getRoutePathById("deck"), locale)} class="rounded-full border border-[var(--mn-border)] px-2 py-0.5 text-xs text-[var(--mn-text-muted)]">{t(locale, "deckWorkspace.title")}</a>
+  <div class="mn-cd"><main class="mn-cd-main"><GuideView client:load guide={guide} /></main></div>
+</PageLayout>

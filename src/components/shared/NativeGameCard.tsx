@@ -6,6 +6,8 @@ import { useContentServerScope } from "@/lib/servers/use-content-server";
 import { loadNativeUiLibrary, type NativeUiEntry, type NativeFormationLayout } from "@/lib/game-ui/source";
 import { createNativeCardFixture, type NativeCardFixtureData } from "@/lib/game-ui/card-fixture";
 import { createNativeFormationFixture, type NativeFormationFixtureData } from "@/lib/game-ui/formation-fixture";
+import { bindNativeSprites } from "@/lib/game-ui/sprite-binding";
+import { browserImageSize, completeSpriteGeometries } from "@/lib/game-ui/sprite-geometry";
 import type { UIPlayer, UIRenderResult } from "ournotes-player/ui";
 
 type NativeData = NativeCardFixtureData | NativeFormationFixtureData;
@@ -13,13 +15,15 @@ type NativeData = NativeCardFixtureData | NativeFormationFixtureData;
 /** Assemble the prefab into `target` (a host element, or a detached canvas) and render it once. */
 async function renderNative(target: HTMLElement, entry: NativeUiEntry, data: NativeData, server: GameServer, fontFamily: string) {
   const library = await loadNativeUiLibrary(assetConfig.gameUiLibraries[server], server);
+  const bound = await bindNativeSprites(library, data);
   const { UIPlayer, UISession, cameraProjection } = await import("ournotes-player/ui");
   await document.fonts.ready;
   const pack = library.pack(entry);
   pack.resources.browserFontFamily = fontFamily;
+  const { geometries: spriteGeometries, data: checked } = await completeSpriteGeometries(library.spriteGeometries, bound, browserImageSize);
   const fixture = entry === "formationGroup"
-    ? createNativeFormationFixture(pack, { ...data as NativeFormationFixtureData, catalogs: library.catalogs, spriteGeometries: library.spriteGeometries })
-    : createNativeCardFixture(pack, { ...data as NativeCardFixtureData, catalogs: library.catalogs, spriteGeometries: library.spriteGeometries });
+    ? createNativeFormationFixture(pack, { ...checked as NativeFormationFixtureData, catalogs: library.catalogs, spriteGeometries })
+    : createNativeCardFixture(pack, { ...checked as NativeCardFixtureData, catalogs: library.catalogs, spriteGeometries });
   const session = new UISession(pack, { bindings: true });
   for (const patch of fixture.patches) session.edit(patch.node, patch.component ?? null, patch.field, patch.value);
   const player = new UIPlayer(target, { bindings: true, assetBase: library.assetBase,
@@ -78,6 +82,7 @@ export default function NativeGameCard({ entry, data, label, className = "", onG
   const { server } = useContentServerScope();
   const root = useRef<HTMLDivElement>(null);
   const host = useRef<HTMLDivElement>(null);
+  const displayed = useRef<UIPlayer | null>(null);
   const snapshot = SNAPSHOT_ENTRIES.has(entry);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [image, setImage] = useState<string | null>(null);
@@ -102,6 +107,7 @@ export default function NativeGameCard({ entry, data, label, className = "", onG
     setStatus("loading");
     const fontFamily = (root.current && getComputedStyle(root.current).fontFamily) || "sans-serif";
     if (snapshot) {
+      displayed.current?.destroy(); displayed.current = null;
       nativeSnapshot(`${server}|${entry}|${fontFamily}|${dataKey}`, entry, data, server, fontFamily).then((result) => {
         if (disposed) return;
         setImage(result.url); setRatio(`${result.width} / ${result.height}`); setStatus("ready");
@@ -110,16 +116,21 @@ export default function NativeGameCard({ entry, data, label, className = "", onG
     }
     void (async () => {
       if (!host.current) return;
-      const rendered = await renderNative(host.current, entry, data, server, fontFamily);
+      // Keep the completed canvas visible while its replacement is painted.
+      const rendered = await renderNative(document.createElement("div"), entry, data, server, fontFamily);
       player = rendered.player;
-      // Cleanup may already have run: drop the canvas this late render appended.
-      if (disposed) { player.destroy(); player.canvas.remove(); }
+      if (disposed || !host.current) player.destroy();
       else {
+        const previous = displayed.current;
+        host.current.replaceChildren(player.canvas);
+        displayed.current = player;
+        previous?.destroy();
         setRatio(`${player.canvas.width} / ${player.canvas.height}`); onGeometry?.({ ...rendered.result, canvas: player.canvas, layout: rendered.layout }); setStatus("ready");
       }
     })().catch(error => { if (!disposed) { setStatus("error"); console.warn("Native card resource", error); } });
-    return () => { disposed = true; player?.destroy(); host.current?.replaceChildren(); };
+    return () => { disposed = true; if (player && displayed.current !== player) player.destroy(); };
   }, [entry, dataKey, server, near]);
+  useEffect(() => () => { displayed.current?.destroy(); displayed.current = null; }, []);
 
   return <div ref={root} className={`mn-native-card mn-native-card--${entry} ${className}`.trim()} style={{ aspectRatio: ratio }} data-renderer="nnnotes-ui" data-status={status}
     role="img" aria-label={label} aria-busy={status === "loading"}>

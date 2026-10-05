@@ -43,6 +43,7 @@ function buildInfo() {
 }
 
 export default defineConfig({
+  devToolbar: { enabled: process.env.MOENOTES_BROWSER_PROOF !== "1" },
   trailingSlash: "ignore",
   // Story pages spend most of their render time waiting on story-table fetches from our own
   // asset service; rendering several pages at once overlaps that wait.

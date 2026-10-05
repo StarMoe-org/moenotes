@@ -5,6 +5,7 @@ import BandLogo from "@/components/shared/BandLogo";
 import ListCardBadge from "@/components/shared/ListCardBadge";
 import MemberCardArtwork from "@/components/shared/MemberCardArtwork";
 import { MemberSquareArtwork } from "@/components/shared/CardSquareArtwork";
+import CardItemSurface, { type CardItemSelection } from "@/components/shared/CardItemSurface";
 import { getRarityIconUrl } from "@/lib/cards/assets";
 import type { CardViewModel } from "@/lib/cards/data";
 import { getRoutePathById } from "@/lib/route/registry";
@@ -15,18 +16,20 @@ interface Props {
   onClick?: () => void;
   /** Short overlay label such as "PICK UP". */
   badge?: string | undefined;
+  selection?: CardItemSelection | undefined;
 }
 
-export default function MemberCardItem({ card, locale, onClick, badge }: Props) {
+export default function MemberCardItem({ card, locale, onClick, badge, selection }: Props) {
   const alt = t(locale, "cards.cardImageAlt", { title: card.title, character: card.characterName });
 
   return (
-    <a
+    <CardItemSurface
       href={localizePath(`${getRoutePathById("cards")}/${card.id}`, locale)}
       onClick={onClick}
-      className="mn-list-card group flex flex-col min-w-0 overflow-hidden border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)]"
-      data-list-item-id={card.id}
-      aria-label={t(locale, "cards.openDetail", { title: card.title, character: card.characterName })}
+      selection={selection}
+      className="mn-list-card group flex w-full flex-col min-w-0 overflow-hidden border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] text-left shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)]"
+      cardId={card.id}
+      label={t(locale, "cards.openDetail", { title: card.title, character: card.characterName })}
     >
       <div className="relative">
         <MemberCardArtwork
@@ -53,19 +56,20 @@ export default function MemberCardItem({ card, locale, onClick, badge }: Props) 
           <BandLogo bandId={card.bandId} bandName={card.bandName} locale={locale} />
         </div>
       </div>
-    </a>
+    </CardItemSurface>
   );
 }
 
 /** The square view's tile: the game's 1:1 card icon with the title below. */
-export function MemberCardTile({ card, locale, onClick, badge }: Props) {
+export function MemberCardTile({ card, locale, onClick, badge, selection }: Props) {
   return (
-    <a
+    <CardItemSurface
       href={localizePath(`${getRoutePathById("cards")}/${card.id}`, locale)}
       onClick={onClick}
+      selection={selection}
       className="mn-focus group flex min-w-0 flex-col items-center gap-1.5 rounded-2xl p-1.5 text-center transition hover:-translate-y-0.5 hover:bg-[var(--mn-paper)] hover:shadow-[var(--mn-shadow-stamp)]"
-      data-list-item-id={card.id}
-      aria-label={t(locale, "cards.openDetail", { title: card.title, character: card.characterName })}
+      cardId={card.id}
+      label={t(locale, "cards.openDetail", { title: card.title, character: card.characterName })}
     >
       <span className="relative block w-full">
         <MemberSquareArtwork locale={locale} card={card} />
@@ -75,6 +79,6 @@ export function MemberCardTile({ card, locale, onClick, badge }: Props) {
         <span className="block truncate text-xs font-black text-[var(--mn-text)]">{card.characterName}</span>
         <span className="block truncate text-[10px] font-medium text-[var(--mn-text-muted)]">{card.title}</span>
       </span>
-    </a>
+    </CardItemSurface>
   );
 }

@@ -6,6 +6,8 @@ import { withWebsiteUiFont } from "./website-font";
 
 export type NativeUiEntry = "formationSlot" | "memberSquare" | "supportSquare" | "formationGroup";
 interface FileRecord { file?: string; sha256: string; size: number; mime: string }
+export type NativeDynamicSprites = Readonly<Record<string, FileRecord & { file: string }>>;
+export type NativeSpriteBitmaps = NativeDynamicSprites;
 export interface NativeUiRect { x: number; y: number; width: number; height: number }
 export interface NativeFormationLayout {
   schema: "moenotes.game-ui-formation-layout/1";
@@ -25,6 +27,10 @@ export interface NativeUiManifest {
   spriteGeometries: FileRecord & { file: string };
   entries: Record<NativeUiEntry, { id: string; file: string }>;
   files: Record<string, FileRecord>;
+  /** Exact decoded Sprite keys. Their files are fetched and verified on first use. */
+  dynamicSprites?: NativeDynamicSprites;
+  /** Authoritative tight bitmaps for these exact keys; other artwork keeps its published URL. */
+  spriteBitmaps?: NativeSpriteBitmaps;
   layout: NativeFormationLayout;
 }
 export interface NativeUiLibrary {
@@ -34,6 +40,7 @@ export interface NativeUiLibrary {
   spriteGeometries: Readonly<Record<string, { geometry: NativeSpriteGeometry }>>;
   camera: { camera: Record<string, unknown>; canvas: Record<string, unknown>; referenceViewport: [number, number] };
   assetBase: string;
+  spriteUrl: (spriteKey: string) => Promise<string>;
 }
 const libraries = new Map<string, Promise<NativeUiLibrary>>();
 const safePath = (path: string) => /^[a-zA-Z0-9_.\/-]+$/.test(path) && !path.split("/").some(part => part === ".." || !part);
@@ -48,6 +55,16 @@ export function validateNativeUiManifest(value: unknown, region: GameServer): Na
   for (const name of ["formationSlot", "memberSquare", "supportSquare", "formationGroup"] as const) {
     const entry = manifest.entries[name];
     if (!entry?.id || !manifest.files[entry.file]) throw new Error("UI prefab is missing from its source");
+  }
+  if (manifest.dynamicSprites !== undefined && manifest.spriteBitmaps !== undefined) throw new Error("UI Sprite image contracts are mutually exclusive");
+  for (const [sprites, label] of [[manifest.dynamicSprites, "Dynamic Sprite"], [manifest.spriteBitmaps, "Sprite bitmap"]] as const) {
+    if (sprites === undefined) continue;
+    if (!sprites || typeof sprites !== "object" || Array.isArray(sprites)) throw new Error(`Invalid ${label} directory`);
+    for (const [key, record] of Object.entries(sprites)) {
+      const listed = record && manifest.files[record.file];
+      if (!/^[^\[\]\r\n]+\[[^\[\]\r\n]+\]$/.test(key) || !listed || !Object.hasOwn(manifest.files, record.file) || !listed.mime.startsWith("image/")
+        || listed.sha256 !== record.sha256 || listed.size !== record.size || listed.mime !== record.mime) throw new Error(`${label} identity differs from its source`);
+    }
   }
   for (const record of [manifest.index, manifest.bindingSources, manifest.spriteGeometries, manifest.layout?.sourceCamera]) {
     const listed = record && manifest.files[record.file];
@@ -68,13 +85,42 @@ export function validateNativeUiManifest(value: unknown, region: GameServer): Na
 }
 const digest = async (bytes: ArrayBuffer) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map(value => value.toString(16).padStart(2, "0")).join("");
 
+/** Bundle-only requests must select one actual decoded Sprite, never a guessed file name. */
+export function resolveNativeSpriteKey(sprites: NativeDynamicSprites, requested: string): string {
+  if (Object.hasOwn(sprites, requested)) return requested;
+  const matches = requested.includes("[") ? [] : Object.keys(sprites).filter(key => key.startsWith(`${requested}[`));
+  if (matches.length !== 1) throw new Error(`Dynamic Sprite is missing or ambiguous: ${requested}`);
+  return matches[0]!;
+}
+
+/** Share only SHA-checked blobs. Failed requests can be retried; unused gallery files stay unloaded. */
+export function createNativeSpriteLoader(sprites: NativeDynamicSprites, base: string, requireExactKeys = false): (spriteKey: string) => Promise<string> {
+  const files = new Map<string, Promise<string>>();
+  return requested => {
+    if (requireExactKeys && !Object.hasOwn(sprites, requested)) throw new Error(`Sprite bitmap is not declared: ${requested}`);
+    const key = resolveNativeSpriteKey(sprites, requested), record = sprites[key]!;
+    let pending = files.get(record.file);
+    if (!pending) {
+      pending = (async () => {
+        const response = await fetchNativeUiResource(new URL(record.file, base));
+        const bytes = await response.arrayBuffer();
+        if (bytes.byteLength !== record.size || await digest(bytes) !== record.sha256) throw new Error(`Dynamic Sprite content differs: ${key}`);
+        return URL.createObjectURL(new Blob([bytes], { type: record.mime }));
+      })().catch(error => { files.delete(record.file); throw error; });
+      files.set(record.file, pending);
+    }
+    return pending;
+  };
+}
+
 /** Verify the exported closure once, then render only these pinned bytes through the companion player. */
 export function loadNativeUiLibrary(url: string, region: GameServer): Promise<NativeUiLibrary> {
   const key = `${region}:${url}`;
   if (!libraries.has(key)) libraries.set(key, (async () => {
     if (!url) throw new Error("UI library is not configured");
-    const base = new URL(".", url).href;
-    const response = await fetchNativeUiResource(url);
+    const manifestUrl = new URL(url, typeof location === "undefined" ? undefined : location.href).href;
+    const base = new URL(".", manifestUrl).href;
+    const response = await fetchNativeUiResource(manifestUrl);
     const manifest = validateNativeUiManifest(await response.json(), region);
     const bytes = new Map<string, ArrayBuffer>();
     const fetchFile = async (path: string) => {
@@ -124,6 +170,9 @@ export function loadNativeUiLibrary(url: string, region: GameServer): Promise<Na
       || sprites.client?.versionName !== manifest.client.versionName || sprites.client?.versionCode !== manifest.client.versionCode || !sprites.sprites) {
       throw new Error("Dynamic Sprite source identity differs");
     }
+    for (const key of Object.keys(manifest.spriteBitmaps ?? {})) {
+      if (!Object.hasOwn(sprites.sprites, key) || !sprites.sprites[key]?.geometry) throw new Error(`Sprite bitmap has no source geometry: ${key}`);
+    }
     const cameraSource = manifest.layout.sourceCamera, cameraPack = json(cameraSource.file) as UIPack;
     const component = (path: string, name: string): Record<string, unknown> => {
       const nodes = cameraPack.document?.nodes?.filter(node => node.path === path);
@@ -136,7 +185,8 @@ export function loadNativeUiLibrary(url: string, region: GameServer): Promise<Na
     const resolution = scaler.m_ReferenceResolution as { x: number; y: number } | undefined;
     if (!resolution || resolution.x !== cameraSource.referenceViewport?.[0] || resolution.y !== cameraSource.referenceViewport?.[1]) throw new Error("Camera reference resolution differs from its CanvasScaler");
     const camera = { camera: component(cameraSource.cameraPath, "Camera"), canvas: component(cameraSource.canvasPath, "Canvas"), referenceViewport: cameraSource.referenceViewport };
-    return { manifest, pack: (entry: NativeUiEntry) => structuredClone(packs.get(entry)!), catalogs: catalogs as NativeCardCatalog[], spriteGeometries: sprites.sprites, camera, assetBase: base };
+    return { manifest, pack: (entry: NativeUiEntry) => structuredClone(packs.get(entry)!), catalogs: catalogs as NativeCardCatalog[], spriteGeometries: sprites.sprites, camera, assetBase: base,
+      spriteUrl: createNativeSpriteLoader(manifest.dynamicSprites ?? manifest.spriteBitmaps ?? {}, base, manifest.spriteBitmaps !== undefined) };
   })().catch(error => { libraries.delete(key); throw error; }));
   return libraries.get(key)!;
 }

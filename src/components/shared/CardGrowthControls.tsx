@@ -72,3 +72,22 @@ export function StepControl({
 }) {
   return <LevelSwitch label={label} value={value} options={options} formatOption={formatOption} onChange={onChange} />;
 }
+
+/** Unknown observations remain nullable; an unverified level ceiling never creates a Max action. */
+export function ObservedLevelControl({ locale, value, onChange, label, limit }: {
+  locale: AppLocale; value: number | null; onChange: (value: number | null) => void; label?: string | undefined; limit?: number | undefined;
+}) {
+  const inputId = useId();
+  const update = (next: number) => { if (Number.isSafeInteger(next) && next >= 1 && (limit === undefined || next <= limit)) onChange(next); };
+  return <div className="mn-observed-level">
+    {value !== null && limit !== undefined ? <LevelControl locale={locale} level={value} limit={limit} onChange={update} /> : <>
+      <label htmlFor={inputId}>{label ?? t(locale, "cards.growth.level")}</label>
+      <div className="mn-observed-level-input"><RoundButton label={t(locale, "cards.growth.decrease")} disabled={value === null || value <= 1} onClick={() => value !== null && update(value - 1)}><path strokeLinecap="round" d="M5 12h14" /></RoundButton>
+        <input id={inputId} type="number" inputMode="numeric" min={1} max={limit} value={value ?? ""} placeholder={t(locale, "deckWorkspace.unknown")}
+          onChange={event => event.target.value === "" ? onChange(null) : update(Number(event.target.value))} />
+        <RoundButton label={t(locale, "cards.growth.increase")} disabled={value === null || limit !== undefined && value >= limit} onClick={() => value !== null && update(value + 1)}><path strokeLinecap="round" d="M12 5v14M5 12h14" /></RoundButton>
+      </div>
+    </>}
+    <button type="button" aria-pressed={value === null} onClick={() => onChange(null)}>{t(locale, "deckWorkspace.unknown")}</button>
+  </div>;
+}
