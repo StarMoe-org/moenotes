@@ -159,12 +159,17 @@ body {
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: var(--mn-bg); }
+/* The thumb takes a foreground token: surface tones (cream-deep) sit within ~1.2:1 of the bg track and vanish. */
 ::-webkit-scrollbar-thumb {
-  background: var(--mn-cream-deep);
+  background: var(--mn-text-muted);
   border-radius: 8px;
   border: 2px solid var(--mn-bg);
 }
-::-webkit-scrollbar-thumb:hover { background: var(--mn-text-muted); }
+::-webkit-scrollbar-thumb:hover { background: var(--mn-text); }
+/* Firefox has no ::-webkit-scrollbar; Chrome 121+ would let the standard property override the styling above. */
+@supports not selector(::-webkit-scrollbar) {
+  html { scrollbar-color: var(--mn-text-muted) var(--mn-bg); }
+}
 
 /* Thinner Typography Overrides via @theme (Tailwind v4 canonical way) */
 @theme {
