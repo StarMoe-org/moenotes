@@ -62,7 +62,7 @@ export default function DeckResult(props: DeckResultProps) {
         : <div className="dr-unproven"><ProofLink locale={locale} anchor="unproven" label={tr(job.status === "done" && job.stopped ? "stoppedUnproven" : props.timeLimit !== null ? "timedOutUnproven" : "unproven")} /></div>}
       {optimality && !optimality.proven && optimality.upperBound !== null && optimality.lowerBound !== null && <p className="dr-bounds">
         {tr("bounds", { best: formatValue(optimality.lowerBound, metric, locale), limit: formatValue(optimality.upperBound, metric, locale) })}
-        {optimality.bestGap !== null && <span> · {tr("gapPercent", { n: (optimality.bestGap * 100).toFixed(optimality.bestGap < 0.01 ? 2 : 1) })}</span>}</p>}
+        {optimality.lowerBound > 0 && <span> · {tr("gapPercent", { n: percent(Math.max(0, optimality.upperBound - optimality.lowerBound) / optimality.lowerBound) })}</span>}</p>}
       {result && !result.coversAllOwnedCards && <p className="dr-note">{tr("partialBox")}</p>}
     </div>
     {result?.play && <p className="dr-note">{tr("playSummary", { notes: result.play.judged, misses: result.play.misses })}</p>}
@@ -76,6 +76,9 @@ function ProofLink({ locale, anchor, label }: { locale: AppLocale; anchor: "prov
   return <a className="dr-proof-link" href={`${localizePath(getRoutePathById("deck-guide"), locale)}#${anchor}`} target="_blank" rel="noopener"
     title={t(locale, "deckWorkspace.deckGuide.proofLink")}><strong>{label}</strong><sup aria-hidden="true">*</sup></a>;
 }
+
+/** How far the optimum may still lie above the best so far, in percent of the shown values. */
+const percent = (gap: number) => (gap * 100).toFixed(gap < 0.01 ? 2 : 1);
 
 function formatValue(value: number, goal: string, locale: AppLocale): string {
   const decimals = goal === "challengePoints" || goal === "eventPoints" || goal === "eventItems" ? 2 : 0;

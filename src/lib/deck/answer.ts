@@ -18,7 +18,7 @@ export interface DeckTeam {
   /** Slots 0..4 of the formation screen; the leader sits in slot 2. */
   layout: { members: number[]; snaps: (number | null)[] };
 }
-export interface DeckOptimality { proven: boolean; lowerBound: number | null; upperBound: number | null; bestGap: number | null; fraction: number | null }
+export interface DeckOptimality { proven: boolean; lowerBound: number | null; upperBound: number | null; fraction: number | null }
 export interface DeckIssue { path: string; code: string; message: string }
 export type DeckPhase = "preprocess" | "search" | "proof" | "done";
 export interface DeckAnswer {
@@ -83,7 +83,7 @@ export function parseDeckAnswer(json: string): DeckAnswer {
       metric: record(r.metric) && typeof r.metric.kind === "string" ? r.metric.kind : record(r.goal) && r.goal.kind === "power" ? "power" : "score",
       play: record(r.goal) && record(r.goal.play) && num(r.goal.play.judged) !== null && num(r.goal.play.misses) !== null
         ? { judged: r.goal.play.judged as number, misses: r.goal.play.misses as number } : null,
-      optimality: { proven: o.proven === true, lowerBound: num(o.lowerBound), upperBound: num(o.upperBound), bestGap: num(o.bestGap), fraction: num(o.fraction) },
+      optimality: { proven: o.proven === true, lowerBound: num(o.lowerBound), upperBound: num(o.upperBound), fraction: num(o.fraction) },
       teams: Array.isArray(r.teams) ? r.teams.map((raw, index) => team(raw, index, o.proven === true)) : [],
       coversAllOwnedCards: account.coversAllOwnedCards !== false,
     };
