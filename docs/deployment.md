@@ -84,7 +84,7 @@ directory Astro keeps intermediate output in `<cwd>/.astro/` and renames it into
 
 The deck solver Worker is served from `public/deck/` on the same origin. The solver engine and its deck data are files of the music data sites, found through `build.json` (or `music-data.json`) and the replay manifest it names; a new engine or data needs no rebuild or redeployment. See [deck-worker.md](deck-worker.md).
 
-The card box serves its screenshot-recognition Worker and modules from `public/recognition/` on the same origin. The gallery, OpenCV and ONNX Runtime WASM, the field model and the card artwork are content-addressed files on the recognition site (`PUBLIC_RECOGNITION_SITE`), found through its `recognition/current.json` pointer; a new gallery needs no rebuild or redeployment. See [card-box.md](card-box.md) for the bundle format, integrity checks and license locations.
+The card box serves its screenshot-recognition Worker and modules from `public/recognition/` on the same origin. The gallery and its reference embeddings, ONNX Runtime Web and the recognition models are content-addressed files on the recognition site (`PUBLIC_RECOGNITION_SITE`), found through its `recognition/current.json` pointer; a new bundle needs no rebuild or redeployment. See [card-box.md](card-box.md) for the bundle format, integrity checks and license locations.
 
 `MOENOTES_ASSET_INTERNAL` and `MOENOTES_MASTERDATA_INTERNAL` (`src/config/assets.ts`,
 `src/config/masterdata.ts`) replace the public origins for every request the build and the server make
