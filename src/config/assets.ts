@@ -1,7 +1,15 @@
 import { buildEnvOrigin } from "./build-env";
+import { gameUiSources } from "./game-ui";
 
 const assetApi = (import.meta.env.PUBLIC_ASSET_API || "https://assets.bdon.moe").replace(/\/+$/, "");
 const recognitionSite = (import.meta.env.PUBLIC_RECOGNITION_SITE || "https://storage.bdon.moe/moenotes").replace(/\/+$/, "");
+const nativeUi = gameUiSources({
+  tw: import.meta.env.PUBLIC_GAME_UI_LIBRARY_TW, jp: import.meta.env.PUBLIC_GAME_UI_LIBRARY_JP,
+  kr: import.meta.env.PUBLIC_GAME_UI_LIBRARY_KR, en: import.meta.env.PUBLIC_GAME_UI_LIBRARY_EN,
+}, {
+  tw: "https://storage.bdon.moe/moenotes/game-ui/tw/0c7f77573ffb33957aa168cfd8816bf2d4a40ec67b87a26f188757a76e5132c2/manifest.json",
+  jp: "https://storage.bdon.moe/moenotes/game-ui/jp/07ae20b788d94a6db8111f10614db08072f5edc0ac9630087aefa6e51a2e29b6/manifest.json",
+});
 
 export const assetConfig = {
   /**
@@ -45,14 +53,9 @@ export const assetConfig = {
     workerUrl: "/deck/deck-worker.js",
     recommendEngine: String(import.meta.env.PUBLIC_DECK_RECOMMEND_ENGINE || "/deck/engine/recommend-engine.json"),
   },
-  /** Region-specific nnnotes prefab libraries. Keep the game files outside the application source repository. */
-  gameUiLibraries: {
-    tw: import.meta.env.PUBLIC_GAME_UI_LIBRARY_TW
-      ?? "https://storage.bdon.moe/moenotes/game-ui/tw/0c7f77573ffb33957aa168cfd8816bf2d4a40ec67b87a26f188757a76e5132c2/manifest.json",
-    jp: import.meta.env.PUBLIC_GAME_UI_LIBRARY_JP || "",
-    kr: import.meta.env.PUBLIC_GAME_UI_LIBRARY_KR || "",
-    en: import.meta.env.PUBLIC_GAME_UI_LIBRARY_EN || "",
-  },
+  /** Published prefab sources; TW/KR/EN reuse the international client UI. */
+  gameUiLibraries: nativeUi.libraries,
+  gameUiLibraryRegions: nativeUi.regions,
   /**
    * Screenshot recognition, shared by every server. The Worker and its modules are served from this site
    * (`public/recognition/`). The recognition site holds `recognition/current.json`, a pointer to the current bundle

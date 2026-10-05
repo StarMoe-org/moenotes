@@ -14,7 +14,7 @@ type NativeData = NativeCardFixtureData | NativeFormationFixtureData;
 
 /** Assemble the prefab into `target` (a host element, or a detached canvas) and render it once. */
 async function renderNative(target: HTMLElement, entry: NativeUiEntry, data: NativeData, server: GameServer, fontFamily: string) {
-  const library = await loadNativeUiLibrary(assetConfig.gameUiLibraries[server], server);
+  const library = await loadNativeUiLibrary(assetConfig.gameUiLibraries[server], assetConfig.gameUiLibraryRegions[server]);
   const bound = await bindNativeSprites(library, data);
   const { UIPlayer, UISession, cameraProjection } = await import("ournotes-player/ui");
   await document.fonts.ready;

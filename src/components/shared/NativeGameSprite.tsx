@@ -15,7 +15,7 @@ export default function NativeGameSprite({ assetKey, className = "", fallbackUrl
   useEffect(() => {
     let disposed = false;
     setFailed(false);
-    if (configured) void loadNativeUiLibrary(configured, server).then(async library => {
+    if (configured) void loadNativeUiLibrary(configured, assetConfig.gameUiLibraryRegions[server]).then(async library => {
       const url = await library.spriteUrl(assetKey);
       if (!disposed) setImage({ key: assetKey, server, url });
     }).catch(error => { if (!disposed) { setFailed(true); console.warn("Native Sprite resource", error); } });
