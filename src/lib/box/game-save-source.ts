@@ -1,5 +1,5 @@
 import type { GameSaveServer } from "@/config/account";
-import { downloadGameSave, gameSaveText, GameSaveError, type GameSaveErrorCode } from "@/lib/account/game-saves";
+import { downloadGameSave, gameSaveText, GameSaveError, type GameSaveErrorCode, type GameSaveMeta } from "@/lib/account/game-saves";
 import { parseGameSave, type GameSavePlayer } from "./game-save";
 import type { BoxSaveLink } from "./model";
 import { gameSaveCacheKey, readCachedGameSave, writeCachedGameSave } from "./save-cache";
@@ -50,6 +50,17 @@ export async function openLinkedGameSave(link: BoxSaveLink): Promise<LinkedGameS
     await keepGameSave(save, link.uploadedAt).catch(() => undefined);
     return { status: "ready", save };
   } catch (error) { return failure(error); }
+}
+
+/**
+ * The upload a signed-in Box reads without being asked: among `saves` (one save server, newest first), the save of a
+ * verified game account of the Box's server, else the save of the only player who uploaded. Null when several
+ * players uploaded and none is verified for this server; the user picks then.
+ */
+export function defaultGameSave(saves: readonly GameSaveMeta[], verifiedProfileIds: readonly string[]): GameSaveMeta | null {
+  const verified = saves.find(save => verifiedProfileIds.includes(save.accountId));
+  if (verified) return verified;
+  return new Set(saves.map(save => save.accountId)).size === 1 ? saves[0]! : null;
 }
 
 /** Forgets this page's copy, e.g. after the Box is unlinked. */

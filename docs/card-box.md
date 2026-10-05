@@ -79,7 +79,7 @@ A game save holds the player's whole collection, so a Box can read its cards and
 
 ### Download and cache
 
-The picker lists upload metadata first. It downloads a save only after the user selects it, checks that its SHA-256 still matches the listed version, and refreshes the list if a newer upload arrived in the meantime.
+The list holds upload metadata only. A save is downloaded when it is linked, automatically or from the picker; the page checks that its SHA-256 still matches the listed version and refreshes the list if a newer upload arrived in the meantime.
 
 The page hashes the downloaded bytes with SHA-256 and accepts them only when the digest equals the SHA-256 the ETag names. Accepted bytes go to the IndexedDB database `moenotes-game-saves`, store `saves`, one record per `<server>/<accountId>` with the bytes, their SHA-256 and the upload time. A read hashes the bytes again and drops a record that no longer matches. A linked Box therefore opens after a reload and offline. When the linked version is not cached, the page downloads it, provided the account still holds that exact version. Unlinking removes the cached copy unless another server's Box in the same browser links the same account.
 
@@ -92,7 +92,15 @@ The page hashes the downloaded bytes with SHA-256 and accepts them only when the
 - VIP rank is not part of a save; it stays a manual answer of the Box, as do events and profile ratings.
 - The view is derived in memory on every load (`deriveGameSaveBox` in `src/lib/box/game-save.ts`). Derived evidence has the source `game-save` and is never written to a Box: `parseBox` accepts only screenshot, manual and deck-answer evidence.
 
-"Check for updates" lists the account's saves again. When the save of the linked account has another SHA-256, one action downloads it, checks it, caches it and moves the link to it.
+### Uploaded saves first
+
+Signed in, a Box reads the account's uploaded save without being asked:
+
+- A Box without a link links the default upload of its save server (`defaultGameSave` in `src/lib/box/game-save-source.ts`): the save of a verified game account of the Box's server, else the save of the only player who uploaded. When several players uploaded and none is verified for that server, the page asks the user to pick.
+- A linked Box follows newer uploads of the same player: when the list shows another SHA-256 for that player, the page downloads it, checks it, caches it and moves the link to it. The list is read on load, again when the linked version has left the account, and when the page becomes visible after at least 30 seconds.
+- Unlinking records an opt-out for that server in this browser (`moenotes.box.own-facts.<server>` in localStorage). The Box keeps its own facts until the user links a save from the picker, which clears the opt-out.
+
+"Check for updates" lists the account's saves again and offers the same move by hand.
 
 ### Reading a save
 
