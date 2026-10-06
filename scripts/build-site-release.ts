@@ -259,12 +259,10 @@ async function publish(input: BuildInput): Promise<void> {
   await verifyFiles(input, OUTPUT);
   await verifyTag(input, true);
   const tag = `site-${input.key}`;
-  if (!existing) {
-    await command(["gh", "release", "create", tag, "--repo", repository(), "--target", input.commit,
-      "--verify-tag", "--draft", "--prerelease", "--latest=false", "--title", tag,
-      "--notes", "Static site build. Retained until a future manual retention policy; never automatically deleted."]);
-  }
-  existing = await release(input, true);
+  // The created draft is checked as the API returns it: the Release list can lag behind a new draft.
+  existing ??= await api("releases", "--method", "POST", "-f", `tag_name=${tag}`, "-f", `target_commitish=${input.commit}`,
+    "-F", "draft=true", "-F", "prerelease=true", "-f", "make_latest=false", "-f", `name=${tag}`,
+    "-f", "body=Static site build. Retained until a future manual retention policy; never automatically deleted.") as Release;
   if (!existing?.draft || existing.target_commitish !== input.commit) throw new Error("Release is not the expected draft; cannot overwrite");
   await command(["gh", "release", "upload", tag, join(OUTPUT, ARCHIVE), join(OUTPUT, MANIFEST), "--repo", repository(), "--clobber"]);
   // Only publish after both assets have been uploaded and verified from GitHub.
