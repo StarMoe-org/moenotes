@@ -15,7 +15,8 @@ import { createDeckPreview } from "@/lib/box/deck-preview";
 import { boxAccountJson, gameSaveAccountJson } from "@/lib/deck/account-envelope";
 import { CHALLENGE_POINT_COSTS, DEFAULT_DECK_GOAL, EVENT_GOALS, EVERYDAY_GOALS, MAX_BOOST, computes, computesGoal, defaultDeckGoalInput, goalGap, heldEvent,
   playsGekisou, readsAccuracy, isChallengeInput, isNetworkInput, recommendationRequest, solverGoalKind, goalVenues, isEventPayoffGoal, type ChallengePointCost, type DeckEvent, type DeckGoal, type DeckGoalInput, type DeckVenue, type DeckArenaMusic } from "@/lib/deck/goals";
-import { parseMasterDate } from "@/lib/schedule";
+import { displayUtcLabel, formatMasterDate, parseMasterDate } from "@/lib/schedule";
+import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { safeGetLocalStorage, safeRemoveLocalStorage, safeSetLocalStorage } from "@/lib/storage/safe-storage";
 import { useDeckSolver } from "./use-deck-solver";
 import DeckResult from "./DeckResult";
@@ -93,6 +94,7 @@ function readStoredGoal(): DeckGoal {
 }
 export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const { locale, servers } = props;
+  const timeZone = useDisplayTimeZone();
   const [page, setPage] = useState(props.page);
   const href = (id: string) => localizePath(getRoutePathById(id), locale);
   const tr = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.${key}`, values);
@@ -405,8 +407,8 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
       icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d={GOAL_ICONS[value]} /></svg> };
   }
   const formatEnd = (endAt: string) => {
-    const time = parseMasterDate(endAt);
-    return time === null ? endAt : new Intl.DateTimeFormat(locale, { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(time);
+    const time = formatMasterDate(endAt, locale, true, timeZone);
+    return time ? `${time} ${displayUtcLabel(endAt, timeZone)}` : endAt;
   };
   const engine = solver.engine;
   const saveReady = !linked || linkedSave.state.status === "ready";

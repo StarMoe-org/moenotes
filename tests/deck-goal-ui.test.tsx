@@ -2,8 +2,30 @@ import { expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import DeckGoalConditions from "../src/components/deck/DeckGoalConditions";
 import DeckResult from "../src/components/deck/DeckResult";
+import DeckWorkspace from "../src/components/deck/DeckWorkspace";
 import { defaultDeckGoalInput } from "../src/lib/deck/goals";
 import { parseDeckAnswer } from "../src/lib/deck/answer";
+
+test("event deadlines render in server time before hydration regardless of the host timezone", () => {
+  const originalZone = process.env.TZ;
+  try {
+    for (const offset of ["+08:00", "+09:00"]) {
+      const render = () => renderToStaticMarkup(<DeckWorkspace locale="en-US" page="deck" servers={["tw"]} members={[]} snaps={[]} songs={[]}
+        deckEvents={[{ server: "tw", events: [{ id: 1, name: "Synthetic event", startAt: `2000/01/01 00:00:00${offset}`,
+          endAt: `2099/02/03 12:59:59${offset}`, itemId: null, challengeMusics: [] }] }]} />);
+      process.env.TZ = "UTC";
+      const expected = render();
+      expect(expected).toContain(`02/03/2099, 12:59 UTC+${offset === "+08:00" ? 8 : 9}`);
+      for (const zone of ["Asia/Singapore", "Europe/London", "America/Los_Angeles"]) {
+        process.env.TZ = zone;
+        expect(render()).toBe(expected);
+      }
+    }
+  } finally {
+    if (originalZone === undefined) delete process.env.TZ;
+    else process.env.TZ = originalZone;
+  }
+});
 
 test("a live goal offers the accuracy and pattern plays and no objective other than the expected score", () => {
   const html = renderToStaticMarkup(<DeckGoalConditions locale="en-US" input={{ ...defaultDeckGoalInput("free"), playMode: "pattern", missEvery: 10 }}
