@@ -45,13 +45,14 @@ export const assetConfig = {
   musicDataSiteJp: (import.meta.env.PUBLIC_MUSIC_DATA_SITE_JP || "https://storage.bdon.moe/moenotes/jp/music-data").replace(/\/+$/, ""),
   /**
    * The deck solver runtime (docs/deck-worker.md). The Worker and its core module are this site's own files
-   * (`public/deck/`); the deck data comes from the music data sites. `recommendEngine` is the URL of an engine
-   * descriptor that replaces the published `recommendEngine` entry: the engine build this site serves
-   * (`public/deck/engine/`), or `PUBLIC_DECK_RECOMMEND_ENGINE`.
+   * (`public/deck/`); the deck data and the recommendation engine come from the music data sites.
+   * `recommendEngine`: in development builds, `PUBLIC_DECK_RECOMMEND_ENGINE`, the URL of an engine descriptor that
+   * replaces the published `recommendEngine` entry; otherwise `null`.
    */
   deck: {
     workerUrl: "/deck/deck-worker.js",
-    recommendEngine: String(import.meta.env.PUBLIC_DECK_RECOMMEND_ENGINE || "/deck/engine/recommend-engine.json"),
+    recommendEngine: import.meta.env.DEV && import.meta.env.PUBLIC_DECK_RECOMMEND_ENGINE
+      ? String(import.meta.env.PUBLIC_DECK_RECOMMEND_ENGINE) : null,
   },
   /** Published prefab sources; TW/KR/EN reuse the international client UI. */
   gameUiLibraries: nativeUi.libraries,

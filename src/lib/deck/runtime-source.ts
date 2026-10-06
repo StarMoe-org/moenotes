@@ -39,7 +39,7 @@ export interface DeckSolverRuntime {
    * deck data's `provenance.deck.commit` against it. `null` with a development engine override, which skips that check.
    */
   modelCommit: string | null;
-  /** True when an engine descriptor (this site's engine build) replaced the published `recommendEngine`. */
+  /** True when a development engine descriptor replaced the published `recommendEngine`. */
   override: boolean;
 }
 
@@ -66,7 +66,7 @@ export interface DeckRuntimeSourceOptions {
   sites?: Readonly<Record<DeckServer, string>>;
   /**
    * Replaces the manifest's `recommendEngine`: a descriptor URL (relative to the page) or a descriptor. Defaults to
-   * `assetConfig.deck.recommendEngine`, the engine build this site serves; `null` turns it off.
+   * `assetConfig.deck.recommendEngine` (development builds only); `null` turns it off.
    */
   engineOverride?: string | DeckEngineOverride | null;
   fetch?: (url: string, init: RequestInit) => Promise<Response>;
