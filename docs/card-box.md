@@ -154,6 +154,8 @@ The build generates a separate field catalogue for each of the four servers from
 
 Furniture stores ownership and level separately. Selecting a legal level records owned; explicit not-owned removes the current level; clearing an already-owned level retains ownership and leaves its level unknown. The JP UI has no equipment-off or mutually-exclusive equipment assumptions. The generic catalogue can describe discrete values and explicit equipment rules when a catalogue supplies them. Partial input can always be saved.
 
+Merging an empty partial furniture record preserves the other record's completeness declaration, including a complete empty collection. A partial record with furniture entries keeps merged coverage partial. Individual field evidence and conflicts are retained independently.
+
 `exportBandItemFacts` maps the box to the strict core contract:
 
 ```json

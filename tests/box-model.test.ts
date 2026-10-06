@@ -58,6 +58,49 @@ describe("card box field lifecycle", () => {
 });
 
 describe("shared card box facts", () => {
+  test("complete furniture backups retain their coverage when merged with an empty furniture record", () => {
+    for (const hasItems of [false, true]) {
+      const backup = createBox("tw", "backup", 1);
+      backup.player.bandItemsComplete = true;
+      if (hasItems) {
+        backup.player.bandItems["101"] = answerField(unknownField(), manual("level", 2, 1));
+        backup.player.bandItemStates["101"] = answerField(unknownField(), { id: "ownership", value: "owned", source: "manual", at: 1 });
+      }
+      const restored = parseBox(JSON.stringify(backup));
+      const target = createBox("tw", "target", 2);
+      target.cards.push(createCard("member", "local-card", "1", 2));
+      target.player.vipRank = answerField(unknownField(), manual("vip", 1, 2));
+      for (const [a, b] of [[target, restored], [restored, target]] as const) {
+        const merged = parseBox(JSON.stringify(mergeBoxes(a, b, 3)));
+        expect(merged.player.bandItemsComplete).toBe(true);
+        expect(merged.player.bandItems).toEqual(backup.player.bandItems);
+        expect(merged.player.bandItemStates).toEqual(backup.player.bandItemStates);
+        expect(merged.player.vipRank.value).toBe(1);
+        expect(merged.player.memory.value).toBeNull();
+      }
+    }
+  });
+  test("partial furniture entries keep merged coverage partial, including unknown and cleared answers", () => {
+    const complete = createBox("jp", "complete", 1);
+    complete.player.bandItemsComplete = true;
+    for (const field of [unknownField<number>(), answerField(unknownField<number>(), manual("clear-level", null, 2)), answerField(unknownField<number>(), manual("known-level", 2, 2))]) {
+      const partial = createBox("jp", "partial", 2);
+      partial.player.bandItems["101"] = field;
+      expect(mergeBoxes(complete, partial).player.bandItemsComplete).toBe(false);
+      expect(mergeBoxes(partial, complete).player.bandItemsComplete).toBe(false);
+    }
+    const ownership = createBox("jp", "ownership", 2);
+    ownership.player.bandItemStates["101"] = unknownField();
+    expect(mergeBoxes(complete, ownership).player.bandItemsComplete).toBe(false);
+    expect(mergeBoxes(createBox("jp", "a"), createBox("jp", "b")).player.bandItemsComplete).toBe(false);
+  });
+  test("complete furniture records retain independent conflicting field evidence", () => {
+    const a = createBox("jp", "a", 1), b = createBox("jp", "b", 2);
+    a.player.bandItemsComplete = b.player.bandItemsComplete = true;
+    a.player.bandItems["101"] = answerField(unknownField(), manual("a-level", 2, 1));
+    b.player.bandItems["101"] = answerField(unknownField(), manual("b-level", 4, 2));
+    expect(mergeBoxes(a, b).player).toMatchObject({ bandItemsComplete: true, bandItems: { "101": { status: "conflict", value: null, needsReview: true } } });
+  });
   test("merges card identities while keeping manual conflicts and independent completeness", () => {
     const a = createBox("jp", "a", 1), b = createBox("jp", "b", 2);
     a.cards.push(createCard("member", "one", "1", 1)); b.cards.push(createCard("member", "two", "1", 2));

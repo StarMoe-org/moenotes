@@ -162,6 +162,14 @@ function mergeRecord<T>(a: Record<string, BoxField<T>>, b: Record<string, BoxFie
 }
 const cardIdentity = (card: BoxCard) => card.identity.value !== null ? `${card.kind}:${card.identity.value}` : `unknown:${card.key}`;
 
+/** An empty partial furniture record is neutral; populated partial records keep merged coverage partial. */
+function mergeBandItemsComplete(a: BoxPlayer, b: BoxPlayer): boolean {
+  const empty = (player: BoxPlayer) => Object.keys(player.bandItems).length === 0 && Object.keys(player.bandItemStates).length === 0;
+  if (!a.bandItemsComplete && empty(a)) return b.bandItemsComplete;
+  if (!b.bandItemsComplete && empty(b)) return a.bandItemsComplete;
+  return a.bandItemsComplete && b.bandItemsComplete;
+}
+
 /** Pure merge: importing another region never silently changes the selected account or box. */
 export function mergeBoxes(current: CardBox, incoming: CardBox, at = Date.now()): CardBox {
   if (current.server !== incoming.server) throw new Error("Card boxes belong to different servers");
@@ -191,7 +199,7 @@ export function mergeBoxes(current: CardBox, incoming: CardBox, at = Date.now())
   result.player = { characterRanks: mergeRecord(current.player.characterRanks, incoming.player.characterRanks),
     characterCoverage: current.player.characterCoverage === "complete" || incoming.player.characterCoverage === "complete" ? "complete" : "partial",
     characterTotalRank: mergeField(current.player.characterTotalRank, incoming.player.characterTotalRank), vipRank: mergeField(current.player.vipRank, incoming.player.vipRank),
-    bandItems: mergeRecord(current.player.bandItems, incoming.player.bandItems), bandItemsComplete: current.player.bandItemsComplete && incoming.player.bandItemsComplete,
+    bandItems: mergeRecord(current.player.bandItems, incoming.player.bandItems), bandItemsComplete: mergeBandItemsComplete(current.player, incoming.player),
     bandItemStates: mergeRecord(current.player.bandItemStates, incoming.player.bandItemStates), catalogFields: mergeRecord(current.player.catalogFields, incoming.player.catalogFields),
     catalogIdentity: current.player.catalogIdentity ?? incoming.player.catalogIdentity,
     memory: mergeField(current.player.memory, incoming.player.memory), eventIds: mergeField(current.player.eventIds, incoming.player.eventIds) };
