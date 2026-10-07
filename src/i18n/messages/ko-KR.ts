@@ -18,6 +18,7 @@ export const koKR = {
       description: "Moenotes API로 공개 프로필, 순위표, 가챠 정보, 승인된 gzip 저장 데이터를 가져옵니다.",
     }, developer: "개발자 앱", developerHint: "앱을 만들면 즉시 인증 정보가 발급됩니다. Secret은 서버에만 보관하세요.", grants: "타사 아카이브 액세스", grantsHint: "선택한 아카이브만 공유됩니다.", name: "앱 이름", website: "HTTPS 웹사이트", description: "설명", create: "앱 만들기", emptyApps: "아직 앱이 없습니다.", clientId: "Client ID", invite: "초대 링크 복사", copy: "복사", copied: "복사됨", lookup: "앱 조회", choose: "업로드한 아카이브 선택", emptyArchives: "사용 가능한 아카이브가 없습니다.", authorize: "선택한 아카이브 승인", emptyGrants: "승인이 없습니다.", revoke: "취소", confirmRevoke: "이 액세스를 취소할까요?", cancel: "취소", refresh: "새로 고침", generate: "시크릿 생성", rotate: "시크릿 교체", revokeSecret: "시크릿 취소", keyLimit: "활성 키가 두 개 있습니다. 새 키를 배포한 후 이전 키를 직접 취소하세요.", confirmRotate: "새 키를 생성할까요? 이전 키는 직접 취소할 때까지 유지됩니다.", secret: "클라이언트 시크릿", secretHint: "한 번만 표시됩니다. 서버에 안전하게 저장하고 브라우저 코드에 넣지 마세요.", dismiss: "시크릿 숨기기", secretActive: "시크릿 활성", secretMissing: "활성 시크릿 없음", ready: "바로 사용 가능", disabled: "비활성", error: "요청에 실패했습니다.", success: "저장됨", unavailable: "현재 사용할 수 없습니다.", consent: "선택한 아카이브 전체를 읽을 수 있습니다. 신뢰하는 앱만 승인하세요." },
   deckWorkspace: {
+    objective: {"label": "탐색 목표", "expected": "평균 성능", "maximum": "이론상 최고값", "expectedNote": "현재 플레이 조건을 유지하고 무작위 스킬 순서와 LUCK 등 무작위 결과의 평균으로 팀을 비교합니다.", "maximumNote": "현재 플레이 조건을 유지하고 무작위 스킬 순서와 LUCK 등으로 도달할 수 있는 최고값을 찾습니다. 매번 달성되는 값은 아닙니다.", "unavailable": "현재 조건에서는 이론상 최고값을 지원하지 않습니다. 평균 성능으로 탐색할 수 있습니다.", "loading": "이론상 최고값 지원 여부를 확인하는 중…"},
     "arenaSong": "아레나 곡",
     "chooseArena": "아레나 곡 선택",
     "noArena": "현재 서버 데이터에 아레나 곡이 없습니다",
@@ -547,7 +548,7 @@ export const koKR = {
       "skip": "이 곡을 스킵했을 때의 점수입니다.",
       "challengeSkip": "이벤트 보너스를 포함해 챌린지 곡을 스킵합니다.",
 
-      "challenge": "선택한 곡과 난이도의 기대 점수 (이벤트 보너스 포함). 곡 기록은 모든 난이도 중 최고 점수를 유지합니다.",
+      "challenge": "선택한 곡과 난이도의 점수 (이벤트 보너스 포함). 곡 기록은 모든 난이도 중 최고 점수를 유지합니다.",
       "challengePoints": "라이브 1회당 획득 CP. 이벤트 PT 보너스는 CP에 적용되지 않습니다.",
       "eventPoints": "라이브 1회당 이벤트 PT.",
       "eventItems": "라이브 1회당 이벤트 배지.",
@@ -580,6 +581,9 @@ export const koKR = {
     "othersAverage": "방의 다른 플레이어 평균 점수",
     "othersAverageSame": "비워 두면 내 점수와 같음",
     "solver": {
+      "maximumLabel": {"score": "이론상 최고 점수", "challengePoints": "라이브 1회 최대 획득 CP", "eventPoints": "라이브 1회 최대 PT", "eventItems": "라이브 1회 최대 배지"},
+      "deterministicLabel": {"score": "점수", "challengePoints": "라이브 1회 획득 CP", "eventPoints": "라이브 1회 PT", "eventItems": "라이브 1회 배지"},
+      "bestOrder": "목표 최고값에 도달하는 스킬 순서",
       "metricLabel": {"score": "기대 점수"},
       "playSummary": "지정 연주: 판정 노트 {notes}개 · Miss {misses}개",
       "start": "편성 계산",

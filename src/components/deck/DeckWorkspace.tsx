@@ -14,7 +14,7 @@ import { answerDeckFields } from "@/lib/box/deck-answers";
 import { createDeckPreview } from "@/lib/box/deck-preview";
 import { boxAccountJson, gameSaveAccountJson } from "@/lib/deck/account-envelope";
 import { CHALLENGE_POINT_COSTS, DEFAULT_DECK_GOAL, EVENT_GOALS, EVERYDAY_GOALS, MAX_BOOST, computes, computesGoal, defaultDeckGoalInput, goalGap, heldEvent,
-  playsGekisou, readsAccuracy, isChallengeInput, isNetworkInput, recommendationRequest, solverGoalKind, goalVenues, isEventPayoffGoal, type ChallengePointCost, type DeckEvent, type DeckGoal, type DeckGoalInput, type DeckVenue, type DeckArenaMusic } from "@/lib/deck/goals";
+  playsGekisou, readsAccuracy, effectiveAggregation, isChallengeInput, isNetworkInput, recommendationRequest, solverGoalKind, goalVenues, isEventPayoffGoal, type ChallengePointCost, type DeckEvent, type DeckGoal, type DeckGoalInput, type DeckVenue, type DeckArenaMusic } from "@/lib/deck/goals";
 import { displayUtcLabel, formatMasterDate, parseMasterDate } from "@/lib/schedule";
 import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { safeGetLocalStorage, safeRemoveLocalStorage, safeSetLocalStorage } from "@/lib/storage/safe-storage";
@@ -27,6 +27,7 @@ import MusicSelectDialog from "@/components/music/MusicSelectDialog";
 import { type MusicDifficulty, MUSIC_DIFFICULTIES } from "@/lib/music/difficulty";
 import DeckComposer from "./DeckComposer";
 import DeckGoalConditions from "./DeckGoalConditions";
+import DeckObjective from "./DeckObjective";
 import NativeFormationGroup from "@/components/chart-data/NativeFormationGroup";
 import Modal from "@/components/shared/Modal";
 import type { PlayerFieldCatalogue } from "@/lib/box/player-catalog";
@@ -189,9 +190,9 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   }));
   // Preserve the player's requested goal and play. Unsupported conditions block the run rather than changing it.
   const goal = goalInput.goal;
-  const effectiveInput: DeckGoalInput = { ...goalInput };
+  const effectiveInput: DeckGoalInput = { ...goalInput, aggregation: effectiveAggregation(goalInput) };
   const gap = goalGap(effectiveInput, event);
-  const supported = !capabilities || computes(capabilities, effectiveInput);
+  const supported = capabilities ? computes(capabilities, effectiveInput) : effectiveInput.aggregation === "expected";
   const idsOf = (keys: readonly string[], kind: CardKind) => keys.flatMap(key => {
     const card = box?.cards.find(item => item.key === key && item.kind === kind);
     return card?.identity.value ? [card.identity.value] : [];
@@ -463,6 +464,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
             {box && <button type="button" disabled={busy} onClick={() => setManagement(true)}>{tr("manage")}</button>}</div>
         </div>}
         conditions={<>
+          <DeckObjective locale={locale} input={effectiveInput} capabilities={capabilities} onChange={aggregation => updateGoal({ aggregation })} />
           {isEventPayoffGoal(goal) ? <label>{tr("venue")}<select aria-label={tr("venue")} value={goalInput.venue} onChange={change => updateGoal({ venue: change.target.value as DeckVenue })}>
             {goalVenues(goal).map(value => <option key={value} value={value} disabled={!!capabilities && !computes(capabilities, { goal, venue: value })}>{tr(`venues.${value}`)}</option>)}</select></label> : null}
           {solverGoalKind(effectiveInput) === "arenaLive" ? <label>{tr("arenaSong")}<select value={goalInput.arenaMusicId ?? ""} onChange={change => updateGoal({ arenaMusicId: change.target.value ? Number(change.target.value) : null })}><option value="">{tr(arenas.length ? "chooseArena" : "noArena")}</option>{arenas.map(row => <option key={row.id} value={row.id}>{songs.find(song => song.id === row.musicId)?.title ?? row.musicId}</option>)}</select></label> : isChallengeInput(effectiveInput) ? <div className="dc-challenge-songs" role="group" aria-label={tr("challengeSong")}>

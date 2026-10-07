@@ -52,6 +52,19 @@
 .dc-composer input[type="checkbox"] { accent-color: var(--dc-accent); width: 17px; height: 17px; flex-shrink: 0; }
 .dc-composer input[type="range"] { width: 100%; min-height: 40px; accent-color: var(--dc-accent); }
 
+.dc-objective { display: grid; gap: 8px; min-width: 0; margin: 0; padding: 0 0 14px; border: 0; border-bottom: 1px solid var(--dc-line); }
+.dc-objective legend { padding: 0 0 7px; font-size: 12px; font-weight: 700; }
+.dc-objective-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+.dc-objective-options label { position: relative; min-width: 0; cursor: pointer; }
+.dc-composer .dc-objective-options input[type="radio"] { position: absolute; width: 1px; height: 1px; min-height: 0; margin: 0; padding: 0; opacity: 0; }
+.dc-objective-options span { display: flex; justify-content: center; align-items: center; min-height: 44px; height: 100%; padding: 8px; border: 1px solid var(--dc-line); border-radius: 8px; text-align: center; line-height: 1.4; }
+.dc-objective-options input:checked + span { color: #fff; border-color: var(--dc-accent); background: var(--dc-accent); }
+.dc-objective-options label:hover input:not(:disabled) + span { border-color: var(--dc-accent); }
+.dc-objective-options input:focus-visible + span { outline: 3px solid var(--dc-accent); outline-offset: 3px; }
+.dc-objective-options input:disabled + span { color: var(--mn-text-muted); border-style: dashed; cursor: not-allowed; }
+.dc-objective-options input:disabled:checked + span { color: var(--mn-text); background: var(--dc-tint); }
+.dc-composer .dc-objective p { font-size: 12px; line-height: 1.55; }
+
 .dc-collection {
   display: flex;
   align-items: center;
@@ -275,6 +288,9 @@
 .dc-composer .dc-blocker { margin-right: 0; color: var(--mn-text-muted); font-size: 11px; }
 
 .dr-result { display: grid; gap: 14px; min-width: 0; }
+.dr-objective { display: grid; gap: 3px; min-width: 0; font-size: 12px; line-height: 1.55; }
+.dr-objective strong { color: var(--mn-accent-deep); }
+.dr-objective span { color: var(--mn-text-muted); }
 .dr-status { display: grid; gap: 8px; min-width: 0; }
 .dr-phase, .dr-proven, .dr-unproven { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
 .dr-phase small, .dr-proven small { color: var(--mn-text-muted); font-size: 11px; }

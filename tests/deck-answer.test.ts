@@ -22,6 +22,31 @@ describe("answer", () => {
     expect(parsed.result?.teams[0]?.layout.members[2]).toBe(3);
     expect(parsed.result?.teams[0]?.orders?.median.score).toBe(1000);
     expect(parsed.result?.coversAllOwnedCards).toBe(true);
+    expect(parsed.result?.aggregation).toBe("expected");
+    expect(parsed.result?.exitReason).toBeNull();
+  });
+  test("retains the engine exit reason independently of the configured time limit", () => {
+    for (const exitReason of ["timeLimit", "refinementRequired", "complete"]) {
+      const raw = JSON.parse(answer({}));
+      raw.result.exitReason = exitReason;
+      expect(parseDeckAnswer(JSON.stringify(raw)).result?.exitReason).toBe(exitReason);
+    }
+  });
+  test("reads the echoed maximum objective and its maximizing order in progress and final results", () => {
+    for (const final of [false, true]) {
+      const raw = JSON.parse(answer({ final }));
+      raw.result.aggregation = "maximum";
+      raw.result.goal = { kind: "battleLive" };
+      raw.result.teams[0].orders = null;
+      raw.result.teams[0].bestOrder = { score: 1200, payoff: null, order: [5, 4, 3, 2, 1] };
+      const parsed = parseDeckAnswer(JSON.stringify(raw));
+      expect(parsed.result?.aggregation).toBe("maximum");
+      expect(parsed.result?.goalKind).toBe("battleLive");
+      expect(parsed.result?.teams[0]?.bestOrder?.order).toEqual([5, 4, 3, 2, 1]);
+      expect(parsed.result?.teams[0]?.orders).toBeNull();
+      raw.result.aggregation = "unsupported";
+      expect(() => parseDeckAnswer(JSON.stringify(raw))).toThrow("Unknown result aggregation");
+    }
   });
   test("a progress report without orders and a partial box", () => {
     const parsed = parseDeckAnswer(answer({ final: false, result: { phase: "proof", elapsedMs: 300, optimality: { proven: false, lowerBound: 900, upperBound: 1100, bestGap: 0.22, fraction: 0.4 },
@@ -112,6 +137,7 @@ describe("issues", () => {
     expect(issueTarget({ path: "declared._vip._rank", code: "missing", message: "" }, box)).toEqual({ kind: "vip" });
     expect(issueTarget({ path: "_player._characters[2]._exp", code: "missing", message: "" }, box)).toEqual({ kind: "player", area: "characters" });
     expect(issueTarget({ path: "goal.difficulty", code: "input", message: "" }, box)).toEqual({ kind: "request" });
+    expect(issueTarget({ path: "aggregation", code: "input", message: "" }, box)).toEqual({ kind: "request" });
   });
   test("group per card in box order", () => {
     const parsed = parseDeckAnswer(answer({ status: "incomplete", result: null, missing: [

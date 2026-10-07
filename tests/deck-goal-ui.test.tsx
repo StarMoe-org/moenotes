@@ -1,9 +1,10 @@
 import { expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import DeckGoalConditions from "../src/components/deck/DeckGoalConditions";
+import DeckObjective from "../src/components/deck/DeckObjective";
 import DeckResult from "../src/components/deck/DeckResult";
 import DeckWorkspace from "../src/components/deck/DeckWorkspace";
-import { defaultDeckGoalInput } from "../src/lib/deck/goals";
+import { defaultDeckGoalInput, type DeckSolverCapabilities } from "../src/lib/deck/goals";
 import { parseDeckAnswer } from "../src/lib/deck/answer";
 
 test("event deadlines render in server time before hydration regardless of the host timezone", () => {
@@ -27,12 +28,70 @@ test("event deadlines render in server time before hydration regardless of the h
   }
 });
 
-test("a live goal offers the accuracy and pattern plays and no objective other than the expected score", () => {
+test("a live goal offers the accuracy and pattern plays", () => {
   const html = renderToStaticMarkup(<DeckGoalConditions locale="en-US" input={{ ...defaultDeckGoalInput("free"), playMode: "pattern", missEvery: 10 }}
     event={null} capabilities={{ goals: ["freeLive"], metrics: { freeLive: ["score"] }, accuracy: { great: true, just: false }, patternPlay: true }} onChange={() => {}} />);
   expect(html).toContain('value="pattern" selected=""');
   expect(html).toContain('value="10"');
   expect(html).not.toContain("Minimum life at the end");
+});
+
+test("the objective has native labelled radio choices, with maximum gated by engine capabilities", () => {
+  const cap = { goals: ["freeLive"], metrics: { freeLive: ["score", "eventPoints"] }, accuracy: { great: true, just: false } };
+  const render = (input = defaultDeckGoalInput("free"), capabilities: DeckSolverCapabilities = cap) => renderToStaticMarkup(
+    <DeckObjective locale="en-US" input={input} capabilities={capabilities} onChange={() => {}} />);
+  const html = render();
+  expect(html).toContain('type="radio"');
+  expect(html).toContain('checked="" value="expected"');
+  expect(html).toMatch(/<input[^>]*disabled=""[^>]*value="maximum"/);
+  expect(html).toContain("Average performance");
+  expect(html).toContain("Theoretical maximum");
+  const ready = render({ ...defaultDeckGoalInput("free"), aggregation: "maximum" }, { ...cap, aggregations: { maximum: { freeLive: ["score"] } } });
+  expect(ready).toContain('checked="" value="maximum"');
+  expect(ready).not.toContain('disabled=""');
+  expect(ready).toContain("not guaranteed every live");
+  expect(render(defaultDeckGoalInput("power"))).toBe("");
+  expect(render(defaultDeckGoalInput("skip"))).toBe("");
+});
+
+test("maximum results retain their own metric, objective, proof state and best order after inputs change", () => {
+  const answer = parseDeckAnswer(JSON.stringify({ format: "ournotes-deck.account-recommendation/1", final: true, status: "ok", result: {
+    goal: { kind: "battleLive" }, metric: { kind: "eventPoints" }, aggregation: "maximum", phase: "done", elapsedMs: 10,
+    optimality: { proven: false, lowerBound: 30, upperBound: 40 }, teams: [{ rank: 1, rankCertified: false,
+      leader: { member: 3, snap: null }, others: [1, 2, 4, 5].map(member => ({ member, snap: null })), power: 100,
+      value: { score: 999999, payoff: { score: 30 } }, orders: null,
+      bestOrder: { score: 950000, payoff: 30, order: [5, 4, 3, 2, 1] },
+      layout: { members: [1, 2, 3, 4, 5], snaps: [null, null, null, null, null] } }] } }));
+  const noop = () => {};
+  const html = renderToStaticMarkup(<DeckResult locale="en-US" goal="free" stale timeLimit={60} box={null} catalog={{ members: [], snaps: [] }} linked={false} busy={false}
+    job={{ status: "done", key: "maximum", answer, stopped: false }} onStop={noop} onRerun={noop} onEditCard={noop} onPlayer={noop} onAnswerAll={noop} />);
+  expect(html).toContain("Theoretical maximum");
+  expect(html).toContain("Maximum points per live");
+  expect(html).toContain("previous result");
+  expect(html).toContain("not proven");
+  expect(html).toContain("5 → 4 → 3 → 2 → 1");
+  expect(html).not.toContain("Expected score");
+  expect(html).not.toContain("performance orders");
+  expect(html).not.toContain("999,999");
+});
+
+test("unproven results distinguish engine time limits, refinement stops and legacy answers", () => {
+  const noop = () => {};
+  for (const exitReason of ["refinementRequired", "timeLimit", undefined]) {
+    const answer = parseDeckAnswer(JSON.stringify({ format: "ournotes-deck.account-recommendation/1", final: true, status: "ok", result: {
+      goal: { kind: "freeLive" }, metric: { kind: "score" }, aggregation: "maximum", phase: "done", elapsedMs: 10,
+      exitReason, optimality: { proven: false }, teams: [] } }));
+    const render = (stopped: boolean) => renderToStaticMarkup(<DeckResult locale="en-US" goal="free" stale timeLimit={60} box={null} catalog={{ members: [], snaps: [] }} linked={false} busy={false}
+      job={{ status: "done", key: "maximum", answer, stopped }} onStop={noop} onRerun={noop} onEditCard={noop} onPlayer={noop} onAnswerAll={noop} />);
+    const html = render(false);
+    expect(html.includes("Time limit reached")).toBe(exitReason === "timeLimit");
+    expect(html).toContain("not proven");
+    expect(html).toContain("Theoretical maximum");
+    expect(html).toContain("previous result");
+    const stopped = render(true);
+    expect(stopped).toContain("Stopped · best so far");
+    expect(stopped).not.toContain("Time limit reached");
+  }
 });
 
 test("a stale goal selection cannot relabel a finished result, and its proof label links the guide", () => {
