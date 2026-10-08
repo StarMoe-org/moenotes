@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import Grow from "@mui/material/Grow";
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { useQuickFilterState } from "@/lib/filter/quick-filter-store";
@@ -93,68 +99,64 @@ export default function FilterDrawerGuide({ locale }: FilterDrawerGuideProps) {
   }
 
   return (
-    <AnimatePresence>
-      <aside
-        aria-label={t(locale, "filter.drawerHintTitle")}
-        style={guideLeftStyle}
-        className="fixed top-28 z-32 pointer-events-none max-w-[calc(100vw-4.5rem)] sm:max-w-xs select-none"
-      >
-        <motion.div
-          className="pointer-events-auto relative rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)] p-4 flex flex-col gap-2.5 text-[var(--mn-text)]"
-          initial={{ opacity: 0, x: -10, scale: 0.96 }}
-          animate={{ opacity: 1, x: 0, scale: 1 }}
-          exit={{ opacity: 0, x: -10, scale: 0.96 }}
-          transition={{ duration: 0.2 }}
-          role="region"
-          aria-live="polite"
+    <MdMuiProvider>
+      <Grow in appear timeout={200}>
+        <aside
+          aria-label={t(locale, "filter.drawerHintTitle")}
+          style={guideLeftStyle}
+          className="fixed top-28 z-32 pointer-events-none max-w-[calc(100vw-4.5rem)] sm:max-w-xs select-none"
         >
-          {/* Beak pointer arrow */}
-          <div
-            className="absolute -left-1.5 top-5 h-3 w-3 rotate-45 border-l-[1.5px] border-b-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] pointer-events-none"
-            aria-hidden="true"
-          />
+          <Card
+            variant="outlined"
+            role="region"
+            aria-live="polite"
+            sx={{
+              position: "relative",
+              display: "flex",
+              flexDirection: "column",
+              gap: 2.5,
+              p: 2,
+              borderRadius: 4,
+              pointerEvents: "auto",
+              bgcolor: "var(--md-sys-color-surface-container)",
+              borderColor: "var(--md-sys-color-outline-variant)",
+            }}
+          >
+            {/* Beak pointer arrow */}
+            <div
+              className="absolute -left-1.5 top-5 h-3 w-3 rotate-45 border-l-[1.5px] border-b-[1.5px] border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] pointer-events-none"
+              aria-hidden="true"
+            />
 
-          {/* Header */}
-          <div className="flex items-center justify-between gap-2 relative z-10">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="h-6 w-6 rounded-lg bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)] flex items-center justify-center shrink-0">
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                </svg>
+            {/* Header */}
+            <div className="flex items-center justify-between gap-2 relative z-10">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="h-6 w-6 rounded-lg bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] flex items-center justify-center shrink-0">
+                  <FilterAltIcon sx={{ fontSize: 14 }} aria-hidden="true" />
+                </div>
+                <h3 className="text-xs sm:text-sm font-bold font-[var(--mn-font-display)] text-[var(--md-sys-color-on-surface)] truncate">
+                  {t(locale, "filter.drawerHintTitle")}
+                </h3>
               </div>
-              <h3 className="text-xs sm:text-sm font-bold font-[var(--mn-font-display)] text-[var(--mn-text)] truncate">
-                {t(locale, "filter.drawerHintTitle")}
-              </h3>
+              <IconButton size="small" onClick={dismiss} aria-label={t(locale, "actions.close")}>
+                <CloseIcon sx={{ fontSize: 16 }} />
+              </IconButton>
             </div>
-            <button
-              type="button"
-              onClick={dismiss}
-              className="mn-stamp-press p-1 text-[var(--mn-text-muted)] hover:text-[var(--mn-text)] rounded-lg transition-colors cursor-pointer shrink-0"
-              aria-label={t(locale, "actions.close")}
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
 
-          {/* Description */}
-          <p className="text-xs text-[var(--mn-text-muted)] leading-relaxed relative z-10">
-            {t(locale, "filter.drawerHintBody")}
-          </p>
+            {/* Description */}
+            <p className="text-xs text-[var(--md-sys-color-on-surface-variant)] leading-relaxed relative z-10">
+              {t(locale, "filter.drawerHintBody")}
+            </p>
 
-          {/* Dismiss button */}
-          <div className="flex items-center justify-end pt-1 relative z-10">
-            <button
-              type="button"
-              onClick={dismiss}
-              className="mn-stamp-press px-3.5 py-1.5 rounded-xl text-xs font-bold text-[var(--mn-paper)] bg-[var(--mn-accent)] hover:bg-[var(--mn-accent-deep)] transition-colors cursor-pointer"
-            >
-              {t(locale, "filter.drawerHintDismiss")}
-            </button>
-          </div>
-        </motion.div>
-      </aside>
-    </AnimatePresence>
+            {/* Dismiss button */}
+            <div className="flex items-center justify-end pt-1 relative z-10">
+              <Button variant="contained" size="small" onClick={dismiss}>
+                {t(locale, "filter.drawerHintDismiss")}
+              </Button>
+            </div>
+          </Card>
+        </aside>
+      </Grow>
+    </MdMuiProvider>
   );
 }
