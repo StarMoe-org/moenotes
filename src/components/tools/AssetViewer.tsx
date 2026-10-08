@@ -5,7 +5,10 @@ import type { AppLocale } from "@/config/locales";
 import { assetConfig } from "@/config/assets";
 import BaseFilters, { FilterSection } from "@/components/shared/BaseFilters";
 import Modal from "@/components/shared/Modal";
-import Popover from "@/components/shared/Popover";
+import Box from "@mui/material/Box";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import { useAssetBrowserQuery } from "@/components/tools/use-asset-browser-query";
 import { AssetBrowserError, assetBrowserUrl, defaultCatalog, fetchAssetBrowser } from "@/lib/assets/browser-client";
@@ -187,29 +190,35 @@ function ToolButton({ icon, label, onClick, disabled = false, active = false }: 
 }
 
 function ScopeSelect({ title, value, options, onChange }: { title: string; value: string; options: { value: string; label: string; flag?: GameServer }[]; onChange: (value: string) => void }) {
-  const selected = options.find((option) => option.value === value);
   return (
     <FilterSection title={title}>
-      <Popover matchTriggerWidth trigger={({ ref, onClick, ...aria }) => (
-        <button ref={ref} type="button" onClick={onClick} {...aria} disabled={!options.length} aria-label={`${title}: ${options.find((option) => option.value === value)?.label ?? ""}`} className="mn-focus mn-stamp-press flex w-full items-center justify-between gap-2 rounded-xl border border-[var(--mn-border)] bg-[var(--mn-paper)] px-3 py-2.5 text-left text-sm font-bold disabled:opacity-50">
-          <span className="flex min-w-0 items-center gap-2">
-            {selected?.flag && <ServerFlag server={selected.flag} className="h-4 w-4" />}
-            <span className="min-w-0 truncate">{selected?.label ?? "—"}</span>
-          </span>
-          <Icon name="chevronDown" className="h-4 w-4 shrink-0 text-[var(--mn-text-muted)]" />
-        </button>
-      )}>
-        {({ close }) => (
-          <div className="space-y-1" role="group" aria-label={title}>
-            {options.map((option) => (
-              <button key={option.value} type="button" aria-pressed={option.value === value} className={`mn-focus flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm ${option.value === value ? "bg-[var(--mn-accent-soft)] font-bold text-[var(--mn-accent-deep)]" : "hover:bg-[var(--mn-surface)]"}`} onClick={() => { onChange(option.value); close(); }}>
+      <MdMuiProvider>
+        <Select
+          fullWidth
+          value={value}
+          disabled={!options.length}
+          inputProps={{ "aria-label": `${title}: ${options.find((option) => option.value === value)?.label ?? ""}` }}
+          onChange={(event) => onChange(event.target.value as string)}
+          renderValue={(selectedValue) => {
+            const selected = options.find((option) => option.value === (selectedValue as string));
+            return (
+              <Box sx={{ display: "flex", minWidth: 0, alignItems: "center", gap: 1 }}>
+                {selected?.flag && <ServerFlag server={selected.flag} className="h-4 w-4" />}
+                <span className="min-w-0 truncate">{selected?.label ?? "—"}</span>
+              </Box>
+            );
+          }}
+        >
+          {options.map((option) => (
+            <MenuItem key={option.value} value={option.value}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 {option.flag && <ServerFlag server={option.flag} className="h-4 w-4" />}
-                {option.label}
-              </button>
-            ))}
-          </div>
-        )}
-      </Popover>
+                <span>{option.label}</span>
+              </Box>
+            </MenuItem>
+          ))}
+        </Select>
+      </MdMuiProvider>
     </FilterSection>
   );
 }

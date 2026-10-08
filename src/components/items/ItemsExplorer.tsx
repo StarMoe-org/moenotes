@@ -9,7 +9,9 @@ import { useAssetUrl, useServerList } from "@/lib/servers/use-content-server";
 import { t } from "@/i18n";
 import BaseFilters, { FilterSection } from "@/components/shared/BaseFilters";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
-import Popover from "@/components/shared/Popover";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 import {
   type ItemViewModel,
@@ -105,51 +107,25 @@ export default function ItemsExplorer({ locale, servers, initialItems }: Props) 
     >
       <FilterSection title={t(locale, "nav.items.items")}>
         <div className="relative mt-2">
-          <Popover
-            matchTriggerWidth
-            trigger={({ ref, onClick, ...aria }) => (
-              <button
-                ref={ref as React.Ref<HTMLButtonElement>}
-                type="button"
-                className="mn-stamp-press flex w-full items-center justify-between rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface)] px-5 py-2.5 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)] cursor-pointer"
-                onClick={onClick}
-                {...aria}
-              >
-                {selectedGroups.length === 0 ? t(locale, "items.allGroups") : t(locale, `items.groups.${selectedGroups[0]}`)}
-                <svg className="h-4 w-4 shrink-0 text-[var(--mn-text-muted)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="m6 9 6 6 6-6" />
-                </svg>
-              </button>
-            )}
-          >
-            {({ close: closePopover }) => (
-              <div className="flex flex-col gap-0.5">
-                <button
-                  type="button"
-                  className={`text-left block w-full rounded-full px-4 py-2 text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] cursor-pointer ${selectedGroups.length === 0 ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
-                  onClick={() => {
-                    setSelectedGroups([]);
-                    closePopover();
-                  }}
-                >
-                  {t(locale, "items.allGroups")}
-                </button>
-                {displayGroups.map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    className={`text-left block w-full rounded-full px-4 py-2 text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] cursor-pointer ${selectedGroups.includes(value) ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
-                    onClick={() => {
-                      setSelectedGroups([value]);
-                      closePopover();
-                    }}
-                  >
-                    {t(locale, `items.groups.${value}`)}
-                  </button>
-                ))}
-              </div>
-            )}
-          </Popover>
+          <MdMuiProvider>
+            <Select
+              fullWidth
+              value={selectedGroups[0] ?? ""}
+              inputProps={{ "aria-label": t(locale, "nav.items.items") }}
+              onChange={(event) => {
+                const next = event.target.value as number | "";
+                setSelectedGroups(next === "" ? [] : [next]);
+              }}
+              renderValue={(selected: unknown) => (
+                selected === "" ? t(locale, "items.allGroups") : t(locale, `items.groups.${selected as string}`)
+              )}
+            >
+              <MenuItem value="">{t(locale, "items.allGroups")}</MenuItem>
+              {displayGroups.map((value) => (
+                <MenuItem key={value} value={value}>{t(locale, `items.groups.${value}`)}</MenuItem>
+              ))}
+            </Select>
+          </MdMuiProvider>
         </div>
       </FilterSection>
     </BaseFilters>

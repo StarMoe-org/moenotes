@@ -6,7 +6,11 @@ import { motion } from "framer-motion";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import Modal from "@/components/shared/Modal";
-import Popover from "@/components/shared/Popover";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 import BaseFilters, { FilterSection, FilterButton, FilterToggle } from "@/components/shared/BaseFilters";
 import QuickFilterButton, { QuickFilterProvider } from "@/components/shared/QuickFilterButton";
 import { useSpringAnimation } from "@/lib/animation/use-animation";
@@ -609,36 +613,14 @@ function FiltersSection({
 }
 
 function FilterSelect({ value, options, onChange }: { value: string; options: { value: string; label: string }[]; onChange: (v: string) => void }) {
-  const selected = options.find((o) => o.value === value);
-
   return (
-    <Popover
-      matchTriggerWidth
-      trigger={({ ref, onClick, ...aria }) => (
-        <button
-          ref={ref as React.Ref<HTMLButtonElement>}
-          type="button"
-          className="mn-stamp-press flex w-full min-w-0 items-center justify-between rounded-xl border border-[var(--mn-border)] bg-[var(--mn-paper)] px-4 py-2.5 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]"
-          onClick={onClick}
-          {...aria}
-        >
-          <span className="truncate">{selected?.label}</span>
-          {chevronDown}
-        </button>
-      )}
-    >
-      {({ close }) =>
-        options.map((opt) => (
-          <button
-            key={opt.value}
-            className={`w-full rounded-xl px-4 py-2 text-left text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${opt.value === value ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
-            onClick={() => { onChange(opt.value); close(); }}
-          >
-            {opt.label}
-          </button>
-        ))
-      }
-    </Popover>
+    <MdMuiProvider>
+      <Select fullWidth value={value} onChange={(event) => onChange(event.target.value as string)}>
+        {options.map((opt) => (
+          <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+        ))}
+      </Select>
+    </MdMuiProvider>
   );
 }
 
@@ -799,10 +781,6 @@ function AnimationsSection({ locale }: { locale: AppLocale }) {
 
 // ── Select & Checkbox Demos ───────────────────────────────────────────────────
 
-const chevronDown = (
-  <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
-);
-
 const checkSvg = (
   <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7" /></svg>
 );
@@ -814,39 +792,25 @@ function SelectDemo({ locale }: { locale: AppLocale }) {
     { value: "c", label: t(locale, "designSystem.components.optC") },
   ];
   const [value, setValue] = useState("a");
-  const selected = options.find((o) => o.value === value);
 
   return (
     <div>
-      <label htmlFor="demo-select" className="mb-1 block text-sm font-bold text-[var(--mn-text)]">{t(locale, "designSystem.components.select")}</label>
-      <Popover
-        matchTriggerWidth
-        trigger={({ ref, onClick, ...aria }) => (
-          <button
-            ref={ref as React.Ref<HTMLButtonElement>}
+      <MdMuiProvider>
+        <FormControl fullWidth>
+          <InputLabel id="demo-select-label">{t(locale, "designSystem.components.select")}</InputLabel>
+          <Select
+            labelId="demo-select-label"
             id="demo-select"
-            type="button"
-            className="mn-stamp-press flex w-full min-w-0 items-center justify-between rounded-xl border border-[var(--mn-border)] bg-[var(--mn-surface)] px-5 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]"
-            onClick={onClick}
-            {...aria}
+            value={value}
+            label={t(locale, "designSystem.components.select")}
+            onChange={(event) => setValue(event.target.value as string)}
           >
-            <span className="truncate">{selected?.label ?? t(locale, "designSystem.components.selectPlaceholder")}</span>
-            {chevronDown}
-          </button>
-        )}
-      >
-        {({ close }) =>
-          options.map((opt) => (
-            <button
-              key={opt.value}
-              className={`w-full rounded-xl px-4 py-2 text-left text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${opt.value === value ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
-              onClick={() => { setValue(opt.value); close(); }}
-            >
-              {opt.label}
-            </button>
-          ))
-        }
-      </Popover>
+            {options.map((opt) => (
+              <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </MdMuiProvider>
     </div>
   );
 }

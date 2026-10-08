@@ -1,38 +1,90 @@
-import { useRef } from "react";
+import { useState, type MouseEvent } from "react";
+import Divider from "@mui/material/Divider";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Typography from "@mui/material/Typography";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
-import Popover from "@/components/shared/Popover";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 import CollectionIcon from "./CollectionIcon";
 
 export default function CollectionActionMenu({ locale, busy, onAdd, onExport, onImport, onStorage, onDelete }: {
   locale: AppLocale; busy: boolean; onAdd?: (() => void) | undefined; onImport?: (() => void) | undefined;
   onExport?: (() => void) | undefined; onStorage?: (() => void) | undefined; onDelete?: (() => void) | undefined;
 }) {
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const open = anchorEl !== null;
   const label = (key: string) => t(locale, `deckWorkspace.collection.${key}`);
-  const menu = useRef<HTMLDivElement>(null);
-  const trigger = useRef<HTMLElement>(null);
-  return <Popover align="end" minWidth={250} panelClassName="cb-action-popover" trigger={props => <button type="button" {...props} ref={node => { trigger.current = node; props.ref(node); }} className="cb-secondary-action" disabled={busy} onClick={() => {
-    props.onClick(); requestAnimationFrame(() => menu.current?.querySelector<HTMLButtonElement>("button:not(:disabled)")?.focus({ preventScroll: true }));
-  }}><CollectionIcon name="more" />{label("actions")}</button>}>
-    {({ close }) => {
-      const finish = (action: () => void) => { close(); trigger.current?.focus({ preventScroll: true }); action(); };
-      return <div className="cb-action-menu" ref={menu} role="group" aria-label={label("actions")} onKeyDown={event => {
-        if (event.key === "Tab") { event.preventDefault(); close(); trigger.current?.focus({ preventScroll: true }); return; }
-        const entries = [...event.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)")];
-        if (!entries.length) return;
-        const index = entries.indexOf(document.activeElement as HTMLButtonElement);
-        const next = event.key === "ArrowDown" ? (index + 1) % entries.length : event.key === "ArrowUp" ? (index + entries.length - 1) % entries.length : event.key === "Home" ? 0 : event.key === "End" ? entries.length - 1 : null;
-        if (next === null) return;
-        event.preventDefault(); entries[next]!.focus();
-      }}>
-        {onAdd && <button type="button" role="menuitem" disabled={busy} onClick={() => finish(onAdd)}><CollectionIcon name="add" />{label("add")}</button>}
-        <div className="cb-menu-label">{label("backup")}</div>
-        {onExport && <button type="button" role="menuitem" disabled={busy} onClick={() => finish(onExport)}><CollectionIcon name="export" />{label("export")}</button>}
-        {onImport && <button type="button" role="menuitem" disabled={busy} onClick={() => finish(onImport)}><CollectionIcon name="import" />{label("import")}</button>}
-        <p>{label("backupNote")}</p>
-        {onStorage && <button type="button" role="menuitem" disabled={busy} onClick={() => finish(onStorage)}><CollectionIcon name="storage" />{label("storage")}</button>}
-        {onDelete && <button type="button" role="menuitem" className="cb-delete-action" disabled={busy} onClick={() => finish(onDelete)}><CollectionIcon name="delete" />{label("delete")}</button>}
-      </div>;
-    }}
-  </Popover>;
+
+  const handleOpen = (event: MouseEvent<HTMLButtonElement>) => setAnchorEl(event.currentTarget);
+  const handleClose = () => setAnchorEl(null);
+  const finish = (action: () => void) => {
+    handleClose();
+    action();
+  };
+
+  return (
+    <MdMuiProvider>
+      <button
+        type="button"
+        className="cb-secondary-action"
+        disabled={busy}
+        onClick={handleOpen}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? "collection-actions" : undefined}
+      >
+        <CollectionIcon name="more" />{label("actions")}
+      </button>
+      <Menu
+        id="collection-actions"
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        slotProps={{ paper: { sx: { minWidth: 250 } }, list: { "aria-label": label("actions") } }}
+      >
+        {onAdd && (
+          <MenuItem disabled={busy} onClick={() => finish(onAdd)}>
+            <ListItemIcon><CollectionIcon name="add" /></ListItemIcon>
+            <ListItemText>{label("add")}</ListItemText>
+          </MenuItem>
+        )}
+        <Divider />
+        <Typography variant="caption" sx={{ display: "block", px: 2, pt: 1, fontWeight: 700, color: "var(--md-sys-color-on-surface-variant)" }}>
+          {label("backup")}
+        </Typography>
+        {onExport && (
+          <MenuItem disabled={busy} onClick={() => finish(onExport)}>
+            <ListItemIcon><CollectionIcon name="export" /></ListItemIcon>
+            <ListItemText>{label("export")}</ListItemText>
+          </MenuItem>
+        )}
+        {onImport && (
+          <MenuItem disabled={busy} onClick={() => finish(onImport)}>
+            <ListItemIcon><CollectionIcon name="import" /></ListItemIcon>
+            <ListItemText>{label("import")}</ListItemText>
+          </MenuItem>
+        )}
+        <Typography variant="body2" sx={{ px: 2, py: 0.5, color: "var(--md-sys-color-on-surface-variant)" }}>
+          {label("backupNote")}
+        </Typography>
+        {onStorage && (
+          <MenuItem disabled={busy} onClick={() => finish(onStorage)}>
+            <ListItemIcon><CollectionIcon name="storage" /></ListItemIcon>
+            <ListItemText>{label("storage")}</ListItemText>
+          </MenuItem>
+        )}
+        {onDelete && (
+          <MenuItem disabled={busy} onClick={() => finish(onDelete)} sx={{ color: "var(--md-sys-color-error)" }}>
+            <ListItemIcon sx={{ color: "inherit" }}><CollectionIcon name="delete" /></ListItemIcon>
+            <ListItemText>{label("delete")}</ListItemText>
+          </MenuItem>
+        )}
+      </Menu>
+    </MdMuiProvider>
+  );
 }

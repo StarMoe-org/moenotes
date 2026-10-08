@@ -1,12 +1,17 @@
 import SiriusLoader, { SiriusIcon } from "@/components/shared/SiriusLoader";
-import { useCallback, useEffect, useMemo, useState, type ReactNode, type Ref } from "react";
+import { useCallback, useEffect, useMemo, useState, type MouseEvent, type ReactNode } from "react";
 import type { StoryPlayer } from "ournotes-player/story";
 import { assetConfig } from "@/config/assets";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import Modal from "@/components/shared/Modal";
-import Popover from "@/components/shared/Popover";
+import CheckIcon from "@mui/icons-material/Check";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 import { fetchSiteStory, fetchStorySite, type StoryRuntimes } from "@/lib/story/player-client";
 import {
   buildStoryPlayerEntries,
@@ -307,46 +312,52 @@ function LanguageSelect({ locale, languages, value, busy, onChange }: {
 }) {
   const label = t(locale, `storyPlayer.languages.${value}`);
   const name = `${t(locale, "storyPlayer.language")}: ${label}`;
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const open = anchorEl !== null;
   return (
-    <Popover
-      align="end"
-      minWidth={150}
-      trigger={({ ref, onClick, ...aria }) => (
-        <button
-          ref={ref as Ref<HTMLButtonElement>}
-          type="button"
-          onClick={onClick}
-          {...aria}
-          disabled={busy || languages.length < 2}
-          aria-busy={busy}
-          aria-label={name}
-          title={name}
-          className={`${PILL} gap-1.5 px-3 disabled:cursor-default`}
-        >
-          <LanguageIcon className="h-4 w-4 shrink-0 text-[var(--mn-accent-deep)]" />
-          <span>{label}</span>
-          {busy
-            ? <SiriusIcon className="h-3.5 w-3.5" />
-            : languages.length > 1 && <ChevronIcon direction="down" className="h-3.5 w-3.5 opacity-60" />}
-        </button>
-      )}
-    >
-      {({ close }) => languages.map((code) => (
-        <button
-          key={code}
-          type="button"
-          role="menuitemradio"
-          aria-checked={code === value}
-          onClick={() => {
-            onChange(code);
-            close();
-          }}
-          className={`w-full rounded-xl px-4 py-2 text-left text-sm font-bold transition hover:bg-[var(--mn-cream-deep)] ${code === value ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:text-[var(--mn-text)]"}`}
-        >
-          {t(locale, `storyPlayer.languages.${code}`)}
-        </button>
-      ))}
-    </Popover>
+    <MdMuiProvider>
+      <button
+        type="button"
+        onClick={(event: MouseEvent<HTMLButtonElement>) => setAnchorEl(event.currentTarget)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        disabled={busy || languages.length < 2}
+        aria-busy={busy}
+        aria-label={name}
+        title={name}
+        className={`${PILL} gap-1.5 px-3 disabled:cursor-default`}
+      >
+        <LanguageIcon className="h-4 w-4 shrink-0 text-[var(--mn-accent-deep)]" />
+        <span>{label}</span>
+        {busy
+          ? <SiriusIcon className="h-3.5 w-3.5" />
+          : languages.length > 1 && <ChevronIcon direction="down" className="h-3.5 w-3.5 opacity-60" />}
+      </button>
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={() => setAnchorEl(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        slotProps={{ paper: { sx: { minWidth: 150 } }, list: { "aria-label": name } }}
+      >
+        {languages.map((code) => (
+          <MenuItem
+            key={code}
+            selected={code === value}
+            onClick={() => {
+              onChange(code);
+              setAnchorEl(null);
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 28 }}>
+              {code === value ? <CheckIcon fontSize="small" /> : null}
+            </ListItemIcon>
+            <ListItemText>{t(locale, `storyPlayer.languages.${code}`)}</ListItemText>
+          </MenuItem>
+        ))}
+      </Menu>
+    </MdMuiProvider>
   );
 }
 
