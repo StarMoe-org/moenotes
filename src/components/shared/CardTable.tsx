@@ -59,7 +59,7 @@ export default function CardTable({ locale, rows, routeId, servers, sort, onSort
       sortValue: (row) => row.title,
       render: (row) => (
         <span className="flex min-w-[12rem] items-center gap-2.5">
-          <img className="h-10 w-10 shrink-0 rounded-lg border border-[var(--mn-border)]/60 bg-[var(--mn-cream-deep)] object-cover" src={assetUrl(row.thumbnailUrl)} alt="" loading="lazy" />
+          <img className="h-10 w-10 shrink-0 rounded-lg border border-[var(--md-sys-color-outline-variant)]/60 bg-[var(--md-sys-color-surface-container-high)] object-cover" src={assetUrl(row.thumbnailUrl)} alt="" loading="lazy" />
           <span className="min-w-0">
             <span className="block max-w-[16rem] truncate font-bold">{row.title}</span>
             <ServerAvailabilityBadge locale={locale} entity={row} servers={servers} />
@@ -68,7 +68,7 @@ export default function CardTable({ locale, rows, routeId, servers, sort, onSort
       ),
     },
     { key: "character", header: t(locale, "cards.table.character"), render: (row) => <span className="whitespace-nowrap">{row.characterNames}</span> },
-    { key: "band", header: t(locale, "cards.band"), render: (row) => <span className="whitespace-nowrap text-[var(--mn-text-muted)]">{row.bandName}</span> },
+    { key: "band", header: t(locale, "cards.band"), render: (row) => <span className="whitespace-nowrap text-[var(--md-sys-color-on-surface-variant)]">{row.bandName}</span> },
     {
       key: "rarity",
       header: t(locale, "cards.rarity"),
@@ -93,7 +93,7 @@ export default function CardTable({ locale, rows, routeId, servers, sort, onSort
       header: t(locale, "cards.detailReleasedAt"),
       initialDirection: "desc",
       sortValue: (row) => row.startAt,
-      render: (row) => <span className="whitespace-nowrap font-mono text-xs tabular-nums text-[var(--mn-text-muted)]">{row.startAt ? formatMasterDate(row.startAt, locale, false, timeZone) : "—"}</span>,
+      render: (row) => <span className="whitespace-nowrap text-xs tabular-nums text-[var(--md-sys-color-on-surface-variant)]">{row.startAt ? formatMasterDate(row.startAt, locale, false, timeZone) : "—"}</span>,
     },
     ];
   }, [locale, assetUrl, servers, timeZone]);

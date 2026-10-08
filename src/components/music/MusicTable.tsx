@@ -82,7 +82,7 @@ export default function MusicTable({ locale, songs, metrics, focus, titleOf, ass
       sortValue: titleOf,
       render: (song) => (
         <span className="flex min-w-[12rem] max-w-[18rem] items-center gap-2.5">
-          <img className="h-9 w-9 shrink-0 rounded-lg border border-[var(--mn-border)] object-cover" src={assetUrl(song.jacketUrl)} alt="" loading="lazy" />
+          <img className="h-9 w-9 shrink-0 rounded-lg border border-[var(--md-sys-color-outline-variant)] object-cover" src={assetUrl(song.jacketUrl)} alt="" loading="lazy" />
           <span className="truncate font-bold" title={titleOf(song)}>{titleOf(song)}</span>
         </span>
       ),
@@ -94,7 +94,7 @@ export default function MusicTable({ locale, songs, metrics, focus, titleOf, ass
       width: "3rem",
       render: (song) => {
         const track = songTrack(song, titleOf(song), assetUrl);
-        return track ? <AudioPlayButton locale={locale} track={track} size="sm" /> : <span className="text-[var(--mn-text-muted)]">{dash}</span>;
+        return track ? <AudioPlayButton locale={locale} track={track} size="sm" /> : <span className="text-[var(--md-sys-color-on-surface-variant)]">{dash}</span>;
       },
     },
     {
@@ -168,5 +168,5 @@ export default function MusicTable({ locale, songs, metrics, focus, titleOf, ass
 }
 
 function CreditCell({ value }: { value: string }) {
-  return <span className="block max-w-[11rem] truncate text-xs text-[var(--mn-text-muted)]" title={value}>{value || dash}</span>;
+  return <span className="block max-w-[11rem] truncate text-xs text-[var(--md-sys-color-on-surface-variant)]" title={value}>{value || dash}</span>;
 }

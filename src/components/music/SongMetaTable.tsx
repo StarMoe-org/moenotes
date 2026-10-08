@@ -1,4 +1,10 @@
 import { useMemo, useState } from "react";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import ToggleButton from "@mui/material/ToggleButton";
+import Typography from "@mui/material/Typography";
+import type { SxProps, Theme } from "@mui/material/styles";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import { t } from "@/i18n";
@@ -26,6 +32,24 @@ interface Props {
 }
 
 const MODES: readonly SongMetaMode[] = ["normal", "gekisou"];
+
+const tabSx: SxProps<Theme> = {
+  borderRadius: 2,
+  textTransform: "none",
+  fontSize: 12,
+  fontWeight: 700,
+  px: 1.5,
+  py: 0.75,
+  border: "1px solid var(--md-sys-color-outline-variant)",
+  color: "var(--md-sys-color-on-surface)",
+  "&.Mui-selected": {
+    bgcolor: "var(--md-sys-color-secondary-container)",
+    color: "var(--md-sys-color-on-secondary-container)",
+  },
+  "&.Mui-selected:hover": {
+    bgcolor: "var(--md-sys-color-secondary-container)",
+  },
+};
 const dash = "—";
 
 /** Every chart as a row (song facts built in, figures from music-data.json), with mode, difficulty, band and attribute filters. */
@@ -53,7 +77,7 @@ export default function SongMetaTable({ locale, servers, initialSongs }: Props) 
       sortValue: (row) => titleOf(row.song),
       render: (row) => (
         <span className="flex min-w-[11rem] max-w-[16rem] items-center gap-2.5">
-          <img className="h-9 w-9 shrink-0 rounded-lg border border-[var(--mn-border)] object-cover" src={assetUrl(row.song.jacketUrl)} alt="" loading="lazy" />
+          <img className="h-9 w-9 shrink-0 rounded-lg border border-[var(--md-sys-color-outline-variant)] object-cover" src={assetUrl(row.song.jacketUrl)} alt="" loading="lazy" />
           <span className="truncate font-bold" title={titleOf(row.song)}>{titleOf(row.song)}</span>
         </span>
       ),
@@ -115,22 +139,20 @@ export default function SongMetaTable({ locale, servers, initialSongs }: Props) 
     ] satisfies DataTableColumn<SongMetaRow>[] : []),
   ];
 
-  const segmented = "mn-segmented flex w-fit gap-1 rounded-full border border-[var(--mn-glass-border)] bg-[var(--mn-surface-strong)] p-1";
-  const segment = (active: boolean) => `mn-focus rounded-full px-3 py-1.5 text-xs font-bold transition ${active ? "bg-[var(--mn-accent-soft)] text-[var(--mn-text)]" : "text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)]"}`;
-
   return (
-    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
+    <MdMuiProvider>
+      <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
       <div className="space-y-4">
-        <div className="mn-paper space-y-4 p-4 sm:p-5">
+        <Card variant="outlined" sx={{ display: "flex", flexDirection: "column", gap: 2, p: { xs: 2, sm: 2.5 } }}>
           <div className="flex flex-wrap items-center gap-3">
-            <div className={segmented} role="group" aria-label={t(locale, "music.meta.mode")}>
+            <Box role="group" aria-label={t(locale, "music.meta.mode")} sx={{ display: "flex", width: "fit-content", gap: 0.5 }}>
               {MODES.map((entry) => (
-                <button key={entry} type="button" aria-pressed={mode === entry} onClick={() => setMode(entry)} className={segment(mode === entry)}>
+                <ToggleButton key={entry} value={entry} selected={mode === entry} onChange={() => setMode(entry)} sx={tabSx}>
                   {t(locale, `music.meta.modes.${entry}`)}
-                </button>
+                </ToggleButton>
               ))}
-            </div>
-            <span className="text-xs font-semibold text-[var(--mn-text-muted)]">{t(locale, "music.meta.count", { count: rows.length })}</span>
+            </Box>
+            <span className="text-xs font-semibold text-[var(--md-sys-color-on-surface-variant)]">{t(locale, "music.meta.count", { count: rows.length })}</span>
           </div>
           <FilterSection title={t(locale, "music.filters.difficulty")}>
             <div className="flex flex-wrap gap-2">
@@ -159,10 +181,10 @@ export default function SongMetaTable({ locale, servers, initialSongs }: Props) 
               getAttributeLabel={(value) => t(locale, `cards.attributes.${value}`)}
             />
           </div>
-          <p className="text-[11px] leading-5 text-[var(--mn-text-muted)]">
+          <p className="text-[11px] leading-5 text-[var(--md-sys-color-on-surface-variant)]">
             {status === "loading" ? t(locale, "music.meta.loading") : status === "error" ? t(locale, "music.chart.unavailable") : t(locale, `music.meta.hints.${mode}`)}
           </p>
-        </div>
+        </Card>
 
         <DataTable
           locale={locale}
@@ -176,13 +198,18 @@ export default function SongMetaTable({ locale, servers, initialSongs }: Props) 
           maxHeight="78vh"
           dense
           empty={(
-            <div className="mn-paper p-8 text-center">
-              <p className="font-[var(--mn-font-display)] text-xl text-[var(--mn-text)]">{t(locale, "music.emptyTitle")}</p>
-              <p className="mt-2 text-sm text-[var(--mn-text-muted)]">{t(locale, "music.emptyDescription")}</p>
-            </div>
+            <Card variant="outlined" sx={{ p: 4, textAlign: "center" }}>
+              <Typography sx={{ fontFamily: "var(--mn-font-display)", fontSize: 20, color: "var(--md-sys-color-on-surface)" }}>
+                {t(locale, "music.emptyTitle")}
+              </Typography>
+              <Typography variant="body2" sx={{ mt: 1, color: "var(--md-sys-color-on-surface-variant)" }}>
+                {t(locale, "music.emptyDescription")}
+              </Typography>
+            </Card>
           )}
         />
       </div>
-    </ServerScope>
+      </ServerScope>
+    </MdMuiProvider>
   );
 }

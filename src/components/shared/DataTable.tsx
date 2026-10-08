@@ -1,4 +1,16 @@
-import { useMemo, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
+import { useMemo, useState, type MouseEvent, type ReactNode } from "react";
+import Link from "@mui/material/Link";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
+import type { SxProps, Theme } from "@mui/material/styles";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 
@@ -60,14 +72,12 @@ export interface DataTableProps<T> {
   dense?: boolean;
 }
 
-const alignClass = { left: "text-left", center: "text-center", right: "text-right" } as const;
-
 function cellAlign<T>(column: DataTableColumn<T>): "left" | "center" | "right" {
   return column.align ?? (column.numeric ? "right" : "left");
 }
 
-function sizeStyle(width: string | number | undefined): CSSProperties | undefined {
-  return width === undefined ? undefined : { width, minWidth: width };
+function sizeStyle(width: string | number | undefined): { width?: string | number; minWidth?: string | number } {
+  return width === undefined ? {} : { width, minWidth: width };
 }
 
 /** Rows ordered by a column's sortValue; missing values last in either direction, ties keep source order. */
@@ -138,8 +148,6 @@ export default function DataTable<T>({
     if (!controlled) setInternalSort(next);
     onSortChange?.(next);
   };
-  const cellPad = dense ? "px-2.5 py-1.5" : "px-3 py-2.5";
-  const stickyCell = "sticky left-0 z-[1] bg-[var(--mn-paper)] shadow-[1px_0_0_var(--mn-border)]";
 
   const openRow = (row: T, event: MouseEvent<HTMLTableRowElement>) => {
     onRowClick?.(row, event);
@@ -153,80 +161,124 @@ export default function DataTable<T>({
   };
 
   return (
-    <div
-      className={`mn-data-table relative w-full overflow-x-auto rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)] ${maxHeight !== undefined ? "overflow-y-auto" : ""} ${className}`}
-      style={maxHeight !== undefined ? { maxHeight } : undefined}
-    >
-      <table className="w-full border-separate border-spacing-0 text-sm">
-        {caption ? <caption className="sr-only">{caption}</caption> : null}
-        <thead>
-          <tr>
-            {columns.map((column) => {
-              const active = sort?.key === column.key;
-              const ariaSort = active ? (sort!.direction === "asc" ? "ascending" : "descending") : column.sortValue ? "none" : undefined;
-              const align = cellAlign(column);
+    <MdMuiProvider>
+      <TableContainer
+        className={className}
+        sx={{
+          borderRadius: 4,
+          border: "1px solid var(--md-sys-color-outline-variant)",
+          bgcolor: "var(--md-sys-color-surface)",
+          ...(maxHeight !== undefined ? { maxHeight } : {}),
+        }}
+      >
+        <Table
+          size={dense ? "small" : "medium"}
+          sx={{
+            borderCollapse: "separate",
+            borderSpacing: 0,
+            "& .MuiTableCell-root": { borderColor: "var(--md-sys-color-outline-variant)" },
+            "& .MuiTableRow-root:last-child .MuiTableCell-root": { borderBottom: "none" },
+          }}
+        >
+          {caption ? <caption className="sr-only">{caption}</caption> : null}
+          <TableHead>
+            <TableRow>
+              {columns.map((column) => {
+                const active = sort?.key === column.key;
+                const ariaSort = active ? (sort!.direction === "asc" ? "ascending" : "descending") : column.sortValue ? "none" : undefined;
+                const align = cellAlign(column);
+                return (
+                  <TableCell
+                    key={column.key}
+                    component="th"
+                    scope="col"
+                    aria-sort={ariaSort}
+                    align={align}
+                    sx={{
+                      ...sizeStyle(column.width),
+                      position: "sticky",
+                      top: stickyTop,
+                      ...(column.sticky ? { left: 0, zIndex: 3, boxShadow: "1px 0 0 var(--md-sys-color-outline-variant)" } : { zIndex: 2 }),
+                      bgcolor: "var(--md-sys-color-surface-container-high)",
+                      whiteSpace: "nowrap",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      color: "var(--md-sys-color-on-surface-variant)",
+                    }}
+                  >
+                    {column.sortValue ? (
+                      <button
+                        type="button"
+                        onClick={() => changeSort(column)}
+                        className={`inline-flex cursor-pointer items-center gap-1 rounded-md border-0 bg-transparent p-0 text-xs font-bold uppercase tracking-wide transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--md-sys-color-primary)] hover:text-[var(--md-sys-color-on-surface)] ${active ? "text-[var(--md-sys-color-primary)]" : ""} ${align === "right" ? "flex-row-reverse" : ""}`}
+                        aria-label={active && typeof column.header === "string" && ascending && descending ? `${column.header}: ${sort!.direction === "asc" ? ascending : descending}` : undefined}
+                      >
+                        <span>{column.header}</span>
+                        <span aria-hidden="true" className={`inline-flex leading-none ${active ? "" : "opacity-30"}`}>
+                          {active ? (
+                            sort!.direction === "asc" ? <ArrowUpwardIcon sx={{ fontSize: 14 }} /> : <ArrowDownwardIcon sx={{ fontSize: 14 }} />
+                          ) : (
+                            <UnfoldMoreIcon sx={{ fontSize: 14 }} />
+                          )}
+                        </span>
+                      </button>
+                    ) : column.header}
+                  </TableCell>
+                );
+              })}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {ordered.map((row, index) => {
+              const href = rowHref?.(row);
+              const clickable = Boolean(href || onRowClick);
               return (
-                <th
-                  key={column.key}
-                  scope="col"
-                  aria-sort={ariaSort}
-                  style={{ ...sizeStyle(column.width), top: stickyTop }}
-                  className={`sticky z-[2] whitespace-nowrap border-b border-[var(--mn-border)] bg-[var(--mn-surface-strong)] ${cellPad} text-xs font-bold uppercase tracking-wide text-[var(--mn-text-muted)] ${alignClass[align]} ${column.sticky ? "left-0 z-[3] shadow-[1px_0_0_var(--mn-border)]" : ""}`}
+                <TableRow
+                  key={rowKey(row, index)}
+                  hover={clickable}
+                  onClick={clickable ? (event) => openRow(row, event) : undefined}
+                  onAuxClick={href ? (event) => { if (event.button === 1) openRow(row, event); } : undefined}
+                  sx={clickable ? { cursor: "pointer" } : undefined}
                 >
-                  {column.sortValue ? (
-                    <button
-                      type="button"
-                      onClick={() => changeSort(column)}
-                      className={`mn-focus inline-flex items-center gap-1 rounded-md uppercase transition hover:text-[var(--mn-text)] ${active ? "text-[var(--mn-accent-deep)]" : ""} ${align === "right" ? "flex-row-reverse" : ""}`}
-                      aria-label={active && typeof column.header === "string" && ascending && descending ? `${column.header}: ${sort!.direction === "asc" ? ascending : descending}` : undefined}
-                    >
-                      <span>{column.header}</span>
-                      <span aria-hidden="true" className={`text-sm leading-none ${active ? "" : "opacity-30"}`}>
-                        {active ? (sort!.direction === "asc" ? "↑" : "↓") : "↕"}
-                      </span>
-                    </button>
-                  ) : column.header}
-                </th>
+                  {columns.map((column, columnIndex) => {
+                    const content = column.render ? column.render(row, index) : String((row as Record<string, unknown>)[column.key] ?? "");
+                    const align = cellAlign(column);
+                    const linked = href && columnIndex === 0;
+                    const cellSx: SxProps<Theme> = {
+                      ...sizeStyle(column.width),
+                      fontWeight: 500,
+                      verticalAlign: "middle",
+                      ...(column.numeric ? { fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" } : {}),
+                      ...(column.sticky ? {
+                        position: "sticky",
+                        left: 0,
+                        zIndex: 1,
+                        bgcolor: "var(--md-sys-color-surface)",
+                        boxShadow: "1px 0 0 var(--md-sys-color-outline-variant)",
+                      } : {}),
+                    };
+                    return columnIndex === 0 ? (
+                      <TableCell key={column.key} component="th" scope="row" align={align} className={column.className} sx={cellSx}>
+                        {linked ? (
+                          <Link href={href} underline="hover" sx={{ color: "inherit", "&:hover": { color: "var(--md-sys-color-primary)" } }}>
+                            {content}
+                          </Link>
+                        ) : content}
+                      </TableCell>
+                    ) : (
+                      <TableCell key={column.key} align={align} className={column.className} sx={cellSx}>
+                        {content}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
               );
             })}
-          </tr>
-        </thead>
-        <tbody>
-          {ordered.map((row, index) => {
-            const href = rowHref?.(row);
-            const clickable = Boolean(href || onRowClick);
-            return (
-              <tr
-                key={rowKey(row, index)}
-                onClick={clickable ? (event) => openRow(row, event) : undefined}
-                onAuxClick={href ? (event) => { if (event.button === 1) openRow(row, event); } : undefined}
-                className={`group ${clickable ? "cursor-pointer" : ""}`}
-              >
-                {columns.map((column, columnIndex) => {
-                  const content = column.render ? column.render(row, index) : String((row as Record<string, unknown>)[column.key] ?? "");
-                  const align = cellAlign(column);
-                  const linked = href && columnIndex === 0;
-                  const Cell = columnIndex === 0 ? "th" : "td";
-                  return (
-                    <Cell
-                      key={column.key}
-                      scope={columnIndex === 0 ? "row" : undefined}
-                      style={sizeStyle(column.width)}
-                      className={`border-b border-[var(--mn-border)]/50 ${cellPad} align-middle font-medium text-[var(--mn-text)] transition-colors group-last:border-b-0 ${clickable ? "group-hover:bg-[var(--mn-cream-deep)]" : ""} ${alignClass[align]} ${column.numeric ? "font-mono tabular-nums whitespace-nowrap" : ""} ${column.sticky ? stickyCell : ""} ${column.className ?? ""}`}
-                    >
-                      {linked ? (
-                        <a href={href} className="mn-focus rounded-sm hover:text-[var(--mn-accent-deep)]">
-                          {content}
-                        </a>
-                      ) : content}
-                    </Cell>
-                  );
-                })}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </MdMuiProvider>
   );
 }
