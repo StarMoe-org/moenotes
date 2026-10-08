@@ -1,21 +1,27 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import Box from "@mui/material/Box";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemText from "@mui/material/ListItemText";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import type { SxProps, Theme } from "@mui/material/styles";
 import type { AppLocale } from "@/config/locales";
 import { localizePath } from "@/i18n/routing";
 import { t } from "@/i18n";
-import { lockBodyScroll, unlockBodyScroll } from "@/lib/overlay/body-scroll-lock";
+import { isTopOverlayLayer } from "@/lib/overlay/layer-stack";
 import { useOverlay } from "@/lib/overlay/use-overlay";
+import { useOverlayLayer } from "@/lib/overlay/use-overlay-layer";
 import { buildStaticSearchIndex } from "@/lib/search/static-index";
 import { searchContent } from "@/lib/search/client";
 import { CONTENT_KIND_ORDER, KIND_LABEL_KEY } from "@/lib/search/kinds";
 import { getRoutePathById } from "@/lib/route/registry";
-import { useSpringAnimation } from "@/lib/animation/use-animation";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 
 interface CommandPaletteProps {
   locale: AppLocale;
 }
-
-const focusableSelector = "input, a[href], button:not([disabled]), [tabindex]:not([tabindex='-1'])";
 
 /** One flat list row: a static page or a content entity, both ready to navigate to. */
 interface PaletteRow {
@@ -26,18 +32,31 @@ interface PaletteRow {
   href: `/${string}`;
 }
 
+const rowSx: SxProps<Theme> = {
+  borderRadius: 3,
+  "&.Mui-selected": {
+    bgcolor: "var(--md-sys-color-secondary-container)",
+    color: "var(--md-sys-color-on-secondary-container)",
+  },
+  "&.Mui-selected:hover": {
+    bgcolor: "var(--md-sys-color-secondary-container)",
+  },
+  "&.Mui-selected .MuiListItemText-secondary": {
+    color: "inherit",
+    opacity: 0.75,
+  },
+};
+
 export default function CommandPalette({ locale }: CommandPaletteProps) {
   const { isOpen, close } = useOverlay("command");
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const [content, setContent] = useState<PaletteRow[]>([]);
   const reactId = useId();
-  const lockKey = `command-${reactId}`;
-  const titleId = `${lockKey}-title`;
-  const inputRef = useRef<HTMLInputElement>(null);
-  const activeOptionRef = useRef<HTMLAnchorElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const restoreFocusRef = useRef<HTMLElement | null>(null);
+  const baseId = `command-${reactId}`;
+  const titleId = `${baseId}-title`;
+  const activeOptionRef = useRef<HTMLElement | null>(null);
+  useOverlayLayer("command", isOpen);
   const staticRows = useMemo<PaletteRow[]>(() =>
     buildStaticSearchIndex().map((item) => ({
       id: item.id,
@@ -77,8 +96,6 @@ export default function CommandPalette({ locale }: CommandPaletteProps) {
 
   const flat = useMemo(() => groups.flatMap((group) => group.rows), [groups]);
 
-  const { modalTransition, isDisabled } = useSpringAnimation();
-
   useEffect(() => {
     setActiveIndex(flat.length > 0 ? 0 : -1);
   }, [flat]);
@@ -91,24 +108,10 @@ export default function CommandPalette({ locale }: CommandPaletteProps) {
     return () => cancelAnimationFrame(raf);
   }, [activeIndex, flat, isOpen]);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    restoreFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    lockBodyScroll(lockKey);
-    const raf = requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }));
-    return () => {
-      cancelAnimationFrame(raf);
-      unlockBodyScroll(lockKey);
-      const restoreTarget = restoreFocusRef.current;
-      if (restoreTarget && document.contains(restoreTarget)) {
-        requestAnimationFrame(() => restoreTarget.focus({ preventScroll: true }));
-      }
-    };
-  }, [isOpen, lockKey]);
+  const setActiveOptionRef = (el: HTMLElement | null) => {
+    activeOptionRef.current = el;
+  };
 
-  const panelInitial = isDisabled ? {} : { opacity: 0, scale: 0.95, y: 10 };
-  const panelAnimate = { opacity: 1, scale: 1, y: 0 };
-  const panelExit = isDisabled ? {} : { opacity: 0, scale: 0.95, y: 10 };
   const activeItem = activeIndex >= 0 ? flat[activeIndex] : undefined;
   const searchPagePath = localizePath(getRoutePathById("search"), locale);
 
@@ -125,6 +128,11 @@ export default function CommandPalette({ locale }: CommandPaletteProps) {
     window.location.href = activeItem.href;
   };
 
+  const handleClose = (_event: object, reason: string) => {
+    if (reason === "escapeKeyDown" && !isTopOverlayLayer("command")) return;
+    close();
+  };
+
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.nativeEvent.isComposing) return;
     if (event.key === "ArrowDown") {
@@ -136,130 +144,110 @@ export default function CommandPalette({ locale }: CommandPaletteProps) {
     } else if (event.key === "Enter") {
       event.preventDefault();
       navigateActive();
-    } else if (event.key === "Escape") {
-      event.preventDefault();
-      close();
-    } else if (event.key === "Tab") {
-      trapFocus(event.nativeEvent, panelRef.current);
     }
   };
 
   let rowOffset = 0;
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex justify-center items-start px-4 pt-[12vh]">
-          <motion.div
-            className="absolute inset-0 mn-overlay-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            onClick={close}
+    <MdMuiProvider>
+      <Dialog
+        open={isOpen}
+        onClose={handleClose}
+        fullWidth
+        maxWidth="sm"
+        aria-labelledby={titleId}
+        sx={{ "& .MuiDialog-container": { alignItems: "flex-start" } }}
+        slotProps={{ paper: { sx: { mt: "12vh", mb: 2, borderRadius: 7 } } }}
+      >
+        <DialogTitle
+          id={titleId}
+          sx={{ position: "absolute", width: 1, height: 1, p: 0, m: -1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap", border: 0 }}
+        >
+          {t(locale, "shell.openCommandPalette")}
+        </DialogTitle>
+        <Box onKeyDown={handleKeyDown}>
+          <TextField
+            autoFocus
+            fullWidth
+            variant="standard"
+            value={query}
+            onChange={(event) => setQuery(event.currentTarget.value)}
+            placeholder={t(locale, "shell.commandPlaceholder")}
+            slotProps={{ input: { disableUnderline: true, sx: { px: 3, py: 2, fontSize: 18, fontWeight: 700 } },
+              htmlInput: {
+              role: "combobox",
+              "aria-autocomplete": "list",
+              "aria-expanded": true,
+              "aria-controls": `${baseId}-listbox`,
+              "aria-activedescendant": activeItem ? `${baseId}-option-${activeItem.id}` : undefined,
+              "aria-label": t(locale, "shell.commandPlaceholder"),
+              } }}
+            sx={{ borderBottom: "1px solid var(--md-sys-color-outline-variant)" }}
           />
-
-          <motion.div
-            ref={panelRef}
-            className="mn-overlay-panel relative z-10 w-full max-w-2xl overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]"
-            initial={panelInitial}
-            animate={panelAnimate}
-            exit={panelExit}
-            transition={modalTransition}
-            onClick={(event) => event.stopPropagation()}
-            onKeyDown={handleKeyDown}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId}
-          >
-            <h2 id={titleId} className="sr-only">{t(locale, "shell.openCommandPalette")}</h2>
-            <input
-              ref={inputRef}
-              value={query}
-              onChange={(event) => setQuery(event.currentTarget.value)}
-              placeholder={t(locale, "shell.commandPlaceholder")}
-              aria-label={t(locale, "shell.commandPlaceholder")}
-              className="w-full border-b-[1.5px] border-[var(--mn-border)] bg-[var(--mn-surface-strong)] px-6 py-4 text-lg font-bold text-[var(--mn-text)] outline-none placeholder:text-[var(--mn-text-muted)]"
-              role="combobox"
-              aria-autocomplete="list"
-              aria-expanded="true"
-              aria-controls={`${lockKey}-listbox`}
-              aria-activedescendant={activeItem ? `${lockKey}-option-${activeItem.id}` : undefined}
-            />
-            <div id={`${lockKey}-listbox`} className="max-h-[50vh] overflow-y-auto p-2" role="listbox">
-              {flat.length === 0 ? (
-                q ? (
-                  <a
-                    href={`${searchPagePath}?q=${encodeURIComponent(query.trim())}`}
-                    className="mn-command-option block rounded-full border-2 border-transparent px-5 py-3 text-sm text-[var(--mn-text)]"
-                    onClick={close}
-                  >
-                    {t(locale, "search.viewAllResults")}
-                  </a>
-                ) : (
-                  <p className="px-4 py-8 text-center text-sm font-bold text-[var(--mn-text-muted)]">
-                    {t(locale, "shell.noCommandResults")}
-                  </p>
-                )
+          <Box id={`${baseId}-listbox`} role="listbox" sx={{ maxHeight: "50vh", overflowY: "auto", p: 1 }}>
+            {flat.length === 0 ? (
+              q ? (
+                <ListItemButton component="a" href={`${searchPagePath}?q=${encodeURIComponent(query.trim())}`} onClick={close} sx={rowSx}>
+                  <ListItemText
+                    primary={t(locale, "search.viewAllResults")}
+                    slotProps={{ primary: { sx: { fontSize: 14, fontWeight: 700 } } }}
+                  />
+                </ListItemButton>
               ) : (
-                groups.map((group) => {
-                  const start = rowOffset;
-                  rowOffset += group.rows.length;
-                  return (
-                    <div key={group.kind}>
-                      {group.labelKey ? (
-                        <p className="px-5 pb-1 pt-3 text-xs font-bold uppercase tracking-wider text-[var(--mn-text-muted)] first:pt-1">
-                          {t(locale, group.labelKey)}
-                        </p>
-                      ) : null}
-                      {group.rows.map((item, index) => {
-                        const flatIndex = start + index;
-                        const active = flatIndex === activeIndex;
-                        return (
-                          <a
-                            ref={active ? activeOptionRef : undefined}
-                            id={`${lockKey}-option-${item.id}`}
-                            key={item.id}
-                            href={item.href}
-                            role="option"
-                            aria-selected={active}
-                            className={`mn-command-option block rounded-full border-2 px-5 py-3 text-sm text-[var(--mn-text)] hover:border-[var(--mn-border)] hover:bg-[var(--mn-cream-deep)] hover:shadow-[var(--mn-shadow-stamp-sm)] ${active ? "border-[var(--mn-border)] bg-[var(--mn-cream-deep)] shadow-[var(--mn-shadow-stamp-sm)]" : "border-transparent"}`}
-                            onMouseEnter={() => setActiveIndex(flatIndex)}
-                            onClick={close}
-                          >
-                            <span className="font-black">{item.label}</span>
-                            <span className="ml-3 text-xs font-bold text-[var(--mn-text-muted)]">{item.href}</span>
-                          </a>
-                        );
-                      })}
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+                <Typography sx={{ px: 2, py: 4, textAlign: "center", fontSize: 14, fontWeight: 700, color: "var(--md-sys-color-on-surface-variant)" }}>
+                  {t(locale, "shell.noCommandResults")}
+                </Typography>
+              )
+            ) : (
+              groups.map((group) => {
+                const start = rowOffset;
+                rowOffset += group.rows.length;
+                return (
+                  <div key={group.kind}>
+                    {group.labelKey ? (
+                      <Typography
+                        variant="caption"
+                        sx={{ display: "block", px: 2.5, pb: 0.5, pt: 1.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--md-sys-color-on-surface-variant)" }}
+                      >
+                        {t(locale, group.labelKey)}
+                      </Typography>
+                    ) : null}
+                    {group.rows.map((item, index) => {
+                      const flatIndex = start + index;
+                      const active = flatIndex === activeIndex;
+                      return (
+                        <ListItemButton
+                          key={item.id}
+                          ref={active ? setActiveOptionRef : undefined}
+                          id={`${baseId}-option-${item.id}`}
+                          component="a"
+                          href={item.href}
+                          role="option"
+                          aria-selected={active}
+                          selected={active}
+                          onMouseEnter={() => setActiveIndex(flatIndex)}
+                          onClick={close}
+                          sx={rowSx}
+                        >
+                          <ListItemText
+                            primary={item.label}
+                            secondary={item.href}
+                            slotProps={{
+                              primary: { sx: { fontSize: 14, fontWeight: 800 } },
+                              secondary: { className: "font-mono", sx: { fontSize: 12 } },
+                            }}
+                          />
+                        </ListItemButton>
+                      );
+                    })}
+                  </div>
+                );
+              })
+            )}
+          </Box>
+        </Box>
+      </Dialog>
+    </MdMuiProvider>
   );
-}
-
-function getFocusableElements(container: HTMLElement): HTMLElement[] {
-  return Array.from(container.querySelectorAll<HTMLElement>(focusableSelector));
-}
-
-function trapFocus(event: globalThis.KeyboardEvent, panel: HTMLElement | null): void {
-  if (!panel) return;
-  const focusable = getFocusableElements(panel);
-  if (focusable.length === 0) return;
-  const first = focusable[0];
-  const last = focusable[focusable.length - 1];
-  if (!first || !last) return;
-  if (event.shiftKey && document.activeElement === first) {
-    event.preventDefault();
-    last.focus({ preventScroll: true });
-  } else if (!event.shiftKey && document.activeElement === last) {
-    event.preventDefault();
-    first.focus({ preventScroll: true });
-  }
 }
