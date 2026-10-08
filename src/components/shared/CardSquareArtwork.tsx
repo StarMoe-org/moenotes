@@ -69,11 +69,11 @@ function SquareImage({ sources, frameUrl, typeIconUrl, attributeLabel, label, cl
   const [attempt, setAttempt] = useState(0);
   const source = sources[attempt];
   return (
-    <div className={`relative aspect-square overflow-hidden rounded-[12%] bg-[var(--mn-cream-deep)] ${className}`.trim()}>
+    <div className={`relative aspect-square overflow-hidden rounded-[12%] bg-[var(--md-sys-color-surface-container-high)] ${className}`.trim()}>
       {source ? (
         <img className="h-full w-full object-cover" crossOrigin="anonymous" src={assetUrl(source)} alt={label} loading="lazy" onError={() => setAttempt((current) => current + 1)} />
       ) : (
-        <span className="grid h-full place-items-center p-2 text-center text-xs font-medium text-[var(--mn-text-muted)]">{label}</span>
+        <span className="grid h-full place-items-center p-2 text-center text-xs font-medium text-[var(--md-sys-color-on-surface-variant)]">{label}</span>
       )}
       <img className="pointer-events-none absolute inset-0 h-full w-full" src={frameUrl} alt="" aria-hidden="true" />
       <img className="absolute left-[6%] top-[6%] h-[22%] w-[22%] drop-shadow-sm" src={typeIconUrl} alt={attributeLabel} />

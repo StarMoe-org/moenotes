@@ -1,4 +1,8 @@
 import { useEffect, useCallback, useMemo } from "react";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import Typography from "@mui/material/Typography";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import { t } from "@/i18n";
@@ -107,12 +111,18 @@ export default function CardsExplorer({ locale, initialCards, servers, skillName
 
 function EmptyState({ locale, onReset }: { locale: AppLocale; onReset: () => void }) {
   return (
-    <div className="mn-paper p-8 text-center sm:p-12">
-      <h3 className="font-[var(--mn-font-display)] text-2xl text-[var(--mn-text)]">{t(locale, "cards.emptyTitle")}</h3>
-      <p className="mx-auto mt-3 max-w-xl text-sm font-medium leading-7 text-[var(--mn-text-muted)]">{t(locale, "cards.emptyDescription")}</p>
-      <button type="button" onClick={onReset} className="mn-focus mn-stamp-press mt-6 rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-6 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]">
-        {t(locale, "cards.reset")}
-      </button>
-    </div>
+    <MdMuiProvider>
+      <Card variant="outlined" sx={{ p: { xs: 4, sm: 6 }, textAlign: "center" }}>
+        <Typography sx={{ fontFamily: "var(--mn-font-display)", fontSize: 24, color: "var(--md-sys-color-on-surface)" }}>
+          {t(locale, "cards.emptyTitle")}
+        </Typography>
+        <Typography variant="body2" sx={{ mx: "auto", mt: 1.5, maxWidth: "36rem", fontWeight: 500, lineHeight: 1.75, color: "var(--md-sys-color-on-surface-variant)" }}>
+          {t(locale, "cards.emptyDescription")}
+        </Typography>
+        <Button variant="outlined" onClick={onReset} sx={{ mt: 3 }}>
+          {t(locale, "cards.reset")}
+        </Button>
+      </Card>
+    </MdMuiProvider>
   );
 }

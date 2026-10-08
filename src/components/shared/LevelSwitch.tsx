@@ -1,4 +1,12 @@
 import { useId, type ReactNode } from "react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Slider from "@mui/material/Slider";
+import ToggleButton from "@mui/material/ToggleButton";
+import Typography from "@mui/material/Typography";
+import type { SxProps, Theme } from "@mui/material/styles";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 
 export interface LevelSwitchProps {
   /** Visible label; also the group's / slider's accessible name. */
@@ -23,6 +31,26 @@ export interface LevelSwitchProps {
   maxLabel?: string;
 }
 
+const segmentSx: SxProps<Theme> = {
+  borderRadius: 2,
+  textTransform: "none",
+  fontSize: 12,
+  fontWeight: 700,
+  fontVariantNumeric: "tabular-nums",
+  minWidth: 36,
+  px: 1.25,
+  py: 0.5,
+  border: "1px solid var(--md-sys-color-outline-variant)",
+  color: "var(--md-sys-color-on-surface)",
+  "&.Mui-selected": {
+    bgcolor: "var(--md-sys-color-secondary-container)",
+    color: "var(--md-sys-color-on-secondary-container)",
+  },
+  "&.Mui-selected:hover": {
+    bgcolor: "var(--md-sys-color-secondary-container)",
+  },
+};
+
 /** Index of `value` among `options`, or of the closest option when it is not one of them. */
 export function levelIndex(options: readonly number[], value: number): number {
   const exact = options.indexOf(value);
@@ -41,26 +69,24 @@ export default function LevelSwitch(props: LevelSwitchProps) {
 
 function SegmentedSwitch({ label, value, options, formatOption = String, onChange }: LevelSwitchProps) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-      <span className="text-sm font-semibold text-[var(--mn-text-muted)]">{label}</span>
-      <div role="group" aria-label={label} className="flex gap-1 rounded-xl border border-[var(--mn-border)] bg-[var(--mn-surface-strong)] p-1 shadow-[var(--mn-shadow-stamp-sm)]">
-        {options.map((option, index) => (
-          <button
-            key={option}
-            type="button"
-            onClick={() => onChange(option)}
-            aria-pressed={value === option}
-            className={`mn-focus min-w-9 rounded-xl px-2.5 py-1 font-mono text-xs font-bold transition ${
-              value === option
-                ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]"
-                : "text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)]"
-            }`}
-          >
-            {formatOption(option, index)}
-          </button>
-        ))}
-      </div>
-    </div>
+    <MdMuiProvider>
+      <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", columnGap: 2, rowGap: 1 }}>
+        <Typography variant="body2" sx={{ fontWeight: 600, color: "var(--md-sys-color-on-surface-variant)" }}>{label}</Typography>
+        <Box role="group" aria-label={label} sx={{ display: "flex", gap: 0.5 }}>
+          {options.map((option, index) => (
+            <ToggleButton
+              key={option}
+              value={option}
+              selected={value === option}
+              onChange={() => onChange(option)}
+              sx={segmentSx}
+            >
+              {formatOption(option, index)}
+            </ToggleButton>
+          ))}
+        </Box>
+      </Box>
+    </MdMuiProvider>
   );
 }
 
@@ -68,66 +94,66 @@ function SliderSwitch({ label, value, options, formatOption = String, formatValu
   const labelId = useId();
   const last = options.length - 1;
   const index = levelIndex(options, value);
-  const progress = last > 0 ? (index / last) * 100 : 100;
   const pick = (next: number) => {
     const option = options[Math.min(Math.max(next, 0), last)];
     if (option !== undefined && option !== value) onChange(option);
   };
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between gap-3 text-sm font-semibold">
-        <span id={labelId} className="text-[var(--mn-text-muted)]">{label}</span>
-        <span className="font-mono text-[var(--mn-text)]">{formatValue ? formatValue(value, index) : formatOption(options[index] ?? value, index)}</span>
-      </div>
-      <div className="flex items-center gap-2.5">
-        <RoundButton label={decreaseLabel ?? ""} disabled={index <= 0} onClick={() => pick(index - 1)}>
-          <path strokeLinecap="round" d="M5 12h14" />
-        </RoundButton>
-        <input
-          type="range"
-          min={0}
-          max={Math.max(last, 0)}
-          step={1}
-          value={index}
-          onChange={(event) => pick(Number(event.target.value))}
-          aria-labelledby={labelId}
-          aria-valuetext={formatOption(options[index] ?? value, index)}
-          className="mn-focus h-1.5 min-w-0 flex-1 cursor-pointer appearance-none rounded-lg accent-[var(--mn-accent)]"
-          style={{
-            background: `linear-gradient(to right, var(--mn-accent) 0%, var(--mn-accent) ${progress}%, var(--mn-cream-deep) ${progress}%, var(--mn-cream-deep) 100%)`,
-          }}
-        />
-        <RoundButton label={increaseLabel ?? ""} disabled={index >= last} onClick={() => pick(index + 1)}>
-          <path strokeLinecap="round" d="M12 5v14M5 12h14" />
-        </RoundButton>
-        {maxLabel ? (
-          <button
-            type="button"
-            disabled={index >= last}
-            onClick={() => pick(last)}
-            className="mn-focus shrink-0 rounded-xl border border-[var(--mn-border)] bg-[var(--mn-paper)] px-3 py-1 text-xs font-bold text-[var(--mn-accent-deep)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:bg-[var(--mn-accent-soft)] disabled:cursor-default disabled:opacity-40 disabled:hover:bg-[var(--mn-paper)]"
-          >
-            {maxLabel}
-          </button>
-        ) : null}
-      </div>
-    </div>
+    <MdMuiProvider>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5 }}>
+          <Typography id={labelId} variant="body2" sx={{ fontWeight: 600, color: "var(--md-sys-color-on-surface-variant)" }}>{label}</Typography>
+          <Typography variant="body2" sx={{ fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "var(--md-sys-color-on-surface)" }}>{formatValue ? formatValue(value, index) : formatOption(options[index] ?? value, index)}</Typography>
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+          <RoundButton label={decreaseLabel ?? ""} disabled={index <= 0} onClick={() => pick(index - 1)}>
+            <path strokeLinecap="round" d="M5 12h14" />
+          </RoundButton>
+          <Slider
+            min={0}
+            max={Math.max(last, 0)}
+            step={1}
+            value={index}
+            onChange={(_event, next) => pick(Array.isArray(next) ? next[0] ?? 0 : next)}
+            aria-labelledby={labelId}
+            getAriaValueText={(thumbValue) => formatOption(options[thumbValue] ?? value, thumbValue)}
+            sx={{ flex: 1, minWidth: 0 }}
+          />
+          <RoundButton label={increaseLabel ?? ""} disabled={index >= last} onClick={() => pick(index + 1)}>
+            <path strokeLinecap="round" d="M12 5v14M5 12h14" />
+          </RoundButton>
+          {maxLabel ? (
+            <Button variant="outlined" size="small" disabled={index >= last} onClick={() => pick(last)} sx={{ flexShrink: 0 }}>
+              {maxLabel}
+            </Button>
+          ) : null}
+        </Box>
+      </Box>
+    </MdMuiProvider>
   );
 }
 
 export function RoundButton({ label, disabled, onClick, children }: { label: string; disabled: boolean; onClick: () => void; children: ReactNode }) {
   return (
-    <button
-      type="button"
-      aria-label={label}
-      disabled={disabled}
-      onClick={onClick}
-      className="mn-focus grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:text-[var(--mn-text)] disabled:cursor-default disabled:opacity-40"
-    >
-      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-        {children}
-      </svg>
-    </button>
+    <MdMuiProvider>
+      <IconButton
+        aria-label={label}
+        disabled={disabled}
+        onClick={onClick}
+        sx={{
+          width: 32,
+          height: 32,
+          flexShrink: 0,
+          borderRadius: 3,
+          border: "1px solid var(--md-sys-color-outline-variant)",
+          color: "var(--md-sys-color-on-surface-variant)",
+        }}
+      >
+        <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+          {children}
+        </svg>
+      </IconButton>
+    </MdMuiProvider>
   );
 }

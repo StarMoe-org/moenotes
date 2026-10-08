@@ -1,4 +1,11 @@
 import { useMemo, useState } from "react";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import Link from "@mui/material/Link";
+import ToggleButton from "@mui/material/ToggleButton";
+import Typography from "@mui/material/Typography";
+import type { SxProps, Theme } from "@mui/material/styles";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import UpgradeCostTable, { type UpgradeStep } from "@/components/shared/UpgradeCostTable";
@@ -21,6 +28,24 @@ const LABEL_KEY: Record<CardMaterialKind, string> = {
   limitBreak: "supportCards.materials.limitBreak",
 };
 
+const tabSx: SxProps<Theme> = {
+  borderRadius: 2,
+  textTransform: "none",
+  fontSize: 12,
+  fontWeight: 700,
+  px: 1.5,
+  py: 0.5,
+  border: "1px solid var(--md-sys-color-outline-variant)",
+  color: "var(--md-sys-color-on-surface)",
+  "&.Mui-selected": {
+    bgcolor: "var(--md-sys-color-secondary-container)",
+    color: "var(--md-sys-color-on-secondary-container)",
+  },
+  "&.Mui-selected:hover": {
+    bgcolor: "var(--md-sys-color-secondary-container)",
+  },
+};
+
 /** A card's upgrade materials: one tab per kind (training, awakening, skills…), each a step-by-step cost table. */
 export default function CardMaterialsPanel({ locale, groups }: Props) {
   const assetUrl = useAssetUrl();
@@ -33,51 +58,57 @@ export default function CardMaterialsPanel({ locale, groups }: Props) {
   })), [current, assetUrl]);
 
   return (
-    <div className="mn-paper overflow-hidden">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_6%,transparent)] to-transparent px-6 py-4 sm:px-8">
-        <h3 className="font-[var(--mn-font-display)] text-xl text-[var(--mn-text)] sm:text-2xl">{t(locale, "cards.materials.title")}</h3>
-        {groups.length > 1 && (
-          <div className="mn-segmented flex max-w-full flex-wrap gap-1 rounded-full border border-[var(--mn-glass-border)] bg-[var(--mn-surface-strong)] p-1" role="group" aria-label={t(locale, "cards.materials.title")}>
-            {groups.map((group) => (
-              <button
-                key={group.kind}
-                type="button"
-                aria-pressed={group === current}
-                onClick={() => setActive(group.kind)}
-                className={`mn-focus rounded-full px-3 py-1 text-xs font-bold transition ${group === current ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)]"}`}
-              >
-                {t(locale, LABEL_KEY[group.kind])}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="space-y-3 p-6 sm:p-8">
-        {!current ? (
-          <p className="text-sm font-medium text-[var(--mn-text-muted)]">{t(locale, "cards.materials.empty")}</p>
-        ) : (
-          <>
-            {current.alternative && (
-              <p className="text-xs font-medium text-[var(--mn-text-muted)]">
-                {t(locale, "cards.materials.alternative")}{" "}
-                {current.alternative.link
-                  ? <a className="mn-focus font-bold text-[var(--mn-accent-deep)] underline decoration-dotted underline-offset-4" href={localizePath(entityLinkPath(current.alternative.link), locale)}>{current.alternative.name}</a>
-                  : <span className="font-bold text-[var(--mn-text)]">{current.alternative.name}</span>}
-              </p>
-            )}
-            <UpgradeCostTable
-              locale={locale}
-              steps={steps}
-              cumulative
-              stepHeader={t(locale, current.kind === "limitBreak" ? "supportCards.materials.limitBreak" : current.kind === "liveSkill" || current.kind === "gekisouSkill" ? "cards.growth.skillLevel" : `cards.materials.kinds.${current.kind}`)}
-              costHeader={t(locale, "cards.materials.cost")}
-              emptyText={t(locale, "cards.materials.empty")}
-              formatStep={(step) => `${step.from} → ${step.to}`}
-            />
-          </>
-        )}
-      </div>
-    </div>
+    <MdMuiProvider>
+      <Card variant="outlined" sx={{ overflow: "hidden" }}>
+        <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 1.5, borderBottom: "1px solid var(--md-sys-color-outline-variant)", px: 3, py: 2 }}>
+          <Typography sx={{ fontFamily: "var(--mn-font-display)", fontSize: { xs: 20, sm: 24 }, color: "var(--md-sys-color-on-surface)" }}>
+            {t(locale, "cards.materials.title")}
+          </Typography>
+          {groups.length > 1 && (
+            <Box role="group" aria-label={t(locale, "cards.materials.title")} sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, maxWidth: "100%" }}>
+              {groups.map((group) => (
+                <ToggleButton
+                  key={group.kind}
+                  value={group.kind}
+                  selected={group === current}
+                  onChange={() => setActive(group.kind)}
+                  sx={tabSx}
+                >
+                  {t(locale, LABEL_KEY[group.kind])}
+                </ToggleButton>
+              ))}
+            </Box>
+          )}
+        </Box>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: { xs: 3, sm: 4 } }}>
+          {!current ? (
+            <Typography variant="body2" sx={{ fontWeight: 500, color: "var(--md-sys-color-on-surface-variant)" }}>
+              {t(locale, "cards.materials.empty")}
+            </Typography>
+          ) : (
+            <>
+              {current.alternative && (
+                <Typography variant="caption" sx={{ fontWeight: 500, color: "var(--md-sys-color-on-surface-variant)" }}>
+                  {t(locale, "cards.materials.alternative")}{" "}
+                  {current.alternative.link
+                    ? <Link href={localizePath(entityLinkPath(current.alternative.link), locale)} underline="always" sx={{ fontWeight: 700, textDecorationStyle: "dotted", textUnderlineOffset: 4 }}>{current.alternative.name}</Link>
+                    : <Box component="span" sx={{ fontWeight: 700, color: "var(--md-sys-color-on-surface)" }}>{current.alternative.name}</Box>}
+                </Typography>
+              )}
+              <UpgradeCostTable
+                locale={locale}
+                steps={steps}
+                cumulative
+                stepHeader={t(locale, current.kind === "limitBreak" ? "supportCards.materials.limitBreak" : current.kind === "liveSkill" || current.kind === "gekisouSkill" ? "cards.growth.skillLevel" : `cards.materials.kinds.${current.kind}`)}
+                costHeader={t(locale, "cards.materials.cost")}
+                emptyText={t(locale, "cards.materials.empty")}
+                formatStep={(step) => `${step.from} → ${step.to}`}
+              />
+            </>
+          )}
+        </Box>
+      </Card>
+    </MdMuiProvider>
   );
 }
 

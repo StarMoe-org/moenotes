@@ -1,4 +1,12 @@
 import { useSyncExternalStore } from "react";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import IconButton from "@mui/material/IconButton";
+import type { SxProps, Theme } from "@mui/material/styles";
+import ErrorIcon from "@mui/icons-material/Error";
+import PauseIcon from "@mui/icons-material/Pause";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { getState, subscribe, toggle, type AudioStatus, type AudioTrack } from "@/lib/audio/player";
@@ -24,8 +32,8 @@ function useTrackStatus(trackId: string): AudioStatus {
   );
 }
 
-const sizeClass = { sm: "h-8 w-8", md: "h-10 w-10", lg: "h-12 w-12" } as const;
-const iconClass = { sm: "h-3.5 w-3.5", md: "h-4.5 w-4.5", lg: "h-5 w-5" } as const;
+const buttonSize = { sm: 32, md: 40, lg: 48 } as const;
+const iconSize = { sm: 14, md: 18, lg: 20 } as const;
 
 /** Play/pause one track through the site-wide player; starting it stops whatever else was playing. */
 export default function AudioPlayButton({ locale, track, size = "md", showLabel = false, className = "" }: AudioPlayButtonProps) {
@@ -34,34 +42,62 @@ export default function AudioPlayButton({ locale, track, size = "md", showLabel 
   const labelKey = status === "playing" ? "audio.pause" : status === "loading" ? "audio.loading" : status === "error" ? "audio.retry" : "audio.play";
   const label = t(locale, labelKey);
   const name = `${label}: ${track.title}`;
+  const iconPx = iconSize[size];
 
   const icon = status === "loading" ? (
-    <svg className={`${iconClass[size]} animate-spin`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9" /></svg>
+    <CircularProgress size={iconPx} thickness={5} color="inherit" aria-hidden="true" />
   ) : status === "playing" ? (
-    <svg className={iconClass[size]} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
+    <PauseIcon sx={{ fontSize: iconPx }} aria-hidden="true" />
   ) : status === "error" ? (
-    <svg className={iconClass[size]} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" aria-hidden="true"><path d="M12 7v6M12 17h.01" /><circle cx="12" cy="12" r="9" /></svg>
+    <ErrorIcon sx={{ fontSize: iconPx }} aria-hidden="true" />
   ) : (
-    <svg className={`${iconClass[size]} translate-x-[1px]`} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg>
+    <PlayArrowIcon sx={{ fontSize: iconPx }} aria-hidden="true" />
   );
 
+  const stateSx: SxProps<Theme> = status === "error"
+    ? { border: "1px solid", borderColor: "error.main", color: "error.main" }
+    : active
+      ? {
+        bgcolor: "var(--md-sys-color-secondary-container)",
+        color: "var(--md-sys-color-on-secondary-container)",
+        "&:hover": { bgcolor: "var(--md-sys-color-secondary-container)" },
+      }
+      : {
+        border: "1px solid var(--md-sys-color-outline-variant)",
+        color: "var(--md-sys-color-primary)",
+      };
+
+  if (showLabel) {
+    return (
+      <MdMuiProvider>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={() => toggle(track)}
+          aria-pressed={active}
+          title={name}
+          startIcon={icon}
+          className={className}
+          sx={{ borderRadius: 999, textTransform: "none", fontWeight: 700, ...stateSx }}
+        >
+          {label}
+        </Button>
+      </MdMuiProvider>
+    );
+  }
+
   return (
-    <button
-      type="button"
-      onClick={() => toggle(track)}
-      aria-label={showLabel ? undefined : name}
-      aria-pressed={active}
-      title={name}
-      className={`mn-focus mn-stamp-press inline-flex shrink-0 items-center justify-center gap-2 rounded-full border-[1.5px] font-bold shadow-[var(--mn-shadow-stamp-sm)] transition ${
-        status === "error"
-          ? "border-[var(--mn-rose)] bg-[var(--mn-paper)] text-[var(--mn-rose)]"
-          : active
-            ? "border-[var(--mn-accent-deep)] bg-[var(--mn-accent)] text-white"
-            : "border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-accent-deep)] hover:bg-[var(--mn-accent-soft)]"
-      } ${showLabel ? "h-9 px-4 text-sm" : sizeClass[size]} ${className}`}
-    >
-      {icon}
-      {showLabel ? <span>{label}</span> : null}
-    </button>
+    <MdMuiProvider>
+      <IconButton
+        onClick={() => toggle(track)}
+        aria-label={name}
+        aria-pressed={active}
+        title={name}
+        className={className}
+        sx={{ width: buttonSize[size], height: buttonSize[size], flexShrink: 0, ...stateSx }}
+      >
+        {icon}
+      </IconButton>
+    </MdMuiProvider>
   );
 }

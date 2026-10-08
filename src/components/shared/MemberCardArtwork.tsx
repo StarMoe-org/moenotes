@@ -41,7 +41,7 @@ export default function MemberCardArtwork({
   const handleImageError = () => setAttempt((current) => current + 1);
 
   return (
-    <div className={`relative aspect-[3/4] overflow-hidden bg-[var(--mn-cream-deep)] ${className}`.trim()}>
+    <div className={`relative aspect-[3/4] overflow-hidden bg-[var(--md-sys-color-surface-container-high)] ${className}`.trim()}>
       {!failed ? (
         <img
           className="h-full w-full object-cover"
@@ -52,7 +52,7 @@ export default function MemberCardArtwork({
           onError={handleImageError}
         />
       ) : (
-        <div className="grid h-full place-items-center p-4 text-center text-sm font-medium text-[var(--mn-text-muted)]">
+        <div className="grid h-full place-items-center p-4 text-center text-sm font-medium text-[var(--md-sys-color-on-surface-variant)]">
           {fallbackLabel}
         </div>
       )}

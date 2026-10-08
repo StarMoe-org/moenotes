@@ -1,4 +1,16 @@
 import { useMemo, useState } from "react";
+import Avatar from "@mui/material/Avatar";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import ToggleButton from "@mui/material/ToggleButton";
+import Typography from "@mui/material/Typography";
+import type { SxProps, Theme } from "@mui/material/styles";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
@@ -37,6 +49,32 @@ export interface UpgradeCostTableProps {
   defaultCumulative?: boolean;
 }
 
+const headSx: SxProps<Theme> = {
+  fontSize: 12,
+  fontWeight: 700,
+  textTransform: "uppercase",
+  letterSpacing: "0.05em",
+  color: "var(--md-sys-color-on-surface-variant)",
+};
+
+const toggleSx: SxProps<Theme> = {
+  borderRadius: 999,
+  textTransform: "none",
+  fontSize: 12,
+  fontWeight: 700,
+  px: 1.5,
+  py: 0.5,
+  border: "1px solid var(--md-sys-color-outline-variant)",
+  color: "var(--md-sys-color-on-surface)",
+  "&.Mui-selected": {
+    bgcolor: "var(--md-sys-color-secondary-container)",
+    color: "var(--md-sys-color-on-secondary-container)",
+  },
+  "&.Mui-selected:hover": {
+    bgcolor: "var(--md-sys-color-secondary-container)",
+  },
+};
+
 /** Steps with every cost summed over all steps up to and including each one (materials keep first-seen order). */
 export function cumulativeUpgradeSteps(steps: readonly UpgradeStep[]): UpgradeStep[] {
   const totals = new Map<string | number, UpgradeCost>();
@@ -65,60 +103,74 @@ export default function UpgradeCostTable({
   const visible = useMemo(() => steps.filter((step) => step.costs.length > 0), [steps]);
   const rows = useMemo(() => (cumulative && showTotal ? cumulativeUpgradeSteps(visible) : visible), [cumulative, showTotal, visible]);
   if (visible.length === 0) {
-    return <p className="text-sm font-medium text-[var(--mn-text-muted)]">{emptyText ?? t(locale, "designSystem.upgrade.empty")}</p>;
+    return (
+      <MdMuiProvider>
+        <Typography variant="body2" sx={{ fontWeight: 500, color: "var(--md-sys-color-on-surface-variant)" }}>
+          {emptyText ?? t(locale, "designSystem.upgrade.empty")}
+        </Typography>
+      </MdMuiProvider>
+    );
   }
   const toggle = cumulative ? (
-        <div className="mb-2 flex justify-end">
-          <button
-            type="button"
-            aria-pressed={showTotal}
-            onClick={() => setShowTotal((value) => !value)}
-            className={`mn-focus rounded-full border border-[var(--mn-border)] px-3 py-1 text-xs font-bold transition ${showTotal ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]" : "bg-[var(--mn-paper)] text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)]"}`}
+        <Box sx={{ mb: 1, display: "flex", justifyContent: "flex-end" }}>
+          <ToggleButton
+            value="cumulative"
+            selected={showTotal}
+            onChange={() => setShowTotal((value) => !value)}
+            size="small"
+            sx={toggleSx}
           >
             {t(locale, "designSystem.upgrade.cumulative")}
-          </button>
-        </div>
+          </ToggleButton>
+        </Box>
       ) : null;
   const table = (
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-left text-xs font-bold uppercase tracking-wide text-[var(--mn-text-muted)]/80">
-            <th scope="col" className="py-2 pr-3">{stepHeader ?? t(locale, "designSystem.upgrade.step")}</th>
-            <th scope="col" className="py-2">{costHeader ?? t(locale, "designSystem.upgrade.cost")}</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-[var(--mn-border)]/40">
+      <Table size="small" sx={{ "& .MuiTableCell-root": { borderColor: "var(--md-sys-color-outline-variant)" } }}>
+        <TableHead>
+          <TableRow>
+            <TableCell component="th" scope="col" sx={headSx}>{stepHeader ?? t(locale, "designSystem.upgrade.step")}</TableCell>
+            <TableCell component="th" scope="col" sx={headSx}>{costHeader ?? t(locale, "designSystem.upgrade.cost")}</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
           {rows.map((step) => (
-            <tr key={`${step.from}-${step.to}`}>
-              <th scope="row" className="py-2 pr-3 align-top whitespace-nowrap font-bold text-[var(--mn-text)]">
+            <TableRow key={`${step.from}-${step.to}`}>
+              <TableCell component="th" scope="row" sx={{ fontWeight: 700, whiteSpace: "nowrap", verticalAlign: "top" }}>
                 {formatStep(step)}
-              </th>
-              <td className="py-2">
-                <ul className="flex flex-wrap gap-2">
+              </TableCell>
+              <TableCell>
+                <Box component="ul" sx={{ display: "flex", flexWrap: "wrap", gap: 1, m: 0, p: 0, listStyle: "none" }}>
                   {step.costs.map((cost) => {
-                    const body = (
-                      <>
-                        {cost.imageUrl ? <img src={cost.imageUrl} alt="" loading="lazy" className="h-6 w-6 object-contain" /> : null}
-                        <span className="font-medium text-[var(--mn-text)]">{cost.name}</span>
-                        <span className="font-black tabular-nums text-[var(--mn-text)]">×{cost.count.toLocaleString(locale)}</span>
-                      </>
-                    );
-                    const chip = "flex items-center gap-1.5 rounded-lg border border-[var(--mn-border)]/60 bg-[var(--mn-cream-deep)]/40 px-2 py-1";
+                    const chipProps = {
+                      size: "small",
+                      variant: "outlined",
+                      avatar: cost.imageUrl ? <Avatar src={cost.imageUrl} alt="" /> : undefined,
+                      label: (
+                        <span>
+                          {cost.name}{" "}
+                          <Box component="span" sx={{ fontWeight: 900, fontVariantNumeric: "tabular-nums" }}>
+                            ×{cost.count.toLocaleString(locale)}
+                          </Box>
+                        </span>
+                      ),
+                    } as const;
                     return (
-                      <li key={cost.id ?? cost.name} className={cost.href ? undefined : chip} title={cost.name}>
+                      <Box component="li" key={cost.id ?? cost.name} title={cost.name} sx={{ display: "flex" }}>
                         {cost.href ? (
-                          <a href={localizePath(cost.href, locale)} className={`mn-focus ${chip} transition hover:border-[var(--mn-accent)] hover:bg-[var(--mn-accent-soft)]`}>{body}</a>
-                        ) : body}
-                      </li>
+                          <Chip {...chipProps} component="a" href={localizePath(cost.href, locale)} clickable sx={{ fontWeight: 500 }} />
+                        ) : (
+                          <Chip {...chipProps} sx={{ fontWeight: 500 }} />
+                        )}
+                      </Box>
                     );
                   })}
-                </ul>
-              </td>
-            </tr>
+                </Box>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
   );
   // Without the toggle the table is the root element, as the band item overlay always had it.
-  return toggle ? <div>{toggle}{table}</div> : table;
+  return toggle ? <MdMuiProvider><div>{toggle}{table}</div></MdMuiProvider> : <MdMuiProvider>{table}</MdMuiProvider>;
 }

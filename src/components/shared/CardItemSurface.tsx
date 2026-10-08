@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import CardActionArea from "@mui/material/CardActionArea";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 
 export interface CardItemSelection {
   selected: boolean;
@@ -12,8 +14,33 @@ export default function CardItemSurface({ href, onClick, selection, className, c
   href: string; onClick?: (() => void) | undefined; selection?: CardItemSelection | undefined;
   className: string; cardId: number; label: string; children: ReactNode;
 }) {
-  return selection
-    ? <button type="button" className={className} data-list-item-id={cardId} aria-label={selection.label}
-      aria-pressed={selection.selected} disabled={selection.disabled} onClick={selection.onSelect}>{children}</button>
-    : <a href={href} onClick={onClick} className={className} data-list-item-id={cardId} aria-label={label}>{children}</a>;
+  return (
+    <MdMuiProvider>
+      {selection ? (
+        <CardActionArea
+          component="button"
+          type="button"
+          className={className}
+          data-list-item-id={cardId}
+          aria-label={selection.label}
+          aria-pressed={selection.selected}
+          disabled={selection.disabled}
+          onClick={selection.onSelect}
+        >
+          {children}
+        </CardActionArea>
+      ) : (
+        <CardActionArea
+          component="a"
+          href={href}
+          onClick={onClick}
+          className={className}
+          data-list-item-id={cardId}
+          aria-label={label}
+        >
+          {children}
+        </CardActionArea>
+      )}
+    </MdMuiProvider>
+  );
 }

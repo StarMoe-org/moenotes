@@ -1,5 +1,19 @@
-import SiriusLoader, { SiriusIcon } from "@/components/shared/SiriusLoader";
+import SiriusLoader from "@/components/shared/SiriusLoader";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import ButtonBase from "@mui/material/ButtonBase";
+import Card from "@mui/material/Card";
+import CircularProgress from "@mui/material/CircularProgress";
+import IconButton from "@mui/material/IconButton";
+import LinearProgress from "@mui/material/LinearProgress";
+import Typography from "@mui/material/Typography";
+import CheckIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import DownloadIcon from "@mui/icons-material/Download";
+import ZoomInIcon from "@mui/icons-material/ZoomIn";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import ServerScope from "@/components/shared/ServerScope";
@@ -87,9 +101,11 @@ export default function CardDetail({ locale, initialData, materials: facetedMate
   const data = useMemo(() => moveReleaseUrls(valueForServer(initialData, server), entityServer(initialData, server)), [initialData, server]);
   const materials = useMemo(() => facetedMaterials && moveReleaseUrls(valueForServer(facetedMaterials, server), entityServer(facetedMaterials, server)), [facetedMaterials, server]);
   return (
-    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer} entityServers={initialData.servers}>
-      <CardDetailView locale={locale} data={data} materials={materials} />
-    </ServerScope>
+    <MdMuiProvider>
+      <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer} entityServers={initialData.servers}>
+        <CardDetailView locale={locale} data={data} materials={materials} />
+      </ServerScope>
+    </MdMuiProvider>
   );
 }
 
@@ -248,24 +264,32 @@ function CardDetailView({ locale, data, materials }: { locale: AppLocale; data: 
   };
 
   if (loading) {
-    return <SiriusLoader locale={locale} label={t(locale, "cards.loading")} className="mn-paper min-h-72" />;
+    return (
+      <MdMuiProvider>
+        <Card variant="outlined">
+          <SiriusLoader locale={locale} label={t(locale, "cards.loading")} className="min-h-72" />
+        </Card>
+      </MdMuiProvider>
+    );
   }
 
   if (error || !card) {
     return (
-      <div className="mn-paper p-8 text-center sm:p-12" role={error ? "alert" : undefined}>
-        <h2 className="font-[var(--mn-font-display)] text-2xl text-[var(--mn-text)]">
-          {t(locale, error ? "cards.loadErrorTitle" : "cards.detailNotFound")}
-        </h2>
-        <p className="mx-auto mt-3 max-w-xl text-sm font-medium leading-7 text-[var(--mn-text-muted)]">
-          {t(locale, error ? "cards.loadErrorDescription" : "cards.detailNotFoundDescription")}
-        </p>
-        {error && (
-          <button type="button" onClick={() => setReloadKey((value) => value + 1)} className="mn-focus mn-stamp-press mt-6 rounded-full border border-[var(--mn-border)] bg-[var(--mn-accent-deep)] px-6 py-3 text-sm font-bold text-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]">
-            {t(locale, "cards.retry")}
-          </button>
-        )}
-      </div>
+      <MdMuiProvider>
+        <Card variant="outlined" sx={{ p: { xs: 4, sm: 6 }, textAlign: "center" }} role={error ? "alert" : undefined}>
+          <Typography sx={{ fontFamily: "var(--mn-font-display)", fontSize: 24, color: "var(--md-sys-color-on-surface)" }}>
+            {t(locale, error ? "cards.loadErrorTitle" : "cards.detailNotFound")}
+          </Typography>
+          <Typography variant="body2" sx={{ mx: "auto", mt: 1.5, maxWidth: "36rem", fontWeight: 500, lineHeight: 1.75, color: "var(--md-sys-color-on-surface-variant)" }}>
+            {t(locale, error ? "cards.loadErrorDescription" : "cards.detailNotFoundDescription")}
+          </Typography>
+          {error && (
+            <Button variant="contained" onClick={() => setReloadKey((value) => value + 1)} sx={{ mt: 3 }}>
+              {t(locale, "cards.retry")}
+            </Button>
+          )}
+        </Card>
+      </MdMuiProvider>
     );
   }
 
@@ -292,47 +316,41 @@ function CardDetailView({ locale, data, materials }: { locale: AppLocale; data: 
 
   const previewActions = selectedAsset ? (
     <>
-      <button
-        type="button"
+      <IconButton
         onClick={handleDownload}
         disabled={downloadState === "downloading"}
-        className="grid h-8 w-8 place-items-center rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:text-[var(--mn-text)] disabled:opacity-50"
+        size="small"
+        sx={{ border: "1px solid var(--md-sys-color-outline-variant)" }}
       >
-        {downloadState === "idle" && (
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
-        )}
-        {downloadState === "downloading" && <SiriusIcon />}
-        {downloadState === "success" && <svg className="h-4 w-4 text-[var(--mn-mint)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
-      </button>
-      <button
-        type="button"
+        {downloadState === "idle" && <DownloadIcon fontSize="small" />}
+        {downloadState === "downloading" && <CircularProgress size={16} color="inherit" />}
+        {downloadState === "success" && <CheckIcon fontSize="small" sx={{ color: "success.main" }} />}
+      </IconButton>
+      <IconButton
         onClick={copySelectedAsset}
         disabled={copyState === "copying"}
-        className="grid h-8 w-8 place-items-center rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:text-[var(--mn-text)] disabled:opacity-50"
+        size="small"
+        sx={{ border: "1px solid var(--md-sys-color-outline-variant)" }}
       >
-        {copyState === "idle" && (
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
-        )}
-        {copyState === "copying" && <SiriusIcon />}
-        {copyState === "success" && <svg className="h-4 w-4 text-[var(--mn-mint)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
-        {copyState === "error" && <svg className="h-4 w-4 text-[var(--mn-rose)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>}
-      </button>
+        {copyState === "idle" && <ContentCopyIcon fontSize="small" />}
+        {copyState === "copying" && <CircularProgress size={16} color="inherit" />}
+        {copyState === "success" && <CheckIcon fontSize="small" sx={{ color: "success.main" }} />}
+        {copyState === "error" && <CloseIcon fontSize="small" sx={{ color: "error.main" }} />}
+      </IconButton>
     </>
   ) : null;
 
   const activeAsset = assets.find((a) => a.id === activeTabId);
 
   return (
+    <MdMuiProvider>
     <div className="space-y-8 w-full">
       <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(22rem,2fr)_3fr] lg:items-start">
         {/* Left Column: Fixed / Sticky Asset Pane */}
         <aside className="lg:sticky lg:top-24 w-full flex flex-col pt-8">
-          <div
-            className="relative aspect-[3/4] w-full rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)] p-5 shadow-[var(--mn-shadow-stamp-lg)]"
+          <Card
+            variant="outlined"
+            sx={{ position: "relative", aspectRatio: "3 / 4", width: "100%", p: 2.5 }}
           >
             {/* Asset preview panel */}
 
@@ -346,10 +364,10 @@ function CardDetailView({ locale, data, materials }: { locale: AppLocale; data: 
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTabId(tab.id)}
-                    className={`px-3 pt-1.5 pb-3 text-[10px] font-semibold tracking-wider uppercase border border-b-0 border-[var(--mn-border)] rounded-t-xl transition-all origin-bottom -mb-[6px] ${
+                    className={`px-3 pt-1.5 pb-3 text-[10px] font-semibold tracking-wider uppercase border border-b-0 border-[var(--md-sys-color-outline-variant)] rounded-t-xl transition-all origin-bottom -mb-[6px] ${
                       isActive
-                        ? "bg-[var(--mn-accent)] text-[var(--mn-bg)] shadow-md z-20 -translate-y-[2px]"
-                        : "bg-[var(--mn-surface)] text-[var(--mn-text)] hover:bg-[var(--mn-accent-soft)] hover:-translate-y-[1px]"
+                        ? "bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] shadow-[var(--md-sys-elevation-level1)] z-20 -translate-y-[2px]"
+                        : "bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-secondary-container)] hover:-translate-y-[1px]"
                     }`}
                   >
                     {tab.label}
@@ -363,14 +381,14 @@ function CardDetailView({ locale, data, materials }: { locale: AppLocale; data: 
               {activeTabId !== "info" ? (
                 <div className="h-full w-full">
                   {/* Polar-like Photo Frame */}
-                  <button
-                    type="button"
+                  <ButtonBase
                     onClick={() => activeAsset && setSelectedAsset(activeAsset)}
-                    className="group relative block w-full h-full overflow-hidden rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-cream-deep)] shadow-inner transition hover:scale-[1.01]"
+                    className="group"
+                    sx={{ position: "relative", display: "block", width: "100%", height: "100%", overflow: "hidden", borderRadius: 4, border: "1px solid var(--md-sys-color-outline-variant)", bgcolor: "var(--md-sys-color-surface-container-high)" }}
                     aria-label={t(locale, "cards.assets.previewFull")}
                   >
                     {activeAsset && (
-                      <div className={`h-full w-full ${activeAsset.transparent ? "mn-stripes-cream bg-[var(--mn-cream-deep)]" : ""}`}>
+                      <div className={`h-full w-full ${activeAsset.transparent ? "mn-stripes-cream bg-[var(--md-sys-color-surface-container-high)]" : ""}`}>
                         <img
                           className={activeAsset.compact ? "max-h-full max-w-full object-contain mx-auto my-auto absolute inset-0 p-4" : "h-full w-full object-cover"}
                           src={activeAsset.url}
@@ -380,17 +398,17 @@ function CardDetailView({ locale, data, materials }: { locale: AppLocale; data: 
                     )}
                     {/* Zoom Indicator */}
                     <div className="absolute inset-0 bg-black/0 transition group-hover:bg-black/10 flex items-center justify-center">
-                      <svg className="h-8 w-8 text-white opacity-0 transition group-hover:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m4-3H6" /></svg>
+                      <ZoomInIcon className="opacity-0 transition group-hover:opacity-100" sx={{ fontSize: 32, color: "white" }} aria-hidden="true" />
                     </div>
-                  </button>
+                  </ButtonBase>
                 </div>
               ) : (
                 <div className="h-full w-full flex flex-col justify-between">
                   {/* Quote and card metadata */}
                   <div className="flex-1 overflow-y-auto space-y-4 pr-1">
                     {card.gachaVoice && (
-                      <div className="relative rounded-2xl border border-solid border-[var(--mn-border)] bg-[var(--mn-accent-soft)] p-4 text-xs font-semibold leading-relaxed text-[var(--mn-ink-soft)] shadow-inner">
-                        <div className="absolute top-2 right-2 bg-[var(--mn-surface)] border border-[var(--mn-border)] px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-[var(--mn-accent-deep)] rounded">
+                      <div className="relative rounded-2xl border border-solid border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-secondary-container)] p-4 text-xs font-semibold leading-relaxed text-[var(--md-sys-color-on-secondary-container)]">
+                        <div className="absolute top-2 right-2 bg-[var(--md-sys-color-surface-container-high)] border border-[var(--md-sys-color-outline-variant)] px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-[var(--md-sys-color-primary)] rounded">
                           QUOTE
                         </div>
                         <div className="mt-2 flex items-start gap-2">
@@ -402,32 +420,32 @@ function CardDetailView({ locale, data, materials }: { locale: AppLocale; data: 
                       </div>
                     )}
 
-                    <div className="rounded-2xl border border-solid border-[var(--mn-border)] bg-[var(--mn-surface)] p-4 space-y-3 shadow-inner">
-                      <h4 className="font-[var(--mn-font-display)] text-sm tracking-tight text-[var(--mn-text)] border-b border-[var(--mn-border)]/60 pb-1.5">Notebook Log</h4>
-                      <div className="space-y-2 text-[11px] font-bold text-[var(--mn-text-muted)]">
-                        <div className="flex justify-between border-b border-[var(--mn-border)]/20 pb-1">
+                    <div className="rounded-2xl border border-solid border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-high)] p-4 space-y-3">
+                      <h4 className="font-[var(--mn-font-display)] text-sm tracking-tight text-[var(--md-sys-color-on-surface)] border-b border-[var(--md-sys-color-outline-variant)]/60 pb-1.5">Notebook Log</h4>
+                      <div className="space-y-2 text-[11px] font-bold text-[var(--md-sys-color-on-surface-variant)]">
+                        <div className="flex justify-between border-b border-[var(--md-sys-color-outline-variant)]/20 pb-1">
                           <span>Rarity</span>
-                          <span className="text-[var(--mn-text)]">{rarity}</span>
+                          <span className="text-[var(--md-sys-color-on-surface)]">{rarity}</span>
                         </div>
-                        <div className="flex justify-between border-b border-[var(--mn-border)]/20 pb-1">
+                        <div className="flex justify-between border-b border-[var(--md-sys-color-outline-variant)]/20 pb-1">
                           <span>Attribute</span>
-                          <span className="text-[var(--mn-text)]">{attribute}</span>
+                          <span className="text-[var(--md-sys-color-on-surface)]">{attribute}</span>
                         </div>
-                        <div className="flex justify-between border-b border-[var(--mn-border)]/20 pb-1">
+                        <div className="flex justify-between border-b border-[var(--md-sys-color-outline-variant)]/20 pb-1">
                           <span>Band</span>
-                          <span className="text-[var(--mn-text)]">{card.bandName}</span>
+                          <span className="text-[var(--md-sys-color-on-surface)]">{card.bandName}</span>
                         </div>
-                        <div className="flex justify-between border-b border-[var(--mn-border)]/20 pb-1">
+                        <div className="flex justify-between border-b border-[var(--md-sys-color-outline-variant)]/20 pb-1">
                           <span>Release</span>
-                          <span className="text-[var(--mn-text)]">{formatMasterDay(card.startAt, locale, timeZone)}</span>
+                          <span className="text-[var(--md-sys-color-on-surface)]">{formatMasterDay(card.startAt, locale, timeZone)}</span>
                         </div>
-                        <div className="flex justify-between border-b border-[var(--mn-border)]/20 pb-1">
+                        <div className="flex justify-between border-b border-[var(--md-sys-color-outline-variant)]/20 pb-1">
                           <span>Card ID</span>
-                          <span className="text-[var(--mn-text)]">#{card.id}</span>
+                          <span className="text-[var(--md-sys-color-on-surface)]">#{card.id}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Asset ID</span>
-                          <span className="text-[var(--mn-text)]">#{card.assetId}</span>
+                          <span className="text-[var(--md-sys-color-on-surface)]">#{card.assetId}</span>
                         </div>
                       </div>
                     </div>
@@ -446,10 +464,10 @@ function CardDetailView({ locale, data, materials }: { locale: AppLocale; data: 
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTabId(tab.id)}
-                    className={`px-3 pt-3 pb-1.5 text-[10px] font-semibold tracking-wider uppercase border border-t-0 border-[var(--mn-border)] rounded-b-xl transition-all origin-top -mt-[6px] ${
+                    className={`px-3 pt-3 pb-1.5 text-[10px] font-semibold tracking-wider uppercase border border-t-0 border-[var(--md-sys-color-outline-variant)] rounded-b-xl transition-all origin-top -mt-[6px] ${
                       isActive
-                        ? "bg-[var(--mn-accent)] text-[var(--mn-bg)] shadow-md z-20 translate-y-[2px]"
-                        : "bg-[var(--mn-surface)] text-[var(--mn-text)] hover:bg-[var(--mn-accent-soft)] hover:translate-y-[1px]"
+                        ? "bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] shadow-[var(--md-sys-elevation-level1)] z-20 translate-y-[2px]"
+                        : "bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-secondary-container)] hover:translate-y-[1px]"
                     }`}
                   >
                     {tab.label}
@@ -457,15 +475,15 @@ function CardDetailView({ locale, data, materials }: { locale: AppLocale; data: 
                 );
               })}
             </div>
-          </div>
+          </Card>
         </aside>
 
         {/* Right Column: Other Content */}
         <section className="flex-1 min-w-0 space-y-6">
           {/* Card Info Card */}
-          <div className="mn-paper overflow-hidden">
+          <Card variant="outlined" sx={{ overflow: "hidden" }}>
             {/* Title Section (Header Banner) */}
-            <div className="border-b border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_6%,transparent)] to-transparent p-6 sm:p-8">
+            <Box sx={{ borderBottom: "1px solid var(--md-sys-color-outline-variant)", p: { xs: 3, sm: 4 } }}>
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -483,18 +501,18 @@ function CardDetailView({ locale, data, materials }: { locale: AppLocale; data: 
                       aria-hidden="true"
                       onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                     />
-                    <span className="font-[var(--mn-font-note)] text-sm text-[var(--mn-accent-deep)]">{card.bandName}</span>
+                    <span className="font-[var(--mn-font-note)] text-sm text-[var(--md-sys-color-primary)]">{card.bandName}</span>
                   </div>
-                  <h2 className="mt-1 font-[var(--mn-font-display)] text-3xl leading-tight text-[var(--mn-text)] sm:text-4xl">{card.title}</h2>
-                  <p className="mt-3 text-base font-medium text-[var(--mn-text-muted)]">{card.characterName}</p>
+                  <h2 className="mt-1 font-[var(--mn-font-display)] text-3xl leading-tight text-[var(--md-sys-color-on-surface)] sm:text-4xl">{card.title}</h2>
+                  <p className="mt-3 text-base font-medium text-[var(--md-sys-color-on-surface-variant)]">{card.characterName}</p>
                 </div>
                 <img className="h-12 w-auto" src={assetUrl(getRarityIconUrl(card.rarity))} alt={rarity} />
               </div>
-            </div>
+            </Box>
 
             {/* Body Section (Detail Rows List) */}
-            <div className="p-6 sm:p-8 bg-[var(--mn-paper)]">
-              <div className="divide-y divide-dashed divide-[var(--mn-border)]/60">
+            <Box sx={{ p: { xs: 3, sm: 4 } }}>
+              <div className="divide-y divide-dashed divide-[var(--md-sys-color-outline-variant)]/60">
                 <DetailRow label={t(locale, "cards.detailRarity")} value={rarity} />
                 <DetailRow label={t(locale, "cards.detailAttribute")} value={<span className="inline-flex items-center gap-2"><img className="h-5 w-5" src={assetUrl(getCardTypeIconUrl(card.cardType))} alt="" aria-hidden="true" />{attribute}</span>} />
                 <DetailRow
@@ -516,21 +534,21 @@ function CardDetailView({ locale, data, materials }: { locale: AppLocale; data: 
                 <DetailRow label={t(locale, "cards.detailCardId")} value={`#${card.id}`} />
                 <DetailRow label={t(locale, "cards.detailAssetId")} value={`#${card.assetId}`} />
               </div>
-            </div>
-          </div>
+            </Box>
+          </Card>
 
           {/* Parameters Card */}
-          <div className="mn-paper overflow-hidden">
+          <Card variant="outlined" sx={{ overflow: "hidden" }}>
             {/* Title Section */}
-            <div className="border-b border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_6%,transparent)] to-transparent px-6 py-4 sm:px-8">
-              <h3 className="font-[var(--mn-font-display)] text-xl text-[var(--mn-text)] sm:text-2xl">
+            <Box sx={{ borderBottom: "1px solid var(--md-sys-color-outline-variant)", px: 3, py: 2 }}>
+              <Typography sx={{ fontFamily: "var(--mn-font-display)", fontSize: { xs: 20, sm: 24 }, color: "var(--md-sys-color-on-surface)" }}>
                 {t(locale, "cards.parametersTitle")}
-              </h3>
-            </div>
+              </Typography>
+            </Box>
             {/* Body Section */}
-            <div className="p-6 sm:p-8 space-y-5">
+            <Box sx={{ p: { xs: 3, sm: 4 }, display: "flex", flexDirection: "column", gap: 2.5 }}>
               {growth.levelCurve.length > 0 && (
-                <div className="space-y-4 border-b border-solid border-[var(--mn-border)]/60 pb-5">
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2, borderBottom: "1px solid var(--md-sys-color-outline-variant)", pb: 2.5 }}>
                   <LevelControl locale={locale} level={build.level} limit={levelLimit} onChange={(level) => setBuild((current) => ({ ...current, level }))} />
                   {growth.awakeSteps.length > 1 && (
                     <StepControl
@@ -548,37 +566,37 @@ function CardDetailView({ locale, data, materials }: { locale: AppLocale; data: 
                       onChange={(rank) => setBuild((current) => ({ ...current, rank }))}
                     />
                   )}
-                </div>
+                </Box>
               )}
 
               {/* Highlighted Total Parameter Row */}
-              <div className="flex items-center justify-between border-b border-solid border-[var(--mn-border)]/60 pb-4">
-                <span className="text-sm font-semibold text-[var(--mn-text-muted)]">
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--md-sys-color-outline-variant)", pb: 2 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: "var(--md-sys-color-on-surface-variant)" }}>
                   {t(locale, isMaxBuild ? "cards.detailPower" : "cards.growth.power")}
-                </span>
-                <span className="font-mono text-xl font-bold text-[var(--mn-accent-deep)]">
+                </Typography>
+                <Typography sx={{ fontSize: 20, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: "var(--md-sys-color-primary)" }}>
                   {parameters.totalPower.toLocaleString(locale)}
-                </span>
-              </div>
+                </Typography>
+              </Box>
 
-              <div className="space-y-4">
-                <ParameterBar label={t(locale, "cards.parameters.performance")} value={parameters.performancePower} max={parameterScale} color="var(--mn-accent)" locale={locale} />
-                <ParameterBar label={t(locale, "cards.parameters.technique")} value={parameters.technicPower} max={parameterScale} color="var(--mn-cyan)" locale={locale} />
-                <ParameterBar label={t(locale, "cards.parameters.visual")} value={parameters.visualPower} max={parameterScale} color="var(--mn-mint)" locale={locale} />
-              </div>
-            </div>
-          </div>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <ParameterBar label={t(locale, "cards.parameters.performance")} value={parameters.performancePower} max={parameterScale} color="var(--md-sys-color-primary)" locale={locale} />
+                <ParameterBar label={t(locale, "cards.parameters.technique")} value={parameters.technicPower} max={parameterScale} color="var(--md-sys-color-secondary)" locale={locale} />
+                <ParameterBar label={t(locale, "cards.parameters.visual")} value={parameters.visualPower} max={parameterScale} color="var(--md-sys-color-tertiary)" locale={locale} />
+              </Box>
+            </Box>
+          </Card>
 
           {/* Skills Card */}
-          <div className="mn-paper overflow-hidden">
+          <Card variant="outlined" sx={{ overflow: "hidden" }}>
             {/* Title Section */}
-            <div className="border-b border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_6%,transparent)] to-transparent px-6 py-4 sm:px-8">
-              <h3 className="font-[var(--mn-font-display)] text-xl text-[var(--mn-text)] sm:text-2xl">
+            <Box sx={{ borderBottom: "1px solid var(--md-sys-color-outline-variant)", px: 3, py: 2 }}>
+              <Typography sx={{ fontFamily: "var(--mn-font-display)", fontSize: { xs: 20, sm: 24 }, color: "var(--md-sys-color-on-surface)" }}>
                 {t(locale, "cards.skillsTitle")}
-              </h3>
-            </div>
+              </Typography>
+            </Box>
             {/* Body Section */}
-            <div className="p-6 sm:p-8 flex flex-col gap-4">
+            <Box sx={{ p: { xs: 3, sm: 4 }, display: "flex", flexDirection: "column", gap: 2 }}>
               {data.skills.map((skill) => (
                 <SkillCard
                   key={skill.kind}
@@ -589,15 +607,15 @@ function CardDetailView({ locale, data, materials }: { locale: AppLocale; data: 
                   onLevelChange={(level) => setSkillLevel(skill, level)}
                 />
               ))}
-            </div>
-          </div>
+            </Box>
+          </Card>
 
           {materials && materials.groups.length > 0 && <CardMaterialsPanel locale={locale} groups={materials.groups} />}
 
           <div className="flex justify-start">
-            <a href={localizePath(getRoutePathById("cards"), locale)} className="mn-focus mn-stamp-press inline-flex rounded-full border border-[var(--mn-border)] bg-[var(--mn-paper)] px-6 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]">
+            <Button component="a" href={localizePath(getRoutePathById("cards"), locale)} variant="outlined">
               {t(locale, "cards.backToList")}
-            </a>
+            </Button>
           </div>
         </section>
       </div>
@@ -611,7 +629,7 @@ function CardDetailView({ locale, data, materials }: { locale: AppLocale; data: 
         headerActions={previewActions}
       >
         {selectedAsset && (
-          <div className={`w-full overflow-hidden rounded-2xl border border-[var(--mn-border)] ${selectedAsset.transparent ? "mn-stripes-cream bg-[var(--mn-cream-deep)]" : "bg-[var(--mn-surface)]"}`}>
+          <div className={`w-full overflow-hidden rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-high)] ${selectedAsset.transparent ? "mn-stripes-cream" : ""}`}>
             <img
               className="mx-auto max-h-[65vh] w-full object-contain"
               src={selectedAsset.url}
@@ -621,29 +639,38 @@ function CardDetailView({ locale, data, materials }: { locale: AppLocale; data: 
         )}
       </Modal>
     </div>
+    </MdMuiProvider>
   );
 }
 
 function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex items-center justify-between py-3.5 text-sm">
-      <span className="font-semibold text-[var(--mn-text-muted)]">{label}</span>
-      <span className="font-semibold text-[var(--mn-text)]">{value}</span>
+      <span className="font-semibold text-[var(--md-sys-color-on-surface-variant)]">{label}</span>
+      <span className="font-semibold text-[var(--md-sys-color-on-surface)]">{value}</span>
     </div>
   );
 }
 
 function ParameterBar({ label, value, max, color, locale }: { label: string; value: number; max: number; color: string; locale: AppLocale }) {
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between text-sm font-semibold">
-        <span className="text-[var(--mn-text-muted)]">{label}</span>
-        <span className="font-mono text-[var(--mn-text)]">{value.toLocaleString(locale)}</span>
-      </div>
-      <div className="h-2 overflow-hidden rounded-full border border-[var(--mn-border)] bg-[var(--mn-cream-deep)]">
-        <div className="h-full rounded-full" style={{ width: `${Math.max(4, (value / max) * 100)}%`, backgroundColor: color }} />
-      </div>
-    </div>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Typography variant="body2" sx={{ fontWeight: 600, color: "var(--md-sys-color-on-surface-variant)" }}>{label}</Typography>
+        <Typography variant="body2" sx={{ fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "var(--md-sys-color-on-surface)" }}>{value.toLocaleString(locale)}</Typography>
+      </Box>
+      <LinearProgress
+        variant="determinate"
+        value={Math.max(4, (value / max) * 100)}
+        aria-label={label}
+        sx={{
+          height: 8,
+          borderRadius: 999,
+          bgcolor: "var(--md-sys-color-surface-container-highest)",
+          "& .MuiLinearProgress-bar": { bgcolor: color, borderRadius: 999 },
+        }}
+      />
+    </Box>
   );
 }
 
@@ -663,21 +690,31 @@ function SkillCard({
   const current = pickSkillLevel(skill, level);
   const assetUrl = useAssetUrl();
   return (
-    <article className="rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-surface-strong)] p-5 shadow-[var(--mn-shadow-stamp)]">
-      <div className="flex items-start gap-4">
-        {skill.iconUrl ? <img className="h-14 w-14 shrink-0 rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)] object-contain p-1" src={assetUrl(skill.iconUrl)} alt="" aria-hidden="true" /> : null}
-        <div className="min-w-0"><p className="text-xs font-semibold uppercase tracking-wider text-[var(--mn-accent-deep)]">{t(locale, `cards.skillKinds.${skill.kind}`)}</p><h3 className="mt-1 text-base font-semibold leading-6 text-[var(--mn-text)]">{skill.name}</h3><p className="mt-1 text-xs text-[var(--mn-text-muted)]">{t(locale, "cards.skillMeta", { level: current.level, id: skill.id })}</p></div>
-      </div>
+    <Box component="article" sx={{ borderRadius: 4, border: "1px solid var(--md-sys-color-outline-variant)", bgcolor: "var(--md-sys-color-surface-container-high)", p: 2.5 }}>
+      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
+        {skill.iconUrl ? <img className="h-14 w-14 shrink-0 rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] object-contain p-1" src={assetUrl(skill.iconUrl)} alt="" aria-hidden="true" /> : null}
+        <Box sx={{ minWidth: 0 }}>
+          <Typography variant="caption" sx={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--md-sys-color-primary)" }}>
+            {t(locale, `cards.skillKinds.${skill.kind}`)}
+          </Typography>
+          <Typography variant="subtitle1" sx={{ mt: 0.5, fontWeight: 600, lineHeight: 1.5, color: "var(--md-sys-color-on-surface)" }}>
+            {skill.name}
+          </Typography>
+          <Typography variant="caption" sx={{ mt: 0.5, color: "var(--md-sys-color-on-surface-variant)" }}>
+            {t(locale, "cards.skillMeta", { level: current.level, id: skill.id })}
+          </Typography>
+        </Box>
+      </Box>
       {skill.levels.length > 1 ? (
-        <div className="mt-4">
+        <Box sx={{ mt: 2 }}>
           <StepControl label={t(locale, "cards.growth.skillLevel")} value={current.level} options={skill.levels.map((entry) => entry.level)} onChange={onLevelChange} />
-        </div>
+        </Box>
       ) : null}
-      {hint ? <p className="mt-3 text-xs font-medium text-[var(--mn-text-muted)]">{hint}</p> : null}
-      <p className="mt-4 whitespace-pre-line rounded-2xl border border-solid border-[var(--mn-border)] bg-[var(--mn-paper)] p-4 text-sm font-medium leading-7 text-[var(--mn-text)]">
+      {hint ? <Typography variant="caption" sx={{ mt: 1.5, fontWeight: 500, color: "var(--md-sys-color-on-surface-variant)" }}>{hint}</Typography> : null}
+      <Typography sx={{ mt: 2, whiteSpace: "pre-line", borderRadius: 4, border: "1px solid var(--md-sys-color-outline-variant)", bgcolor: "var(--md-sys-color-surface-container-highest)", p: 2, fontSize: 14, fontWeight: 500, lineHeight: 1.75, color: "var(--md-sys-color-on-surface)" }}>
         {current.description || fallbackSkillDescription(current, locale)}
-      </p>
-    </article>
+      </Typography>
+    </Box>
   );
 }
 
@@ -688,4 +725,3 @@ function fallbackSkillDescription(skill: SkillLevelViewModel, locale: AppLocale)
   }).join(" / ");
   return t(locale, "cards.skillFallback", { values });
 }
-

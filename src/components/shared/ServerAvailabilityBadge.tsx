@@ -30,13 +30,13 @@ export default function ServerAvailabilityBadge({ locale, entity, servers, size 
   const flag = size === "md" ? "h-4.5 w-4.5" : "h-3.5 w-3.5";
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full border border-[var(--mn-glass-border)] bg-[var(--mn-surface-strong)] px-1.5 py-0.5 text-[10px] font-bold leading-none text-[var(--mn-text-muted)] ${className}`}
+      className={`inline-flex items-center gap-1 rounded-full border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-high)] px-1.5 py-0.5 text-[10px] font-bold leading-none text-[var(--md-sys-color-on-surface-variant)] ${className}`}
       title={label}
       role={showLabel ? undefined : "img"}
       aria-label={showLabel ? undefined : label}
     >
       <span className="flex items-center -space-x-1">
-        {available.map((server) => <ServerFlag key={server} server={server} className={`${flag} ring-1 ring-[var(--mn-paper)]`} />)}
+        {available.map((server) => <ServerFlag key={server} server={server} className={`${flag} ring-1 ring-[var(--md-sys-color-surface)]`} />)}
       </span>
       {showLabel ? <span>{label}</span> : null}
     </span>

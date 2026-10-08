@@ -15,7 +15,7 @@ export default function BandLogo({ bandId, bandName, locale }: Props) {
   const assetUrl = useAssetUrl();
 
   if (!bandId || failed) {
-    return <span className="truncate text-[11px] font-medium text-[var(--mn-text-muted)]">{bandName}</span>;
+    return <span className="truncate text-[11px] font-medium text-[var(--md-sys-color-on-surface-variant)]">{bandName}</span>;
   }
 
   return (

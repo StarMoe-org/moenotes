@@ -62,7 +62,7 @@ function AvailabilityNote({ locale, servers, server, source, entityServers }: {
       : "";
   if (!text) return null;
   return (
-    <p className={`text-xs font-bold ${source !== server ? "text-[var(--mn-accent-deep)]" : "text-[var(--mn-text-muted)]"}`} role="status">
+    <p className={`text-xs font-bold ${source !== server ? "text-[var(--md-sys-color-primary)]" : "text-[var(--md-sys-color-on-surface-variant)]"}`} role="status">
       {text}
     </p>
   );
