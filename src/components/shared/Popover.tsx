@@ -164,7 +164,7 @@ export default function Popover({
         createPortal(
           <>
             <div
-              className="fixed inset-0 z-[210] cursor-pointer"
+              className="fixed inset-0 z-[1400] cursor-pointer"
               onClick={close}
               onPointerDown={close}
               aria-hidden="true"
@@ -172,7 +172,7 @@ export default function Popover({
             <div
               ref={panelRef}
               style={panelStyle}
-              className={`mn-popover-panel z-[220] rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp)] ${panelClassName}`}
+              className={`mn-popover-panel z-[1410] rounded-2xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] p-2 shadow-[var(--mn-shadow-stamp)] ${panelClassName}`}
               role="menu"
             >
               {typeof children === "function" ? children({ close }) : children}

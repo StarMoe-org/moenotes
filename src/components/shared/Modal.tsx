@@ -1,9 +1,13 @@
-import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
-import { createPortal } from "react-dom";
-import { AnimatePresence, motion } from "framer-motion";
-import { lockBodyScroll, unlockBodyScroll } from "@/lib/overlay/body-scroll-lock";
-import { isTopOverlayLayer, pushOverlayLayer, removeOverlayLayer } from "@/lib/overlay/layer-stack";
-import { useSpringAnimation } from "@/lib/animation/use-animation";
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import Box from "@mui/material/Box";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
+import { isTopOverlayLayer } from "@/lib/overlay/layer-stack";
+import { useOverlayLayer } from "@/lib/overlay/use-overlay-layer";
 
 export interface ModalProps {
   isOpen: boolean;
@@ -17,12 +21,7 @@ export interface ModalProps {
   historyNavigation?: boolean;
 }
 
-const sizeClasses: Record<string, string> = {
-  sm: "max-w-sm",
-  md: "max-w-lg",
-  lg: "max-w-2xl",
-  xl: "max-w-5xl",
-};
+const maxWidths = { sm: "xs", md: "sm", lg: "md", xl: "lg" } as const;
 
 const focusableSelector = [
   "a[href]",
@@ -47,9 +46,8 @@ export default function Modal({
   const reactId = useId();
   const modalKey = `modal-${reactId}`;
   const titleId = `${modalKey}-title`;
-  const panelRef = useRef<HTMLDivElement>(null);
-  const restoreFocusRef = useRef<HTMLElement | null>(null);
-  const { modalTransition, isDisabled } = useSpringAnimation();
+  const contentRef = useRef<HTMLDivElement>(null);
+  useOverlayLayer(modalKey, isOpen);
 
   const onCloseRef = useRef(onClose);
   useEffect(() => {
@@ -62,34 +60,22 @@ export default function Modal({
     return () => cancelAnimationFrame(raf);
   }, []);
 
+  // History entry (Back closes) and initial focus; scroll lock, focus trap and
+  // focus restore come from the MUI dialog itself.
   useEffect(() => {
     if (!isOpen) return;
-    lockBodyScroll(modalKey);
-    pushOverlayLayer(modalKey);
-    restoreFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-
-    let didPushHistory = false;
-    let rafId: number | null = null;
 
     const isTopModal = () => isTopOverlayLayer(modalKey);
     const focusInitialElement = () => {
-      const panel = panelRef.current;
-      if (!panel || !isTopModal()) return;
-      const firstFocusable = getFocusableElements(panel)[0];
-      (firstFocusable ?? panel).focus({ preventScroll: true });
+      const content = contentRef.current;
+      if (!content || !isTopModal()) return;
+      const firstFocusable = getFocusableElements(content)[0];
+      (firstFocusable ?? content).focus({ preventScroll: true });
     };
 
+    let didPushHistory = false;
     const handlePopState = () => {
       if (isTopModal()) stableOnClose();
-    };
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (!isTopModal() || event.isComposing) return;
-      if (event.key === "Escape") {
-        event.preventDefault();
-        stableOnClose();
-        return;
-      }
-      if (event.key === "Tab") trapFocus(event, panelRef.current);
     };
 
     const hasModalState = window.history.state?.modal;
@@ -97,92 +83,57 @@ export default function Modal({
       window.history.pushState({ modal: true }, "");
       didPushHistory = true;
     }
-    rafId = requestAnimationFrame(() => {
+    const rafId = requestAnimationFrame(() => {
       window.addEventListener("popstate", handlePopState);
       focusInitialElement();
     });
 
-    document.addEventListener("keydown", handleKeyDown);
-
     return () => {
-      if (rafId !== null) cancelAnimationFrame(rafId);
-      removeOverlayLayer(modalKey);
-      unlockBodyScroll(modalKey);
+      cancelAnimationFrame(rafId);
       window.removeEventListener("popstate", handlePopState);
-      document.removeEventListener("keydown", handleKeyDown);
       if (didPushHistory && window.history.state?.modal) {
         window.history.back();
-      }
-      const restoreTarget = restoreFocusRef.current;
-      if (restoreTarget && document.contains(restoreTarget)) {
-        requestAnimationFrame(() => restoreTarget.focus({ preventScroll: true }));
       }
     };
   }, [isOpen, modalKey, stableOnClose, historyNavigation]);
 
   if (!mounted) return null;
 
-  const panelInitial = isDisabled ? {} : { opacity: 0, scale: 0.95, y: 10 };
-  const panelAnimate = { opacity: 1, scale: 1, y: 0 };
-  const panelExit = isDisabled ? {} : { opacity: 0, scale: 0.95, y: 10 };
+  const handleClose = (_event: object, reason: string) => {
+    if (reason === "escapeKeyDown" && !isTopOverlayLayer(modalKey)) return;
+    stableOnClose();
+  };
 
-  return createPortal(
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-[200] isolate flex items-center justify-center p-4 sm:p-6">
-          <motion.div
-            className="absolute inset-0 mn-overlay-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            onClick={stableOnClose}
-          />
-
-          <motion.div
-            ref={panelRef}
-            className={`mn-overlay-panel relative w-full ${sizeClasses[size]} max-h-[calc(100vh-2rem)] sm:max-h-[85vh] flex flex-col overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-lg)]`}
-            initial={panelInitial}
-            animate={panelAnimate}
-            exit={panelExit}
-            transition={modalTransition}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={title ? titleId : undefined}
-            aria-label={title ? undefined : closeLabel}
-            tabIndex={-1}
-            onKeyDown={(event: ReactKeyboardEvent<HTMLDivElement>) => {
-              if (event.key === "Tab") trapFocus(event.nativeEvent, panelRef.current);
-            }}
-          >
-            <div className="mn-overlay-heading flex shrink-0 items-center justify-between border-b-[1.5px] border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_8%,transparent)] to-transparent px-5 py-3.5">
-              <h2 id={titleId} className="flex items-center gap-2 font-[var(--mn-font-display)] text-base tracking-tight text-[var(--mn-text)]">
-                <svg className="mn-overlay-symbol" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m12 2 2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z" stroke="currentColor" strokeWidth="1.2"/></svg>
-                {title}
-              </h2>
-              <div className="flex items-center gap-1.5">
-                {headerActions}
-                <button
-                  type="button"
-                  onClick={stableOnClose}
-                  className="grid h-8 w-8 place-items-center rounded-full border-2 border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text-muted)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]"
-                  aria-label={closeLabel}
-                >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" aria-hidden="true">
-                    <path d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div className="mn-overlay-body flex-1 overflow-y-auto p-5">
-              {children}
-            </div>
-          </motion.div>
+  return (
+    <MdMuiProvider>
+      <Dialog
+        open={isOpen}
+        onClose={handleClose}
+        fullWidth
+        maxWidth={maxWidths[size]}
+        scroll="paper"
+        disableAutoFocus
+        aria-labelledby={titleId}
+        slotProps={{ paper: { sx: { borderRadius: 7 } } }}
+      >
+        <div ref={contentRef} tabIndex={-1} style={{ display: "contents" }}>
+          <DialogTitle id={titleId} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {title ? title : (
+              <Box component="span" sx={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap" }}>
+                {closeLabel}
+              </Box>
+            )}
+            <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: 0.5 }}>
+              {headerActions}
+              <IconButton size="small" onClick={stableOnClose} aria-label={closeLabel}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
+          </DialogTitle>
+          <DialogContent>{children}</DialogContent>
         </div>
-      )}
-    </AnimatePresence>,
-    document.body,
+      </Dialog>
+    </MdMuiProvider>
   );
 }
 

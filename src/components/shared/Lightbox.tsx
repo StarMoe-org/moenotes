@@ -235,7 +235,7 @@ export default function Lightbox({ locale, images, index, open, onClose, onIndex
   return createPortal(
     <div
       ref={panelRef}
-      className="fixed inset-0 z-[210] flex flex-col bg-black/90 text-white"
+      className="fixed inset-0 z-[1400] flex flex-col bg-black/90 text-white"
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
