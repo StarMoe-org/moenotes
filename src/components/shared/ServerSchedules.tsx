@@ -30,8 +30,8 @@ export default function ServerSchedules<T extends Scheduled>({ locale, faceted, 
   const instants = new Set(windows.map((entry) => `${parseMasterDate(entry.startAt)}-${parseMasterDate(entry.endAt)}`));
   if (windows.length < 2 || instants.size < 2) return null;
   return (
-    <div className="mt-4 rounded-xl border border-dashed border-[var(--mn-border)] p-3">
-      <p className="text-xs font-black text-[var(--mn-text-muted)]">{t(locale, "gameServer.schedules")}</p>
+    <div className="mt-4 rounded-xl border border-dashed border-[var(--md-sys-color-outline-variant)] p-3">
+      <p className="text-xs font-black text-[var(--md-sys-color-on-surface-variant)]">{t(locale, "gameServer.schedules")}</p>
       <ul className="mt-2 space-y-1 text-sm">
         {windows.map(({ server, startAt, endAt }) => (
           <li key={server} className="flex flex-wrap items-baseline gap-x-2">
@@ -40,8 +40,8 @@ export default function ServerSchedules<T extends Scheduled>({ locale, faceted, 
               <ServerFlag server={server} />
               <span className="sr-only">{t(locale, `gameServer.names.${server}`)}</span>
             </span>
-            <span className="tabular-nums text-[var(--mn-text)]">{formatScheduleRange(startAt, endAt, locale, timeZone) || alwaysLabel}</span>
-            <span className="text-[11px] text-[var(--mn-text-muted)]">{displayUtcLabel(startAt || endAt, timeZone)}</span>
+            <span className="tabular-nums text-[var(--md-sys-color-on-surface)]">{formatScheduleRange(startAt, endAt, locale, timeZone) || alwaysLabel}</span>
+            <span className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">{displayUtcLabel(startAt || endAt, timeZone)}</span>
           </li>
         ))}
       </ul>

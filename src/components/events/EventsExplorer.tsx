@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import Typography from "@mui/material/Typography";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 import type { AppLocale } from "@/config/locales";
 import { orderServers, type GameServer } from "@/config/servers";
 import EventBanner from "@/components/events/EventBanner";
@@ -154,6 +158,7 @@ export default function EventsExplorer({ locale, servers, initialEvents, bands }
 
   return (
     <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
+      <MdMuiProvider>
       <section className="min-w-0" aria-live="polite">
         {events.length === 0 ? (
           <NoEventsOnServer locale={locale} server={server} eventServers={eventServers} onPick={pickServer} />
@@ -167,6 +172,7 @@ export default function EventsExplorer({ locale, servers, initialEvents, bands }
           </div>
         )}
       </section>
+      </MdMuiProvider>
     </ServerScope>
   );
 }
@@ -176,11 +182,11 @@ function EventCard({ event, locale, now, timeZone, onClick }: { event: EventView
     <a
       href={localizePath(eventPath(event.id), locale)}
       onClick={onClick}
-      className="mn-list-card group flex min-w-0 flex-col overflow-hidden border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)] transition hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)]"
+      className="group flex min-w-0 flex-col overflow-hidden rounded-3xl border-[1.5px] border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)] transition-colors hover:border-[var(--md-sys-color-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--md-sys-color-primary)]"
       data-list-item-id={event.id}
       aria-label={t(locale, "events.openDetail", { name: event.name })}
     >
-      <div className="relative border-b border-[var(--mn-glass-border)]">
+      <div className="relative border-b border-[var(--md-sys-color-outline-variant)]">
         <EventBanner event={event} alt="" />
         <div className="absolute left-2 top-2 flex max-w-[calc(100%-1rem)] flex-wrap gap-1.5">
           <ScheduleBadge locale={locale} startAt={event.startAt} endAt={event.endAt} now={now} countdown />
@@ -188,12 +194,12 @@ function EventCard({ event, locale, now, timeZone, onClick }: { event: EventView
       </div>
       <div className="flex flex-1 flex-col gap-3 p-3 sm:p-4">
         <div className="min-w-0">
-          <h3 className="line-clamp-2 text-sm font-black leading-5 text-[var(--mn-text)] transition-colors group-hover:text-[var(--mn-accent-deep)]">{event.name}</h3>
-          <p className="mt-1 truncate text-xs font-medium tabular-nums text-[var(--mn-text-muted)]">{formatScheduleRange(event.startAt, event.endAt, locale, timeZone)}</p>
+          <h3 className="line-clamp-2 text-sm font-black leading-5 text-[var(--md-sys-color-on-surface)] transition-colors group-hover:text-[var(--md-sys-color-primary)]">{event.name}</h3>
+          <p className="mt-1 truncate text-xs font-medium tabular-nums text-[var(--md-sys-color-on-surface-variant)]">{formatScheduleRange(event.startAt, event.endAt, locale, timeZone)}</p>
           <ScheduleCountdown locale={locale} startAt={event.startAt} endAt={event.endAt} now={now} className="mt-1" />
         </div>
         {event.characters.length > 0 && (
-          <div className="mt-auto border-t border-dashed border-[var(--mn-text-muted)]/40 pt-2">
+          <div className="mt-auto border-t border-dashed border-[var(--md-sys-color-outline-variant)] pt-2">
             <Faces characters={event.characters} label={t(locale, "events.bonus")} />
           </div>
         )}
@@ -207,18 +213,18 @@ function Faces({ characters, label }: { characters: EventCharacter[]; label: str
   const shown = characters.slice(0, 8);
   return (
     <span className="flex min-w-0 items-center gap-2">
-      <span className="shrink-0 text-[10px] font-black tracking-wider text-[var(--mn-accent-deep)]">{label}</span>
+      <span className="shrink-0 text-[10px] font-black tracking-wider text-[var(--md-sys-color-primary)]">{label}</span>
       <span className="flex items-center" title={characters.map((character) => character.name).join(" / ")}>
         {shown.map((character) => (
           <img
             key={character.id}
-            className="-ml-1.5 h-7 w-7 rounded-full border-2 border-[var(--mn-paper)] bg-[var(--mn-cream-deep)] object-cover first:ml-0"
+            className="-ml-1.5 h-7 w-7 rounded-full border-2 border-[var(--md-sys-color-surface-container-low)] bg-[var(--md-sys-color-surface-container-high)] object-cover first:ml-0"
             src={assetUrl(getCharacterFaceIconUrl(character.id))}
             alt={character.name}
             loading="lazy"
           />
         ))}
-        {characters.length > shown.length && <span className="ml-1 text-[11px] font-bold text-[var(--mn-text-muted)]">+{characters.length - shown.length}</span>}
+        {characters.length > shown.length && <span className="ml-1 text-[11px] font-bold text-[var(--md-sys-color-on-surface-variant)]">+{characters.length - shown.length}</span>}
       </span>
     </span>
   );
@@ -227,36 +233,35 @@ function Faces({ characters, label }: { characters: EventCharacter[]; label: str
 /** The reader's server has held no event yet; offer the servers that have. */
 function NoEventsOnServer({ locale, server, eventServers, onPick }: { locale: AppLocale; server: GameServer; eventServers: GameServer[]; onPick: (server: GameServer) => void }) {
   return (
-    <div className="mn-paper p-8 text-center sm:p-12">
-      <h2 className="font-[var(--mn-font-display)] text-2xl text-[var(--mn-text)]">{t(locale, "events.noneOnServer", { server: t(locale, `gameServer.names.${server}`) })}</h2>
+    <Card variant="outlined" sx={{ px: { xs: 4, sm: 6 }, py: { xs: 4, sm: 6 }, textAlign: "center" }}>
+      <Typography component="h2" sx={{ fontFamily: "var(--mn-font-display)", fontSize: 24, color: "var(--md-sys-color-on-surface)" }}>{t(locale, "events.noneOnServer", { server: t(locale, `gameServer.names.${server}`) })}</Typography>
       {eventServers.length > 0 && (
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           {eventServers.map((entry) => (
-            <button
+            <Button
               key={entry}
-              type="button"
+              variant="outlined"
               onClick={() => onPick(entry)}
-              className="mn-focus mn-stamp-press flex items-center gap-2 rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-6 py-3 text-sm font-bold text-[var(--mn-accent-deep)] shadow-[var(--mn-shadow-stamp)]"
+              startIcon={<ServerFlag server={entry} className="h-5 w-5" />}
             >
-              <ServerFlag server={entry} className="h-5 w-5" />
               {t(locale, "events.showServer", { server: t(locale, `gameServer.names.${entry}`) })}
-            </button>
+            </Button>
           ))}
         </div>
       )}
-    </div>
+    </Card>
   );
 }
 
 function EmptyState({ locale, onReset }: { locale: AppLocale; onReset: () => void }) {
   return (
-    <div className="mn-paper p-8 text-center sm:p-12">
-      <h2 className="font-[var(--mn-font-display)] text-2xl text-[var(--mn-text)]">{t(locale, "events.emptyTitle")}</h2>
-      <p className="mx-auto mt-3 max-w-xl text-sm font-medium leading-7 text-[var(--mn-text-muted)]">{t(locale, "events.emptyDescription")}</p>
-      <button type="button" onClick={onReset} className="mn-focus mn-stamp-press mt-6 rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-6 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]">
+    <Card variant="outlined" sx={{ px: { xs: 4, sm: 6 }, py: { xs: 4, sm: 6 }, textAlign: "center" }}>
+      <Typography component="h2" sx={{ fontFamily: "var(--mn-font-display)", fontSize: 24, color: "var(--md-sys-color-on-surface)" }}>{t(locale, "events.emptyTitle")}</Typography>
+      <Typography variant="body2" sx={{ mx: "auto", mt: 1.5, maxWidth: 576, fontWeight: 500, lineHeight: 1.75, color: "var(--md-sys-color-on-surface-variant)" }}>{t(locale, "events.emptyDescription")}</Typography>
+      <Button variant="outlined" onClick={onReset} sx={{ mt: 3 }}>
         {t(locale, "events.reset")}
-      </button>
-    </div>
+      </Button>
+    </Card>
   );
 }
 

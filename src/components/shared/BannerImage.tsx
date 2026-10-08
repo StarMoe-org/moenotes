@@ -19,9 +19,9 @@ export default function BannerImage({ src: neutralSrc, alt, fallback, className 
   const failed = !src || failedSrc === src;
 
   return (
-    <div className={`relative aspect-[7/3] overflow-hidden bg-[var(--mn-cream-deep)] ${className}`.trim()}>
+    <div className={`relative aspect-[7/3] overflow-hidden bg-[var(--md-sys-color-surface-container-high)] ${className}`.trim()}>
       {failed ? (
-        <div className="mn-texture-orbit grid h-full place-items-center p-4 text-center text-sm font-bold text-[var(--mn-text-muted)]">
+        <div className="mn-texture-orbit grid h-full place-items-center p-4 text-center text-sm font-bold text-[var(--md-sys-color-on-surface-variant)]">
           <span className="line-clamp-2">{fallback}</span>
         </div>
       ) : (

@@ -17,10 +17,10 @@ export interface ScheduleCountdownProps {
 }
 
 const toneByStatus: Record<CountdownParts["status"], string> = {
-  ongoing: "text-[var(--mn-accent-deep)]",
-  upcoming: "text-[var(--mn-ink-soft)]",
-  permanent: "text-[var(--mn-mint-deep)]",
-  ended: "text-[var(--mn-text-muted)]",
+  ongoing: "text-[var(--md-sys-color-primary)]",
+  upcoming: "text-[var(--md-sys-color-secondary)]",
+  permanent: "text-[var(--md-sys-color-tertiary)]",
+  ended: "text-[var(--md-sys-color-on-surface-variant)]",
 };
 
 /** "Starts in 3d" / "5h left" / "Ended" for one schedule. */

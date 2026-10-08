@@ -1,5 +1,12 @@
 import SiriusLoader from "@/components/shared/SiriusLoader";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import Typography from "@mui/material/Typography";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import EventBanner from "@/components/events/EventBanner";
@@ -146,25 +153,28 @@ export default function EventTracker({ locale, events, songs, deckCards, servers
   };
 
   return (
+    <MdMuiProvider>
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <GameServerSwitch locale={locale} value={server} onChange={pickServer} />
         {catalog.length > 1 && (
-          <label className="flex min-w-0 items-center gap-2 text-xs font-bold text-[var(--mn-text-muted)]">
-            <span className="shrink-0">{t(locale, "eventTracker.eventLabel")}</span>
-            <select
-              className="mn-focus min-w-0 max-w-[18rem] truncate rounded-full border border-[var(--mn-border)] bg-[var(--mn-paper)] px-3 py-1.5 text-xs font-bold text-[var(--mn-text)]"
+          <Box sx={{ display: "flex", minWidth: 0, alignItems: "center", gap: 1 }}>
+            <Typography variant="caption" component="span" sx={{ flexShrink: 0, fontWeight: 700, color: "var(--md-sys-color-on-surface-variant)" }}>{t(locale, "eventTracker.eventLabel")}</Typography>
+            <Select
+              size="small"
               value={pinned ?? ""}
+              inputProps={{ "aria-label": t(locale, "eventTracker.eventLabel") }}
               onChange={(change) => pickEvent(change.target.value || null)}
+              sx={{ minWidth: 0, maxWidth: 288, fontSize: 12, fontWeight: 700 }}
             >
-              <option value="">{t(locale, "eventTracker.currentEvent")}</option>
+              <MenuItem value="">{t(locale, "eventTracker.currentEvent")}</MenuItem>
               {catalog.map((entry) => (
-                <option key={entry.eventId} value={entry.eventId}>
+                <MenuItem key={entry.eventId} value={entry.eventId}>
                   {`${eventName(entry.eventId)} · ${t(locale, `eventTracker.eventStatus.${entry.eventStatus}`)}`}
-                </option>
+                </MenuItem>
               ))}
-            </select>
-          </label>
+            </Select>
+          </Box>
         )}
       </div>
 
@@ -199,14 +209,14 @@ export default function EventTracker({ locale, events, songs, deckCards, servers
             name={eventName(event.eventId)}
           />
 
-          <section className="mn-paper overflow-hidden" aria-labelledby="event-tracker-challenges">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_6%,transparent)] to-transparent px-6 py-4 sm:px-8">
-              <h2 id="event-tracker-challenges" className="font-[var(--mn-font-display)] text-xl text-[var(--mn-text)] sm:text-2xl">
+          <Card variant="outlined" component="section" sx={{ overflow: "hidden" }} aria-labelledby="event-tracker-challenges">
+            <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 1.5, borderBottom: "1px solid var(--md-sys-color-outline-variant)", px: 3, py: 2 }}>
+              <Typography component="h2" id="event-tracker-challenges" sx={{ fontFamily: "var(--mn-font-display)", fontSize: { xs: 20, sm: 24 }, color: "var(--md-sys-color-on-surface)" }}>
                 {t(locale, "eventTracker.challenges.title")}
-              </h2>
-            </div>
+              </Typography>
+            </Box>
             {challenges.length === 0 ? (
-              <p className="px-6 py-8 text-center text-sm font-semibold text-[var(--mn-text-muted)]">{t(locale, "eventTracker.challenges.none")}</p>
+              <p className="px-6 py-8 text-center text-sm font-semibold text-[var(--md-sys-color-on-surface-variant)]">{t(locale, "eventTracker.challenges.none")}</p>
             ) : (
               <>
                 <SongTabs locale={locale} server={server} challenges={challenges} songs={songs} selected={challenge?.challengeMusicId ?? null} onSelect={setSong} />
@@ -224,12 +234,13 @@ export default function EventTracker({ locale, events, songs, deckCards, servers
                 )}
               </>
             )}
-          </section>
+          </Card>
 
           <PointRankingPanel key={`${server}:${event.eventId}`} locale={locale} server={server} event={event} servers={servers} />
         </>
       )}
     </div>
+    </MdMuiProvider>
   );
 }
 
@@ -246,7 +257,7 @@ function EventHeader({ locale, server, servers, event, entry, name }: {
   const art = { name, bannerUrl: shown?.bannerUrl ?? "", logoUrl: shown?.logoUrl ?? "", backgroundUrl: shown?.backgroundUrl ?? "" };
 
   return (
-    <div className="mn-paper overflow-hidden">
+    <Card variant="outlined" sx={{ overflow: "hidden" }}>
       <div className="grid gap-0 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         {/* The banner keeps its 7:3 width inside its column; sized by the row's height it would spill over the text. */}
         <div className="min-w-0 self-center overflow-hidden">
@@ -259,24 +270,24 @@ function EventHeader({ locale, server, servers, event, entry, name }: {
             <StatusChip tone={event.eventStatus === "nowOn" ? "live" : event.eventStatus === "aggregation" || event.eventStatus === "feature" ? "wait" : "done"}>
               {t(locale, `eventTracker.eventStatus.${event.eventStatus}`)}
             </StatusChip>
-            <span className="font-mono text-[11px] font-bold text-[var(--mn-text-muted)]">#{event.eventId}</span>
+            <span className="text-[11px] font-bold tabular-nums text-[var(--md-sys-color-on-surface-variant)]">#{event.eventId}</span>
           </div>
-          <h2 className="font-[var(--mn-font-display)] text-2xl leading-tight text-[var(--mn-text)] sm:text-3xl">{name}</h2>
-          <p className="text-xs font-semibold tabular-nums text-[var(--mn-text-muted)]">
+          <Typography component="h2" sx={{ fontFamily: "var(--mn-font-display)", fontSize: { xs: 24, sm: 30 }, lineHeight: 1.25, color: "var(--md-sys-color-on-surface)" }}>{name}</Typography>
+          <p className="text-xs font-semibold tabular-nums text-[var(--md-sys-color-on-surface-variant)]">
             {formatServerSchedule(event.startAt, event.endAt, server, locale)}
           </p>
           <Countdown locale={locale} event={event} />
           {entry?.servers.includes(server) && (
             <a
               href={localizePath(eventPath(Number(event.eventId)), locale)}
-              className="mn-focus w-fit text-xs font-bold text-[var(--mn-accent-deep)] underline-offset-4 hover:underline"
+              className="w-fit text-xs font-bold text-[var(--md-sys-color-primary)] underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--md-sys-color-primary)]"
             >
               {t(locale, "eventTracker.openEvent")}
             </a>
           )}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -294,9 +305,9 @@ function Countdown({ locale, event }: { locale: AppLocale; event: RankdEvent }) 
         : [null, 0] as const;
   if (!key) return null;
   return (
-    <p className="text-sm font-bold text-[var(--mn-text)]">
+    <p className="text-sm font-bold text-[var(--md-sys-color-on-surface)]">
       {t(locale, `eventTracker.countdown.${key}`)}{" "}
-      <span className="font-mono tabular-nums text-[var(--mn-accent-deep)]">{formatDuration(locale, target - now)}</span>
+      <span className="tabular-nums text-[var(--md-sys-color-primary)]">{formatDuration(locale, target - now)}</span>
     </p>
   );
 }
@@ -317,7 +328,7 @@ function SongTabs({ locale, server, challenges, songs, selected, onSelect }: {
   onSelect: (challengeMusicId: string) => void;
 }) {
   return (
-    <div className="flex gap-2 overflow-x-auto border-b border-[var(--mn-border)] px-4 py-3 sm:px-6" role="tablist" aria-label={t(locale, "eventTracker.challenges.songs")}>
+    <div className="flex gap-2 overflow-x-auto border-b border-[var(--md-sys-color-outline-variant)] px-4 py-3 sm:px-6" role="tablist" aria-label={t(locale, "eventTracker.challenges.songs")}>
       {challenges.map((entry, index) => {
         const song = songs[entry.musicId];
         const active = entry.challengeMusicId === selected;
@@ -328,19 +339,19 @@ function SongTabs({ locale, server, challenges, songs, selected, onSelect }: {
             role="tab"
             aria-selected={active}
             onClick={() => onSelect(entry.challengeMusicId)}
-            className={`mn-focus flex min-w-[11rem] max-w-[16rem] shrink-0 items-center gap-2.5 rounded-2xl border p-2 text-left transition ${
+            className={`flex min-w-[11rem] max-w-[16rem] shrink-0 items-center gap-2.5 rounded-2xl border p-2 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--md-sys-color-primary)] ${
               active
-                ? "border-[var(--mn-accent)] bg-[var(--mn-accent-soft)]"
-                : "border-[var(--mn-border)] bg-[var(--mn-paper)] hover:border-[var(--mn-accent)]"
+                ? "border-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-primary-container)]"
+                : "border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)] hover:border-[var(--md-sys-color-primary)]"
             }`}
           >
             <SongJacket song={song} server={server} className="h-11 w-11" />
             <span className="min-w-0">
-              <span className="block text-[10px] font-black tracking-wider text-[var(--mn-text-muted)]">{t(locale, "eventTracker.challenges.songNumber", { n: index + 1 })}</span>
-              <span className={`block truncate text-sm font-bold ${active ? "text-[var(--mn-accent-deep)]" : "text-[var(--mn-text)]"}`}>
+              <span className="block text-[10px] font-black tracking-wider text-[var(--md-sys-color-on-surface-variant)]">{t(locale, "eventTracker.challenges.songNumber", { n: index + 1 })}</span>
+              <span className={`block truncate text-sm font-bold ${active ? "text-[var(--md-sys-color-on-primary-container)]" : "text-[var(--md-sys-color-on-surface)]"}`}>
                 {song?.title || t(locale, "eventTracker.songFallback", { id: entry.musicId })}
               </span>
-              <span className="mt-0.5 flex items-center gap-1 text-[10px] font-semibold text-[var(--mn-text-muted)]">
+              <span className="mt-0.5 flex items-center gap-1 text-[10px] font-semibold text-[var(--md-sys-color-on-surface-variant)]">
                 <StatusDot status={entry.collectStatus} />
                 {t(locale, `eventTracker.collect.${entry.collectStatus}`)}
               </span>
@@ -355,7 +366,7 @@ function SongTabs({ locale, server, challenges, songs, selected, onSelect }: {
 function SongJacket({ song, server, className }: { song: TrackerSong | undefined | null; server: GameServer; className: string }) {
   const source = song?.servers.length && !song.servers.includes(server) ? song.servers[0]! : server;
   return song?.jacketUrl ? (
-    <img className={`${className} shrink-0 rounded-lg border border-[var(--mn-glass-border)] bg-[var(--mn-cream-deep)] object-cover`} src={serverAssetUrl(song.jacketUrl, source)} alt="" loading="lazy" />
+    <img className={`${className} shrink-0 rounded-lg border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-high)] object-cover`} src={serverAssetUrl(song.jacketUrl, source)} alt="" loading="lazy" />
   ) : (
     <span className={`${className} mn-texture-orbit shrink-0 rounded-lg`} aria-hidden="true" />
   );
@@ -421,16 +432,16 @@ function ChallengeBoard({ locale, server, eventId, challenge, song, cards, serve
   return (
     <div className="px-4 py-4 sm:px-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 px-2">
-        <a href={song ? localizePath(`${getRoutePathById("music")}/${challenge.musicId}`, locale) : undefined} className="mn-focus group flex min-w-0 items-center gap-3">
+        <a href={song ? localizePath(`${getRoutePathById("music")}/${challenge.musicId}`, locale) : undefined} className="group flex min-w-0 items-center gap-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--md-sys-color-primary)]">
           <SongJacket song={song} server={server} className="h-14 w-14" />
           <span className="min-w-0">
-            <span className="block truncate font-[var(--mn-font-display)] text-lg font-bold text-[var(--mn-text)] group-hover:text-[var(--mn-accent-deep)]">
+            <span className="block truncate font-[var(--mn-font-display)] text-lg font-bold text-[var(--md-sys-color-on-surface)] group-hover:text-[var(--md-sys-color-primary)]">
               {song?.title || t(locale, "eventTracker.songFallback", { id: challenge.musicId })}
             </span>
-            {song?.bandName && <span className="block truncate text-xs font-semibold text-[var(--mn-text-muted)]">{song.bandName}</span>}
+            {song?.bandName && <span className="block truncate text-xs font-semibold text-[var(--md-sys-color-on-surface-variant)]">{song.bandName}</span>}
           </span>
         </a>
-        <div className="flex flex-col items-end gap-1 text-right text-[11px] font-semibold text-[var(--mn-text-muted)]">
+        <div className="flex flex-col items-end gap-1 text-right text-[11px] font-semibold text-[var(--md-sys-color-on-surface-variant)]">
           <span className="flex items-center gap-1.5">
             <StatusDot status={challenge.collectStatus} />
             {t(locale, `eventTracker.collect.${challenge.collectStatus}`)}
@@ -460,13 +471,13 @@ function ChallengeBoard({ locale, server, eventId, challenge, song, cards, serve
           <BoardNotice locale={locale} server={server} challenge={{ ...challenge, collectStatus: load.kind === "notStarted" ? "pending" : load.kind }} />
         )
       ) : top.length === 0 ? (
-        <p className="px-2 py-8 text-center text-sm font-semibold text-[var(--mn-text-muted)]">{t(locale, "music.ranking.empty")}</p>
+        <p className="px-2 py-8 text-center text-sm font-semibold text-[var(--md-sys-color-on-surface-variant)]">{t(locale, "music.ranking.empty")}</p>
       ) : (
         <RankingList locale={locale} rows={top} cards={cards} assetUrl={assetUrl} boundaries={boundaries} server={server} />
       )}
 
       {finalQuality === "lastSeen" && (
-        <p className="mt-4 border-t border-[var(--mn-glass-border)] px-2 pt-3 text-xs leading-6 text-[var(--mn-text-muted)]">
+        <p className="mt-4 border-t border-[var(--md-sys-color-outline-variant)] px-2 pt-3 text-xs leading-6 text-[var(--md-sys-color-on-surface-variant)]">
           {t(locale, "eventTracker.challenges.lastSeen")}
         </p>
       )}
@@ -516,42 +527,42 @@ function PointRankingPanel({ locale, server, event, servers }: { locale: AppLoca
   const missing = data ? missingRanks(data) : [];
 
   return (
-    <section className="mn-paper overflow-hidden" aria-labelledby="event-tracker-points">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_6%,transparent)] to-transparent px-6 py-4 sm:px-8">
-        <h2 id="event-tracker-points" className="font-[var(--mn-font-display)] text-xl text-[var(--mn-text)] sm:text-2xl">{t(locale, "eventTracker.points.title")}</h2>
+    <Card variant="outlined" component="section" sx={{ overflow: "hidden" }} aria-labelledby="event-tracker-points">
+      <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 1.5, borderBottom: "1px solid var(--md-sys-color-outline-variant)", px: 3, py: 2 }}>
+        <Typography component="h2" id="event-tracker-points" sx={{ fontFamily: "var(--mn-font-display)", fontSize: { xs: 20, sm: 24 }, color: "var(--md-sys-color-on-surface)" }}>{t(locale, "eventTracker.points.title")}</Typography>
         {enabled && (
-          <span className="flex items-center gap-1.5 text-[11px] font-semibold text-[var(--mn-text-muted)]">
+          <span className="flex items-center gap-1.5 text-[11px] font-semibold text-[var(--md-sys-color-on-surface-variant)]">
             <StatusDot status={status} />
             {t(locale, `eventTracker.collect.${status}`)}
           </span>
         )}
-      </div>
+      </Box>
       <div className="px-4 py-4 sm:px-6">
         {!enabled ? (
-          <p className="px-2 py-4 text-sm leading-7 text-[var(--mn-text-muted)]">{t(locale, "eventTracker.points.disabled")}</p>
+          <p className="px-2 py-4 text-sm leading-7 text-[var(--md-sys-color-on-surface-variant)]">{t(locale, "eventTracker.points.disabled")}</p>
         ) : !readable ? (
-          <p className="px-2 py-4 text-sm leading-7 text-[var(--mn-text-muted)]">{t(locale, `eventTracker.board.${status === "missed" ? "missed" : "pending"}`)}</p>
+          <p className="px-2 py-4 text-sm leading-7 text-[var(--md-sys-color-on-surface-variant)]">{t(locale, `eventTracker.board.${status === "missed" ? "missed" : "pending"}`)}</p>
         ) : !data ? (
           failed
-            ? <p className="px-2 py-4 text-sm font-semibold text-[var(--mn-text-muted)]">{t(locale, "music.ranking.errors.failed")}</p>
+            ? <p className="px-2 py-4 text-sm font-semibold text-[var(--md-sys-color-on-surface-variant)]">{t(locale, "music.ranking.errors.failed")}</p>
             : <RankingLoading locale={locale} label={t(locale, "music.ranking.loading")} />
         ) : (
           <>
-            <p className="mb-3 px-2 text-right text-[11px] font-semibold text-[var(--mn-text-muted)]">
+            <p className="mb-3 px-2 text-right text-[11px] font-semibold text-[var(--md-sys-color-on-surface-variant)]">
               {t(locale, "music.ranking.updatedAgo", { time: formatAge(data.updatedAt, latest.serverTime ?? Date.now(), locale) })}
               {data.stale && ` · ${t(locale, "eventTracker.points.interrupted")}`}
               {data.frozen && ` · ${t(locale, "eventTracker.points.frozen")}`}
             </p>
-            <ol className="divide-y divide-dashed divide-[var(--mn-border)]/50">
+            <ol className="divide-y divide-dashed divide-[var(--md-sys-color-outline-variant)]/50">
               {rows.map((row, index) => {
                 const profile = row.profile;
                 const thumbnails = profile?.profileCard?.thumbnailUrl;
                 const namecardImages = Array.isArray(thumbnails) ? thumbnails.length : 0;
                 return (
                   <li key={`${row.rank}:${profile?.id ?? index}`} className="grid grid-cols-[3.5rem_minmax(0,1fr)_auto] items-center gap-3 px-2 py-2">
-                    <span className={`font-mono text-base font-black ${row.rank <= 3 ? "text-[var(--mn-accent-deep)]" : "text-[var(--mn-text)]"}`}>
+                    <span className={`text-base font-black tabular-nums ${row.rank <= 3 ? "text-[var(--md-sys-color-primary)]" : "text-[var(--md-sys-color-on-surface)]"}`}>
                       {numbers.format(row.rank)}
-                      {row.dup && <span className="ml-0.5 align-top text-[9px] font-bold text-[var(--mn-text-muted)]" title={t(locale, "eventTracker.points.tied")}>=</span>}
+                      {row.dup && <span className="ml-0.5 align-top text-[9px] font-bold text-[var(--md-sys-color-on-surface-variant)]" title={t(locale, "eventTracker.points.tied")}>=</span>}
                     </span>
                     <span className="flex min-w-0 items-center gap-2">
                       {profile && namecardImages > 0 && (
@@ -564,41 +575,41 @@ function PointRankingPanel({ locale, server, event, servers }: { locale: AppLoca
                           useRankingApi={true}
                         />
                       )}
-                      <span className="truncate text-sm font-bold text-[var(--mn-text)]">{profile?.name ?? ""}</span>
+                      <span className="truncate text-sm font-bold text-[var(--md-sys-color-on-surface)]">{profile?.name ?? ""}</span>
                     </span>
-                    <span className="text-right font-mono text-sm font-black tabular-nums text-[var(--mn-text)]">{numbers.format(row.point)}</span>
+                    <span className="text-right text-sm font-black tabular-nums text-[var(--md-sys-color-on-surface)]">{numbers.format(row.point)}</span>
                   </li>
                 );
               })}
             </ol>
             {missing.length > 0 && (
-              <p className="mt-3 px-2 text-xs text-[var(--mn-text-muted)]">
+              <p className="mt-3 px-2 text-xs text-[var(--md-sys-color-on-surface-variant)]">
                 {t(locale, "eventTracker.points.notReturned", { ranks: missing.map((rank) => numbers.format(rank)).join(", ") })}
               </p>
             )}
           </>
         )}
       </div>
-    </section>
+    </Card>
   );
 }
 
 const dotTone: Record<string, string> = {
-  collecting: "bg-[var(--mn-mint-deep)] animate-pulse",
-  finalizing: "bg-[var(--mn-accent)]",
-  archiving: "bg-[var(--mn-accent)]",
-  archived: "bg-[var(--mn-text-muted)]",
-  pending: "bg-[var(--mn-pink)]",
+  collecting: "bg-[var(--md-sys-color-primary)] animate-pulse",
+  finalizing: "bg-[var(--md-sys-color-secondary)]",
+  archiving: "bg-[var(--md-sys-color-secondary)]",
+  archived: "bg-[var(--md-sys-color-on-surface-variant)]",
+  pending: "bg-[var(--md-sys-color-tertiary)]",
 };
 
 function StatusDot({ status }: { status: string }) {
-  return <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotTone[status] ?? "bg-[var(--mn-border)]"}`} aria-hidden="true" />;
+  return <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotTone[status] ?? "bg-[var(--md-sys-color-outline-variant)]"}`} aria-hidden="true" />;
 }
 
 const chipTone = {
-  live: "border-[color-mix(in_srgb,var(--mn-accent)_45%,transparent)] bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]",
-  wait: "border-[color-mix(in_srgb,var(--mn-pink)_70%,transparent)] bg-[var(--mn-pink-soft)] text-[var(--mn-ink-soft)]",
-  done: "border-[var(--mn-glass-border)] bg-[var(--mn-cream-deep)] text-[var(--mn-text-muted)]",
+  live: "border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]",
+  wait: "border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-tertiary-container)] text-[var(--md-sys-color-on-tertiary-container)]",
+  done: "border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-on-surface-variant)]",
 };
 
 function StatusChip({ tone, children }: { tone: keyof typeof chipTone; children: ReactNode }) {
@@ -611,23 +622,24 @@ function StatusChip({ tone, children }: { tone: keyof typeof chipTone; children:
 }
 
 function Notice({ title, hint, action, compact = false }: { title: string; hint?: string; action?: ReactNode; compact?: boolean }) {
-  return (
-    <div className={compact ? "px-2 py-8 text-center" : "mn-paper p-8 text-center"} role="status">
-      <p className={compact ? "text-sm font-bold text-[var(--mn-text)]" : "font-[var(--mn-font-display)] text-xl text-[var(--mn-text)]"}>{title}</p>
-      {hint && <p className="mx-auto mt-2 max-w-lg text-xs leading-6 text-[var(--mn-text-muted)]">{hint}</p>}
+  const body = (
+    <>
+      <p className={compact ? "text-sm font-bold text-[var(--md-sys-color-on-surface)]" : "font-[var(--mn-font-display)] text-xl text-[var(--md-sys-color-on-surface)]"}>{title}</p>
+      {hint && <p className="mx-auto mt-2 max-w-lg text-xs leading-6 text-[var(--md-sys-color-on-surface-variant)]">{hint}</p>}
       {action && <div className="mt-4 flex justify-center">{action}</div>}
-    </div>
+    </>
+  );
+  return compact ? (
+    <div className="px-2 py-8 text-center" role="status">{body}</div>
+  ) : (
+    <Card variant="outlined" sx={{ p: 4, textAlign: "center" }} role="status">{body}</Card>
   );
 }
 
 function RetryButton({ locale, onClick, label }: { locale: AppLocale; onClick: () => void; label?: string }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="mn-focus mn-stamp-press rounded-full border border-[var(--mn-border)] bg-[var(--mn-paper)] px-5 py-2 text-xs font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]"
-    >
+    <Button variant="outlined" size="small" onClick={onClick}>
       {label ?? t(locale, "music.ranking.retry")}
-    </button>
+    </Button>
   );
 }

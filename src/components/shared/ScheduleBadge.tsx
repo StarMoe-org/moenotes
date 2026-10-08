@@ -12,10 +12,10 @@ interface Props {
 }
 
 const toneByStatus: Record<ScheduleStatus, string> = {
-  ongoing: "border-[color-mix(in_srgb,var(--mn-accent)_45%,transparent)] bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]",
-  upcoming: "border-[color-mix(in_srgb,var(--mn-pink)_70%,transparent)] bg-[var(--mn-pink-soft)] text-[var(--mn-ink-soft)]",
-  permanent: "border-[color-mix(in_srgb,var(--mn-mint)_80%,transparent)] bg-[var(--mn-mint-soft)] text-[var(--mn-mint-deep)]",
-  ended: "border-[var(--mn-glass-border)] bg-[var(--mn-cream-deep)] text-[var(--mn-text-muted)]",
+  ongoing: "border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]",
+  upcoming: "border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)]",
+  permanent: "border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-tertiary-container)] text-[var(--md-sys-color-on-tertiary-container)]",
+  ended: "border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-on-surface-variant)]",
 };
 
 const TWO_DAYS = 48 * 3_600_000;
