@@ -26,6 +26,11 @@
   },
   "dependencies": {
     "@astrojs/react": "7.0.0",
+    "@emotion/cache": "^11.14.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^9.4.0",
+    "@mui/material": "^9.4.0",
     "@tailwindcss/vite": "^4.1.18",
     "astro": "7.3.5",
     "framer-motion": "^12.40.0",
