@@ -116,15 +116,15 @@ export function solverGoalKind(input: Pick<DeckGoalInput, "goal" | "venue">): st
 export function solverMetricKind(goal: DeckGoal): string | null {
   return goal === "power" ? null : isEventPayoffGoal(goal) ? goal : "score";
 }
-/** Whether the goal input plays a live with gekisou (only a battle live does). */
+/** Whether the goal input plays a live with Gekisou sections. */
 export const playsGekisou = (input: Pick<DeckGoalInput, "goal" | "venue">): boolean => ["battleLive", "missionLive", "arenaLive"].includes(solverGoalKind(input));
 export const isChallengeInput = (input: Pick<DeckGoalInput, "goal" | "venue">): boolean => input.goal === "challenge" || input.goal === "challengeSkip" || isEventPayoffGoal(input.goal) && ["challengeLive", "challengeSkip"].includes(input.venue);
 export const isNetworkInput = (input: Pick<DeckGoalInput, "goal" | "venue">): boolean => ["battleLive", "arenaLive"].includes(solverGoalKind(input));
 /** Whether the goal input reads a play style (a played live; not power or a skip). */
 export const readsAccuracy = (input: Pick<DeckGoalInput, "goal" | "venue">): boolean => !["power", "skip"].includes(solverGoalKind(input));
-/** Deterministic goals have a single value; keep the preference for the next played live. */
+/** Retain the objective preference for supported non-Gekisou played lives. */
 export const effectiveAggregation = (input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "aggregation">>): DeckAggregation =>
-  readsAccuracy(input) ? input.aggregation ?? "expected" : "expected";
+  readsAccuracy(input) && !playsGekisou(input) ? input.aggregation ?? "expected" : "expected";
 
 /** `DeckSolver.capabilities()`: what the loaded engine computes. */
 export interface DeckSolverCapabilities {

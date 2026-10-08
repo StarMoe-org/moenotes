@@ -21,7 +21,7 @@ describe("held event", () => {
 
 describe("recommendation request", () => {
   test("maximum changes only the aggregation and preserves the declared play, pool and event conditions", () => {
-    const input = { ...defaultDeckGoalInput("eventPoints"), venue: "battleLive" as const, musicId: 245, boosts: 3,
+    const input = { ...defaultDeckGoalInput("eventPoints"), venue: "freeLive" as const, musicId: 245, boosts: 3,
       playMode: "pattern" as const, missEvery: 17, greatPercent: 7, justPercent: 81, othersAverageScore: 120000 };
     const context = { event, now, constraints: { includeMembers: ["61"], excludeMembers: ["62"], excludeSnaps: ["70"] } };
     const expected = JSON.parse(recommendationRequest(input, context));
@@ -29,7 +29,7 @@ describe("recommendation request", () => {
     expect(input.aggregation).toBe("expected");
     expect(expected.aggregation).toBeUndefined();
     expect(maximum).toEqual({ ...expected, aggregation: "maximum" });
-    expect(maximum.goal.play).toEqual({ kind: "pattern", greatFraction: 0.07, justFraction: 0.81, missEvery: 17 });
+    expect(maximum.goal.play).toEqual({ kind: "pattern", greatFraction: 0.07, justFraction: 0, missEvery: 17 });
   });
   test("deterministic goals keep one value while preserving the player's live objective preference", () => {
     for (const goal of ["power", "skip", "challengeSkip"] as const) {
@@ -37,9 +37,38 @@ describe("recommendation request", () => {
       expect(effectiveAggregation(input)).toBe("expected");
       expect(request(input).aggregation).toBeUndefined();
       expect(input.aggregation).toBe("maximum");
-      expect(effectiveAggregation({ ...input, goal: "battle" })).toBe("maximum");
+      expect(effectiveAggregation({ ...input, goal: "free" })).toBe("maximum");
     }
     expect(request({ goal: "eventPoints", venue: "skip", musicId: 245, aggregation: "maximum" }).aggregation).toBeUndefined();
+  });
+  test("Gekisou scenes use Expected and returning to Free Live restores the objective preference", () => {
+    const stored = { ...defaultDeckGoalInput("free"), musicId: 245, arenaMusicId: 42, aggregation: "maximum" as const,
+      playMode: "pattern" as const, greatPercent: 7, justPercent: 81, missEvery: 17 };
+    expect(effectiveAggregation(stored)).toBe("maximum");
+    for (const goal of ["battle", "mission", "arena"] as const) {
+      const selected = { ...stored, goal };
+      expect(effectiveAggregation(selected)).toBe("expected");
+      expect(request(selected)).toEqual(request({ ...selected, aggregation: "expected" }));
+      expect(selected.aggregation).toBe("maximum");
+      expect(selected.greatPercent).toBe(7);
+      expect(selected.justPercent).toBe(81);
+      expect(selected.missEvery).toBe(17);
+      expect(request({ ...selected, goal: "free" }).aggregation).toBe("maximum");
+    }
+  });
+  test("event payoff venues retain Maximum only for non-Gekisou played lives", () => {
+    for (const goal of ["eventPoints", "eventItems", "challengePoints"] as const) {
+      for (const venue of ["battleLive", "missionLive", "arenaLive", "freeLive", "challengeLive", "skip", "challengeSkip"] as const) {
+        if (goal === "challengePoints" && (venue === "challengeLive" || venue === "challengeSkip")) continue;
+        const input = { ...defaultDeckGoalInput(goal), venue, musicId: 245, arenaMusicId: 42, challengeMusicId: 1,
+          aggregation: "maximum" as const, rewardContextConfirmed: true, localEventPoints: 100, localChallengePoints: 800 };
+        const available = venue === "freeLive" || venue === "challengeLive";
+        expect(effectiveAggregation(input)).toBe(available ? "maximum" : "expected");
+        expect(request(input).aggregation).toBe(available ? "maximum" : undefined);
+        expect(input.aggregation).toBe("maximum");
+      }
+    }
+    expect(request({ goal: "challenge", challengeMusicId: 1, aggregation: "maximum" }).aggregation).toBe("maximum");
   });
   test("a battle live sends Great and Just, rank 1 and the score metric", () => {
     const body = request({ goal: "battle", musicId: 245, difficulty: "expert", greatPercent: 3, justPercent: 95 });
@@ -132,7 +161,7 @@ describe("capabilities", () => {
     const cap = parseCapabilities(JSON.stringify({ ...legacy, aggregations: { maximum: { freeLive: ["score"] } } }))!;
     expect(computes(cap, input)).toBe(true);
     expect(computes(cap, { ...input, goal: "eventPoints" })).toBe(false);
-    expect(computes(cap, { ...input, goal: "battle" })).toBe(false);
+    expect(computes(cap, { ...input, goal: "battle" })).toBe(true);
     expect(computes(cap, { ...input, greatPercent: 5 })).toBe(false);
     expect(computes(cap, { ...input, playMode: "pattern" })).toBe(false);
     expect(computes(cap, { ...input, goal: "eventPoints", aggregation: "expected" })).toBe(true);

@@ -13,9 +13,9 @@ export const enUS: ChartDataGuide = {
       "id": "goal",
       "title": "What is optimized",
       "body": [
-        "Each goal is a number the search makes as large as possible: for Gekisou Live and Free Live, the score on the chosen song and difficulty; for event points, the event points per live; for highest power, the team's power. For played lives, choose Average performance or Theoretical maximum under Search objective. Power and skipped lives have a single value, so this choice is not shown.",
+        "Each goal is a number the search makes as large as possible: for Gekisou Live and Free Live, the score on the chosen song and difficulty; for event points, the event points per live; for highest power, the team's power. Free and Challenge Live, including their event payoff goals, offer Average performance or Theoretical maximum. Gekisou modes use Average performance. Power and skipped lives have a single value, so this choice is not shown.",
         "Average performance (default): at the start of each live the members' skill order is shuffled. We treat the 120 orders of the five members as equally likely, simulate a whole live for each order (skills, Snap effects and, in Gekisou Live, the gekisou sections and rank bonuses) and average them. Where a skill or mission draws a lottery, the draw is averaged with the game's probabilities.",
-        "Theoretical maximum ranks teams by the highest goal value reachable across skill orders and LUCK or other random outcomes with nonzero probability. Switching keeps your collection, song, difficulty and declared play, including Great, Just and Miss conditions. Reaching the value requires the corresponding random outcomes and is not guaranteed every live. The option is enabled only when the engine supports the current conditions.",
+        "Theoretical maximum ranks Free and Challenge Live teams by the highest goal value reachable across skill orders and random skill outcomes with nonzero probability. Switching keeps your collection, song, difficulty and declared play conditions. Only a complete search proves the maximum. Reaching the value requires the corresponding random outcomes and is not guaranteed every live; the option is enabled only when the engine supports the current conditions.",
         "Play: by default the play is the theoretical best, all Perfect, with every Just-eligible note in Gekisou Live hit Just. When you change the Great or Just rate under “Play assumptions”, that share of Greats and non-Just judgements is spread evenly over the whole chart and the live is computed again. It describes a declared play, not a prediction of how you will play.",
         "A team is a leader, 4 other members and the Snap paired with each. Swapping the positions of the 4 members does not change the score, so the positions in a result are only for display."
       ]
@@ -70,7 +70,7 @@ export const enUS: ChartDataGuide = {
       "body": [
         "Each result shows the goal value, the power, the formation in the game's own style, and for each position the member card, its progress and the paired Snap.",
         "A goal value is sometimes shown as an interval that contains the exact value, for example while a skill with a lottery has not been refined yet.",
-        "When an Average performance calculation finishes, each team lists the orders with the lowest, median and highest score among the 120. A Theoretical maximum result shows a skill order for the highest selected goal value; the corresponding LUCK and other random outcomes are still required. The objective label belongs to that calculation. Changing the objective marks it as a previous result until you recalculate."
+        "When an Average performance calculation finishes, each team lists the orders with the lowest, median and highest score among the 120. A Theoretical maximum result shows a skill order for the highest selected goal value; the corresponding random skill outcomes are still required. The objective label belongs to that calculation. Changing the objective marks it as a previous result until you recalculate."
       ]
     },
     {

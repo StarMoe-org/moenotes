@@ -188,7 +188,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
     memberLevel: preview.members[index]?.fields.level.value ?? undefined, memberRank: preview.members[index]?.fields.rank.value ?? undefined,
     supportLevel: preview.snaps[index]?.fields.level.value ?? undefined, supportRank: preview.snaps[index]?.fields.rank.value ?? undefined,
   }));
-  // Preserve the player's requested goal and play. Unsupported conditions block the run rather than changing it.
+  // Keep the stored objective preference while using the selected scene's effective objective.
   const goal = goalInput.goal;
   const effectiveInput: DeckGoalInput = { ...goalInput, aggregation: effectiveAggregation(goalInput) };
   const gap = goalGap(effectiveInput, event);
