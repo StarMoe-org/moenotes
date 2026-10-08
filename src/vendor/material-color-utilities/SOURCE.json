@@ -1,0 +1,14 @@
+{
+  "package": "@material/material-color-utilities",
+  "version": "0.4.0",
+  "registry": "https://registry.npmjs.org/@material/material-color-utilities",
+  "repository": "https://github.com/material-foundation/material-color-utilities",
+  "license": "Apache-2.0",
+  "bundle": {
+    "file": "mcu-scheme.mjs",
+    "sha256": "a1a4bf9b366216309202174e824d2b87a29aba2b8160ece5967b2e41b39b1a1e",
+    "entry": "export { SchemeTonalSpot, SchemeVibrant, Hct, argbFromHex, hexFromArgb } from '@material/material-color-utilities';",
+    "toolchain": "esbuild 0.25.0 --bundle --format=esm --target=es2020 --minify"
+  },
+  "reason": "CI installs with bun --frozen-lockfile, so a new npm dependency cannot land without a bun-regenerated lockfile. The published package also ships extensionless relative imports that break unbundled ESM resolution. This single-file bundle (color-scheme subset only; quantize/score/image modules tree-shaken away) keeps MD3 scheme generation dependency-free and reproducible."
+}

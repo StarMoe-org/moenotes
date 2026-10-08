@@ -1,5 +1,6 @@
 import { ACCENT_PALETTE_STORAGE_KEY, DEFAULT_ACCENT, SETTINGS_STORAGE_KEY } from "@/config/settings";
 import { HOME_LAYOUT_STORAGE_KEY, HOME_LAYOUT_STYLE_ID, HOME_MODULES } from "@/lib/home/layout";
+import { applyMd3SchemeToDocument } from "@/lib/md3/scheme";
 import { accentPalettes, type AccentPalette, type AccentPalettes } from "@/lib/settings/accent";
 import type { AppSettings, ColorScheme } from "@/types/settings";
 
@@ -43,6 +44,7 @@ export function applySettingsToDocument(settings: AppSettings): void {
   root.dataset.density = settings.density;
   const palettes = settings.accentColor === DEFAULT_ACCENT ? null : accentPalettes(settings.accentColor);
   applyAccent(root, palettes ? palettes[resolved] : null);
+  applyMd3SchemeToDocument(root, palettes ? palettes.md3[resolved] : null);
   cachePalettes(palettes);
 }
 
@@ -79,6 +81,18 @@ export function buildThemeBootstrapScript(): string {
       root.style.setProperty('--mn-accent-deep', palette.deep);
       root.style.setProperty('--mn-accent-soft', palette.soft);
       root.dataset.accent = 'band';
+    }
+    var md3 = cached && accent && String(cached.color).toUpperCase() === accent && cached.md3 ? cached.md3[resolved] : null;
+    if (md3 && typeof md3 === 'object') {
+      for (var role in md3) {
+        if (!Object.prototype.hasOwnProperty.call(md3, role)) continue;
+        var hex = md3[role];
+        if (typeof hex !== 'string' || !/^#[0-9a-f]{6}$/i.test(hex)) continue;
+        var kebab = role.replace(/([A-Z])/g, function(m){ return '-' + m.toLowerCase(); });
+        if (!/^[a-z][a-z0-9-]*$/.test(kebab)) continue;
+        root.style.setProperty('--md-sys-color-' + kebab, hex);
+      }
+      root.dataset.md3 = 'band';
     }
   } catch(e) {}
   try {

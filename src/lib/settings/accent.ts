@@ -4,7 +4,12 @@
  *
  * The palettes of the chosen color are cached in browser storage when the settings are applied, so the head's bootstrap
  * script (src/lib/settings/apply-theme.ts) sets them before the first paint without computing anything.
+ *
+ * The same cache entry carries the full MD3 sys-color schemes (`md3`, see src/lib/md3/scheme.ts) so the MD3
+ * components recolor with the band choice through the same pipeline.
  */
+
+import { md3ColorSchemes, type Md3ColorSchemes } from "@/lib/md3/scheme";
 
 export interface AccentPalette {
   accent: string;
@@ -89,10 +94,13 @@ export interface AccentPalettes {
   color: string;
   light: AccentPalette;
   dark: AccentPalette;
+  /** Full MD3 sys-color schemes for the same color. Older cache entries lack it; the bootstrap tolerates that. */
+  md3: Md3ColorSchemes;
 }
 
 export function accentPalettes(hex: string): AccentPalettes | null {
   const light = accentPalette(hex, false);
   const dark = accentPalette(hex, true);
-  return light && dark ? { color: hex, light, dark } : null;
+  const md3 = md3ColorSchemes(hex);
+  return light && dark && md3 ? { color: hex, light, dark, md3 } : null;
 }

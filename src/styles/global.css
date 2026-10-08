@@ -1,7 +1,9 @@
 @import "tailwindcss";
 @import "./tokens.css";
 @import "./themes.css";
+@import "./md3/tokens.css";
 @import "./components.css";
+@import "./md3/components.css";
 @import "./chart-data.css";
 
 @layer utilities {
