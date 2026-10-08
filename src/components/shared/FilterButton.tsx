@@ -1,6 +1,6 @@
+import ToggleButton from "@mui/material/ToggleButton";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 import type { ReactNode } from "react";
-import { motion } from "framer-motion";
-import { useSpringAnimation } from "@/lib/animation/use-animation";
 
 export interface FilterButtonProps {
   active: boolean;
@@ -10,6 +10,7 @@ export interface FilterButtonProps {
   children: ReactNode;
 }
 
+/** A toggleable filter chip; selected state defaults to the M3 tonal fill. */
 export default function FilterButton({
   active,
   onClick,
@@ -17,29 +18,29 @@ export default function FilterButton({
   activeColor,
   children,
 }: FilterButtonProps) {
-  const { floatTapProps, floatHoverProps, springTransition } = useSpringAnimation();
-  const motionProps = { ...floatHoverProps, ...floatTapProps };
-
+  const selectedBg = activeBg ?? "var(--md-sys-color-secondary-container)";
+  const selectedColor = activeColor ?? "var(--md-sys-color-on-secondary-container)";
   return (
-    <motion.button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      {...motionProps}
-      transition={springTransition}
-      className={[
-        "mn-filter-chip relative rounded-lg border border-[var(--mn-border)] px-3 py-1.5",
-        "text-xs font-bold transition-colors sm:text-sm",
-        active
-          ? "text-[var(--mn-bg)] shadow-[var(--mn-shadow-stamp-sm)]"
-          : "bg-[var(--mn-paper)] hover:shadow-[var(--mn-shadow-stamp-sm)]",
-      ].join(" ")}
-      style={{
-        background: active ? (activeBg ?? "var(--mn-accent-deep)") : undefined,
-        color: active ? (activeColor ?? "var(--mn-bg)") : undefined,
-      }}
-    >
-      {children}
-    </motion.button>
+    <MdMuiProvider>
+      <ToggleButton
+        value="filter"
+        selected={active}
+        onChange={() => onClick()}
+        sx={{
+          borderRadius: 2,
+          px: 1.5,
+          py: 0.75,
+          fontSize: { xs: 12, sm: 14 },
+          fontWeight: 700,
+          textTransform: "none",
+          border: "1px solid var(--md-sys-color-outline-variant)",
+          color: "var(--md-sys-color-on-surface)",
+          "&.Mui-selected": { bgcolor: selectedBg, color: selectedColor },
+          "&.Mui-selected:hover": { bgcolor: selectedBg },
+        }}
+      >
+        {children}
+      </ToggleButton>
+    </MdMuiProvider>
   );
 }

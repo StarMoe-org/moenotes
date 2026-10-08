@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { useSpringAnimation } from "@/lib/animation/use-animation";
+import Fab from "@mui/material/Fab";
+import Zoom from "@mui/material/Zoom";
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 import Modal from "@/components/shared/Modal";
 
 // -- Context --
@@ -56,8 +58,6 @@ export default function QuickFilterButton({ content, title, buttonLabel = "Quick
   const finalTitle = title ?? ctx.filterTitle;
   const [visible, setVisible] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  // Circular button → stamp animation (shadow press effect)
-  const { springTransition, stampHoverProps, stampTapProps } = useSpringAnimation();
 
   useEffect(() => {
     const MAX_THRESHOLD = 300;
@@ -78,30 +78,31 @@ export default function QuickFilterButton({ content, title, buttonLabel = "Quick
   if (!finalContent) return null;
 
   return (
-    <>
-      <AnimatePresence>
-        {visible && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={springTransition}
-            {...stampHoverProps}
-            {...stampTapProps}
-            onClick={() => setIsOpen(true)}
-            className="fixed bottom-8 right-[5.5rem] z-30 grid h-11 w-11 place-items-center rounded-xl border border-[var(--mn-border)] bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)] shadow-[var(--mn-shadow-stamp)] transition-colors hover:bg-[var(--mn-cream-deep)] hover:shadow-[var(--mn-shadow-stamp-sm)]"
-            aria-label={buttonLabel}
-          >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
-            </svg>
-          </motion.button>
-        )}
-      </AnimatePresence>
+    <MdMuiProvider>
+      <Zoom in={visible} timeout={200}>
+        <Fab
+          size="small"
+          aria-label={buttonLabel}
+          aria-hidden={!visible}
+          tabIndex={visible ? 0 : -1}
+          onClick={() => setIsOpen(true)}
+          sx={{
+            position: "fixed",
+            bottom: 32,
+            right: 88,
+            zIndex: 30,
+            bgcolor: "var(--md-sys-color-secondary-container)",
+            color: "var(--md-sys-color-on-secondary-container)",
+            "&:hover": { bgcolor: "var(--md-sys-color-secondary-container)" },
+          }}
+        >
+          <FilterAltIcon />
+        </Fab>
+      </Zoom>
 
       <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title={finalTitle || "Quick Filter"} size="md">
         {finalContent}
       </Modal>
-    </>
+    </MdMuiProvider>
   );
 }

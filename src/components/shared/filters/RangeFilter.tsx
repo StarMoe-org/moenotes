@@ -1,8 +1,6 @@
-import { useState } from "react";
+import Slider from "@mui/material/Slider";
 import { FilterSection } from "@/components/shared/BaseFilters";
-
-/** Keep in sync with `.mn-range-thumb` in components.css. */
-const THUMB_SIZE = 18;
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 
 export type RangeValue = [number | null, number | null];
 
@@ -25,7 +23,7 @@ export interface RangeFilterProps {
   className?: string;
 }
 
-/** Two-thumb slider. The thumbs may pass each other; the range always reads from the lower to the higher one. */
+/** Two-thumb range slider; a bound dragged back to the slider's end reads as null (open). */
 export function RangeFilter({
   title,
   min,
@@ -43,56 +41,23 @@ export function RangeFilter({
   const [a, b] = [clamp(value[0] ?? min), clamp(value[1] ?? max)];
   const [low, high] = a <= b ? [a, b] : [b, a];
 
-  // Thumbs keep their identity while one is dragged past the other, so the positions live here.
-  const [thumbs, setThumbs] = useState<[number, number]>([low, high]);
-  const [synced, setSynced] = useState<[number, number]>([low, high]);
-  let current = thumbs;
-  if (synced[0] !== low || synced[1] !== high) {
-    setSynced([low, high]);
-    // Only an outside change (reset, restored filters) moves the thumbs; our own drags already match.
-    if (Math.min(...thumbs) !== low || Math.max(...thumbs) !== high) {
-      current = [low, high];
-      setThumbs(current);
-    }
-  }
-
-  const move = (index: 0 | 1, next: number) => {
-    const moved: [number, number] = index === 0 ? [next, current[1]] : [current[0], next];
-    setThumbs(moved);
-    const [from, to] = [Math.min(...moved), Math.max(...moved)];
-    onChange([from > min ? from : null, to < max ? to : null]);
-  };
-
-  // Native thumbs travel between half a thumb in from either edge.
-  const fraction = (position: number) => (max > min ? (position - min) / (max - min) : 0);
-  const fill = {
-    left: `calc(${THUMB_SIZE / 2}px + (100% - ${THUMB_SIZE}px) * ${fraction(low)})`,
-    width: `calc((100% - ${THUMB_SIZE}px) * ${fraction(high) - fraction(low)})`,
-  };
-
   const slider = (
-    <div className={`relative h-[18px] ${className ?? ""}`}>
-      <div aria-hidden="true" className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-[var(--mn-cream-deep)]" />
-      <div aria-hidden="true" className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-[var(--mn-accent)]" style={fill} />
-      {current.map((position, index) => {
-        const other = current[1 - index] ?? position;
-        const isLower = position < other || (position === other && index === 0);
-        return (
-          <input
-            key={index}
-            type="range"
-            min={min}
-            max={max}
-            step={step}
-            value={position}
-            onChange={(event) => move(index as 0 | 1, Number(event.target.value))}
-            aria-label={isLower ? minLabel : maxLabel}
-            aria-valuetext={formatValue(position)}
-            className="mn-range-thumb"
-          />
-        );
-      })}
-    </div>
+    <MdMuiProvider>
+      <Slider
+        className={className}
+        value={[low, high]}
+        min={min}
+        max={max}
+        step={step}
+        onChange={(_event, next) => {
+          const pair = Array.isArray(next) ? next : [next, next];
+          const [from, to] = [Math.min(...pair), Math.max(...pair)];
+          onChange([from > min ? from : null, to < max ? to : null]);
+        }}
+        getAriaLabel={(index: number) => (index === 0 ? minLabel : maxLabel)}
+        getAriaValueText={(thumbValue: number) => formatValue(thumbValue)}
+      />
+    </MdMuiProvider>
   );
 
   if (!title) return slider;
@@ -100,7 +65,7 @@ export function RangeFilter({
   return (
     <FilterSection
       title={title}
-      aside={<span className="font-mono text-xs font-bold text-[var(--mn-text)]">{formatRange(formatValue(low), formatValue(high))}</span>}
+      aside={<span className="font-mono text-xs font-bold text-[var(--md-sys-color-on-surface)]">{formatRange(formatValue(low), formatValue(high))}</span>}
     >
       {slider}
     </FilterSection>
