@@ -1,4 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
+import Typography from "@mui/material/Typography";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import LevelSwitch from "@/components/shared/LevelSwitch";
@@ -30,37 +36,48 @@ export function useCharacterSection(): [CharacterSection, (section: CharacterSec
 
 export function CharacterSectionTabs({ locale, value, onChange }: { locale: AppLocale; value: CharacterSection; onChange: (section: CharacterSection) => void }) {
   return (
-    <div className="mn-segmented flex w-fit max-w-full flex-wrap gap-1 rounded-full border border-[var(--mn-glass-border)] bg-[var(--mn-surface-strong)] p-1" role="tablist" aria-label={t(locale, "characters.sections.label")}>
-      {CHARACTER_SECTIONS.map((section) => (
-        <button
-          key={section}
-          type="button"
-          role="tab"
-          aria-selected={section === value}
-          onClick={() => onChange(section)}
-          className={`mn-focus rounded-full px-3 py-1.5 text-xs font-bold transition ${section === value ? "bg-[var(--mn-accent-soft)] text-[var(--mn-text)]" : "text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)] hover:text-[var(--mn-text)]"}`}
-        >
-          {t(locale, `characters.sections.${section}`)}
-        </button>
-      ))}
-    </div>
+    <MdMuiProvider>
+      <Tabs
+        value={value}
+        onChange={(_event: React.SyntheticEvent, next: CharacterSection) => onChange(next)}
+        aria-label={t(locale, "characters.sections.label")}
+        variant="scrollable"
+        scrollButtons="auto"
+        allowScrollButtonsMobile
+        sx={{ "& .MuiTab-root": { textTransform: "none", fontSize: 12, fontWeight: 700, minHeight: 40, px: 1.5 } }}
+      >
+        {CHARACTER_SECTIONS.map((section) => (
+          <Tab key={section} value={section} label={t(locale, `characters.sections.${section}`)} />
+        ))}
+      </Tabs>
+    </MdMuiProvider>
   );
 }
 
-const panelHeader = "border-b border-[var(--mn-border)] bg-gradient-to-r from-[color-mix(in_oklab,var(--mn-accent)_6%,transparent)] to-transparent px-6 py-4 sm:px-8";
-const panelTitle = "font-[var(--mn-font-display)] text-xl text-[var(--mn-text)] sm:text-2xl";
-
 export function Panel({ title, actions, children }: { title: string; actions?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="mn-paper overflow-hidden">
-      <div className={`${panelHeader} flex flex-wrap items-center justify-between gap-3`}><h3 className={panelTitle}>{title}</h3>{actions}</div>
-      <div className="p-6 sm:p-8">{children}</div>
-    </div>
+    <MdMuiProvider>
+      <Card variant="outlined" sx={{ overflow: "hidden" }}>
+        <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 1.5, borderBottom: "1px solid var(--md-sys-color-outline-variant)", px: 3, py: 2 }}>
+          <Typography component="h3" sx={{ fontFamily: "var(--mn-font-display)", fontSize: { xs: 20, sm: 24 }, color: "var(--md-sys-color-on-surface)" }}>
+            {title}
+          </Typography>
+          {actions}
+        </Box>
+        <Box sx={{ p: { xs: 3, sm: 4 } }}>{children}</Box>
+      </Card>
+    </MdMuiProvider>
   );
 }
 
 export function Empty({ text }: { text: string }) {
-  return <p className="py-2 text-center text-sm font-medium text-[var(--mn-text-muted)]">{text}</p>;
+  return (
+    <MdMuiProvider>
+      <Typography variant="body2" sx={{ py: 1, textAlign: "center", fontWeight: 500, color: "var(--md-sys-color-on-surface-variant)" }}>
+        {text}
+      </Typography>
+    </MdMuiProvider>
+  );
 }
 
 /** Rank rewards with a rank switch: the rewards handed out on reaching the chosen rank. */
@@ -71,14 +88,14 @@ export function RankRewardsPanel({ locale, title, groups }: { locale: AppLocale;
   return (
     <Panel title={title}>
       {!current ? <Empty text={t(locale, "characters.rewards.empty")} /> : (
-        <div className="space-y-4">
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <LevelSwitch label={t(locale, "characters.rewards.rank")} value={current.rank} options={ranks} onChange={setRank} variant="slider" />
           <ul className="flex flex-wrap gap-2">
             {current.rewards.map((reward, index) => (
               <li key={`${reward.kind}:${reward.id}:${index}`}><RewardChip locale={locale} reward={reward as RewardViewModel} /></li>
             ))}
           </ul>
-        </div>
+        </Box>
       )}
     </Panel>
   );
@@ -105,14 +122,14 @@ export function CostumesPanel({ locale, costumes }: { locale: AppLocale; costume
             const body = (
               <>
                 <img className="mx-auto h-24 w-24 object-contain" src={assetUrl(getCostumeIconUrl(costume.iconPath, locale))} alt="" loading="lazy" />
-                <span className="mt-2 block text-center text-xs font-bold text-[var(--mn-text)]">{costume.name}</span>
+                <span className="mt-2 block text-center text-xs font-bold text-[var(--md-sys-color-on-surface)]">{costume.name}</span>
               </>
             );
             return (
               <li key={costume.groupId}>
                 {modelId
-                  ? <a href={getLive2DViewerHref(locale, modelId)} title={t(locale, "characters.costumes.openViewer")} className="mn-focus block rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-cream-deep)]/40 p-3 transition hover:-translate-y-0.5 hover:border-[var(--mn-accent)]">{body}</a>
-                  : <div className="rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-cream-deep)]/40 p-3">{body}</div>}
+                  ? <a href={getLive2DViewerHref(locale, modelId)} title={t(locale, "characters.costumes.openViewer")} className="block rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-high)] p-3 transition-colors hover:border-[var(--md-sys-color-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--md-sys-color-primary)]">{body}</a>
+                  : <div className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-high)] p-3">{body}</div>}
               </li>
             );
           })}

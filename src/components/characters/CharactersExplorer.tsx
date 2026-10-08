@@ -1,4 +1,9 @@
 import { useEffect, useMemo, useCallback, useState } from "react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import Typography from "@mui/material/Typography";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import { t } from "@/i18n";
@@ -149,54 +154,56 @@ export default function CharactersExplorer({ locale, servers, initialCharacters 
 
   return (
     <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
+      <MdMuiProvider>
       {filtered.length === 0 ? (
-        <div className="mn-paper p-8 text-center sm:p-12">
-          <p className="text-sm font-medium text-[var(--mn-text-muted)]">{t(locale, "characters.list.empty")}</p>
-          <button type="button" onClick={resetFilters} className="mn-focus mn-stamp-press mt-6 rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-6 py-3 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp)]">
+        <Card variant="outlined" sx={{ px: { xs: 4, sm: 6 }, py: { xs: 4, sm: 6 }, textAlign: "center" }}>
+          <Typography variant="body2" sx={{ fontWeight: 500, color: "var(--md-sys-color-on-surface-variant)" }}>{t(locale, "characters.list.empty")}</Typography>
+          <Button variant="outlined" onClick={resetFilters} sx={{ mt: 3 }}>
             {t(locale, "characters.reset")}
-          </button>
-        </div>
+          </Button>
+        </Card>
       ) : !grouped ? (
-        <section className="mn-paper p-6 sm:p-8">
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5 xl:grid-cols-5">
+        <Card component="section" variant="outlined" sx={{ p: { xs: 3, sm: 4 } }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" }, gap: 2 }}>
             {sorted.map((char) => <CharacterCard key={char.id} char={char} locale={locale} onClick={saveCurrentState} />)}
-          </div>
-        </section>
+          </Box>
+        </Card>
       ) : (
-        <div className="space-y-12">
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {data.bands.map((band) => {
             const bandChars = filtered.filter((char) => char.bandId === band.id);
             if (bandChars.length === 0) return null;
 
             return (
-              <section key={band.id} className="mn-paper p-6 sm:p-8" aria-labelledby={`band-title-${band.id}`}>
+              <Card key={band.id} component="section" variant="outlined" sx={{ p: { xs: 3, sm: 4 } }} aria-labelledby={`band-title-${band.id}`}>
                 {/* Band Header (PJSK Style info box) */}
-                <div className="flex items-start gap-4 border-b-[1.5px] border-dashed border-[var(--mn-border)]/30 pb-5 mb-6">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-sm)]">
+                <div className="flex items-start gap-4 border-b-[1.5px] border-dashed border-[var(--md-sys-color-outline-variant)]/30 pb-5 mb-6">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-high)]">
                     <img className="h-9 w-auto object-contain" src={assetUrl(getBandSmallIconUrl(band.id))} alt="" aria-hidden="true" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h2 id={`band-title-${band.id}`} className="font-[var(--mn-font-display)] text-xl text-[var(--mn-text)] flex items-center gap-2">
+                    <Typography component="h2" id={`band-title-${band.id}`} sx={{ fontFamily: "var(--mn-font-display)", fontSize: 20, color: "var(--md-sys-color-on-surface)", display: "flex", alignItems: "center", gap: 1 }}>
                       {band.name}
-                      <span className="h-2.5 w-2.5 rounded-full border border-[var(--mn-border)]/50" style={{ backgroundColor: band.color }} />
-                    </h2>
-                    <p className="mt-1.5 text-xs font-semibold leading-relaxed text-[var(--mn-text-muted)] max-w-5xl">
+                      <span className="h-2.5 w-2.5 rounded-full border border-[var(--md-sys-color-outline-variant)]/50" style={{ backgroundColor: band.color }} />
+                    </Typography>
+                    <Typography variant="caption" component="p" sx={{ mt: 0.75, fontWeight: 600, lineHeight: 1.6, color: "var(--md-sys-color-on-surface-variant)", maxWidth: 1024, display: "block" }}>
                       {band.description}
-                    </p>
+                    </Typography>
                   </div>
                 </div>
 
                 {/* Character Cards Horizontal/Grid Row */}
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5 xl:grid-cols-5">
+                <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" }, gap: 2 }}>
                   {bandChars.map((char) => (
                     <CharacterCard key={char.id} char={char} locale={locale} onClick={saveCurrentState} />
                   ))}
-                </div>
-              </section>
+                </Box>
+              </Card>
             );
           })}
-        </div>
+        </Box>
       )}
+      </MdMuiProvider>
     </ServerScope>
   );
 }
@@ -207,7 +214,7 @@ function CharacterCard({ char, locale, onClick }: { char: CharacterViewModel; lo
     <a
       href={localizePath(entityLinkPath({ routeId: "characters", detailId: char.id }), locale)}
       onClick={onClick}
-      className="mn-list-card group relative block aspect-[1/2.8] w-full overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] shadow-[var(--mn-shadow-stamp)] transition-all hover:-translate-y-1 hover:shadow-[var(--mn-shadow-stamp-lg)]"
+      className="group relative block aspect-[1/2.8] w-full overflow-hidden rounded-3xl border-[1.5px] border-[var(--md-sys-color-outline-variant)] transition-colors hover:border-[var(--md-sys-color-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--md-sys-color-primary)]"
       style={{ backgroundColor: char.mainColor }}
       aria-label={char.name}
     >
@@ -216,7 +223,7 @@ function CharacterCard({ char, locale, onClick }: { char: CharacterViewModel; lo
       <div className="absolute top-0 bottom-0 left-[20%] w-[30%] -skew-x-12 bg-white/10 pointer-events-none" />
 
       {/* Position/Role Badge */}
-      <span className="absolute top-3 left-3 z-10 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider rounded-md border border-[var(--mn-border)] bg-[var(--mn-paper)] text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp-sm)]">
+      <span className="absolute top-3 left-3 z-10 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider rounded-md border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-on-surface)]">
         {char.bandPart}
       </span>
 
@@ -232,9 +239,9 @@ function CharacterCard({ char, locale, onClick }: { char: CharacterViewModel; lo
       </div>
 
       {/* Slanted Name tag sticker at the bottom */}
-      <div className="mn-list-caption absolute bottom-4 left-3 right-3 z-10 bg-[var(--mn-paper)] border-[1.5px] border-[var(--mn-border)] rounded-2xl py-2.5 px-2 text-center shadow-[var(--mn-shadow-stamp-sm)] transition-transform duration-300 group-hover:scale-102">
-        <span className="block text-xs font-black text-[var(--mn-text)] truncate">{char.name}</span>
-        <span className="block text-[8px] font-bold text-[var(--mn-text-muted)] tracking-wider uppercase truncate mt-0.5">{char.enName}</span>
+      <div className="absolute bottom-4 left-3 right-3 z-10 bg-[var(--md-sys-color-surface-container-high)] border-[1.5px] border-[var(--md-sys-color-outline-variant)] rounded-2xl py-2.5 px-2 text-center transition-transform duration-300 group-hover:scale-102">
+        <span className="block text-xs font-black text-[var(--md-sys-color-on-surface)] truncate">{char.name}</span>
+        <span className="block text-[8px] font-bold text-[var(--md-sys-color-on-surface-variant)] tracking-wider uppercase truncate mt-0.5">{char.enName}</span>
       </div>
     </a>
   );

@@ -1,4 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import Typography from "@mui/material/Typography";
+import { MdMuiProvider } from "@/components/md3/MuiProvider";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
@@ -53,22 +58,24 @@ export default function CharacterVoicesSection({ locale, characterId, characterN
   if (state.status === "loading") return <SiriusLoader locale={locale} label={t(locale, "characters.voices.loading")} className="mn-paper min-h-48" />;
   if (state.status === "error" || !payload) {
     return (
-      <div className="mn-paper p-8 text-center" role="alert">
-        <p className="text-sm font-medium text-[var(--mn-text-muted)]">{t(locale, "characters.voices.loadError")}</p>
-        <button type="button" onClick={() => setAttempt((value) => value + 1)} className="mn-focus mn-stamp-press mt-4 rounded-full border border-[var(--mn-border)] bg-[var(--mn-paper)] px-5 py-2 text-sm font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp-sm)]">
-          {t(locale, "cards.retry")}
-        </button>
-      </div>
+      <MdMuiProvider>
+        <Card variant="outlined" sx={{ p: 4, textAlign: "center" }} role="alert">
+          <Typography variant="body2" sx={{ fontWeight: 500, color: "var(--md-sys-color-on-surface-variant)" }}>{t(locale, "characters.voices.loadError")}</Typography>
+          <Button variant="outlined" onClick={() => setAttempt((value) => value + 1)} sx={{ mt: 2 }}>
+            {t(locale, "cards.retry")}
+          </Button>
+        </Card>
+      </MdMuiProvider>
     );
   }
   if (groups.length === 0) return <Panel title={t(locale, "characters.sections.voices")}><Empty text={t(locale, "characters.voices.empty")} /></Panel>;
 
   return (
-    <div className="space-y-6">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       {groups.map((group) => (
         <VoiceGroupPanel key={group.source} locale={locale} group={group} payload={payload} characterId={characterId} characterNames={characterNames} cards={cards} />
       ))}
-    </div>
+    </Box>
   );
 }
 
@@ -106,39 +113,39 @@ function VoiceGroupPanel({ locale, group, payload, characterId, characterNames, 
   })).filter((track): track is AudioTrack => track !== null), [group, trackOf]);
 
   const playAll = queue.length > 1 ? (
-    <button
-      type="button"
+    <Button
+      variant="outlined"
+      size="small"
       onClick={() => setQueue(queue)}
-      className="mn-focus mn-stamp-press inline-flex items-center gap-1.5 rounded-full border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] px-3.5 py-1.5 text-xs font-bold text-[var(--mn-text)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:border-[var(--mn-accent)] hover:text-[var(--mn-accent-deep)]"
+      startIcon={<svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg>}
     >
-      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg>
       {t(locale, "characters.voices.playAll", { count: queue.length })}
-    </button>
+    </Button>
   ) : null;
 
   return (
     <Panel title={title} actions={playAll}>
-      <div className="space-y-5">
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
         {group.sections.map((section) => (
           <section key={section.kind ?? "all"}>
             {section.kind && group.source === "talk" && (
-              <h4 className="mb-1 text-xs font-black uppercase tracking-wider text-[var(--mn-text-muted)]">
+              <Typography component="h4" variant="caption" sx={{ mb: 0.5, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--md-sys-color-on-surface-variant)" }}>
                 {t(locale, `characters.voices.talk.${section.kind}`)} <span className="tabular-nums">({section.lines.length})</span>
-              </h4>
+              </Typography>
             )}
-            <ul className="divide-y divide-dashed divide-[var(--mn-border)]/60">
+            <ul className="divide-y divide-dashed divide-[var(--md-sys-color-outline-variant)]/60">
               {section.lines.map((line) => (
                 <VoiceLineRow key={`${line.source}:${line.id}:${line.characterId}`} locale={locale} line={line} payload={payload} characterId={characterId} nameOf={nameOf} cards={cards} trackOf={trackOf} />
               ))}
             </ul>
           </section>
         ))}
-      </div>
+      </Box>
     </Panel>
   );
 }
 
-const linkClass = "mn-focus font-bold text-[var(--mn-accent-deep)] underline decoration-dotted underline-offset-4 hover:text-[var(--mn-accent)]";
+const linkClass = "font-bold text-[var(--md-sys-color-primary)] underline decoration-dotted underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--md-sys-color-primary)]";
 
 interface LineProps {
   locale: AppLocale;
@@ -188,8 +195,8 @@ function VoiceLineRow({ locale, line, payload, characterId, nameOf, cards, track
     <div className="flex items-start gap-3">
       {own ? <AudioPlayButton locale={locale} size="sm" track={own} /> : <span className="h-8 w-8 shrink-0" />}
       <div className="min-w-0">
-        {partner ? <p className="text-[11px] font-bold text-[var(--mn-text-muted)]">{nameOf(line.characterId)}</p> : null}
-        <p className="whitespace-pre-line text-sm font-medium text-[var(--mn-text)]">{text || "—"}</p>
+        {partner ? <p className="text-[11px] font-bold text-[var(--md-sys-color-on-surface-variant)]">{nameOf(line.characterId)}</p> : null}
+        <p className="whitespace-pre-line text-sm font-medium text-[var(--md-sys-color-on-surface)]">{text || "—"}</p>
       </div>
     </div>
   );
@@ -197,8 +204,8 @@ function VoiceLineRow({ locale, line, payload, characterId, nameOf, cards, track
     <div className="flex items-start gap-3">
       {partnerTrack ? <AudioPlayButton locale={locale} size="sm" track={partnerTrack} /> : <span className="h-8 w-8 shrink-0" />}
       <div className="min-w-0">
-        <p className="text-[11px] font-bold text-[var(--mn-text-muted)]">{nameOf(partner)}</p>
-        <p className="whitespace-pre-line text-sm font-medium text-[var(--mn-text-muted)]">{voiceText(payload, line.partnerText, locale) || "—"}</p>
+        <p className="text-[11px] font-bold text-[var(--md-sys-color-on-surface-variant)]">{nameOf(partner)}</p>
+        <p className="whitespace-pre-line text-sm font-medium text-[var(--md-sys-color-on-surface-variant)]">{voiceText(payload, line.partnerText, locale) || "—"}</p>
       </div>
     </div>
   ) : null;
@@ -206,7 +213,7 @@ function VoiceLineRow({ locale, line, payload, characterId, nameOf, cards, track
   return (
     <li className="space-y-2 py-3">
       {(label || partner || meta.length > 0) && (
-        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold uppercase tracking-wider text-[var(--mn-accent-deep)]">
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold uppercase tracking-wider text-[var(--md-sys-color-primary)]">
           {label && <span>{label}</span>}
           {partner ? (
             <a className={`${linkClass} normal-case tracking-normal`} href={localizePath(entityLinkPath({ routeId: "characters", detailId: partner }), locale)}>
@@ -214,7 +221,7 @@ function VoiceLineRow({ locale, line, payload, characterId, nameOf, cards, track
             </a>
           ) : null}
           {meta.map((entry, index) => (
-            <span key={index} className="rounded-full border border-[var(--mn-border)]/60 px-2 py-0.5 normal-case tracking-normal text-[var(--mn-text-muted)]">{entry}</span>
+            <span key={index} className="rounded-full border border-[var(--md-sys-color-outline-variant)]/60 px-2 py-0.5 normal-case tracking-normal text-[var(--md-sys-color-on-surface-variant)]">{entry}</span>
           ))}
         </p>
       )}

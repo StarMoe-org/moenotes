@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import Button from "@mui/material/Button";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
@@ -13,7 +14,7 @@ import { entityLinkPath } from "@/lib/route/entity-link";
 import { useAssetUrl } from "@/lib/servers/use-content-server";
 import { storyPath } from "@/lib/story/paths";
 
-const linkCard = "mn-focus block rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-sm)] transition hover:-translate-y-0.5 hover:border-[var(--mn-accent)] hover:shadow-[var(--mn-shadow-stamp)]";
+const linkCard = "block rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)] transition-colors hover:border-[var(--md-sys-color-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--md-sys-color-primary)]";
 
 function characterHref(locale: AppLocale, id: number): string {
   return localizePath(entityLinkPath({ routeId: "characters", detailId: id }), locale);
@@ -38,12 +39,12 @@ export function BondPartnersPanel({ locale, extras }: { locale: AppLocale; extra
             const name = names.get(pair.partnerId) ?? `#${pair.partnerId}`;
             const stories = storiesByPair.get(pair.friendshipId) ?? [];
             return (
-              <li key={pair.friendshipId} className="overflow-hidden rounded-2xl border border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp-sm)]">
-                {pair.bannerUrl && <img className="aspect-[3/1] w-full bg-[var(--mn-cream-deep)] object-cover" src={assetUrl(pair.bannerUrl)} alt="" loading="lazy" onError={(event) => { (event.target as HTMLElement).style.display = "none"; }} />}
+              <li key={pair.friendshipId} className="overflow-hidden rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)]">
+                {pair.bannerUrl && <img className="aspect-[3/1] w-full bg-[var(--md-sys-color-surface-container-high)] object-cover" src={assetUrl(pair.bannerUrl)} alt="" loading="lazy" onError={(event) => { (event.target as HTMLElement).style.display = "none"; }} />}
                 <div className="space-y-3 p-3">
-                  <a href={characterHref(locale, pair.partnerId)} className="mn-focus flex items-center gap-3 rounded-xl hover:text-[var(--mn-accent-deep)]">
-                    <img className="h-10 w-10 shrink-0 rounded-full border-2 border-[var(--mn-paper)] bg-[var(--mn-cream-deep)] object-cover shadow-[var(--mn-shadow-stamp-sm)]" src={assetUrl(getCharacterFaceIconUrl(pair.partnerId))} alt="" loading="lazy" />
-                    <span className="min-w-0 truncate text-sm font-black text-[var(--mn-text)]">{name}</span>
+                  <a href={characterHref(locale, pair.partnerId)} className="flex items-center gap-3 rounded-xl hover:text-[var(--md-sys-color-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--md-sys-color-primary)]">
+                    <img className="h-10 w-10 shrink-0 rounded-full border-2 border-[var(--md-sys-color-surface)] bg-[var(--md-sys-color-surface-container-high)] object-cover" src={assetUrl(getCharacterFaceIconUrl(pair.partnerId))} alt="" loading="lazy" />
+                    <span className="min-w-0 truncate text-sm font-black text-[var(--md-sys-color-on-surface)]">{name}</span>
                   </a>
                   {stories.length > 0 && (
                     <ul className="flex flex-wrap gap-1.5">
@@ -52,10 +53,10 @@ export function BondPartnersPanel({ locale, extras }: { locale: AppLocale; extra
                           <a
                             href={localizePath(storyPath(story.advId), locale)}
                             title={story.title}
-                            className="mn-focus inline-flex items-center gap-1 rounded-full border border-[var(--mn-border)] bg-[var(--mn-surface)] px-2.5 py-1 text-[11px] font-bold text-[var(--mn-text)] hover:border-[var(--mn-accent)] hover:text-[var(--mn-accent-deep)]"
+                            className="inline-flex items-center gap-1 rounded-full border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-high)] px-2.5 py-1 text-[11px] font-bold text-[var(--md-sys-color-on-surface)] hover:border-[var(--md-sys-color-primary)] hover:text-[var(--md-sys-color-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--md-sys-color-primary)]"
                           >
                             {t(locale, "characters.bonds.episode", { number: story.episodeNumber ?? "?" })}
-                            {story.unlockLevel > 0 && <span className="font-medium text-[var(--mn-text-muted)]">{t(locale, "characters.bonds.unlockLevel", { level: story.unlockLevel })}</span>}
+                            {story.unlockLevel > 0 && <span className="font-medium text-[var(--md-sys-color-on-surface-variant)]">{t(locale, "characters.bonds.unlockLevel", { level: story.unlockLevel })}</span>}
                           </a>
                         </li>
                       ))}
@@ -90,7 +91,7 @@ export function CharacterMissionsPanel({ locale, characterName, extras }: { loca
     <Panel title={t(locale, "characters.missions.title")}>
       {extras.missions.length === 0 ? <Empty text={t(locale, "characters.missions.empty")} /> : (
         <div className="space-y-6">
-          <p className="text-xs font-medium leading-6 text-[var(--mn-text-muted)]">{t(locale, "characters.missions.note")}</p>
+          <p className="text-xs font-medium leading-6 text-[var(--md-sys-color-on-surface-variant)]">{t(locale, "characters.missions.note")}</p>
           {extras.missions.map((group) => <MissionGroup key={group.type} locale={locale} characterName={characterName} group={group} rewards={extras.missionRewards} />)}
         </div>
       )}
@@ -106,16 +107,16 @@ function MissionGroup({ locale, characterName, group, rewards }: { locale: AppLo
   const title = typeKey ? t(locale, `characters.missions.types.${typeKey}`) : group.title || t(locale, "characters.missions.typeFallback", { type: group.type });
   return (
     <section>
-      <h4 className="mb-2 flex flex-wrap items-baseline gap-2 text-sm font-black text-[var(--mn-text)]">
+      <h4 className="mb-2 flex flex-wrap items-baseline gap-2 text-sm font-black text-[var(--md-sys-color-on-surface)]">
         {title}
-        <span className="text-xs font-bold tabular-nums text-[var(--mn-text-muted)]">{t(locale, "characters.missions.count", { count: rows.length })}</span>
+        <span className="text-xs font-bold tabular-nums text-[var(--md-sys-color-on-surface-variant)]">{t(locale, "characters.missions.count", { count: rows.length })}</span>
       </h4>
-      <ul className="divide-y divide-dashed divide-[var(--mn-border)]/60 rounded-2xl border border-[var(--mn-border)]/70 bg-[var(--mn-surface)]/40 px-3">
+      <ul className="divide-y divide-dashed divide-[var(--md-sys-color-outline-variant)]/60 rounded-2xl border border-[var(--md-sys-color-outline-variant)]/70 bg-[var(--md-sys-color-surface-container-low)] px-3">
         {shown.map((row, index) => (
           <li key={index} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
-            <p className="min-w-0 flex-1 whitespace-pre-line text-sm font-medium text-[var(--mn-text)]">{characterMissionText(group.template, locale, characterName, row)}</p>
+            <p className="min-w-0 flex-1 whitespace-pre-line text-sm font-medium text-[var(--md-sys-color-on-surface)]">{characterMissionText(group.template, locale, characterName, row)}</p>
             <span className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-[var(--mn-accent-soft)] px-2 py-0.5 font-mono text-xs font-bold tabular-nums text-[var(--mn-text)]" title={t(locale, "characters.missions.goal")}>{row.achievementCount.toLocaleString(locale)}</span>
+              <span className="rounded-full bg-[var(--md-sys-color-secondary-container)] px-2 py-0.5 text-xs font-bold tabular-nums text-[var(--md-sys-color-on-secondary-container)]" title={t(locale, "characters.missions.goal")}>{row.achievementCount.toLocaleString(locale)}</span>
               {row.rewardIds.map((id, rewardIndex) => {
                 const reward = rewards[String(id)];
                 return reward ? <RewardChip key={`${id}:${rewardIndex}`} locale={locale} reward={reward} variant="icon" /> : null;
@@ -125,9 +126,9 @@ function MissionGroup({ locale, characterName, group, rewards }: { locale: AppLo
         ))}
       </ul>
       {rows.length > MISSION_PREVIEW_ROWS && (
-        <button type="button" onClick={() => setExpanded((value) => !value)} aria-expanded={expanded} className="mn-focus mt-2 rounded-full px-3 py-1 text-xs font-bold text-[var(--mn-accent-deep)] hover:bg-[var(--mn-accent-soft)]">
+        <Button variant="text" size="small" onClick={() => setExpanded((value) => !value)} aria-expanded={expanded} sx={{ mt: 1 }}>
           {expanded ? t(locale, "characters.missions.collapse") : t(locale, "characters.missions.expand", { count: rows.length })}
-        </button>
+        </Button>
       )}
     </section>
   );
@@ -163,7 +164,7 @@ export function RelatedPanels({ locale, cards, extras }: { locale: AppLocale; ca
               <li key={stamp.id}>
                 <a href={localizePath(entityLinkPath({ routeId: "stamps", query: { id: String(stamp.id) } }), locale)} className={`${linkCard} p-2 text-center`} title={stamp.name}>
                   <img className="mx-auto aspect-square w-full object-contain" src={assetUrl(stamp.imageUrl)} alt="" loading="lazy" />
-                  <span className="mt-1 block truncate text-[11px] font-bold text-[var(--mn-text)]">{stamp.name}</span>
+                  <span className="mt-1 block truncate text-[11px] font-bold text-[var(--md-sys-color-on-surface)]">{stamp.name}</span>
                 </a>
               </li>
             ))}
@@ -179,8 +180,8 @@ export function RelatedPanels({ locale, cards, extras }: { locale: AppLocale; ca
             {extras.songs.map((song) => (
               <li key={song.id}>
                 <a href={localizePath(entityLinkPath({ routeId: "music", detailId: song.id }), locale)} className={`${linkCard} flex items-center gap-2 p-2`}>
-                  <img className="h-12 w-12 shrink-0 rounded-lg bg-[var(--mn-cream-deep)] object-cover" src={assetUrl(song.jacketUrl)} alt="" loading="lazy" />
-                  <span className="min-w-0 line-clamp-2 text-xs font-bold text-[var(--mn-text)]">{song.title}</span>
+                  <img className="h-12 w-12 shrink-0 rounded-lg bg-[var(--md-sys-color-surface-container-high)] object-cover" src={assetUrl(song.jacketUrl)} alt="" loading="lazy" />
+                  <span className="min-w-0 line-clamp-2 text-xs font-bold text-[var(--md-sys-color-on-surface)]">{song.title}</span>
                 </a>
               </li>
             ))}
@@ -205,15 +206,15 @@ function RelatedStories({ locale, stories }: { locale: AppLocale; stories: Chara
         <div className="space-y-5">
           {groups.map(([category, list]) => (
             <details key={category} open={list.length <= 30} className="group">
-              <summary className="mn-focus cursor-pointer select-none text-sm font-black text-[var(--mn-text)]">
-                {t(locale, `story.categories.${STORY_CATEGORY_KEYS[category] ?? category}`)} <span className="text-xs font-bold tabular-nums text-[var(--mn-text-muted)]">({list.length})</span>
+              <summary className="cursor-pointer select-none text-sm font-black text-[var(--md-sys-color-on-surface)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--md-sys-color-primary)]">
+                {t(locale, `story.categories.${STORY_CATEGORY_KEYS[category] ?? category}`)} <span className="text-xs font-bold tabular-nums text-[var(--md-sys-color-on-surface-variant)]">({list.length})</span>
               </summary>
               <ul className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                 {list.map((story) => (
                   <li key={story.advId}>
                     <a href={localizePath(storyPath(story.advId), locale)} className={`${linkCard} px-3 py-2`}>
-                      <span className="block truncate text-sm font-bold text-[var(--mn-text)]">{story.title || `ADV ${story.advId}`}</span>
-                      {story.groupTitle && story.groupTitle !== story.title && <span className="block truncate text-[11px] font-medium text-[var(--mn-text-muted)]">{story.groupTitle}</span>}
+                      <span className="block truncate text-sm font-bold text-[var(--md-sys-color-on-surface)]">{story.title || `ADV ${story.advId}`}</span>
+                      {story.groupTitle && story.groupTitle !== story.title && <span className="block truncate text-[11px] font-medium text-[var(--md-sys-color-on-surface-variant)]">{story.groupTitle}</span>}
                     </a>
                   </li>
                 ))}
