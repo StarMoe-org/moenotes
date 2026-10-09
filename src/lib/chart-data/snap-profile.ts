@@ -1,7 +1,7 @@
 import type { ChartDataState } from "./query";
 import { snapMemberContext } from "./snap-catalogue";
 import type { FiveSlots, SnapDeckData, SnapEvaluationProfile, SnapMemberContext } from "./snap-types";
-import { emptySnapRanking, snapProfileKey, snapSourceKey, type SnapRankingSource, type SnapRankingState } from "./snap-client";
+import { emptySnapRanking, snapProfileKey, snapSourceKey, type SnapRankRequest, type SnapRankingSource, type SnapRankingState } from "./snap-client";
 import { validateSnapFormation, type SnapLegalityContext, type SnapLegalityIssue } from "./snap-legality";
 
 /** A reproducible standard profile. This is a measurement, not an ownership or shuffle model. */
@@ -19,7 +19,7 @@ export function chartSnapProfile(state: ChartDataState, data?: SnapDeckData, leg
       memberSkillPercent: state.skills.slice(0, 5) as unknown as FiveSlots<number>,
       selections: state.snapSkills,
       pairedMembers,
-      power: state.snapPower,
+      power: state.power,
       mode: state.mode === "free" ? { kind: "normal" } : { kind: "fixedSoloGekisou", ranks: [state.ranks[0] ?? 1, state.ranks[1] ?? 1, state.ranks[2] ?? 1] },
       seed: 1,
       fps: 60,
@@ -31,8 +31,8 @@ export function chartSnapProfile(state: ChartDataState, data?: SnapDeckData, leg
 }
 
 /** Invalid URL member IDs must clear displayed rows before the Controller's next effect runs. */
-export function snapDisplayedMeasurement(evaluation: ReturnType<typeof chartSnapProfile>, source: SnapRankingSource | null, measurement: SnapRankingState): SnapRankingState {
-  return evaluation.invalidMembers.length || evaluation.issues.length ? { ...emptySnapRanking(snapProfileKey(evaluation.profile)),
+export function snapDisplayedMeasurement(evaluation: ReturnType<typeof chartSnapProfile>, source: SnapRankingSource | null, measurement: SnapRankingState, analysis?: SnapRankRequest): SnapRankingState {
+  return evaluation.invalidMembers.length || evaluation.issues.length ? { ...emptySnapRanking(snapProfileKey(evaluation.profile, analysis)),
     sourceKey: source ? snapSourceKey(source) : "", status: "needs-context",
     ...(evaluation.issues.length ? { error: { code: "invalid-selection", message: "" } } : {}) } : measurement;
 }

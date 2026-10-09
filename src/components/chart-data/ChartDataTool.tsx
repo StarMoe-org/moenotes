@@ -9,14 +9,15 @@ import Modal from "@/components/shared/Modal";
 import { replaceUrl } from "@/lib/browser/history";
 import { chartRows } from "@/lib/chart-data/catalog";
 import { fetchMusicData } from "@/lib/chart-data/client";
-import { DIFFICULTIES, perMinute, scoreRate } from "@/lib/chart-data/ranking";
+import { DIFFICULTIES, perMinute, rankThreshold, scoreRate } from "@/lib/chart-data/ranking";
 import { parseChartDataQuery, playScenario, serializeChartDataQuery, VIEWS, type ChartDataState, type QueryContext, type View } from "@/lib/chart-data/query";
 import { scenarioSupport } from "@/lib/chart-data/scenario";
 import { localizeDataText } from "@/lib/chart-data/text";
 import type { MusicData } from "@/lib/chart-data/types";
 import { chartSnapProfile, snapDisplayedMeasurement } from "@/lib/chart-data/snap-profile";
 import { createSnapLegalityContext } from "@/lib/chart-data/snap-legality";
-import { emptySnapRanking, isCurrentSnapCatalogue, type SnapRankingCatalogue, type SnapRankingSource, type SnapRankingState } from "@/lib/chart-data/snap-client";
+import { emptySnapRanking, isCurrentSnapCatalogue, type SnapRankRequest, type SnapRankingCatalogue, type SnapRankingSource, type SnapRankingState } from "@/lib/chart-data/snap-client";
+import { SNAP_ORDER_MODEL, SNAP_POWER_DOMAIN } from "@/lib/chart-data/snap-rank";
 import { getChartPreviewHref } from "@/lib/music/chart-preview";
 import { getMusicJacketUrl } from "@/lib/music/data";
 import { isMusicDifficulty } from "@/lib/music/difficulty";
@@ -130,6 +131,12 @@ export default function ChartDataTool({ locale, guide }: Props) {
     if (current?.chart && rows.some((row) => row.scoreId === current.chart) && !ids.includes(current.chart)) ids.push(current.chart);
     return ids;
   }, [rows, current?.diffs, current?.band, current?.chart, view]);
+  const snapAnalysis = useMemo<SnapRankRequest | undefined>(() => {
+    if (!current || current.rankBy !== "event" && current.chart === null) return undefined;
+    const byScore = new Map(rows.map(row => [row.scoreId, row]));
+    return { model: SNAP_ORDER_MODEL, target: current.target, powerDomain: { ...SNAP_POWER_DOMAIN },
+      targets: snapScoreIds.map(scoreId => ({ scoreId, threshold: byScore.has(scoreId) ? rankThreshold(byScore.get(scoreId)!, current.target, 0) : null })) };
+  }, [rows, snapScoreIds, current?.rankBy, current?.chart, current?.target]);
   const ctx = useMemo<ChartDataContext | null>(() => {
     if (!data || !current) return null;
     const bands = new Map((data.bands ?? []).map((b) => [String(b.id), b]));
@@ -161,9 +168,9 @@ export default function ChartDataTool({ locale, guide }: Props) {
         : { rate: null, perMinute: null }),
       openChart: (scoreId) => update({ chart: scoreId }),
       pool: rows.filter((r) => current.diffs.includes(r.difficulty as typeof DIFFICULTIES[number]) && (!current.band || r.bandIds.map(String).includes(current.band))),
-      snap: snapEvaluation ? { active: snapActive, profile: snapEvaluation.profile, measurement: snapDisplayedMeasurement(snapEvaluation, snapSource, snapMeasurement), source: snapSource } : undefined,
+      snap: snapEvaluation ? { active: snapActive, profile: snapEvaluation.profile, measurement: snapDisplayedMeasurement(snapEvaluation, snapSource, snapMeasurement, snapAnalysis), source: snapSource, analysis: snapAnalysis } : undefined,
     };
-  }, [data, current, rows, locale, tr, hasStats, support, update, snapEvaluation, snapActive, snapMeasurement, snapSource]);
+  }, [data, current, rows, locale, tr, hasStats, support, update, snapEvaluation, snapActive, snapMeasurement, snapSource, snapAnalysis]);
 
   const detail = ctx && current?.chart ? ctx.byScore.get(current.chart) ?? null : null;
 
@@ -203,7 +210,7 @@ export default function ChartDataTool({ locale, guide }: Props) {
       )}
 
       {data ? <Footer locale={locale} data={data} /> : null}
-      {snapEvaluation ? <SnapRankingController key={snapAttempt} source={snapSource} profile={snapEvaluation.profile} scoreIds={snapScoreIds}
+      {snapEvaluation ? <SnapRankingController key={snapAttempt} source={snapSource} profile={snapEvaluation.profile} scoreIds={snapScoreIds} analysis={snapAnalysis}
         enabled={snapActive && snapScoreIds.length > 0 && !!currentSnapCatalogue && snapEvaluation.invalidMembers.length === 0 && snapEvaluation.issues.length === 0} locale={locale}
         onState={setSnapMeasurement} onCatalogue={setSnapCatalogue} onCatalogueError={() => setSnapCatalogueError(true)} /> : null}
 

@@ -2,14 +2,17 @@ import { useMemo, type ReactNode } from "react";
 import { matches, sortBy, type ChartRow } from "@/lib/chart-data/catalog";
 import { EFF_RANKS, RANKS, SPEEDS, roomSize, type RankBy } from "@/lib/chart-data/query";
 import { X_MAX, eventDominance, formatLength, lengthMs, orderRates, rank, rankThreshold, reachChance, requiredPower } from "@/lib/chart-data/ranking";
-import { snapProfileKey, snapSourceKey } from "@/lib/chart-data/snap-client";
+import { currentSnapRanking } from "@/lib/chart-data/snap-client";
+import { currentSnapRank, snapRankFigures, snapRankStatusKey } from "@/lib/chart-data/snap-rank";
 import SettingsPanel, { ScenarioPanel } from "./SettingsPanel";
 import { Icon, LevelBadge, Seg, SongCell, fmt, fmtInt, type ChartDataContext } from "./shared";
 
 type Col = "rank" | "song" | "level" | "time" | "bpm" | "notes" | "density" | "rate" | "perMinute" | "relative" | "dom"
-  | "need" | "chance" | "perHour" | "goal" | "skip" | "score" | "delta";
+  | "rankStatus" | "need" | "chance" | "perHour" | "goal" | "skip" | "score" | "delta";
 
 interface Listed extends ChartRow {
+  rankStatus?: string;
+  needStatus?: string | undefined;
   rate?: number | null;
   perMinute?: number | null;
   need?: number | null;
@@ -26,10 +29,7 @@ interface Listed extends ChartRow {
 const snapActive = (ctx: ChartDataContext) => !!ctx.snap?.active && (ctx.state.rankBy === "efficiency" || ctx.state.rankBy === "event");
 function currentMeasurement(ctx: ChartDataContext) {
   const snap = ctx.snap;
-  if (!snap?.source || snap.measurement.profileKey !== snapProfileKey(snap.profile)
-    || snap.measurement.sourceKey !== snapSourceKey(snap.source)) return null;
-  if (snap.measurement.source && snap.measurement.source.manifestSha256 !== snap.source.reference.sha256) return null;
-  return snap.measurement;
+  return snap ? currentSnapRanking(snap.profile, snap.source, snap.measurement, snap.analysis) : null;
 }
 
 /** The ranking of the pool by the chosen measure, as ournotes-player's chart data page ranks it. */
@@ -47,22 +47,32 @@ function useRanking(ctx: ChartDataContext) {
         const result = measured?.rows.get(row.scoreId);
         const duration = ctx.lengthOf(row);
         const time = duration === null ? null : duration + state.overhead * 1000;
-        const ratio = result && Number.isFinite(power) && power > 0 ? result.score / power : null;
+        if (state.rankBy === "event") {
+          const rank = currentSnapRank(result, rankThreshold(row, state.target, 0), power);
+          const figures = rank.status === "complete" ? snapRankFigures(rank.result, time) : null;
+          const baselineScore = rank.status === "complete" && rank.baseline ? rank.baseline.scoreSum / rank.baseline.orderCount : null;
+          return { ...row, ...figures, score: figures?.score ?? null, baselineScore,
+            delta: figures && baselineScore !== null ? figures.score - baselineScore : null,
+            perHour: time !== null && time > 0 ? 3600000 / time : null,
+            rankStatus: snapRankStatusKey(rank),
+            needStatus: rank.status === "complete" ? rank.result.need.status === "exact" ? undefined
+              : rank.result.need.status === "outsideDomain" ? "snap.rank.outsideDomain" : "snap.rank.unproven" : snapRankStatusKey(rank) };
+        }
+        const ratio = typeof result?.score === "number" && Number.isFinite(power) && power > 0 ? result.score / power : null;
         return { ...row, score: result?.score ?? null, baselineScore: result?.baselineScore ?? null, delta: result?.delta ?? null,
           rate: ratio, perMinute: ratio !== null && time !== null && time > 0 ? ratio * 60000 / time : null,
           perHour: time !== null && time > 0 ? 3600000 / time : null };
       });
       if (state.rankBy === "efficiency") {
         list = sortBy(list, (row) => row.perMinute);
-        cols.push("rate", "perMinute", "relative", "dom");
+        cols.push("rate", "perMinute", "relative");
         hi = "perMinute";
       } else {
-        // Keep the event table's established columns. Point measurements do not provide a
-        // required-power inverse, a probability model or a dominance certificate.
-        list = sortBy(list, (row) => row.score);
+        list = [...list].sort((a, b) => (b.goal ?? -Infinity) - (a.goal ?? -Infinity)
+          || (a.need ?? Infinity) - (b.need ?? Infinity) || a.scoreId - b.scoreId);
         cols.splice(4, 3);
-        cols.push("need", ...(state.power ? ["chance" as const] : []), "perHour", ...(state.power ? ["goal" as const] : []), "dom");
-        hi = state.power ? "goal" : "need";
+        cols.push("need", "chance", "perHour", "goal", "rankStatus");
+        hi = "goal";
       }
     } else if (state.rankBy === "efficiency") {
       unsorted = list.filter((r) => r.weights);
@@ -133,18 +143,22 @@ export default function RankView({ ctx }: { ctx: ChartDataContext }) {
       {state.rankBy === "efficiency" || state.rankBy === "event" ? (
         <>
           <ScenarioPanel ctx={ctx} rooms={state.rankBy === "event" && !active} />
-          <SettingsPanel ctx={ctx} event={state.rankBy === "event"} frontier />
+          <SettingsPanel ctx={ctx} event={state.rankBy === "event"} frontier={!active} />
+          {active ? <p className="mn-cd-hint">{tr("snap.frontierUnavailable")}</p> : null}
         </>
       ) : null}
       {!hasStats && !active ? <p className="mn-cd-hint warn">{tr("noStats")}</p> : null}
       {active ? (
         <p className={`mn-cd-snap-state${measurement?.error ? " warn" : ""}`} role={measurement?.error ? "alert" : "status"}>
           {measurement?.error?.code === "invalid-selection" ? tr("snap.invalidSelection")
-            : measurement?.status === "complete" ? tr("snap.ready", { n: measurement.done })
+            : measurement?.status === "complete" ? state.rankBy === "event"
+              ? tr("snap.rank.summary", { ready: [...measurement.rows.values()].filter(row => row.rank?.status === "complete").length, total: measurement.total })
+              : tr("snap.ready", { n: measurement.done })
             : measurement?.status === "needs-context" ? tr("snap.needsContext")
             : measurement?.status === "unsupported" ? tr("snap.unsupportedScenario")
             : measurement?.status === "error" ? tr("snap.calculationError")
             : tr("snap.calculating", { done: measurement?.done ?? 0, total: measurement?.total ?? ctx.pool.length })}
+          {measurement?.orderProgress ? ` · ${tr("snap.rank.orders", { done: measurement.orderProgress.completed, total: measurement.orderProgress.total })}` : null}
         </p>
       ) : null}
       <RankTable ctx={ctx} />
@@ -162,7 +176,7 @@ function RankTable({ ctx }: { ctx: ChartDataContext }) {
     <span className="mn-cd-bar" style={{ ["--w" as string]: `${barMax && typeof v === "number" ? Math.max(0, Math.min(100, (100 * v) / barMax)) : 0}%` }}>{text}</span>
   );
   const clear = () => ctx.update({ band: "", search: "", frontier: false, diffs: ["easy", "normal", "hard", "expert"] });
-  const head = (k: Col) => k === "score" || k === "delta" ? tr(`snap.${k}`)
+  const head = (k: Col) => k === "rankStatus" ? tr("snap.rank.status") : k === "score" || k === "delta" ? tr(`snap.${k}`)
     : k === "bpm" && state.rankBy === "speed" && state.speedBy === "bpmMax" ? tr("speedBy.bpmMax") : tr(`col.${k}`);
   const names = (r: Listed) => (r.dominatedBy ?? []).map((j) => unsorted?.[j]).filter((x): x is Listed => !!x)
     .map((x) => `${ctx.title(x)} ${tr(`difficulties.${x.difficulty}`)}`).join(tr("listSeparator"));
@@ -188,11 +202,12 @@ function RankTable({ ctx }: { ctx: ChartDataContext }) {
         const v = orderRates(r as ChartRow & { base: number }, ctx.skills);
         return <>{fmt(r.rate, 3)}{v[0] === v[v.length - 1] ? null : <small className="mn-cd-spread" title={tr("tipSpread")}>{` ${fmt(v[0], 3)}–${fmt(v[v.length - 1], 3)}`}</small>}</>;
       }
-      case "need": return hi === "need" ? bar(r.need, fmtInt(r.need)) : fmtInt(r.need);
-      case "chance": return r.chance === null || r.chance === undefined ? "–"
+      case "rankStatus": return r.rankStatus ? tr(r.rankStatus) : "–";
+      case "need": if (r.needStatus) return tr(r.needStatus); return hi === "need" ? bar(r.need, fmtInt(r.need)) : fmtInt(r.need);
+      case "chance": return r.chance === null || r.chance === undefined ? r.rankStatus ? tr(r.rankStatus) : "–"
         : <span className={`mn-cd-chance c${Math.round((r.chance || 0) * 4)}`}>{`${(100 * r.chance).toFixed(r.chance > 0 && r.chance < 0.01 ? 1 : 0)}%`}</span>;
       case "perHour": return fmt(r.perHour, 1);
-      case "goal": return bar(r.goal, fmt(r.goal, 2));
+      case "goal": return r.goal == null && r.rankStatus ? tr(r.rankStatus) : bar(r.goal, fmt(r.goal, 2));
       case "perMinute": return bar(r.perMinute, fmt(r.perMinute, 3));
       case "relative": return top && typeof r.perMinute === "number" ? `${((100 * r.perMinute) / top).toFixed(1)}%` : "";
       case "dom": return snapActive(ctx) ? "–" : r.frontier

@@ -46,6 +46,7 @@ export interface SnapReplayEngine {
   template(scoreId: number, power: number, fps: number): string;
   describeChart(scoreId: number): string;
   run(request: string): string;
+  startRankAnalysis?(request: string): SnapReplayRankJob;
   free?(): void;
 }
 export interface SnapReplayResult {
@@ -57,6 +58,39 @@ export interface SnapReplayResult {
   combo: number;
   randomDraws: number;
   convertedJudgements: number;
+}
+export interface SnapReplayRankJob {
+  advance(maxOrders: number): string;
+  status(): string;
+  free(): void;
+}
+export interface SnapPowerDomain { min: number; max: number }
+export type SnapRequiredPower =
+  | { status: "exact"; power: number; scoreSum: number; previousScoreSum: number | null }
+  | { status: "outsideDomain" }
+  | { status: "unproven"; reason: string };
+export interface SnapRankResult {
+  scoreId: number;
+  power: number;
+  threshold: number;
+  orderModel: "uniformSkillOrder120";
+  orderScores: number[];
+  scoreSum: number;
+  orderCount: 120;
+  minScore: number;
+  maxScore: number;
+  targetHitCount: number;
+  need: SnapRequiredPower;
+  powerDomain: SnapPowerDomain;
+}
+export interface SnapRankProgress {
+  format: "ournotes.replay-rank-result/1";
+  status: "running" | "complete" | "unsupported";
+  completedOrders: number;
+  totalOrders: 120;
+  result: SnapRankResult | null;
+  code: string | null;
+  reason: string | null;
 }
 export interface SnapEvaluationProfile {
   /** Declared synthetic plain score-up skills, duration exactly 5s. */

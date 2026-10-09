@@ -1,7 +1,8 @@
 import { buildSnapSkillCatalogue, snapChoiceKey, snapRows } from "./snap-catalogue";
-import type { SnapDeckData, SnapEvaluationProfile, SnapReplayEngine, SnapReplayManifest, SnapReplayReference, SnapReplayResource, SnapReplayResult } from "./snap-types";
+import type { SnapDeckData, SnapEvaluationProfile, SnapPowerDomain, SnapReplayEngine, SnapReplayManifest, SnapReplayReference, SnapReplayResource, SnapReplayResult } from "./snap-types";
 import type { SnapLabelSource } from "./snap-labels";
 import { fetchMusicReplayResource } from "./client";
+import { parseSnapRankProgress, SNAP_POWER_DOMAIN } from "./snap-rank";
 
 /** The original player's input-plan helper is injected; this bridge never recreates its algorithm. */
 export type SnapInputPlanPreparer = (request: Record<string, unknown>, description: Record<string, unknown>, data: SnapDeckData, profile: SnapEvaluationProfile) => void;
@@ -15,7 +16,7 @@ export interface LoadedSnapReplay {
   labelSource?: SnapLabelSource;
 }
 export class SnapReplayError extends Error {
-  constructor(public readonly code: "invalid-profile" | "unsupported" | "needs-context" | "identity" | "accuracy-plan", message: string) { super(message); this.name = "SnapReplayError"; }
+  constructor(public readonly code: "invalid-profile" | "unsupported" | "needs-context" | "identity" | "accuracy-plan" | "engine-capability", message: string) { super(message); this.name = "SnapReplayError"; }
 }
 const invalid = (message: string): never => { throw new SnapReplayError("invalid-profile", message); };
 function immutable<T>(value: T): T {
@@ -88,25 +89,41 @@ export function createSnapEvaluator(loaded: LoadedSnapReplay, profile: SnapEvalu
   const derived = snapProfileData(loaded.data, profile);
   if (!prepareInputPlan && (profile.greatFraction !== 0 || profile.justFraction !== 0)) throw new SnapReplayError("accuracy-plan", "The shared input-plan helper is required for Great/Just presets");
   const session = loaded.factory(JSON.stringify(derived));
+  const buildRequest = (scoreId: number): Record<string, unknown> => {
+    const request = JSON.parse(session.template(scoreId, profile.power, profile.fps)) as Record<string, unknown>;
+    request.seed = profile.seed;
+    request.mode = profile.mode;
+    request.skillOrder = [...profile.skillOrder];
+    request.performers = profile.pairedMembers.map((member, i) => {
+      const selection = profile.selections[i];
+      const { memberId: _memberId, ...predicates } = member ?? { bandId: 0, characterId: 0, cardType: 0, tagIds: [], liveSkillCategories: [], gekisouSkillCategories: [], gekisouMissionType: 0, gekisouSkill: null };
+      const liveSkillCategories = snapRows(derived, "MasterLiveSkill").find((r) => r._id === -1000001 - i)?._skillCategories;
+      return { ...predicates, liveSkillCategories, liveSkill: [-1000001 - i, 1], supportSkills: selection?.kind === "support" ? [[selection.skillId, selection.level]] : [], gekisouSupportSkills: selection?.kind === "gekisou-support" ? [[selection.skillId, selection.level]] : [] };
+    });
+    if (prepareInputPlan) prepareInputPlan(request, JSON.parse(session.describeChart(scoreId)) as Record<string, unknown>, derived, profile);
+    return request;
+  };
   return {
     scope: "standard-skill-profile" as const,
     source: { manifestSha256: loaded.manifestSha256, dataSha256: loaded.dataSha256, modelCommit: loaded.modelCommit },
     profile,
     evaluate(scoreId: number): SnapReplayResult {
-      const request = JSON.parse(session.template(scoreId, profile.power, profile.fps)) as Record<string, unknown>;
-      request.seed = profile.seed;
-      request.mode = profile.mode;
-      request.skillOrder = [...profile.skillOrder];
-      request.performers = profile.pairedMembers.map((member, i) => {
-        const selection = profile.selections[i];
-        const { memberId: _memberId, ...predicates } = member ?? { bandId: 0, characterId: 0, cardType: 0, tagIds: [], liveSkillCategories: [], gekisouSkillCategories: [], gekisouMissionType: 0, gekisouSkill: null };
-        const liveSkillCategories = snapRows(derived, "MasterLiveSkill").find((r) => r._id === -1000001 - i)?._skillCategories;
-        return { ...predicates, liveSkillCategories, liveSkill: [-1000001 - i, 1], supportSkills: selection?.kind === "support" ? [[selection.skillId, selection.level]] : [], gekisouSupportSkills: selection?.kind === "gekisou-support" ? [[selection.skillId, selection.level]] : [] };
-      });
-      if (prepareInputPlan) prepareInputPlan(request, JSON.parse(session.describeChart(scoreId)) as Record<string, unknown>, derived, profile);
+      const request = buildRequest(scoreId);
       const result = JSON.parse(session.run(JSON.stringify(request))) as SnapReplayResult;
       if (result.format !== "ournotes.replay-result/1" || !result.complete || result.scoreId !== scoreId || !Number.isSafeInteger(result.score) || result.score < 0) throw new SnapReplayError("identity", "Replay did not return a complete matching result");
       return result;
+    },
+    startRank(scoreId: number, threshold: number, powerDomain: SnapPowerDomain = SNAP_POWER_DOMAIN) {
+      if (!session.startRankAnalysis) throw new SnapReplayError("engine-capability", "The published replay engine does not provide rank analysis");
+      if (!Number.isInteger(threshold) || threshold < 0 || threshold > 2147483647) invalid("Invalid score threshold");
+      const identity = { scoreId, power: profile.power, threshold, powerDomain: { ...powerDomain } };
+      const job = session.startRankAnalysis(JSON.stringify({ format: "ournotes.replay-rank/1", replay: buildRequest(scoreId),
+        target: { kind: "score", threshold }, powerDomain: identity.powerDomain }));
+      return {
+        status: () => parseSnapRankProgress(job.status(), identity),
+        advance: (maxOrders: number) => parseSnapRankProgress(job.advance(maxOrders), identity),
+        dispose: () => job.free(),
+      };
     },
     dispose: () => session.free?.(),
   };

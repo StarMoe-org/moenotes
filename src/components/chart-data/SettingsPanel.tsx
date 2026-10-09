@@ -1,7 +1,7 @@
 import { startTransition, useEffect, useState } from "react";
 import { X_MAX, meanSkill } from "@/lib/chart-data/ranking";
 import { RANGES, RANK_MAX, type ScenarioId } from "@/lib/chart-data/scenario";
-import { SKILL_SLOTS } from "@/lib/chart-data/query";
+import { MAX_POWER, SKILL_SLOTS } from "@/lib/chart-data/query";
 import { Seg, type ChartDataContext } from "./shared";
 
 const PRESETS = [["all150", 150], ["all100", 100], ["none", 0]] as const;
@@ -143,7 +143,7 @@ export default function SettingsPanel({ ctx, event = false, frontier = false, ap
         </div>
         <small className="mn-cd-note mn-cd-scenario-note">{tr("skillsHint")}</small>
       </div>
-      {event || aptitude ? (
+      {event || aptitude || ctx.snap?.active ? (
         <>
           {event ? <div className="mn-cd-field">
             <span>{tr("target")}</span>
@@ -151,7 +151,7 @@ export default function SettingsPanel({ ctx, event = false, frontier = false, ap
           </div> : null}
           <label className="mn-cd-field">
             <span>{tr("power")}</span>
-            <NumberInput className="power" value={state.power} step={1000} placeholder={aptitude ? "" : tr("powerHint")} label={tr("power")} onValue={(v) => update({ power: Math.round(v) })} />
+            <NumberInput className="power" value={state.power} min={1} max={MAX_POWER} step={1000} label={tr("power")} onValue={(v) => update({ power: Math.round(v) })} />
           </label>
         </>
       ) : null}

@@ -11,7 +11,7 @@ import { chartRows } from "../src/lib/chart-data/catalog";
 import { parseChartDataQuery, serializeChartDataQuery } from "../src/lib/chart-data/query";
 import { chartSnapProfile } from "../src/lib/chart-data/snap-profile";
 import { emptySnapRanking, snapProfileKey, snapSourceKey, type SnapRankingCatalogue, type SnapRankingSource } from "../src/lib/chart-data/snap-client";
-import type { SnapEvaluationProfile, SnapTable } from "../src/lib/chart-data/snap-types";
+import type { SnapEvaluationProfile, SnapRankResult, SnapTable } from "../src/lib/chart-data/snap-types";
 import type { MusicData } from "../src/lib/chart-data/types";
 
 const profile: SnapEvaluationProfile = { memberSkillPercent: [100, 100, 100, 100, 100], selections: [{ kind: "support", skillId: 1, level: 1 }, null, null, null, null],
@@ -41,7 +41,7 @@ function panelMarkup(ctx: ChartDataContext, catalogue: SnapRankingCatalogue | nu
     invalidMembers={[]} legality={undefined} issues={[]} available onOpen={() => {}} catalogueError={false} />);
 }
 
-test("member and Snap selection then clear all preserve the manual ordinary baseline and both power inputs", () => {
+test("member and Snap selection then clear all preserve the manual skills and shared power", () => {
   const OriginalPicker = SnapSkillPickerModule.default;
   const OriginalMemberControls = SnapMemberControlsModule.default;
   let picker: Parameters<typeof OriginalPicker>[0] | undefined;
@@ -55,31 +55,43 @@ test("member and Snap selection then clear all preserve the manual ordinary base
   try {
     const ctx = context();
     const manual = [140, 130, 90, 110, 120];
-    ctx.state.skills = [...manual]; ctx.state.power = 432100; ctx.state.snapPower = 654300;
+    ctx.state.skills = [...manual]; ctx.state.power = 432100;
     ctx.update = patch => { ctx.state = { ...ctx.state, ...patch }; };
     const render = () => { members.length = 0; panelMarkup(ctx); };
     render();
     members[2]!.onChange({ memberId: 18, gekisouLevel: 3 });
     expect(ctx.state.skills).toEqual(manual);
-    expect(ctx.state.snapPower).toBe(654300);
+    expect(ctx.state.power).toBe(432100);
     expect(ctx.state.snapSkills.some(Boolean)).toBe(false);
     render();
     picker!.onSelect(2, { kind: "support", skillId: 31, level: 5, cardId: 17 });
     expect(chartSnapProfile(ctx.state).profile.memberSkillPercent).toEqual(manual);
-    expect(chartSnapProfile(ctx.state).profile.power).toBe(654300);
+    expect(chartSnapProfile(ctx.state).profile.power).toBe(432100);
     render();
     picker!.onReset();
     expect(ctx.state.snapMembers).toEqual([null, null, null, null, null]);
     expect(ctx.state.snapSkills).toEqual([null, null, null, null, null]);
     expect(ctx.state.skills).toEqual(manual);
     expect(ctx.state.power).toBe(432100);
-    expect(ctx.state.snapPower).toBe(654300);
     const queryContext = { hasStats: true, support: ctx.support };
     const restored = parseChartDataQuery(serializeChartDataQuery(ctx.state, queryContext), queryContext);
     expect(restored.skills).toEqual(manual);
     expect(restored.power).toBe(432100);
-    expect(restored.snapPower).toBe(654300);
+    expect(chartSnapProfile(restored).profile.power).toBe(432100);
   } finally { pickerSpy.mockRestore(); memberSpy.mockRestore(); }
+});
+
+test("Snap ranking shows one shared power input in efficiency and event views", () => {
+  for (const rankBy of ["efficiency", "event"] as const) {
+    const ctx = context();
+    ctx.state.rankBy = rankBy;
+    ctx.state.snapSkills = profile.selections;
+    ctx.state.power = 1090877;
+    const html = panelMarkup(ctx) + renderToStaticMarkup(<RankView ctx={ctx} />);
+    expect((html.match(/aria-label="power"/g) ?? []).length).toBe(1);
+    expect(html).toContain('value="1090877"');
+    expect(chartSnapProfile(ctx.state).profile.power).toBe(1090877);
+  }
 });
 
 test("clear all is available for a member-only formation in both artwork layouts", () => {
@@ -161,7 +173,7 @@ test("selected cards retain existing thumbnail artwork when their UI manifest is
   } finally { assetConfig.gameUiLibraries.tw = saved; }
 });
 
-test("Snap efficiency preserves the existing columns using only the declared-power ratio", () => {
+test("Snap efficiency uses the declared-power ratio and states its frontier capability", () => {
   const ctx = context();
   ctx.state.frontier = true;
   ctx.state.overhead = 30;
@@ -174,51 +186,89 @@ test("Snap efficiency preserves the existing columns using only the declared-pow
   expect(html).toContain('class="num c-rate">4.115');
   expect(html).toContain('class="num c-perMinute hi"><span class="mn-cd-bar" style="--w:100%">2.743');
   expect(html).toContain('class="num dim c-relative">100.0%');
-  expect(html).toContain('class=" c-dom">–');
+  expect(html).not.toContain('class=" c-dom"');
   expect(html).toContain('title="snap.measurementRow: 1,234,567 / 1,000,000 / +234,567"');
   expect(html).toContain('class="num c-rate">–');
   expect(html).not.toContain('class="c-score');
   expect(html).not.toContain("mn-cd-spread");
   expect(html).not.toContain("snap.fixedGekisou");
   expect(html).toContain("scenario.battle");
-  expect(html).toContain('title="snap.frontierUnavailable"');
-  expect(html).toContain('type="checkbox" disabled=""');
-  const ordinary = context(); ordinary.snap!.active = false;
-  expect(html.match(/<thead>.*?<\/thead>/)?.[0]).toBe(renderToStaticMarkup(<RankView ctx={ordinary} />).match(/<thead>.*?<\/thead>/)?.[0]);
+  expect(html).toContain("snap.frontierUnavailable");
+  expect(html).not.toContain('type="checkbox"');
 });
-test("Snap event preserves pending event columns without deriving linear need, chance or dominance", () => {
+function rankedContext(): ChartDataContext {
   const ctx = context();
   ctx.state.rankBy = "event";
+  ctx.state.mode = "free";
+  ctx.state.target = "S";
+  ctx.state.power = 1090877;
+  ctx.state.skills = [130, 110, 150, 110, 130];
+  ctx.state.great = 0;
+  ctx.state.overhead = 0;
+  ctx.lengthOf = () => 120000;
+  ctx.snap!.profile = { ...profile, mode: { kind: "normal" }, power: ctx.state.power,
+    memberSkillPercent: [130, 110, 150, 110, 130], justFraction: 0 };
+  for (const row of ctx.rows) row.scoreRanks = [{ rank: "S", requiredScore: 1000000, battleRequiredScore: 9000000 }];
+  ctx.snap!.analysis = { model: "uniformSkillOrder120", target: "S", powerDomain: { min: 1, max: 20000000 },
+    targets: ctx.rows.map(row => ({ scoreId: row.scoreId, threshold: 1000000 })) };
+  const result: SnapRankResult = { scoreId: 10, power: ctx.state.power, threshold: 1000000, orderModel: "uniformSkillOrder120",
+    orderScores: [...Array(30).fill(1000000), ...Array(90).fill(900000)], scoreSum: 111000000, orderCount: 120,
+    minScore: 900000, maxScore: 1000000, targetHitCount: 30, powerDomain: { min: 1, max: 20000000 },
+    need: { status: "exact", power: 1200000, scoreSum: 120000000, previousScoreSum: 119999880 } };
+  const baseline: SnapRankResult = { ...result, orderScores: Array(120).fill(500000), scoreSum: 60000000,
+    minScore: 500000, maxScore: 500000, targetHitCount: 0, need: { status: "outsideDomain" } };
+  const row = ctx.snap!.measurement.rows.get(10)!;
+  ctx.snap!.measurement = { ...ctx.snap!.measurement, profileKey: snapProfileKey(ctx.snap!.profile, ctx.snap!.analysis),
+    rows: new Map([[10, { ...row, rank: { status: "complete", result, baseline } }]]) };
+  return ctx;
+}
+
+test("Snap event shows the exact order hit rate and required power with pending rows explicit", () => {
+  const ctx = rankedContext();
   ctx.state.frontier = true;
-  ctx.state.power = 250000;
-  for (const row of ctx.rows) {
-    row.scoreRanks = [{ rank: "SS", requiredScore: 1000000, battleRequiredScore: 1000000 }];
-    row.weights = new Proxy(row.weights!, { get(target, key, receiver) {
-      if (/^\d+$/.test(String(key))) throw new Error("Legacy event model must not read linear weights for Snap ranking");
-      return Reflect.get(target, key, receiver);
-    } });
-  }
+  for (const row of ctx.rows) row.weights = new Proxy(row.weights!, { get(target, key, receiver) {
+    if (/^\d+$/.test(String(key))) throw Error("Snap rank must use native statistics");
+    return Reflect.get(target, key, receiver);
+  } });
   const html = renderToStaticMarkup(<RankView ctx={ctx} />);
-  expect(html).toContain(measured.toLocaleString());
-  expect(html).toContain("snap.eventMeasurementHint");
-  expect(html).toContain('class="num c-need">–');
-  expect(html).toContain('class="num c-chance">–');
-  expect(html).toContain('class=" c-dom">–');
-  expect(html).toContain('class="num c-goal hi"><span class="mn-cd-bar" style="--w:0%">–');
-  expect(html).toContain('class="num c-perHour">60.0');
+  expect(html).toContain('class="num c-need">1,200,000');
+  expect(html).toContain('class="mn-cd-chance c1">25%');
+  expect(html).toContain('class="num c-goal hi"><span class="mn-cd-bar" style="--w:100%">7.50');
   expect(html).toContain('class="num c-perHour">30.0');
+  expect(html).toContain('class="num c-need">snap.rank.pending');
+  expect(html).toContain("snap.rank.summary");
+  expect(html).not.toContain('class=" c-dom"');
   expect(html).not.toContain("scenario.roomHint");
   expect(html).toContain('aria-label="target"');
-  expect(html).toContain("chartsCount");
-  // The missing second result remains missing; synthetic linear weights do not fill it.
-  expect((html.match(/snap.measurementRow:/g) ?? []).length).toBe(1);
-  expect(html).not.toContain('class="c-score');
-  expect(html).not.toContain('class="c-delta');
-  expect(html).not.toContain("mn-cd-beaten");
-  const ordinary = context(); ordinary.snap!.active = false; ordinary.state.rankBy = "event"; ordinary.state.power = ctx.state.power;
-  for (const row of ordinary.rows) row.scoreRanks = [{ rank: "SS", requiredScore: 1000000, battleRequiredScore: 1000000 }];
-  expect(html.match(/<thead>.*?<\/thead>/)?.[0]).toBe(renderToStaticMarkup(<RankView ctx={ordinary} />).match(/<thead>.*?<\/thead>/)?.[0]);
+  expect(html).toContain("snap.eventMeasurementHint");
 });
+
+test("Snap rank keeps zero percent distinct from unsupported and unproved metrics", () => {
+  const ctx = rankedContext(), row = ctx.snap!.measurement.rows.get(10)!;
+  if (row.rank?.status !== "complete") throw Error("Expected complete fixture");
+  row.rank.result.targetHitCount = 0;
+  row.rank.result.need = { status: "unproven", reason: "No interval certificate" };
+  const rows = new Map(ctx.snap!.measurement.rows);
+  rows.set(11, { ...row, scoreId: 11, rank: { status: "unsupported", code: "unsupported-domain", reason: "Unproved schedule" } });
+  ctx.snap!.measurement = { ...ctx.snap!.measurement, rows };
+  const html = renderToStaticMarkup(<RankView ctx={ctx} />);
+  expect(html).toContain('class="mn-cd-chance c0">0%');
+  expect(html).toContain('class="num c-goal hi"><span class="mn-cd-bar" style="--w:0%">0.00');
+  expect(html).toContain("snap.rank.unproven");
+  expect(html).toContain("snap.rank.unsupported");
+});
+
+test("changing the target clears prior rank values synchronously", () => {
+  const ctx = rankedContext();
+  ctx.state.target = "SS";
+  for (const row of ctx.rows) row.scoreRanks.push({ rank: "SS", requiredScore: 2000000, battleRequiredScore: 9000000 });
+  ctx.snap!.analysis = { ...ctx.snap!.analysis!, target: "SS", targets: [{ scoreId: 10, threshold: 2000000 }, { scoreId: 11, threshold: 2000000 }] };
+  const html = renderToStaticMarkup(<RankView ctx={ctx} />);
+  expect(html).not.toContain('class="num c-need">1,200,000');
+  expect(html).not.toContain('class="mn-cd-chance c1">25%');
+  expect(html).toContain("snap.rank.pending");
+});
+
 test("profile or source change hides old values before the next effect/Worker response", () => {
   const ctx = context();
   ctx.snap!.profile = { ...profile, seed: 7 };
@@ -240,16 +290,18 @@ test("all None preserves the exact existing RankView markup", () => {
   expect(withNone).not.toContain(measured.toLocaleString());
 });
 
-test("Snap detail reuses the same point and raw solo thresholds without linear power or chance", () => {
-  const ctx = context(), row = ctx.rows[0]!;
-  row.scoreRanks = [{ rank: "SS", requiredScore: 7777777, battleRequiredScore: 9999999 }];
+test("Snap detail preserves point replay and uses the same selected-target rank statistics", () => {
+  const ctx = rankedContext(), row = ctx.rows[0]!;
   ctx.data.replay = source.reference;
   ctx.eff = () => { throw new Error("Legacy linear scoring must not run for an active Snap detail"); };
   const html = renderToStaticMarkup(<ChartDetail ctx={ctx} row={row} />);
   expect(html).toContain(measured.toLocaleString());
   expect(html).toContain("snap.baseline");
-  expect(html).toContain((7777777).toLocaleString());
-  expect(html).not.toContain((9999999).toLocaleString());
+  expect(html).toContain("1,200,000");
+  expect(html).toContain("25.0%");
+  expect(html).toContain("7.50");
+  expect(html).toContain("925,000");
+  expect(html).not.toContain("9,000,000");
   expect(html).not.toContain("detail.needPower");
   expect(html).not.toContain("scenario.roomHint");
   expect(html).not.toContain("col.rate");

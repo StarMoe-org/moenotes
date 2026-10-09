@@ -23,18 +23,32 @@ describe("five optional Snap selections", () => {
   });
   test("levels, member context and physical slots round-trip through the chart URL", () => {
     const ctx = { hasStats: false, support: scenarioSupport(null) };
-    const state = parseChartDataQuery("ss=0,support:31:2,0,gekisou-support:19:3,0&sm=0,7:0,0,4:2,0&mp=321000", ctx);
+    const state = parseChartDataQuery("ss=0,support:31:2,0,gekisou-support:19:3,0&sm=0,7:0,0,4:2,0&p=321000", ctx);
     expect(state.snapSkills[1]).toEqual({ kind: "support", skillId: 31, level: 2 });
     expect(state.snapMembers[3]).toEqual({ memberId: 4, gekisouLevel: 2 });
     expect(parseChartDataQuery(serializeChartDataQuery(state, ctx), ctx)).toEqual(state);
   });
-  test("untrusted URL cannot inject malformed IDs, levels or out-of-range power", () => {
-    const state = parseSnapQuery(new URLSearchParams("ss=support:1:2:3:4,unknown:1:2,support:-1:2,support:1:NaN,support:9007199254740993:1&sm=2:0:9,1:4,0:1&mp=20000001"));
+  test("untrusted URL cannot inject malformed IDs or levels", () => {
+    const state = parseSnapQuery(new URLSearchParams("ss=support:1:2:3:4,unknown:1:2,support:-1:2,support:1:NaN,support:9007199254740993:1&sm=2:0:9,1:4,0:1"));
     expect(state.snapSkills).toEqual([null, null, null, null, null]);
     expect(state.snapMembers[0]).toBeNull();
     expect(state.snapMembers[1]).toEqual({ memberId: 1, gekisouLevel: 4 });
-    expect(state.snapPower).toBe(300000);
     expect(() => replaceSnapSlot(state.snapSkills, 5, null)).toThrow();
+  });
+  test("the shared power query controls the displayed profile and round-trips", () => {
+    const ctx = { hasStats: true, support: scenarioSupport(null) };
+    for (const [query, power] of [["", 300000], ["p=1090877", 1090877], ["p=NaN", 300000], ["p=Infinity", 300000], ["p=0", 1], ["p=20000001", 20000000]] as const) {
+      const state = parseChartDataQuery(query, ctx);
+      expect(state.power).toBe(power);
+      expect(chartSnapProfile(state).profile.power).toBe(power);
+      expect(parseChartDataQuery(serializeChartDataQuery(state, ctx), ctx).power).toBe(power);
+    }
+    const state = parseChartDataQuery("p=1090877&gk=free&gr=0&tr=S&x=130,110,150,110,130", ctx);
+    const original = chartSnapProfile(state).profile;
+    expect(original.memberSkillPercent).toEqual([130, 110, 150, 110, 130]);
+    const edited = chartSnapProfile({ ...state, power: 1200000 }).profile;
+    expect(edited.power).toBe(1200000);
+    expect(snapProfileKey(edited)).not.toBe(snapProfileKey(original));
   });
   test("an invalid member URL hides same-null-profile results synchronously", () => {
     const ctx = { hasStats: false, support: scenarioSupport(null) };

@@ -1,11 +1,12 @@
 import { useEffect, useRef } from "react";
 import type { AppLocale } from "@/config/locales";
-import { emptySnapRanking, SnapRankingClient, snapProfileKey, snapSourceKey, type SnapRankingCatalogue, type SnapRankingSource, type SnapRankingState } from "@/lib/chart-data/snap-client";
+import { emptySnapRanking, SnapRankingClient, snapProfileKey, snapSourceKey, type SnapRankRequest, type SnapRankingCatalogue, type SnapRankingSource, type SnapRankingState } from "@/lib/chart-data/snap-client";
 import type { SnapEvaluationProfile } from "@/lib/chart-data/snap-types";
 
 export interface SnapRankingControllerProps {
   source: SnapRankingSource | null;
   profile: SnapEvaluationProfile;
+  analysis?: SnapRankRequest | undefined;
   scoreIds: readonly number[];
   enabled: boolean;
   locale: AppLocale;
@@ -20,7 +21,7 @@ export default function SnapRankingController(props: SnapRankingControllerProps)
   callbacks.current = props;
   const client = useRef<SnapRankingClient | null>(null);
   const sourceKey = props.source ? snapSourceKey(props.source) : "";
-  const profileKey = snapProfileKey(props.profile);
+  const profileKey = snapProfileKey(props.profile, props.analysis);
   const chartKey = JSON.stringify([...new Set(props.scoreIds)].sort((a, b) => a - b));
   const active = props.enabled && props.profile.selections.some(Boolean);
 
@@ -43,7 +44,7 @@ export default function SnapRankingController(props: SnapRankingControllerProps)
   useEffect(() => {
     const instance = client.current;
     if (!instance) return;
-    if (active && props.source) instance.measure(props.source, props.profile, JSON.parse(chartKey) as number[]);
+    if (active && props.source) instance.measure(props.source, props.profile, JSON.parse(chartKey) as number[], props.analysis);
     else instance.reset();
     return () => instance.cancel();
   }, [sourceKey, profileKey, chartKey, active]);

@@ -47,7 +47,7 @@ export default function SnapRankingPanel({ ctx, catalogue, measurement, loading,
   const ownedIds = new Set(filter?.cards.filter(card => card.kind === "member").map(card => card.identity.value) ?? []);
   const offeredMembers = filter ? (cards?.members ?? []).filter(member => ownedIds.has(String(member.id))) : cards?.members ?? [];
   const active = state.snapSkills.some(Boolean);
-  const current = ctx.snap?.source && snapProfileKey(ctx.snap.profile) === measurement.profileKey && snapSourceKey(ctx.snap.source) === measurement.sourceKey;
+  const current = ctx.snap?.source && snapProfileKey(ctx.snap.profile, ctx.snap.analysis) === measurement.profileKey && snapSourceKey(ctx.snap.source) === measurement.sourceKey;
   const catalogueStatus = !available ? "loadUnavailable" : catalogueError ? "calculationError" : null;
   const status = invalidMembers.length ? "invalidMember" : catalogueStatus ?? (current && measurement.status === "error" ? "calculationError"
     : current && measurement.status === "needs-context" ? "needsContext" : current && measurement.status === "unsupported" ? "unsupportedScenario" : null);
@@ -82,10 +82,6 @@ export default function SnapRankingPanel({ ctx, catalogue, measurement, loading,
     <p className="mn-cd-note mn-cd-snap-profile-hint">{tr("snap.profileHint")}</p>
     {rejected || issues[0] ? <p className="mn-cd-snap-legality" role="alert">{tr(`snap.legality.${(rejected ?? issues[0])!.code}`, { n: ((rejected ?? issues[0])!.otherSlot ?? 0) + 1 })}</p> : null}
     {catalogue && !catalogue.labelSource ? <p className="mn-cd-note">{tr("snap.snapshotFallback")}</p> : null}
-    {active ? <div className="mn-cd-snap-summary">
-      <label className="mn-cd-snap-power"><span>{tr("power")}</span><input type="number" className="mn-cd-num power" inputMode="numeric" aria-label={tr("power")}
-        min={1} max={20000000} step={1000} value={state.snapPower} onChange={(event) => update({ snapPower: Math.min(20000000, Math.max(1, Math.round(Number(event.target.value) || 1))) })} /></label>
-      {status ? <span className="mn-cd-note" role="status">{tr(`snap.${status}`)}</span> : null}
-    </div> : null}
+    {active && status ? <p className="mn-cd-note" role="status">{tr(`snap.${status}`)}</p> : null}
   </div></ContentServerProvider>;
 }
