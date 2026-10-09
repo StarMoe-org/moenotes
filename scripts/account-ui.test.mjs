@@ -27,7 +27,7 @@ test('selection is explicit, immutable and deduplicated', () => {
   assert.deepEqual(toggleSelection(selected, 'intl/123', false), []);
 });
 
-const source = (name) => readFileSync(new URL(`../src/components/account/${name}`, import.meta.url), 'utf8');
+const source = (name) => readFileSync(new URL(`../src/components/account/${name}`, import.meta.url), 'utf8').replace(/\r\n/g, '\n');
 
 test('creation uses every dynamically returned permission and region with no selection UI', async () => {
   const ui = source('OpenPlatform.tsx');
