@@ -518,6 +518,8 @@ export const koKR = {
     "useBox": "내 카드 목록 사용",
     "boxFilterNote": "Snap은 종류와 랭크가 확인된 보유 카드, 멤버는 종류가 확인된 카드를 표시합니다. 선택 목록만 필터링하며 순위는 현재 시험 계산 조건을 유지합니다.",
     "boxFilterMissing": "먼저 이 서버의 카드 목록을 만드세요.",
+    "boxSaveLoading": "내 카드 목록에 연결된 게임 세이브를 읽는 중…",
+    "boxSaveUnavailable": "내 카드 목록에 연결된 게임 세이브를 읽을 수 없습니다. 내 카드 목록에서 확인하세요.",
     "baseline": "현재 팀",
     "baselineNote": "검색 제외 조건과 별도로 비교용 5슬롯 팀을 저장합니다.",
     "saveBaseline": "비교 팀 저장",
