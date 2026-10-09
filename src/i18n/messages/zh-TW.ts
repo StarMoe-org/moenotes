@@ -2831,6 +2831,12 @@ export const zhTW = {
     download: "下載 {name}",
     dismiss: "關閉提示",
   },
+  pageUpdate: {
+    title: "頁面有新版本",
+    description: "重新整理後即可看到最新的卡牌、活動等內容，已儲存的資料不受影響。",
+    reload: "重新整理",
+    later: "稍後",
+  },
   modal: {
     close: "關閉",
   },

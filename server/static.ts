@@ -20,6 +20,11 @@ interface FileInfo {
 
 const IMMUTABLE = "public, max-age=31536000, immutable";
 const REVALIDATE = "no-cache";
+/**
+ * `Server-Timing` metric naming the version of an HTML page: the page reads it from its navigation entry and compares
+ * it with a later HEAD of its own URL to tell that a newer build changed it (src/lib/site/page-update.ts).
+ */
+export const PAGE_VERSION_METRIC = "page";
 
 /**
  * The Astro output as a static site: `{path}`, `{path}/index.html`, `{path}.html`, then `/404.html`. Player pages
@@ -149,6 +154,9 @@ async function fileResponse(request: Request, file: FileInfo, status: number, ca
   if (encoding) headers.set("content-encoding", encoding);
 
   // Finalize hard-links unchanged files across builds, so size + mtime stays stable while the content does.
+  if (headers.get("content-type")?.startsWith("text/html")) {
+    headers.set("server-timing", `${PAGE_VERSION_METRIC};desc="${fileVersion(file)}"`);
+  }
   const etag = `"${served.size.toString(36)}-${Math.floor(served.mtimeMs).toString(36)}${encoding ? `-${encoding}` : ""}"`;
   headers.set("etag", etag);
   headers.set("last-modified", new Date(served.mtimeMs).toUTCString());
@@ -158,6 +166,11 @@ async function fileResponse(request: Request, file: FileInfo, status: number, ca
   }
   headers.set("content-length", String(served.size));
   return new Response(request.method === "HEAD" ? null : Bun.file(served.path), { status, headers });
+}
+
+/** The version of a file as served in any encoding: its uncompressed size and modification time. */
+function fileVersion(file: FileInfo): string {
+  return `${file.size.toString(36)}-${Math.floor(file.mtimeMs).toString(36)}`;
 }
 
 function acceptedEncodings(header: string | null): Set<string> {

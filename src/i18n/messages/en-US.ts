@@ -2701,6 +2701,12 @@ export const enUS = {
     download: "Get {name}",
     dismiss: "Dismiss",
   },
+  pageUpdate: {
+    title: "A new version of this page is available",
+    description: "Reload to see the latest cards, events and more. Your saved data stays as it is.",
+    reload: "Reload",
+    later: "Later",
+  },
   modal: { close: "Close" },
   footer: {
     desc: "A handwritten notebook for BanG Dream! Our Notes, dedicated to the stage and the stars.",

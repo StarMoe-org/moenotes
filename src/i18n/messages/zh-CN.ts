@@ -2832,6 +2832,12 @@ export const zhCN = {
     download: "下载 {name}",
     dismiss: "关闭提示",
   },
+  pageUpdate: {
+    title: "页面有新版本",
+    description: "刷新后即可看到最新的卡牌、活动等内容，已保存的数据不受影响。",
+    reload: "刷新",
+    later: "稍后",
+  },
   modal: {
     close: "关闭",
   },
