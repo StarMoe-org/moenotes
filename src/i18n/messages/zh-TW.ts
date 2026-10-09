@@ -519,6 +519,8 @@ export const zhTW = {
     "useBox": "讀取我的卡池",
     "boxFilterNote": "Snap 只列身分、卡階已知的持有卡；配對成員按已知身分列出。這只篩選備選清單，排行仍沿用目前試算條件。",
     "boxFilterMissing": "請先建立本區服卡池。",
+    "boxSaveLoading": "正在讀取卡池關聯的遊戲存檔…",
+    "boxSaveUnavailable": "無法讀取卡池關聯的遊戲存檔，請開啟我的卡池查看。",
     "baseline": "我現在的隊",
     "baselineNote": "單獨儲存五槽對比基準，與搜尋排除條件分開。",
     "saveBaseline": "儲存對比基準隊",

@@ -275,3 +275,13 @@ export function unavailableGameSaveBox(box: CardBox): CardBox {
     player: { ...structuredClone(box.player), characterRanks: {}, characterCoverage: "partial", characterTotalRank: unknownField(),
       bandItems: {}, bandItemStates: {}, bandItemsComplete: false, memory: unknownField() } };
 }
+
+/**
+ * The Box a page reads: the stored Box, or while a save is linked, the Box `save` describes, with no cards until the
+ * save is read. Writes still start from the stored Box.
+ */
+export function gameSaveBoxView(stored: CardBox | null, save: GameSavePlayer | null, tables: GameSaveTables | null, catalogue: PlayerFieldCatalogue | null): { box: CardBox | null; derivation: GameSaveDerivation | null } {
+  if (!stored?.save) return { box: stored, derivation: null };
+  const derivation = save ? deriveGameSaveBox(stored, stored.save, save, tables, catalogue) : null;
+  return { box: derivation?.box ?? unavailableGameSaveBox(stored), derivation };
+}

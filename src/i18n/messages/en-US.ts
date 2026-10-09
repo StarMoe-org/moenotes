@@ -528,6 +528,8 @@ export const enUS = {
     "useBox": "Use my card box",
     "boxFilterNote": "Snap choices use known identities and ranks; paired members use known identities. This filters the pickers only. Ranking keeps the current replay assumptions.",
     "boxFilterMissing": "Prepare a collection for this server first.",
+    "boxSaveLoading": "Reading the game save linked to your card box…",
+    "boxSaveUnavailable": "The game save linked to your card box could not be read. Open My card box to check it.",
     "baseline": "My current team",
     "baselineNote": "Save a five-slot comparison team separately from search exclusions.",
     "saveBaseline": "Save comparison team",

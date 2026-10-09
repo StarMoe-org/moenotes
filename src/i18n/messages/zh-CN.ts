@@ -520,6 +520,8 @@ export const zhCN = {
     "useBox": "读取我的卡池",
     "boxFilterNote": "Snap 仅列身份、卡阶已知的持有卡；配对成员按已知身份列出。这只筛选备选列表，排行仍沿用当前试算条件。",
     "boxFilterMissing": "请先建立本区服卡池。",
+    "boxSaveLoading": "正在读取卡池关联的游戏存档…",
+    "boxSaveUnavailable": "未能读取卡池关联的游戏存档，请打开我的卡池查看。",
     "baseline": "我现在的队",
     "baselineNote": "单独保存五槽对比基准，与搜索排除条件分开。",
     "saveBaseline": "保存对比基准队",

@@ -21,7 +21,7 @@ import { safeGetLocalStorage, safeRemoveLocalStorage, safeSetLocalStorage } from
 import { useDeckSolver } from "./use-deck-solver";
 import { deckDataGap } from "@/lib/deck/data-coverage";
 import DeckResult from "./DeckResult";
-import { useCardBox } from "@/components/box/use-card-box";
+import { useCardBoxView } from "@/components/box/use-card-box";
 import BoxManager, { BoxArtwork, BoxCardEditor, cardTitle, cardSubtitle } from "@/components/box/BoxManager";
 import PlayerStateManager from "@/components/box/PlayerStateManager";
 import MusicSelectDialog from "@/components/music/MusicSelectDialog";
@@ -43,13 +43,13 @@ import { MemberSquareArtwork } from "@/components/shared/CardSquareArtwork";
 import { gameSaveServer } from "@/config/account";
 import { GAME_SERVERS } from "@/config/servers";
 import type { GameSaveMeta } from "@/lib/account/game-saves";
-import { deriveGameSaveBox, unavailableGameSaveBox, type GameSaveTables } from "@/lib/box/game-save";
+import type { GameSaveTables } from "@/lib/box/game-save";
 import { defaultGameSave, fetchGameSave, forgetLoadedGameSave, keepGameSave, type LoadedGameSave } from "@/lib/box/game-save-source";
 import { loadGameAccounts } from "@/lib/account/game-accounts";
 import { pruneCachedGameSaves } from "@/lib/box/save-cache";
 import { readLocalBox } from "@/lib/box/store";
 import { GameSaveBanner, GameSaveHint, GameSavePicker } from "@/components/box/GameSave";
-import { useGameSaveList, useLinkedGameSave } from "@/components/box/use-game-save";
+import { useGameSaveList } from "@/components/box/use-game-save";
 import CloudBoxPanel from "@/components/box/CloudBoxPanel";
 
 export interface DeckWorkspaceProps {
@@ -100,7 +100,10 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const href = (id: string) => localizePath(getRoutePathById(id), locale);
   const tr = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.${key}`, values);
   const [server, pickServer] = useContentServer(locale, servers);
-  const storage = useCardBox(server);
+  const playerCatalogue = props.playerCatalogues?.find(value => value.server === server) ?? null;
+  const saveTables = props.saveTables?.find(value => value.server === server) ?? null;
+  /** What the page shows (`box`): the stored Box, or while a save is linked, the Box the save describes. */
+  const { storage, linkedSave, derivation, box } = useCardBoxView(server, saveTables, playerCatalogue);
   const { busy, mode } = storage;
   /** The stored Box: every write starts from it. */
   const stored = storage.box;
@@ -108,15 +111,8 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const snaps = useMemo(() => listForServer(props.snaps, server), [props.snaps, server]);
   const songs = useMemo(() => listForServer(props.songs, server), [props.songs, server]);
   const catalog = useMemo(() => ({ members, snaps }), [members, snaps]);
-  const playerCatalogue = props.playerCatalogues?.find(value => value.server === server) ?? null;
-  const saveTables = props.saveTables?.find(value => value.server === server) ?? null;
   const saveList = useGameSaveList(server);
-  const linkedSave = useLinkedGameSave(stored?.save ?? null);
   const linked = !!stored?.save;
-  const derivation = useMemo(() => stored?.save && linkedSave.state.status === "ready"
-    ? deriveGameSaveBox(stored, stored.save, linkedSave.state.save.player, saveTables, playerCatalogue) : null, [stored, linkedSave.state, saveTables, playerCatalogue]);
-  /** What the page shows: the stored Box, or while a save is linked, the Box the save describes. */
-  const box = useMemo(() => !stored?.save ? stored : derivation?.box ?? unavailableGameSaveBox(stored), [stored, derivation]);
   const [savePicker, setSavePicker] = useState(false);
   const ownFactsKey = `${OWN_FACTS_KEY}.${server}`;
   /** Null until read. While false, a signed-in Box reads the account's uploaded save. */
