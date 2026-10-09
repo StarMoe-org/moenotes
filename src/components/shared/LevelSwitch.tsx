@@ -43,14 +43,14 @@ function SegmentedSwitch({ label, value, options, formatOption = String, onChang
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
       <span className="text-sm font-semibold text-[var(--mn-text-muted)]">{label}</span>
-      <div role="group" aria-label={label} className="flex gap-1 rounded-xl border border-[var(--mn-border)] bg-[var(--mn-surface-strong)] p-1 shadow-[var(--mn-shadow-stamp-sm)]">
+      <div role="group" aria-label={label} className="mn-level-switch flex flex-wrap gap-1 rounded-xl border border-[var(--mn-border)] bg-[var(--mn-surface-strong)] p-1 shadow-[var(--mn-shadow-stamp-sm)]">
         {options.map((option, index) => (
           <button
             key={option}
             type="button"
             onClick={() => onChange(option)}
             aria-pressed={value === option}
-            className={`mn-focus min-w-9 rounded-xl px-2.5 py-1 font-mono text-xs font-bold transition ${
+            className={`mn-focus min-w-9 rounded-xl px-2.5 py-1 font-mono text-xs font-medium transition ${
               value === option
                 ? "bg-[var(--mn-accent-soft)] text-[var(--mn-accent-deep)]"
                 : "text-[var(--mn-text-muted)] hover:bg-[var(--mn-cream-deep)]"

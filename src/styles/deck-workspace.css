@@ -98,6 +98,9 @@
 .dw-warning{background:#fcf1d5;color:#81571a}
 .dw-workspace button,.dw-workspace .dw-button,.dw-dialog button,.dw-box-manager button,.dw-edit button{cursor:pointer;border:1px solid var(--mn-border);border-radius:8px;background:var(--mn-paper);padding:8px 12px;font:inherit;font-size:12px;font-weight:700;min-height:38px;transition:background .15s,border-color .15s}
 .dw-workspace button:hover,.dw-dialog button:hover,.dw-box-manager button:hover,.dw-edit button:hover{border-color:var(--dw-blue);background:var(--dw-soft)}
+.dw-edit .mn-level-switch{min-width:0;max-width:100%}
+.dw-edit .mn-level-switch button{font-weight:500;color:var(--mn-text-muted)}
+.dw-edit .mn-level-switch button[aria-pressed=true]{background:var(--mn-accent-soft);border-color:var(--mn-accent-deep);color:var(--mn-accent-deep);font-weight:800}
 .dw-workspace button:focus-visible,.dw-dialog button:focus-visible,.dw-box-manager button:focus-visible,.dw-edit button:focus-visible{outline:3px solid #7ca2e4;outline-offset:3px}
 .dw-workspace button:disabled,.dw-box-manager button:disabled,.dw-dialog button:disabled{opacity:.5;cursor:not-allowed}
 .dw-primary.dw-primary{background:#4166a9;color:#fff;border-color:#4166a9}
