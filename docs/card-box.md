@@ -8,6 +8,8 @@ Fields retain independent `unknown`, screenshot observation, manual answer and c
 
 The primary import action opens the game-save flow even before the user signs in or uploads a save. It links the official StarMoe Box Android release and upload instructions, explains using the same Passport account, and offers a refresh after uploading. Screenshot import remains available beside it and inside the dialog. The screenshot guide and collection menu provide manual supplements, backup export/import, local save location and deletion. Member, Snap, review and player-growth tabs share the same saved Box. Without a linked save, player growth is entered manually: character Rank, furniture ownership/levels, VIP and other player facts are not read from card-list screenshots. The guide's Rank badge is an explicitly labelled example. R/SR/SSR/BD/EX rarity comes from the Master entry of the identified card; numerical cultivation Lv. is a separate nullable fact.
 
+JSON backup import merges stored observations and restores the backup's save link and saved team when the device has none. An existing saved team is retained; a different linked player or save version requires source selection. A linked backup contains the save pointer, and reading that save uses the browser cache or the signed-in account's existing download access.
+
 ## Account cloud sync
 
 The cloud panel appears on both collection and deck pages. A signed-in account with a stable `/api/me.user.id` reads its private collection from `/api/me/boxes/{server}`. The local or temporary Box remains the editable working copy. "Save to account" explicitly uploads the stored Box; subsequent edits remain unsynced until saved again. Signing in alone never uploads local facts.

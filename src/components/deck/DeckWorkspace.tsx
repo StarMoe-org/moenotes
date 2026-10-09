@@ -9,7 +9,7 @@ import type { SupportCardViewModel } from "@/lib/support-cards/data";
 import type { MusicViewModel } from "@/lib/music/data";
 import { listForServer, type ServerFaceted } from "@/lib/servers/facets";
 import { ContentServerProvider, useContentServer } from "@/lib/servers/use-content-server";
-import { mergeBoxes, parseBox, type BoxCard, type CardBox, type CardFieldName, type CardKind } from "@/lib/box/model";
+import { mergeBoxBackup, parseBox, type BoxCard, type BoxSaveLink, type CardBox, type CardFieldName, type CardKind } from "@/lib/box/model";
 import { answerDeckFields } from "@/lib/box/deck-answers";
 import { createDeckPreview } from "@/lib/box/deck-preview";
 import { boxAccountJson, gameSaveAccountJson } from "@/lib/deck/account-envelope";
@@ -292,7 +292,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
       if (incoming.server !== server) throw new Error("server");
       const session = getCardBoxSession(server);
       if (!session.getSnapshot().box && !await session.start(mode)) throw new Error("storage");
-      if (!await session.commit(mergeBoxes(session.getSnapshot().box!, incoming))) throw new Error("save");
+      if (!await session.commit(mergeBoxBackup(session.getSnapshot().box!, incoming))) throw new Error("save");
     } catch { setBackupError(true); }
     if (emptyBackup.current) emptyBackup.current.value = "";
   }
@@ -307,20 +307,19 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const returnTo = href(page === "box" ? "card-box" : "deck");
   function openSavePicker() { setManagement(false); setGuideOpen(false); setSavePicker(true); }
   /** Stores the checked bytes, then links them; a Box is created in the current storage mode when there is none. */
-  async function linkGameSave(meta: GameSaveMeta, save: LoadedGameSave): Promise<boolean> {
+  async function linkGameSave(meta: GameSaveMeta, save: LoadedGameSave, expectedSave?: BoxSaveLink | null): Promise<boolean> {
     if (save.sha256 !== meta.sha256) return false;
     try { await keepGameSave(save, meta.uploadedAt); } catch { return false; }
     const session = getCardBoxSession(server);
     if (!session.getSnapshot().box && !await session.start(mode)) return false;
-    const latest = session.getSnapshot().box;
-    if (!latest) return false;
-    return session.commit({ ...latest, save: { server: meta.server, accountId: meta.accountId, sha256: save.sha256, uploadedAt: meta.uploadedAt } });
+    return session.linkSave({ server: meta.server, accountId: meta.accountId, sha256: save.sha256, uploadedAt: meta.uploadedAt }, expectedSave);
   }
   async function updateGameSave(meta: GameSaveMeta): Promise<boolean> {
-    if (!stored?.save || meta.server !== stored.save.server || meta.accountId !== stored.save.accountId) return false;
+    const expectedSave = stored?.save;
+    if (!expectedSave || meta.server !== expectedSave.server || meta.accountId !== expectedSave.accountId) return false;
     const save = await fetchGameSave(meta.server, meta.accountId);
     if (save.sha256 !== meta.sha256) { await saveList.refresh(); return false; }
-    return linkGameSave(meta, save);
+    return linkGameSave(meta, save, expectedSave);
   }
   /** Another server's Box of this browser that links the same account keeps the cached save. */
   async function linkedElsewhere(server: GameServer, saveServer: string, accountId: string): Promise<boolean> {
@@ -363,7 +362,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
       if (!meta) return true;
       const save = await fetchGameSave(meta.server, meta.accountId);
       if (save.sha256 !== meta.sha256) { await saveList.refresh(); return true; }
-      return safeGetLocalStorage(ownFactsKey) === "1" || await linkGameSave(meta, save);
+      return safeGetLocalStorage(ownFactsKey) === "1" || await linkGameSave(meta, save, null);
     })().catch(() => false).then(done => finishAttempt(attempt, done));
   }, [busy, stored?.save, ownFacts, saveList.access, saveList.saves, server]);
   const follow = useRef<AutoAttempt | null>(null);

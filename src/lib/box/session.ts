@@ -1,5 +1,5 @@
 import type { GameServer } from "@/config/servers";
-import { createBox, mergeBoxes, parseBox, type CardBox } from "./model";
+import { createBox, mergeBoxes, parseBox, sameSaveLink, type BoxSaveLink, type CardBox } from "./model";
 import { BoxStorageError, readLocalBox, saveLocalBox, deleteLocalBox, subscribeLocalBox, type BoxChange } from "./store";
 
 export type BoxMode = "local" | "temporary";
@@ -91,6 +91,12 @@ export class CardBoxSession {
     } finally {
       await this.settle(epoch);
     }
+  }
+  /** Automatic linking and updates name the source they started from; a manual choice omits it. */
+  async linkSave(save: BoxSaveLink, expectedSave?: BoxSaveLink | null): Promise<boolean> {
+    const box = this.state.box;
+    if (!box || expectedSave !== undefined && !sameSaveLink(box.save, expectedSave)) return false;
+    return this.commit({ ...box, save });
   }
   /** Changing destination preserves facts. Existing local facts merge instead of disappearing. */
   async start(mode: BoxMode): Promise<boolean> {
