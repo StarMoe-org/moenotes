@@ -596,6 +596,7 @@ export const enUS = {
       "rerun": "Recalculate",
       "stop": "Stop",
       "loading": "Loading the team engine…",
+      "dataUpdating": "Team data is updating.",
       "saveNotReady": "The game save is still loading.",
       "tablesUnavailable": "Level tables for this server are unavailable, so the team cannot be calculated.",
       "stoppedEmpty": "Stopped before any team was found.",

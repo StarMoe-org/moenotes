@@ -13,6 +13,35 @@ class Failure extends Error {
 const describe = error => (error instanceof Error ? error.message : String(error));
 const hex = buffer => Array.from(new Uint8Array(buffer), value => value.toString(16).padStart(2, '0')).join('');
 const record = value => !!value && typeof value === 'object' && !Array.isArray(value);
+const positiveId = value => Number.isSafeInteger(value) && value > 0;
+const DIFFICULTIES = [['easy', '_easyID'], ['normal', '_normalID'], ['hard', '_hardID'], ['expert', '_expertID']];
+
+/** A small availability view of the verified data. The solver still receives the original bytes. */
+function dataCatalog(data) {
+  function rows(name) {
+    const table = data?.master?.[name];
+    if (!record(table) || !Array.isArray(table.columns) || !Array.isArray(table.rows)
+      || table.columns.some(column => typeof column !== 'string') || new Set(table.columns).size !== table.columns.length) return [];
+    const byId = new Map();
+    for (const row of table.rows) {
+      if (!Array.isArray(row) || row.length !== table.columns.length) continue;
+      const value = Object.fromEntries(table.columns.map((column, index) => [column, row[index]]));
+      if (!positiveId(value._id)) continue;
+      byId.set(value._id, byId.has(value._id) ? null : value);
+    }
+    return [...byId.values()].filter(value => value !== null).sort((a, b) => a._id - b._id);
+  }
+  const scoreIds = new Set(Array.isArray(data?.charts) ? data.charts.filter(chart => record(chart) && positiveId(chart.scoreId)).map(chart => chart.scoreId) : []);
+  return {
+    eventIds: rows('MasterEvent').map(row => row._id),
+    musics: rows('MasterLiveMusic').map(row => ({ id: row._id,
+      difficulties: DIFFICULTIES.filter(([, column]) => positiveId(row[column]) && scoreIds.has(row[column])).map(([difficulty]) => difficulty) })),
+    challengeMusics: rows('MasterChallengeMusic').filter(row => positiveId(row._eventId) && positiveId(row._liveMusicId))
+      .map(row => ({ id: row._id, eventId: row._eventId, musicId: row._liveMusicId })),
+    arenaMusics: rows('MasterArenaMusic').filter(row => positiveId(row._liveMusicId))
+      .map(row => ({ id: row._id, musicId: row._liveMusicId })),
+  };
+}
 
 /**
  * Load wasm-bindgen `--target web` glue from its verified bytes: import it as an ES module from a blob URL, then
@@ -84,10 +113,13 @@ export function createDeckWorkerCore({
     return body;
   }
 
-  function checkModelCommit(deckData, expected) {
-    let commit;
-    try { commit = JSON.parse(new TextDecoder().decode(deckData))?.provenance?.deck?.commit; }
+  function readDeckData(deckData) {
+    try { return JSON.parse(new TextDecoder().decode(deckData)); }
     catch { throw new Failure('identity', 'The deck data is not JSON'); }
+  }
+
+  function checkModelCommit(data, expected) {
+    const commit = data?.provenance?.deck?.commit;
     if (commit !== expected) throw new Failure('identity', 'The deck data names model ' + String(commit) + ', expected ' + expected);
   }
 
@@ -112,7 +144,9 @@ export function createDeckWorkerCore({
     const started = now();
     try {
       const [deckData, wasm, glue] = await Promise.all(FILES.map(([name, label]) => download(message, name, label)));
-      if (message.modelCommit !== null) checkModelCommit(deckData, message.modelCommit);
+      const data = readDeckData(deckData);
+      if (message.modelCommit !== null) checkModelCommit(data, message.modelCommit);
+      const catalog = dataCatalog(data);
       let DeckSolver, created;
       try { DeckSolver = await loadSolver({ glue, wasm }); }
       catch (error) { throw new Failure('init', 'Engine: ' + describe(error)); }
@@ -127,7 +161,7 @@ export function createDeckWorkerCore({
       try { capabilitiesJson = capabilities(created); }
       catch (error) { created.free?.(); throw new Failure('init', 'DeckSolver.capabilities: ' + describe(error)); }
       solver = created;
-      ready = { type: 'ready', datasetId, initMs: now() - started, capabilitiesJson };
+      ready = { type: 'ready', datasetId, initMs: now() - started, capabilitiesJson, catalog };
       post(ready);
     } catch (error) {
       failure = { type: 'failed', code: error instanceof Failure ? error.code : 'init', message: describe(error) };

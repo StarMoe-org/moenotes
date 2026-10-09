@@ -80,12 +80,23 @@ imports `deck-worker-core.mjs` with dynamic `import()`; the core holds all the l
 On `init` the core downloads the deck data, the engine WASM and its glue, and checks each one's size and SHA-256
 against the message before using it. Then it:
 
-1. checks that the deck data's `provenance.deck.commit` equals `modelCommit` (unless `null`);
+1. parses the verified deck data once to read `provenance.deck.commit` and the available event, song and scene IDs,
+   then checks the commit against `modelCommit` (unless `null`);
 2. imports the glue, a wasm-bindgen `--target web` ES module, from a `blob:` URL of its verified bytes, and calls its
    default export with `{ module_or_path: wasmBytes }`, so the WASM is never fetched again unverified;
 3. constructs `new DeckSolver(deckDataBytes)` with the deck data as a `Uint8Array`;
 4. checks that `solver.datasetId`, the lowercase hex SHA-256 of the deck data bytes, equals `deckDataSha256`;
-5. reads `solver.capabilities()` as JSON text, when the solver has it.
+5. reads `solver.capabilities()` as JSON text, when the solver has it, and returns the dataset catalogue in `ready`.
+
+The catalogue contains `eventIds`, `musics: [{id, difficulties}]`,
+`challengeMusics: [{id, eventId, musicId}]` and `arenaMusics: [{id, musicId}]`. Master IDs come from the columnar
+`MasterEvent`, `MasterLiveMusic`, `MasterChallengeMusic` and `MasterArenaMusic` tables. A song's available difficulties
+are the `_easyID`, `_normalID`, `_hardID` and `_expertID` values also present in `charts[].scoreId`. A known song can
+have an empty difficulty list. Absent or malformed tables and ambiguous IDs do not declare availability.
+
+The page uses this view to check whether the loaded dataset can serve the selected goal while publications update.
+The original deck bytes and their `datasetId` remain the solver input. A `ready` message with an omitted or `null`
+catalogue is accepted as `catalog: null`.
 
 `solver.recommend(accountJson, requestJson, onProgress, intervalMs)` is synchronous. Each `onProgress` call carries a
 complete result of the same shape as the final one, and the Worker forwards each as a `progress` message. Input
@@ -103,7 +114,7 @@ Every message has a `type`.
 | Direction | `type` | Fields |
 | --- | --- | --- |
 | page → Worker | `init` | `protocol: "moenotes.deck-worker/1"`; `deckDataUrl`, `deckDataSha256`, `deckDataBytes`; `wasmUrl`, `wasmSha256`, `wasmBytes`; `glueUrl`, `glueSha256`, `glueBytes`; `modelCommit` (string or `null`) |
-| Worker → page | `ready` | `datasetId`, `initMs`, `capabilitiesJson` (string or `null`) |
+| Worker → page | `ready` | `datasetId`, `initMs`, `capabilitiesJson` (string or `null`), `catalog` (availability object or `null`) |
 | page → Worker | `run` | `jobId`, `inputRevision`, `accountJson`, `requestJson`, `progressIntervalMs` |
 | Worker → page | `progress` | `jobId`, `inputRevision`, `resultJson` |
 | Worker → page | `result` | `jobId`, `inputRevision`, `resultJson` |

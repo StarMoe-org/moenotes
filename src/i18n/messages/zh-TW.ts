@@ -587,6 +587,7 @@ export const zhTW = {
       "rerun": "重新計算",
       "stop": "停止",
       "loading": "正在載入組卡引擎…",
+      "dataUpdating": "組卡資料更新中。",
       "saveNotReady": "存檔還沒有讀好，請稍候。",
       "tablesUnavailable": "此區服的等級表暫不可用，無法計算。",
       "stoppedEmpty": "已停止，還沒有找到可行隊伍。",

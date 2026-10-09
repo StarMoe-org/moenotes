@@ -4,7 +4,7 @@ import path from "node:path";
 import { assetConfig } from "../src/config/assets";
 import { sha256Hex, type DeckSolverRuntime } from "../src/lib/deck/runtime-source";
 import { DeckWorkerClient, type DeckRecommendJob, type DeckWorkerPort } from "../src/lib/deck/worker-client";
-import { DECK_WORKER_PROTOCOL, deckWorkerInit, isCurrentDeckWorkerReply, parseDeckWorkerEvent, type DeckWorkerInit } from "../src/lib/deck/worker-protocol";
+import { DECK_WORKER_PROTOCOL, deckWorkerInit, isCurrentDeckWorkerReply, parseDeckWorkerEvent, type DeckDataCatalog, type DeckWorkerInit } from "../src/lib/deck/worker-protocol";
 const runtimeDir = path.join(import.meta.dir, "..", "public", "deck");
 // The Worker core is plain JavaScript served from public/.
 const { createDeckWorkerCore, loadDeckSolverModule } = await import(path.join(runtimeDir, "deck-worker-core.mjs")) as {
@@ -50,8 +50,21 @@ export { DeckSolver as Solver };
 }
 
 const BASE = "https://data.example.invalid/replay";
-async function fixture(options: { glue?: Parameters<typeof syntheticGlue>[0] | ((sha: string) => Parameters<typeof syntheticGlue>[0]); commit?: string } = {}) {
-  const deckData = encode({ format: "nnnotes.deck-data/1", provenance: { region: "tw", deck: { commit: "0123abcd" } }, master: {}, charts: [] });
+const EMPTY_CATALOG: DeckDataCatalog = { eventIds: [], musics: [], challengeMusics: [], arenaMusics: [] };
+const CATALOG: DeckDataCatalog = { eventIds: [2], musics: [{ id: 100076, difficulties: [] }, { id: 100110, difficulties: ["hard"] }, { id: 100111, difficulties: ["easy", "expert"] }],
+  challengeMusics: [{ id: 4, eventId: 2, musicId: 100111 }], arenaMusics: [{ id: 7, musicId: 100110 }] };
+function catalogueData() {
+  return { format: "nnnotes.deck-data/1", provenance: { region: "tw", deck: { commit: "0123abcd" } },
+    master: {
+      MasterEvent: { columns: ["_nameTextId", "_id"], rows: [["Event_Name_0002", 2]] },
+      MasterLiveMusic: { columns: ["_hardID", "_id", "_expertID", "_normalID", "_easyID"], rows: [
+        [10011102, 100111, 10011103, 10011101, 10011100], [10011002, 100110, 10011003, 10011001, 10011000], [0, 100076, 0, 0, 0]] },
+      MasterChallengeMusic: { columns: ["_liveMusicId", "_id", "_eventId"], rows: [[100111, 4, 2]] },
+      MasterArenaMusic: { columns: ["_liveMusicId", "_id"], rows: [[100110, 7]] },
+    }, charts: [{ scoreId: 10011103 }, { scoreId: 10011002 }, { scoreId: 10011100 }] };
+}
+async function fixture(options: { data?: unknown; glue?: Parameters<typeof syntheticGlue>[0] | ((sha: string) => Parameters<typeof syntheticGlue>[0]); commit?: string } = {}) {
+  const deckData = encode(options.data ?? { format: "nnnotes.deck-data/1", provenance: { region: "tw", deck: { commit: "0123abcd" } }, master: {}, charts: [] });
   const deckSha = await digest(deckData);
   const glueOptions = typeof options.glue === "function" ? options.glue(deckSha) : options.glue ?? { datasetId: deckSha };
   const glue = encode(syntheticGlue(glueOptions)), wasm = new Uint8Array([0, 0x61, 0x73, 0x6d, 1, 0, 0, 0]);
@@ -85,12 +98,55 @@ describe("deck Worker core", () => {
     const { files, init, deckSha } = await fixture(), { worker, posted, requested } = core(files);
     await worker.handle(init);
     expect(requested.sort()).toEqual([init.deckDataUrl, init.glueUrl, init.wasmUrl].sort());
-    expect(posted).toEqual([{ type: "ready", datasetId: deckSha, initMs: expect.any(Number), capabilitiesJson: '{"objectives":["score"]}' }]);
+    expect(posted).toEqual([{ type: "ready", datasetId: deckSha, initMs: expect.any(Number), capabilitiesJson: '{"objectives":["score"]}', catalog: EMPTY_CATALOG }]);
     await worker.handle(run("job-1", 7, { progress: 3 }));
     expect(posted.slice(1)).toEqual([
       ...[1, 2, 3].map((step) => ({ type: "progress", jobId: "job-1", inputRevision: 7, resultJson: `{"step":${step},"final":false,"account":{"cards":[${BIG}]}}` })),
       { type: "result", jobId: "job-1", inputRevision: 7, resultJson: `{"step":3,"final":true,"intervalMs":250,"account":{"cards":[${BIG}]}}` },
     ]);
+  });
+
+  test("reports master scene IDs and only the difficulties whose charts are loaded", async () => {
+    const { files, init, deckSha } = await fixture({ data: catalogueData() }), { worker, posted } = core(files);
+    await worker.handle(init);
+    expect(posted).toEqual([{ type: "ready", datasetId: deckSha, initMs: expect.any(Number), capabilitiesJson: '{"objectives":["score"]}', catalog: CATALOG }]);
+    await worker.handle(init);
+    expect(posted[1]).toEqual(posted[0]);
+  });
+
+  test("empty, malformed and ambiguous master rows never claim available IDs", async () => {
+    const data = catalogueData();
+    const { files, init } = await fixture({ data: { ...data, master: {
+      MasterEvent: { columns: ["_id", "_id"], rows: [[2, 3]] },
+      MasterLiveMusic: { columns: ["_id", "_expertID"], rows: [[100111, 10011103], [100111, 10011103], [100110], ["100076", 10011103]] },
+      MasterChallengeMusic: { columns: ["_id", "_liveMusicId"], rows: [[4, 100111]] },
+      MasterArenaMusic: { columns: [], rows: [] },
+    } } }), { worker, posted } = core(files);
+    await worker.handle(init);
+    expect(posted[0]).toMatchObject({ type: "ready", catalog: EMPTY_CATALOG });
+  });
+
+  test("chart IDs must be safe integers and match the song's difficulty columns", async () => {
+    const data = catalogueData();
+    const { files, init } = await fixture({ data: { ...data, charts: [null, { scoreId: "10011103" }, { scoreId: 10011102.5 }, { scoreId: Number.MAX_SAFE_INTEGER + 1 }, { scoreId: 10011100 }] } });
+    const { worker, posted } = core(files);
+    await worker.handle(init);
+    expect(posted[0]).toMatchObject({ type: "ready", catalog: { ...CATALOG,
+      musics: [{ id: 100076, difficulties: [] }, { id: 100110, difficulties: [] }, { id: 100111, difficulties: ["easy"] }] } });
+  });
+
+  test("catalogue parsing preserves the exact deck bytes passed to the solver", async () => {
+    const data = JSON.stringify(catalogueData()).replace('"charts":', `"integer":${BIG},"charts":`);
+    const { files, init, deckSha } = await fixture({ data });
+    let received: Uint8Array | null = null;
+    const { worker, posted } = core(files, { loadSolver: async () => class {
+      datasetId = deckSha;
+      constructor(bytes: Uint8Array) { received = bytes; }
+    } });
+    await worker.handle(init);
+    expect(received).toEqual(files.get(init.deckDataUrl)!);
+    expect(new TextDecoder().decode(received!)).toContain(`"integer":${BIG}`);
+    expect(posted[0]).toMatchObject({ type: "ready", datasetId: deckSha, catalog: CATALOG });
   });
 
   test("a SHA-256 or size that differs from the init message is an integrity failure", async () => {
@@ -298,7 +354,7 @@ describe("deck Worker client", () => {
     const a = await fixture(), b = await fixture({ commit: "4567cdef" }), { client, ports } = scripted();
     const prepared = client.prepare(a.runtime);
     ports[0]!.emit(ready);
-    expect(await prepared).toEqual({ status: "ready", datasetId: DATASET, initMs: 12, capabilitiesJson: null });
+    expect(await prepared).toEqual({ status: "ready", datasetId: DATASET, initMs: 12, capabilitiesJson: null, catalog: null });
     const other = client.run(await job(b.runtime, "job-1", 1));
     expect(ports[0]!.terminated).toBe(true);
     expect(ports[1]!.posted[0]).toMatchObject({ type: "init", modelCommit: "4567cdef" });
@@ -307,6 +363,20 @@ describe("deck Worker client", () => {
     expect(ports[1]!.terminated).toBe(true);
     expect(await client.run({ ...await job(a.runtime, "", 1) })).toMatchObject({ status: "failed", code: "protocol" });
     expect(ports).toHaveLength(2);
+  });
+
+  test("prepare and onReady carry the catalogue of the initialized dataset", async () => {
+    const { runtime } = await fixture(), { client, ports } = scripted();
+    const prepared = client.prepare(runtime);
+    ports[0]!.emit({ ...ready, catalog: CATALOG });
+    const info = { datasetId: DATASET, initMs: 12, capabilitiesJson: null, catalog: CATALOG };
+    expect(await prepared).toEqual({ status: "ready", ...info });
+    const notices: unknown[] = [];
+    const outcome = client.run({ ...await job(runtime, "job-catalog", 1), onReady: value => notices.push(value) });
+    await tick();
+    expect(notices).toEqual([info]);
+    ports[0]!.emit({ type: "result", jobId: "job-catalog", inputRevision: 1, resultJson: "{}" });
+    expect((await outcome).status).toBe("complete");
   });
 
   test("against the Worker core with synthetic glue: complete result, then stop with the last progress and rebuild", async () => {
@@ -339,6 +409,21 @@ describe("deck Worker client", () => {
 });
 
 describe("deck Worker protocol and files", () => {
+  test("ready accepts a reported catalogue and normalizes an absent catalogue to null", () => {
+    expect(parseDeckWorkerEvent(ready)).toEqual({ ...ready, catalog: null });
+    expect(parseDeckWorkerEvent({ ...ready, catalog: null })).toEqual({ ...ready, catalog: null });
+    expect(parseDeckWorkerEvent({ ...ready, catalog: CATALOG })).toEqual({ ...ready, catalog: CATALOG });
+    expect(parseDeckWorkerEvent({ ...ready, catalog: EMPTY_CATALOG })).toEqual({ ...ready, catalog: EMPTY_CATALOG });
+  });
+
+  test("ready rejects malformed catalogues instead of accepting their availability claims", () => {
+    for (const catalog of [false, {}, { ...CATALOG, eventIds: [2, 2] }, { ...CATALOG, eventIds: [Number.MAX_SAFE_INTEGER + 1] },
+      { ...CATALOG, musics: [{ id: 100111, difficulties: ["master"] }] }, { ...CATALOG, musics: [{ id: 100111, difficulties: ["easy", "easy"] }] },
+      { ...CATALOG, challengeMusics: [{ id: 4, eventId: "2", musicId: 100111 }] }, { ...CATALOG, arenaMusics: [{ id: 7, musicId: 0 }] }]) {
+      expect(parseDeckWorkerEvent({ ...ready, catalog })).toBeNull();
+    }
+  });
+
   test("reply parsing and binding", () => {
     expect(parseDeckWorkerEvent({ type: "ready", datasetId: "A".repeat(64), initMs: 1, capabilitiesJson: null })).toBeNull();
     expect(parseDeckWorkerEvent({ type: "progress", jobId: "j", inputRevision: 1.5, resultJson: "{}" })).toBeNull();

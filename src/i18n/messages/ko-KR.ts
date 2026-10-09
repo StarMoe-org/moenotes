@@ -586,6 +586,7 @@ export const koKR = {
       "rerun": "다시 계산",
       "stop": "중지",
       "loading": "편성 엔진을 불러오는 중…",
+      "dataUpdating": "편성 데이터를 업데이트 중입니다.",
       "saveNotReady": "세이브 데이터를 불러오는 중입니다.",
       "tablesUnavailable": "이 서버의 레벨 표를 불러올 수 없어 계산할 수 없습니다.",
       "stoppedEmpty": "편성을 찾기 전에 중지했습니다.",

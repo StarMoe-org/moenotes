@@ -588,6 +588,7 @@ export const zhCN = {
       "rerun": "重新计算",
       "stop": "停止",
       "loading": "正在加载组卡引擎…",
+      "dataUpdating": "组卡数据更新中。",
       "saveNotReady": "存档还没有读好，请稍候。",
       "tablesUnavailable": "此区服的等级表暂不可用，无法计算。",
       "stoppedEmpty": "已停止，还没有找到可行队伍。",

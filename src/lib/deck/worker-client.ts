@@ -1,6 +1,6 @@
 import { assetConfig } from "@/config/assets";
 import type { DeckSolverRuntime } from "./runtime-source";
-import { deckWorkerInit, isCurrentDeckWorkerReply, parseDeckWorkerEvent, type DeckWorkerFailureCode, type DeckWorkerInit, type DeckWorkerRun } from "./worker-protocol";
+import { deckWorkerInit, isCurrentDeckWorkerReply, parseDeckWorkerEvent, type DeckDataCatalog, type DeckWorkerFailureCode, type DeckWorkerInit, type DeckWorkerRun } from "./worker-protocol";
 
 /** The part of `Worker` the client uses. */
 export interface DeckWorkerPort {
@@ -10,7 +10,7 @@ export interface DeckWorkerPort {
   terminate(): void;
 }
 
-export interface DeckWorkerReadyInfo { datasetId: string; initMs: number; capabilitiesJson: string | null }
+export interface DeckWorkerReadyInfo { datasetId: string; initMs: number; capabilitiesJson: string | null; catalog: DeckDataCatalog | null }
 export type DeckWorkerPrepareOutcome =
   | ({ status: "ready" } & DeckWorkerReadyInfo)
   | { status: "failed"; code: DeckWorkerFailureCode; message: string }
@@ -112,7 +112,7 @@ export class DeckWorkerClient {
           requestJson: job.requestJson, progressIntervalMs: job.progressIntervalMs };
         try { slot.worker.postMessage(run); active.posted = true; }
         catch (error) { this.fail(slot, "protocol", describe(error)); return; }
-        job.onReady?.({ datasetId: ready.datasetId, initMs: ready.initMs, capabilitiesJson: ready.capabilitiesJson });
+        job.onReady?.({ datasetId: ready.datasetId, initMs: ready.initMs, capabilitiesJson: ready.capabilitiesJson, catalog: ready.catalog });
       });
     });
   }
@@ -180,7 +180,7 @@ export class DeckWorkerClient {
     switch (event.type) {
       case "ready":
         if (slot.info) return;
-        slot.info = { datasetId: event.datasetId, initMs: event.initMs, capabilitiesJson: event.capabilitiesJson };
+        slot.info = { datasetId: event.datasetId, initMs: event.initMs, capabilitiesJson: event.capabilitiesJson, catalog: event.catalog ?? null };
         slot.settle({ status: "ready", ...slot.info });
         return;
       case "progress":

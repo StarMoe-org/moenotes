@@ -585,6 +585,7 @@ export const jaJP = {
       "rerun": "再計算",
       "stop": "停止",
       "loading": "編成エンジンを読み込み中…",
+      "dataUpdating": "編成データを更新中です。",
       "saveNotReady": "セーブデータを読み込み中です。",
       "tablesUnavailable": "このサーバーのレベル表を読み込めないため計算できません。",
       "stoppedEmpty": "停止しました。まだ編成が見つかっていません。",

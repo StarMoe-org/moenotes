@@ -28,6 +28,14 @@ export interface DeckWorkerRun {
 }
 export type DeckWorkerCommand = DeckWorkerInit | DeckWorkerRun;
 
+/** Master IDs and playable difficulties present in the verified solver dataset. */
+export interface DeckDataCatalog {
+  readonly eventIds: readonly number[];
+  readonly musics: readonly { readonly id: number; readonly difficulties: readonly string[] }[];
+  readonly challengeMusics: readonly { readonly id: number; readonly eventId: number; readonly musicId: number }[];
+  readonly arenaMusics: readonly { readonly id: number; readonly musicId: number }[];
+}
+
 /** Worker -> page: the solver is loaded and bound to the deck data. */
 export interface DeckWorkerReady {
   type: "ready";
@@ -36,6 +44,8 @@ export interface DeckWorkerReady {
   initMs: number;
   /** `DeckSolver.capabilities()` as text, or `null` when the solver has no such method. */
   capabilitiesJson: string | null;
+  /** Dataset availability, or `null` when the Worker does not report it. */
+  catalog?: DeckDataCatalog | null;
 }
 /** Worker -> page: a complete intermediate result, shaped like the final one. */
 export interface DeckWorkerProgress { type: "progress"; jobId: string; inputRevision: number; resultJson: string }
@@ -57,6 +67,19 @@ export interface DeckJobBinding { jobId: string; inputRevision: number }
 
 const HEX64 = /^[0-9a-f]{64}$/;
 const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === "object" && !Array.isArray(value);
+const positiveId = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value) && value > 0;
+
+function isDataCatalog(value: unknown): value is DeckDataCatalog {
+  if (!record(value)) return false;
+  const ids = (list: unknown): boolean => Array.isArray(list) && list.every(positiveId) && new Set(list).size === list.length;
+  const rows = (list: unknown, valid: (row: Record<string, unknown>) => boolean): boolean => Array.isArray(list)
+    && list.every(row => record(row) && positiveId(row.id) && valid(row)) && new Set(list.map(row => row.id)).size === list.length;
+  return ids(value.eventIds)
+    && rows(value.musics, row => Array.isArray(row.difficulties) && row.difficulties.every(difficulty => ["easy", "normal", "hard", "expert"].includes(difficulty))
+      && new Set(row.difficulties).size === row.difficulties.length)
+    && rows(value.challengeMusics, row => positiveId(row.eventId) && positiveId(row.musicId))
+    && rows(value.arenaMusics, row => positiveId(row.musicId));
+}
 
 /** The init message of a resolved runtime: the deck data, the engine's WASM and its glue. */
 export function deckWorkerInit(runtime: DeckSolverRuntime): DeckWorkerInit {
@@ -74,9 +97,13 @@ export function parseDeckWorkerEvent(value: unknown): DeckWorkerEvent | null {
   if (!record(value)) return null;
   const job = typeof value.jobId === "string" && value.jobId !== "" && Number.isSafeInteger(value.inputRevision);
   switch (value.type) {
-    case "ready":
-      return typeof value.datasetId === "string" && HEX64.test(value.datasetId) && typeof value.initMs === "number" && Number.isFinite(value.initMs)
-        && (value.capabilitiesJson === null || typeof value.capabilitiesJson === "string") ? value as unknown as DeckWorkerReady : null;
+    case "ready": {
+      if (typeof value.datasetId !== "string" || !HEX64.test(value.datasetId) || typeof value.initMs !== "number" || !Number.isFinite(value.initMs)
+        || !(value.capabilitiesJson === null || typeof value.capabilitiesJson === "string")) return null;
+      const catalog = value.catalog ?? null;
+      if (catalog !== null && !isDataCatalog(catalog)) return null;
+      return { type: "ready", datasetId: value.datasetId, initMs: value.initMs, capabilitiesJson: value.capabilitiesJson, catalog };
+    }
     case "progress":
     case "result":
       return job && typeof value.resultJson === "string" ? value as unknown as DeckWorkerProgress | DeckWorkerResult : null;
