@@ -205,9 +205,10 @@ export default function ChartDetail({ ctx, row }: { ctx: ChartDataContext; row: 
   const c = row.chart;
   const snap = ctx.snap?.active ? ctx.snap : null;
   const e = snap ? { rate: null, perMinute: null } : ctx.eff(row);
-  const measured = snap ? currentSnapRanking(snap.profile, snap.source, snap.measurement, snap.analysis)?.rows.get(row.scoreId) : undefined;
+  const current = snap ? currentSnapRanking(snap.profile, snap.source, snap.measurement, snap.analysis) : null;
+  const measured = current?.rows.get(row.scoreId);
   const duration = ctx.lengthOf(row);
-  const rank = snap ? currentSnapRank(measured, rankThreshold(row, state.target, 0), snap.profile.power) : null;
+  const rank = snap ? currentSnapRank(measured, rankThreshold(row, state.target, 0), snap.profile.power, current) : null;
   const rankFigures = rank?.status === "complete" ? snapRankFigures(rank.result, duration === null ? null : duration + state.overhead * 1000) : null;
   const rankStatus = rank ? tr(snapRankStatusKey(rank)) : "";
   const rankNeed = rank?.status === "complete" ? rank.result.need.status === "exact" ? fmtInt(rank.result.need.power)

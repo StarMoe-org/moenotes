@@ -48,7 +48,7 @@ function useRanking(ctx: ChartDataContext) {
         const duration = ctx.lengthOf(row);
         const time = duration === null ? null : duration + state.overhead * 1000;
         if (state.rankBy === "event") {
-          const rank = currentSnapRank(result, rankThreshold(row, state.target, 0), power);
+          const rank = currentSnapRank(result, rankThreshold(row, state.target, 0), power, measured);
           const figures = rank.status === "complete" ? snapRankFigures(rank.result, time) : null;
           const baselineScore = rank.status === "complete" && rank.baseline ? rank.baseline.scoreSum / rank.baseline.orderCount : null;
           return { ...row, ...figures, score: figures?.score ?? null, baselineScore,

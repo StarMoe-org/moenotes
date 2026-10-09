@@ -258,6 +258,17 @@ test("Snap rank keeps zero percent distinct from unsupported and unproved metric
   expect(html).toContain("snap.rank.unsupported");
 });
 
+test("terminal Worker failures show failed rank cells instead of pending cells", () => {
+  const ctx = rankedContext();
+  ctx.snap!.measurement = { ...ctx.snap!.measurement, status: "error", rows: new Map(), error: { code: "worker", message: "Worker failed" } };
+  const ranking = renderToStaticMarkup(<RankView ctx={ctx} />);
+  const detail = renderToStaticMarkup(<ChartDetail ctx={ctx} row={ctx.rows[0]!} />);
+  expect(ranking).toContain('class="num c-need">snap.rank.error');
+  expect(detail).toContain("snap.rank.error");
+  expect(ranking).not.toContain("snap.rank.pending");
+  expect(detail).not.toContain("snap.rank.pending");
+});
+
 test("changing the target clears prior rank values synchronously", () => {
   const ctx = rankedContext();
   ctx.state.target = "SS";

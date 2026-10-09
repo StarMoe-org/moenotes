@@ -166,7 +166,7 @@ export class SnapRankingClient {
   };
   private workerError = (event: ErrorEvent): void => {
     if (this.disposed) return;
-    const error = { code: "worker", message: event.message };
+    const error = { code: "worker", message: event.message || "Replay Worker failed" };
     this.onCatalogueError?.(error);
     if (this.jobRevision) {
       this.state = { ...this.state, status: "error", error, rows: new Map() };

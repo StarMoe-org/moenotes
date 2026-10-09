@@ -1,4 +1,4 @@
-import type { SnapMeasuredRank, SnapMeasuredRow } from "./snap-client";
+import type { SnapMeasuredRank, SnapMeasuredRow, SnapRankingState } from "./snap-client";
 import type { SnapPowerDomain, SnapRankProgress, SnapRankResult } from "./snap-types";
 
 export const SNAP_ORDER_MODEL = "uniformSkillOrder120" as const;
@@ -40,8 +40,12 @@ export function parseSnapRankProgress(json: string, expected: SnapRankIdentity):
 }
 
 /** Select only the current target's complete distribution, even before a new Worker effect runs. */
-export function currentSnapRank(row: SnapMeasuredRow | undefined, threshold: number | null, power: number): SnapMeasuredRank | { status: "pending" } {
+export function currentSnapRank(row: SnapMeasuredRow | undefined, threshold: number | null, power: number, measurement?: SnapRankingState | null): SnapMeasuredRank | { status: "pending" } {
   if (threshold === null) return { status: "no-threshold" };
+  if (!row?.rank && measurement && ["error", "unsupported", "needs-context"].includes(measurement.status)) {
+    return { status: measurement.status === "error" ? "error" : "unsupported",
+      code: measurement.error?.code ?? measurement.status, reason: measurement.error?.message ?? measurement.status };
+  }
   if (!row?.rank) return { status: "pending" };
   if (row.rank.status === "complete" && (row.rank.result.threshold !== threshold || row.rank.result.power !== power)) return { status: "pending" };
   return row.rank;
