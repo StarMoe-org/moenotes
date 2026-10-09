@@ -19,6 +19,7 @@ import { displayUtcLabel, formatMasterDate, parseMasterDate } from "@/lib/schedu
 import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { safeGetLocalStorage, safeRemoveLocalStorage, safeSetLocalStorage } from "@/lib/storage/safe-storage";
 import { useDeckSolver } from "./use-deck-solver";
+import { deckDataGap } from "@/lib/deck/data-coverage";
 import DeckResult from "./DeckResult";
 import { useCardBox } from "@/components/box/use-card-box";
 import BoxManager, { BoxArtwork, BoxCardEditor, cardTitle, cardSubtitle } from "@/components/box/BoxManager";
@@ -191,6 +192,8 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const goal = goalInput.goal;
   const effectiveInput: DeckGoalInput = { ...goalInput };
   const gap = goalGap(effectiveInput, event);
+  const dataGap = solver.engine.status === "ready" ? deckDataGap(effectiveInput, event, solver.engine.catalog,
+    props.deckArenas?.find(value => value.server === server)?.songs) : null;
   const supported = !capabilities || computes(capabilities, effectiveInput);
   const idsOf = (keys: readonly string[], kind: CardKind) => keys.flatMap(key => {
     const card = box?.cards.find(item => item.key === key && item.kind === kind);
@@ -202,7 +205,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const stale = job.status !== "idle" && job.status !== "running" && job.key !== runKey;
   function runSolver() {
     setRunError("");
-    if (solver.engine.status !== "ready" || !box || gap || !supported) return;
+    if (solver.engine.status !== "ready" || !box || gap || dataGap || !supported) return;
     try {
       const target = { datasetId: solver.engine.datasetId, server: gameSaveServer(server) };
       let accountJson: string;
@@ -420,11 +423,12 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   };
   const engine = solver.engine;
   const saveReady = !linked || linkedSave.state.status === "ready";
-  const canRun = engine.status === "ready" && supported && !gap && saveReady;
+  const canRun = engine.status === "ready" && supported && !gap && !dataGap && saveReady;
   const blocker = engine.status === "loading" ? tr("solver.loading") : engine.status === "unavailable" ? tr(`solver.unavailable.${engine.reason}`)
     : engine.status === "failed" ? "" : !supported ? tr("comingSoon") : gap ? tr(`solver.gap.${gap}`) : !saveReady ? tr("solver.saveNotReady") : "";
   function engineNotice() {
     if (engine.status === "failed") return <p className="dc-engine-note" role="alert">{tr(`solver.failure.${engine.code}`)} <button type="button" onClick={solver.retry}>{tr("retry")}</button></p>;
+    if (dataGap) return <p className="dc-engine-note" role="status">{tr("solver.dataUpdating")} <button type="button" onClick={solver.retry}>{tr("retry")}</button></p>;
     if (runError) return <p className="dc-engine-note" role="alert">{runError}</p>;
     return null;
   }

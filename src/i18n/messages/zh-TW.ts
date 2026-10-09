@@ -587,6 +587,7 @@ export const zhTW = {
       "rerun": "重新計算",
       "stop": "停止",
       "loading": "正在載入組卡引擎…",
+      "dataUpdating": "組卡資料更新中。",
       "saveNotReady": "存檔還沒有讀好，請稍候。",
       "tablesUnavailable": "此區服的等級表暫不可用，無法計算。",
       "stoppedEmpty": "已停止，還沒有找到可行隊伍。",
@@ -678,7 +679,8 @@ export const zhTW = {
         "invalid": "下面這些資訊有誤，修正後重新計算。",
         "failed": "這組條件暫時算不出來。",
         "incompleteLinked": "存檔裡缺這些資訊，請在遊戲裡更新存檔後重新上傳。",
-        "invalidLinked": "存檔裡這些資訊有誤，請重新上傳存檔。",
+        "invalidLinked": "存檔中的部分紀錄未通過驗證，請查看詳細錯誤。",
+        "invalidDataLinked": "部分存檔紀錄不在目前的計算資料中，請查看詳細錯誤。",
         "failedLinked": "這組條件暫時算不出來。"
       },
       "playerArea": {

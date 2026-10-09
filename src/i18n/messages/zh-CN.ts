@@ -588,6 +588,7 @@ export const zhCN = {
       "rerun": "重新计算",
       "stop": "停止",
       "loading": "正在加载组卡引擎…",
+      "dataUpdating": "组卡数据更新中。",
       "saveNotReady": "存档还没有读好，请稍候。",
       "tablesUnavailable": "此区服的等级表暂不可用，无法计算。",
       "stoppedEmpty": "已停止，还没有找到可行队伍。",
@@ -679,7 +680,8 @@ export const zhCN = {
         "invalid": "下面这些信息有误，修正后重新计算。",
         "failed": "这组条件暂时算不出来。",
         "incompleteLinked": "存档里缺这些信息，请在游戏里更新存档后重新上传。",
-        "invalidLinked": "存档里这些信息有误，请重新上传存档。",
+        "invalidLinked": "存档中的部分记录未通过校验，请查看详细错误。",
+        "invalidDataLinked": "部分存档记录不在当前计算数据中，请查看详细错误。",
         "failedLinked": "这组条件暂时算不出来。"
       },
       "playerArea": {

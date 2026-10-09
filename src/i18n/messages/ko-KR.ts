@@ -586,6 +586,7 @@ export const koKR = {
       "rerun": "다시 계산",
       "stop": "중지",
       "loading": "편성 엔진을 불러오는 중…",
+      "dataUpdating": "편성 데이터를 업데이트 중입니다.",
       "saveNotReady": "세이브 데이터를 불러오는 중입니다.",
       "tablesUnavailable": "이 서버의 레벨 표를 불러올 수 없어 계산할 수 없습니다.",
       "stoppedEmpty": "편성을 찾기 전에 중지했습니다.",
@@ -677,7 +678,8 @@ export const koKR = {
         "invalid": "아래 정보를 수정한 뒤 다시 계산하세요.",
         "failed": "이 조건은 지금 계산할 수 없습니다.",
         "incompleteLinked": "세이브 데이터에 이 정보가 없습니다. 게임에서 갱신한 뒤 다시 업로드하세요.",
-        "invalidLinked": "세이브 데이터의 이 정보에 오류가 있습니다. 다시 업로드하세요.",
+        "invalidLinked": "일부 세이브 기록이 검증을 통과하지 못했습니다. 오류 세부 정보를 확인하세요.",
+        "invalidDataLinked": "일부 세이브 기록이 현재 계산 데이터에 없습니다. 오류 세부 정보를 확인하세요.",
         "failedLinked": "이 조건은 지금 계산할 수 없습니다."
       },
       "playerArea": {

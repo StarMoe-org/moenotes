@@ -585,6 +585,7 @@ export const jaJP = {
       "rerun": "再計算",
       "stop": "停止",
       "loading": "編成エンジンを読み込み中…",
+      "dataUpdating": "編成データを更新中です。",
       "saveNotReady": "セーブデータを読み込み中です。",
       "tablesUnavailable": "このサーバーのレベル表を読み込めないため計算できません。",
       "stoppedEmpty": "停止しました。まだ編成が見つかっていません。",
@@ -676,7 +677,8 @@ export const jaJP = {
         "invalid": "以下の情報に誤りがあります。修正してから再計算してください。",
         "failed": "この条件は現在計算できません。",
         "incompleteLinked": "セーブデータにこれらの情報がありません。ゲームでデータを更新して再アップロードしてください。",
-        "invalidLinked": "セーブデータのこれらの情報に誤りがあります。再アップロードしてください。",
+        "invalidLinked": "一部のセーブ記録が検証に通りませんでした。エラーの詳細を確認してください。",
+        "invalidDataLinked": "一部のセーブ記録が現在の計算データに含まれていません。エラーの詳細を確認してください。",
         "failedLinked": "この条件は現在計算できません。"
       },
       "playerArea": {
