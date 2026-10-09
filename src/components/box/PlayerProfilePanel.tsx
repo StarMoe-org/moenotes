@@ -62,7 +62,7 @@ function ProfileField({ field, labels, canEdit, busy, onChange, onPresenceChange
         <option value="unknown">{labels.unknown}</option><option value="owned">{labels.owned}</option><option value="not-owned">{labels.notOwned}</option>
       </select> : <span className="pp-presence-label" data-presence={field.presence.value ?? "unknown"}>{field.presence.label}</span>}
     </div>}
-    <div className="pp-value-shell" data-value-state={field.value === null ? "unknown" : "known"}>
+    <div className="pp-value-shell" data-value-state={field.derived ? "derived" : field.value === null ? "unknown" : "known"}>
       {editable && hasEditor ? field.editor ?? <FieldEditor field={field} id={inputId} labels={labels}
         disabled={busy || levelUnavailable} onChange={onChange!} /> : <strong className="pp-value">{field.displayValue}</strong>}
     </div>

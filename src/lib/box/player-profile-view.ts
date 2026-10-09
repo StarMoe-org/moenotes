@@ -10,6 +10,8 @@ export interface PlayerProfileFieldView {
   ariaLabel?: string;
   value: number | string | null;
   displayValue: string;
+  /** Displayed from complete supporting facts without adding an observation. */
+  derived?: boolean;
   options?: readonly { value: number | string | null; label: string }[] | undefined;
   range?: { min: number; max: number; step: number } | undefined;
   statusLabel?: string;
