@@ -63,7 +63,7 @@ export function playerProfileGroups(box: CardBox, catalogue: PlayerFieldCatalogu
     const field = view(entry, label);
     if (entry.kind === "character-total-rank") {
       if (total !== null && ranks.characterTotalRank !== null && total !== ranks.characterTotalRank) { field.needsReview = true; field.description = pp("totalConflict"); }
-      if (field.value === null && total !== null && !field.needsReview && box.player.characterTotalRank.status !== "conflict") { field.displayValue = String(total); field.readOnly = true; field.statusLabel = pp("totalSource"); }
+      if (field.value === null && total !== null && !field.needsReview && box.player.characterTotalRank.status !== "conflict") { field.displayValue = String(total); field.derived = true; field.readOnly = true; field.statusLabel = pp("totalSource"); }
       return { id: entry.key, title: label, fields: [options.gameSave ? { ...fromSave(field), statusLabel: pp("totalSource") } : field] };
     }
     return { id: entry.key, title: label, fields: [field] };

@@ -1,4 +1,7 @@
 import { expect, test } from "bun:test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import PlayerProfilePanel from "../src/components/box/PlayerProfilePanel";
 import { createBox, mergeBoxes, parseBox } from "../src/lib/box/model";
 import { answerFurnitureLevel, answerFurnitureOwnership, answerPlayerEvents, answerPlayerField, answerPlayerMemory, exportBandItemFacts, exportPlayerContexts, exportPlayerRankFacts, playerCatalogueIssues, serializePlayerBonusFacts } from "../src/lib/box/player-catalog";
 import { deriveGameSaveBox, parseGameSave, type GameSaveTables } from "../src/lib/box/game-save";
@@ -56,17 +59,34 @@ test("a complete rank sum displays without inventing a total-rank observation", 
   box = answerPlayerField(box, source, "characterRank.2", 3, 2);
   box.player.characterCoverage = "complete";
   const before = JSON.stringify(box);
-  const total = playerProfileGroups(box, source, "en-US", url => url).find(group => group.section === "global")!.entities.find(entity => entity.id === "characterTotalRank")!.fields[0]!;
+  const global = playerProfileGroups(box, source, "en-US", url => url).find(group => group.section === "global")!;
+  const total = global.entities.find(entity => entity.id === "characterTotalRank")!.fields[0]!;
   expect(total.displayValue).toBe("5"); expect(total.value).toBeNull();
   expect(total.readOnly).toBe(true);
+  const renderTotal = (field: typeof total) => renderToStaticMarkup(createElement(PlayerProfilePanel, {
+    server: box.server, currentCatalog: source, mode: "edit", busy: false,
+    groups: [{ ...global, entities: [{ id: field.key, title: field.label, fields: [field] }] }], onChange: () => {},
+    labels: { title: "Player growth", description: "", characters: "Characters", bands: "Bands and items", global: "Player status",
+      unknown: "Unknown", owned: "Owned", notOwned: "Not owned", history: "History", review: "Review", unavailable: "Unavailable", catalogVersion: "" },
+  }));
+  const html = renderTotal(total);
+  expect(html).toContain('data-value-state="derived"><strong class="pp-value">5</strong>');
+  expect(html).not.toContain('class="pp-value-input"');
   expect(box.player.characterTotalRank.history).toEqual([]); expect(JSON.stringify(box)).toBe(before);
   const partial = { ...box, player: { ...box.player, characterCoverage: "partial" as const } };
-  expect(playerProfileGroups(partial, source, "en-US", url => url).find(group => group.section === "global")!.entities.find(entity => entity.id === "characterTotalRank")!.fields[0]!.displayValue).not.toBe("5");
+  const incomplete = playerProfileGroups(partial, source, "en-US", url => url).find(group => group.section === "global")!.entities.find(entity => entity.id === "characterTotalRank")!.fields[0]!;
+  expect(incomplete.displayValue).not.toBe("5"); expect(incomplete.readOnly).not.toBe(true);
+  expect(renderTotal(incomplete)).toContain('data-value-state="unknown"><input');
+  const recorded = answerPlayerField(box, source, "characterTotalRank", 4, 3);
+  const conflict = playerProfileGroups(recorded, source, "en-US", url => url).find(group => group.section === "global")!.entities.find(entity => entity.id === "characterTotalRank")!.fields[0]!;
+  expect(conflict.value).toBe(4); expect(conflict.needsReview).toBe(true); expect(conflict.readOnly).not.toBe(true);
+  expect(renderTotal(conflict)).toContain('data-value-state="known"><input');
   const merged = mergeBoxes(answerPlayerField(box, source, "characterTotalRank", 4, 3), answerPlayerField(box, source, "characterTotalRank", 5, 4));
   const conflicted = playerProfileGroups(merged, source, "en-US", url => url).find(group => group.section === "global")!.entities.find(entity => entity.id === "characterTotalRank")!.fields[0]!;
   expect(merged.player.characterTotalRank.status).toBe("conflict");
   expect(conflicted.value).toBeNull(); expect(conflicted.needsReview).toBe(true);
   expect(conflicted.readOnly).not.toBe(true);
+  expect(renderTotal(conflicted)).toContain('data-value-state="unknown"><input');
 });
 
 test("memory and events distinguish unknown from an explicit empty choice with versioned histories", async () => {
