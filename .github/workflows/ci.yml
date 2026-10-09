@@ -1,11 +1,16 @@
 name: CI
 
-# Checks on every push to main and every pull request. The deploy server dispatches build-site.yml
-# for rendering and publishing; this workflow validates the installation and scheduling protocols offline.
+# Shared checks for pull requests, main and pinned site builds.
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_call:
+    inputs:
+      commit:
+        description: Source commit to check
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -15,6 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.commit || github.sha }}
+          persist-credentials: false
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.14
@@ -25,8 +33,5 @@ jobs:
       - run: bun run lint
       - run: bun run check:search-seo
       - run: bun run check
-      - run: bun test tests/deck-data-coverage.test.ts tests/deck-goals.test.ts tests/deck-worker.test.ts tests/deck-runtime-source.test.ts tests/deck-goal-ui.test.tsx
-      - run: bun test tests/github-build.test.ts tests/site-artifact.test.ts tests/site-release-build.test.ts tests/build-store-ci.test.ts
-      - run: bun test tests/box-model.test.ts tests/box-session.test.ts tests/box-game-save.test.ts tests/box-game-save-source.test.ts tests/box-save-cache.test.ts tests/box-player-profile.test.ts tests/box-deck-preview.test.ts
-      - run: bun test tests/deck-answer.test.ts tests/deck-result.test.tsx
+      - run: bun test tests/
       - run: bun server/main.ts --self-check
