@@ -2736,6 +2736,12 @@ export const jaJP = {
     download: "{name} を入手",
     dismiss: "閉じる",
   },
+  pageUpdate: {
+    title: "このページの新しいバージョンがあります",
+    description: "再読み込みすると最新のカードやイベントなどが表示されます。保存済みのデータはそのまま残ります。",
+    reload: "再読み込み",
+    later: "あとで",
+  },
   modal: { close: "閉じる" },
   footer: {
     desc: "ステージと星の光に捧げる、Our Notes の散策手帳。",

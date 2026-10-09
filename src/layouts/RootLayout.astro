@@ -1,6 +1,7 @@
 ---
 import "@/styles/global.css";
 import BrowserNotice from "@/components/shell/BrowserNotice.astro";
+import PageUpdateNotice from "@/components/shell/PageUpdateNotice.astro";
 import { HTML_LANG, DEFAULT_LOCALE, OG_LOCALE, type AppLocale } from "@/config/locales";
 import { siteConfig } from "@/config/site";
 import { assetConfig } from "@/config/assets";
@@ -91,6 +92,7 @@ const googleAnalyticsBootstrapScript = isGoogleAnalyticsEnabled
   </head>
   <body>
     <BrowserNotice locale={locale} />
+    <PageUpdateNotice locale={locale} />
     <slot />
   </body>
 </html>

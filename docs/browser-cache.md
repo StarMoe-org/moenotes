@@ -76,3 +76,22 @@ the images to keep (`assetConfig.api`); a changed URL installs the worker again.
   the worker uses both for eviction (10 s after the last image is stored, and on activation).
 - Setting the developer switch `moenotes:asset-cache-bypass` to `true` in localStorage unregisters the worker on the
   next page load. To retire it for everyone, publish a `sw.js` that only unregisters itself.
+
+## Newer page versions
+
+Pages are served with `no-cache`, so every navigation asks the server for the current page. A page that stays open,
+or that the browser restores from its back/forward cache or from a suspended tab, keeps showing the build it was
+loaded from. The page notices a newer version of itself and offers a reload; it never reloads by itself.
+
+- The static server names the version of every HTML page in a `Server-Timing` metric, `page;desc="<size>-<mtime>"` of
+  the uncompressed file (`server/static.ts`). A build links unchanged files from the previous one, so a page keeps its
+  version until its content changes.
+- `PageUpdateNotice.astro` (in `RootLayout.astro`) reads the version the page was loaded with from its navigation entry
+  and compares it with an uncached `HEAD` of its own path (`src/lib/site/page-update.ts`): 3 s after load, when the
+  tab becomes visible, on a back/forward cache restore, when the network returns and every 10 minutes while visible,
+  at most once a minute. A browser that does not expose the navigation entry's server timing takes the first answer
+  as the loaded version.
+- A changed page shows a toast (`src/lib/toast/toast.ts`) with **Later** and **Reload**. While a dialog is open, such as
+  a card being edited, the toast waits until it closes. Each newer version is announced once.
+- Hosts without the metric, such as `astro dev`, never announce a version. In development, `?page-update` shows the
+  toast to preview it.

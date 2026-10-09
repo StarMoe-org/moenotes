@@ -2690,6 +2690,12 @@ export const koKR = {
     download: "{name} 받기",
     dismiss: "닫기",
   },
+  pageUpdate: {
+    title: "이 페이지의 새 버전이 있습니다",
+    description: "새로고침하면 최신 카드와 이벤트 등을 볼 수 있습니다. 저장된 데이터는 그대로 유지됩니다.",
+    reload: "새로고침",
+    later: "나중에",
+  },
   modal: { close: "닫기" },
   footer: {
     desc: "무대와 별빛에 바치는 Our Notes 산책 노트",

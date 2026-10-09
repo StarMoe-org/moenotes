@@ -1,0 +1,56 @@
+---
+import type { AppLocale } from "@/config/locales";
+import { t } from "@/i18n";
+
+interface Props {
+  locale: AppLocale;
+}
+
+const { locale } = Astro.props;
+---
+
+<!-- Copy for the toast that tells the reader a newer version of this page is available. -->
+<template
+  id="mn-page-update"
+  data-title={t(locale, "pageUpdate.title")}
+  data-description={t(locale, "pageUpdate.description")}
+  data-reload={t(locale, "pageUpdate.reload")}
+  data-later={t(locale, "pageUpdate.later")}
+></template>
+
+<script>
+  import { installPageUpdateCheck } from "@/lib/site/page-update";
+  import { showToast } from "@/lib/toast/toast";
+
+  const copy = document.querySelector<HTMLTemplateElement>("#mn-page-update")?.dataset;
+  if (copy) {
+    const dialogOpen = () => document.querySelector("[aria-modal='true'], dialog[open]") !== null;
+    let waiting: MutationObserver | null = null;
+    const show = () =>
+      showToast({
+        id: "page-update",
+        icon: "update",
+        title: copy.title ?? "",
+        description: copy.description,
+        actions: [{ label: copy.later ?? "" }, { label: copy.reload ?? "", primary: true, onSelect: () => window.location.reload() }],
+      });
+    // Never over an open dialog, such as a card being edited: the toast waits until it closes.
+    const notify = () => {
+      if (!dialogOpen()) {
+        show();
+        return;
+      }
+      if (waiting) return;
+      waiting = new MutationObserver(() => {
+        if (dialogOpen()) return;
+        waiting?.disconnect();
+        waiting = null;
+        show();
+      });
+      waiting.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["aria-modal", "open"] });
+    };
+    installPageUpdateCheck(notify);
+    // The development server sends no page versions: `?page-update` shows the toast to preview it.
+    if (import.meta.env.DEV && new URLSearchParams(window.location.search).has("page-update")) notify();
+  }
+</script>
