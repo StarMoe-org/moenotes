@@ -3,12 +3,13 @@ import { MEASURES, rangeMeasures, type MeasureStat } from "@/lib/chart-data/geki
 import { roomSize } from "@/lib/chart-data/query";
 import { SCORE_RANKS, chartFigures, formatLength, modelPower, orderRates, plainKind, quantile, rankThreshold, reachChance, requiredPower, scoreRate, weightSum } from "@/lib/chart-data/ranking";
 import { FREE } from "@/lib/chart-data/scenario";
+import { hasNominalStatistics } from "@/lib/chart-data/expectation";
 import AptitudeDetail from "./AptitudeDetail";
 import ReplayDetail from "./ReplayDetail";
 import { currentSnapRanking } from "@/lib/chart-data/snap-client";
 import { currentSnapRank, snapRankFigures, snapRankStatusKey } from "@/lib/chart-data/snap-rank";
 import SettingsPanel, { MISSIONS, ScenarioPanel } from "./SettingsPanel";
-import { Heading, Icon, Jacket, fmt, fmtInt, diffShort, SongLink, type ChartDataContext } from "./shared";
+import { Heading, Icon, Jacket, fmt, fmtBounds, fmtInt, diffShort, SongLink, type ChartDataContext } from "./shared";
 
 const KIND_COLOR: Record<string, string> = { tap: "var(--mn-accent)", flick: "var(--mn-pink)", slide: "var(--mn-mint)", trace: "var(--mn-amber)", combo: "var(--mn-border)" };
 type Figured = ChartRow & { base: number; weights: number[] };
@@ -112,9 +113,10 @@ function Weights({ row }: { row: Figured }) {
   );
 }
 
-// a measure as its seed mean, with the seeds' min–max when they differ; null when a seed lacks it
-const measureText = (m: MeasureStat | null) => (m
-  ? `${Number.isInteger(m.mean) ? fmtInt(m.mean) : fmt(m.mean, 1)}${m.min === m.max ? "" : ` (${fmtInt(m.min)}–${fmtInt(m.max)})`}`
+// Nominal enclosures keep their numerical endpoints; legacy samples retain their min–max display.
+const measureText = (m: MeasureStat | null, nominal: boolean) => (m
+  ? nominal ? `${m.mean}${m.min === m.max ? "" : ` ${fmtBounds([m.min, m.max])}`}`
+    : `${Number.isInteger(m.mean) ? fmtInt(m.mean) : fmt(m.mean, 1)}${m.min === m.max ? "" : ` (${fmtInt(m.min)}–${fmtInt(m.max)})`}`
   : null);
 
 // Gekisou Live's rank measures per range (seed means without Gekisou skills), the one each range ranks by in bold
@@ -143,7 +145,7 @@ function Measures({ ctx, row }: { ctx: ChartDataContext; row: ChartRow }) {
                   <td>{code ? tr("scenario.rangeMission", { n: m.index + 1, mission: tr(`missions.${code}`) }) : tr("scenario.range", { n: m.index + 1 })}</td>
                   <td>{m.measure ? tr(`detail.measure.${m.measure}`) : "–"}</td>
                   {MEASURES.map((k) => {
-                    const text = measureText(m.values[k]);
+                    const text = measureText(m.values[k], hasNominalStatistics(row.stats));
                     return <td key={k} className={k === m.measure ? "num hi" : "num dim"} title={text === null ? tr("scenario.pending") : undefined}>{text ?? "–"}</td>;
                   })}
                 </tr>
@@ -152,7 +154,7 @@ function Measures({ ctx, row }: { ctx: ChartDataContext; row: ChartRow }) {
           </tbody>
         </table>
       </div>
-      <p className="mn-cd-hint">{tr("detail.measuresHint")}</p>
+      <p className="mn-cd-hint">{tr(hasNominalStatistics(row.stats) ? "detail.expectationMeasuresHint" : "detail.measuresHint")}</p>
     </section>
   );
 }
@@ -217,6 +219,7 @@ export default function ChartDetail({ ctx, row }: { ctx: ChartDataContext; row: 
   const figured = !snap && row.weights ? (row as Figured) : null;
   const orders = figured ? orderRates(figured, ctx.skills) : null;
   const battle = state.mode === "battle";
+  const nominal = battle && hasNominalStatistics(row.stats);
   // Free Live's score per power at the Great share chosen (the one Gekisou Live keeps as the song's best score)
   const free = battle && figured ? chartFigures(row.stats, plainKind(ctx.data), modelPower(ctx.data), { ...FREE, great: state.great / 100 }) : null;
   const solo = free ? scoreRate(free, ctx.skills) : null;
@@ -281,7 +284,8 @@ export default function ChartDetail({ ctx, row }: { ctx: ChartDataContext; row: 
               label={tr("col.base")}
               value={fmt(row.base, 3)}
               sub={`W ${fmt(weightSum(figured), 3)} · ${tr("col.skip")} ${fmt(row.skip, 3)}`
-                + (row.seeds && row.seeds > 1 && row.baseRange ? ` · ${tr("detail.seeds", { n: row.seeds })} ${fmt(row.baseRange[0], 3)}–${fmt(row.baseRange[1], 3)}` : "")}
+                + (nominal ? ` · ${tr("aptitude.nominal")}${row.baseRange ? ` · ${tr("aptitude.interval")} ${fmtBounds(row.baseRange)}` : ` · ${tr("approximateShort")}`}`
+                  : row.seeds && row.seeds > 1 && row.baseRange ? ` · ${tr("detail.seeds", { n: row.seeds })} ${fmt(row.baseRange[0], 3)}–${fmt(row.baseRange[1], 3)}` : "")}
             />
           ) : null}
           {figured ? <Tile label={tr("col.perMinute")} value={fmt(e.perMinute, 3)} sub={`${tr("length")} ${tr(state.len)} + ${tr("seconds", { n: state.overhead })}`} /> : null}
@@ -303,7 +307,7 @@ export default function ChartDetail({ ctx, row }: { ctx: ChartDataContext; row: 
             <section>
               <Heading level={3} title={tr("detail.weights")} />
               <Weights row={figured} />
-              <p className="mn-cd-hint">{tr("detail.weightsHint")}</p>
+              <p className="mn-cd-hint">{tr(nominal ? "detail.expectationWeightsHint" : "detail.weightsHint")}</p>
             </section>
           ) : null}
         </div>

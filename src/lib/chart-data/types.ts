@@ -1,5 +1,5 @@
 /**
- * The parts of nnnotes' music-data.json (`nnnotes.music-data/1`, deck statistics `ournotes-deck.chart-stats/2`) that
+ * The parts of nnnotes' music-data.json (current `/2`, deck statistics `ournotes-deck.chart-stats/3`) that
  * the chart data tool reads. The file comes from the network, so every field is optional and readers check what
  * they use; unknown keys are ignored, as the format's versioning rules ask.
  */
@@ -92,6 +92,10 @@ export interface ChartDeck {
   ranges?: readonly DeckRange[];
   justNotes?: number;
   seeds?: readonly DeckSeed[];
+  /** Nominal expectation in music-data/2. Its interval radius is numerical enclosure, never sample SE. */
+  expectation?: DeckExpectation | null;
+  /** Replay suggestions only; these seeds do not define the expectation. */
+  replaySeeds?: readonly number[];
   /** Gekisou off (Free Live, Challenge Live): one seed, without range fields. */
   offSeeds?: readonly DeckSeed[];
   unplayable?: string | null;
@@ -104,6 +108,30 @@ export interface ChartDeck {
 
 /** A mean over seeds and its standard error (sample standard deviation / √n); se 0 for a seed-independent figure. */
 export type MeanSe = readonly [number, number];
+
+/** Center and outward interval half-width under the model's independent nominal probabilities. */
+export type Estimate = readonly [number, number];
+
+export interface ExpectedRange {
+  rangeScore: Estimate;
+  rangeScorePerfect: Estimate;
+  rankBonus: Estimate;
+  rankBonusPerfect: Estimate;
+  maxCombo: number;
+  justCount: number;
+  luckPoints: Estimate;
+  lotResults: readonly Estimate[];
+}
+
+export interface DeckExpectation {
+  score: Estimate;
+  scorePerfect: Estimate;
+  ranges: readonly ExpectedRange[];
+  weights: ReadonlyArray<readonly Estimate[]>;
+  rangeWeights: ReadonlyArray<ReadonlyArray<readonly Estimate[]> | null> | null;
+  check?: unknown;
+  rankCheck?: unknown;
+}
 
 /** A chart factor of a Gekisou range: what the chart and a no-skill run give, to read the aptitude by. */
 export interface RangeFactors {
@@ -126,6 +154,7 @@ export interface VariantRange {
   rangeScore?: MeanSe;
   /** At rank 1. */
   rankBonus?: MeanSe;
+  rankBonusPerfect?: Estimate;
   rangeScorePerfect?: MeanSe;
   maxCombo?: MeanSe;
   justCount?: MeanSe;
@@ -197,6 +226,7 @@ export interface AptitudeShape {
 export interface FileAptitude {
   plainKind?: number | null;
   host?: string;
+  law?: string;
   seedRule?: { deterministicTest?: number; batches?: readonly number[]; relative?: number; baseline?: number; crossSeeds?: number } | null;
   shapes?: readonly AptitudeShape[];
 }

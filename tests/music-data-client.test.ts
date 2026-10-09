@@ -92,7 +92,7 @@ describe("music-data short-lived snapshot cache", () => {
   test("malformed, incompatible and wrongly attributed cached bodies retry the network", async () => {
     for (const poison of [
       { blob: new Blob(["{broken"]) },
-      { blob: new Blob([JSON.stringify({ ...snapshot("a"), format: "nnnotes.music-data/2" })]) },
+      { blob: new Blob([JSON.stringify({ ...snapshot("a"), format: "nnnotes.music-data/99" })]) },
       { blob: new Blob([JSON.stringify({ ...snapshot("a"), songs: null })]) },
       { url: SOURCE_B },
     ]) {
@@ -148,7 +148,7 @@ describe("music-data short-lived snapshot cache", () => {
 
   test("invalid network responses are never remembered or written", async () => {
     for (const bad of [new Response("unavailable", { status: 503 }), new Response("{broken"),
-      new Response(JSON.stringify({ ...snapshot("a"), format: "nnnotes.music-data/2" }))]) {
+      new Response(JSON.stringify({ ...snapshot("a"), format: "nnnotes.music-data/99" }))]) {
       const env = environment(), load = env.page();
       env.fetch.mockImplementationOnce(async () => bad);
       await expect(load(SOURCE_A)).rejects.toThrow();
