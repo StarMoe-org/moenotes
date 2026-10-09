@@ -153,8 +153,12 @@ function Issues(props: DeckResultProps & { answer: DeckAnswer }) {
   const groups: DeckIssueGroups = groupIssues(answer, box);
   const editable = groups.cards.filter((entry): entry is typeof entry & { card: BoxCard } => entry.card !== null);
   const skillFields = SKILL_FIELDS.filter(name => editable.some(entry => entry.fields.includes(name)));
+  const details = [...answer.missing, ...answer.errors];
+  const linkedIssue = linked && (groups.cards.length > 0 || groups.player.length > 0);
+  const statusNote = linkedIssue && answer.status === "invalid" && answer.errors.some(issue => issue.code === "unknown_id" && issue.path.startsWith("_player."))
+    ? "invalidDataLinked" : `${answer.status}${linkedIssue ? "Linked" : ""}`;
   return <div className="dr-result" data-state={answer.status}>
-    <div className="dr-issues-head" role="status"><strong>{tr(`status.${answer.status}`)}</strong><p>{tr(`statusNote.${answer.status}${linked && (groups.cards.length > 0 || groups.player.length > 0) ? "Linked" : ""}`)}</p></div>
+    <div className="dr-issues-head" role="status"><strong>{tr(`status.${answer.status}`)}</strong><p>{tr(`statusNote.${statusNote}`)}</p></div>
     {!linked && skillFields.map(name => <div className="dc-bulk-skills" key={name}><strong>{field(name)}</strong><div>
       {[1, 5].map(value => <button type="button" key={value} disabled={busy} onClick={() => props.onAnswerAll(editable.filter(entry => entry.fields.includes(name)).map(entry => entry.card.key), name, value)}>
         {t(locale, value === 1 ? "deckWorkspace.allLv1" : "deckWorkspace.allLv5")}</button>)}</div></div>)}
@@ -167,7 +171,7 @@ function Issues(props: DeckResultProps & { answer: DeckAnswer }) {
     {(groups.vip.length > 0 || groups.player.length > 0) && <div className="dr-issue-player">
       <p>{[...(groups.vip.length ? [tr("vipMissing")] : []), ...groups.player.map(entry => tr(`playerArea.${entry.area}`))].join(" · ")}</p>
       <button type="button" disabled={busy} onClick={props.onPlayer}>{tr("openPlayer")}</button></div>}
-    {(groups.request.length > 0 || groups.other.length > 0) && <details className="dr-issue-details"><summary>{tr("details")}</summary>
-      <ul>{[...groups.request, ...groups.other].map((issue, index) => <li key={index}><code>{issue.path}</code> {issue.message}</li>)}</ul></details>}
+    {details.length > 0 && <details className="dr-issue-details"><summary>{tr("details")}</summary>
+      <ul>{details.map((issue, index) => <li key={index}><code>{issue.path}</code> <code>{issue.code}</code> {issue.message}</li>)}</ul></details>}
   </div>;
 }

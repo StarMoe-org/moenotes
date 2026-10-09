@@ -687,7 +687,8 @@ export const enUS = {
         "invalid": "Fix these details, then recalculate.",
         "failed": "These conditions cannot be calculated right now.",
         "incompleteLinked": "The game save lacks these details. Update it in the game and upload it again.",
-        "invalidLinked": "These details in the game save are invalid. Please upload it again.",
+        "invalidLinked": "Some save records failed validation. See the error details.",
+        "invalidDataLinked": "Some save records are absent from the current calculation data. See the error details.",
         "failedLinked": "These conditions cannot be calculated right now."
       },
       "playerArea": {

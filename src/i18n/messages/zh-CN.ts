@@ -679,7 +679,8 @@ export const zhCN = {
         "invalid": "下面这些信息有误，修正后重新计算。",
         "failed": "这组条件暂时算不出来。",
         "incompleteLinked": "存档里缺这些信息，请在游戏里更新存档后重新上传。",
-        "invalidLinked": "存档里这些信息有误，请重新上传存档。",
+        "invalidLinked": "存档中的部分记录未通过校验，请查看详细错误。",
+        "invalidDataLinked": "部分存档记录不在当前计算数据中，请查看详细错误。",
         "failedLinked": "这组条件暂时算不出来。"
       },
       "playerArea": {
