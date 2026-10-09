@@ -603,6 +603,8 @@ export const enUS = {
       "stop": "Stop",
       "loading": "Loading the team engine…",
       "dataUpdating": "Team data is updating.",
+      "luckUnsupported": "This chart has a LUCK section. Team calculation for this Gekisou scene is currently unsupported. Free Live, Challenge Live and Skip remain available.",
+      "missionsUnavailable": "The Gekisou missions for this chart could not be confirmed. Refresh the team data and try again.",
       "saveNotReady": "The game save is still loading.",
       "tablesUnavailable": "Level tables for this server are unavailable, so the team cannot be calculated.",
       "stoppedEmpty": "Stopped before any team was found.",

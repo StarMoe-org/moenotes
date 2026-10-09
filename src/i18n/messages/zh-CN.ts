@@ -595,6 +595,8 @@ export const zhCN = {
       "stop": "停止",
       "loading": "正在加载组卡引擎…",
       "dataUpdating": "组卡数据更新中。",
+      "luckUnsupported": "该谱面含 LUCK 段，暂不支持此激奏场景的组卡。自由 Live、挑战 Live 和 Skip 仍可计算。",
+      "missionsUnavailable": "无法确认该谱面的激奏任务，请刷新组卡数据后重试。",
       "saveNotReady": "存档还没有读好，请稍候。",
       "tablesUnavailable": "此区服的等级表暂不可用，无法计算。",
       "stoppedEmpty": "已停止，还没有找到可行队伍。",

@@ -425,7 +425,8 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
     : engine.status === "failed" ? "" : !supported ? tr("comingSoon") : gap ? tr(`solver.gap.${gap}`) : !saveReady ? tr("solver.saveNotReady") : "";
   function engineNotice() {
     if (engine.status === "failed") return <p className="dc-engine-note" role="alert">{tr(`solver.failure.${engine.code}`)} <button type="button" onClick={solver.retry}>{tr("retry")}</button></p>;
-    if (dataGap) return <p className="dc-engine-note" role="status">{tr("solver.dataUpdating")} <button type="button" onClick={solver.retry}>{tr("retry")}</button></p>;
+    if (dataGap === "luck") return <p className="dc-engine-note" role="status">{tr("solver.luckUnsupported")}</p>;
+    if (dataGap) return <p className="dc-engine-note" role="status">{tr(dataGap === "missions" ? "solver.missionsUnavailable" : "solver.dataUpdating")} <button type="button" onClick={solver.retry}>{tr("retry")}</button></p>;
     if (runError) return <p className="dc-engine-note" role="alert">{runError}</p>;
     return null;
   }

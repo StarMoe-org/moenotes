@@ -88,11 +88,16 @@ against the message before using it. Then it:
 4. checks that `solver.datasetId`, the lowercase hex SHA-256 of the deck data bytes, equals `deckDataSha256`;
 5. reads `solver.capabilities()` as JSON text, when the solver has it, and returns the dataset catalogue in `ready`.
 
-The catalogue contains `eventIds`, `musics: [{id, difficulties}]`,
+The catalogue contains `eventIds`, `musics: [{id, difficulties, hasLuck}]`,
 `challengeMusics: [{id, eventId, musicId}]` and `arenaMusics: [{id, musicId}]`. Master IDs come from the columnar
 `MasterEvent`, `MasterLiveMusic`, `MasterChallengeMusic` and `MasterArenaMusic` tables. A song's available difficulties
 are the `_easyID`, `_normalID`, `_hardID` and `_expertID` values also present in `charts[].scoreId`. A known song can
 have an empty difficulty list. Absent or malformed tables and ambiguous IDs do not declare availability.
+
+`hasLuck` is `true` when any `_gekisouMission1..3` value is LUCK (`2`), `false` when every mission is COMBO (`1`)
+or JUST (`3`), and `null` when the mission data is otherwise incomplete. Gekisou team calculations require
+`hasLuck: false`. Free Live, Challenge Live, Skip and power calculations use their own scene checks regardless of
+this flag.
 
 The page uses this view to check whether the loaded dataset can serve the selected goal while publications update.
 The original deck bytes and their `datasetId` remain the solver input. A `ready` message with an omitted or `null`

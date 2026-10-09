@@ -592,6 +592,8 @@ export const jaJP = {
       "stop": "停止",
       "loading": "編成エンジンを読み込み中…",
       "dataUpdating": "編成データを更新中です。",
+      "luckUnsupported": "この譜面には LUCK 区間があり、この撃奏条件での編成計算は現在未対応です。自由ライブ、チャレンジライブ、Skip は引き続き計算できます。",
+      "missionsUnavailable": "この譜面の撃奏ミッションを確認できません。編成データを更新して再試行してください。",
       "saveNotReady": "セーブデータを読み込み中です。",
       "tablesUnavailable": "このサーバーのレベル表を読み込めないため計算できません。",
       "stoppedEmpty": "停止しました。まだ編成が見つかっていません。",

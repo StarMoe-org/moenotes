@@ -593,6 +593,8 @@ export const koKR = {
       "stop": "중지",
       "loading": "편성 엔진을 불러오는 중…",
       "dataUpdating": "편성 데이터를 업데이트 중입니다.",
+      "luckUnsupported": "이 채보에는 LUCK 구간이 있어 현재 이 격주 조건의 편성 계산은 지원하지 않습니다. 자유 Live, 챌린지 Live 및 Skip은 계속 계산할 수 있습니다.",
+      "missionsUnavailable": "이 채보의 격주 미션을 확인할 수 없습니다. 편성 데이터를 새로고침한 뒤 다시 시도하세요.",
       "saveNotReady": "세이브 데이터를 불러오는 중입니다.",
       "tablesUnavailable": "이 서버의 레벨 표를 불러올 수 없어 계산할 수 없습니다.",
       "stoppedEmpty": "편성을 찾기 전에 중지했습니다.",

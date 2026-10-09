@@ -6,11 +6,11 @@ import type { DeckDataCatalog } from "../src/lib/deck/worker-protocol";
 const event: DeckEvent = { id: 2, name: "Event", startAt: "2030/01/01 00:00:00+08:00", endAt: "2030/01/10 00:00:00+08:00",
   itemId: 90, challengeMusics: [{ id: 4, musicId: 100111 }] };
 const catalog: DeckDataCatalog = {
-  eventIds: [1], musics: [{ id: 100001, difficulties: ["easy", "expert"] }],
+  eventIds: [1], musics: [{ id: 100001, difficulties: ["easy", "expert"], hasLuck: false }],
   challengeMusics: [{ id: 1, eventId: 1, musicId: 100001 }], arenaMusics: [],
 };
 const updated: DeckDataCatalog = { ...catalog, eventIds: [1, 2],
-  musics: [...catalog.musics, { id: 100111, difficulties: ["easy", "normal", "hard", "expert"] }],
+  musics: [...catalog.musics, { id: 100111, difficulties: ["easy", "normal", "hard", "expert"], hasLuck: false }],
   challengeMusics: [...catalog.challengeMusics, { id: 4, eventId: 2, musicId: 100111 }],
   arenaMusics: [{ id: 7, musicId: 100001 }],
 };
@@ -57,7 +57,7 @@ describe("deck data coverage", () => {
   });
 
   test("power checks a selected song without requiring a chart or reading an unused song", () => {
-    expect(gap({ goal: "power", powerSong: true, eventParameter: false }, { ...catalog, musics: [{ id: 100001, difficulties: [] }] })).toBeNull();
+    expect(gap({ goal: "power", powerSong: true, eventParameter: false }, { ...catalog, musics: [{ id: 100001, difficulties: [], hasLuck: true }] })).toBeNull();
     expect(gap({ goal: "power", musicId: 100111, powerSong: true, eventParameter: false })).toBe("song");
     expect(gap({ goal: "power", musicId: 100111, powerSong: false, eventParameter: false })).toBeNull();
   });
@@ -67,6 +67,38 @@ describe("deck data coverage", () => {
     expect(gap({ goal: "arena", arenaMusicId: 7 }, { ...updated, arenaMusics: [{ id: 7, musicId: 100111 }] })).toBe("song");
     expect(gap({ goal: "arena", arenaMusicId: 7, difficulty: "normal" }, updated)).toBe("song");
     expect(gap({ goal: "arena", arenaMusicId: 7 }, updated)).toBeNull();
+  });
+
+  test("LUCK and unknown missions block only scenes that run Gekisou", () => {
+    for (const hasLuck of [true, false, null] as const) {
+      const available = { ...updated, musics: updated.musics.map(row => ({ ...row, hasLuck })) };
+      const expected = hasLuck === true ? "luck" : hasLuck === null ? "missions" : null;
+      for (const goal of ["battle", "mission", "arena"] as const) {
+        expect(gap({ goal, arenaMusicId: 7 }, available)).toBe(expected);
+      }
+      for (const goal of ["free", "skip", "challenge", "challengeSkip", "power"] as const) {
+        expect(gap({ goal, challengeMusicId: 4, powerSong: true }, available)).toBeNull();
+      }
+      for (const goal of ["eventPoints", "challengePoints", "eventItems"] as const) {
+        for (const venue of ["battleLive", "missionLive", "arenaLive"] as const) {
+          expect(gap({ goal, venue, arenaMusicId: 7 }, available)).toBe(expected);
+        }
+        for (const venue of ["freeLive", "skip"] as const) expect(gap({ goal, venue }, available)).toBeNull();
+      }
+      for (const goal of ["eventPoints", "eventItems"] as const) {
+        for (const venue of ["challengeLive", "challengeSkip"] as const) {
+          expect(gap({ goal, venue, challengeMusicId: 4 }, available)).toBeNull();
+        }
+      }
+    }
+  });
+
+  test("mission support follows the selected arena song rather than an unused ordinary selection", () => {
+    const available = { ...updated, musics: updated.musics.map(row => ({ ...row, hasLuck: row.id === 100001 })) };
+    expect(gap({ goal: "arena", arenaMusicId: 7, musicId: 100111 }, available)).toBe("luck");
+    expect(gap({ goal: "battle", musicId: 100111 }, available)).toBeNull();
+    expect(gap({ goal: "free", musicId: 100001 }, available)).toBeNull();
+    expect(gap({ goal: "battle", musicId: 100001 }, available)).toBe("luck");
   });
 
   test("unselected inputs keep their selection prompt and a legacy worker requires refreshed coverage", () => {

@@ -16,6 +16,12 @@ const record = value => !!value && typeof value === 'object' && !Array.isArray(v
 const positiveId = value => Number.isSafeInteger(value) && value > 0;
 const DIFFICULTIES = [['easy', '_easyID'], ['normal', '_normalID'], ['hard', '_hardID'], ['expert', '_expertID']];
 
+/** LUCK presence in the three mission slots; null denotes incomplete mission data. */
+function hasLuck(row) {
+  const missions = [row._gekisouMission1, row._gekisouMission2, row._gekisouMission3];
+  return missions.includes(2) ? true : missions.every(mission => mission === 1 || mission === 3) ? false : null;
+}
+
 /** A small availability view of the verified data. The solver still receives the original bytes. */
 function dataCatalog(data) {
   function rows(name) {
@@ -34,7 +40,7 @@ function dataCatalog(data) {
   const scoreIds = new Set(Array.isArray(data?.charts) ? data.charts.filter(chart => record(chart) && positiveId(chart.scoreId)).map(chart => chart.scoreId) : []);
   return {
     eventIds: rows('MasterEvent').map(row => row._id),
-    musics: rows('MasterLiveMusic').map(row => ({ id: row._id,
+    musics: rows('MasterLiveMusic').map(row => ({ id: row._id, hasLuck: hasLuck(row),
       difficulties: DIFFICULTIES.filter(([, column]) => positiveId(row[column]) && scoreIds.has(row[column])).map(([difficulty]) => difficulty) })),
     challengeMusics: rows('MasterChallengeMusic').filter(row => positiveId(row._eventId) && positiveId(row._liveMusicId))
       .map(row => ({ id: row._id, eventId: row._eventId, musicId: row._liveMusicId })),

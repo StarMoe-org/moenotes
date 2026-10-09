@@ -51,14 +51,14 @@ export { DeckSolver as Solver };
 
 const BASE = "https://data.example.invalid/replay";
 const EMPTY_CATALOG: DeckDataCatalog = { eventIds: [], musics: [], challengeMusics: [], arenaMusics: [] };
-const CATALOG: DeckDataCatalog = { eventIds: [2], musics: [{ id: 100076, difficulties: [] }, { id: 100110, difficulties: ["hard"] }, { id: 100111, difficulties: ["easy", "expert"] }],
+const CATALOG: DeckDataCatalog = { eventIds: [2], musics: [{ id: 100076, difficulties: [], hasLuck: null }, { id: 100110, difficulties: ["hard"], hasLuck: true }, { id: 100111, difficulties: ["easy", "expert"], hasLuck: false }],
   challengeMusics: [{ id: 4, eventId: 2, musicId: 100111 }], arenaMusics: [{ id: 7, musicId: 100110 }] };
 function catalogueData() {
   return { format: "nnnotes.deck-data/1", provenance: { region: "tw", deck: { commit: "0123abcd" } },
     master: {
       MasterEvent: { columns: ["_nameTextId", "_id"], rows: [["Event_Name_0002", 2]] },
-      MasterLiveMusic: { columns: ["_hardID", "_id", "_expertID", "_normalID", "_easyID"], rows: [
-        [10011102, 100111, 10011103, 10011101, 10011100], [10011002, 100110, 10011003, 10011001, 10011000], [0, 100076, 0, 0, 0]] },
+      MasterLiveMusic: { columns: ["_hardID", "_id", "_expertID", "_normalID", "_easyID", "_gekisouMission3", "_gekisouMission1", "_gekisouMission2"], rows: [
+        [10011102, 100111, 10011103, 10011101, 10011100, 3, 1, 3], [10011002, 100110, 10011003, 10011001, 10011000, 3, 2, 1], [0, 100076, 0, 0, 0, null, null, null]] },
       MasterChallengeMusic: { columns: ["_liveMusicId", "_id", "_eventId"], rows: [[100111, 4, 2]] },
       MasterArenaMusic: { columns: ["_liveMusicId", "_id"], rows: [[100110, 7]] },
     }, charts: [{ scoreId: 10011103 }, { scoreId: 10011002 }, { scoreId: 10011100 }] };
@@ -114,6 +114,31 @@ describe("deck Worker core", () => {
     expect(posted[1]).toEqual(posted[0]);
   });
 
+  test("mission coverage distinguishes LUCK in every range from known and unknown non-LUCK missions", async () => {
+    const cases = [
+      { missions: [2, 1, 3], hasLuck: true }, { missions: [1, 2, 3], hasLuck: true }, { missions: [1, 3, 2], hasLuck: true },
+      { missions: [1, 3, 1], hasLuck: false }, { missions: [null, 1, 3], hasLuck: null }, { missions: ["2", 1, 3], hasLuck: null },
+      { missions: [1, 4, 3], hasLuck: null }, { missions: [null, 2, null], hasLuck: true },
+    ];
+    const data = catalogueData();
+    const { files, init } = await fixture({ data: { ...data, master: { MasterLiveMusic: {
+      columns: ["_id", "_gekisouMission1", "_gekisouMission2", "_gekisouMission3"],
+      rows: cases.map(({ missions }, index) => [index + 1, ...missions]),
+    } } } });
+    const { worker, posted } = core(files);
+    await worker.handle(init);
+    expect(posted[0]).toMatchObject({ type: "ready", catalog: { musics: cases.map(({ hasLuck }, index) => ({ id: index + 1, difficulties: [], hasLuck })) } });
+    expect(parseDeckWorkerEvent(posted[0])).not.toBeNull();
+  });
+
+  test("missing mission columns remain unknown", async () => {
+    const data = catalogueData();
+    const { files, init } = await fixture({ data: { ...data, master: { MasterLiveMusic: { columns: ["_id"], rows: [[1]] } } } });
+    const { worker, posted } = core(files);
+    await worker.handle(init);
+    expect(posted[0]).toMatchObject({ type: "ready", catalog: { musics: [{ id: 1, difficulties: [], hasLuck: null }] } });
+  });
+
   test("empty, malformed and ambiguous master rows never claim available IDs", async () => {
     const data = catalogueData();
     const { files, init } = await fixture({ data: { ...data, master: {
@@ -132,7 +157,7 @@ describe("deck Worker core", () => {
     const { worker, posted } = core(files);
     await worker.handle(init);
     expect(posted[0]).toMatchObject({ type: "ready", catalog: { ...CATALOG,
-      musics: [{ id: 100076, difficulties: [] }, { id: 100110, difficulties: [] }, { id: 100111, difficulties: ["easy"] }] } });
+      musics: [{ id: 100076, difficulties: [], hasLuck: null }, { id: 100110, difficulties: [], hasLuck: true }, { id: 100111, difficulties: ["easy"], hasLuck: false }] } });
   });
 
   test("catalogue parsing preserves the exact deck bytes passed to the solver", async () => {
@@ -418,7 +443,8 @@ describe("deck Worker protocol and files", () => {
 
   test("ready rejects malformed catalogues instead of accepting their availability claims", () => {
     for (const catalog of [false, {}, { ...CATALOG, eventIds: [2, 2] }, { ...CATALOG, eventIds: [Number.MAX_SAFE_INTEGER + 1] },
-      { ...CATALOG, musics: [{ id: 100111, difficulties: ["master"] }] }, { ...CATALOG, musics: [{ id: 100111, difficulties: ["easy", "easy"] }] },
+      { ...CATALOG, musics: [{ id: 100111, difficulties: ["master"], hasLuck: false }] }, { ...CATALOG, musics: [{ id: 100111, difficulties: ["easy", "easy"], hasLuck: false }] },
+      ...[undefined, 0, 1, "false", "true"].map(hasLuck => ({ ...CATALOG, musics: [{ id: 100111, difficulties: ["easy"], hasLuck }] })),
       { ...CATALOG, challengeMusics: [{ id: 4, eventId: "2", musicId: 100111 }] }, { ...CATALOG, arenaMusics: [{ id: 7, musicId: 0 }] }]) {
       expect(parseDeckWorkerEvent({ ...ready, catalog })).toBeNull();
     }

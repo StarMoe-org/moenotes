@@ -1,9 +1,9 @@
-import { isChallengeInput, solverGoalKind, usesEventData, type DeckArenaMusic, type DeckEvent, type DeckGoalInput } from "./goals";
+import { isChallengeInput, playsGekisou, solverGoalKind, usesEventData, type DeckArenaMusic, type DeckEvent, type DeckGoalInput } from "./goals";
 import type { DeckDataCatalog } from "./worker-protocol";
 
-export type DeckDataGap = "catalog" | "event" | "song" | null;
+export type DeckDataGap = "catalog" | "event" | "song" | "luck" | "missions" | null;
 
-/** Check the selected scene against the data loaded by the Worker. Missing selections belong to `goalGap`. */
+/** Check the selected scene's coverage and supported missions in the verified Worker data. */
 export function deckDataGap(input: DeckGoalInput, event: DeckEvent | null, catalog: DeckDataCatalog | null,
   arenas: readonly DeckArenaMusic[] = []): DeckDataGap {
   if (!catalog) return "catalog";
@@ -30,5 +30,9 @@ export function deckDataGap(input: DeckGoalInput, event: DeckEvent | null, catal
   if (musicId === null) return null;
   const music = catalog.musics.find(row => row.id === musicId);
   if (!music || kind !== "power" && !music.difficulties.includes(input.difficulty)) return "song";
+  if (playsGekisou(input)) {
+    if (music.hasLuck === true) return "luck";
+    if (music.hasLuck !== false) return "missions";
+  }
   return null;
 }

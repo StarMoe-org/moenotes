@@ -31,7 +31,7 @@ export type DeckWorkerCommand = DeckWorkerInit | DeckWorkerRun;
 /** Master IDs and playable difficulties present in the verified solver dataset. */
 export interface DeckDataCatalog {
   readonly eventIds: readonly number[];
-  readonly musics: readonly { readonly id: number; readonly difficulties: readonly string[] }[];
+  readonly musics: readonly { readonly id: number; readonly difficulties: readonly string[]; readonly hasLuck: boolean | null }[];
   readonly challengeMusics: readonly { readonly id: number; readonly eventId: number; readonly musicId: number }[];
   readonly arenaMusics: readonly { readonly id: number; readonly musicId: number }[];
 }
@@ -76,7 +76,7 @@ function isDataCatalog(value: unknown): value is DeckDataCatalog {
     && list.every(row => record(row) && positiveId(row.id) && valid(row)) && new Set(list.map(row => row.id)).size === list.length;
   return ids(value.eventIds)
     && rows(value.musics, row => Array.isArray(row.difficulties) && row.difficulties.every(difficulty => ["easy", "normal", "hard", "expert"].includes(difficulty))
-      && new Set(row.difficulties).size === row.difficulties.length)
+      && new Set(row.difficulties).size === row.difficulties.length && (row.hasLuck === null || typeof row.hasLuck === "boolean"))
     && rows(value.challengeMusics, row => positiveId(row.eventId) && positiveId(row.musicId))
     && rows(value.arenaMusics, row => positiveId(row.musicId));
 }
