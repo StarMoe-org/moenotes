@@ -46,9 +46,11 @@ test("the objective has native labelled radio choices, with maximum gated by eng
   expect(html).toMatch(/<input[^>]*disabled=""[^>]*value="maximum"/);
   expect(html).toContain("Average performance");
   expect(html).toContain("Theoretical maximum");
+  expect(html).toContain("Theoretical maximum<small>Not yet supported</small>");
   const ready = render({ ...defaultDeckGoalInput("free"), aggregation: "maximum" }, { ...cap, aggregations: { maximum: { freeLive: ["score"] } } });
   expect(ready).toContain('checked="" value="maximum"');
   expect(ready).not.toContain('disabled=""');
+  expect(ready).not.toContain("Not yet supported");
   expect(ready).toContain("not guaranteed every live");
   expect(ready).toContain("proved only when the search completes");
   const unavailable = render({ ...defaultDeckGoalInput("free"), aggregation: "maximum" });
@@ -57,6 +59,7 @@ test("the objective has native labelled radio choices, with maximum gated by eng
   const loading = renderToStaticMarkup(<DeckObjective locale="en-US" input={{ ...defaultDeckGoalInput("free"), aggregation: "maximum" }} capabilities={null} onChange={() => {}} />);
   expect(loading).toMatch(/<input[^>]*disabled=""[^>]*checked=""[^>]*value="maximum"/);
   expect(loading).toContain("Checking whether theoretical maximum is available");
+  expect(loading).not.toContain("Not yet supported");
   expect(render(defaultDeckGoalInput("power"))).toBe("");
   expect(render(defaultDeckGoalInput("skip"))).toBe("");
 });
