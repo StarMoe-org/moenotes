@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
-import { answerField, createCard, mergeBoxes, parseBox, CARD_FIELDS, type BoxCard, type CardBox, type CardFieldName, type CardKind } from "@/lib/box/model";
+import { answerField, createCard, mergeBoxBackup, parseBox, CARD_FIELDS, type BoxCard, type CardBox, type CardFieldName, type CardKind } from "@/lib/box/model";
 import type { CardViewModel } from "@/lib/cards/data";
 import type { SupportCardViewModel } from "@/lib/support-cards/data";
 import Modal from "@/components/shared/Modal";
@@ -11,7 +11,7 @@ import PlayerStateManager from "./PlayerStateManager";
 import type { PlayerFieldCatalogue } from "@/lib/box/player-catalog";
 import CardIdentitySelection from "./CardIdentitySelection";
 import { ObservedLevelControl, StepControl } from "@/components/shared/CardGrowthControls";
-import type { BoxMode } from "@/lib/box/session";
+import { getCardBoxSession, type BoxMode } from "@/lib/box/session";
 import CollectionIcon from "./CollectionIcon";
 import CollectionActionMenu from "./CollectionActionMenu";
 import "@/styles/card-box-collection.css";
@@ -152,7 +152,13 @@ export default function BoxManager({ locale, box, mode, busy, commit, members, s
   async function importBox(input: File | undefined) {
     if (!input) return;
     setInvalid(false);
-    try { if (input.size > 20_000_000) throw new Error("size"); setSaveError(!await commit(mergeBoxes(box, parseBox(await input.text())))); }
+    try {
+      if (input.size > 20_000_000) throw new Error("size");
+      const incoming = parseBox(await input.text());
+      const latest = getCardBoxSession(box.server).getSnapshot().box;
+      if (!latest || latest.id !== box.id) throw new Error("Card box changed during import");
+      setSaveError(!await commit(mergeBoxBackup(latest, incoming), latest.revision));
+    }
     catch { setInvalid(true); }
     if (file.current) file.current.value = "";
   }

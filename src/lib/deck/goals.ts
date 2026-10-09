@@ -126,6 +126,9 @@ export const readsAccuracy = (input: Pick<DeckGoalInput, "goal" | "venue">): boo
 export const effectiveAggregation = (input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "aggregation">>): DeckAggregation =>
   readsAccuracy(input) && !playsGekisou(input) ? input.aggregation ?? "expected" : "expected";
 
+/** Event objectives and event-boosted power require the held event's data. */
+export const usesEventData = (input: Pick<DeckGoalInput, "goal" | "eventParameter">): boolean => isEventGoal(input.goal) || input.goal === "power" && input.eventParameter;
+
 /** `DeckSolver.capabilities()`: what the loaded engine computes. */
 export interface DeckSolverCapabilities {
   goals: readonly string[];
@@ -209,8 +212,8 @@ const ids = (values: readonly string[]) => values.map(value => {
 });
 
 /**
- * The request text of a goal input. Throws when `goalGap` is not null. The held event's ID is always sent; only
- * goals that count event parameter bonuses read it.
+ * The request text of a goal input. Throws when `goalGap` is not null. The held event's ID is sent for event
+ * objectives and power with event bonuses enabled.
  */
 export function recommendationRequest(input: DeckGoalInput, context: { event: DeckEvent | null; now: number; constraints: DeckRunConstraints }): string {
   if (input.goal === "challengePoints" && ["challengeLive", "challengeSkip"].includes(input.venue)) throw new Error("Challenge Live spends challenge points; choose an ordinary venue to earn them");
@@ -242,7 +245,7 @@ export function recommendationRequest(input: DeckGoalInput, context: { event: De
     if (isNetworkInput(input)) parts.push(`"room":{"players":5,"othersAverageScore":${input.othersAverageScore === null ? "null" : Math.max(0, Math.trunc(input.othersAverageScore))}}`);
   } else if (kind !== "power") parts.push(`"metric":{"kind":"score"}`);
   const { includeMembers, excludeMembers, excludeSnaps } = context.constraints;
-  parts.push(`"eventIds":[${event ? event.id : ""}]`,
+  parts.push(`"eventIds":[${event && usesEventData(input) ? event.id : ""}]`,
     `"constraints":{"leader":null,"includeMembers":[${ids(includeMembers).join(",")}],"excludeMembers":[${ids(excludeMembers).join(",")}],"excludeSnaps":[${ids(excludeSnaps).join(",")}],"noSnaps":false}`,
     `"k":${RECOMMENDATION_COUNT}`, `"limits":{"timeLimitMs":${input.timeLimit === null ? "null" : input.timeLimit * 1000}}`);
   return `{${parts.join(",")}}`;

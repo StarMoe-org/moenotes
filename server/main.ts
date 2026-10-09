@@ -225,6 +225,12 @@ async function selfCheck(): Promise<void> {
     check(home.status === 200 && home.headers.get("content-encoding") === "br", "GET / should serve the brotli variant");
     const etag = home.headers.get("etag") ?? "";
     check((await get("/", { "accept-encoding": "br", "if-none-match": etag })).status === 304, "matching ETag should answer 304");
+    const pageVersion = home.headers.get("server-timing") ?? "";
+    check(/^page;desc="[0-9a-z]+-[0-9a-z]+"$/.test(pageVersion), "HTML should carry its page version");
+    check((await get("/", { "accept-encoding": "identity" })).headers.get("server-timing") === pageVersion, "the page version should not depend on the encoding");
+    roots = { current: previous, previous: [] };
+    check((await get("/")).headers.get("server-timing") === pageVersion, "a page linked unchanged into a new build should keep its version");
+    roots = { current, previous: [previous] };
     check((await get("/music/1")).status === 200, "GET /music/1 should serve music/1/index.html");
     check((await get("/music/1", {}, "HEAD")).status === 200, "HEAD should be served");
     check((await get("/missing")).status === 404, "unknown paths should answer 404");
@@ -235,6 +241,7 @@ async function selfCheck(): Promise<void> {
     check((await get("/%2e%2e/%2e%2e/etc/hostname")).status === 404, "paths must stay inside the site");
     const script = await get("/_astro/app.js");
     check(script.headers.get("cache-control")?.includes("immutable") === true, "/_astro/ should be immutable");
+    check(!script.headers.has("server-timing"), "only HTML should carry a page version");
     check((await get("/_astro/old.js")).status === 200, "/_astro/ should fall back to earlier builds");
     check((await serveStatic(new Request("http://self-check/"), { current: null, previous: [] })).status === 503, "no build should answer 503");
 

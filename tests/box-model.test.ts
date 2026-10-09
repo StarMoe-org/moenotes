@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { answerField, createBox, createCard, mergeBoxes, mergeField, observeField, parseBox, unknownField, type Observation } from "../src/lib/box/model";
+import { answerField, createBox, createCard, mergeBoxBackup, mergeBoxes, mergeField, observeField, parseBox, unknownField, type Observation } from "../src/lib/box/model";
 
 const observed = (id: string, value: number, at: number): Observation<number> => ({ id, value, at, source: "screenshot", screenshot: { sourceId: `image-${id}`, bbox: [10, 20, 30, 40] } });
 const manual = (id: string, value: number | null, at: number): Observation<number> => ({ id, value, at, source: "deck-answer" });
@@ -148,5 +148,63 @@ describe("shared card box facts", () => {
     const snap = createCard("snap", "snap", "1", 1);
     snap.fields.liveSkillLevel = answerField(unknownField(), manual("not-derived", 3, 2));
     expect(() => parseBox(JSON.stringify({ ...box, cards: [snap] }))).toThrow("derived from rank");
+  });
+});
+
+describe("collection backup imports", () => {
+  test("a JSON round trip restores a linked save and saved team with the stored observations", () => {
+    const backup = createBox("jp", "backup", 100), current = createBox("jp", "device", 200);
+    backup.save = { server: "jp", accountId: "9007199254740993", sha256: "a".repeat(64), uploadedAt: 100 };
+    backup.baseline = { members: ["1", "2", "3", "4", "5"], snaps: ["11", null, "12", null, null] };
+    backup.player.vipRank = answerField(unknownField(), manual("vip", 3, 100));
+    backup.cards.push(createCard("member", "manual-card", "1", 100));
+    const before = structuredClone(backup);
+    const restored = parseBox(JSON.stringify(mergeBoxBackup(current, parseBox(JSON.stringify(backup)), 300)));
+    expect(restored.save).toEqual(backup.save); expect(restored.baseline).toEqual(backup.baseline);
+    expect(restored.cards).toEqual(backup.cards); expect(restored.player.vipRank).toEqual(backup.player.vipRank);
+    expect(restored.id).toBe(current.id); expect(restored.revision).toBe(current.revision);
+    expect(backup).toEqual(before); expect(current.save).toBeNull(); expect(current.baseline).toBeNull();
+    expect(restored.save).not.toBe(backup.save); expect(restored.baseline).not.toBe(backup.baseline);
+  });
+
+  test("an existing team and conflicting manual evidence survive a backup merge", () => {
+    const current = createBox("jp", "device", 100), backup = createBox("jp", "backup", 100);
+    current.baseline = { members: ["5", "4", "3", "2", "1"], snaps: [null, null, null, null, null] };
+    backup.baseline = { members: ["1", "2", "3", "4", "5"], snaps: ["11", null, null, null, null] };
+    current.player.vipRank = answerField(unknownField(), manual("device-vip", 2, 100));
+    backup.player.vipRank = answerField(unknownField(), manual("backup-vip", 3, 100));
+    const restored = parseBox(JSON.stringify(mergeBoxBackup(current, backup, 200)));
+    expect(restored.baseline).toEqual(current.baseline);
+    expect(restored.player.vipRank).toMatchObject({ status: "conflict", value: null, needsReview: true });
+    expect(restored.player.vipRank.history.map(item => item.id).sort()).toEqual(["backup-vip", "device-vip"]);
+  });
+
+  test("another linked player or save version needs source selection before any facts are merged", () => {
+    const current = createBox("jp", "device", 100);
+    current.save = { server: "jp", accountId: "1", sha256: "a".repeat(64), uploadedAt: 100 };
+    const before = structuredClone(current);
+    for (const save of [{ ...current.save, accountId: "2" }, { ...current.save, sha256: "b".repeat(64) }, { ...current.save, server: "intl" as const }]) {
+      const backup = { ...createBox("jp", "backup", 100), save, cards: [createCard("member", "backup-card", "1", 100)] };
+      expect(() => mergeBoxBackup(current, backup)).toThrow("source selection");
+      expect(current).toEqual(before);
+    }
+  });
+
+  test("save identity ignores upload metadata and a manual backup keeps the current link", () => {
+    const current = createBox("jp", "device", 100), backup = createBox("jp", "backup", 100);
+    current.save = { server: "jp", accountId: "1", sha256: "a".repeat(64), uploadedAt: 100 };
+    backup.save = { ...current.save, uploadedAt: 200 };
+    expect(mergeBoxBackup(current, backup).save).toEqual(current.save);
+    backup.save = null;
+    expect(mergeBoxBackup(current, backup).save).toEqual(current.save);
+    expect(() => mergeBoxBackup(createBox("tw", "other-region", 100), backup)).toThrow("different servers");
+  });
+
+  test("ordinary merges keep the device source and team", () => {
+    const current = createBox("jp", "device", 100), backup = createBox("jp", "backup", 100);
+    backup.save = { server: "jp", accountId: "1", sha256: "a".repeat(64), uploadedAt: 100 };
+    backup.baseline = { members: ["1", "2", "3", "4", "5"], snaps: [null, null, null, null, null] };
+    const merged = mergeBoxes(current, backup);
+    expect(merged.save).toBeNull(); expect(merged.baseline).toBeNull();
   });
 });

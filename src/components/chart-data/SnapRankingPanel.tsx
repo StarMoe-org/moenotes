@@ -3,7 +3,7 @@ import { isGameServer, PRIMARY_SERVER } from "@/config/servers";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import { getRoutePathById } from "@/lib/route/registry";
-import { useCardBox } from "@/components/box/use-card-box";
+import { useCardBoxView } from "@/components/box/use-card-box";
 import { ownedSnapChoices } from "@/lib/box/snap-selection";
 import { assetConfig } from "@/config/assets";
 import { ContentServerProvider } from "@/lib/servers/use-content-server";
@@ -32,24 +32,30 @@ export default function SnapRankingPanel({ ctx, catalogue, measurement, loading,
   const [rejected, setRejected] = useState<SnapLegalityIssue | null>(null);
   const region = ctx.data.provenance?.region;
   const server = isGameServer(region) ? region : PRIMARY_SERVER;
-  const collection = useCardBox(server);
+  // The filter reads card identities and Snap ranks, which a linked save gives without the Master tables.
+  const { storage: collection, linkedSave, box } = useCardBoxView(server, null, null);
+  const saveStatus = collection.box?.save ? linkedSave.state.status : null;
+  /** The Box the pickers are filtered with: none while a linked save is being read or cannot be read. */
+  const filterBox = saveStatus === null || saveStatus === "ready" ? box : null;
   const [boxOnly, setBoxOnly] = useState(false);
+  const filter = boxOnly ? filterBox : null;
   const boxTr = (key: string) => t(locale, `deckWorkspace.${key}`);
   const nativeUi = !!assetConfig.gameUiLibraries[server].trim();
   const cards = useMemo(() => catalogue ? buildSnapSourceCards(catalogue.data, ctx.data, catalogue.labelSource, locale) : null, [catalogue, ctx.data, locale]);
   const choices = useMemo(() => catalogue ? labelSnapRankingCatalogue(catalogue.choices, catalogue.data, ctx.data, catalogue.labelSource, locale) : [], [catalogue, ctx.data, locale]);
-  const offeredChoices = useMemo(() => boxOnly && collection.box ? ownedSnapChoices(choices, collection.box) : choices, [boxOnly, collection.box, choices]);
-  const ownedIds = new Set(collection.box?.cards.filter(card => card.kind === "member").map(card => card.identity.value) ?? []);
-  const offeredMembers = boxOnly ? (cards?.members ?? []).filter(member => ownedIds.has(String(member.id))) : cards?.members ?? [];
+  const offeredChoices = useMemo(() => filter ? ownedSnapChoices(choices, filter) : choices, [filter, choices]);
+  const ownedIds = new Set(filter?.cards.filter(card => card.kind === "member").map(card => card.identity.value) ?? []);
+  const offeredMembers = filter ? (cards?.members ?? []).filter(member => ownedIds.has(String(member.id))) : cards?.members ?? [];
   const active = state.snapSkills.some(Boolean);
   const current = ctx.snap?.source && snapProfileKey(ctx.snap.profile) === measurement.profileKey && snapSourceKey(ctx.snap.source) === measurement.sourceKey;
   const catalogueStatus = !available ? "loadUnavailable" : catalogueError ? "calculationError" : null;
   const status = invalidMembers.length ? "invalidMember" : catalogueStatus ?? (current && measurement.status === "error" ? "calculationError"
     : current && measurement.status === "needs-context" ? "needsContext" : current && measurement.status === "unsupported" ? "unsupportedScenario" : null);
   return <ContentServerProvider server={server} servers={[server]}><div className="mn-cd-snap-area">
-    <div className="mn-cd-box-read"><label><input type="checkbox" checked={boxOnly} disabled={collection.busy || !collection.box} onChange={event => setBoxOnly(event.target.checked)} />{boxTr("useBox")}</label>
+    <div className="mn-cd-box-read"><label><input type="checkbox" checked={!!filter} disabled={collection.busy || !filterBox} onChange={event => setBoxOnly(event.target.checked)} />{boxTr("useBox")}</label>
       <a href={localizePath(getRoutePathById("card-box"), locale)}>{boxTr("boxTitle")}</a>
-      <p className="mn-cd-note">{boxTr(collection.box ? "boxFilterNote" : "boxFilterMissing")}</p>
+      <p className="mn-cd-note">{boxTr(!collection.box ? "boxFilterMissing" : saveStatus === "loading" ? "boxSaveLoading"
+        : saveStatus === "changed" || saveStatus === "error" ? "boxSaveUnavailable" : "boxFilterNote")}</p>
     </div>
     <SnapSkillPicker locale={locale} choices={offeredChoices} selections={state.snapSkills} cards={cards?.snaps}
       loading={loading && !catalogueStatus} error={catalogueStatus ? tr(`snap.${catalogueStatus}`) : null} onOpen={onOpen}

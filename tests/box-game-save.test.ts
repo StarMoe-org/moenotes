@@ -160,6 +160,33 @@ describe("game save derivation", () => {
     expect(summary).toMatchObject({ musicGroups: 1, memoryMembers: 2, memorySnaps: 1, unlockedMembers: 1, unlockedSnaps: 1 });
   });
 
+  test("invalid or incomplete memory records remain unknown instead of confirming empty progress", () => {
+    for (const memory of [
+      { _members: [{ _id: 101, _unlocked: "false" }] },
+      { _members: [{ _id: 101 }] },
+      { _supports: [{ _id: 999, _unlocked: false }] },
+      { _supports: [{ _id: 201, _unlocked: false }, { _id: 201, _unlocked: false }] },
+      { _musicGroups: [{ _id: 7, _musics: [] }] },
+      { _musicGroups: [{ _id: 7, _musics: [{ _id: 71 }] }] },
+      { _members: {} }, { _members: [null] }, { _musicGroups: [{ _id: 7, _musics: {} }] }, "invalid",
+    ]) {
+      const { box, issues } = derive({ _memory: memory });
+      expect(issues.some(issue => issue.path.startsWith("_player._memory"))).toBe(true);
+      expect(box.player.memory.status).toBe("unknown"); expect(box.player.memory.value).toBeNull();
+      expect(box.player.memory.history).toEqual([]);
+    }
+  });
+
+  test("absent, null and valid locked memory lists are complete empty progress", () => {
+    for (const memory of [undefined, null, {}, { _musicGroups: null, _members: null, _supports: null },
+      { _members: [{ _id: 101, _unlocked: false }], _supports: [{ _id: 201, _unlocked: false }] }]) {
+      const { box, issues } = derive({ _memory: memory });
+      expect(issues).toEqual([]);
+      expect(box.player.memory.value).toEqual({ musicRanks: {}, unlockedMembers: [], unlockedSnaps: [] });
+      expect(box.player.memory.status).toBe("observed");
+    }
+  });
+
   test("the Box's own facts stay stored and unused; VIP and events remain its own", () => {
     let stored = createBox("tw", "box", 1);
     const manual = createCard("member", "manual-card", "102", 2);

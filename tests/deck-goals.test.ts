@@ -75,7 +75,7 @@ describe("recommendation request", () => {
     expect(body.format).toBe("ournotes-deck.recommendation-request/2");
     expect(body.goal).toEqual({ kind: "battleLive", musicId: 245, difficulty: "expert", rank: 1, accuracy: { greatFraction: 0.03, justFraction: 0.95 } });
     expect(body.metric).toEqual({ kind: "score" });
-    expect(body.eventIds).toEqual([7]);
+    expect(body.eventIds).toEqual([]);
     expect(body.limits).toEqual({ timeLimitMs: 60000 });
     expect(body.k).toBe(5);
   });
@@ -88,6 +88,18 @@ describe("recommendation request", () => {
     expect(request({ goal: "power", musicId: 245, powerSong: true }).goal).toEqual({ kind: "power", musicId: 245, eventParameter: true });
     expect(request({ goal: "power" }, null).goal).toEqual({ kind: "power", eventParameter: false });
     expect(request({ goal: "power" }).metric).toBeUndefined();
+  });
+  test("only event objectives and event-boosted power send the held event ID", () => {
+    for (const goal of ["battle", "mission", "arena", "free", "skip"] as const) {
+      expect(request({ goal, musicId: 100, arenaMusicId: 42 }).eventIds).toEqual([]);
+    }
+    expect(request({ goal: "power", eventParameter: false }).eventIds).toEqual([]);
+    expect(request({ goal: "power", eventParameter: true }).eventIds).toEqual([7]);
+    for (const goal of ["challenge", "challengeSkip", "eventPoints", "challengePoints"] as const) {
+      expect(request({ goal, musicId: 100, challengeMusicId: 1 }).eventIds).toEqual([7]);
+    }
+    expect(request({ goal: "eventItems", musicId: 100, rewardContextConfirmed: true,
+      localEventPoints: 0, localChallengePoints: 0 }).eventIds).toEqual([7]);
   });
   test("event points carry the event, the consumption and the result clock", () => {
     const body = request({ goal: "eventPoints", venue: "freeLive", musicId: 245, boosts: 3 });

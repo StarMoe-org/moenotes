@@ -41,7 +41,13 @@ env:
   SITE_PUBLIC_ENV: ${{ inputs.public_env }}
 
 jobs:
+  quality:
+    uses: ./.github/workflows/ci.yml
+    with:
+      commit: ${{ inputs.commit }}
+
   build:
+    needs: quality
     # The dispatcher selects the workflow ref (main by default); source is always pinned below.
     runs-on: ubuntu-latest
     timeout-minutes: 180

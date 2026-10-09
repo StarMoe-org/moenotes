@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { GameServer } from "../src/config/servers";
-import { answerField, createBox, createCard, unknownField, type CardBox } from "../src/lib/box/model";
+import { answerField, createBox, createCard, mergeBoxBackup, parseBox, unknownField, type CardBox } from "../src/lib/box/model";
 import { CardBoxSession, type BoxBackend } from "../src/lib/box/session";
 import { BoxStorageError, type BoxChange } from "../src/lib/box/store";
 
@@ -24,6 +24,117 @@ function backend() {
   return { api, boxes, writes: () => writes };
 }
 describe("shared collection sessions", () => {
+  test("a linked backup with no local cards retains its source and team after saving and reopening", async () => {
+    const store = backend(), session = new CardBoxSession("jp", store.api);
+    const backup = createBox("jp", "backup", 100);
+    backup.save = { server: "jp", accountId: "9007199254740993", sha256: "a".repeat(64), uploadedAt: 100 };
+    backup.baseline = { members: ["1", "2", "3", "4", "5"], snaps: [null, null, null, null, null] };
+    backup.player.vipRank = answerField(unknownField(), { id: "vip", value: 3, source: "manual", at: 100 });
+    const imported = parseBox(JSON.stringify(backup));
+    await session.load(); await session.start("local");
+    const current = session.getSnapshot().box!;
+    expect(await session.commit(mergeBoxBackup(current, imported))).toBe(true);
+    const reopened = new CardBoxSession("jp", store.api);
+    await reopened.load();
+    const restored = reopened.getSnapshot().box!;
+    expect(restored.save).toEqual(backup.save); expect(restored.baseline).toEqual(backup.baseline);
+    expect(restored.player.vipRank).toEqual(backup.player.vipRank); expect(restored.cards).toEqual([]);
+    expect(restored.id).toBe(current.id); expect(restored.revision).toBe(current.revision + 1);
+  });
+
+  test("a late automatic download keeps the save restored from a backup", async () => {
+    const store = backend(), session = new CardBoxSession("jp", store.api);
+    await session.load(); await session.start("local");
+    const automatic = { server: "jp" as const, accountId: "1", sha256: "a".repeat(64), uploadedAt: 100 };
+    let downloaded!: () => void;
+    const download = new Promise<void>(resolve => { downloaded = resolve; });
+    const linking = download.then(() => session.linkSave(automatic, null));
+    const backup = createBox("jp", "backup", 100);
+    backup.save = { server: "jp", accountId: "2", sha256: "b".repeat(64), uploadedAt: 100 };
+    expect(await session.commit(mergeBoxBackup(session.getSnapshot().box!, parseBox(JSON.stringify(backup))))).toBe(true);
+    const writes = store.writes();
+    downloaded();
+    expect(await linking).toBe(false); expect(store.writes()).toBe(writes);
+    expect(session.getSnapshot().box?.save).toEqual(backup.save);
+    expect(await session.linkSave(automatic)).toBe(true);
+    expect(session.getSnapshot().box?.save).toEqual(automatic);
+  });
+
+  test("a late save update respects unlinking and a backup's different player or version", async () => {
+    for (const replacement of [null, { server: "jp" as const, accountId: "2", sha256: "b".repeat(64), uploadedAt: 200 },
+      { server: "jp" as const, accountId: "1", sha256: "c".repeat(64), uploadedAt: 200 }]) {
+      const store = backend(), session = new CardBoxSession("jp", store.api);
+      await session.load(); await session.start("local");
+      const original = { server: "jp" as const, accountId: "1", sha256: "a".repeat(64), uploadedAt: 100 };
+      expect(await session.linkSave(original)).toBe(true);
+      let downloaded!: () => void;
+      const download = new Promise<void>(resolve => { downloaded = resolve; });
+      const updating = download.then(() => session.linkSave({ ...original, sha256: "d".repeat(64), uploadedAt: 300 }, original));
+      expect(await session.commit({ ...session.getSnapshot().box!, save: null })).toBe(true);
+      const backup = { ...createBox("jp", "backup", 200), save: replacement };
+      expect(await session.commit(mergeBoxBackup(session.getSnapshot().box!, parseBox(JSON.stringify(backup))))).toBe(true);
+      const writes = store.writes();
+      downloaded();
+      expect(await updating).toBe(false); expect(store.writes()).toBe(writes);
+      expect(session.getSnapshot().box?.save).toEqual(replacement);
+    }
+  });
+
+  test("a source-matching update keeps newer local answers and accepts upload metadata differences", async () => {
+    const store = backend(), session = new CardBoxSession("jp", store.api);
+    await session.load(); await session.start("local");
+    const original = { server: "jp" as const, accountId: "1", sha256: "a".repeat(64), uploadedAt: 100 };
+    expect(await session.linkSave(original, null)).toBe(true);
+    const current = session.getSnapshot().box!;
+    const vip = answerField(current.player.vipRank, { id: "vip", value: 3, source: "manual", at: 200 });
+    expect(await session.commit({ ...current, player: { ...current.player, vipRank: vip } })).toBe(true);
+    const updated = { ...original, sha256: "b".repeat(64), uploadedAt: 300 };
+    expect(await session.linkSave(updated, { ...original, uploadedAt: 150 })).toBe(true);
+    expect(session.getSnapshot().box?.save).toEqual(updated);
+    expect(session.getSnapshot().box?.player.vipRank).toEqual(vip);
+  });
+
+  test("checks the source before preparing bytes and again when preparation finishes", async () => {
+    const store = backend(), session = new CardBoxSession("jp", store.api);
+    await session.load(); await session.start("local");
+    const original = { server: "jp" as const, accountId: "1", sha256: "a".repeat(64), uploadedAt: 100 };
+    const replacement = { ...original, sha256: "b".repeat(64), uploadedAt: 200 };
+    await session.linkSave(original);
+    let prepared = 0;
+    expect(await session.linkSave(replacement, null, async () => { prepared++; })).toBe(false);
+    expect(prepared).toBe(0);
+    let release!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    const updating = session.linkSave(replacement, original, async () => { prepared++; await gate; });
+    expect(prepared).toBe(1);
+    await session.commit({ ...session.getSnapshot().box!, save: null });
+    const writes = store.writes();
+    release();
+    expect(await updating).toBe(false); expect(store.writes()).toBe(writes);
+    expect(session.getSnapshot().box?.save).toBeNull();
+    expect(await session.linkSave(replacement, null, async () => { throw new Error("Storage unavailable"); })).toBe(false);
+    expect(session.getSnapshot().box?.save).toBeNull();
+  });
+
+  test("preserves edits made while save bytes are prepared and rejects a changed Box identity", async () => {
+    const store = backend(), session = new CardBoxSession("jp", store.api);
+    await session.load(); await session.start("local");
+    const link = { server: "jp" as const, accountId: "1", sha256: "a".repeat(64), uploadedAt: 100 };
+    let release!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    const linking = session.linkSave(link, null, () => gate);
+    const current = session.getSnapshot().box!;
+    const vip = answerField(current.player.vipRank, { id: "vip", value: 3, source: "manual", at: 200 });
+    await session.commit({ ...current, player: { ...current.player, vipRank: vip } });
+    release(); expect(await linking).toBe(true);
+    expect(session.getSnapshot().box?.player.vipRank).toEqual(vip);
+    const secondGate = new Promise<void>(resolve => { release = resolve; });
+    const updating = session.linkSave({ ...link, sha256: "b".repeat(64) }, link, () => secondGate);
+    await session.remove(); await session.start("local");
+    release(); expect(await updating).toBe(false);
+    expect(session.getSnapshot().box?.save).toBeNull();
+  });
+
   test("reviewed cloud import is persisted without losing local identity or overwriting newer drafts", async () => {
     const store = backend(), session = new CardBoxSession("jp", store.api);
     const cloud = createBox("jp", "remote", 100); cloud.cards.push(createCard("member", "remote-card", "1", 100));

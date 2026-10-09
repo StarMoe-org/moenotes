@@ -9,7 +9,7 @@ import type { SupportCardViewModel } from "@/lib/support-cards/data";
 import type { MusicViewModel } from "@/lib/music/data";
 import { listForServer, type ServerFaceted } from "@/lib/servers/facets";
 import { ContentServerProvider, useContentServer } from "@/lib/servers/use-content-server";
-import { mergeBoxes, parseBox, type BoxCard, type CardBox, type CardFieldName, type CardKind } from "@/lib/box/model";
+import { mergeBoxBackup, parseBox, type BoxCard, type BoxSaveLink, type CardBox, type CardFieldName, type CardKind } from "@/lib/box/model";
 import { answerDeckFields } from "@/lib/box/deck-answers";
 import { createDeckPreview } from "@/lib/box/deck-preview";
 import { boxAccountJson, gameSaveAccountJson } from "@/lib/deck/account-envelope";
@@ -19,8 +19,9 @@ import { displayUtcLabel, formatMasterDate, parseMasterDate } from "@/lib/schedu
 import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { safeGetLocalStorage, safeRemoveLocalStorage, safeSetLocalStorage } from "@/lib/storage/safe-storage";
 import { useDeckSolver } from "./use-deck-solver";
+import { deckDataGap } from "@/lib/deck/data-coverage";
 import DeckResult from "./DeckResult";
-import { useCardBox } from "@/components/box/use-card-box";
+import { useCardBoxView } from "@/components/box/use-card-box";
 import BoxManager, { BoxArtwork, BoxCardEditor, cardTitle, cardSubtitle } from "@/components/box/BoxManager";
 import PlayerStateManager from "@/components/box/PlayerStateManager";
 import MusicSelectDialog from "@/components/music/MusicSelectDialog";
@@ -43,13 +44,13 @@ import { MemberSquareArtwork } from "@/components/shared/CardSquareArtwork";
 import { gameSaveServer } from "@/config/account";
 import { GAME_SERVERS } from "@/config/servers";
 import type { GameSaveMeta } from "@/lib/account/game-saves";
-import { deriveGameSaveBox, unavailableGameSaveBox, type GameSaveTables } from "@/lib/box/game-save";
+import type { GameSaveTables } from "@/lib/box/game-save";
 import { defaultGameSave, fetchGameSave, forgetLoadedGameSave, keepGameSave, type LoadedGameSave } from "@/lib/box/game-save-source";
 import { loadGameAccounts } from "@/lib/account/game-accounts";
-import { deleteCachedGameSave } from "@/lib/box/save-cache";
+import { pruneCachedGameSaves } from "@/lib/box/save-cache";
 import { readLocalBox } from "@/lib/box/store";
 import { GameSaveBanner, GameSaveHint, GameSavePicker } from "@/components/box/GameSave";
-import { useGameSaveList, useLinkedGameSave } from "@/components/box/use-game-save";
+import { useGameSaveList } from "@/components/box/use-game-save";
 import CloudBoxPanel from "@/components/box/CloudBoxPanel";
 
 export interface DeckWorkspaceProps {
@@ -100,7 +101,10 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const href = (id: string) => localizePath(getRoutePathById(id), locale);
   const tr = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.${key}`, values);
   const [server, pickServer] = useContentServer(locale, servers);
-  const storage = useCardBox(server);
+  const playerCatalogue = props.playerCatalogues?.find(value => value.server === server) ?? null;
+  const saveTables = props.saveTables?.find(value => value.server === server) ?? null;
+  /** What the page shows (`box`): the stored Box, or while a save is linked, the Box the save describes. */
+  const { storage, linkedSave, derivation, box } = useCardBoxView(server, saveTables, playerCatalogue);
   const { busy, mode } = storage;
   /** The stored Box: every write starts from it. */
   const stored = storage.box;
@@ -108,15 +112,8 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const snaps = useMemo(() => listForServer(props.snaps, server), [props.snaps, server]);
   const songs = useMemo(() => listForServer(props.songs, server), [props.songs, server]);
   const catalog = useMemo(() => ({ members, snaps }), [members, snaps]);
-  const playerCatalogue = props.playerCatalogues?.find(value => value.server === server) ?? null;
-  const saveTables = props.saveTables?.find(value => value.server === server) ?? null;
   const saveList = useGameSaveList(server);
-  const linkedSave = useLinkedGameSave(stored?.save ?? null);
   const linked = !!stored?.save;
-  const derivation = useMemo(() => stored?.save && linkedSave.state.status === "ready"
-    ? deriveGameSaveBox(stored, stored.save, linkedSave.state.save.player, saveTables, playerCatalogue) : null, [stored, linkedSave.state, saveTables, playerCatalogue]);
-  /** What the page shows: the stored Box, or while a save is linked, the Box the save describes. */
-  const box = useMemo(() => !stored?.save ? stored : derivation?.box ?? unavailableGameSaveBox(stored), [stored, derivation]);
   const [savePicker, setSavePicker] = useState(false);
   const ownFactsKey = `${OWN_FACTS_KEY}.${server}`;
   /** Null until read. While false, a signed-in Box reads the account's uploaded save. */
@@ -192,6 +189,8 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const goal = goalInput.goal;
   const effectiveInput: DeckGoalInput = { ...goalInput, aggregation: effectiveAggregation(goalInput) };
   const gap = goalGap(effectiveInput, event);
+  const dataGap = solver.engine.status === "ready" ? deckDataGap(effectiveInput, event, solver.engine.catalog,
+    props.deckArenas?.find(value => value.server === server)?.songs) : null;
   const supported = capabilities ? computes(capabilities, effectiveInput) : effectiveInput.aggregation === "expected";
   const idsOf = (keys: readonly string[], kind: CardKind) => keys.flatMap(key => {
     const card = box?.cards.find(item => item.key === key && item.kind === kind);
@@ -203,7 +202,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const stale = job.status !== "idle" && job.status !== "running" && job.key !== runKey;
   function runSolver() {
     setRunError("");
-    if (solver.engine.status !== "ready" || !box || gap || !supported) return;
+    if (solver.engine.status !== "ready" || !box || gap || dataGap || !supported) return;
     try {
       const target = { datasetId: solver.engine.datasetId, server: gameSaveServer(server) };
       let accountJson: string;
@@ -293,7 +292,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
       if (incoming.server !== server) throw new Error("server");
       const session = getCardBoxSession(server);
       if (!session.getSnapshot().box && !await session.start(mode)) throw new Error("storage");
-      if (!await session.commit(mergeBoxes(session.getSnapshot().box!, incoming))) throw new Error("save");
+      if (!await session.commit(mergeBoxBackup(session.getSnapshot().box!, incoming))) throw new Error("save");
     } catch { setBackupError(true); }
     if (emptyBackup.current) emptyBackup.current.value = "";
   }
@@ -307,30 +306,38 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   }
   const returnTo = href(page === "box" ? "card-box" : "deck");
   function openSavePicker() { setManagement(false); setGuideOpen(false); setSavePicker(true); }
-  /** Stores the checked bytes, then links them; a Box is created in the current storage mode when there is none. */
-  async function linkGameSave(meta: GameSaveMeta, save: LoadedGameSave): Promise<boolean> {
-    if (save.sha256 !== meta.sha256) return false;
-    try { await keepGameSave(save, meta.uploadedAt); } catch { return false; }
+  /** Checks the source around cache storage; a Box is created in the current storage mode when there is none. */
+  async function linkGameSave(meta: GameSaveMeta, save: LoadedGameSave, expectedSave?: BoxSaveLink | null): Promise<boolean> {
+    if (save.server !== meta.server || save.accountId !== meta.accountId || save.sha256 !== meta.sha256) return false;
     const session = getCardBoxSession(server);
+    if (!session.getSnapshot().box && expectedSave) return false;
     if (!session.getSnapshot().box && !await session.start(mode)) return false;
-    const latest = session.getSnapshot().box;
-    if (!latest) return false;
-    return session.commit({ ...latest, save: { server: meta.server, accountId: meta.accountId, sha256: save.sha256, uploadedAt: meta.uploadedAt } });
+    const previous = session.getSnapshot().box?.save;
+    const link = { server: meta.server, accountId: meta.accountId, sha256: save.sha256, uploadedAt: meta.uploadedAt };
+    const linked = await session.linkSave(link, expectedSave, () => keepGameSave(save, meta.uploadedAt));
+    if (linked) {
+      await pruneSaveCache(link).catch(() => undefined);
+      if (previous && (previous.server !== link.server || previous.accountId !== link.accountId)) await pruneSaveCache(previous).catch(() => undefined);
+    }
+    return linked;
   }
   async function updateGameSave(meta: GameSaveMeta): Promise<boolean> {
-    if (!stored?.save || meta.server !== stored.save.server || meta.accountId !== stored.save.accountId) return false;
+    const expectedSave = stored?.save;
+    if (!expectedSave || meta.server !== expectedSave.server || meta.accountId !== expectedSave.accountId) return false;
     const save = await fetchGameSave(meta.server, meta.accountId);
     if (save.sha256 !== meta.sha256) { await saveList.refresh(); return false; }
-    return linkGameSave(meta, save);
+    return linkGameSave(meta, save, expectedSave);
   }
-  /** Another server's Box of this browser that links the same account keeps the cached save. */
-  async function linkedElsewhere(server: GameServer, saveServer: string, accountId: string): Promise<boolean> {
-    for (const other of GAME_SERVERS.filter(value => value !== server && gameSaveServer(value) === saveServer)) {
-      const snapshot = getCardBoxSession(other).getSnapshot();
-      const otherBox = snapshot.mode === "temporary" ? snapshot.box : await readLocalBox(other).catch(() => null);
-      if (otherBox?.save?.accountId === accountId) return true;
+  /** Persistent and current-visit Boxes can retain different versions of the same account. */
+  async function pruneSaveCache(link: BoxSaveLink): Promise<void> {
+    const referenced = new Set<string>();
+    for (const other of GAME_SERVERS.filter(value => gameSaveServer(value) === link.server)) {
+      const local = await readLocalBox(other);
+      for (const box of [local, getCardBoxSession(other).getSnapshot().box]) {
+        if (box?.save?.server === link.server && box.save.accountId === link.accountId) referenced.add(box.save.sha256);
+      }
     }
-    return false;
+    await pruneCachedGameSaves(link.server, link.accountId, referenced);
   }
   /** The user's own choice in the picker; it also ends an earlier opt-out. */
   async function pickGameSave(meta: GameSaveMeta, save: LoadedGameSave): Promise<boolean> {
@@ -344,8 +351,8 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
     // Opt out first: the render that sees the unlinked Box must not link the upload again.
     safeSetLocalStorage(ownFactsKey, "1"); setOwnFacts(true);
     if (!await storage.commit({ ...stored, save: null })) { safeRemoveLocalStorage(ownFactsKey); setOwnFacts(false); return false; }
-    forgetLoadedGameSave(link.server, link.accountId);
-    if (!await linkedElsewhere(server, link.server, link.accountId)) await deleteCachedGameSave(link.server, link.accountId).catch(() => undefined);
+    forgetLoadedGameSave(link.server, link.accountId, link.sha256);
+    await pruneSaveCache(link).catch(() => undefined);
     return true;
   }
   // Signed in, the uploaded save comes first: link the default upload when the Box has no save, and follow newer
@@ -364,7 +371,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
       if (!meta) return true;
       const save = await fetchGameSave(meta.server, meta.accountId);
       if (save.sha256 !== meta.sha256) { await saveList.refresh(); return true; }
-      return safeGetLocalStorage(ownFactsKey) === "1" || await linkGameSave(meta, save);
+      return safeGetLocalStorage(ownFactsKey) === "1" || await linkGameSave(meta, save, null);
     })().catch(() => false).then(done => finishAttempt(attempt, done));
   }, [busy, stored?.save, ownFacts, saveList.access, saveList.saves, server]);
   const follow = useRef<AutoAttempt | null>(null);
@@ -413,11 +420,12 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   };
   const engine = solver.engine;
   const saveReady = !linked || linkedSave.state.status === "ready";
-  const canRun = engine.status === "ready" && supported && !gap && saveReady;
+  const canRun = engine.status === "ready" && supported && !gap && !dataGap && saveReady;
   const blocker = engine.status === "loading" ? tr("solver.loading") : engine.status === "unavailable" ? tr(`solver.unavailable.${engine.reason}`)
     : engine.status === "failed" ? "" : !supported ? tr("comingSoon") : gap ? tr(`solver.gap.${gap}`) : !saveReady ? tr("solver.saveNotReady") : "";
   function engineNotice() {
     if (engine.status === "failed") return <p className="dc-engine-note" role="alert">{tr(`solver.failure.${engine.code}`)} <button type="button" onClick={solver.retry}>{tr("retry")}</button></p>;
+    if (dataGap) return <p className="dc-engine-note" role="status">{tr("solver.dataUpdating")} <button type="button" onClick={solver.retry}>{tr("retry")}</button></p>;
     if (runError) return <p className="dc-engine-note" role="alert">{runError}</p>;
     return null;
   }
@@ -542,7 +550,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
     <MusicSelectDialog key={`songs:${server}`} locale={locale} songs={songs} open={songPicker} onClose={() => setSongPicker(false)}
       current={selectedSong ? { musicId: selectedSong.id, difficulty: goalInput.difficulty } : null} sortPage="deck-song"
       onSelect={selection => updateGoal({ musicId: selection.song.id, difficulty: selection.difficulty })} />
-    <Modal historyNavigation={false} isOpen={playerSettings && box !== null} onClose={() => setPlayerSettings(false)} title={tr("playerTitle")} closeLabel={tr("close")} size="lg">
+    <Modal historyNavigation={false} isOpen={playerSettings && box !== null} onClose={() => setPlayerSettings(false)} title={tr("playerTitle")} closeLabel={tr("close")} size="xl">
       {stored && <PlayerStateManager key={`${server}:${stored.id}`} locale={locale} box={stored} view={linked ? box ?? undefined : undefined} catalogue={playerCatalogue} busy={busy} commit={storage.commit} embedded />}
     </Modal>
     <ScreenshotImport locale={locale} server={server} source={recognition.context?.source} sourceIssue={recognition.issue} box={box} mode={mode} catalog={catalog} isOpen={importing} onClose={() => { setImporting(false); setPendingScreenshots([]); }} onSave={saveScreenshot} pendingFiles={pendingScreenshots} onPendingFilesConsumed={() => setPendingScreenshots([])} />
@@ -555,8 +563,8 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
         <input className="dc-option-search" aria-label={tr("searchCards")} placeholder={tr("searchCards")} value={constraintQuery} onChange={event => setConstraintQuery(event.target.value)} />
         <div className="dc-option-tabs" role="group" aria-label={composer("constraintsTitle")}>{(["all", "required", "excluded"] as const).map(value => <button type="button" key={value} aria-pressed={constraintFilter === value} onClick={() => setConstraintFilter(value)}>{composer(value === "all" ? "constraintAll" : value === "required" ? "constraintRequired" : "constraintExcluded")}</button>)}</div>
         {(box?.cards ?? []).filter(card => (constraintFilter === "all" || (constraintFilter === "required" ? required : excluded).includes(card.key))
-          && `${cardTitle(card, catalog)} ${cardSubtitle(card, catalog)} ${card.identity.value ?? ""}`.toLowerCase().includes(constraintQuery.toLowerCase())).map(card => <div key={card.key} className="dc-constraint-card"><BoxArtwork card={card} catalog={catalog} locale={locale} /><div><strong>{cardTitle(card, catalog)}</strong><small>{cardSubtitle(card, catalog)}</small></div>
-            {card.kind === "member" && <label><input type="checkbox" checked={required.includes(card.key)} disabled={excluded.includes(card.key) || required.filter(key => box?.cards.find(other => other.key === key)?.kind === card.kind).length >= 5 && !required.includes(card.key)} onChange={() => toggle(required, card.key, setRequired)} />{tr("required")}</label>}<label><input type="checkbox" checked={excluded.includes(card.key)} disabled={required.includes(card.key)} onChange={() => toggle(excluded, card.key, setExcluded)} />{tr("excluded")}</label></div>)}
+          && `${cardTitle(card, catalog)} ${cardSubtitle(card, catalog)} ${card.identity.value ?? ""}`.toLowerCase().includes(constraintQuery.toLowerCase())).map(card => <div key={card.key} className="dc-constraint-card"><BoxArtwork card={card} catalog={catalog} locale={locale} /><div className="dc-constraint-info"><strong>{cardTitle(card, catalog)}</strong><small>{cardSubtitle(card, catalog)}</small></div>
+            <div className="dc-constraint-actions">{card.kind === "member" && <label><input type="checkbox" checked={required.includes(card.key)} disabled={excluded.includes(card.key) || required.filter(key => box?.cards.find(other => other.key === key)?.kind === card.kind).length >= 5 && !required.includes(card.key)} onChange={() => toggle(required, card.key, setRequired)} />{tr("required")}</label>}<label><input type="checkbox" checked={excluded.includes(card.key)} disabled={required.includes(card.key)} onChange={() => toggle(excluded, card.key, setExcluded)} />{tr("excluded")}</label></div></div>)}
       </> : box && <><p className="dw-muted">{composer("savedTeamDescription")}</p>
         {baselineChanged && <p role="alert" className="dw-alert">{composer("teamChanged")} <button type="button" onClick={() => openOptions("team")}>{composer("reloadTeam")}</button></p>}
         {baselineSaveError && <p role="alert" className="dw-alert">{composer("teamSaveFailed")}</p>}

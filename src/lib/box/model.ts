@@ -209,6 +209,22 @@ export function mergeBoxes(current: CardBox, incoming: CardBox, at = Date.now())
   return result;
 }
 
+/** Backup import restores an absent save link and saved team while merging the stored observations. */
+export function mergeBoxBackup(current: CardBox, incoming: CardBox, at = Date.now()): CardBox {
+  if (current.save && incoming.save && !sameSaveLink(current.save, incoming.save)) {
+    throw new Error("Different game saves require a source selection");
+  }
+  const result = mergeBoxes(current, incoming, at);
+  result.save = structuredClone(current.save ?? incoming.save);
+  result.baseline = structuredClone(current.baseline ?? incoming.baseline);
+  return result;
+}
+
+/** A linked version is identified by its server, player and content hash. */
+export function sameSaveLink(a: BoxSaveLink | null, b: BoxSaveLink | null): boolean {
+  return a === null || b === null ? a === b : a.server === b.server && a.accountId === b.accountId && a.sha256 === b.sha256;
+}
+
 function record(value: unknown): value is Record<string, unknown> { return !!value && typeof value === "object" && !Array.isArray(value); }
 function onlyKeys(value: Record<string, unknown>, keys: readonly string[]): void {
   if (Object.keys(value).some(key => !keys.includes(key))) throw new Error("Unknown card box field");

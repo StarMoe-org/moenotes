@@ -8,10 +8,12 @@ export interface CachedGameSave {
   accountId: string;
   sha256: string;
   uploadedAt: number;
+  cachedAt?: number;
   bytes: ArrayBuffer;
 }
 
-export const gameSaveCacheKey = (server: GameSaveServer, accountId: string): string => `${server}/${accountId}`;
+const accountKey = (server: GameSaveServer, accountId: string): string => `${server}/${accountId}`;
+export const gameSaveCacheKey = (server: GameSaveServer, accountId: string, sha256: string): string => `${accountKey(server, accountId)}/${sha256}`;
 let database: Promise<IDBDatabase> | undefined;
 
 function openDatabase(): Promise<IDBDatabase> {
@@ -40,25 +42,50 @@ async function run<T>(mode: IDBTransactionMode, action: (store: IDBObjectStore) 
   });
 }
 
-/** The cached save of an account, or null. Bytes that no longer hash to the recorded SHA-256 are dropped. */
-export async function readCachedGameSave(server: GameSaveServer, accountId: string): Promise<CachedGameSave | null> {
-  const key = gameSaveCacheKey(server, accountId);
-  const entry = await run<CachedGameSave | undefined>("readonly", store => store.get(key) as IDBRequest<CachedGameSave | undefined>);
-  if (!entry) return null;
-  if (!(entry.bytes instanceof ArrayBuffer) || await sha256Hex(new Uint8Array(entry.bytes)) !== entry.sha256) {
-    await deleteCachedGameSave(server, accountId);
-    return null;
+/** Reads an exact version and also accepts the matching account-keyed cache from an earlier visit. */
+export async function readCachedGameSave(server: GameSaveServer, accountId: string, sha256: string): Promise<CachedGameSave | null> {
+  const key = gameSaveCacheKey(server, accountId, sha256);
+  for (const candidate of [key, accountKey(server, accountId)]) {
+    const entry = await run<CachedGameSave | undefined>("readonly", store => store.get(candidate) as IDBRequest<CachedGameSave | undefined>);
+    if (!entry) continue;
+    if (entry.server !== server || entry.accountId !== accountId || candidate === key && entry.sha256 !== sha256 || !(entry.bytes instanceof ArrayBuffer)
+      || await sha256Hex(new Uint8Array(entry.bytes)) !== entry.sha256) {
+      await run("readwrite", store => store.delete(candidate));
+      continue;
+    }
+    if (entry.sha256 !== sha256) continue;
+    if (candidate !== key) {
+      await writeCachedGameSave({ ...entry, bytes: new Uint8Array(entry.bytes) }).catch(() => undefined);
+      return { ...entry, key };
+    }
+    return entry;
   }
-  return entry;
+  return null;
 }
 
-/** Keeps one save per account: a newer download replaces the older bytes. */
+/** Versions have independent keys, so downloads completing out of order cannot replace another version. */
 export async function writeCachedGameSave(entry: Omit<CachedGameSave, "key" | "bytes"> & { bytes: Uint8Array }): Promise<void> {
   const bytes = entry.bytes.slice().buffer;
-  await run("readwrite", store => store.put({ key: gameSaveCacheKey(entry.server, entry.accountId), server: entry.server, accountId: entry.accountId,
-    sha256: entry.sha256, uploadedAt: entry.uploadedAt, bytes } satisfies CachedGameSave));
+  await run("readwrite", store => store.put({ key: gameSaveCacheKey(entry.server, entry.accountId, entry.sha256), server: entry.server, accountId: entry.accountId,
+    sha256: entry.sha256, uploadedAt: entry.uploadedAt, cachedAt: Date.now(), bytes } satisfies CachedGameSave));
 }
 
-export async function deleteCachedGameSave(server: GameSaveServer, accountId: string): Promise<void> {
-  await run("readwrite", store => store.delete(gameSaveCacheKey(server, accountId)));
+/** Keeps linked versions, recent writes and two other versions per account for backup restoration. */
+export async function pruneCachedGameSaves(server: GameSaveServer, accountId: string, referenced: ReadonlySet<string>, now = Date.now()): Promise<void> {
+  const prefix = accountKey(server, accountId);
+  await run("readwrite", store => {
+    const request = store.getAll(IDBKeyRange.bound(prefix, `${prefix}/\uffff`)) as IDBRequest<CachedGameSave[]>;
+    request.onsuccess = () => {
+      const entries = request.result.filter(entry => entry.server === server && entry.accountId === accountId);
+      const versions = new Set(entries.filter(entry => entry.key !== prefix).map(entry => entry.sha256));
+      const unreferenced = entries.filter(entry => !referenced.has(entry.sha256) && entry.key !== prefix)
+        .sort((a, b) => (b.cachedAt ?? b.uploadedAt) - (a.cachedAt ?? a.uploadedAt));
+      const retained = new Set(unreferenced.slice(0, 2).map(entry => entry.key));
+      for (const entry of entries) {
+        if (entry.key === prefix && versions.has(entry.sha256)) store.delete(entry.key);
+        else if (!referenced.has(entry.sha256) && !retained.has(entry.key) && (entry.cachedAt ?? 0) < now - 60_000) store.delete(entry.key);
+      }
+    };
+    return request;
+  });
 }

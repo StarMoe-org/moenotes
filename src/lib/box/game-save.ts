@@ -38,6 +38,7 @@ export interface GameSavePlayer {
   characters: GameSaveCharacter[];
   bandItems: GameSaveBandItem[];
   memory: { musicGroups: GameSaveMusicGroup[]; members: GameSaveMemoryCard[]; supports: GameSaveMemoryCard[] };
+  issues?: GameSaveIssue[];
 }
 
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === "object" && !Array.isArray(value);
@@ -68,6 +69,16 @@ export function parseGameSave(text: string): GameSavePlayer {
   try { value = JSON.parse(text); } catch { throw new Error("A game save is not JSON"); }
   if (!object(value)) throw new Error("A game save is not a JSON object");
   const memory = object(value._memory) ? value._memory : {};
+  const issues: GameSaveIssue[] = [];
+  if (value._memory !== undefined && value._memory !== null && !object(value._memory)) issues.push({ path: "_player._memory", code: "invalid_value" });
+  const memoryEntries = (items: unknown, path: string): Record<string, unknown>[] => {
+    if (items === undefined || items === null) return [];
+    if (!Array.isArray(items)) { issues.push({ path, code: "invalid_value" }); return []; }
+    return items.flatMap((item, index) => {
+      if (object(item)) return [item];
+      issues.push({ path: `${path}[${index}]`, code: "invalid_value" }); return [];
+    });
+  };
   const entries = (items: unknown) => list(items).filter(object);
   return {
     memberCards: entries(value._memberCards).map(card => ({ masterId: long(card._masterId), exp: int(card._exp), awakeCount: int(card._awakeCount), rank: int(card._rank),
@@ -76,11 +87,12 @@ export function parseGameSave(text: string): GameSavePlayer {
     characters: entries(value._characters).map(character => ({ masterId: long(character._masterId), exp: int(character._exp) })),
     bandItems: entries(value._bandItems).map(item => ({ masterId: long(item._masterId), level: int(item._level) })),
     memory: {
-      musicGroups: entries(memory._musicGroups).map(group => ({ id: long(group._id),
-        musics: entries(group._musics).map(music => ({ id: long(music._id), unlockedScoreRank: int(music._unlockedScoreRank) })) })),
-      members: entries(memory._members).map(card => ({ id: long(card._id), unlocked: flag(card._unlocked) })),
-      supports: entries(memory._supports).map(card => ({ id: long(card._id), unlocked: flag(card._unlocked) })),
+      musicGroups: memoryEntries(memory._musicGroups, "_player._memory._musicGroups").map((group, index) => ({ id: long(group._id),
+        musics: memoryEntries(group._musics, `_player._memory._musicGroups[${index}]._musics`).map(music => ({ id: long(music._id), unlockedScoreRank: int(music._unlockedScoreRank) })) })),
+      members: memoryEntries(memory._members, "_player._memory._members").map(card => ({ id: long(card._id), unlocked: flag(card._unlocked) })),
+      supports: memoryEntries(memory._supports, "_player._memory._supports").map(card => ({ id: long(card._id), unlocked: flag(card._unlocked) })),
     },
+    ...(issues.length ? { issues } : {}),
   };
 }
 
@@ -107,7 +119,7 @@ export function expForLevel(rows: readonly (readonly [number, number])[] | undef
   return rows?.find(row => row[0] === level)?.[1] ?? null;
 }
 
-export type GameSaveIssueCode = "unknown_id" | "duplicate_id" | "invalid_value" | "no_level_row";
+export type GameSaveIssueCode = "unknown_id" | "duplicate_id" | "invalid_value" | "missing_value" | "no_level_row";
 export interface GameSaveIssue { path: string; code: GameSaveIssueCode }
 export interface GameSaveSummary {
   members: number; snaps: number; characters: number;
@@ -128,7 +140,7 @@ export function deriveGameSaveBox(box: CardBox, link: BoxSaveLink, save: GameSav
   if (tables && tables.server !== box.server) throw new Error("Save tables belong to another server");
   const bound = catalogue && catalogue.server === box.server ? catalogue : null;
   const identity: PlayerCatalogIdentity | null = bound ? { format: bound.format, server: bound.server, masterVersion: bound.masterVersion, sha256: bound.sha256 } : null;
-  const issues: GameSaveIssue[] = [];
+  const issues: GameSaveIssue[] = [...(save.issues ?? [])];
   const issue = (path: string, code: GameSaveIssueCode) => { issues.push({ path, code }); };
   const evidence = <T>(key: string, value: T, catalog?: { fieldKey: string; sourceEvidence: string }): Observation<T> => ({
     id: `game-save:${link.sha256}:${key}`, value, source: "game-save", at: link.uploadedAt,
@@ -223,20 +235,23 @@ export function deriveGameSaveBox(box: CardBox, link: BoxSaveLink, save: GameSav
   const musicRanks: Record<string, number> = {};
   const groups = identities("_player._memory._musicGroups", save.memory.musicGroups, group => group.id, "_id", id => !tables || tables.memoryMusicGroups.includes(id));
   for (const { item, id: groupId, path } of groups) {
+    if (!item.musics.length) issue(`${path}._musics`, "invalid_value");
     for (const { item: music, id } of identities(`${path}._musics`, item.musics, music => music.id, "_id", id => !tables || tables.memoryMusics[id] === groupId)) {
       const rank = music.unlockedScoreRank;
-      if (rank === null) continue;
+      if (rank === null) { issue(`${path}._musics`, "missing_value"); continue; }
       if (rank === "invalid" || rank < 0 || rank > 7) { issue(`${path}._musics`, "invalid_value"); continue; }
       musicRanks[id] = rank;
     }
   }
   const unlocked = (path: string, items: readonly GameSaveMemoryCard[], isKnown: (id: string) => boolean) => identities(path, items, card => card.id, "_id", isKnown).flatMap(({ item, id, path: at }) => {
     if (item.unlocked === "invalid") issue(`${at}._unlocked`, "invalid_value");
+    if (item.unlocked === null) issue(`${at}._unlocked`, "missing_value");
     return item.unlocked === true ? [id] : [];
   });
   const memoryMembers = unlocked("_player._memory._members", save.memory.members, isMember);
   const memorySnaps = unlocked("_player._memory._supports", save.memory.supports, isSnap);
   const memory: BoxMemory = { musicRanks, unlockedMembers: memoryMembers, unlockedSnaps: memorySnaps };
+  const memoryValid = !issues.some(issue => issue.path.startsWith("_player._memory"));
   const memoryContext = bound?.profile?.memory;
 
   const declaredAt = link.uploadedAt;
@@ -244,7 +259,7 @@ export function deriveGameSaveBox(box: CardBox, link: BoxSaveLink, save: GameSav
     coverage: { member: { complete: true, declaredAt }, snap: { complete: true, declaredAt } },
     player: { ...structuredClone(box.player), characterRanks, characterCoverage: "complete", characterTotalRank: unknownField(),
       bandItems, bandItemStates, bandItemsComplete: true, catalogIdentity: identity ?? box.player.catalogIdentity,
-      memory: known("memory", memory, memoryContext ? { fieldKey: "memory", sourceEvidence: memoryContext.sourceEvidence } : undefined) } };
+      memory: known("memory", memoryValid ? memory : null, memoryContext ? { fieldKey: "memory", sourceEvidence: memoryContext.sourceEvidence } : undefined) } };
   return { box: view, issues, summary: { members: members.length, snaps: snaps.length, characters: listedCharacters.length,
     builtBandItems: [...builtLevels.values()].filter(value => value !== null && value > 0).length,
     musicGroups: groups.length, memoryMembers: save.memory.members.length, memorySnaps: save.memory.supports.length,
@@ -259,4 +274,14 @@ export function unavailableGameSaveBox(box: CardBox): CardBox {
   return { ...structuredClone(box), cards: [], coverage: { member: { complete: false, declaredAt: null }, snap: { complete: false, declaredAt: null } },
     player: { ...structuredClone(box.player), characterRanks: {}, characterCoverage: "partial", characterTotalRank: unknownField(),
       bandItems: {}, bandItemStates: {}, bandItemsComplete: false, memory: unknownField() } };
+}
+
+/**
+ * The Box a page reads: the stored Box, or while a save is linked, the Box `save` describes, with no cards until the
+ * save is read. Writes still start from the stored Box.
+ */
+export function gameSaveBoxView(stored: CardBox | null, save: GameSavePlayer | null, tables: GameSaveTables | null, catalogue: PlayerFieldCatalogue | null): { box: CardBox | null; derivation: GameSaveDerivation | null } {
+  if (!stored?.save) return { box: stored, derivation: null };
+  const derivation = save ? deriveGameSaveBox(stored, stored.save, save, tables, catalogue) : null;
+  return { box: derivation?.box ?? unavailableGameSaveBox(stored), derivation };
 }
