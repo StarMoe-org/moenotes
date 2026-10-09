@@ -16,13 +16,15 @@ export default function DeckObjective({ locale, input, capabilities, onChange }:
   if (playsGekisou(input)) return <p className="dw-muted">{tr("gekisouNote")}</p>;
   const selected = effectiveAggregation(input);
   const maximum = !!capabilities && computes(capabilities, { ...input, aggregation: "maximum" });
+  // Tagged only once the loaded engine has answered; while it loads, the availability note says so instead.
+  const unsupported = !!capabilities && !maximum;
   return <fieldset className="dc-objective" aria-describedby={`${id}-note${maximum ? "" : ` ${id}-availability`}`}>
     <legend>{tr("label")}</legend>
     <div className="dc-objective-options">
       {(["expected", "maximum"] as const).map(aggregation => <label key={aggregation}>
         <input type="radio" name={id} value={aggregation} checked={selected === aggregation}
           disabled={aggregation === "maximum" && !maximum} onChange={() => onChange(aggregation)} />
-        <span>{tr(aggregation)}</span>
+        <span>{tr(aggregation)}{aggregation === "maximum" && unsupported && <small>{tr("unsupported")}</small>}</span>
       </label>)}
     </div>
     <p id={`${id}-note`} className="dw-muted">{tr(`${selected}Note`)}</p>
