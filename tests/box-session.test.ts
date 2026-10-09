@@ -94,6 +94,47 @@ describe("shared collection sessions", () => {
     expect(session.getSnapshot().box?.player.vipRank).toEqual(vip);
   });
 
+  test("checks the source before preparing bytes and again when preparation finishes", async () => {
+    const store = backend(), session = new CardBoxSession("jp", store.api);
+    await session.load(); await session.start("local");
+    const original = { server: "jp" as const, accountId: "1", sha256: "a".repeat(64), uploadedAt: 100 };
+    const replacement = { ...original, sha256: "b".repeat(64), uploadedAt: 200 };
+    await session.linkSave(original);
+    let prepared = 0;
+    expect(await session.linkSave(replacement, null, async () => { prepared++; })).toBe(false);
+    expect(prepared).toBe(0);
+    let release!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    const updating = session.linkSave(replacement, original, async () => { prepared++; await gate; });
+    expect(prepared).toBe(1);
+    await session.commit({ ...session.getSnapshot().box!, save: null });
+    const writes = store.writes();
+    release();
+    expect(await updating).toBe(false); expect(store.writes()).toBe(writes);
+    expect(session.getSnapshot().box?.save).toBeNull();
+    expect(await session.linkSave(replacement, null, async () => { throw new Error("Storage unavailable"); })).toBe(false);
+    expect(session.getSnapshot().box?.save).toBeNull();
+  });
+
+  test("preserves edits made while save bytes are prepared and rejects a changed Box identity", async () => {
+    const store = backend(), session = new CardBoxSession("jp", store.api);
+    await session.load(); await session.start("local");
+    const link = { server: "jp" as const, accountId: "1", sha256: "a".repeat(64), uploadedAt: 100 };
+    let release!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    const linking = session.linkSave(link, null, () => gate);
+    const current = session.getSnapshot().box!;
+    const vip = answerField(current.player.vipRank, { id: "vip", value: 3, source: "manual", at: 200 });
+    await session.commit({ ...current, player: { ...current.player, vipRank: vip } });
+    release(); expect(await linking).toBe(true);
+    expect(session.getSnapshot().box?.player.vipRank).toEqual(vip);
+    const secondGate = new Promise<void>(resolve => { release = resolve; });
+    const updating = session.linkSave({ ...link, sha256: "b".repeat(64) }, link, () => secondGate);
+    await session.remove(); await session.start("local");
+    release(); expect(await updating).toBe(false);
+    expect(session.getSnapshot().box?.save).toBeNull();
+  });
+
   test("reviewed cloud import is persisted without losing local identity or overwriting newer drafts", async () => {
     const store = backend(), session = new CardBoxSession("jp", store.api);
     const cloud = createBox("jp", "remote", 100); cloud.cards.push(createCard("member", "remote-card", "1", 100));

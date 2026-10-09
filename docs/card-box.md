@@ -10,6 +10,8 @@ The primary import action opens the game-save flow even before the user signs in
 
 JSON backup import merges stored observations and restores the backup's save link and saved team when the device has none. An existing saved team is retained; a different linked player or save version requires source selection. A linked backup contains the save pointer, and reading that save uses the browser cache or the signed-in account's existing download access.
 
+Downloaded saves are cached by save server, account ID and SHA-256. Each linked version can reopen independently after sign-out; matching account-keyed cache entries are read and migrated on access. Linking checks the current source before storing bytes and again before committing the link. Cache cleanup retains versions referenced by persistent and current-visit Boxes across servers, writes from the last minute and two additional versions per account for backup restoration.
+
 ## Account cloud sync
 
 The cloud panel appears on both collection and deck pages. A signed-in account with a stable `/api/me.user.id` reads its private collection from `/api/me/boxes/{server}`. The local or temporary Box remains the editable working copy. "Save to account" explicitly uploads the stored Box; subsequent edits remain unsynced until saved again. Signing in alone never uploads local facts.

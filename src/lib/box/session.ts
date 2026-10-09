@@ -93,10 +93,13 @@ export class CardBoxSession {
     }
   }
   /** Automatic linking and updates name the source they started from; a manual choice omits it. */
-  async linkSave(save: BoxSaveLink, expectedSave?: BoxSaveLink | null): Promise<boolean> {
-    const box = this.state.box;
-    if (!box || expectedSave !== undefined && !sameSaveLink(box.save, expectedSave)) return false;
-    return this.commit({ ...box, save });
+  async linkSave(save: BoxSaveLink, expectedSave?: BoxSaveLink | null, prepare?: () => Promise<void>): Promise<boolean> {
+    const { box, busy, mode } = this.state;
+    if (!box || busy || expectedSave !== undefined && !sameSaveLink(box.save, expectedSave)) return false;
+    try { await prepare?.(); } catch { return false; }
+    const latest = this.state.box;
+    if (!latest || latest.id !== box.id || this.state.mode !== mode || !sameSaveLink(latest.save, box.save)) return false;
+    return this.commit({ ...latest, save });
   }
   /** Changing destination preserves facts. Existing local facts merge instead of disappearing. */
   async start(mode: BoxMode): Promise<boolean> {

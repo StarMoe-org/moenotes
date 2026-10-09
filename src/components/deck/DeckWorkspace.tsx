@@ -45,7 +45,7 @@ import type { GameSaveMeta } from "@/lib/account/game-saves";
 import { deriveGameSaveBox, unavailableGameSaveBox, type GameSaveTables } from "@/lib/box/game-save";
 import { defaultGameSave, fetchGameSave, forgetLoadedGameSave, keepGameSave, type LoadedGameSave } from "@/lib/box/game-save-source";
 import { loadGameAccounts } from "@/lib/account/game-accounts";
-import { deleteCachedGameSave } from "@/lib/box/save-cache";
+import { pruneCachedGameSaves } from "@/lib/box/save-cache";
 import { readLocalBox } from "@/lib/box/store";
 import { GameSaveBanner, GameSaveHint, GameSavePicker } from "@/components/box/GameSave";
 import { useGameSaveList, useLinkedGameSave } from "@/components/box/use-game-save";
@@ -306,13 +306,20 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   }
   const returnTo = href(page === "box" ? "card-box" : "deck");
   function openSavePicker() { setManagement(false); setGuideOpen(false); setSavePicker(true); }
-  /** Stores the checked bytes, then links them; a Box is created in the current storage mode when there is none. */
+  /** Checks the source around cache storage; a Box is created in the current storage mode when there is none. */
   async function linkGameSave(meta: GameSaveMeta, save: LoadedGameSave, expectedSave?: BoxSaveLink | null): Promise<boolean> {
-    if (save.sha256 !== meta.sha256) return false;
-    try { await keepGameSave(save, meta.uploadedAt); } catch { return false; }
+    if (save.server !== meta.server || save.accountId !== meta.accountId || save.sha256 !== meta.sha256) return false;
     const session = getCardBoxSession(server);
+    if (!session.getSnapshot().box && expectedSave) return false;
     if (!session.getSnapshot().box && !await session.start(mode)) return false;
-    return session.linkSave({ server: meta.server, accountId: meta.accountId, sha256: save.sha256, uploadedAt: meta.uploadedAt }, expectedSave);
+    const previous = session.getSnapshot().box?.save;
+    const link = { server: meta.server, accountId: meta.accountId, sha256: save.sha256, uploadedAt: meta.uploadedAt };
+    const linked = await session.linkSave(link, expectedSave, () => keepGameSave(save, meta.uploadedAt));
+    if (linked) {
+      await pruneSaveCache(link).catch(() => undefined);
+      if (previous && (previous.server !== link.server || previous.accountId !== link.accountId)) await pruneSaveCache(previous).catch(() => undefined);
+    }
+    return linked;
   }
   async function updateGameSave(meta: GameSaveMeta): Promise<boolean> {
     const expectedSave = stored?.save;
@@ -321,14 +328,16 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
     if (save.sha256 !== meta.sha256) { await saveList.refresh(); return false; }
     return linkGameSave(meta, save, expectedSave);
   }
-  /** Another server's Box of this browser that links the same account keeps the cached save. */
-  async function linkedElsewhere(server: GameServer, saveServer: string, accountId: string): Promise<boolean> {
-    for (const other of GAME_SERVERS.filter(value => value !== server && gameSaveServer(value) === saveServer)) {
-      const snapshot = getCardBoxSession(other).getSnapshot();
-      const otherBox = snapshot.mode === "temporary" ? snapshot.box : await readLocalBox(other).catch(() => null);
-      if (otherBox?.save?.accountId === accountId) return true;
+  /** Persistent and current-visit Boxes can retain different versions of the same account. */
+  async function pruneSaveCache(link: BoxSaveLink): Promise<void> {
+    const referenced = new Set<string>();
+    for (const other of GAME_SERVERS.filter(value => gameSaveServer(value) === link.server)) {
+      const local = await readLocalBox(other);
+      for (const box of [local, getCardBoxSession(other).getSnapshot().box]) {
+        if (box?.save?.server === link.server && box.save.accountId === link.accountId) referenced.add(box.save.sha256);
+      }
     }
-    return false;
+    await pruneCachedGameSaves(link.server, link.accountId, referenced);
   }
   /** The user's own choice in the picker; it also ends an earlier opt-out. */
   async function pickGameSave(meta: GameSaveMeta, save: LoadedGameSave): Promise<boolean> {
@@ -342,8 +351,8 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
     // Opt out first: the render that sees the unlinked Box must not link the upload again.
     safeSetLocalStorage(ownFactsKey, "1"); setOwnFacts(true);
     if (!await storage.commit({ ...stored, save: null })) { safeRemoveLocalStorage(ownFactsKey); setOwnFacts(false); return false; }
-    forgetLoadedGameSave(link.server, link.accountId);
-    if (!await linkedElsewhere(server, link.server, link.accountId)) await deleteCachedGameSave(link.server, link.accountId).catch(() => undefined);
+    forgetLoadedGameSave(link.server, link.accountId, link.sha256);
+    await pruneSaveCache(link).catch(() => undefined);
     return true;
   }
   // Signed in, the uploaded save comes first: link the default upload when the Box has no save, and follow newer

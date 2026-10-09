@@ -26,4 +26,5 @@ jobs:
       - run: bun run check:search-seo
       - run: bun run check
       - run: bun test tests/github-build.test.ts tests/site-artifact.test.ts tests/site-release-build.test.ts tests/build-store-ci.test.ts
+      - run: bun test tests/box-model.test.ts tests/box-session.test.ts tests/box-game-save.test.ts tests/box-game-save-source.test.ts tests/box-save-cache.test.ts tests/box-player-profile.test.ts tests/box-deck-preview.test.ts
       - run: bun server/main.ts --self-check
