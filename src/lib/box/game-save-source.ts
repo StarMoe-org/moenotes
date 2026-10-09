@@ -14,13 +14,14 @@ export type LinkedGameSaveResult =
 
 const loaded = new Map<string, LoadedGameSave>();
 function remember(server: GameSaveServer, accountId: string, sha256: string, bytes: Uint8Array): LoadedGameSave {
-  const key = gameSaveCacheKey(server, accountId), previous = loaded.get(key);
-  if (previous?.sha256 === sha256) return previous;
+  const key = gameSaveCacheKey(server, accountId, sha256), previous = loaded.get(key);
+  if (previous) return previous;
   const text = gameSaveText(bytes);
   let player: GameSavePlayer;
   try { player = parseGameSave(text); } catch { throw new GameSaveError("invalid"); }
   const save = { server, accountId, sha256, bytes, text, player };
   loaded.set(key, save);
+  if (loaded.size > 8) loaded.delete(loaded.keys().next().value!);
   return save;
 }
 const failure = (error: unknown): LinkedGameSaveResult => ({ status: "error", code: error instanceof GameSaveError ? error.code : "invalid" });
@@ -39,11 +40,11 @@ export async function keepGameSave(save: LoadedGameSave, uploadedAt: number): Pr
 
 /** The exact version a Box links: from this page, the browser cache, or the account when it still holds it. */
 export async function openLinkedGameSave(link: BoxSaveLink): Promise<LinkedGameSaveResult> {
-  const memory = loaded.get(gameSaveCacheKey(link.server, link.accountId));
-  if (memory?.sha256 === link.sha256) return { status: "ready", save: memory };
+  const memory = loaded.get(gameSaveCacheKey(link.server, link.accountId, link.sha256));
+  if (memory) return { status: "ready", save: memory };
   try {
-    const cached = await readCachedGameSave(link.server, link.accountId).catch(() => null);
-    if (cached?.sha256 === link.sha256) return { status: "ready", save: remember(link.server, link.accountId, cached.sha256, new Uint8Array(cached.bytes)) };
+    const cached = await readCachedGameSave(link.server, link.accountId, link.sha256).catch(() => null);
+    if (cached) return { status: "ready", save: remember(link.server, link.accountId, cached.sha256, new Uint8Array(cached.bytes)) };
     const download = await downloadGameSave(link.server, link.accountId);
     if (download.status !== "ok" || download.sha256 !== link.sha256) return { status: "changed" };
     const save = remember(link.server, link.accountId, download.sha256, download.bytes);
@@ -64,6 +65,6 @@ export function defaultGameSave(saves: readonly GameSaveMeta[], verifiedProfileI
 }
 
 /** Forgets this page's copy, e.g. after the Box is unlinked. */
-export function forgetLoadedGameSave(server: GameSaveServer, accountId: string): void {
-  loaded.delete(gameSaveCacheKey(server, accountId));
+export function forgetLoadedGameSave(server: GameSaveServer, accountId: string, sha256: string): void {
+  loaded.delete(gameSaveCacheKey(server, accountId, sha256));
 }
