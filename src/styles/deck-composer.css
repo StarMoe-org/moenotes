@@ -347,13 +347,13 @@
 .dr-meta-card span { color: var(--mn-text); }
 .dr-meta-facts { display: flex; flex-wrap: wrap; gap: 3px 10px; font-size: 11px; font-variant-numeric: tabular-nums; }
 .dr-meta-facts > span { white-space: nowrap; }
-.dr-orders { display: grid; gap: 6px; min-width: 0; padding-top: 10px; border-top: 1px solid var(--dc-line); }
-.dc-composer .dr-orders h4 { margin: 0; font-size: 12px; font-weight: 750; }
-.dr-orders dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
-.dr-orders dt { font-size: 11px; color: var(--mn-text-muted); }
-.dr-orders dd { display: grid; gap: 2px; margin: 0; min-width: 0; }
-.dr-orders dd strong { font-weight: 750; font-variant-numeric: tabular-nums; }
-.dr-orders dd small { font-size: 11px; color: var(--mn-text-muted); overflow-wrap: anywhere; }
+:is(.dr-orders, .dr-event-rewards) { display: grid; gap: 6px; min-width: 0; padding-top: 10px; border-top: 1px solid var(--dc-line); }
+.dc-composer :is(.dr-orders, .dr-event-rewards) h4 { margin: 0; font-size: 12px; font-weight: 750; }
+:is(.dr-orders, .dr-event-rewards) dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
+:is(.dr-orders, .dr-event-rewards) dt { font-size: 11px; color: var(--mn-text-muted); }
+:is(.dr-orders, .dr-event-rewards) dd { display: grid; gap: 2px; margin: 0; min-width: 0; }
+:is(.dr-orders, .dr-event-rewards) dd strong { font-weight: 750; font-variant-numeric: tabular-nums; }
+:is(.dr-orders, .dr-event-rewards) dd small { font-size: 11px; color: var(--mn-text-muted); overflow-wrap: anywhere; }
 .dr-issues-head { display: grid; gap: 4px; }
 .dr-issues-head strong { font-size: 14px; }
 .dc-composer .dr-issues-head p { font-size: 12px; color: var(--mn-text-muted); }
@@ -375,5 +375,5 @@
   .dr-meta tr > th, .dr-meta tr > td { padding: 0; border-top: 0; background: none; }
   .dr-meta tbody th { width: auto; grid-row: span 3; }
   .dr-meta tr > td { grid-column: 2; }
-  .dr-orders dl { grid-template-columns: minmax(0, 1fr); }
+  :is(.dr-orders, .dr-event-rewards) dl { grid-template-columns: minmax(0, 1fr); }
 }

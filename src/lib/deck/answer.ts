@@ -1,12 +1,14 @@
 import type { BoxCard, CardBox, CardFieldName, CardKind } from "@/lib/box/model";
 import { parseFraction, parseInterval, type DeckFraction, type DeckInterval } from "./interval";
-import type { DeckAggregation } from "./goals";
+import { isChallengePointPriority, type ChallengePointPriority, type DeckAggregation } from "./goals";
 
 /** The answer of a recommendation, `ournotes-deck.account-recommendation/1`, as the page reads it. */
 export const ANSWER_FORMAT = "ournotes-deck.account-recommendation/1";
 
 export interface DeckPair { member: number; snap: number | null }
-export interface DeckValue { score: number; exact: DeckFraction | null; interval: DeckInterval | null; payoff: { score: number; exact: DeckFraction | null; interval: DeckInterval | null } | null }
+export interface DeckPayoffValue { score: number; exact: DeckFraction | null; interval: DeckInterval | null }
+export interface DeckValue extends DeckPayoffValue { payoff: DeckPayoffValue | null }
+export type DeckEventRewards = Record<"challengePoints" | "eventPoints" | "eventItems", DeckPayoffValue & { exact: DeckFraction; interval: null }>;
 export interface DeckOrderStat { score: number; order: number[] }
 export interface DeckTeam {
   rank: number;
@@ -15,6 +17,7 @@ export interface DeckTeam {
   others: DeckPair[];
   power: number;
   value: DeckValue | null;
+  eventRewards?: DeckEventRewards;
   orders: { count: number; min: DeckOrderStat; median: DeckOrderStat; max: DeckOrderStat } | null;
   bestOrder: DeckOrderStat | null;
   /** Slots 0..4 of the formation screen; the leader sits in slot 2. */
@@ -35,6 +38,9 @@ export interface DeckAnswer {
     teams: DeckTeam[];
     coversAllOwnedCards: boolean;
     metric?: string;
+    secondaryPriority?: ChallengePointPriority;
+    resourceType?: number;
+    resourceId?: number;
     aggregation: DeckAggregation;
     goalKind: string | null;
     exitReason: string | null;
@@ -59,12 +65,25 @@ function stat(raw: unknown): DeckOrderStat {
   if (!record(raw) || num(raw.score) === null || !Array.isArray(raw.order)) throw new Error("Invalid order statistic");
   return { score: raw.score as number, order: raw.order.map(int) };
 }
-function team(raw: unknown, index: number, inheritedRankProof: boolean): DeckTeam {
+function exactReward(raw: unknown): DeckEventRewards["challengePoints"] {
+  if (!record(raw) || num(raw.score) === null || raw.interval !== null) throw new Error("Invalid exact event reward");
+  const exact = parseFraction(raw.exact);
+  if (!exact) throw new Error("Missing exact event reward");
+  return { score: raw.score as number, exact, interval: null };
+}
+function eventRewards(raw: unknown): DeckEventRewards {
+  if (!record(raw)) throw new Error("Missing event rewards for challenge-point priority");
+  return { challengePoints: exactReward(raw.challengePoints), eventPoints: exactReward(raw.eventPoints), eventItems: exactReward(raw.eventItems) };
+}
+function team(raw: unknown, index: number, inheritedRankProof: boolean, requireEventRewards: boolean): DeckTeam {
   if (!record(raw) || !record(raw.layout) || !Array.isArray(raw.others)) throw new Error("Invalid team");
   const layout = raw.layout as Record<string, unknown>;
   if (!Array.isArray(layout.members) || layout.members.length !== 5 || !Array.isArray(layout.snaps) || layout.snaps.length !== 5) throw new Error("Invalid layout");
   const orders = record(raw.orders) ? { count: int(raw.orders.count), min: stat(raw.orders.min), median: stat(raw.orders.median), max: stat(raw.orders.max) } : null;
-  return { rank: num(raw.rank) ?? index + 1, rankCertified: raw.rankCertified === undefined ? inheritedRankProof : raw.rankCertified === true, leader: pair(raw.leader), others: raw.others.map(pair), power: num(raw.power) ?? 0, value: value(raw.value), orders,
+  const teamValue = value(raw.value);
+  if (requireEventRewards && !teamValue?.payoff) throw new Error("Missing challenge-point payoff");
+  return { rank: num(raw.rank) ?? index + 1, rankCertified: raw.rankCertified === undefined ? inheritedRankProof : raw.rankCertified === true, leader: pair(raw.leader), others: raw.others.map(pair), power: num(raw.power) ?? 0, value: teamValue, orders,
+    ...(requireEventRewards ? { eventRewards: eventRewards(raw.eventRewards) } : {}),
     bestOrder: record(raw.bestOrder) ? stat(raw.bestOrder) : null,
     layout: { members: layout.members.map(int), snaps: layout.snaps.map(item => item === null ? null : int(item)) } };
 }
@@ -85,7 +104,14 @@ export function parseDeckAnswer(json: string): DeckAnswer {
     const phase = r.phase === "preprocess" || r.phase === "search" || r.phase === "proof" || r.phase === "done" ? r.phase : "search";
     const account = record(r.account) && record(r.account.cards) ? r.account.cards : {};
     if (r.aggregation !== undefined && r.aggregation !== "expected" && r.aggregation !== "maximum") throw new Error("Unknown result aggregation");
+    const metric = record(r.metric) ? r.metric : {};
+    const secondaryPriority = metric.secondaryPriority;
+    const hasPriority = secondaryPriority !== undefined && secondaryPriority !== null;
+    if (hasPriority && (!isChallengePointPriority(secondaryPriority) || metric.kind !== "challengePoints"
+      || r.aggregation === "maximum" || metric.resourceType !== 1 || !Number.isSafeInteger(metric.resourceId)
+      || (metric.resourceId as number) <= 0 || !Array.isArray(r.teams))) throw new Error("Invalid challenge-point priority result");
     result = {
+      ...(hasPriority ? { secondaryPriority: secondaryPriority as ChallengePointPriority, resourceType: 1, resourceId: metric.resourceId as number } : {}),
       phase, elapsedMs: num(r.elapsedMs),
       aggregation: r.aggregation === "maximum" ? "maximum" : "expected",
       goalKind: record(r.goal) && typeof r.goal.kind === "string" ? r.goal.kind : null,
@@ -94,7 +120,7 @@ export function parseDeckAnswer(json: string): DeckAnswer {
       play: record(r.goal) && record(r.goal.play) && num(r.goal.play.judged) !== null && num(r.goal.play.misses) !== null
         ? { judged: r.goal.play.judged as number, misses: r.goal.play.misses as number } : null,
       optimality: { proven: o.proven === true, lowerBound: num(o.lowerBound), upperBound: num(o.upperBound), fraction: num(o.fraction) },
-      teams: Array.isArray(r.teams) ? r.teams.map((raw, index) => team(raw, index, o.proven === true)) : [],
+      teams: Array.isArray(r.teams) ? r.teams.map((raw, index) => team(raw, index, o.proven === true, hasPriority)) : [],
       coversAllOwnedCards: account.coversAllOwnedCards !== false,
     };
   }

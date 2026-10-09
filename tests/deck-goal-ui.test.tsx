@@ -4,7 +4,7 @@ import DeckGoalConditions from "../src/components/deck/DeckGoalConditions";
 import DeckObjective from "../src/components/deck/DeckObjective";
 import DeckResult from "../src/components/deck/DeckResult";
 import DeckWorkspace from "../src/components/deck/DeckWorkspace";
-import { defaultDeckGoalInput, type DeckSolverCapabilities } from "../src/lib/deck/goals";
+import { defaultDeckGoalInput, parseCapabilities, type DeckSolverCapabilities } from "../src/lib/deck/goals";
 import { parseDeckAnswer } from "../src/lib/deck/answer";
 
 test("event deadlines render in server time before hydration regardless of the host timezone", () => {
@@ -155,5 +155,64 @@ test("event badge results explain exact-grade rewards using the result metric", 
     const html = renderToStaticMarkup(<DeckResult locale="en-US" goal="power" stale timeLimit={60} box={null} catalog={{ members: [], snaps: [] }} linked={false} busy={false}
       job={{ status: "done", key: "badges", answer, stopped: false }} onStop={noop} onRerun={noop} onEditCard={noop} onPlayer={noop} onAnswerAll={noop} />);
     expect(html.includes("single matching result grade")).toBe(metric === "eventItems");
+  }
+});
+
+
+test("CP conditions preserve the selected secondary priority and explicitly gate unsupported modes", () => {
+  const input = defaultDeckGoalInput("challengePoints");
+  const legacy = { goals: ["freeLive"], metrics: { freeLive: ["challengePoints"] }, accuracy: { great: true, just: false } };
+  const render = (patch = {}, capabilities: DeckSolverCapabilities | null = legacy) => renderToStaticMarkup(
+    <DeckGoalConditions locale="en-US" input={{ ...input, ...patch }} capabilities={capabilities} onChange={() => {}} />);
+  expect(render()).toContain('value="none" selected=""');
+  expect(render()).not.toContain("does not support CP-first");
+  const capabilities = parseCapabilities(JSON.stringify({ ...legacy,
+    eventItemRewards: { selection: "exactResultGrade", eventGroupField: "eventGroup", rowsPerGrade: 1, probabilityMarker: 10000 },
+    challengePointPriorities: { priorities: ["eventPointsFirst", "eventItemsFirst"], objective: "lexicographicExpected", primary: "challengePoints", bestPrimaryOnly: true, lotteryFree: true } }))!;
+  for (const secondaryPriority of ["eventPointsFirst", "eventItemsFirst"] as const) {
+    const blocked = render({ secondaryPriority });
+    expect(blocked).toContain(`value="${secondaryPriority}" selected=""`);
+    expect(blocked).toContain("does not support CP-first");
+    const supported = render({ secondaryPriority }, capabilities);
+    expect(supported).toContain("Maximize average CP first");
+    expect(supported).toContain("highest-CP tier only");
+    expect(supported).not.toContain("does not support CP-first");
+    const maximum = render({ secondaryPriority, aggregation: "maximum" }, capabilities);
+    expect(maximum).toContain("require Average performance");
+    const objective = renderToStaticMarkup(<DeckObjective locale="en-US" input={{ ...input, secondaryPriority, aggregation: "maximum" }} capabilities={capabilities} onChange={() => {}} />);
+    expect(objective).toMatch(/<input[^>]*disabled=""[^>]*checked=""[^>]*value="maximum"/);
+  }
+  expect(render({ secondaryPriority: "eventPointsFirst" }, null)).toContain("does not support CP-first");
+});
+
+test("CP secondary results retain their priority, exact rewards and proof state after input changes", () => {
+  const reward = (numerator: string, denominator: string) => ({ score: Number(numerator) / Number(denominator), exact: { numerator, denominator }, interval: null });
+  const noop = () => {};
+  for (const secondaryPriority of ["eventPointsFirst", "eventItemsFirst"]) {
+    const answer = parseDeckAnswer(JSON.stringify({ format: "ournotes-deck.account-recommendation/1", final: true, status: "ok", result: {
+      goal: { kind: "freeLive" }, metric: { kind: "challengePoints", secondaryPriority, resourceType: 1, resourceId: 90 }, aggregation: "expected", phase: "done", elapsedMs: 10,
+      optimality: { proven: false, lowerBound: 75.5, upperBound: 75.5 }, exitReason: "timeLimit", teams: [{ rank: 1, rankCertified: false,
+        leader: { member: 3, snap: null }, others: [1, 2, 4, 5].map(member => ({ member, snap: null })), power: 100,
+        value: { score: 999999, payoff: reward("151", "2") },
+        eventRewards: { challengePoints: reward("151", "2"), eventPoints: reward("901", "3"), eventItems: reward("39", "4") },
+        orders: null, layout: { members: [1, 2, 3, 4, 5], snaps: [null, null, null, null, null] } }] } }));
+    const html = renderToStaticMarkup(<DeckResult locale="en-US" goal="power" stale timeLimit={60} box={null} catalog={{ members: [], snaps: [] }} linked={false} busy={false}
+      job={{ status: "done", key: secondaryPriority, answer, stopped: false }} onStop={noop} onRerun={noop} onEditCard={noop} onPlayer={noop} onAnswerAll={noop} />);
+    expect(html).toContain(secondaryPriority === "eventPointsFirst" ? "CP → PT → badges" : "CP → badges → PT");
+    expect(html).toContain("Expected CP earned per live");
+    expect(html).toContain("Expected points per live");
+    expect(html).toContain("Expected badges per live");
+    for (const fraction of ["151/2", "901/3", "39/4"]) expect(html).toContain(fraction);
+    expect(html).toContain("75.5");
+    expect(html).toContain("9.75");
+    expect(html).toContain("Time limit reached");
+    expect(html).toContain("not proven");
+    expect(html).toContain("previous result");
+    expect(html).toContain("fewer teams may qualify");
+    expect(html).not.toContain('class="dr-bounds"');
+    expect(html).not.toContain("999,999");
+    expect((html.match(/class="dr-team"/g) ?? []).length).toBe(1);
+    const ptIndex = html.indexOf("<dt>Expected points"), itemIndex = html.indexOf("<dt>Expected badges");
+    expect(ptIndex < itemIndex).toBe(secondaryPriority === "eventPointsFirst");
   }
 });

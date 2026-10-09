@@ -110,6 +110,31 @@ reward-group shape disables the badge calculation. The request metric is
 exact grade; the engine aggregates these amounts for the chosen objective. Event-point and challenge-point
 requests also use `rewardProjection: true`.
 
+### Challenge-point secondary priorities
+
+The challenge-point metric accepts an optional `secondaryPriority` of `eventPointsFirst` or `eventItemsFirst`,
+with `resourceType: 1` and the event badge `resourceId`. These three fields are emitted together only for a
+combined objective. The goal uses expected rewards: maximize CP first, then PT and badges in the selected order.
+It supports ordinary Live scenes and ordinary Skip. Results contain up to `k` teams from the highest-CP tier;
+that tier may contain fewer than `k` teams. A time-limited search remains unproven.
+
+Both the event-item reward capability above and this capability are required:
+
+```json
+{"challengePointPriorities":{"priorities":["eventPointsFirst","eventItemsFirst"],"objective":"lexicographicExpected","primary":"challengePoints","bestPrimaryOnly":true,"lotteryFree":true}}
+```
+
+The engine reports unsupported skill conditions. Badge resource and reward-catalogue checks also apply to the
+combined objective. Pure challenge-point requests retain their scene and metric capability checks.
+
+The result metric echoes `secondaryPriority`, `resourceType` and `resourceId`. Each combined-result team includes
+`eventRewards: {challengePoints, eventPoints, eventItems}`; each value has `score`, an exact rational
+`{numerator, denominator}` using decimal strings, and `interval: null`. The CP primary value remains in
+`team.value.payoff`. A combined result with missing or malformed reward values is a protocol error. The page
+uses the result's echoed priority and rewards when displaying a previous calculation. Combined results show
+the complete proof state; scalar CP-bound gaps are omitted from their display because secondary ranking
+requires the full lexicographic proof.
+
 `hasLuck` is `true` when any `_gekisouMission1..3` value is LUCK (`2`), `false` when every mission is COMBO (`1`)
 or JUST (`3`), and `null` when the mission data is otherwise incomplete. Gekisou team calculations require
 `hasLuck: false`. Free Live, Challenge Live, Skip and power calculations use their own scene checks regardless of

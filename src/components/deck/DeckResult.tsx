@@ -6,7 +6,7 @@ import type { BoxCard, CardBox, CardFieldName } from "@/lib/box/model";
 import type { DeckAnswer, DeckIssueGroups, DeckTeam } from "@/lib/deck/answer";
 import { formatDeckInterval } from "@/lib/deck/interval";
 import { groupIssues, isOutOfMemory } from "@/lib/deck/answer";
-import type { DeckAggregation, DeckGoal } from "@/lib/deck/goals";
+import { RECOMMENDATION_COUNT, type ChallengePointPriority, type DeckAggregation, type DeckGoal } from "@/lib/deck/goals";
 import type { DeckJobState } from "./use-deck-solver";
 import { BoxArtwork, cardRarityLabel, cardTitle, type BoxCatalog } from "@/components/box/BoxManager";
 import NativeFormationGroup from "@/components/chart-data/NativeFormationGroup";
@@ -49,6 +49,7 @@ export default function DeckResult(props: DeckResultProps) {
   const optimality = result?.optimality;
   const metric = result?.metric ?? (props.goal === "power" ? "power" : ["eventPoints", "challengePoints", "eventItems"].includes(props.goal) ? props.goal : "score");
   const aggregation = result?.aggregation ?? "expected";
+  const secondaryPriority = result?.secondaryPriority ?? null;
   const deterministic = result?.goalKind === "skip" || metric === "power";
   return <div className="dr-result" data-state={running ? "running" : "done"} aria-busy={running}>
     {props.stale && !running && <div className="dr-stale" role="status"><strong>{tr("stale")}</strong><button type="button" onClick={props.onRerun}>{tr("rerun")}</button></div>}
@@ -62,16 +63,20 @@ export default function DeckResult(props: DeckResultProps) {
       </> : optimality?.proven ? <div className="dr-proven"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true"><path d="m3.5 8 3 3 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
         <ProofLink locale={locale} anchor="proven" label={tr("proven")} />{result?.elapsedMs !== null && result?.elapsedMs !== undefined && <small>{tr("elapsed", { n: (result.elapsedMs / 1000).toFixed(1) })}</small>}</div>
         : <div className="dr-unproven"><ProofLink locale={locale} anchor="unproven" label={tr(job.status === "done" && job.stopped ? "stoppedUnproven" : result?.exitReason === "timeLimit" ? "timedOutUnproven" : "unproven")} /></div>}
-      {optimality && !optimality.proven && optimality.upperBound !== null && optimality.lowerBound !== null && <p className="dr-bounds">
+      {optimality && !optimality.proven && !secondaryPriority && optimality.upperBound !== null && optimality.lowerBound !== null && <p className="dr-bounds">
         {tr("bounds", { best: formatValue(optimality.lowerBound, metric, locale), limit: formatValue(optimality.upperBound, metric, locale) })}
         {optimality.lowerBound > 0 && <span> · {tr("gapPercent", { n: percent(Math.max(0, optimality.upperBound - optimality.lowerBound) / optimality.lowerBound) })}</span>}</p>}
       {result && !result.coversAllOwnedCards && <p className="dr-note">{tr("partialBox")}</p>}
     </div>
-    {result && !deterministic && <p className="dr-objective"><strong>{t(locale, `deckWorkspace.objective.${aggregation}`)}</strong>
+    {result && secondaryPriority ? <div className="dr-objective">
+      <strong>{t(locale, `deckWorkspace.conditions.priorities.${secondaryPriority}`)}</strong>
+      <span>{t(locale, "deckWorkspace.conditions.priorityNote")}</span>
+      <span>{t(locale, "deckWorkspace.conditions.priorityTeams", { n: RECOMMENDATION_COUNT })}</span>
+    </div> : result && !deterministic && <p className="dr-objective"><strong>{t(locale, `deckWorkspace.objective.${aggregation}`)}</strong>
       <span>{t(locale, `deckWorkspace.objective.${aggregation}Note`)}</span></p>}
     {result && metric === "eventItems" && <p className="dr-note">{t(locale, "deckWorkspace.conditions.eventItemsNote")}</p>}
     {result?.play && <p className="dr-note">{tr("playSummary", { notes: result.play.judged, misses: result.play.misses })}</p>}
-    {result && result.teams.length > 0 ? <ol className="dr-teams">{result.teams.map((team, index) => <TeamCard key={index} {...props} team={team} metric={metric} aggregation={aggregation} deterministic={deterministic} first={index === 0} final={!running} />)}</ol>
+    {result && result.teams.length > 0 ? <ol className="dr-teams">{result.teams.map((team, index) => <TeamCard key={index} {...props} team={team} metric={metric} aggregation={aggregation} secondaryPriority={secondaryPriority} deterministic={deterministic} first={index === 0} final={!running} />)}</ol>
       : <p className="dr-muted">{tr(running ? "searching" : "noTeam")}</p>}
   </div>;
 }
@@ -90,7 +95,7 @@ function formatValue(value: number, goal: string, locale: AppLocale): string {
   return new Intl.NumberFormat(locale, { maximumFractionDigits: decimals }).format(decimals ? value : Math.floor(value));
 }
 
-function TeamCard(props: DeckResultProps & { team: DeckTeam; metric: string; aggregation: DeckAggregation; deterministic: boolean; first: boolean; final: boolean }) {
+function TeamCard(props: DeckResultProps & { team: DeckTeam; metric: string; aggregation: DeckAggregation; secondaryPriority: ChallengePointPriority | null; deterministic: boolean; first: boolean; final: boolean }) {
   const { locale, team, metric, aggregation, box, catalog } = props;
   const tr = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.solver.${key}`, values);
   const cardOf = (kind: "member" | "snap", id: number | null) => id === null ? null : box?.cards.find(card => card.kind === kind && card.identity.value === String(id)) ?? null;
@@ -107,7 +112,9 @@ function TeamCard(props: DeckResultProps & { team: DeckTeam; metric: string; agg
       supportLevel: snap?.fields.level.value ?? undefined, supportRank: snap?.fields.rank.value ?? undefined };
   });
   const sequence = (order: number[]) => order.map(id => memberView(id)?.characterName ?? String(id)).join(" → ");
-  const valueLabel = metric === "power" ? "valueLabel.power" : props.deterministic ? `deterministicLabel.${metric}`
+  const rewardOrder = props.secondaryPriority === "eventPointsFirst"
+    ? ["challengePoints", "eventPoints", "eventItems"] as const : ["challengePoints", "eventItems", "eventPoints"] as const;
+  const valueLabel = props.secondaryPriority ? "valueLabel.challengePoints" : metric === "power" ? "valueLabel.power" : props.deterministic ? `deterministicLabel.${metric}`
     : aggregation === "maximum" ? `maximumLabel.${metric}` : metric === "score" ? "metricLabel.score" : `valueLabel.${metric}`;
   return <li className="dr-team" data-first={props.first}>
     <div className="dr-team-head">
@@ -116,6 +123,16 @@ function TeamCard(props: DeckResultProps & { team: DeckTeam; metric: string; agg
         <strong>{main === null ? "—" : interval ? formatDeckInterval(interval, locale, payoff ? 2 : 0) : formatValue(main, metric, locale)}</strong></div>
       {metric !== "power" && <div className="dr-power"><small>{tr("power")}</small><span>{formatValue(team.power, "power", locale)}</span></div>}
     </div>
+    {props.secondaryPriority && team.eventRewards && <section className="dr-event-rewards" aria-label={tr("eventRewards")}>
+      <h4>{tr("eventRewards")}</h4>
+      <dl>{rewardOrder.map(kind => {
+        const reward = team.eventRewards![kind];
+        return <div key={kind}><dt>{tr(`valueLabel.${kind}`)}</dt><dd>
+          <strong>{formatValue(reward.score, kind, locale)}</strong>
+          <small>{tr("exactReward", { numerator: reward.exact.numerator, denominator: reward.exact.denominator })}</small>
+        </dd></div>;
+      })}</dl>
+    </section>}
     <div className="dr-formation" data-compact={!props.first}>
       <div className="dc-stage"><NativeFormationGroup locale={locale} slots={slots} label={tr("formation")} /></div>
     </div>

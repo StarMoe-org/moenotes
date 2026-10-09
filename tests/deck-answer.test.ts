@@ -151,3 +151,67 @@ describe("issues", () => {
     expect(groups.vip).toHaveLength(1);
   });
 });
+
+
+describe("challenge-point priority answers", () => {
+  const payoff = (numerator: string, denominator = "1") => ({ score: Number(numerator) / Number(denominator), exact: { numerator, denominator }, interval: null });
+  const combo = (secondaryPriority = "eventPointsFirst") => {
+    const raw = JSON.parse(answer({}));
+    raw.result.metric = { kind: "challengePoints", eventId: 7, consumption: 3, secondaryPriority, resourceType: 1, resourceId: 90 };
+    raw.result.aggregation = "expected";
+    raw.result.teams[0].value.payoff = payoff("151", "2");
+    raw.result.teams[0].eventRewards = { challengePoints: payoff("151", "2"), eventPoints: payoff("901", "3"), eventItems: payoff("9007199254740993", "9007199254740992") };
+    return raw;
+  };
+  test("retains the echoed priority, badge resource and exact rewards with fewer than five teams", () => {
+    for (const priority of ["eventPointsFirst", "eventItemsFirst"]) for (const count of [0, 1, 3]) {
+      const raw = combo(priority);
+      raw.result.teams = Array.from({ length: count }, (_, i) => ({ ...raw.result.teams[0], rank: i + 1 }));
+      const result = parseDeckAnswer(JSON.stringify(raw)).result!;
+      expect(result.secondaryPriority).toBe(priority);
+      expect(result.resourceType).toBe(1);
+      expect(result.resourceId).toBe(90);
+      expect(result.teams).toHaveLength(count);
+      expect(result.optimality.proven).toBe(true);
+      if (count) {
+        expect(result.teams[0]!.value!.payoff!.score).toBe(75.5);
+        expect(result.teams[0]!.eventRewards!.eventItems.exact.numerator).toBe("9007199254740993");
+        expect(result.teams[0]!.eventRewards!.eventPoints.exact).toEqual({ numerator: "901", denominator: "3" });
+      }
+    }
+  });
+  test("missing or malformed combined rewards are protocol errors in progress and final answers", () => {
+    for (const final of [false, true]) {
+      for (const field of ["challengePoints", "eventPoints", "eventItems", "all"]) {
+        const raw = combo(); raw.final = final;
+        if (field === "all") delete raw.result.teams[0].eventRewards;
+        else delete raw.result.teams[0].eventRewards[field];
+        expect(() => parseDeckAnswer(JSON.stringify(raw))).toThrow();
+      }
+      for (const patch of [{ exact: null }, { exact: { numerator: "1", denominator: "0" } }, { score: "12" }, { interval: { lower: 1, upper: 2 } }]) {
+        const raw = combo(); raw.final = final;
+        Object.assign(raw.result.teams[0].eventRewards.eventPoints, patch);
+        expect(() => parseDeckAnswer(JSON.stringify(raw))).toThrow();
+      }
+    }
+  });
+  test("malformed priority metadata and a missing CP primary payoff are rejected", () => {
+    for (const patch of [{ secondaryPriority: "unknown" }, { resourceType: 2 }, { resourceId: 0 }, { kind: "eventPoints" }]) {
+      const raw = combo(); Object.assign(raw.result.metric, patch);
+      expect(() => parseDeckAnswer(JSON.stringify(raw))).toThrow();
+    }
+    const maximum = combo(); maximum.result.aggregation = "maximum";
+    expect(() => parseDeckAnswer(JSON.stringify(maximum))).toThrow();
+    const absent = combo(); absent.result.teams[0].value.payoff = null;
+    expect(() => parseDeckAnswer(JSON.stringify(absent))).toThrow();
+  });
+  test("timeouts remain unproven and non-combined answers keep their existing shape", () => {
+    const raw = combo(); raw.result.optimality.proven = false; raw.result.exitReason = "timeLimit";
+    expect(parseDeckAnswer(JSON.stringify(raw)).result!.optimality.proven).toBe(false);
+    expect(parseDeckAnswer(JSON.stringify(raw)).result!.exitReason).toBe("timeLimit");
+    const plain = JSON.parse(answer({})); plain.result.metric = { kind: "challengePoints" };
+    const result = parseDeckAnswer(JSON.stringify(plain)).result!;
+    expect(result.secondaryPriority).toBeUndefined();
+    expect(result.teams[0]!.eventRewards).toBeUndefined();
+  });
+});
