@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { computes, computesGoal, defaultDeckGoalInput, goalGap, heldEvent, jstTicks, parseCapabilities, recommendationRequest, type DeckEvent, type DeckGoalInput } from "../src/lib/deck/goals";
+import { computes, computesGoal, defaultDeckGoalInput, effectiveAggregation, goalGap, heldEvent, jstTicks, parseCapabilities, recommendationRequest, type DeckEvent, type DeckGoalInput } from "../src/lib/deck/goals";
 import { parseMasterDate } from "../src/lib/schedule";
 
 const event: DeckEvent = { id: 7, name: "Event", startAt: "2030/01/01 15:00:00+08:00", endAt: "2030/01/09 20:59:59+08:00", itemId: 90,
@@ -20,6 +20,56 @@ describe("held event", () => {
 });
 
 describe("recommendation request", () => {
+  test("maximum changes only the aggregation and preserves the declared play, pool and event conditions", () => {
+    const input = { ...defaultDeckGoalInput("eventPoints"), venue: "freeLive" as const, musicId: 245, boosts: 3,
+      playMode: "pattern" as const, missEvery: 17, greatPercent: 7, justPercent: 81, othersAverageScore: 120000 };
+    const context = { event, now, constraints: { includeMembers: ["61"], excludeMembers: ["62"], excludeSnaps: ["70"] } };
+    const expected = JSON.parse(recommendationRequest(input, context));
+    const maximum = JSON.parse(recommendationRequest({ ...input, aggregation: "maximum" }, context));
+    expect(input.aggregation).toBe("expected");
+    expect(expected.aggregation).toBeUndefined();
+    expect(maximum).toEqual({ ...expected, aggregation: "maximum" });
+    expect(maximum.goal.play).toEqual({ kind: "pattern", greatFraction: 0.07, justFraction: 0, missEvery: 17 });
+  });
+  test("deterministic goals keep one value while preserving the player's live objective preference", () => {
+    for (const goal of ["power", "skip", "challengeSkip"] as const) {
+      const input = { ...defaultDeckGoalInput(goal), aggregation: "maximum" as const, musicId: 245, challengeMusicId: 1 };
+      expect(effectiveAggregation(input)).toBe("expected");
+      expect(request(input).aggregation).toBeUndefined();
+      expect(input.aggregation).toBe("maximum");
+      expect(effectiveAggregation({ ...input, goal: "free" })).toBe("maximum");
+    }
+    expect(request({ goal: "eventPoints", venue: "skip", musicId: 245, aggregation: "maximum" }).aggregation).toBeUndefined();
+  });
+  test("Gekisou scenes use Expected and returning to Free Live restores the objective preference", () => {
+    const stored = { ...defaultDeckGoalInput("free"), musicId: 245, arenaMusicId: 42, aggregation: "maximum" as const,
+      playMode: "pattern" as const, greatPercent: 7, justPercent: 81, missEvery: 17 };
+    expect(effectiveAggregation(stored)).toBe("maximum");
+    for (const goal of ["battle", "mission", "arena"] as const) {
+      const selected = { ...stored, goal };
+      expect(effectiveAggregation(selected)).toBe("expected");
+      expect(request(selected)).toEqual(request({ ...selected, aggregation: "expected" }));
+      expect(selected.aggregation).toBe("maximum");
+      expect(selected.greatPercent).toBe(7);
+      expect(selected.justPercent).toBe(81);
+      expect(selected.missEvery).toBe(17);
+      expect(request({ ...selected, goal: "free" }).aggregation).toBe("maximum");
+    }
+  });
+  test("event payoff venues retain Maximum only for non-Gekisou played lives", () => {
+    for (const goal of ["eventPoints", "eventItems", "challengePoints"] as const) {
+      for (const venue of ["battleLive", "missionLive", "arenaLive", "freeLive", "challengeLive", "skip", "challengeSkip"] as const) {
+        if (goal === "challengePoints" && (venue === "challengeLive" || venue === "challengeSkip")) continue;
+        const input = { ...defaultDeckGoalInput(goal), venue, musicId: 245, arenaMusicId: 42, challengeMusicId: 1,
+          aggregation: "maximum" as const, rewardContextConfirmed: true, localEventPoints: 100, localChallengePoints: 800 };
+        const available = venue === "freeLive" || venue === "challengeLive";
+        expect(effectiveAggregation(input)).toBe(available ? "maximum" : "expected");
+        expect(request(input).aggregation).toBe(available ? "maximum" : undefined);
+        expect(input.aggregation).toBe("maximum");
+      }
+    }
+    expect(request({ goal: "challenge", challengeMusicId: 1, aggregation: "maximum" }).aggregation).toBe("maximum");
+  });
   test("a battle live sends Great and Just, rank 1 and the score metric", () => {
     const body = request({ goal: "battle", musicId: 245, difficulty: "expert", greatPercent: 3, justPercent: 95 });
     expect(body.format).toBe("ournotes-deck.recommendation-request/2");
@@ -115,6 +165,19 @@ describe("capabilities", () => {
   test("an engine without capabilities reports none", () => {
     expect(parseCapabilities(null)).toBeNull();
     expect(parseCapabilities("not json")).toBeNull();
+  });
+  test("maximum requires support for both the chosen scene and metric and preserves play restrictions", () => {
+    const legacy = { goals: ["freeLive", "battleLive"], metrics: { freeLive: ["score", "eventPoints"], battleLive: ["score"] }, accuracy: { great: false, just: false } };
+    const input = { ...defaultDeckGoalInput("free"), musicId: 100, aggregation: "maximum" as const };
+    expect(computes(parseCapabilities(JSON.stringify(legacy))!, input)).toBe(false);
+    const cap = parseCapabilities(JSON.stringify({ ...legacy, aggregations: { maximum: { freeLive: ["score"] } } }))!;
+    expect(computes(cap, input)).toBe(true);
+    expect(computes(cap, { ...input, goal: "eventPoints" })).toBe(false);
+    expect(computes(cap, { ...input, goal: "battle" })).toBe(true);
+    expect(computes(cap, { ...input, greatPercent: 5 })).toBe(false);
+    expect(computes(cap, { ...input, playMode: "pattern" })).toBe(false);
+    expect(computes(cap, { ...input, goal: "eventPoints", aggregation: "expected" })).toBe(true);
+    expect(input.aggregation).toBe("maximum");
   });
 });
 

@@ -28,6 +28,7 @@ export const enUS = {
     consent: "This application can read the full content of the selected archives. Only authorize applications you trust.",
   },
   deckWorkspace: {
+    objective: {"label": "Search objective", "expected": "Average performance", "maximum": "Theoretical maximum", "expectedNote": "Keeps your play conditions and ranks teams by the average over random skill orders, LUCK and other random outcomes.", "maximumNote": "For Free and Challenge Live, finds the highest value reachable through skill orders and random skill outcomes under your play conditions. The maximum is proved only when the search completes; it is not guaranteed every live.", "unavailable": "Theoretical maximum is unavailable for these conditions. Choose Average performance to search.", "loading": "Checking whether theoretical maximum is available…", "gekisouNote": "Gekisou modes use Average performance. Theoretical maximum is available for Free and Challenge Live."},
     "arenaSong": "Arena song",
     "chooseArena": "Choose an Arena song",
     "noArena": "No Arena songs in this server’s current data",
@@ -559,7 +560,7 @@ export const enUS = {
       "skip": "Score from skipping this song.",
       "challengeSkip": "Skip a challenge song with event bonuses.",
 
-      "challenge": "Expected score on your chosen song and difficulty, with event bonuses. The song record keeps the highest score across difficulties.",
+      "challenge": "Score on your chosen song and difficulty, with event bonuses. The song record keeps the highest score across difficulties.",
       "challengePoints": "Challenge points earned per live. Event PT bonuses do not multiply CP.",
       "eventPoints": "Event points per live.",
       "eventItems": "Event badges per live.",
@@ -592,6 +593,9 @@ export const enUS = {
     "othersAverage": "Other players' average score",
     "othersAverageSame": "Leave empty for the same as yours",
     "solver": {
+      "maximumLabel": {"score": "Theoretical maximum score", "challengePoints": "Maximum CP earned per live", "eventPoints": "Maximum points per live", "eventItems": "Maximum badges per live"},
+      "deterministicLabel": {"score": "Score", "challengePoints": "CP earned per live", "eventPoints": "Points per live", "eventItems": "Badges per live"},
+      "bestOrder": "Skill order for the highest objective value",
       "metricLabel": {"score": "Expected score"},
       "playSummary": "Declared play: {notes} judged notes · {misses} Misses",
       "start": "Build team",

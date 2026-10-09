@@ -17,6 +17,7 @@ export const jaJP = {
       description: "Moenotes API で公開プロフィール、ランキング、ガチャ情報、許可された gzip セーブを取得します。",
     }, developer: "開発者アプリ", developerHint: "アプリを作成するとすぐに認証情報が発行されます。Secret はサーバーのみで保管してください。", grants: "第三者アーカイブへのアクセス", grantsHint: "選択したアーカイブだけを共有します。", name: "アプリ名", website: "HTTPS ウェブサイト", description: "説明", create: "アプリを作成", emptyApps: "アプリはまだありません。", clientId: "Client ID", invite: "招待リンクをコピー", copy: "コピー", copied: "コピーしました", lookup: "アプリを検索", choose: "アップロード済みアーカイブを選択", emptyArchives: "利用できるアーカイブはありません。", authorize: "選択したアーカイブを許可", emptyGrants: "許可はまだありません。", revoke: "取り消す", confirmRevoke: "このアクセスを取り消しますか？", cancel: "キャンセル", refresh: "更新", generate: "シークレットを生成", rotate: "シークレットをローテーション", revokeSecret: "シークレットを取り消す", keyLimit: "有効なキーが2つあります。新しいキーを配置してから、古いキーを手動で取り消してください。", confirmRotate: "新しいキーを生成しますか？古いキーは手動で取り消すまで有効です。", secret: "クライアントシークレット", secretHint: "一度だけ表示されます。サーバーに安全に保存し、ブラウザコードには置かないでください。", dismiss: "シークレットを隠す", secretActive: "有効", secretMissing: "有効なシークレットなし", ready: "利用可能", disabled: "無効", error: "リクエストに失敗しました。", success: "保存しました", unavailable: "現在利用できません。", consent: "選択したアーカイブの全内容を読み取れます。信頼できるアプリだけを許可してください。" },
   deckWorkspace: {
+    objective: {"label": "探索の目標", "expected": "平均を重視", "maximum": "理論上の最高値", "expectedNote": "現在の演奏条件を保ち、ランダムなスキル順や LUCK などの結果の平均で編成を比較します。", "maximumNote": "フリーライブとチャレンジライブで、現在の演奏条件を保ち、スキル順やランダムなスキル結果から到達できる最高値を探します。最高値の証明には探索の完了が必要で、毎回出せる値ではありません。", "unavailable": "この条件では理論上の最高値に未対応です。「平均を重視」で探索できます。", "loading": "理論上の最高値に対応しているか確認中…", "gekisouNote": "撃奏モードは「平均を重視」で探索します。フリーライブとチャレンジライブでは「理論上の最高値」を選べます。"},
     "arenaSong": "アリーナ楽曲",
     "chooseArena": "アリーナ楽曲を選択",
     "noArena": "現在のサーバーデータにアリーナ楽曲はありません",
@@ -548,7 +549,7 @@ export const jaJP = {
       "skip": "この楽曲をスキップした場合のスコア。",
       "challengeSkip": "イベント補正込みでチャレンジ楽曲をスキップ。",
 
-      "challenge": "選んだ曲・難易度の期待スコア（イベントボーナス込み）。曲の記録には全難易度の最高スコアが残ります。",
+      "challenge": "選んだ曲・難易度のスコア（イベントボーナス込み）。曲の記録には全難易度の最高スコアが残ります。",
       "challengePoints": "1回で獲得するCP。イベントPTボーナスはCPに掛かりません。",
       "eventPoints": "1回あたりのイベントPT。",
       "eventItems": "1回あたりのイベントバッジ。",
@@ -581,6 +582,9 @@ export const jaJP = {
     "othersAverage": "ルームの他プレイヤーの平均スコア",
     "othersAverageSame": "空欄なら自分と同じスコア",
     "solver": {
+      "maximumLabel": {"score": "理論上の最高スコア", "challengePoints": "1回の最大獲得 CP", "eventPoints": "1回の最大 PT", "eventItems": "1回の最大バッジ数"},
+      "deterministicLabel": {"score": "スコア", "challengePoints": "1回の獲得 CP", "eventPoints": "1回の PT", "eventItems": "1回のバッジ数"},
+      "bestOrder": "目標の最高値に到達するスキル順",
       "metricLabel": {"score": "期待スコア"},
       "playSummary": "指定演奏：判定ノーツ {notes} 個 · Miss {misses} 個",
       "start": "編成を計算",

@@ -9,6 +9,8 @@ export const EVERYDAY_GOALS = ["battle", "mission", "arena", "free", "skip", "po
 export const DECK_GOALS = [...EVENT_GOALS, ...EVERYDAY_GOALS] as const;
 export type DeckGoal = typeof DECK_GOALS[number];
 export const DEFAULT_DECK_GOAL: DeckGoal = "battle";
+/** Aggregate the reachable random outcomes while keeping the declared play fixed. */
+export type DeckAggregation = "expected" | "maximum";
 export const isEventGoal = (goal: DeckGoal): boolean => (EVENT_GOALS as readonly string[]).includes(goal);
 export const isEventPayoffGoal = (goal: DeckGoal): boolean => goal === "challengePoints" || goal === "eventPoints" || goal === "eventItems";
 
@@ -61,6 +63,7 @@ export function heldEvent(events: readonly DeckEvent[], now: number, parse: (dat
 /** Everything the goal controls set. Inputs a goal does not read are ignored when its request is built. */
 export interface DeckGoalInput {
   goal: DeckGoal;
+  aggregation: DeckAggregation;
   musicId: number | null;
   difficulty: MusicDifficulty;
   /** `MasterChallengeMusic._id` of the chosen challenge song. */
@@ -89,7 +92,7 @@ export interface DeckGoalInput {
 }
 
 export const defaultDeckGoalInput = (goal: DeckGoal = DEFAULT_DECK_GOAL): DeckGoalInput => ({
-  goal, musicId: null, difficulty: "expert", challengeMusicId: null, venue: "freeLive", boosts: 0, challengePoints: 200, timeLimit: DEFAULT_TIME_LIMIT,
+  goal, aggregation: "expected", musicId: null, difficulty: "expert", challengeMusicId: null, venue: "freeLive", boosts: 0, challengePoints: 200, timeLimit: DEFAULT_TIME_LIMIT,
   arenaMusicId: null,
   playMode: "accuracy", missEvery: 0, selectedRewards: [], rewardContextConfirmed: false,
   localEventPoints: null, localChallengePoints: null,
@@ -109,16 +112,19 @@ export function solverGoalKind(input: Pick<DeckGoalInput, "goal" | "venue">): st
     case "challengePoints": case "eventPoints": case "eventItems": return input.venue === "challengeSkip" ? "skip" : input.venue;
   }
 }
-/** The solver metric kind, or null for power: the event payoff of event goals, otherwise the expected score. */
+/** The solver metric kind, or null for power: the event payoff of event goals, otherwise the score. */
 export function solverMetricKind(goal: DeckGoal): string | null {
   return goal === "power" ? null : isEventPayoffGoal(goal) ? goal : "score";
 }
-/** Whether the goal input plays a live with gekisou (only a battle live does). */
+/** Whether the goal input plays a live with Gekisou sections. */
 export const playsGekisou = (input: Pick<DeckGoalInput, "goal" | "venue">): boolean => ["battleLive", "missionLive", "arenaLive"].includes(solverGoalKind(input));
 export const isChallengeInput = (input: Pick<DeckGoalInput, "goal" | "venue">): boolean => input.goal === "challenge" || input.goal === "challengeSkip" || isEventPayoffGoal(input.goal) && ["challengeLive", "challengeSkip"].includes(input.venue);
 export const isNetworkInput = (input: Pick<DeckGoalInput, "goal" | "venue">): boolean => ["battleLive", "arenaLive"].includes(solverGoalKind(input));
 /** Whether the goal input reads a play style (a played live; not power or a skip). */
 export const readsAccuracy = (input: Pick<DeckGoalInput, "goal" | "venue">): boolean => !["power", "skip"].includes(solverGoalKind(input));
+/** Retain the objective preference for supported non-Gekisou played lives. */
+export const effectiveAggregation = (input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "aggregation">>): DeckAggregation =>
+  readsAccuracy(input) && !playsGekisou(input) ? input.aggregation ?? "expected" : "expected";
 
 /** Event objectives and event-boosted power require the held event's data. */
 export const usesEventData = (input: Pick<DeckGoalInput, "goal" | "eventParameter">): boolean => isEventGoal(input.goal) || input.goal === "power" && input.eventParameter;
@@ -127,6 +133,7 @@ export const usesEventData = (input: Pick<DeckGoalInput, "goal" | "eventParamete
 export interface DeckSolverCapabilities {
   goals: readonly string[];
   metrics: Readonly<Record<string, readonly string[]>>;
+  aggregations?: Partial<Record<DeckAggregation, Readonly<Record<string, readonly string[]>>>>;
   accuracy: { great: boolean; just: boolean };
   patternPlay?: boolean;
 }
@@ -138,14 +145,23 @@ export function parseCapabilities(json: string | null): DeckSolverCapabilities |
   if (!value || typeof value !== "object") return null;
   const raw = value as Record<string, unknown>;
   const strings = (list: unknown) => Array.isArray(list) ? list.filter((item): item is string => typeof item === "string") : [];
-  const metrics: Record<string, string[]> = {};
-  if (raw.metrics && typeof raw.metrics === "object") for (const [kind, list] of Object.entries(raw.metrics)) metrics[kind] = strings(list);
+  const metricMap = (value: unknown): Record<string, string[]> => {
+    const map: Record<string, string[]> = {};
+    if (value && typeof value === "object" && !Array.isArray(value)) for (const [kind, list] of Object.entries(value)) map[kind] = strings(list);
+    return map;
+  };
+  const metrics = metricMap(raw.metrics);
+  const aggregations: DeckSolverCapabilities["aggregations"] = {};
+  if (raw.aggregations && typeof raw.aggregations === "object") for (const key of ["expected", "maximum"] as const) {
+    const map = (raw.aggregations as Record<string, unknown>)[key];
+    if (map !== undefined) aggregations[key] = metricMap(map);
+  }
   const accuracy = raw.accuracy && typeof raw.accuracy === "object" ? raw.accuracy as Record<string, unknown> : {};
-  return { goals: strings(raw.goals), metrics, patternPlay: raw.patternPlay === true || !!raw.patternPlay && typeof raw.patternPlay === "object", accuracy: { great: accuracy.great === true, just: accuracy.just === true } };
+  return { goals: strings(raw.goals), metrics, aggregations, patternPlay: raw.patternPlay === true || !!raw.patternPlay && typeof raw.patternPlay === "object", accuracy: { great: accuracy.great === true, just: accuracy.just === true } };
 }
 
 /** Whether the engine computes a goal input's goal kind and metric. */
-export function computes(capabilities: DeckSolverCapabilities, input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "playMode" | "greatPercent" | "justPercent">>): boolean {
+export function computes(capabilities: DeckSolverCapabilities, input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "playMode" | "greatPercent" | "justPercent" | "aggregation">>): boolean {
   if (input.goal === "challengePoints" && ["challengeLive", "challengeSkip"].includes(input.venue)) return false;
   const kind = solverGoalKind(input), metric = solverMetricKind(input.goal);
   if (input.playMode === "pattern" && readsAccuracy(input) && !capabilities.patternPlay) return false;
@@ -154,7 +170,9 @@ export function computes(capabilities: DeckSolverCapabilities, input: Pick<DeckG
     if (playsGekisou(input) && (input.justPercent ?? 100) !== 100 && !capabilities.accuracy.just) return false;
   }
   if (!capabilities.goals.includes(kind)) return false;
-  return metric === null || (capabilities.metrics[kind] ?? []).includes(metric);
+  const aggregation = effectiveAggregation(input);
+  const metrics = capabilities.aggregations?.[aggregation] ?? (aggregation === "expected" ? capabilities.metrics : {});
+  return metric === null || (metrics[kind] ?? []).includes(metric);
 }
 /** Whether any venue of a goal is computed; a goal whose venues are all unsupported is shown as coming soon. */
 export function computesGoal(capabilities: DeckSolverCapabilities, goal: DeckGoal): boolean {
@@ -216,6 +234,7 @@ export function recommendationRequest(input: DeckGoalInput, context: { event: De
     default: goal = `{"kind":"power"${input.powerSong ? `,"musicId":${input.musicId}` : ""},"eventParameter":${input.eventParameter && !!event}}`;
   }
   const parts = [`"format":${JSON.stringify(REQUEST_FORMAT)}`, `"goal":${goal}`];
+  if (effectiveAggregation(input) === "maximum") parts.push('"aggregation":"maximum"');
   const consumption = isChallengeInput(input) ? input.challengePoints : Math.min(MAX_BOOST, Math.max(0, Math.trunc(input.boosts)));
   if (isEventPayoffGoal(input.goal)) {
     const metric = input.goal === "eventItems" ? `{"kind":"eventItems","eventId":${event!.id},"resourceType":${ITEM_RESOURCE_TYPE},"resourceId":${event!.itemId},"consumption":${consumption}}`

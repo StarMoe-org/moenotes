@@ -1,5 +1,6 @@
 import type { BoxCard, CardBox, CardFieldName, CardKind } from "@/lib/box/model";
 import { parseFraction, parseInterval, type DeckFraction, type DeckInterval } from "./interval";
+import type { DeckAggregation } from "./goals";
 
 /** The answer of a recommendation, `ournotes-deck.account-recommendation/1`, as the page reads it. */
 export const ANSWER_FORMAT = "ournotes-deck.account-recommendation/1";
@@ -15,6 +16,7 @@ export interface DeckTeam {
   power: number;
   value: DeckValue | null;
   orders: { count: number; min: DeckOrderStat; median: DeckOrderStat; max: DeckOrderStat } | null;
+  bestOrder: DeckOrderStat | null;
   /** Slots 0..4 of the formation screen; the leader sits in slot 2. */
   layout: { members: number[]; snaps: (number | null)[] };
 }
@@ -33,6 +35,9 @@ export interface DeckAnswer {
     teams: DeckTeam[];
     coversAllOwnedCards: boolean;
     metric?: string;
+    aggregation: DeckAggregation;
+    goalKind: string | null;
+    exitReason: string | null;
     play?: { judged: number; misses: number } | null;
   };
 }
@@ -60,6 +65,7 @@ function team(raw: unknown, index: number, inheritedRankProof: boolean): DeckTea
   if (!Array.isArray(layout.members) || layout.members.length !== 5 || !Array.isArray(layout.snaps) || layout.snaps.length !== 5) throw new Error("Invalid layout");
   const orders = record(raw.orders) ? { count: int(raw.orders.count), min: stat(raw.orders.min), median: stat(raw.orders.median), max: stat(raw.orders.max) } : null;
   return { rank: num(raw.rank) ?? index + 1, rankCertified: raw.rankCertified === undefined ? inheritedRankProof : raw.rankCertified === true, leader: pair(raw.leader), others: raw.others.map(pair), power: num(raw.power) ?? 0, value: value(raw.value), orders,
+    bestOrder: record(raw.bestOrder) ? stat(raw.bestOrder) : null,
     layout: { members: layout.members.map(int), snaps: layout.snaps.map(item => item === null ? null : int(item)) } };
 }
 function issues(raw: unknown): DeckIssue[] {
@@ -78,8 +84,12 @@ export function parseDeckAnswer(json: string): DeckAnswer {
     const r = raw.result, o = record(r.optimality) ? r.optimality : {};
     const phase = r.phase === "preprocess" || r.phase === "search" || r.phase === "proof" || r.phase === "done" ? r.phase : "search";
     const account = record(r.account) && record(r.account.cards) ? r.account.cards : {};
+    if (r.aggregation !== undefined && r.aggregation !== "expected" && r.aggregation !== "maximum") throw new Error("Unknown result aggregation");
     result = {
       phase, elapsedMs: num(r.elapsedMs),
+      aggregation: r.aggregation === "maximum" ? "maximum" : "expected",
+      goalKind: record(r.goal) && typeof r.goal.kind === "string" ? r.goal.kind : null,
+      exitReason: typeof r.exitReason === "string" ? r.exitReason : null,
       metric: record(r.metric) && typeof r.metric.kind === "string" ? r.metric.kind : record(r.goal) && r.goal.kind === "power" ? "power" : "score",
       play: record(r.goal) && record(r.goal.play) && num(r.goal.play.judged) !== null && num(r.goal.play.misses) !== null
         ? { judged: r.goal.play.judged as number, misses: r.goal.play.misses as number } : null,
@@ -125,7 +135,7 @@ export function issueTarget(issue: DeckIssue, box: CardBox | null): DeckIssueTar
   if (path.startsWith("_player._characters")) return { kind: "player", area: "characters" };
   if (path.startsWith("_player._bandItems")) return { kind: "player", area: "bandItems" };
   if (path.startsWith("_player._memory")) return { kind: "player", area: "memory" };
-  if (path === "request" || /^(goal|metric|constraints|eventIds|eventContext|room|limits|k)\b/.test(path)) return { kind: "request" };
+  if (path === "request" || /^(goal|metric|aggregation|constraints|eventIds|eventContext|room|limits|k)\b/.test(path)) return { kind: "request" };
   return { kind: "other" };
 }
 
