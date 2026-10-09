@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { createBox, parseBox } from "../src/lib/box/model";
+import { createBox, mergeBoxes, parseBox } from "../src/lib/box/model";
 import { answerFurnitureLevel, answerFurnitureOwnership, answerPlayerEvents, answerPlayerField, answerPlayerMemory, exportBandItemFacts, exportPlayerContexts, exportPlayerRankFacts, playerCatalogueIssues, serializePlayerBonusFacts } from "../src/lib/box/player-catalog";
 import { deriveGameSaveBox, parseGameSave, type GameSaveTables } from "../src/lib/box/game-save";
 import { playerProfileGroups } from "../src/lib/box/player-profile-data";
@@ -58,10 +58,15 @@ test("a complete rank sum displays without inventing a total-rank observation", 
   const before = JSON.stringify(box);
   const total = playerProfileGroups(box, source, "en-US", url => url).find(group => group.section === "global")!.entities.find(entity => entity.id === "characterTotalRank")!.fields[0]!;
   expect(total.displayValue).toBe("5"); expect(total.value).toBeNull();
-  expect(total.description).toContain("Sum of 2 characters: 5");
+  expect(total.readOnly).toBe(true);
   expect(box.player.characterTotalRank.history).toEqual([]); expect(JSON.stringify(box)).toBe(before);
   const partial = { ...box, player: { ...box.player, characterCoverage: "partial" as const } };
   expect(playerProfileGroups(partial, source, "en-US", url => url).find(group => group.section === "global")!.entities.find(entity => entity.id === "characterTotalRank")!.fields[0]!.displayValue).not.toBe("5");
+  const merged = mergeBoxes(answerPlayerField(box, source, "characterTotalRank", 4, 3), answerPlayerField(box, source, "characterTotalRank", 5, 4));
+  const conflicted = playerProfileGroups(merged, source, "en-US", url => url).find(group => group.section === "global")!.entities.find(entity => entity.id === "characterTotalRank")!.fields[0]!;
+  expect(merged.player.characterTotalRank.status).toBe("conflict");
+  expect(conflicted.value).toBeNull(); expect(conflicted.needsReview).toBe(true);
+  expect(conflicted.readOnly).not.toBe(true);
 });
 
 test("memory and events distinguish unknown from an explicit empty choice with versioned histories", async () => {

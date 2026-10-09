@@ -62,12 +62,10 @@ export function playerProfileGroups(box: CardBox, catalogue: PlayerFieldCatalogu
     const label = tr(entry.kind === "character-total-rank" ? "characterTotalRankLabel" : "vipRankLabel");
     const field = view(entry, label);
     if (entry.kind === "character-total-rank") {
-      field.description = total === null ? pp("totalDescription") : pp("totalDerived", { count: ranks.characterRanks.values.length, value: total });
-      if (total !== null && ranks.characterTotalRank !== null && total !== ranks.characterTotalRank) { field.needsReview = true; field.description += ` ${pp("totalConflict")}`; }
-      if (field.value === null && total !== null) { field.displayValue = String(total); field.statusLabel = pp("totalSource"); }
+      if (total !== null && ranks.characterTotalRank !== null && total !== ranks.characterTotalRank) { field.needsReview = true; field.description = pp("totalConflict"); }
+      if (field.value === null && total !== null && !field.needsReview && box.player.characterTotalRank.status !== "conflict") { field.displayValue = String(total); field.readOnly = true; field.statusLabel = pp("totalSource"); }
       return { id: entry.key, title: label, fields: [options.gameSave ? { ...fromSave(field), statusLabel: pp("totalSource") } : field] };
     }
-    field.description = options.gameSave ? `${pp("vipDescription")} ${tr("gameSave.vipNote")}` : pp("vipDescription");
     return { id: entry.key, title: label, fields: [field] };
   });
   const player = meta?.fields.find(entry => entry.key === "profile.playerRank");
