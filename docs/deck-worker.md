@@ -94,6 +94,22 @@ The catalogue contains `eventIds`, `musics: [{id, difficulties, hasLuck}]`,
 are the `_easyID`, `_normalID`, `_hardID` and `_expertID` values also present in `charts[].scoreId`. A known song can
 have an empty difficulty list. Absent or malformed tables and ambiguous IDs do not declare availability.
 
+`eventItemRewards: [{id, itemId, normal, challenge}]` reports event-badge reward availability. The event ID and
+item ID come from `MasterEvent._id` and `_eventItemId`. The normal and challenge flags join
+`_liveEventRewardGroup` and `_challengeLiveEventRewardGroup` to `_eventGroup` in `MasterLiveEventReward` and
+`MasterChallengeLiveEventReward`, respectively. Every grade in the linked group must have exactly one row across
+all resources and `_probability: 10000`. `_scoreRank` identifies the grade. The catalogue checks this shape;
+the engine computes the exact result grade and the reward amount.
+
+The page also requires the engine capability
+`eventItemRewards: {selection: "exactResultGrade", eventGroupField: "eventGroup", rowsPerGrade: 1, probabilityMarker: 10000}`
+and support for the selected scene, metric and aggregation. An absent or mismatched capability or unsupported
+reward-group shape disables the badge calculation. The request metric is
+`{kind: "eventItems", eventId, resourceType: 1, resourceId: itemId, consumption}` and its event context contains
+`resultClock` and `rewardProjection: true`. Each possible live result contributes the badge amount for its one
+exact grade; the engine aggregates these amounts for the chosen objective. Event-point and challenge-point
+requests also use `rewardProjection: true`.
+
 `hasLuck` is `true` when any `_gekisouMission1..3` value is LUCK (`2`), `false` when every mission is COMBO (`1`)
 or JUST (`3`), and `null` when the mission data is otherwise incomplete. Gekisou team calculations require
 `hasLuck: false`. Free Live, Challenge Live, Skip and power calculations use their own scene checks regardless of

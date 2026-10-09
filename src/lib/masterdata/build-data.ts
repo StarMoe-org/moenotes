@@ -758,16 +758,11 @@ export function getBuildEvents(locale: AppLocale): Promise<ServerFaceted<EventVi
 /** Per server, the events the deck page offers event goals for, with their challenge songs. */
 export function getBuildDeckEvents(locale: AppLocale): Promise<{ server: GameServer; events: DeckEvent[] }[]> {
   return memo(`deck-events:${locale}`, async () => (await eachServer(async (server) => {
-    const [events, challengeMusics, summaries, normalRewards, challengeRewards] = await Promise.all([
-      table<RawEvent>("MasterEvent.json", server), table<RawChallengeMusic>("MasterChallengeMusic.json", server), eventsOn(server, locale),
-      table<RawLiveEventReward>("MasterLiveEventReward.json", server), table<RawLiveEventReward>("MasterChallengeLiveEventReward.json", server)]);
+    const [events, challengeMusics, summaries] = await Promise.all([
+      table<RawEvent>("MasterEvent.json", server), table<RawChallengeMusic>("MasterChallengeMusic.json", server), eventsOn(server, locale)]);
     return events._allData.map((event): DeckEvent => ({
       id: event.id, name: summaries.find((summary) => summary.id === event.id)?.name ?? String(event.id), startAt: event.startAt, endAt: event.endAt,
       itemId: event.eventItemId || null,
-      rewards: [...normalRewards._allData.map(row => ({ ...row, challenge: false })), ...challengeRewards._allData.map(row => ({ ...row, challenge: true }))]
-        .filter(row => row.resourceType === 1 && row.resourceId === event.eventItemId
-          && row.eventGroup === (row.challenge ? event.challengeLiveEventRewardGroup : event.liveEventRewardGroup))
-        .map(row => ({ id: row.id, amount: row.resourceCount, challenge: row.challenge })),
       challengeMusics: challengeMusics._allData.filter((row) => row.eventId === event.id).map((row) => ({ id: row.id, musicId: row.liveMusicId })),
     }));
   })).map(([server, events]) => ({ server, events })));

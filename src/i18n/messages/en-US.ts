@@ -32,7 +32,7 @@ export const enUS = {
     "arenaSong": "Arena song",
     "chooseArena": "Choose an Arena song",
     "noArena": "No Arena songs in this server’s current data",
-    conditions: {"play": "Play assumption", "accuracy": "Great / Just rates, no Misses", "pattern": "Declare a complete play with Misses", "missEvery": "Miss every N judged notes (0 = no Misses)", "noMiss": "Explicit complete play: no Misses.", "missPattern": "Every {n}th judged note is a Miss.", "patternNote": "Great and Just rates below are applied before replacing those notes with Misses. This fixed pattern is not a distribution of human errors.", "rewardContext": "Reward conditions", "rewardNote": "Choose the reward entries assumed to be selected for this result. The result is conditional on this list; drop probabilities and cumulative rewards are not predicted.", "reward": "Reward {id} · base amount {n}", "currentPoints": "Current event points", "currentCP": "Current challenge points", "rewardConfirm": "Use these reward entries and current balances", "emptyRewardConfirm": "Explicitly assume no selected event rewards", "timeLimit": "Time limit", "timeLimitNote": "When time runs out, the best teams found so far are shown, marked as not proven optimal.", "timeLimits": {"30": "30 s", "60": "1 min", "120": "2 min", "300": "5 min", "none": "No limit"}},
+    conditions: {"play": "Play assumption", "accuracy": "Great / Just rates, no Misses", "pattern": "Declare a complete play with Misses", "missEvery": "Miss every N judged notes (0 = no Misses)", "noMiss": "Explicit complete play: no Misses.", "missPattern": "Every {n}th judged note is a Miss.", "patternNote": "Great and Just rates below are applied before replacing those notes with Misses. This fixed pattern is not a distribution of human errors.", "timeLimit": "Time limit", "timeLimitNote": "When time runs out, the best teams found so far are shown, marked as not proven optimal.", "timeLimits": {"30": "30 s", "60": "1 min", "120": "2 min", "300": "5 min", "none": "No limit"}, "eventItemsNote": "For each possible live result, the engine calculates event badges from the single matching result grade."},
 
     cloud: {
       "accountChanged": "Your signed-in account changed. Confirm the account shown below before saving this device's collection.",
@@ -563,7 +563,7 @@ export const enUS = {
       "challenge": "Score on your chosen song and difficulty, with event bonuses. The song record keeps the highest score across difficulties.",
       "challengePoints": "Challenge points earned per live. Event PT bonuses do not multiply CP.",
       "eventPoints": "Event points per live.",
-      "eventItems": "Event badges per live.",
+      "eventItems": "Event badges per live, calculated from each result’s exact grade.",
       "battle": "Your score on this song.",
       "free": "Your score in a solo live without gekisou.",
       "power": "The highest team power you can build."
@@ -593,6 +593,8 @@ export const enUS = {
     "othersAverage": "Other players' average score",
     "othersAverageSame": "Leave empty for the same as yours",
     "solver": {
+      "eventItemsUnsupported": "This engine does not support event badges selected by exact result grade.",
+      "eventItemRewardsUnsupported": "This scene’s event reward data is unsupported. Each grade must have exactly one reward row with probability marker 10000.",
       "maximumLabel": {"score": "Theoretical maximum score", "challengePoints": "Maximum CP earned per live", "eventPoints": "Maximum points per live", "eventItems": "Maximum badges per live"},
       "deterministicLabel": {"score": "Score", "challengePoints": "CP earned per live", "eventPoints": "Points per live", "eventItems": "Badges per live"},
       "bestOrder": "Skill order for the highest objective value",
@@ -653,7 +655,6 @@ export const enUS = {
       "gap": {
       "arenaSong": "Choose an Arena song from this server’s data.",
       "play": "Enter a valid Miss interval: 0 or a positive whole number.",
-      "rewardContext": "Choose and confirm reward conditions, and enter current event and challenge points.",
 
         "song": "Choose a song first.",
         "challengeSong": "Choose a challenge song first.",

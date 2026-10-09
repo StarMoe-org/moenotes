@@ -126,13 +126,11 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
     catch (error) { return { context: undefined, issue: error instanceof Error ? error.message : "Invalid card catalogue" }; }
   }, [rawRecognitionSource, catalog]);
   const [goalInput, setGoalInput] = useState<DeckGoalInput>(() => defaultDeckGoalInput());
-  const updateGoal = (patch: Partial<DeckGoalInput>) => setGoalInput(previous => ({ ...previous,
-    ...(patch.venue !== undefined || patch.goal !== undefined ? { rewardContextConfirmed: false, selectedRewards: [] } : {}), ...patch }));
+  const updateGoal = (patch: Partial<DeckGoalInput>) => setGoalInput(previous => ({ ...previous, ...patch }));
   useEffect(() => { updateGoal({ goal: readStoredGoal() }); }, []);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 60_000); return () => clearInterval(timer); }, []);
   const event = useMemo(() => heldEvent(props.deckEvents?.find(value => value.server === server)?.events ?? [], now, parseMasterDate), [props.deckEvents, server, now]);
-  useEffect(() => { updateGoal({ selectedRewards: [], rewardContextConfirmed: false, localEventPoints: null, localChallengePoints: null }); }, [event?.id]);
   const solver = useDeckSolver(server, page === "deck");
   const capabilities = solver.engine.status === "ready" ? solver.engine.capabilities : null;
   const [excluded, setExcluded] = useState<string[]>([]);
@@ -191,7 +189,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const gap = goalGap(effectiveInput, event);
   const dataGap = solver.engine.status === "ready" ? deckDataGap(effectiveInput, event, solver.engine.catalog,
     props.deckArenas?.find(value => value.server === server)?.songs) : null;
-  const supported = capabilities ? computes(capabilities, effectiveInput) : effectiveInput.aggregation === "expected";
+  const supported = capabilities ? computes(capabilities, effectiveInput) : effectiveInput.goal !== "eventItems" && effectiveInput.aggregation === "expected";
   const idsOf = (keys: readonly string[], kind: CardKind) => keys.flatMap(key => {
     const card = box?.cards.find(item => item.key === key && item.kind === kind);
     return card?.identity.value ? [card.identity.value] : [];
@@ -254,7 +252,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
     window.addEventListener("popstate", back);
     return () => window.removeEventListener("popstate", back);
   }, [locale]);
-  useEffect(() => { setExcluded([]); setRequired([]); updateGoal({ musicId: null, challengeMusicId: null, arenaMusicId: null, rewardContextConfirmed: false, selectedRewards: [], localEventPoints: null, localChallengePoints: null }); setRunError(""); setManagement(false); setSetup(false); setDeleting(false); setImporting(false);
+  useEffect(() => { setExcluded([]); setRequired([]); updateGoal({ musicId: null, challengeMusicId: null, arenaMusicId: null }); setRunError(""); setManagement(false); setSetup(false); setDeleting(false); setImporting(false);
     baselineEditorEpoch.current++; setOptions(false); setBaselineTarget(null); setBaselineScope(null); setEditingCardKey(null); setPlayerSettings(false); setGuideOpen(false); setBackupError(false); setSongPicker(false); setConstraintQuery(""); setConstraintFilter("all"); setPendingScreenshots([]); setDraggingScreenshots(false); setSavePicker(false); }, [server]);
   function openScreenshotImport() { if (linked) return; setManagement(false); setGuideOpen(false); setImporting(true); }
   function openGuide() { setManagement(false); setGuideOpen(true); }
@@ -410,8 +408,8 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const composer = (key: string, values?: Record<string, string | number>) => tr(`composer.${key}`, values);
   const collection = (key: string, values?: Record<string, string | number>) => tr(`collection.${key}`, values);
   function goalCard(value: DeckGoal) {
-    const coming = !!capabilities && !computesGoal(capabilities, value);
-    return { id: value, title: tr(`goals.${value}`), description: tr(`goalNotes.${value}`), disabled: coming, badge: coming ? tr("comingSoon") : undefined,
+    const coming = capabilities ? !computesGoal(capabilities, value) : value === "eventItems" && solver.engine.status === "ready";
+    return { id: value, title: tr(`goals.${value}`), description: tr(coming && value === "eventItems" ? "solver.eventItemsUnsupported" : `goalNotes.${value}`), disabled: coming, badge: coming ? tr(value === "eventItems" ? "objective.unsupported" : "comingSoon") : undefined,
       icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d={GOAL_ICONS[value]} /></svg> };
   }
   const formatEnd = (endAt: string) => {
@@ -422,9 +420,10 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const saveReady = !linked || linkedSave.state.status === "ready";
   const canRun = engine.status === "ready" && supported && !gap && !dataGap && saveReady;
   const blocker = engine.status === "loading" ? tr("solver.loading") : engine.status === "unavailable" ? tr(`solver.unavailable.${engine.reason}`)
-    : engine.status === "failed" ? "" : !supported ? tr("comingSoon") : gap ? tr(`solver.gap.${gap}`) : !saveReady ? tr("solver.saveNotReady") : "";
+    : engine.status === "failed" ? "" : !supported ? tr(goal === "eventItems" ? "solver.eventItemsUnsupported" : "comingSoon") : gap ? tr(`solver.gap.${gap}`) : !saveReady ? tr("solver.saveNotReady") : "";
   function engineNotice() {
     if (engine.status === "failed") return <p className="dc-engine-note" role="alert">{tr(`solver.failure.${engine.code}`)} <button type="button" onClick={solver.retry}>{tr("retry")}</button></p>;
+    if (dataGap === "eventItemRewards") return <p className="dc-engine-note" role="status">{tr("solver.eventItemRewardsUnsupported")}</p>;
     if (dataGap === "luck") return <p className="dc-engine-note" role="status">{tr("solver.luckUnsupported")}</p>;
     if (dataGap) return <p className="dc-engine-note" role="status">{tr(dataGap === "missions" ? "solver.missionsUnavailable" : "solver.dataUpdating")} <button type="button" onClick={solver.retry}>{tr("retry")}</button></p>;
     if (runError) return <p className="dc-engine-note" role="alert">{runError}</p>;
@@ -496,7 +495,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
               : <select aria-label={tr("consumption")} value={goalInput.boosts} onChange={change => updateGoal({ boosts: Number(change.target.value) })}>
                 {Array.from({ length: MAX_BOOST + 1 }, (_, value) => <option key={value} value={value}>{tr("boosts", { n: value })}</option>)}</select>}</label>}
           </div>}
-          <DeckGoalConditions locale={locale} input={effectiveInput} event={event} capabilities={capabilities} onChange={updateGoal} />
+          <DeckGoalConditions locale={locale} input={effectiveInput} capabilities={capabilities} onChange={updateGoal} />
           {goal === "power" && <div className="dc-checks">
             <label><input type="checkbox" checked={goalInput.powerSong} onChange={change => updateGoal({ powerSong: change.target.checked })} />{tr("powerSong")}</label>
             {event && <label><input type="checkbox" checked={goalInput.eventParameter} onChange={change => updateGoal({ eventParameter: change.target.checked })} />{tr("powerEvent")}</label>}

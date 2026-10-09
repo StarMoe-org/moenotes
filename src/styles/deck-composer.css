@@ -377,7 +377,3 @@
   .dr-meta tr > td { grid-column: 2; }
   .dr-orders dl { grid-template-columns: minmax(0, 1fr); }
 }
-
-.dc-reward-context { display: grid; gap: 10px; min-width: 0; padding: 12px; border: 1px solid var(--dc-line, var(--mn-border)); border-radius: 12px; }
-.dc-reward-context > label { display: flex; gap: 8px; align-items: start; }
-.dc-reward-context input[type="checkbox"] { flex: 0 0 auto; margin-top: 3px; }

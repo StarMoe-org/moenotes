@@ -31,6 +31,8 @@ export type DeckWorkerCommand = DeckWorkerInit | DeckWorkerRun;
 /** Master IDs and playable difficulties present in the verified solver dataset. */
 export interface DeckDataCatalog {
   readonly eventIds: readonly number[];
+  /** Per-event support for unique, guaranteed result-grade rewards in each scene. */
+  readonly eventItemRewards?: readonly { readonly id: number; readonly itemId: number; readonly normal: boolean; readonly challenge: boolean }[];
   readonly musics: readonly { readonly id: number; readonly difficulties: readonly string[]; readonly hasLuck: boolean | null }[];
   readonly challengeMusics: readonly { readonly id: number; readonly eventId: number; readonly musicId: number }[];
   readonly arenaMusics: readonly { readonly id: number; readonly musicId: number }[];
@@ -75,6 +77,8 @@ function isDataCatalog(value: unknown): value is DeckDataCatalog {
   const rows = (list: unknown, valid: (row: Record<string, unknown>) => boolean): boolean => Array.isArray(list)
     && list.every(row => record(row) && positiveId(row.id) && valid(row)) && new Set(list.map(row => row.id)).size === list.length;
   return ids(value.eventIds)
+    && (value.eventItemRewards === undefined || rows(value.eventItemRewards, row => positiveId(row.itemId)
+      && typeof row.normal === "boolean" && typeof row.challenge === "boolean" && (value.eventIds as number[]).includes(row.id as number)))
     && rows(value.musics, row => Array.isArray(row.difficulties) && row.difficulties.every(difficulty => ["easy", "normal", "hard", "expert"].includes(difficulty))
       && new Set(row.difficulties).size === row.difficulties.length && (row.hasLuck === null || typeof row.hasLuck === "boolean"))
     && rows(value.challengeMusics, row => positiveId(row.eventId) && positiveId(row.musicId))

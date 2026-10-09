@@ -10,6 +10,7 @@ const catalog: DeckDataCatalog = {
   challengeMusics: [{ id: 1, eventId: 1, musicId: 100001 }], arenaMusics: [],
 };
 const updated: DeckDataCatalog = { ...catalog, eventIds: [1, 2],
+  eventItemRewards: [{ id: 2, itemId: 90, normal: true, challenge: true }],
   musics: [...catalog.musics, { id: 100111, difficulties: ["easy", "normal", "hard", "expert"], hasLuck: false }],
   challengeMusics: [...catalog.challengeMusics, { id: 4, eventId: 2, musicId: 100111 }],
   arenaMusics: [{ id: 7, musicId: 100001 }],
@@ -23,6 +24,23 @@ describe("deck data coverage", () => {
       expect(gap({ goal, challengeMusicId: 4 })).toBe("event");
     }
     expect(gap({ goal: "power", eventParameter: true })).toBe("event");
+  });
+
+  test("event items require verified reward coverage for the selected event item and scene", () => {
+    for (const venue of ["freeLive", "challengeLive", "skip", "challengeSkip"] as const) {
+      const input = { goal: "eventItems" as const, venue, challengeMusicId: 4 };
+      expect(gap(input, updated)).toBeNull();
+      for (const eventItemRewards of [undefined, [], [{ id: 2, itemId: 91, normal: true, challenge: true }],
+        [{ id: 1, itemId: 90, normal: true, challenge: true }], [{ id: 2, itemId: 90, normal: false, challenge: false }]]) {
+        const available = { ...updated, eventItemRewards };
+        expect(gap(input, available)).toBe("eventItemRewards");
+        expect(gap({ ...input, goal: "eventPoints" }, available)).toBeNull();
+        expect(gap({ ...input, goal: "challengePoints", venue: "freeLive" }, available)).toBeNull();
+      }
+      const challenge = venue === "challengeLive" || venue === "challengeSkip";
+      expect(gap(input, { ...updated, eventItemRewards: [{ id: 2, itemId: 90, normal: !challenge, challenge }] })).toBeNull();
+      expect(gap(input, { ...updated, eventItemRewards: [{ id: 2, itemId: 90, normal: challenge, challenge: !challenge }] })).toBe("eventItemRewards");
+    }
   });
 
   test("ordinary goals run independently of a new event", () => {

@@ -21,7 +21,7 @@ export const jaJP = {
     "arenaSong": "アリーナ楽曲",
     "chooseArena": "アリーナ楽曲を選択",
     "noArena": "現在のサーバーデータにアリーナ楽曲はありません",
-    conditions: {"play": "演奏条件", "accuracy": "Great / Just の割合、Miss なし", "pattern": "Miss を含む完全な演奏を明示", "missEvery": "判定ノーツ N 個ごとに Miss（0 は Miss なし）", "noMiss": "完全な演奏を明示：Miss なし。", "missPattern": "判定ノーツ {n} 個ごとに Miss とします。", "patternNote": "下の Great・Just 割合を適用後、指定ノーツを Miss に置換します。固定の演奏条件であり、人のミスの確率分布ではありません。", "rewardContext": "報酬条件", "rewardNote": "今回選ばれたと仮定する報酬を指定します。この一覧を条件とする結果で、ドロップ確率や累積報酬は予測しません。", "reward": "報酬 {id} · 基本個数 {n}", "currentPoints": "現在のイベント PT", "currentCP": "現在のチャレンジポイント", "rewardConfirm": "この報酬と現在のポイントを使用", "emptyRewardConfirm": "イベント報酬の選出なしと明示", "timeLimit": "最大計算時間", "timeLimitNote": "時間になると、その時点で最良の編成を「最適未証明」として表示します。", "timeLimits": {"30": "30 秒", "60": "1 分", "120": "2 分", "300": "5 分", "none": "無制限"}},
+    conditions: {"play": "演奏条件", "accuracy": "Great / Just の割合、Miss なし", "pattern": "Miss を含む完全な演奏を明示", "missEvery": "判定ノーツ N 個ごとに Miss（0 は Miss なし）", "noMiss": "完全な演奏を明示：Miss なし。", "missPattern": "判定ノーツ {n} 個ごとに Miss とします。", "patternNote": "下の Great・Just 割合を適用後、指定ノーツを Miss に置換します。固定の演奏条件であり、人のミスの確率分布ではありません。", "timeLimit": "最大計算時間", "timeLimitNote": "時間になると、その時点で最良の編成を「最適未証明」として表示します。", "timeLimits": {"30": "30 秒", "60": "1 分", "120": "2 分", "300": "5 分", "none": "無制限"}, "eventItemsNote": "エンジンは演奏結果ごとに、最終ランクと完全に一致する一段階の報酬からイベントバッジ数を計算します。"},
 
     cloud: {
       "accountChanged": "ログイン中のアカウントが変わりました。この端末のコレクションを保存する前に、下のアカウントを確認してください。",
@@ -552,7 +552,7 @@ export const jaJP = {
       "challenge": "選んだ曲・難易度のスコア（イベントボーナス込み）。曲の記録には全難易度の最高スコアが残ります。",
       "challengePoints": "1回で獲得するCP。イベントPTボーナスはCPに掛かりません。",
       "eventPoints": "1回あたりのイベントPT。",
-      "eventItems": "1回あたりのイベントバッジ。",
+      "eventItems": "結果ごとの正確なランクから、1回あたりのイベントバッジ数を計算します。",
       "battle": "この曲で何点取れるか。",
       "free": "激走なしのソロライブで何点取れるか。",
       "power": "編成の総合力の最大値。"
@@ -582,6 +582,8 @@ export const jaJP = {
     "othersAverage": "ルームの他プレイヤーの平均スコア",
     "othersAverageSame": "空欄なら自分と同じスコア",
     "solver": {
+      "eventItemsUnsupported": "このエンジンは、確定した結果ランクに基づくイベントバッジ計算に未対応です。",
+      "eventItemRewardsUnsupported": "このモードのイベント報酬データには未対応です。各ランクの報酬行はちょうど1件で、確率マーカーが 10000 である必要があります。",
       "maximumLabel": {"score": "理論上の最高スコア", "challengePoints": "1回の最大獲得 CP", "eventPoints": "1回の最大 PT", "eventItems": "1回の最大バッジ数"},
       "deterministicLabel": {"score": "スコア", "challengePoints": "1回の獲得 CP", "eventPoints": "1回の PT", "eventItems": "1回のバッジ数"},
       "bestOrder": "目標の最高値に到達するスキル順",
@@ -642,7 +644,6 @@ export const jaJP = {
       "gap": {
       "arenaSong": "現在のサーバーデータからアリーナ楽曲を選択してください。",
       "play": "Miss の間隔を 0 以上の整数で入力してください。",
-      "rewardContext": "報酬条件を選択・確認し、現在のイベント PT とチャレンジポイントを入力してください。",
 
         "song": "曲を選んでください。",
         "challengeSong": "チャレンジ曲を選んでください。",
