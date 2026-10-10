@@ -30,7 +30,7 @@ test("event deadlines render in server time before hydration regardless of the h
 
 test("a live goal offers the accuracy and pattern plays", () => {
   const html = renderToStaticMarkup(<DeckGoalConditions locale="en-US" input={{ ...defaultDeckGoalInput("free"), playMode: "pattern", missEvery: 10 }}
-    event={null} capabilities={{ goals: ["freeLive"], metrics: { freeLive: ["score"] }, accuracy: { great: true, just: false }, patternPlay: true }} onChange={() => {}} />);
+    capabilities={{ goals: ["freeLive"], metrics: { freeLive: ["score"] }, accuracy: { great: true, just: false }, patternPlay: true }} onChange={() => {}} />);
   expect(html).toContain('value="pattern" selected=""');
   expect(html).toContain('value="10"');
   expect(html).not.toContain("Minimum life at the end");
@@ -133,4 +133,27 @@ test("a stale goal selection cannot relabel a finished result, and its proof lab
   expect(html).toContain("999,999");
   expect(html).toContain("100 judged notes · 10 Misses");
   expect(html).toContain('href="/en/tools/deck/guide#proven"');
+});
+
+
+test("event badge conditions show exact-grade projection and only scene-relevant inputs", () => {
+  for (const venue of ["freeLive", "challengeLive", "skip", "challengeSkip"] as const) {
+    const html = renderToStaticMarkup(<DeckGoalConditions locale="en-US" input={{ ...defaultDeckGoalInput("eventItems"), venue }}
+      capabilities={null} onChange={() => {}} />);
+    expect(html).toContain("single matching result grade");
+    expect(html).toContain("Time limit");
+    expect((html.match(/<select/g) ?? []).length).toBe(venue === "skip" || venue === "challengeSkip" ? 1 : 2);
+    expect((html.match(/<input/g) ?? []).length).toBe(0);
+  }
+});
+
+test("event badge results explain exact-grade rewards using the result metric", () => {
+  const noop = () => {};
+  for (const metric of ["eventItems", "eventPoints", "challengePoints"]) {
+    const answer = parseDeckAnswer(JSON.stringify({ format: "ournotes-deck.account-recommendation/1", final: true, status: "ok", result: {
+      goal: { kind: "skip" }, metric: { kind: metric }, phase: "done", elapsedMs: 10, optimality: { proven: true }, teams: [] } }));
+    const html = renderToStaticMarkup(<DeckResult locale="en-US" goal="power" stale timeLimit={60} box={null} catalog={{ members: [], snaps: [] }} linked={false} busy={false}
+      job={{ status: "done", key: "badges", answer, stopped: false }} onStop={noop} onRerun={noop} onEditCard={noop} onPlayer={noop} onAnswerAll={noop} />);
+    expect(html.includes("single matching result grade")).toBe(metric === "eventItems");
+  }
 });

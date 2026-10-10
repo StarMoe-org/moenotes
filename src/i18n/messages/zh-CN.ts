@@ -24,7 +24,7 @@ export const zhCN = {
     "arenaSong": "Arena 歌曲",
     "chooseArena": "选择 Arena 歌曲",
     "noArena": "当前服务器数据中没有 Arena 歌曲",
-    conditions: {"play": "演奏条件", "accuracy": "Great / Just 比例，无 Miss", "pattern": "明确指定含 Miss 的完整演奏", "missEvery": "每 N 个判定音符出现一次 Miss（0 为无 Miss）", "noMiss": "明确指定完整演奏：无 Miss。", "missPattern": "每第 {n} 个判定音符记为 Miss。", "patternNote": "先应用下方 Great、Just 比例，再把指定音符改为 Miss。这是固定演奏条件，不代表真人失误的概率分布。", "rewardContext": "奖励条件", "rewardNote": "选择本次结算假定已抽中的奖励条目。结果以这份清单为条件，不预测掉落概率或累计奖励。", "reward": "奖励 {id} · 基础数量 {n}", "currentPoints": "当前活动 PT", "currentCP": "当前挑战点数", "rewardConfirm": "使用这些奖励条目与当前点数", "emptyRewardConfirm": "明确假定本次没有抽中活动奖励", "timeLimit": "最长计算时间", "timeLimitNote": "到时间后给出目前找到的最好队伍，并标明尚未证明最优。", "timeLimits": {"30": "30 秒", "60": "1 分钟", "120": "2 分钟", "300": "5 分钟", "none": "不限"}},
+    conditions: {"play": "演奏条件", "accuracy": "Great / Just 比例，无 Miss", "pattern": "明确指定含 Miss 的完整演奏", "missEvery": "每 N 个判定音符出现一次 Miss（0 为无 Miss）", "noMiss": "明确指定完整演奏：无 Miss。", "missPattern": "每第 {n} 个判定音符记为 Miss。", "patternNote": "先应用下方 Great、Just 比例，再把指定音符改为 Miss。这是固定演奏条件，不代表真人失误的概率分布。", "timeLimit": "最长计算时间", "timeLimitNote": "到时间后给出目前找到的最好队伍，并标明尚未证明最优。", "timeLimits": {"30": "30 秒", "60": "1 分钟", "120": "2 分钟", "300": "5 分钟", "none": "不限"}, "eventItemsNote": "引擎逐个演出结果计算活动徽章，每次只取与最终评级确切对应的一档奖励。"},
 
     cloud: {
       "accountChanged": "登录账号发生了变化。保存本机卡池前，请确认下方显示的账号。",
@@ -555,7 +555,7 @@ export const zhCN = {
       "challenge": "所选挑战曲和难度的分数，含活动加成。歌曲纪录保留各难度中的最高分。",
       "challengePoints": "每局新增的挑战点数。活动 PT 加成不提高 CP。",
       "eventPoints": "每局能拿多少活动 PT。",
-      "eventItems": "每局能拿多少活动徽章。",
+      "eventItems": "逐个结算结果按确切评级计算每局活动徽章。",
       "battle": "这首歌能打多少分。",
       "free": "不开激走的单人演出能打多少分。",
       "power": "队伍综合力最高是多少。"
@@ -585,6 +585,8 @@ export const zhCN = {
     "othersAverage": "房间里其他人的平均分",
     "othersAverageSame": "留空表示与你同分",
     "solver": {
+      "eventItemsUnsupported": "当前引擎不支持按确切结算评级计算活动徽章。",
+      "eventItemRewardsUnsupported": "当前场景的活动奖励数据不受支持：每个评级必须恰好有一条奖励，且概率标记为 10000。",
       "maximumLabel": {"score": "理论最高分数", "challengePoints": "每局最高新增 CP", "eventPoints": "每局最高 PT", "eventItems": "每局最高徽章"},
       "deterministicLabel": {"score": "分数", "challengePoints": "每局新增 CP", "eventPoints": "每局 PT", "eventItems": "每局徽章"},
       "bestOrder": "达到目标最高值的技能顺序",
@@ -645,7 +647,6 @@ export const zhCN = {
       "gap": {
       "arenaSong": "请从当前服务器数据中选择 Arena 歌曲。",
       "play": "请填写有效的 Miss 间隔：0 或正整数。",
-      "rewardContext": "请选择并确认奖励条件，填写当前活动 PT 和挑战点数。",
 
         "song": "先选一首歌。",
         "challengeSong": "先选一首挑战曲。",

@@ -22,7 +22,7 @@ export const koKR = {
     "arenaSong": "아레나 곡",
     "chooseArena": "아레나 곡 선택",
     "noArena": "현재 서버 데이터에 아레나 곡이 없습니다",
-    conditions: {"play": "연주 조건", "accuracy": "Great / Just 비율, Miss 없음", "pattern": "Miss를 포함한 전체 연주 지정", "missEvery": "판정 노트 N개마다 Miss (0 = Miss 없음)", "noMiss": "전체 연주 명시: Miss 없음.", "missPattern": "판정 노트 {n}개마다 Miss로 처리합니다.", "patternNote": "아래 Great·Just 비율을 적용한 후 지정한 노트를 Miss로 바꿉니다. 고정된 연주 조건이며 사람의 실수 확률 분포가 아닙니다.", "rewardContext": "보상 조건", "rewardNote": "이번 결과에서 선택되었다고 가정할 보상 항목을 지정하세요. 결과는 이 목록을 조건으로 하며 드롭 확률과 누적 보상은 예측하지 않습니다.", "reward": "보상 {id} · 기본 수량 {n}", "currentPoints": "현재 이벤트 PT", "currentCP": "현재 챌린지 포인트", "rewardConfirm": "이 보상 항목과 현재 포인트 사용", "emptyRewardConfirm": "선택된 이벤트 보상 없음으로 명시", "timeLimit": "최대 계산 시간", "timeLimitNote": "시간이 다 되면 지금까지 찾은 최선의 덱을 최적 미증명으로 표시합니다.", "timeLimits": {"30": "30초", "60": "1분", "120": "2분", "300": "5분", "none": "제한 없음"}},
+    conditions: {"play": "연주 조건", "accuracy": "Great / Just 비율, Miss 없음", "pattern": "Miss를 포함한 전체 연주 지정", "missEvery": "판정 노트 N개마다 Miss (0 = Miss 없음)", "noMiss": "전체 연주 명시: Miss 없음.", "missPattern": "판정 노트 {n}개마다 Miss로 처리합니다.", "patternNote": "아래 Great·Just 비율을 적용한 후 지정한 노트를 Miss로 바꿉니다. 고정된 연주 조건이며 사람의 실수 확률 분포가 아닙니다.", "timeLimit": "최대 계산 시간", "timeLimitNote": "시간이 다 되면 지금까지 찾은 최선의 덱을 최적 미증명으로 표시합니다.", "timeLimits": {"30": "30초", "60": "1분", "120": "2분", "300": "5분", "none": "제한 없음"}, "eventItemsNote": "엔진은 가능한 연주 결과마다 최종 등급과 정확히 일치하는 한 단계의 보상으로 이벤트 배지 수를 계산합니다."},
 
     cloud: {
       "accountChanged": "로그인한 계정이 변경되었습니다. 이 기기의 컬렉션을 저장하기 전에 아래 계정을 확인하세요.",
@@ -553,7 +553,7 @@ export const koKR = {
       "challenge": "선택한 곡과 난이도의 점수 (이벤트 보너스 포함). 곡 기록은 모든 난이도 중 최고 점수를 유지합니다.",
       "challengePoints": "라이브 1회당 획득 CP. 이벤트 PT 보너스는 CP에 적용되지 않습니다.",
       "eventPoints": "라이브 1회당 이벤트 PT.",
-      "eventItems": "라이브 1회당 이벤트 배지.",
+      "eventItems": "각 결과의 정확한 등급으로 라이브 1회당 이벤트 배지를 계산합니다.",
       "battle": "이 곡의 점수.",
       "free": "격주 없는 솔로 라이브의 점수.",
       "power": "만들 수 있는 최고 종합력."
@@ -583,6 +583,8 @@ export const koKR = {
     "othersAverage": "방의 다른 플레이어 평균 점수",
     "othersAverageSame": "비워 두면 내 점수와 같음",
     "solver": {
+      "eventItemsUnsupported": "현재 엔진은 정확한 결과 등급에 따른 이벤트 배지 계산을 지원하지 않습니다.",
+      "eventItemRewardsUnsupported": "이 모드의 이벤트 보상 데이터는 지원되지 않습니다. 등급마다 보상 행이 정확히 하나이며 확률 표식이 10000이어야 합니다.",
       "maximumLabel": {"score": "이론상 최고 점수", "challengePoints": "라이브 1회 최대 획득 CP", "eventPoints": "라이브 1회 최대 PT", "eventItems": "라이브 1회 최대 배지"},
       "deterministicLabel": {"score": "점수", "challengePoints": "라이브 1회 획득 CP", "eventPoints": "라이브 1회 PT", "eventItems": "라이브 1회 배지"},
       "bestOrder": "목표 최고값에 도달하는 스킬 순서",
@@ -643,7 +645,6 @@ export const koKR = {
       "gap": {
       "arenaSong": "현재 서버 데이터에서 아레나 곡을 선택하세요.",
       "play": "유효한 Miss 간격을 입력하세요: 0 또는 양의 정수.",
-      "rewardContext": "보상 조건을 선택하고 확인한 후 현재 이벤트 PT와 챌린지 포인트를 입력하세요.",
 
         "song": "곡을 먼저 선택하세요.",
         "challengeSong": "챌린지곡을 먼저 선택하세요.",

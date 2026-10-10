@@ -1,13 +1,17 @@
 import { isChallengeInput, playsGekisou, solverGoalKind, usesEventData, type DeckArenaMusic, type DeckEvent, type DeckGoalInput } from "./goals";
 import type { DeckDataCatalog } from "./worker-protocol";
 
-export type DeckDataGap = "catalog" | "event" | "song" | "luck" | "missions" | null;
+export type DeckDataGap = "catalog" | "event" | "eventItemRewards" | "song" | "luck" | "missions" | null;
 
 /** Check the selected scene's coverage and supported missions in the verified Worker data. */
 export function deckDataGap(input: DeckGoalInput, event: DeckEvent | null, catalog: DeckDataCatalog | null,
   arenas: readonly DeckArenaMusic[] = []): DeckDataGap {
   if (!catalog) return "catalog";
   if (event && usesEventData(input) && !catalog.eventIds.includes(event.id)) return "event";
+  if (input.goal === "eventItems" && event) {
+    const rewards = catalog.eventItemRewards?.find(row => row.id === event.id && row.itemId === event.itemId);
+    if (!rewards || !(isChallengeInput(input) ? rewards.challenge : rewards.normal)) return "eventItemRewards";
+  }
   const kind = solverGoalKind(input);
   let musicId: number | null;
   if (isChallengeInput(input)) {

@@ -69,6 +69,7 @@ export default function DeckResult(props: DeckResultProps) {
     </div>
     {result && !deterministic && <p className="dr-objective"><strong>{t(locale, `deckWorkspace.objective.${aggregation}`)}</strong>
       <span>{t(locale, `deckWorkspace.objective.${aggregation}Note`)}</span></p>}
+    {result && metric === "eventItems" && <p className="dr-note">{t(locale, "deckWorkspace.conditions.eventItemsNote")}</p>}
     {result?.play && <p className="dr-note">{tr("playSummary", { notes: result.play.judged, misses: result.play.misses })}</p>}
     {result && result.teams.length > 0 ? <ol className="dr-teams">{result.teams.map((team, index) => <TeamCard key={index} {...props} team={team} metric={metric} aggregation={aggregation} deterministic={deterministic} first={index === 0} final={!running} />)}</ol>
       : <p className="dr-muted">{tr(running ? "searching" : "noTeam")}</p>}

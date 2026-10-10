@@ -24,22 +24,44 @@ function hasLuck(row) {
 
 /** A small availability view of the verified data. The solver still receives the original bytes. */
 function dataCatalog(data) {
-  function rows(name) {
+  function rows(name, required = []) {
     const table = data?.master?.[name];
     if (!record(table) || !Array.isArray(table.columns) || !Array.isArray(table.rows)
-      || table.columns.some(column => typeof column !== 'string') || new Set(table.columns).size !== table.columns.length) return [];
+      || table.columns.some(column => typeof column !== 'string') || new Set(table.columns).size !== table.columns.length
+      || required.some(column => !table.columns.includes(column))) return [];
     const byId = new Map();
     for (const row of table.rows) {
-      if (!Array.isArray(row) || row.length !== table.columns.length) continue;
+      if (!Array.isArray(row) || row.length !== table.columns.length) { if (required.length) return []; continue; }
       const value = Object.fromEntries(table.columns.map((column, index) => [column, row[index]]));
-      if (!positiveId(value._id)) continue;
+      if (!positiveId(value._id)) { if (required.length) return []; continue; }
+      if (required.length && byId.has(value._id)) return [];
       byId.set(value._id, byId.has(value._id) ? null : value);
     }
     return [...byId.values()].filter(value => value !== null).sort((a, b) => a._id - b._id);
   }
+  // Each grade must have exactly one guaranteed row across all resources in its event group.
+  function rewardGroups(name) {
+    const groups = new Map();
+    for (const row of rows(name, ['_eventGroup', '_scoreRank', '_probability'])) {
+      if (!positiveId(row._eventGroup)) continue;
+      const group = groups.get(row._eventGroup) ?? { grades: new Set(), supported: true };
+      group.supported &&= Number.isSafeInteger(row._scoreRank) && row._scoreRank >= 0
+        && !group.grades.has(row._scoreRank) && row._probability === 10000;
+      group.grades.add(row._scoreRank);
+      groups.set(row._eventGroup, group);
+    }
+    return groups;
+  }
+  const normalRewards = rewardGroups('MasterLiveEventReward'), challengeRewards = rewardGroups('MasterChallengeLiveEventReward');
+  const events = rows('MasterEvent');
   const scoreIds = new Set(Array.isArray(data?.charts) ? data.charts.filter(chart => record(chart) && positiveId(chart.scoreId)).map(chart => chart.scoreId) : []);
   return {
-    eventIds: rows('MasterEvent').map(row => row._id),
+    eventIds: events.map(row => row._id),
+    eventItemRewards: events.filter(row => positiveId(row._eventItemId)).map(row => ({
+      id: row._id, itemId: row._eventItemId,
+      normal: normalRewards.get(row._liveEventRewardGroup)?.supported === true,
+      challenge: challengeRewards.get(row._challengeLiveEventRewardGroup)?.supported === true,
+    })),
     musics: rows('MasterLiveMusic').map(row => ({ id: row._id, hasLuck: hasLuck(row),
       difficulties: DIFFICULTIES.filter(([, column]) => positiveId(row[column]) && scoreIds.has(row[column])).map(([difficulty]) => difficulty) })),
     challengeMusics: rows('MasterChallengeMusic').filter(row => positiveId(row._eventId) && positiveId(row._liveMusicId))
