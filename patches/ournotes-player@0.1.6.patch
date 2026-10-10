@@ -14,6 +14,33 @@ diff --git a/package.json b/package.json
    },
    "sideEffects": [
      "./src/element.js",
+diff --git a/src/story/features/canvas.js b/src/story/features/canvas.js
+--- a/src/story/features/canvas.js
++++ b/src/story/features/canvas.js
+@@ -511,6 +511,14 @@ export const viewProjection = (fov, W, H) => {
+ // The UI shader programs, textures and buffers of the screen canvases (story root: shaders/, textures/).
+ // Graphic.defaultGraphicMaterial for images without a material: "Default UI Material" = UI/Default with its shader
+ // defaults. A custom Image material keeps its own properties; _MainTex is the sprite's texture (Image.mainTexture).
++// ENGINE: a custom Image material may be a URP 2D Shader Graph (Sprite Unlit target: Graphs_UIGrayscale of the
++// StillImage_mono layers of anime stills), whose program also reads what the engine sets outside the canvas:
++// `_RendererColor` (white: URP sets it every frame for the 2D Shader Graph targets, which have no hidden properties),
++// the per-draw sprite constants (a CanvasRenderer has no SpriteRenderer colour or flip: `unity_SpriteColor` white,
++// `unity_SpriteProps` unflipped) and `_GlobalMipBias` (0: no mip bias).
++const CANVAS_ENGINE = Object.freeze({ _RendererColor: [1, 1, 1, 1], unity_SpriteColor: [1, 1, 1, 1], unity_SpriteProps: [1, 1, 0, 0],
++                                      _GlobalMipBias: [0, 0] });
++
+ export class CanvasGL {
+   // textUI: the story UI, whose text materials, glyph pages and shader programs draw the canvas texts
+   constructor(gl, lib, assets, textUI = null) {
+@@ -544,7 +552,7 @@ export class CanvasGL {
+ 
+   draw(canvas, items, width, height) {
+     const gl = this.gl, { W, H } = canvas.size;
+-    const globals = UIDraw.globals(W, H, width, height, 4);
++    const globals = { ...UIDraw.globals(W, H, width, height, 4), ...CANVAS_ENGINE };
+     if (canvas.perspective) {
+       const vp = viewProjection(canvas.perspective.fov, W, H);
+       globals.unity_MatrixVP = vp; globals.glstate_matrix_projection = vp;
 diff --git a/src/ui/animator.js b/src/ui/animator.js
 diff --git a/src/ui/define.js b/src/ui/define.js
 diff --git a/src/ui/element.js b/src/ui/element.js
