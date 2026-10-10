@@ -1,10 +1,12 @@
-import { expect, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import DeckGoalConditions from "../src/components/deck/DeckGoalConditions";
 import DeckObjective from "../src/components/deck/DeckObjective";
 import DeckResult from "../src/components/deck/DeckResult";
+import DeckRewardMix from "../src/components/deck/DeckRewardMix";
 import DeckWorkspace from "../src/components/deck/DeckWorkspace";
 import { defaultDeckGoalInput, parseCapabilities, type DeckSolverCapabilities } from "../src/lib/deck/goals";
+import { defaultRewardRates } from "../src/lib/deck/reward-mix";
 import { parseDeckAnswer } from "../src/lib/deck/answer";
 
 test("event deadlines render in server time before hydration regardless of the host timezone", () => {
@@ -143,7 +145,7 @@ test("event badge conditions show exact-grade projection and only scene-relevant
     expect(html).toContain("single matching result grade");
     expect(html).toContain("Time limit");
     expect((html.match(/<select/g) ?? []).length).toBe(venue === "skip" || venue === "challengeSkip" ? 1 : 2);
-    expect((html.match(/<input/g) ?? []).length).toBe(0);
+    expect(html.match(/<input[^>]*>/g) ?? []).toEqual([expect.stringContaining('value="single"'), expect.stringContaining('value="weighted"')]);
   }
 });
 
@@ -164,14 +166,15 @@ test("CP conditions preserve the selected secondary priority and explicitly gate
   const legacy = { goals: ["freeLive"], metrics: { freeLive: ["challengePoints"] }, accuracy: { great: true, just: false } };
   const render = (patch = {}, capabilities: DeckSolverCapabilities | null = legacy) => renderToStaticMarkup(
     <DeckGoalConditions locale="en-US" input={{ ...input, ...patch }} capabilities={capabilities} onChange={() => {}} />);
-  expect(render()).toContain('value="none" selected=""');
+  expect(render()).toMatch(/<input[^>]*checked=""[^>]*value="single"/);
   expect(render()).not.toContain("does not support CP-first");
   const capabilities = parseCapabilities(JSON.stringify({ ...legacy,
     eventItemRewards: { selection: "exactResultGrade", eventGroupField: "eventGroup", rowsPerGrade: 1, probabilityMarker: 10000 },
     challengePointPriorities: { priorities: ["eventPointsFirst", "eventItemsFirst"], objective: "lexicographicExpected", primary: "challengePoints", bestPrimaryOnly: true, lotteryFree: true } }))!;
   for (const secondaryPriority of ["eventPointsFirst", "eventItemsFirst"] as const) {
     const blocked = render({ secondaryPriority });
-    expect(blocked).toContain(`value="${secondaryPriority}" selected=""`);
+    expect(blocked).toMatch(/<input[^>]*checked=""[^>]*value="tieBreak"/);
+    expect(blocked).toMatch(new RegExp(`<input[^>]*checked=""[^>]*value="${secondaryPriority}"`));
     expect(blocked).toContain("does not support CP-first");
     const supported = render({ secondaryPriority }, capabilities);
     expect(supported).toContain("Maximize average CP first");
@@ -215,4 +218,90 @@ test("CP secondary results retain their priority, exact rewards and proof state 
     const ptIndex = html.indexOf("<dt>Expected points"), itemIndex = html.indexOf("<dt>Expected badges");
     expect(ptIndex < itemIndex).toBe(secondaryPriority === "eventPointsFirst");
   }
+});
+
+describe("reward mix", () => {
+  const combinedMetric = { kind: "combined", field: "metric.terms", objective: "weightedExpectedSum", termMetrics: "metrics", weights: "integer",
+    maxTerms: 8, maxWeight: 1_000_000, consumption: "metric.consumption", lotteryFree: true };
+  const rewards = ["eventPoints", "challengePoints", "eventItems"];
+  const legacy = { goals: ["freeLive", "challengeLive"], metrics: { freeLive: rewards, challengeLive: ["eventPoints", "eventItems"] }, accuracy: { great: true, just: false },
+    eventItemRewards: { selection: "exactResultGrade", eventGroupField: "eventGroup", rowsPerGrade: 1, probabilityMarker: 10000 } };
+  const capable = parseCapabilities(JSON.stringify({ ...legacy, combinedMetric }))!;
+  const mixed = (patch = {}) => ({ ...defaultDeckGoalInput("eventPoints"), rewardMix: true,
+    rewardRates: { ...defaultRewardRates(), challengePoints: { counted: true, rate: 17.5 } }, ...patch });
+  const render = (input: ReturnType<typeof mixed>, capabilities: DeckSolverCapabilities | null = capable) => renderToStaticMarkup(
+    <DeckRewardMix locale="en-US" input={input} capabilities={capabilities} onChange={() => {}} />);
+
+  test("only event payoff goals offer it, and the tie-break way belongs to challenge points", () => {
+    for (const goal of ["battle", "free", "skip", "power", "challenge"] as const) expect(render({ ...mixed(), goal })).toBe("");
+    const points = render({ ...defaultDeckGoalInput("eventPoints") });
+    expect(points).toMatch(/<input[^>]*checked=""[^>]*value="single"/);
+    expect(points).toContain("PT only");
+    expect(points).not.toContain('value="tieBreak"');
+    expect(render({ ...defaultDeckGoalInput("challengePoints") })).toContain('value="tieBreak"');
+  });
+
+  test("the weighted way lists the goal as the base, the counted rates and the ranking formula", () => {
+    const html = render(mixed());
+    expect(html).toMatch(/<input[^>]*checked=""[^>]*value="weighted"/);
+    expect(html).toContain("Goal · worth 1");
+    expect(html).toMatch(/<input[^>]*type="checkbox"[^>]*aria-label="Count Challenge points"[^>]*checked=""/);
+    expect(html).toMatch(/<input[^>]*type="number"[^>]*aria-label="How many PT one CP is worth"[^>]*value="17.5"/);
+    expect(html).toContain('<span class="rm-chip" data-reward="eventPoints">PT</span>');
+    expect(html).toContain('<span class="rm-chip" data-reward="challengePoints"><b>17.5</b><span aria-hidden="true">×</span>CP</span>');
+    expect(html).not.toContain("Tick a reward");
+    expect(html).not.toContain("does not add up rewards");
+    // An uncounted reward keeps its rate field disabled and out of the formula.
+    expect(html).toMatch(/<input[^>]*type="number"[^>]*disabled=""[^>]*aria-label="How many PT one badge is worth"/);
+    expect(html).not.toContain('data-reward="eventItems"><b>');
+  });
+
+  test("an incomplete mix asks for a rate and a challenge live cannot count challenge points", () => {
+    const empty = render(mixed({ rewardRates: defaultRewardRates() }));
+    expect(empty).toContain("Tick a reward and enter what it is worth.");
+    const unset = render(mixed({ rewardRates: { ...defaultRewardRates(), eventItems: { counted: true, rate: null } } }));
+    expect(unset).toMatch(/<input[^>]*type="number"[^>]*aria-invalid="true"/);
+    expect(unset).toContain("Tick a reward and enter what it is worth.");
+    const challenge = render(mixed({ venue: "challengeLive" }));
+    expect(challenge).toContain("A Challenge Live spends CP and earns none.");
+    expect(challenge).toMatch(/<input[^>]*type="checkbox"[^>]*disabled=""[^>]*aria-label="Count Challenge points"\/>/);
+    expect(challenge).toContain("Tick a reward and enter what it is worth.");
+  });
+
+  test("engines without combined metrics, loading engines and other objectives gate the weighted way", () => {
+    const old = render({ ...defaultDeckGoalInput("eventPoints") }, parseCapabilities(JSON.stringify(legacy))!);
+    expect(old).toMatch(/<input[^>]*disabled=""[^>]*value="weighted"/);
+    expect(old).toContain("Add up at my rates<small>Not yet supported</small>");
+    const stuck = render(mixed(), parseCapabilities(JSON.stringify(legacy))!);
+    expect(stuck).toMatch(/<input[^>]*disabled=""[^>]*checked=""[^>]*value="weighted"/);
+    expect(stuck).toContain("does not add up rewards");
+    const loading = render(mixed(), null);
+    expect(loading).toContain("Checking whether rewards can be added up");
+    expect(loading).not.toContain("Not yet supported");
+    expect(render(mixed({ aggregation: "maximum" }))).toContain("Adding up rewards requires Average performance");
+    expect(render(mixed({ venue: "battleLive" }))).toContain("LUCK lotteries");
+    expect(render(mixed())).not.toContain("LUCK lotteries");
+  });
+
+  test("results show the total in the goal's reward with every reward's own value and part", () => {
+    const value = (numerator: number) => ({ score: numerator / 120, exact: { numerator: String(numerator), denominator: "120" }, interval: null });
+    const answer = parseDeckAnswer(JSON.stringify({ format: "ournotes-deck.account-recommendation/1", final: true, status: "ok", result: {
+      goal: { kind: "freeLive" }, aggregation: "expected", phase: "done", elapsedMs: 10, optimality: { proven: true, lowerBound: 4000, upperBound: 4000 },
+      metric: { kind: "combined", consumption: 1, terms: [{ kind: "eventPoints", eventId: 7, weight: 2 }, { kind: "challengePoints", eventId: 7, weight: 35 }] },
+      teams: [{ rank: 1, rankCertified: true, leader: { member: 3, snap: null }, others: [1, 2, 4, 5].map(member => ({ member, snap: null })), power: 100,
+        value: { score: 900000, payoff: value(480000) }, terms: [value(120000), value(6857.142857142857)], orders: null,
+        layout: { members: [1, 2, 3, 4, 5], snaps: [null, null, null, null, null] } }] } }));
+    const noop = () => {};
+    const html = renderToStaticMarkup(<DeckResult locale="en-US" goal="battle" stale={false} timeLimit={60} box={null} catalog={{ members: [], snaps: [] }} linked={false} busy={false}
+      job={{ status: "done", key: "mix", answer, stopped: false }} onStop={noop} onRerun={noop} onEditCard={noop} onPlayer={noop} onAnswerAll={noop} />);
+    expect(html).toContain("Rewards added up at your rates");
+    expect(html).toContain("Expected total per live, as PT");
+    // 480000 / 120 weighted, shown per unit of the goal's weight 2.
+    expect(html).toContain("<strong>2,000</strong>");
+    expect(html).toContain("What the total is made of");
+    expect(html).toContain('aria-label="PT 50%, CP 50%"');
+    expect(html).toContain("<strong>1,000</strong>");
+    expect(html).toContain("<strong>57.14</strong><small>× 17.5 = 1,000 PT</small>");
+    expect(html).not.toContain("Expected points per live");
+  });
 });

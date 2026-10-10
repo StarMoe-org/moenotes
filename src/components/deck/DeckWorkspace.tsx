@@ -14,10 +14,11 @@ import { answerDeckFields } from "@/lib/box/deck-answers";
 import { createDeckPreview } from "@/lib/box/deck-preview";
 import { boxAccountJson, gameSaveAccountJson } from "@/lib/deck/account-envelope";
 import { CHALLENGE_POINT_COSTS, DEFAULT_DECK_GOAL, EVENT_GOALS, EVERYDAY_GOALS, MAX_BOOST, computes, computesGoal, defaultDeckGoalInput, goalGap, heldEvent,
-  playsGekisou, readsAccuracy, effectiveAggregation, usesChallengePointPriority, usesEventItemRewards, isChallengeInput, isNetworkInput, recommendationRequest, solverGoalKind, goalVenues, isEventPayoffGoal, type ChallengePointCost, type DeckEvent, type DeckGoal, type DeckGoalInput, type DeckVenue, type DeckArenaMusic } from "@/lib/deck/goals";
+  playsGekisou, readsAccuracy, effectiveAggregation, usesChallengePointPriority, usesEventItemRewards, usesRewardMix, isChallengeInput, isNetworkInput, recommendationRequest, solverGoalKind, goalVenues, isEventPayoffGoal, type ChallengePointCost, type DeckEvent, type DeckGoal, type DeckGoalInput, type DeckVenue, type DeckArenaMusic } from "@/lib/deck/goals";
 import { displayUtcLabel, formatMasterDate, parseMasterDate } from "@/lib/schedule";
 import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { safeGetLocalStorage, safeRemoveLocalStorage, safeSetLocalStorage } from "@/lib/storage/safe-storage";
+import { defaultRewardRates } from "@/lib/deck/reward-mix";
 import { useDeckSolver } from "./use-deck-solver";
 import { deckDataGap } from "@/lib/deck/data-coverage";
 import DeckResult from "./DeckResult";
@@ -189,7 +190,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const gap = goalGap(effectiveInput, event);
   const dataGap = solver.engine.status === "ready" ? deckDataGap(effectiveInput, event, solver.engine.catalog,
     props.deckArenas?.find(value => value.server === server)?.songs) : null;
-  const supported = capabilities ? computes(capabilities, effectiveInput) : !usesEventItemRewards(effectiveInput) && effectiveInput.aggregation === "expected";
+  const supported = capabilities ? computes(capabilities, effectiveInput) : !usesEventItemRewards(effectiveInput) && !usesRewardMix(effectiveInput) && effectiveInput.aggregation === "expected";
   const idsOf = (keys: readonly string[], kind: CardKind) => keys.flatMap(key => {
     const card = box?.cards.find(item => item.key === key && item.kind === kind);
     return card?.identity.value ? [card.identity.value] : [];
@@ -420,7 +421,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const saveReady = !linked || linkedSave.state.status === "ready";
   const canRun = engine.status === "ready" && supported && !gap && !dataGap && saveReady;
   const blocker = engine.status === "loading" ? tr("solver.loading") : engine.status === "unavailable" ? tr(`solver.unavailable.${engine.reason}`)
-    : engine.status === "failed" ? "" : !supported ? tr(usesChallengePointPriority(effectiveInput) ? "conditions.priorityUnsupported" : goal === "eventItems" ? "solver.eventItemsUnsupported" : "comingSoon") : gap ? tr(`solver.gap.${gap}`) : !saveReady ? tr("solver.saveNotReady") : "";
+    : engine.status === "failed" ? "" : !supported ? tr(usesRewardMix(effectiveInput) ? "rewardMix.unavailable" : usesChallengePointPriority(effectiveInput) ? "conditions.priorityUnsupported" : goal === "eventItems" ? "solver.eventItemsUnsupported" : "comingSoon") : gap ? tr(`solver.gap.${gap}`) : !saveReady ? tr("solver.saveNotReady") : "";
   function engineNotice() {
     if (engine.status === "failed") return <p className="dc-engine-note" role="alert">{tr(`solver.failure.${engine.code}`)} <button type="button" onClick={solver.retry}>{tr("retry")}</button></p>;
     if (dataGap === "eventItemRewards") return <p className="dc-engine-note" role="status">{tr("solver.eventItemRewardsUnsupported")}</p>;
@@ -460,7 +461,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
             goals: event ? EVENT_GOALS.map(value => goalCard(value)) : [] },
           { id: "everyday", title: tr("goalGroups.everyday"), goals: EVERYDAY_GOALS.map(value => goalCard(value)) },
         ]}
-        selectedGoal={goal} onGoalChange={value => { updateGoal({ goal: value as DeckGoal, ...(value === "challengePoints" && ["challengeLive", "challengeSkip"].includes(goalInput.venue) ? { venue: "freeLive" } : {}) }); safeSetLocalStorage(GOAL_STORAGE_KEY, value); }}
+        selectedGoal={goal} onGoalChange={value => { updateGoal({ goal: value as DeckGoal, ...(value !== goal ? { rewardMix: false, rewardRates: defaultRewardRates() } : {}), ...(value === "challengePoints" && ["challengeLive", "challengeSkip"].includes(goalInput.venue) ? { venue: "freeLive" } : {}) }); safeSetLocalStorage(GOAL_STORAGE_KEY, value); }}
         collection={<div className="dc-collection-summary">
           <div className="dc-collection-stats"><span><strong>{ownedMembers.length}</strong> {tr("member")}</span><span><strong>{ownedSnaps.length}</strong> {tr("snap")}</span>
             {box && <span className="dc-collection-source" data-source={linked ? "game-save" : "box"}><CollectionIcon name={linked ? "game" : "image"} />{tr(linked ? "gameSave.sourceSave" : "gameSave.sourceBox")}

@@ -24,6 +24,7 @@ export const zhTW = {
     "chooseArena": "選擇 Arena 歌曲",
     "noArena": "目前伺服器資料中沒有 Arena 歌曲",
     conditions: {"play": "演奏條件", "accuracy": "Great / Just 比例，無 Miss", "pattern": "明確指定含 Miss 的完整演奏", "missEvery": "每 N 個判定音符出現一次 Miss（0 為無 Miss）", "noMiss": "明確指定完整演奏：無 Miss。", "missPattern": "每第 {n} 個判定音符記為 Miss。", "patternNote": "先套用下方 Great、Just 比例，再將指定音符改為 Miss。這是固定演奏條件，不代表真人失誤的機率分布。", "timeLimit": "最長計算時間", "timeLimitNote": "到時間後給出目前找到的最佳隊伍，並標明尚未證明最優。", "timeLimits": {"30": "30 秒", "60": "1 分鐘", "120": "2 分鐘", "300": "5 分鐘", "none": "不限"}, "eventItemsNote": "引擎逐個演出結果計算活動徽章，每次只取與最終評級確切對應的一檔獎勵。", "secondaryPriority": "CP 相同時的副收益順序", "priorities": {"none": "僅 CP", "eventPointsFirst": "CP → PT → 徽章", "eventItemsFirst": "CP → 徽章 → PT"}, "priorityNote": "先最大化平均 CP，CP 相同時再依所選副收益順序排序。", "priorityTeams": "只回傳最高 CP 層內至多 {n} 支隊伍，可能少於此數。逾時結果仍未證明最優。", "priorityExpectedOnly": "CP 副收益排序僅適用於平均表現，請選擇平均表現繼續。", "priorityUnsupported": "目前引擎不支援這些條件下的 CP 優先副收益排序。"},
+    rewardMix: {"label": "同一局的其他獎勵", "modes": {"single": "只看 {reward}", "weighted": "依換算率合計", "tieBreak": "只用來分先後"}, "unsupported": "暫不支援", "singleNote": "只依 {reward} 排序，其他獎勵不影響名次。", "rewards": {"eventPoints": "PT", "challengePoints": "CP", "eventItems": "徽章"}, "units": {"eventPoints": "PT", "challengePoints": "CP", "eventItems": "徽章"}, "names": {"eventPoints": "活動點數", "challengePoints": "挑戰點數", "eventItems": "活動徽章"}, "base": "主目標 · 記為 1", "count": "計入{reward}", "rate": "1 {reward} =", "rateInput": "1 {reward} 折合多少 {base}", "ratePlaceholder": "換算率", "spent": "挑戰 Live 消耗 CP，不會獲得 CP。", "formula": "排序依據", "formulaEmpty": "勾選要計入的獎勵並填寫換算率。", "weightedNote": "每局結算會同時發放這些獎勵。各項依你填的換算率折算後相加，再依平均合計排序。換算率由你決定，例如 1 CP 的價值可以取挑戰 Live 一局的 PT 除以消耗的 CP。", "expectedOnly": "合計獎勵僅適用於平均表現，請選擇平均表現繼續。", "unavailable": "目前引擎不支援在這些條件下合計獎勵。", "loading": "正在確認能否合計獎勵…", "luckNote": "技能帶 LUCK 抽籤的場次暫時無法合計。", "total": "每局期望合計（折合 {unit}）", "totalDeterministic": "每局合計（折合 {unit}）", "summary": "依換算率合計獎勵", "breakdown": "合計的構成", "counted": "× {rate} = {value} {unit}", "share": "{n}%"},
 
     cloud: {
       "accountChanged": "登入帳號發生了變更。儲存本機卡池前，請確認下方顯示的帳號。",
@@ -646,6 +647,7 @@ export const zhTW = {
         "protocol": "組卡引擎通訊出錯。"
       },
       "gap": {
+        "rewardMix": "請至少勾選一種要計入的獎勵並填寫大於 0 的換算率，優化目標選平均表現。",
         "secondaryPriority": "CP 副收益排序僅適用於平均表現，請選擇平均表現繼續。",
       "arenaSong": "請從目前伺服器資料中選擇 Arena 歌曲。",
       "play": "請填寫有效的 Miss 間隔：0 或正整數。",

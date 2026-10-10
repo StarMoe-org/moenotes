@@ -1,6 +1,7 @@
 import type { BoxCard, CardBox, CardFieldName, CardKind } from "@/lib/box/model";
 import { parseFraction, parseInterval, type DeckFraction, type DeckInterval } from "./interval";
 import { isChallengePointPriority, type ChallengePointPriority, type DeckAggregation } from "./goals";
+import { isEventReward, type RewardTerm } from "./reward-mix";
 
 /** The answer of a recommendation, `ournotes-deck.account-recommendation/1`, as the page reads it. */
 export const ANSWER_FORMAT = "ournotes-deck.account-recommendation/1";
@@ -18,6 +19,8 @@ export interface DeckTeam {
   power: number;
   value: DeckValue | null;
   eventRewards?: DeckEventRewards;
+  /** A reward mix: the expectation of each reward on its own, in the order of the result's terms. */
+  terms?: number[];
   orders: { count: number; min: DeckOrderStat; median: DeckOrderStat; max: DeckOrderStat } | null;
   bestOrder: DeckOrderStat | null;
   /** Slots 0..4 of the formation screen; the leader sits in slot 2. */
@@ -39,6 +42,8 @@ export interface DeckAnswer {
     coversAllOwnedCards: boolean;
     metric?: string;
     secondaryPriority?: ChallengePointPriority;
+    /** A reward mix: the weighted rewards the payoff sums, the goal's own first. */
+    terms?: RewardTerm[];
     resourceType?: number;
     resourceId?: number;
     aggregation: DeckAggregation;
@@ -75,15 +80,31 @@ function eventRewards(raw: unknown): DeckEventRewards {
   if (!record(raw)) throw new Error("Missing event rewards for challenge-point priority");
   return { challengePoints: exactReward(raw.challengePoints), eventPoints: exactReward(raw.eventPoints), eventItems: exactReward(raw.eventItems) };
 }
-function team(raw: unknown, index: number, inheritedRankProof: boolean, requireEventRewards: boolean): DeckTeam {
+function mixTerms(raw: unknown): RewardTerm[] {
+  if (!Array.isArray(raw) || !raw.length) throw new Error("Invalid reward mix result");
+  return raw.map(term => {
+    if (!record(term) || !isEventReward(term.kind) || !Number.isSafeInteger(term.weight) || (term.weight as number) < 1) throw new Error("Invalid reward mix term");
+    return { kind: term.kind, weight: term.weight as number };
+  });
+}
+function termValues(raw: unknown, count: number): number[] {
+  if (!Array.isArray(raw) || raw.length !== count) throw new Error("Missing reward mix values");
+  return raw.map(term => {
+    if (!record(term) || num(term.score) === null) throw new Error("Invalid reward mix value");
+    return term.score as number;
+  });
+}
+function team(raw: unknown, index: number, inheritedRankProof: boolean, requireEventRewards: boolean, mixed: number): DeckTeam {
   if (!record(raw) || !record(raw.layout) || !Array.isArray(raw.others)) throw new Error("Invalid team");
   const layout = raw.layout as Record<string, unknown>;
   if (!Array.isArray(layout.members) || layout.members.length !== 5 || !Array.isArray(layout.snaps) || layout.snaps.length !== 5) throw new Error("Invalid layout");
   const orders = record(raw.orders) ? { count: int(raw.orders.count), min: stat(raw.orders.min), median: stat(raw.orders.median), max: stat(raw.orders.max) } : null;
   const teamValue = value(raw.value);
   if (requireEventRewards && !teamValue?.payoff) throw new Error("Missing challenge-point payoff");
+  if (mixed && !teamValue?.payoff) throw new Error("Missing reward mix payoff");
   return { rank: num(raw.rank) ?? index + 1, rankCertified: raw.rankCertified === undefined ? inheritedRankProof : raw.rankCertified === true, leader: pair(raw.leader), others: raw.others.map(pair), power: num(raw.power) ?? 0, value: teamValue, orders,
     ...(requireEventRewards ? { eventRewards: eventRewards(raw.eventRewards) } : {}),
+    ...(mixed ? { terms: termValues(raw.terms, mixed) } : {}),
     bestOrder: record(raw.bestOrder) ? stat(raw.bestOrder) : null,
     layout: { members: layout.members.map(int), snaps: layout.snaps.map(item => item === null ? null : int(item)) } };
 }
@@ -110,7 +131,10 @@ export function parseDeckAnswer(json: string): DeckAnswer {
     if (hasPriority && (!isChallengePointPriority(secondaryPriority) || metric.kind !== "challengePoints"
       || r.aggregation === "maximum" || metric.resourceType !== 1 || !Number.isSafeInteger(metric.resourceId)
       || (metric.resourceId as number) <= 0 || !Array.isArray(r.teams))) throw new Error("Invalid challenge-point priority result");
+    const terms = metric.kind === "combined" ? mixTerms(metric.terms) : null;
+    if (terms && r.aggregation === "maximum") throw new Error("Invalid reward mix result");
     result = {
+      ...(terms ? { terms } : {}),
       ...(hasPriority ? { secondaryPriority: secondaryPriority as ChallengePointPriority, resourceType: 1, resourceId: metric.resourceId as number } : {}),
       phase, elapsedMs: num(r.elapsedMs),
       aggregation: r.aggregation === "maximum" ? "maximum" : "expected",
@@ -120,7 +144,7 @@ export function parseDeckAnswer(json: string): DeckAnswer {
       play: record(r.goal) && record(r.goal.play) && num(r.goal.play.judged) !== null && num(r.goal.play.misses) !== null
         ? { judged: r.goal.play.judged as number, misses: r.goal.play.misses as number } : null,
       optimality: { proven: o.proven === true, lowerBound: num(o.lowerBound), upperBound: num(o.upperBound), fraction: num(o.fraction) },
-      teams: Array.isArray(r.teams) ? r.teams.map((raw, index) => team(raw, index, o.proven === true, hasPriority)) : [],
+      teams: Array.isArray(r.teams) ? r.teams.map((raw, index) => team(raw, index, o.proven === true, hasPriority, terms?.length ?? 0)) : [],
       coversAllOwnedCards: account.coversAllOwnedCards !== false,
     };
   }

@@ -23,6 +23,7 @@ export const koKR = {
     "chooseArena": "아레나 곡 선택",
     "noArena": "현재 서버 데이터에 아레나 곡이 없습니다",
     conditions: {"play": "연주 조건", "accuracy": "Great / Just 비율, Miss 없음", "pattern": "Miss를 포함한 전체 연주 지정", "missEvery": "판정 노트 N개마다 Miss (0 = Miss 없음)", "noMiss": "전체 연주 명시: Miss 없음.", "missPattern": "판정 노트 {n}개마다 Miss로 처리합니다.", "patternNote": "아래 Great·Just 비율을 적용한 후 지정한 노트를 Miss로 바꿉니다. 고정된 연주 조건이며 사람의 실수 확률 분포가 아닙니다.", "timeLimit": "최대 계산 시간", "timeLimitNote": "시간이 다 되면 지금까지 찾은 최선의 덱을 최적 미증명으로 표시합니다.", "timeLimits": {"30": "30초", "60": "1분", "120": "2분", "300": "5분", "none": "제한 없음"}, "eventItemsNote": "엔진은 가능한 연주 결과마다 최종 등급과 정확히 일치하는 한 단계의 보상으로 이벤트 배지 수를 계산합니다.", "secondaryPriority": "CP가 같을 때 부가 보상 우선순위", "priorities": {"none": "CP만", "eventPointsFirst": "CP → PT → 배지", "eventItemsFirst": "CP → 배지 → PT"}, "priorityNote": "평균 CP를 먼저 최대화하고, CP가 같으면 선택한 부가 보상 우선순위로 덱을 정렬합니다.", "priorityTeams": "최고 CP 그룹에서 최대 {n}개 덱만 반환하며, 해당 덱 수가 더 적을 수 있습니다. 시간 초과 결과는 최적 미증명 상태입니다.", "priorityExpectedOnly": "CP 부가 보상 정렬은 평균 성능에서만 사용할 수 있습니다. 평균 성능을 선택하세요.", "priorityUnsupported": "현재 엔진은 이 조건에서 CP 우선 부가 보상 정렬을 지원하지 않습니다."},
+    rewardMix: {"label": "같은 라이브의 다른 보상", "modes": {"single": "{reward}만", "weighted": "환산해서 합산", "tieBreak": "동점일 때만 비교"}, "unsupported": "아직 지원하지 않음", "singleNote": "{reward}만으로 덱을 정렬합니다. 다른 보상은 순위에 영향을 주지 않습니다.", "rewards": {"eventPoints": "PT", "challengePoints": "CP", "eventItems": "배지"}, "units": {"eventPoints": "PT", "challengePoints": "CP", "eventItems": "배지"}, "names": {"eventPoints": "이벤트 포인트", "challengePoints": "챌린지 포인트", "eventItems": "이벤트 배지"}, "base": "주 목표 · 1로 계산", "count": "{reward} 포함", "rate": "1 {reward} =", "rateInput": "1 {reward}가 몇 {base}에 해당하는지", "ratePlaceholder": "환산율", "spent": "챌린지 라이브는 CP를 소모하며 CP를 얻지 않습니다.", "formula": "정렬 기준", "formulaEmpty": "포함할 보상을 선택하고 환산율을 입력하세요.", "weightedNote": "라이브 한 번의 결과로 이 보상들을 함께 받습니다. 각 보상을 입력한 환산율로 바꿔 더한 뒤, 평균 합계로 덱을 정렬합니다. 환산율은 직접 정합니다. 예를 들어 1 CP의 가치는 챌린지 라이브 1회의 PT를 소모 CP로 나눈 값으로 잡을 수 있습니다.", "expectedOnly": "보상 합산은 평균 성능에서만 사용할 수 있습니다. 평균 성능을 선택하세요.", "unavailable": "현재 엔진은 이 조건에서 보상 합산을 지원하지 않습니다.", "loading": "보상을 합산할 수 있는지 확인하는 중…", "luckNote": "스킬이 LUCK 추첨을 하는 라이브는 아직 합산할 수 없습니다.", "total": "1회당 기대 합계 ({unit} 환산)", "totalDeterministic": "1회당 합계 ({unit} 환산)", "summary": "환산율로 보상 합산", "breakdown": "합계 구성", "counted": "× {rate} = {value} {unit}", "share": "{n}%"},
 
     cloud: {
       "accountChanged": "로그인한 계정이 변경되었습니다. 이 기기의 컬렉션을 저장하기 전에 아래 계정을 확인하세요.",
@@ -645,6 +646,7 @@ export const koKR = {
         "protocol": "편성 엔진과의 통신에 실패했습니다."
       },
       "gap": {
+        "rewardMix": "포함할 보상을 하나 이상 선택하고 0보다 큰 환산율을 입력하세요. 최적화 목표는 평균 성능이어야 합니다.",
         "secondaryPriority": "CP 부가 보상 정렬은 평균 성능에서만 사용할 수 있습니다. 평균 성능을 선택하세요.",
       "arenaSong": "현재 서버 데이터에서 아레나 곡을 선택하세요.",
       "play": "유효한 Miss 간격을 입력하세요: 0 또는 양의 정수.",

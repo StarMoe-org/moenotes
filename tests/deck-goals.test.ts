@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { computes, computesGoal, defaultDeckGoalInput, effectiveAggregation, goalGap, heldEvent, jstTicks, parseCapabilities, recommendationRequest, type DeckEvent, type DeckGoalInput } from "../src/lib/deck/goals";
+import { mixTerms, mixableRewards, usesEventItemRewards } from "../src/lib/deck/goals";
+import { defaultRewardRates, rewardShares, rewardTerms, type RewardRates } from "../src/lib/deck/reward-mix";
 import { parseMasterDate } from "../src/lib/schedule";
 
 const event: DeckEvent = { id: 7, name: "Event", startAt: "2030/01/01 15:00:00+08:00", endAt: "2030/01/09 20:59:59+08:00", itemId: 90,
@@ -331,5 +333,111 @@ describe("challenge-point secondary priorities", () => {
       expect(computes(cap, { goal: "challengePoints", venue: "freeLive" })).toBe(true);
       expect(computes(cap, { goal: "challengePoints", venue: "freeLive", secondaryPriority: "eventPointsFirst" })).toBe(false);
     }
+  });
+});
+
+describe("reward mix", () => {
+  const rates = (patch: Partial<Record<keyof RewardRates, number | null>>): RewardRates => {
+    const all = { ...defaultRewardRates() };
+    for (const [kind, rate] of Object.entries(patch)) all[kind as keyof RewardRates] = { counted: true, rate: rate ?? null };
+    return all;
+  };
+  const others = ["challengePoints", "eventItems"] as const;
+  const combinedMetric = { kind: "combined", field: "metric.terms", objective: "weightedExpectedSum", termMetrics: "metrics", weights: "integer",
+    maxTerms: 8, maxWeight: 1_000_000, consumption: "metric.consumption", lotteryFree: true };
+  const eventItemRewards = { selection: "exactResultGrade", eventGroupField: "eventGroup", rowsPerGrade: 1, probabilityMarker: 10000 };
+  const kinds = ["freeLive", "battleLive", "challengeLive", "skip"];
+  const raw = { goals: kinds, metrics: Object.fromEntries(kinds.map(kind => [kind, ["eventPoints", "challengePoints", "eventItems"]])), accuracy: { great: true, just: true }, eventItemRewards };
+
+  test("rates become the smallest integer weights with the goal's reward first", () => {
+    expect(rewardTerms("eventPoints", rates({ challengePoints: 17.5 }), others)).toEqual([{ kind: "eventPoints", weight: 2 }, { kind: "challengePoints", weight: 35 }]);
+    expect(rewardTerms("eventPoints", rates({ challengePoints: 3, eventItems: 0.25 }), others))
+      .toEqual([{ kind: "eventPoints", weight: 4 }, { kind: "challengePoints", weight: 12 }, { kind: "eventItems", weight: 1 }]);
+    expect(rewardTerms("challengePoints", rates({ eventPoints: 0.0571 }), ["eventPoints", "eventItems"]))
+      .toEqual([{ kind: "challengePoints", weight: 10000 }, { kind: "eventPoints", weight: 571 }]);
+    // Four decimals are kept, fewer while a weight would pass the limit.
+    expect(rewardTerms("eventPoints", rates({ challengePoints: 0.12345 }), others)).toEqual([{ kind: "eventPoints", weight: 2000 }, { kind: "challengePoints", weight: 247 }]);
+    expect(rewardTerms("eventPoints", rates({ challengePoints: 1234.5678 }), others)).toEqual([{ kind: "eventPoints", weight: 100 }, { kind: "challengePoints", weight: 123457 }]);
+    expect(rewardTerms("eventPoints", rates({ challengePoints: 1_000_000 }), others)).toEqual([{ kind: "eventPoints", weight: 1 }, { kind: "challengePoints", weight: 1_000_000 }]);
+  });
+
+  test("a mix without a counted reward or with an unusable rate has no terms", () => {
+    expect(rewardTerms("eventPoints", defaultRewardRates(), others)).toBeNull();
+    for (const rate of [null, 0, -1, Number.NaN, Number.POSITIVE_INFINITY, 0.00004, 1_000_001]) expect(rewardTerms("eventPoints", rates({ challengePoints: rate }), others)).toBeNull();
+    expect(rewardTerms("eventPoints", rates({ challengePoints: 2, eventItems: null }), others)).toBeNull();
+    // The goal's own reward and rewards the venue cannot earn are left out.
+    expect(rewardTerms("eventPoints", rates({ eventPoints: 9, challengePoints: 2 }), others)).toEqual([{ kind: "eventPoints", weight: 1 }, { kind: "challengePoints", weight: 2 }]);
+    expect(rewardTerms("eventPoints", rates({ challengePoints: 2 }), ["eventItems"])).toBeNull();
+  });
+
+  test("shares split a team's total by reward in the goal's own unit", () => {
+    const shares = rewardShares([{ kind: "eventPoints", weight: 2 }, { kind: "challengePoints", weight: 35 }], [1000, 40]);
+    expect(shares.map(share => [share.kind, share.rate, share.value, share.counted])).toEqual([["eventPoints", 1, 1000, 1000], ["challengePoints", 17.5, 40, 700]]);
+    expect(shares[0]!.share + shares[1]!.share).toBeCloseTo(1);
+    expect(shares[1]!.share).toBeCloseTo(700 / 1700);
+    expect(rewardShares([{ kind: "eventPoints", weight: 1 }, { kind: "eventItems", weight: 3 }], [0, 0]).map(share => share.share)).toEqual([0, 0]);
+  });
+
+  test("a mixed goal sends one combined metric with the shared consumption and every term's own fields", () => {
+    const input = { ...defaultDeckGoalInput("eventPoints"), musicId: 100, boosts: 3, rewardMix: true, rewardRates: rates({ challengePoints: 17.5, eventItems: 40 }) };
+    const body = request(input);
+    expect(body.metric).toEqual({ kind: "combined", consumption: 3, terms: [
+      { kind: "eventPoints", eventId: 7, weight: 2 },
+      { kind: "challengePoints", eventId: 7, weight: 35 },
+      { kind: "eventItems", eventId: 7, resourceType: 1, resourceId: 90, weight: 80 },
+    ] });
+    expect(body.eventContext.rewardProjection).toBe(true);
+    expect(body.eventIds).toEqual([7]);
+    expect(body.aggregation).toBeUndefined();
+    expect(goalGap(input, event)).toBeNull();
+    const cp = request({ goal: "challengePoints", musicId: 100, rewardMix: true, secondaryPriority: "eventItemsFirst", rewardRates: rates({ eventPoints: 0.05 }) });
+    expect(cp.metric).toEqual({ kind: "combined", consumption: 0, terms: [{ kind: "challengePoints", eventId: 7, weight: 20 }, { kind: "eventPoints", eventId: 7, weight: 1 }] });
+    // Other goals ignore a stored mix.
+    expect(request({ goal: "free", musicId: 100, rewardMix: true, rewardRates: rates({ challengePoints: 2 }) }).metric).toEqual({ kind: "score" });
+    expect(request({ goal: "eventPoints", musicId: 100, rewardRates: rates({ challengePoints: 2 }) }).metric).toEqual({ kind: "eventPoints", eventId: 7, consumption: 0 });
+  });
+
+  test("a challenge live counts badges but no challenge points, and spends the chosen cost", () => {
+    const input = { ...defaultDeckGoalInput("eventPoints"), venue: "challengeLive" as const, challengeMusicId: 1, challengePoints: 400 as const,
+      rewardMix: true, rewardRates: rates({ challengePoints: 17.5, eventItems: 2 }) };
+    expect(mixableRewards(input)).toEqual(["eventItems"]);
+    expect(request(input).metric).toEqual({ kind: "combined", consumption: 400, terms: [
+      { kind: "eventPoints", eventId: 7, weight: 1 }, { kind: "eventItems", eventId: 7, resourceType: 1, resourceId: 90, weight: 2 }] });
+    expect(mixTerms({ ...input, rewardRates: rates({ challengePoints: 17.5 }) })).toBeNull();
+    expect(goalGap({ ...input, rewardRates: rates({ challengePoints: 17.5 }) }, event)).toBe("rewardMix");
+  });
+
+  test("gaps name an incomplete mix, a missing badge and a non-average objective", () => {
+    const input = { ...defaultDeckGoalInput("eventPoints"), musicId: 100, rewardMix: true };
+    expect(goalGap(input, event)).toBe("rewardMix");
+    expect(() => request(input)).toThrow("rewardMix");
+    expect(goalGap({ ...input, rewardRates: rates({ challengePoints: null }) }, event)).toBe("rewardMix");
+    expect(goalGap({ ...input, rewardRates: rates({ challengePoints: 2 }), aggregation: "maximum" }, event)).toBe("rewardMix");
+    expect(usesEventItemRewards({ ...input, rewardRates: rates({ eventItems: 2 }) })).toBe(true);
+    expect(usesEventItemRewards({ ...input, rewardRates: rates({ challengePoints: 2 }) })).toBe(false);
+    expect(goalGap({ ...input, rewardRates: rates({ eventItems: 2 }) }, { ...event, itemId: null })).toBe("eventItem");
+    expect(goalGap({ ...input, rewardRates: rates({ challengePoints: 2 }) }, { ...event, itemId: null })).toBeNull();
+  });
+
+  test("the engine must declare combined metrics and compute every term in the scene", () => {
+    const capable = parseCapabilities(JSON.stringify({ ...raw, combinedMetric }))!;
+    expect(capable.combinedMetric).toEqual({ maxTerms: 8, maxWeight: 1_000_000 });
+    const input = { goal: "eventPoints" as const, venue: "freeLive" as const, rewardMix: true, rewardRates: rates({ challengePoints: 17.5 }) };
+    expect(computes(capable, input)).toBe(true);
+    expect(computes(capable, { ...input, rewardRates: defaultRewardRates() })).toBe(true);
+    expect(computes(capable, { ...input, aggregation: "maximum" })).toBe(false);
+    expect(computes(parseCapabilities(JSON.stringify(raw))!, input)).toBe(false);
+    expect(computes(parseCapabilities(JSON.stringify(raw))!, { ...input, rewardMix: false })).toBe(true);
+    for (const patch of [{ objective: "lexicographicExpected" }, { weights: "decimal" }, { kind: "sum" }, { maxTerms: "8" }, { maxWeight: null }]) {
+      expect(parseCapabilities(JSON.stringify({ ...raw, combinedMetric: { ...combinedMetric, ...patch } }))!.combinedMetric).toBeUndefined();
+    }
+    expect(computes(parseCapabilities(JSON.stringify({ ...raw, combinedMetric: { ...combinedMetric, maxTerms: 1 } }))!, input)).toBe(false);
+    expect(computes(parseCapabilities(JSON.stringify({ ...raw, combinedMetric: { ...combinedMetric, maxWeight: 1000 } }))!, input)).toBe(false);
+    const noChallengePoints = parseCapabilities(JSON.stringify({ ...raw, combinedMetric, metrics: { ...raw.metrics, freeLive: ["eventPoints", "eventItems"] } }))!;
+    expect(computes(noChallengePoints, input)).toBe(false);
+    expect(computes(noChallengePoints, { ...input, rewardRates: rates({ eventItems: 2 }) })).toBe(true);
+    const noBadges = parseCapabilities(JSON.stringify({ ...raw, combinedMetric, eventItemRewards: undefined }))!;
+    expect(computes(noBadges, { ...input, rewardRates: rates({ eventItems: 2 }) })).toBe(false);
+    expect(computes(noBadges, input)).toBe(true);
   });
 });
