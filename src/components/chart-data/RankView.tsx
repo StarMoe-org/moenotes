@@ -175,7 +175,7 @@ function RankTable({ ctx }: { ctx: ChartDataContext }) {
   const bar = (v: number | null | undefined, text: ReactNode) => (
     <span className="mn-cd-bar" style={{ ["--w" as string]: `${barMax && typeof v === "number" ? Math.max(0, Math.min(100, (100 * v) / barMax)) : 0}%` }}>{text}</span>
   );
-  const clear = () => ctx.update({ band: "", search: "", frontier: false, diffs: ["easy", "normal", "hard", "expert"] });
+  const clear = () => ctx.update({ band: "", types: [], search: "", frontier: false, diffs: ["easy", "normal", "hard", "expert"] });
   const head = (k: Col) => k === "rankStatus" ? tr("snap.rank.status") : k === "score" || k === "delta" ? tr(`snap.${k}`)
     : k === "bpm" && state.rankBy === "speed" && state.speedBy === "bpmMax" ? tr("speedBy.bpmMax") : tr(`col.${k}`);
   const names = (r: Listed) => (r.dominatedBy ?? []).map((j) => unsorted?.[j]).filter((x): x is Listed => !!x)

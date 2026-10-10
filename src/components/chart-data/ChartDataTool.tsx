@@ -10,7 +10,7 @@ import { replaceUrl } from "@/lib/browser/history";
 import { chartRows } from "@/lib/chart-data/catalog";
 import { fetchMusicData } from "@/lib/chart-data/client";
 import { DIFFICULTIES, perMinute, scoreRate } from "@/lib/chart-data/ranking";
-import { parseChartDataQuery, playScenario, serializeChartDataQuery, VIEWS, type ChartDataState, type QueryContext, type View } from "@/lib/chart-data/query";
+import { inPool, parseChartDataQuery, playScenario, serializeChartDataQuery, VIEWS, type ChartDataState, type QueryContext, type View } from "@/lib/chart-data/query";
 import { scenarioSupport } from "@/lib/chart-data/scenario";
 import { localizeDataText } from "@/lib/chart-data/text";
 import type { MusicData } from "@/lib/chart-data/types";
@@ -18,8 +18,10 @@ import { chartSnapProfile, snapDisplayedMeasurement, snapMeasurementPlan } from 
 import { createSnapLegalityContext } from "@/lib/chart-data/snap-legality";
 import { emptySnapRanking, isCurrentSnapCatalogue, type SnapRankingCatalogue, type SnapRankingSource, type SnapRankingState } from "@/lib/chart-data/snap-client";
 import { getChartPreviewHref } from "@/lib/music/chart-preview";
+import { getCardTypeIconUrl, type CardType } from "@/lib/cards/assets";
 import { getMusicJacketUrl } from "@/lib/music/data";
 import { isMusicDifficulty } from "@/lib/music/difficulty";
+import { MUSIC_TYPES } from "@/lib/music/filter";
 import { getRoutePathById } from "@/lib/route/registry";
 import ChartDetail from "./ChartDetail";
 import ChartsView from "./ChartsView";
@@ -156,7 +158,7 @@ export default function ChartDataTool({ locale, guide }: Props) {
         ? { rate: scoreRate(r, skills), perMinute: perMinute(r, skills, current.len, current.overhead * 1000) }
         : { rate: null, perMinute: null }),
       openChart: (scoreId) => update({ chart: scoreId }),
-      pool: rows.filter((r) => current.diffs.includes(r.difficulty as typeof DIFFICULTIES[number]) && (!current.band || r.bandIds.map(String).includes(current.band))),
+      pool: rows.filter((r) => inPool(r, current)),
       snap: snapEvaluation ? { active: snapActive, profile: snapEvaluation.profile, measurement: snapDisplayedMeasurement(snapEvaluation, snapSource, snapMeasurement, snapAnalysis), source: snapSource, analysis: snapAnalysis } : undefined,
     };
   }, [data, current, rows, locale, tr, hasStats, support, update, snapEvaluation, snapActive, snapMeasurement, snapSource, snapAnalysis]);
@@ -224,6 +226,8 @@ function Filters({ ctx }: { ctx: ChartDataContext }) {
     const on = state.diffs.includes(d) ? state.diffs.filter((x) => x !== d) : [...state.diffs, d];
     update({ diffs: DIFFICULTIES.filter((x) => on.includes(x)) });
   };
+  const types = MUSIC_TYPES.filter((type) => ctx.data.songs?.some((song) => song.musicType === type));
+  const toggleType = (type: number) => update({ types: MUSIC_TYPES.filter((x) => state.types.includes(x) !== (x === type)) });
   return (
     <div className="mn-cd-filters mn-cd-glass">
       <div className="mn-cd-filter-row">
@@ -237,6 +241,19 @@ function Filters({ ctx }: { ctx: ChartDataContext }) {
           ))}
         </div>
       </div>
+      {types.length ? (
+        <div className="mn-cd-filter-row">
+          <div className="mn-cd-group scroll" role="group" aria-label={t(locale, "cards.attribute")}>
+            <span className="mn-cd-group-label">{t(locale, "cards.attribute")}</span>
+            <button type="button" className="mn-cd-chip" aria-pressed={state.types.length === 0} onClick={() => update({ types: [] })}>{tr("all")}</button>
+            {types.map((type) => (
+              <button key={type} type="button" className="mn-cd-chip" aria-pressed={state.types.includes(type)} onClick={() => toggleType(type)}>
+                <img src={getCardTypeIconUrl(type as CardType)} alt="" aria-hidden="true" />{t(locale, `cards.attributes.${type}`)}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
       <div className="mn-cd-filter-row">
         <div className="mn-cd-group" role="group" aria-label={tr("difficulty")}>
           <span className="mn-cd-group-label">{tr("difficulty")}</span>

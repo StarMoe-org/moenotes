@@ -3,7 +3,7 @@ import { aptitudeFigures, aptitudeRate, aptitudeSe, aptitudeShapes, chartVariant
 import type { AptitudeVariant } from "../src/lib/chart-data/types";
 import { describe, expect, test } from "bun:test";
 import { chartRows, histogram, matches, noteKinds, sortBy, ticks } from "../src/lib/chart-data/catalog";
-import { parseChartDataQuery, playScenario, roomSize, serializeChartDataQuery, type QueryContext } from "../src/lib/chart-data/query";
+import { inPool, parseChartDataQuery, playScenario, roomSize, serializeChartDataQuery, type QueryContext } from "../src/lib/chart-data/query";
 import {
   chartFigures,
   dominates,
@@ -303,10 +303,11 @@ describe("query", () => {
     expect(serializeChartDataQuery(state, ctx)).toBe("");
   });
   test("a query round-trips", () => {
-    const query = "v=charts&band=2&d=hard%2Cexpert&q=ave&r=event&len=chart&oh=45&x=150%2C120%2C0%2C0%2C0&p=800000&tr=S&rk=2%2C1%2C5&gr=20&jr=80&n=3&ax=bpm&ay=rate&c=10000103&frontier";
+    const query = "v=charts&band=2&type=1%2C3&d=hard%2Cexpert&q=ave&r=event&len=chart&oh=45&x=150%2C120%2C0%2C0%2C0&p=800000&tr=S&rk=2%2C1%2C5&gr=20&jr=80&n=3&ax=bpm&ay=rate&c=10000103&frontier";
     const state = parseChartDataQuery(query, ctx);
     expect(playScenario(state)).toEqual({ id: "battle", ranks: [2, 1, 5], great: 0.2, just: 0.8 });
     expect(state.room).toBe(3);
+    expect(state.types).toEqual([1, 3]);
     expect(state.frontier).toBe(true);
     expect(state.chart).toBe(10000103);
     expect(serializeChartDataQuery(state, ctx)).toBe(query);
@@ -337,6 +338,17 @@ describe("query", () => {
     expect(state.view).toBe("rank");
     expect(state.ay).toBe("density");
     expect(parseChartDataQuery("n=-2", ctx).room).toBe(1);
+  });
+  test("attributes are known, unique and ascending; the pool keeps the charts every filter passes", () => {
+    const state = parseChartDataQuery("type=3,9,1,x,3&band=2", ctx);
+    expect(state.types).toEqual([1, 3]);
+    const row = (musicType: number | undefined, bandIds: number[], difficulty = "expert") => ({ difficulty, bandIds, song: { id: 1, musicType } });
+    expect(inPool(row(3, [2]), state)).toBe(true);
+    expect(inPool(row(2, [2]), state)).toBe(false);
+    expect(inPool(row(undefined, [2]), state)).toBe(false);
+    expect(inPool(row(1, [4]), state)).toBe(false);
+    expect(inPool(row(1, [2], "hard"), state)).toBe(false);
+    expect(inPool(row(undefined, [2]), { ...state, types: [] })).toBe(true);
   });
 });
 

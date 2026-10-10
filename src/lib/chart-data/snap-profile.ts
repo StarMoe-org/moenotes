@@ -1,7 +1,7 @@
 import type { ChartRow } from "./catalog";
-import { DIFFICULTIES, rankThreshold } from "./ranking";
+import { rankThreshold } from "./ranking";
 import { SNAP_ORDER_MODEL, SNAP_POWER_DOMAIN } from "./snap-rank";
-import type { ChartDataState } from "./query";
+import { inPool, type ChartDataState } from "./query";
 import { snapMemberContext } from "./snap-catalogue";
 import type { FiveSlots, SnapDeckData, SnapEvaluationProfile, SnapMemberContext } from "./snap-types";
 import { emptySnapRanking, snapProfileKey, snapSourceKey, type SnapRankRequest, type SnapRankingSource, type SnapRankingState } from "./snap-client";
@@ -45,8 +45,7 @@ export function snapMeasurementPlan(rows: readonly ChartRow[], state: ChartDataS
   if (!state) return { scoreIds: [] };
   const byScore = new Map(rows.map(row => [row.scoreId, row]));
   const detail = state.chart !== null && byScore.has(state.chart) ? [state.chart] : [];
-  const pool = state.view === "rank" ? rows.filter(row => state.diffs.includes(row.difficulty as typeof DIFFICULTIES[number])
-    && (!state.band || row.bandIds.map(String).includes(state.band))).map(row => row.scoreId) : [];
+  const pool = state.view === "rank" ? rows.filter(row => inPool(row, state)).map(row => row.scoreId) : [];
   const scoreIds = [...new Set([...detail, ...pool])];
   const targets = state.view === "rank" && state.rankBy === "event" ? scoreIds : detail;
   return { scoreIds, ...(targets.length ? { analysis: {

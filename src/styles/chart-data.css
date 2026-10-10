@@ -66,6 +66,7 @@ html[data-theme="dark"] .mn-cd {
 .mn-cd-chip:hover { border-color: var(--mn-accent); background: var(--mn-accent-soft); }
 .mn-cd-chip[aria-pressed="true"] { color: var(--mn-orbit-light); background: var(--mn-orbit-night); border-color: var(--mn-orbit-edge); box-shadow: inset 3px 0 0 var(--mn-accent); }
 .mn-cd-chip i { width: 8px; height: 8px; border-radius: 50%; }
+.mn-cd-chip img { width: 16px; height: 16px; }
 .mn-cd-chip.d { min-width: 44px; justify-content: center; font-weight: 600; letter-spacing: .02em; }
 .mn-cd-chip.d[aria-pressed="true"] { color: var(--dc-ink); background: var(--dc-bg); border-color: var(--dc-ink); box-shadow: inset 3px 0 0 var(--dc); }
 .mn-cd-toggle {

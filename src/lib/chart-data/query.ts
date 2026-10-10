@@ -1,3 +1,5 @@
+import { MUSIC_TYPES } from "@/lib/music/filter";
+import type { ChartRow } from "./catalog";
 import { DIFFICULTIES, SCORE_RANKS, type Difficulty, type LengthSource, type ScoreRank } from "./ranking";
 import { BEST_RANKS, RANK_MAX, formatRanks, parseRanks, type Scenario, type ScenarioId, type ScenarioSupport } from "./scenario";
 import { axisGoal } from "./pareto";
@@ -6,7 +8,7 @@ import { parseSnapQuery, writeSnapQuery, type SnapQueryState } from "./snap-quer
 /**
  * The chart data tool's choices live in the query, as on ournotes-player's chart data page (the page's language is
  * the site locale, its theme the site setting):
- *   ?v=rank|charts|guide &band=<id> &d=<difficulty>[,...] &q=<search>
+ *   ?v=rank|charts|guide &band=<id> &type=<attribute>[,...] &d=<difficulty>[,...] &q=<search>
  *   &r=efficiency|event|speed|level|notes|long|short|skip &sp=density|bpmMax|bpm   (ranking, speed measure)
  *   &len=bgm|chart &oh=<seconds> &x=<percent>[,...] &frontier                      (efficiency)
  *   &gk=free &rk=<r>[,<r>,<r>]                        (play scenario: Free Live, else Gekisou Live with a rank 1-5
@@ -36,6 +38,8 @@ const DEFAULT_SKILLS = "100,100,100,100,100";
 export interface ChartDataState extends SnapQueryState {
   view: View;
   band: string;
+  /** Song attributes (`musicType`) shown, ascending; empty for every attribute. */
+  types: number[];
   diffs: Difficulty[];
   search: string;
   rankBy: RankBy;
@@ -86,9 +90,17 @@ export function roomSize(state: Pick<ChartDataState, "mode" | "room">): number {
   return state.mode === "battle" ? state.room : 0;
 }
 
+/** Whether a chart passes the difficulty, band and attribute filters. */
+export function inPool(row: Pick<ChartRow, "difficulty" | "bandIds" | "song">, state: Pick<ChartDataState, "diffs" | "band" | "types">): boolean {
+  return (state.diffs as readonly string[]).includes(row.difficulty)
+    && (!state.band || row.bandIds.map(String).includes(state.band))
+    && (state.types.length === 0 || state.types.includes(row.song.musicType ?? 0));
+}
+
 export function parseChartDataQuery(search: string, ctx: QueryContext): ChartDataState {
   const q = new URLSearchParams(search);
   const has = ctx.support;
+  const types = new Set((q.get("type") || "").split(",").map(Number));
   const skills = (q.get("x") || DEFAULT_SKILLS).split(",").map(Number).filter((x) => Number.isFinite(x) && x >= 0).slice(0, SKILL_SLOTS);
   while (skills.length < SKILL_SLOTS) skills.push(0);
   let rankBy: RankBy = oneOf(RANKS, q.get("r")) ? q.get("r") as RankBy : defaultRank(ctx);
@@ -102,6 +114,7 @@ export function parseChartDataQuery(search: string, ctx: QueryContext): ChartDat
     ...parseSnapQuery(q),
     view: oneOf(VIEWS, view) ? view : "rank",
     band: q.get("band") || "",
+    types: MUSIC_TYPES.filter((type) => types.has(type)),
     diffs: (q.get("d") || "expert").split(",").filter((d): d is Difficulty => oneOf(DIFFICULTIES, d)),
     search: q.get("q") || "",
     rankBy,
@@ -133,6 +146,7 @@ export function serializeChartDataQuery(state: ChartDataState, ctx: QueryContext
   };
   put("v", state.view, "rank");
   put("band", state.band, "");
+  put("type", state.types.join(","), "");
   put("d", state.diffs.join(","), "expert");
   put("q", state.search, "");
   put("r", state.rankBy, defaultRank(ctx));
