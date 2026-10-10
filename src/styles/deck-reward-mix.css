@@ -37,7 +37,7 @@ html[data-theme="dark"] :is(.rm-mix, .rm-breakdown, .rm-summary) {
 .rm-row:is([data-base], [data-counted="true"]) { border-color: color-mix(in oklab, var(--rm-color) 42%, var(--dc-line)); background: color-mix(in oklab, var(--rm-color) 5%, var(--mn-paper)); }
 .rm-row:is([data-base], [data-counted="true"])::before { opacity: 1; }
 .rm-row[data-offered="false"] { border-style: dashed; }
-.rm-pick { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.rm-mix .rm-pick { display: flex; align-items: center; gap: 9px; min-width: 0; }
 label.rm-pick { cursor: pointer; }
 .rm-row[data-offered="false"] label.rm-pick { cursor: not-allowed; }
 .dc-composer .rm-pick input[type="checkbox"] { accent-color: var(--rm-color); }
