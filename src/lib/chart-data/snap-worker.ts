@@ -164,8 +164,9 @@ export function createSnapWorkerHandler(post: (value: SnapWorkerResponse) => voi
             const row: SnapMeasuredRow = { scoreId, score: result.score, baselineScore: withoutSnap.score,
               delta: result.score - withoutSnap.score, life: result.life, combo: result.combo,
               randomDraws: result.randomDraws, convertedJudgements: result.convertedJudgements };
-            if (analysis) {
-              const rankKey = `${sourceKey}/${profileKey}/${scoreId}`;
+            const target = analysis?.targets.find(target => target.scoreId === scoreId);
+            if (analysis && target) {
+              const rankKey = `${sourceKey}/${snapProfileKey(profile, { ...analysis, targets: [target] })}/${scoreId}`;
               let rank = rankCache.get(rankKey);
               if (rank) { cacheHits++; rankCache.delete(rankKey); rankCache.set(rankKey, rank); }
               else {
@@ -191,7 +192,7 @@ export function createSnapWorkerHandler(post: (value: SnapWorkerResponse) => voi
             const message = error instanceof Error ? error.message : String(error);
             const row: SnapMeasuredRow = { scoreId, score: null, baselineScore: null, delta: null,
               life: null, combo: null, randomDraws: null, convertedJudgements: null, error: { code, message },
-              ...(analysis ? { rank: { status: code === "unsupported" || code === "engine-capability" ? "unsupported" as const : "error" as const, code, reason: message } } : {}) };
+              ...(analysis?.targets.some(target => target.scoreId === scoreId) ? { rank: { status: code === "unsupported" || code === "engine-capability" ? "unsupported" as const : "error" as const, code, reason: message } } : {}) };
             done++;
             post({ kind: "progress", revision, profileKey, done, total: scoreIds.length, rows: [row], source });
           }

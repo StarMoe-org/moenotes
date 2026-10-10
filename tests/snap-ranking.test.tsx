@@ -9,7 +9,7 @@ import { assetConfig } from "../src/config/assets";
 import type { ChartDataContext } from "../src/components/chart-data/shared";
 import { chartRows } from "../src/lib/chart-data/catalog";
 import { parseChartDataQuery, serializeChartDataQuery } from "../src/lib/chart-data/query";
-import { chartSnapProfile } from "../src/lib/chart-data/snap-profile";
+import { chartSnapProfile, snapMeasurementPlan } from "../src/lib/chart-data/snap-profile";
 import { emptySnapRanking, snapProfileKey, snapSourceKey, type SnapRankingCatalogue, type SnapRankingSource } from "../src/lib/chart-data/snap-client";
 import type { SnapEvaluationProfile, SnapRankResult, SnapTable } from "../src/lib/chart-data/snap-types";
 import type { MusicData } from "../src/lib/chart-data/types";
@@ -319,4 +319,19 @@ test("Snap detail preserves point replay and uses the same selected-target rank 
   expect(html).toContain("snap.timelineHint");
   expect(html).not.toContain('class="mn-cd-replay"');
   expect(html).not.toContain("detail.measures");
+});
+
+test("efficiency details prioritize the open chart and restrict rank analysis to that chart", () => {
+  const ctx = context();
+  const state = { ...ctx.state, view: "rank" as const, rankBy: "efficiency" as const, chart: 11 };
+  const detail = snapMeasurementPlan(ctx.rows, state);
+  expect(detail.scoreIds).toEqual([11, 10]);
+  expect(detail.analysis?.targets.map(target => target.scoreId)).toEqual([11]);
+  expect(snapMeasurementPlan(ctx.rows, { ...state, chart: null }).analysis).toBeUndefined();
+  expect(snapMeasurementPlan(ctx.rows, { ...state, view: "charts" }).scoreIds).toEqual([11]);
+  expect(snapMeasurementPlan(ctx.rows, { ...state, chart: 999 }).analysis).toBeUndefined();
+  const event = snapMeasurementPlan(ctx.rows, { ...state, rankBy: "event" });
+  expect(event.scoreIds).toEqual([11, 10]);
+  expect(event.analysis?.targets.map(target => target.scoreId)).toEqual([10, 11]);
+  expect(event.analysis).toEqual(snapMeasurementPlan(ctx.rows, { ...state, rankBy: "event", chart: 10 }).analysis);
 });

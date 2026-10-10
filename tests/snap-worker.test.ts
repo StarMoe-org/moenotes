@@ -214,3 +214,16 @@ test("client discards stale job/profile messages, independently accepts latest c
   client.dispose();
   expect(worker.stopped).toBe(true);
 });
+
+test("detail-first scheduling only analyzes requested ranks and reuses them across rank scopes", async () => {
+  const h = rankHarness();
+  await h.handler.handle({ ...h.request, scoreIds: [11, 10], analysis: { ...h.analysis, targets: [h.analysis.targets[1]!] } });
+  const rows = h.messages.flatMap(message => message.kind === "progress" ? message.rows : []);
+  expect(rows.map(row => row.scoreId)).toEqual([11, 10]);
+  expect(rows.map(row => row.rank?.status)).toEqual(["complete", undefined]);
+  expect(h.counts().jobs).toBe(2);
+  await h.handler.handle({ ...h.request, revision: 2 });
+  expect(h.counts().jobs).toBe(4);
+  await h.handler.handle({ ...h.request, revision: 3, scoreIds: [11, 10] });
+  expect(h.counts().jobs).toBe(4);
+});

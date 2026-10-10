@@ -22,7 +22,7 @@ export default function SnapRankingController(props: SnapRankingControllerProps)
   const client = useRef<SnapRankingClient | null>(null);
   const sourceKey = props.source ? snapSourceKey(props.source) : "";
   const profileKey = snapProfileKey(props.profile, props.analysis);
-  const chartKey = JSON.stringify([...new Set(props.scoreIds)].sort((a, b) => a - b));
+  const chartKey = JSON.stringify([...new Set(props.scoreIds)]);
   const active = props.enabled && props.profile.selections.some(Boolean);
 
   useEffect(() => {

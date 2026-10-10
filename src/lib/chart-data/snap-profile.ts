@@ -1,3 +1,6 @@
+import type { ChartRow } from "./catalog";
+import { DIFFICULTIES, rankThreshold } from "./ranking";
+import { SNAP_ORDER_MODEL, SNAP_POWER_DOMAIN } from "./snap-rank";
 import type { ChartDataState } from "./query";
 import { snapMemberContext } from "./snap-catalogue";
 import type { FiveSlots, SnapDeckData, SnapEvaluationProfile, SnapMemberContext } from "./snap-types";
@@ -35,4 +38,19 @@ export function snapDisplayedMeasurement(evaluation: ReturnType<typeof chartSnap
   return evaluation.invalidMembers.length || evaluation.issues.length ? { ...emptySnapRanking(snapProfileKey(evaluation.profile, analysis)),
     sourceKey: source ? snapSourceKey(source) : "", status: "needs-context",
     ...(evaluation.issues.length ? { error: { code: "invalid-selection", message: "" } } : {}) } : measurement;
+}
+
+/** Visible ranking measurements, with the open detail first and rank work limited to the visible rank scope. */
+export function snapMeasurementPlan(rows: readonly ChartRow[], state: ChartDataState | null): { scoreIds: number[]; analysis?: SnapRankRequest } {
+  if (!state) return { scoreIds: [] };
+  const byScore = new Map(rows.map(row => [row.scoreId, row]));
+  const detail = state.chart !== null && byScore.has(state.chart) ? [state.chart] : [];
+  const pool = state.view === "rank" ? rows.filter(row => state.diffs.includes(row.difficulty as typeof DIFFICULTIES[number])
+    && (!state.band || row.bandIds.map(String).includes(state.band))).map(row => row.scoreId) : [];
+  const scoreIds = [...new Set([...detail, ...pool])];
+  const targets = state.view === "rank" && state.rankBy === "event" ? scoreIds : detail;
+  return { scoreIds, ...(targets.length ? { analysis: {
+    model: SNAP_ORDER_MODEL, target: state.target, powerDomain: { ...SNAP_POWER_DOMAIN },
+    targets: [...targets].sort((a, b) => a - b).map(scoreId => ({ scoreId, threshold: rankThreshold(byScore.get(scoreId)!, state.target, 0) })),
+  } } : {}) };
 }
