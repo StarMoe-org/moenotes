@@ -3,10 +3,11 @@ import type { AppLocale } from "@/config/locales";
 import { createSnapEvaluator, loadSnapReplayRuntime, SnapReplayError, validateSnapProfile, type LoadedSnapReplay } from "./snap-bridge";
 import { buildSnapSkillCatalogue } from "./snap-catalogue";
 import { buildSnapLabeler } from "./snap-labels";
-import type { SnapMeasuredRow, SnapRankingCatalogue, SnapRankingSource, SnapWorkerRequest, SnapWorkerResponse } from "./snap-client";
-import type { SnapEvaluationProfile, SnapReplayResult } from "./snap-types";
+import { snapProfileKey, type SnapMeasuredRank, type SnapMeasuredRow, type SnapRankRequest, type SnapRankingCatalogue, type SnapRankingSource, type SnapWorkerRequest, type SnapWorkerResponse } from "./snap-client";
+import type { SnapEvaluationProfile, SnapPowerDomain, SnapRankProgress, SnapReplayResult } from "./snap-types";
 
-type Evaluator = { evaluate(scoreId: number): SnapReplayResult; dispose(): void };
+type RankJob = { status(): SnapRankProgress; advance(count: number): SnapRankProgress; dispose(): void };
+type Evaluator = { evaluate(scoreId: number): SnapReplayResult; startRank?(scoreId: number, threshold: number, domain: SnapPowerDomain): RankJob; dispose(): void };
 interface WorkerDependencies {
   load(source: SnapRankingSource): Promise<LoadedSnapReplay>;
   evaluator(loaded: LoadedSnapReplay, profile: SnapEvaluationProfile): Evaluator;
@@ -39,6 +40,8 @@ export function createSnapWorkerHandler(post: (value: SnapWorkerResponse) => voi
   let activeJob = 0;
   const cancelled = new Set<number>();
   const cache = new Map<string, SnapReplayResult>();
+  const rankCache = new Map<string, SnapMeasuredRank>();
+  const interrupted = Symbol("cancelled rank job");
   const cacheGet = (key: string) => {
     const value = cache.get(key);
     if (value) { cache.delete(key); cache.set(key, value); }
@@ -53,6 +56,7 @@ export function createSnapWorkerHandler(post: (value: SnapWorkerResponse) => voi
     if (key !== loadedKey || !loadedPromise) {
       loadedKey = key;
       cache.clear();
+      rankCache.clear();
       loadedPromise = dependencies.load(source).catch((error: unknown) => {
         if (loadedKey === key) loadedPromise = null;
         throw error;
@@ -61,6 +65,43 @@ export function createSnapWorkerHandler(post: (value: SnapWorkerResponse) => voi
     return loadedPromise;
   };
   const isCurrent = (revision: number) => activeJob === revision && !cancelled.has(revision);
+
+  async function rankPair(revision: number, selected: Evaluator, baseline: Evaluator, scoreId: number, analysis: SnapRankRequest, onOrders: (completed: number) => void): Promise<SnapMeasuredRank> {
+    const target = analysis.targets.find(target => target.scoreId === scoreId);
+    if (!target || target.threshold === null) return { status: "no-threshold" };
+    const run = async (evaluator: Evaluator, offset: number) => {
+      if (!evaluator.startRank) throw new SnapReplayError("engine-capability", "The published replay engine does not provide rank analysis");
+      const job = evaluator.startRank(scoreId, target.threshold!, analysis.powerDomain);
+      try {
+        let progress = job.status();
+        while (progress.status === "running") {
+          if (!isCurrent(revision)) throw interrupted;
+          progress = job.advance(4);
+          if (progress.completedOrders % 12 === 0 || progress.status !== "running") onOrders(offset + progress.completedOrders);
+          await dependencies.yieldControl();
+        }
+        if (!isCurrent(revision)) throw interrupted;
+        return progress;
+      } finally { job.dispose(); }
+    };
+    try {
+      const selectedRank = await run(selected, 0);
+      if (selectedRank.status === "unsupported") return { status: "unsupported", code: selectedRank.code!, reason: selectedRank.reason! };
+      try {
+        const baselineRank = await run(baseline, 120);
+        return { status: "complete", result: selectedRank.result!, baseline: baselineRank.result,
+          ...(baselineRank.status === "unsupported" ? { baselineIssue: baselineRank.reason! } : {}) };
+      } catch (error) {
+        if (error === interrupted) throw error;
+        return { status: "complete", result: selectedRank.result!, baseline: null,
+          baselineIssue: error instanceof Error ? error.message : String(error) };
+      }
+    } catch (error) {
+      if (error === interrupted) throw error;
+      return { status: error instanceof SnapReplayError && ["unsupported", "engine-capability"].includes(error.code) ? "unsupported" : "error",
+        code: error instanceof SnapReplayError ? error.code : "runtime", reason: error instanceof Error ? error.message : String(error) };
+    }
+  }
 
   async function handle(value: SnapWorkerRequest): Promise<void> {
     if (value.kind === "cancel") {
@@ -79,7 +120,16 @@ export function createSnapWorkerHandler(post: (value: SnapWorkerResponse) => voi
       const scoreIds = [...new Set(value.scoreIds)];
       if (scoreIds.some((id) => !Number.isSafeInteger(id) || id <= 0)) throw new SnapReplayError("invalid-profile", "Invalid chart IDs");
       dependencies.validate(loaded, profile);
-      const profileKey = JSON.stringify(profile);
+      const analysis = value.analysis;
+      if (analysis && (analysis.model !== "uniformSkillOrder120" || !Number.isInteger(analysis.powerDomain.min)
+        || !Number.isInteger(analysis.powerDomain.max) || analysis.powerDomain.min < 1 || analysis.powerDomain.max > 20000000
+        || analysis.powerDomain.min > analysis.powerDomain.max || new Set(analysis.targets.map(target => target.scoreId)).size !== analysis.targets.length
+        || analysis.targets.some(target => !Number.isSafeInteger(target.scoreId) || target.scoreId <= 0
+          || target.threshold !== null && (!Number.isInteger(target.threshold) || target.threshold < 0 || target.threshold > 2147483647)))) {
+        throw new SnapReplayError("invalid-profile", "Invalid rank analysis targets or power domain");
+      }
+      const profileKey = snapProfileKey(profile, analysis);
+      const pointProfileKey = snapProfileKey(profile);
       const baselineProfile: SnapEvaluationProfile = { ...profile, selections: [null, null, null, null, null] };
       const baselineKey = JSON.stringify(baselineProfile);
       const source = { manifestSha256: loaded.manifestSha256, dataSha256: loaded.dataSha256, modelCommit: loaded.modelCommit };
@@ -92,29 +142,60 @@ export function createSnapWorkerHandler(post: (value: SnapWorkerResponse) => voi
         post({ kind: "progress", revision, profileKey, done, total: scoreIds.length, rows: [], source });
         for (const scoreId of scoreIds) {
           if (!isCurrent(revision)) { post({ kind: "cancelled", revision }); return; }
-          const key = `${sourceKey}/${profileKey}/${scoreId}`;
-          const noSnapKey = `${sourceKey}/${baselineKey}/${scoreId}`;
-          let result = cacheGet(key), withoutSnap = cacheGet(noSnapKey);
-          if (result) cacheHits++;
-          if (withoutSnap) cacheHits++;
-          if (!result) {
-            selected ??= dependencies.evaluator(loaded, profile);
-            result = selected.evaluate(scoreId);
-            cacheSet(key, result);
+          try {
+            const key = `${sourceKey}/${pointProfileKey}/${scoreId}`;
+            const noSnapKey = `${sourceKey}/${baselineKey}/${scoreId}`;
+            let result = cacheGet(key), withoutSnap = cacheGet(noSnapKey);
+            if (result) cacheHits++;
+            if (withoutSnap) cacheHits++;
+            if (!result) {
+              selected ??= dependencies.evaluator(loaded, profile);
+              result = selected.evaluate(scoreId);
+              cacheSet(key, result);
+            }
+            if (!withoutSnap) {
+              baseline ??= dependencies.evaluator(loaded, baselineProfile);
+              withoutSnap = baseline.evaluate(scoreId);
+              cacheSet(noSnapKey, withoutSnap);
+            }
+            if (!Number.isSafeInteger(result.score) || !Number.isSafeInteger(withoutSnap.score) || !Number.isSafeInteger(result.score - withoutSnap.score)) {
+              throw new SnapReplayError("identity", "Replay score exceeds exact browser integer range");
+            }
+            const row: SnapMeasuredRow = { scoreId, score: result.score, baselineScore: withoutSnap.score,
+              delta: result.score - withoutSnap.score, life: result.life, combo: result.combo,
+              randomDraws: result.randomDraws, convertedJudgements: result.convertedJudgements };
+            const target = analysis?.targets.find(target => target.scoreId === scoreId);
+            if (analysis && target) {
+              const rankKey = `${sourceKey}/${snapProfileKey(profile, { ...analysis, targets: [target] })}/${scoreId}`;
+              let rank = rankCache.get(rankKey);
+              if (rank) { cacheHits++; rankCache.delete(rankKey); rankCache.set(rankKey, rank); }
+              else {
+                selected ??= dependencies.evaluator(loaded, profile);
+                baseline ??= dependencies.evaluator(loaded, baselineProfile);
+                rank = await rankPair(revision, selected, baseline, scoreId, analysis, completed => {
+                  post({ kind: "progress", revision, profileKey, done, total: scoreIds.length, rows: [], source, orderProgress: { completed, total: 240 } });
+                });
+                if (rank.status !== "error") {
+                  rankCache.set(rankKey, rank);
+                  while (rankCache.size > cacheLimit) rankCache.delete(rankCache.keys().next().value!);
+                }
+              }
+              row.rank = rank;
+            }
+            if (!isCurrent(revision)) { post({ kind: "cancelled", revision }); return; }
+            done++;
+            post({ kind: "progress", revision, profileKey, done, total: scoreIds.length, rows: [row], source });
+          } catch (error) {
+            if (error === interrupted) throw error;
+            if (!isCurrent(revision)) { post({ kind: "cancelled", revision }); return; }
+            const code = error instanceof SnapReplayError ? error.code : "runtime";
+            const message = error instanceof Error ? error.message : String(error);
+            const row: SnapMeasuredRow = { scoreId, score: null, baselineScore: null, delta: null,
+              life: null, combo: null, randomDraws: null, convertedJudgements: null, error: { code, message },
+              ...(analysis?.targets.some(target => target.scoreId === scoreId) ? { rank: { status: code === "unsupported" || code === "engine-capability" ? "unsupported" as const : "error" as const, code, reason: message } } : {}) };
+            done++;
+            post({ kind: "progress", revision, profileKey, done, total: scoreIds.length, rows: [row], source });
           }
-          if (!withoutSnap) {
-            baseline ??= dependencies.evaluator(loaded, baselineProfile);
-            withoutSnap = baseline.evaluate(scoreId);
-            cacheSet(noSnapKey, withoutSnap);
-          }
-          if (!Number.isSafeInteger(result.score) || !Number.isSafeInteger(withoutSnap.score) || !Number.isSafeInteger(result.score - withoutSnap.score)) {
-            throw new SnapReplayError("identity", "Replay score exceeds exact browser integer range");
-          }
-          const row: SnapMeasuredRow = { scoreId, score: result.score, baselineScore: withoutSnap.score,
-            delta: result.score - withoutSnap.score, life: result.life, combo: result.combo,
-            randomDraws: result.randomDraws, convertedJudgements: result.convertedJudgements };
-          done++;
-          post({ kind: "progress", revision, profileKey, done, total: scoreIds.length, rows: [row], source });
           // Each paired result is atomic. Yield between charts so new profiles/cancel
           // messages can stop further work instead of queueing behind a whole pool.
           await dependencies.yieldControl();
@@ -130,6 +211,7 @@ export function createSnapWorkerHandler(post: (value: SnapWorkerResponse) => voi
         cancelled.delete(revision);
       }
     } catch (error: unknown) {
+      if (error === interrupted) { cancelled.delete(value.revision); post({ kind: "cancelled", revision: value.revision }); return; }
       const code = error instanceof SnapReplayError ? error.code : "runtime";
       if (value.kind === "catalogue" || isCurrent(value.revision)) post({ kind: "error", phase: value.kind === "catalogue" ? "catalogue" : "measure",
         revision: value.revision, code, message: error instanceof Error ? error.message : String(error) });

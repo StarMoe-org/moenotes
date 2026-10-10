@@ -91,6 +91,40 @@ describe("same-snapshot Snap inputs", () => {
     expect(performers[0]?.supportSkills).toEqual([]);
     expect(performers[2]?.liveSkillCategories).toEqual([7]);
   });
+  test("rank jobs share the replay play plan and keep paired skill identities", () => {
+    const data = fixture(), p = profile(data);
+    p.selections = [null, null, { kind: "support", skillId: 1, level: 1 }, null, null];
+    p.greatFraction = 0.2;
+    let input: Record<string, any> = {}, frees = 0, sessionFrees = 0;
+    const running = { format: "ournotes.replay-rank-result/1", status: "running", completedOrders: 0, totalOrders: 120,
+      result: null, code: null, reason: null };
+    const runtime = createSnapEvaluator({ data, manifestSha256: "a", dataSha256: "b", modelCommit: "c", factory: () => ({
+      template: () => JSON.stringify({ format: "ournotes.replay/1", scoreId: 10, power: p.power, complete: true, frames: [] }),
+      describeChart: () => "{}", run: () => { throw Error("Rank jobs use the rank entry point"); },
+      startRankAnalysis: raw => { input = JSON.parse(raw); return { status: () => JSON.stringify(running),
+        advance: count => JSON.stringify({ ...running, completedOrders: count }), free: () => { frees++; } }; },
+      free: () => { sessionFrees++; },
+    }) }, p, request => { request.frames = [{ timeMs: 10, judgements: [{ noteId: 1, judgement: 4 }] }]; });
+    const domain = { min: 1, max: 2000000 };
+    const job = runtime.startRank(10, 1000000, domain);
+    domain.max = 2;
+    expect(input.format).toBe("ournotes.replay-rank/1");
+    expect(input.target).toEqual({ kind: "score", threshold: 1000000 });
+    expect(input.powerDomain).toEqual({ min: 1, max: 2000000 });
+    expect(input.replay.performers[2].supportSkills).toEqual([[1, 1]]);
+    expect(input.replay.performers[0].supportSkills).toEqual([]);
+    expect(input.replay.frames[0].judgements[0].judgement).toBe(4);
+    expect(job.status().completedOrders).toBe(0);
+    expect(job.advance(7).completedOrders).toBe(7);
+    job.dispose(); runtime.dispose();
+    expect([frees, sessionFrees]).toEqual([1, 1]);
+  });
+  test("rank analysis requires the published engine capability", () => {
+    const runtime = createSnapEvaluator({ data: fixture(), manifestSha256: "a", dataSha256: "b", modelCommit: "c", factory: () => ({
+      template: () => "{}", describeChart: () => "{}", run: () => { throw Error("No point-score substitute"); },
+    }) }, profile());
+    expect(() => runtime.startRank(10, 100)).toThrow("published replay engine");
+  });
   test("non-default accuracy needs the shared input-plan helper", () => {
     const data = fixture(), p = profile(data); p.justFraction = 1;
     expect(() => createSnapEvaluator({ data, manifestSha256: "a", dataSha256: "b", modelCommit: "c", factory: () => { throw Error("must not allocate"); } }, p)).toThrow("input-plan helper");

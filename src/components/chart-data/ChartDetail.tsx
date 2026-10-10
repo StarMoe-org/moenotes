@@ -6,7 +6,8 @@ import { FREE } from "@/lib/chart-data/scenario";
 import AptitudeDetail from "./AptitudeDetail";
 import ReplayDetail from "./ReplayDetail";
 import { currentSnapRanking } from "@/lib/chart-data/snap-client";
-import { MISSIONS, ScenarioPanel } from "./SettingsPanel";
+import { currentSnapRank, snapRankFigures, snapRankStatusKey } from "@/lib/chart-data/snap-rank";
+import SettingsPanel, { MISSIONS, ScenarioPanel } from "./SettingsPanel";
 import { Heading, Icon, Jacket, fmt, fmtInt, diffShort, SongLink, type ChartDataContext } from "./shared";
 
 const KIND_COLOR: Record<string, string> = { tap: "var(--mn-accent)", flick: "var(--mn-pink)", slide: "var(--mn-mint)", trace: "var(--mn-amber)", combo: "var(--mn-border)" };
@@ -204,9 +205,15 @@ export default function ChartDetail({ ctx, row }: { ctx: ChartDataContext; row: 
   const c = row.chart;
   const snap = ctx.snap?.active ? ctx.snap : null;
   const e = snap ? { rate: null, perMinute: null } : ctx.eff(row);
-  const measured = snap ? currentSnapRanking(snap.profile, snap.source, snap.measurement)?.rows.get(row.scoreId) : null;
+  const current = snap ? currentSnapRanking(snap.profile, snap.source, snap.measurement, snap.analysis) : null;
+  const measured = current?.rows.get(row.scoreId);
   const duration = ctx.lengthOf(row);
-  const measuredPerMinute = measured && duration !== null && duration + state.overhead * 1000 > 0 ? measured.score * 60000 / (duration + state.overhead * 1000) : null;
+  const rank = snap ? currentSnapRank(measured, rankThreshold(row, state.target, 0), snap.profile.power, current) : null;
+  const rankFigures = rank?.status === "complete" ? snapRankFigures(rank.result, duration === null ? null : duration + state.overhead * 1000) : null;
+  const rankStatus = rank ? tr(snapRankStatusKey(rank)) : "";
+  const rankNeed = rank?.status === "complete" ? rank.result.need.status === "exact" ? fmtInt(rank.result.need.power)
+    : tr(rank.result.need.status === "outsideDomain" ? "snap.rank.outsideDomain" : "snap.rank.unproven") : rankStatus;
+  const measuredPerMinute = typeof measured?.score === "number" && duration !== null && duration + state.overhead * 1000 > 0 ? measured.score * 60000 / (duration + state.overhead * 1000) : null;
   const figured = !snap && row.weights ? (row as Figured) : null;
   const orders = figured ? orderRates(figured, ctx.skills) : null;
   const battle = state.mode === "battle";
@@ -257,7 +264,7 @@ export default function ChartDetail({ ctx, row }: { ctx: ChartDataContext; row: 
           {snap ? <>
             <Tile label={tr("snap.score")} value={fmtInt(measured?.score)} sub={tr("snap.measurementHint")} />
             <Tile label={tr("snap.baseline")} value={fmtInt(measured?.baselineScore)} />
-            <Tile label={tr("snap.delta")} value={measured ? `${measured.delta > 0 ? "+" : ""}${fmtInt(measured.delta)}` : "–"} />
+            <Tile label={tr("snap.delta")} value={typeof measured?.delta === "number" ? `${measured.delta > 0 ? "+" : ""}${fmtInt(measured.delta)}` : "–"} />
             <Tile label={tr("snap.perMinute")} value={fmt(measuredPerMinute, 3)} />
           </> : null}
           {figured && orders ? (
@@ -300,16 +307,26 @@ export default function ChartDetail({ ctx, row }: { ctx: ChartDataContext; row: 
             </section>
           ) : null}
         </div>
-        {(figured || snap) && row.scoreRanks.length ? (
+        {(snap || figured && row.scoreRanks.length > 0) ? (
           <section>
             <Heading level={3} title={tr("detail.ranks")} />
-            {snap ? <div className="mn-cd-table-scroll"><table className="mn-cd-ranks">
+            {snap ? <>
+              <SettingsPanel ctx={ctx} event />
+              <p className="mn-cd-hint">{tr("snap.eventMeasurementHint")}</p>
+              <p role="status">{rankStatus}</p>
+              <div className="mn-cd-tiles">
+                <Tile label={tr("snap.rank.meanScore")} value={rankFigures ? fmtInt(rankFigures.score) : rankStatus} />
+                <Tile label={tr("col.need")} value={rankNeed} />
+                <Tile label={tr("col.chance")} value={rankFigures ? `${fmt(rankFigures.chance * 100, 1)}%` : rankStatus} />
+                <Tile label={tr("col.goal")} value={rankFigures ? fmt(rankFigures.goal, 2) : rankStatus} />
+              </div>
+              <div className="mn-cd-table-scroll"><table className="mn-cd-ranks">
               <thead><tr><th>{tr("detail.rank")}</th><th>{tr("detail.required")}</th></tr></thead>
               <tbody>{SCORE_RANKS.filter((rank) => rankThreshold(row, rank, 0) !== null).reverse().map((rank) => <tr key={rank}>
                 <td><span className={`mn-cd-rk rk-${rank}`}>{rank}</span></td><td className="num">{fmtInt(rankThreshold(row, rank, 0))}</td>
               </tr>)}</tbody>
-            </table></div> : figured ? <RanksTable ctx={ctx} row={figured} /> : null}
-            <p className="mn-cd-hint">{snap ? tr("snap.eventMeasurementHint") : roomSize(state) ? tr("detail.ranksHintRoom", { n: state.room }) : tr("detail.ranksHint")}</p>
+            </table></div></> : figured ? <RanksTable ctx={ctx} row={figured} /> : null}
+            {!snap ? <p className="mn-cd-hint">{roomSize(state) ? tr("detail.ranksHintRoom", { n: state.room }) : tr("detail.ranksHint")}</p> : null}
           </section>
         ) : null}
         <p className="mn-cd-ids">{`${tr("detail.musicId")} ${row.musicId} · ${tr("detail.scoreId")} ${row.scoreId} · ${tr("detail.musicType")} ${row.song.musicType ?? "–"}`}</p>

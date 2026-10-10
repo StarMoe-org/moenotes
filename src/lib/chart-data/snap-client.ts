@@ -1,6 +1,6 @@
 import type { AppLocale } from "@/config/locales";
 import type { SnapLabelSource } from "./snap-labels";
-import type { SnapDeckData, SnapEvaluationProfile, SnapReplayReference, SnapSkillChoice } from "./snap-types";
+import type { SnapDeckData, SnapEvaluationProfile, SnapPowerDomain, SnapRankResult, SnapReplayReference, SnapSkillChoice } from "./snap-types";
 import type { MusicData } from "./types";
 
 export interface SnapRankingSource {
@@ -25,15 +25,27 @@ export function isCurrentSnapCatalogue(catalogue: SnapRankingCatalogue | null, m
     && catalogue.data.provenance.region === music.provenance?.region
     && master?.version === music.provenance?.master?.version && model?.commit === music.provenance?.deck?.commit;
 }
+export interface SnapRankRequest {
+  model: "uniformSkillOrder120";
+  target: string;
+  powerDomain: SnapPowerDomain;
+  targets: readonly { scoreId: number; threshold: number | null }[];
+}
+export type SnapMeasuredRank =
+  | { status: "complete"; result: SnapRankResult; baseline: SnapRankResult | null; baselineIssue?: string }
+  | { status: "unsupported" | "error"; code: string; reason: string }
+  | { status: "no-threshold" };
 export interface SnapMeasuredRow {
   scoreId: number;
-  score: number;
-  baselineScore: number;
-  delta: number;
-  life: number;
-  combo: number;
-  randomDraws: number;
-  convertedJudgements: number;
+  score: number | null;
+  baselineScore: number | null;
+  delta: number | null;
+  life: number | null;
+  combo: number | null;
+  randomDraws: number | null;
+  convertedJudgements: number | null;
+  error?: { code: string; message: string };
+  rank?: SnapMeasuredRank;
 }
 export type SnapRankingStatus = "idle" | "loading" | "running" | "complete" | "needs-context" | "unsupported" | "error";
 export interface SnapRankingState {
@@ -43,26 +55,27 @@ export interface SnapRankingState {
   sourceKey: string;
   done: number;
   total: number;
+  orderProgress?: { completed: number; total: number } | null;
   rows: ReadonlyMap<number, SnapMeasuredRow>;
   source?: SnapMeasurementSource;
   error?: { code: string; message: string };
 }
 export type SnapWorkerRequest =
   | { kind: "catalogue"; revision: number; source: SnapRankingSource; locale: AppLocale }
-  | { kind: "measure"; revision: number; source: SnapRankingSource; profile: SnapEvaluationProfile; scoreIds: readonly number[] }
+  | { kind: "measure"; revision: number; source: SnapRankingSource; profile: SnapEvaluationProfile; scoreIds: readonly number[]; analysis?: SnapRankRequest }
   | { kind: "cancel"; revision: number };
 export type SnapWorkerResponse =
   | { kind: "catalogue"; revision: number; catalogue: SnapRankingCatalogue }
-  | { kind: "progress"; revision: number; profileKey: string; done: number; total: number; rows: SnapMeasuredRow[]; source: SnapMeasurementSource }
+  | { kind: "progress"; revision: number; profileKey: string; done: number; total: number; rows: SnapMeasuredRow[]; source: SnapMeasurementSource; orderProgress?: { completed: number; total: number } }
   | { kind: "complete"; revision: number; profileKey: string; done: number; total: number; source: SnapMeasurementSource; cacheHits: number }
   | { kind: "cancelled"; revision: number }
   | { kind: "error"; revision: number; phase: "catalogue" | "measure"; code: string; message: string };
 
 /** Conservative identity: changes in any declared input invalidate displayed rows. */
-export const snapProfileKey = (profile: SnapEvaluationProfile): string => JSON.stringify(profile);
+export const snapProfileKey = (profile: SnapEvaluationProfile, analysis?: SnapRankRequest): string => JSON.stringify(analysis ? { profile, analysis } : profile);
 export const snapSourceKey = (source: SnapRankingSource): string => JSON.stringify(source);
-export function currentSnapRanking(profile: SnapEvaluationProfile, source: SnapRankingSource | null, measurement: SnapRankingState): SnapRankingState | null {
-  if (!source || measurement.profileKey !== snapProfileKey(profile) || measurement.sourceKey !== snapSourceKey(source)
+export function currentSnapRanking(profile: SnapEvaluationProfile, source: SnapRankingSource | null, measurement: SnapRankingState, analysis?: SnapRankRequest): SnapRankingState | null {
+  if (!source || measurement.profileKey !== snapProfileKey(profile, analysis) || measurement.sourceKey !== snapSourceKey(source)
     || (measurement.source && measurement.source.manifestSha256 !== source.reference.sha256)) return null;
   return measurement;
 }
@@ -98,14 +111,14 @@ export class SnapRankingClient {
     this.catalogueRevision = ++this.revision;
     this.worker.postMessage({ kind: "catalogue", revision: this.catalogueRevision, source, locale });
   }
-  measure(source: SnapRankingSource, profile: SnapEvaluationProfile, scoreIds: readonly number[]): void {
+  measure(source: SnapRankingSource, profile: SnapEvaluationProfile, scoreIds: readonly number[], analysis?: SnapRankRequest): void {
     if (this.disposed) return;
     this.cancel();
     this.jobRevision = ++this.revision;
-    this.state = { status: "loading", revision: this.jobRevision, profileKey: snapProfileKey(profile), sourceKey: snapSourceKey(source), done: 0,
+    this.state = { status: "loading", revision: this.jobRevision, profileKey: snapProfileKey(profile, analysis), sourceKey: snapSourceKey(source), done: 0,
       total: new Set(scoreIds).size, rows: new Map() };
     this.onState(this.state);
-    this.worker.postMessage({ kind: "measure", revision: this.jobRevision, source, profile, scoreIds });
+    this.worker.postMessage({ kind: "measure", revision: this.jobRevision, source, profile, scoreIds, ...(analysis ? { analysis } : {}) });
   }
   cancel(): void {
     if (!this.jobRevision || this.disposed) return;
@@ -147,13 +160,13 @@ export class SnapRankingClient {
       const rows = new Map(this.state.rows);
       if (value.kind === "progress") for (const row of value.rows) rows.set(row.scoreId, row);
       this.state = { ...this.state, status: value.kind === "complete" ? "complete" : "running", done: value.done,
-        total: value.total, rows, source: value.source };
+        total: value.total, rows, source: value.source, orderProgress: value.kind === "progress" ? value.orderProgress ?? null : null };
     }
     this.onState(this.state);
   };
   private workerError = (event: ErrorEvent): void => {
     if (this.disposed) return;
-    const error = { code: "worker", message: event.message };
+    const error = { code: "worker", message: event.message || "Replay Worker failed" };
     this.onCatalogueError?.(error);
     if (this.jobRevision) {
       this.state = { ...this.state, status: "error", error, rows: new Map() };

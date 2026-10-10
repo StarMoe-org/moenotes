@@ -2,7 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { SnapRankingClient, isCurrentSnapCatalogue, snapProfileKey, snapSourceKey, type SnapRankingCatalogue, type SnapRankingSource, type SnapRankingState, type SnapWorkerPort, type SnapWorkerRequest, type SnapWorkerResponse } from "../src/lib/chart-data/snap-client";
 import { createSnapWorkerHandler } from "../src/lib/chart-data/snap-worker";
 import { SnapReplayError, type LoadedSnapReplay } from "../src/lib/chart-data/snap-bridge";
-import type { SnapEvaluationProfile } from "../src/lib/chart-data/snap-types";
+import type { SnapEvaluationProfile, SnapRankProgress } from "../src/lib/chart-data/snap-types";
+import type { SnapRankRequest } from "../src/lib/chart-data/snap-client";
 
 const source: SnapRankingSource = { site: "https://example.invalid/", reference: { format: "nnnotes.replay-manifest/1", manifestUrl: "replay.json", sha256: "a".repeat(64) }, expected: { region: "tw", masterVersion: "saved", modelCommit: "frozen" } };
 const identity = { manifestSha256: "a".repeat(64), dataSha256: "b".repeat(64), modelCommit: "frozen" };
@@ -75,7 +76,8 @@ describe("Snap Worker transport and paired replay", () => {
       evaluator: () => ({ evaluate: () => { throw new SnapReplayError("unsupported", "Unsupported chart"); }, dispose: () => { freed++; } }) });
     await handler.handle({ kind: "measure", revision: 9, source, profile: profile(), scoreIds: [10] });
     expect(freed).toBe(1);
-    expect(messages.at(-1)).toMatchObject({ kind: "error", code: "unsupported", phase: "measure", revision: 9 });
+    expect(messages.flatMap(value => value.kind === "progress" ? value.rows : [])).toMatchObject([{ scoreId: 10, score: null, error: { code: "unsupported" } }]);
+    expect(messages.at(-1)).toMatchObject({ kind: "complete", done: 1, revision: 9 });
   });
   test("bounded cache does not grow with profiles", async () => {
     const handler = createSnapWorkerHandler(() => {}, { load: async () => loaded, catalogue: () => catalogue, validate: () => {}, yieldControl: async () => {},
@@ -83,6 +85,93 @@ describe("Snap Worker transport and paired replay", () => {
     await handler.handle({ kind: "measure", revision: 1, source, profile: profile(), scoreIds: [10, 11, 12] });
     expect(handler.cacheSize()).toBe(2);
   });
+});
+
+function rankHarness(options: { unsupported?: number; cancel?: boolean; baselineUnsupported?: boolean } = {}) {
+  const messages: SnapWorkerResponse[] = [];
+  let jobs = 0, freedJobs = 0, freedSessions = 0, steps = 0;
+  const handler = createSnapWorkerHandler(value => messages.push(value), {
+    load: async () => loaded, catalogue: () => catalogue, validate: () => {},
+    evaluator: (_, input) => {
+      const score = input.selections.some(Boolean) ? 250 : 100;
+      return {
+        evaluate: scoreId => ({ format: "ournotes.replay-result/1", scoreId, complete: true, score,
+          life: 1000, combo: 1, randomDraws: 0, convertedJudgements: 0 }),
+        startRank: (scoreId, threshold, powerDomain) => {
+          jobs++;
+          let progress: SnapRankProgress = { format: "ournotes.replay-rank-result/1", status: "running", completedOrders: 0,
+            totalOrders: 120, result: null, code: null, reason: null };
+          if (options.unsupported === scoreId || options.baselineUnsupported && score === 100) {
+            progress = { ...progress, status: "unsupported", code: "unsupported-domain", reason: "Unproved schedule" };
+          }
+          return { status: () => progress, advance: count => {
+            steps++;
+            const completedOrders = Math.min(120, progress.completedOrders + count);
+            progress = { ...progress, completedOrders, status: completedOrders === 120 ? "complete" : "running",
+              result: completedOrders === 120 ? { scoreId, power: input.power, threshold, powerDomain,
+                orderModel: "uniformSkillOrder120", orderCount: 120, orderScores: Array(120).fill(score), scoreSum: score * 120,
+                minScore: score, maxScore: score, targetHitCount: score >= threshold ? 120 : 0, need: { status: "outsideDomain" } } : null };
+            return progress;
+          }, dispose: () => { freedJobs++; } };
+        },
+        dispose: () => { freedSessions++; },
+      };
+    },
+    yieldControl: async () => { if (options.cancel) await handler.handle({ kind: "cancel", revision: 1 }); },
+  });
+  const analysis: SnapRankRequest = { model: "uniformSkillOrder120", target: "S", powerDomain: { min: 1, max: 20000000 },
+    targets: [{ scoreId: 10, threshold: 200 }, { scoreId: 11, threshold: 200 }] };
+  const request: SnapWorkerRequest = { kind: "measure", revision: 1, source, profile: profile(), scoreIds: [10, 11], analysis };
+  return { handler, messages, request, analysis, counts: () => ({ jobs, freedJobs, freedSessions, steps }) };
+}
+
+test("rank batches keep paired models, reuse exact caches and invalidate changed thresholds", async () => {
+  const h = rankHarness();
+  await h.handler.handle(h.request);
+  expect(h.counts()).toEqual({ jobs: 4, freedJobs: 4, freedSessions: 2, steps: 120 });
+  const rows = h.messages.flatMap(message => message.kind === "progress" ? message.rows : []);
+  expect(rows.map(row => row.rank?.status)).toEqual(["complete", "complete"]);
+  const rank = rows[0]!.rank!;
+  if (rank.status !== "complete") throw Error("Expected complete rank");
+  expect(rank.result.scoreSum / 120).toBe(250);
+  expect(rank.baseline!.scoreSum / 120).toBe(100);
+  expect(rank.result.targetHitCount).toBe(120);
+  await h.handler.handle({ ...h.request, revision: 2 });
+  expect(h.counts().jobs).toBe(4);
+  expect(h.messages.at(-1)).toMatchObject({ kind: "complete", cacheHits: 6 });
+  await h.handler.handle({ ...h.request, revision: 3, analysis: { ...h.analysis, targets: [{ scoreId: 10, threshold: 300 }, { scoreId: 11, threshold: 300 }] } });
+  expect(h.counts().jobs).toBe(8);
+});
+
+test("cancelling within a rank batch frees the partial job without publishing its distribution", async () => {
+  const h = rankHarness({ cancel: true });
+  await h.handler.handle(h.request);
+  expect(h.counts()).toEqual({ jobs: 1, freedJobs: 1, freedSessions: 2, steps: 1 });
+  expect(h.messages.flatMap(message => message.kind === "progress" ? message.rows : [])).toEqual([]);
+  expect(h.messages.at(-1)).toEqual({ kind: "cancelled", revision: 1 });
+  expect(h.messages.some(message => message.kind === "complete")).toBe(false);
+});
+
+test("an unsupported chart leaves the next chart's complete rank intact", async () => {
+  const h = rankHarness({ unsupported: 10 });
+  await h.handler.handle(h.request);
+  const rows = h.messages.flatMap(message => message.kind === "progress" ? message.rows : []);
+  expect(rows.map(row => row.rank?.status)).toEqual(["unsupported", "complete"]);
+  expect(h.messages.at(-1)).toMatchObject({ kind: "complete", done: 2 });
+});
+
+test("a missing baseline certificate keeps the selected formation's rank statistics", async () => {
+  const h = rankHarness({ baselineUnsupported: true });
+  await h.handler.handle(h.request);
+  const row = h.messages.flatMap(message => message.kind === "progress" ? message.rows : [])[0]!;
+  expect(row.rank).toMatchObject({ status: "complete", result: { targetHitCount: 120 }, baseline: null });
+});
+
+test("a missing threshold is explicit and does not allocate a rank job", async () => {
+  const h = rankHarness();
+  await h.handler.handle({ ...h.request, analysis: { ...h.analysis, targets: [{ scoreId: 10, threshold: null }, { scoreId: 11, threshold: null }] } });
+  expect(h.counts().jobs).toBe(0);
+  expect(h.messages.flatMap(message => message.kind === "progress" ? message.rows : []).map(row => row.rank?.status)).toEqual(["no-threshold", "no-threshold"]);
 });
 
 class FakeWorker implements SnapWorkerPort {
@@ -124,4 +213,17 @@ test("client discards stale job/profile messages, independently accepts latest c
   expect(states.at(-1)?.status).toBe("complete");
   client.dispose();
   expect(worker.stopped).toBe(true);
+});
+
+test("detail-first scheduling only analyzes requested ranks and reuses them across rank scopes", async () => {
+  const h = rankHarness();
+  await h.handler.handle({ ...h.request, scoreIds: [11, 10], analysis: { ...h.analysis, targets: [h.analysis.targets[1]!] } });
+  const rows = h.messages.flatMap(message => message.kind === "progress" ? message.rows : []);
+  expect(rows.map(row => row.scoreId)).toEqual([11, 10]);
+  expect(rows.map(row => row.rank?.status)).toEqual(["complete", undefined]);
+  expect(h.counts().jobs).toBe(2);
+  await h.handler.handle({ ...h.request, revision: 2 });
+  expect(h.counts().jobs).toBe(4);
+  await h.handler.handle({ ...h.request, revision: 3, scoreIds: [11, 10] });
+  expect(h.counts().jobs).toBe(4);
 });

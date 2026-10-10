@@ -14,7 +14,7 @@ import { parseChartDataQuery, playScenario, serializeChartDataQuery, VIEWS, type
 import { scenarioSupport } from "@/lib/chart-data/scenario";
 import { localizeDataText } from "@/lib/chart-data/text";
 import type { MusicData } from "@/lib/chart-data/types";
-import { chartSnapProfile, snapDisplayedMeasurement } from "@/lib/chart-data/snap-profile";
+import { chartSnapProfile, snapDisplayedMeasurement, snapMeasurementPlan } from "@/lib/chart-data/snap-profile";
 import { createSnapLegalityContext } from "@/lib/chart-data/snap-legality";
 import { emptySnapRanking, isCurrentSnapCatalogue, type SnapRankingCatalogue, type SnapRankingSource, type SnapRankingState } from "@/lib/chart-data/snap-client";
 import { getChartPreviewHref } from "@/lib/music/chart-preview";
@@ -125,11 +125,7 @@ export default function ChartDataTool({ locale, guide }: Props) {
     return data?.replay && region && masterVersion && modelCommit && (snapRequested || snapActive)
       ? { site: assetConfig.musicDataSite, reference: data.replay, expected: { region, masterVersion, modelCommit } } : null;
   }, [data, snapRequested, snapActive]);
-  const snapScoreIds = useMemo(() => {
-    const ids = view === "rank" ? rows.filter((r) => current?.diffs.includes(r.difficulty as typeof DIFFICULTIES[number]) && (!current.band || r.bandIds.map(String).includes(current.band))).map((r) => r.scoreId) : [];
-    if (current?.chart && rows.some((row) => row.scoreId === current.chart) && !ids.includes(current.chart)) ids.push(current.chart);
-    return ids;
-  }, [rows, current?.diffs, current?.band, current?.chart, view]);
+  const { scoreIds: snapScoreIds, analysis: snapAnalysis } = useMemo(() => snapMeasurementPlan(rows, current), [rows, current]);
   const ctx = useMemo<ChartDataContext | null>(() => {
     if (!data || !current) return null;
     const bands = new Map((data.bands ?? []).map((b) => [String(b.id), b]));
@@ -161,9 +157,9 @@ export default function ChartDataTool({ locale, guide }: Props) {
         : { rate: null, perMinute: null }),
       openChart: (scoreId) => update({ chart: scoreId }),
       pool: rows.filter((r) => current.diffs.includes(r.difficulty as typeof DIFFICULTIES[number]) && (!current.band || r.bandIds.map(String).includes(current.band))),
-      snap: snapEvaluation ? { active: snapActive, profile: snapEvaluation.profile, measurement: snapDisplayedMeasurement(snapEvaluation, snapSource, snapMeasurement), source: snapSource } : undefined,
+      snap: snapEvaluation ? { active: snapActive, profile: snapEvaluation.profile, measurement: snapDisplayedMeasurement(snapEvaluation, snapSource, snapMeasurement, snapAnalysis), source: snapSource, analysis: snapAnalysis } : undefined,
     };
-  }, [data, current, rows, locale, tr, hasStats, support, update, snapEvaluation, snapActive, snapMeasurement, snapSource]);
+  }, [data, current, rows, locale, tr, hasStats, support, update, snapEvaluation, snapActive, snapMeasurement, snapSource, snapAnalysis]);
 
   const detail = ctx && current?.chart ? ctx.byScore.get(current.chart) ?? null : null;
 
@@ -203,7 +199,7 @@ export default function ChartDataTool({ locale, guide }: Props) {
       )}
 
       {data ? <Footer locale={locale} data={data} /> : null}
-      {snapEvaluation ? <SnapRankingController key={snapAttempt} source={snapSource} profile={snapEvaluation.profile} scoreIds={snapScoreIds}
+      {snapEvaluation ? <SnapRankingController key={snapAttempt} source={snapSource} profile={snapEvaluation.profile} scoreIds={snapScoreIds} analysis={snapAnalysis}
         enabled={snapActive && snapScoreIds.length > 0 && !!currentSnapCatalogue && snapEvaluation.invalidMembers.length === 0 && snapEvaluation.issues.length === 0} locale={locale}
         onState={setSnapMeasurement} onCatalogue={setSnapCatalogue} onCatalogueError={() => setSnapCatalogueError(true)} /> : null}
 

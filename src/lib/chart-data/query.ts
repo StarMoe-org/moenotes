@@ -29,6 +29,8 @@ export type Axis = typeof AXES[number];
 export const EFF_AXES: ReadonlySet<Axis> = new Set(["perMinute", "rate", "base", "skip"]);
 /** Skill values are entered in percent, up to X_MAX. */
 export const SKILL_SLOTS = 5;
+export const DEFAULT_POWER = 300000;
+export const MAX_POWER = 20000000;
 const DEFAULT_SKILLS = "100,100,100,100,100";
 
 export interface ChartDataState extends SnapQueryState {
@@ -94,6 +96,8 @@ export function parseChartDataQuery(search: string, ctx: QueryContext): ChartDat
   const ax = q.get("ax"), ay = q.get("ay"), view = q.get("v"), speed = q.get("sp"), target = q.get("tr");
   const parsedAx = oneOf(AXES, ax) ? ax : "displayLevel";
   const parsedAy = oneOf(AXES, ay) ? ay : defaultY(ctx);
+  const power = q.get("p");
+  const parsedPower = power?.trim() && Number.isFinite(Number(power)) ? Math.min(MAX_POWER, Math.max(1, Math.round(Number(power)))) : DEFAULT_POWER;
   return {
     ...parseSnapQuery(q),
     view: oneOf(VIEWS, view) ? view : "rank",
@@ -106,7 +110,7 @@ export function parseChartDataQuery(search: string, ctx: QueryContext): ChartDat
     overhead: Math.min(600, Math.max(0, Number(q.get("oh") ?? 30) || 0)),
     skills,
     frontier: q.has("frontier"),
-    power: Math.max(0, Math.round(Number(q.get("p")) || 0)),
+    power: parsedPower,
     target: oneOf(SCORE_RANKS, target) ? target : "SS",
     mode: q.get("gk") === "free" && has.free ? "free" : "battle",
     ranks: has.ranks ? parseRanks(q.get("rk")) : [...BEST_RANKS],
@@ -136,7 +140,7 @@ export function serializeChartDataQuery(state: ChartDataState, ctx: QueryContext
   put("len", state.len, "bgm");
   put("oh", state.overhead, 30);
   put("x", state.skills.join(","), DEFAULT_SKILLS);
-  put("p", state.power, 0);
+  put("p", state.power, DEFAULT_POWER);
   put("tr", state.target, "SS");
   put("gk", state.mode, "battle");
   put("rk", formatRanks(state.ranks), "");
