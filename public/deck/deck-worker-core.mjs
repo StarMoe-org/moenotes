@@ -43,7 +43,7 @@ function dataCatalog(data) {
   function rewardGroups(name) {
     const groups = new Map();
     for (const row of rows(name, ['_eventGroup', '_scoreRank', '_probability'])) {
-      if (!positiveId(row._eventGroup)) return new Map();
+      if (!positiveId(row._eventGroup)) continue;
       const group = groups.get(row._eventGroup) ?? { grades: new Set(), supported: true };
       group.supported &&= Number.isSafeInteger(row._scoreRank) && row._scoreRank >= 0
         && !group.grades.has(row._scoreRank) && row._probability === 10000;

@@ -120,7 +120,7 @@ describe("deck Worker core", () => {
 
   test("event reward coverage follows eventGroup and validates entire grades in both tables", async () => {
     for (const table of ["MasterLiveEventReward", "MasterChallengeLiveEventReward"] as const) {
-      for (const variant of ["valid", "groupOnly", "multiple", "otherResource", "weighted", "marker", "missingMarker", "duplicateId", "unknownGrade", "missingTable", "malformedRow", "otherEvent"] as const) {
+      for (const variant of ["valid", "groupOnly", "multiple", "otherResource", "weighted", "marker", "missingMarker", "duplicateId", "unknownGrade", "missingTable", "malformedRow", "otherEvent", "unassignedGroup", "negativeGroup"] as const) {
         const data = catalogueData();
         const rewards = data.master[table];
         const row = rewards.rows[0]!;
@@ -138,9 +138,13 @@ describe("deck Worker core", () => {
         if (variant === "missingTable") rewards.rows = [];
         if (variant === "malformedRow") rewards.rows.push([3]);
         if (variant === "otherEvent") { const extra = [...row]; extra[0] = 3; extra[2] = 99; extra[7] = 5000; rewards.rows.push(extra); }
+        if (variant === "unassignedGroup" || variant === "negativeGroup") {
+          const extra = [...row]; extra[0] = 3; extra[2] = variant === "unassignedGroup" ? 0 : -1;
+          rewards.rows.push(extra);
+        }
         const { files, init } = await fixture({ data }), { worker, posted } = core(files);
         await worker.handle(init);
-        const supported = variant === "valid" || variant === "otherEvent";
+        const supported = ["valid", "otherEvent", "unassignedGroup", "negativeGroup"].includes(variant);
         expect(posted[0]).toMatchObject({ type: "ready", catalog: { eventItemRewards: [{ id: 2, itemId: 90,
           normal: table === "MasterLiveEventReward" ? supported : true,
           challenge: table === "MasterChallengeLiveEventReward" ? supported : true }] } });
