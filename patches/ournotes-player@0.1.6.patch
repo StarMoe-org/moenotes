@@ -14,33 +14,39 @@ diff --git a/package.json b/package.json
    },
    "sideEffects": [
      "./src/element.js",
-diff --git a/src/story/features/canvas.js b/src/story/features/canvas.js
---- a/src/story/features/canvas.js
-+++ b/src/story/features/canvas.js
-@@ -511,6 +511,14 @@ export const viewProjection = (fov, W, H) => {
- // The UI shader programs, textures and buffers of the screen canvases (story root: shaders/, textures/).
- // Graphic.defaultGraphicMaterial for images without a material: "Default UI Material" = UI/Default with its shader
- // defaults. A custom Image material keeps its own properties; _MainTex is the sprite's texture (Image.mainTexture).
-+// ENGINE: a custom Image material may be a URP 2D Shader Graph (Sprite Unlit target: Graphs_UIGrayscale of the
-+// StillImage_mono layers of anime stills), whose program also reads what the engine sets outside the canvas:
-+// `_RendererColor` (white: URP sets it every frame for the 2D Shader Graph targets, which have no hidden properties),
-+// the per-draw sprite constants (a CanvasRenderer has no SpriteRenderer colour or flip: `unity_SpriteColor` white,
-+// `unity_SpriteProps` unflipped) and `_GlobalMipBias` (0: no mip bias).
-+const CANVAS_ENGINE = Object.freeze({ _RendererColor: [1, 1, 1, 1], unity_SpriteColor: [1, 1, 1, 1], unity_SpriteProps: [1, 1, 0, 0],
-+                                      _GlobalMipBias: [0, 0] });
+diff --git a/src/engine/ugui.js b/src/engine/ugui.js
+--- a/src/engine/ugui.js
++++ b/src/engine/ugui.js
+@@ -480,7 +480,16 @@ export const UIDraw = {
+     const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+     return { unity_MatrixVP: P, glstate_matrix_projection: P, unity_ObjectToWorld: I, unity_WorldToObject: I,
+              _WorldSpaceCameraPos: [W / 2, H / 2, -10], _ScreenParams: [pxW, pxH, 1 + 1 / pxW, 1 + 1 / pxH],
+-             _UIMaskSoftnessX: 0, _UIMaskSoftnessY: 0, unity_GUIZTestMode: zTest };
++             _UIMaskSoftnessX: 0, _UIMaskSoftnessY: 0, unity_GUIZTestMode: zTest, ...UIDraw.spriteGlobals() };
++  },
 +
- export class CanvasGL {
-   // textUI: the story UI, whose text materials, glyph pages and shader programs draw the canvas texts
-   constructor(gl, lib, assets, textUI = null) {
-@@ -544,7 +552,7 @@ export class CanvasGL {
++  // ENGINE: a graphic's material may be a URP 2D Shader Graph (Sprite Unlit target: Graphs_UIGrayscale of the
++  // StillImage_mono layers of anime stills), whose program also reads what the engine sets outside the canvas:
++  // `_RendererColor` white (UniversalRenderPipeline.SetupPerFrameShaderConstants: the 2D Shader Graph targets have no
++  // hidden properties), the per-draw sprite constants of a renderer that is no SpriteRenderer (`unity_SpriteColor`
++  // white, `unity_SpriteProps` unflipped) and `_GlobalMipBias` (mip bias, 2 ^ mip bias) without a bias.
++  spriteGlobals() {
++    return { _RendererColor: [1, 1, 1, 1], unity_SpriteColor: [1, 1, 1, 1], unity_SpriteProps: [1, 1, 0, 0], _GlobalMipBias: [0, 1] };
+   },
  
-   draw(canvas, items, width, height) {
-     const gl = this.gl, { W, H } = canvas.size;
--    const globals = UIDraw.globals(W, H, width, height, 4);
-+    const globals = { ...UIDraw.globals(W, H, width, height, 4), ...CANVAS_ENGINE };
-     if (canvas.perspective) {
-       const vp = viewProjection(canvas.perspective.fov, W, H);
-       globals.unity_MatrixVP = vp; globals.glstate_matrix_projection = vp;
+   // one indexed triangle list: mat = {shader, keywords, floats, colors, defaults}, sheet = per-draw properties,
+diff --git a/src/story/ui-chat.js b/src/story/ui-chat.js
+--- a/src/story/ui-chat.js
++++ b/src/story/ui-chat.js
+@@ -533,7 +533,7 @@ export class ChatCanvasGL {
+     const Mi = [1 / s, 0, 0, 0, 0, 1 / s, 0, 0, 0, 0, -1 / s, 0, W / 2, H / 2, -distance / s, 1];
+     return { unity_MatrixVP: P, glstate_matrix_projection: P, unity_ObjectToWorld: M, unity_WorldToObject: Mi,
+              _WorldSpaceCameraPos: [0, 0, 0], _ScreenParams: [width, height, 1 + 1 / width, 1 + 1 / height],
+-             _UIMaskSoftnessX: 0, _UIMaskSoftnessY: 0, unity_GUIZTestMode: 4, worldScale: s };
++             _UIMaskSoftnessX: 0, _UIMaskSoftnessY: 0, unity_GUIZTestMode: 4, worldScale: s, ...UIDraw.spriteGlobals() };
+   }
+ 
+   // the items onto `target` (the camera colour GLTarget, bound again afterwards)
 diff --git a/src/ui/animator.js b/src/ui/animator.js
 diff --git a/src/ui/define.js b/src/ui/define.js
 diff --git a/src/ui/element.js b/src/ui/element.js
