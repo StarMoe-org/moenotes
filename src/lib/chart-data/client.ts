@@ -5,7 +5,8 @@ import { getNativeFetch, isAssetCacheBypassed } from "@/lib/cache/cached-fetch";
 import type { MusicData } from "./types";
 
 /** The major version of music-data.json this tool reads; a file of another major version is rejected. */
-export const MUSIC_DATA_FORMAT = "nnnotes.music-data/1";
+export const MUSIC_DATA_FORMAT = "nnnotes.music-data/2";
+export const MUSIC_DATA_FORMATS: readonly string[] = [MUSIC_DATA_FORMAT, "nnnotes.music-data/1"];
 
 export class MusicDataError extends Error {
   constructor(message: string) {
@@ -28,7 +29,7 @@ interface MusicDataCacheDependencies {
 
 function validateMusicData(data: unknown): MusicData {
   if (!data || typeof data !== "object" || !("songs" in data) || !Array.isArray(data.songs)) throw new MusicDataError("music-data.json: no songs");
-  if ("format" in data && typeof data.format === "string" && data.format !== MUSIC_DATA_FORMAT) throw new MusicDataError(`music-data.json: format ${data.format}`);
+  if ("format" in data && typeof data.format === "string" && !MUSIC_DATA_FORMATS.includes(data.format)) throw new MusicDataError(`music-data.json: format ${data.format}`);
   return data as MusicData;
 }
 

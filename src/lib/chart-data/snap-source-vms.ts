@@ -13,7 +13,7 @@ export interface SnapSourceMember { id: number; name: string; vm?: CardViewModel
 
 function assertSourceMusic(data: SnapDeckData, music: MusicData) {
   const master = data.provenance.master as { version?: string } | undefined, model = data.provenance.deck as { commit?: string } | undefined;
-  if (music.format !== "nnnotes.music-data/1" || music.provenance?.region !== data.provenance.region || music.provenance?.master?.version !== master?.version || music.provenance?.deck?.commit !== model?.commit) throw new Error("Display catalog belongs to another replay snapshot");
+  if (!["nnnotes.music-data/1", "nnnotes.music-data/2"].includes(music.format ?? "") || music.provenance?.region !== data.provenance.region || music.provenance?.master?.version !== master?.version || music.provenance?.deck?.commit !== model?.commit) throw new Error("Display catalog belongs to another replay snapshot");
 }
 const number = (value: unknown, fallback = 0): number => typeof value === "number" && Number.isFinite(value) ? value : fallback;
 const text = (value: unknown): string => typeof value === "string" ? value : "";

@@ -1,11 +1,13 @@
 // Gekisou range measures and single-skill aptitude, ported from ournotes-player 1522c24.
 // Baseline rankings stay unchanged. Increments of several skills must not be added.
-// Δscore(r,j) = T(j) + Σ RS_i(j) · (1 + p_i(r_i)/100), with measured score used directly at rank 1.
+// Legacy Δscore(r,j) = T(j) + Σ RS_i(j) · (1 + p_i(r_i)/100), with measured score used directly at rank 1.
+// Nominal gains start from the measured expectation and replace only changed ranges' expected rank bonuses.
 // Δw_k(r) = Δw_k + Σ (p_i(r_i) − p_i(1))/100 · Δu_k,i, for the all-Just play only.
 // Perfect cross terms are unmeasured: partial Just with nonzero plain skills has no complete gain.
-// Transformed means have no known SE because joint samples/covariances are not exported.
+// Transformed means have neither a published nominal enclosure nor a known legacy sample SE.
 
 import { modelPower, plainKind, scoreRate, skillValues } from "./ranking";
+import { hasNominalStatistics, isEstimate } from "./expectation";
 import { BEST_BATTLE, clampRank, greatFactor, rankPercent, type Scenario } from "./scenario";
 import { localizeDataText } from "./text";
 import type { AppLocale } from "@/config/locales";
@@ -50,17 +52,24 @@ export interface RangeMeasures {
  */
 export function rangeMeasures(deck: ChartDeck | null | undefined): RangeMeasures[] {
   if (!deck || deck.unplayable) return [];
+  const ranges = Array.isArray(deck.ranges) ? deck.ranges : [];
   const seeds = deck.seeds ?? [];
   const stat = (i: number, key: Measure): MeasureStat | null => {
+    if (hasNominalStatistics(deck)) {
+      if (!Array.isArray(deck.expectation?.ranges) || deck.expectation.ranges.length !== ranges.length) return null;
+      const v = deck.expectation?.ranges?.[i]?.[key];
+      if (isEstimate(v)) return { mean: v[0], min: v[0] - v[1], max: v[0] + v[1] };
+      return finite(v) ? { mean: v, min: v, max: v } : null;
+    }
     const v = seeds.map((s) => s?.ranges?.[i]?.[key]);
     if (!v.length || !v.every(finite)) return null;
     const n = v as number[];
     return { mean: mean(n), min: Math.min(...n), max: Math.max(...n) };
   };
-  return (deck.ranges ?? []).map((r, i) => ({
+  return ranges.map((r, i) => ({
     index: i,
-    mission: r.mission ?? null,
-    measure: (r.mission !== undefined && MISSION_MEASURE[r.mission]) || null,
+    mission: r?.mission ?? null,
+    measure: (r?.mission !== undefined && MISSION_MEASURE[r.mission]) || null,
     values: Object.fromEntries(MEASURES.map((k) => [k, stat(i, k)])) as Record<Measure, MeasureStat | null>,
   }));
 }
@@ -116,6 +125,7 @@ export function aptitudeData(data: MusicData | null | undefined): boolean {
 export interface AptitudeFigures {
   base: number;
   baseSe: number | null;
+  baseRadius: number | null;
   weights: number[] | null;
   missingPerfectCross: boolean;
   crossAtRank1: boolean;
@@ -125,15 +135,20 @@ export interface AptitudeFigures {
 }
 
 /** A single variant's gain, matching player aptitudeFigures; SE only for the original sampled statistic. */
-export function aptitudeFigures(variant: AptitudeVariant | null | undefined, ranges: readonly DeckRange[], power = modelPower(null), scenario: Scenario | null = null): AptitudeFigures | null {
+export function aptitudeFigures(variant: AptitudeVariant | null | undefined, ranges: readonly DeckRange[], power = modelPower(null), scenario: Scenario | null = null, nominal = false): AptitudeFigures | null {
   const sc = { ...BEST_BATTLE, ...(scenario ?? {}) };
-  if (!variant || sc.id === "free" || mOf(variant.score) === null) return null;
+  if (!variant || sc.id === "free" || mOf(variant.score) === null || !finite(power) || power <= 0) return null;
   const rs = Array.isArray(variant.ranges) ? variant.ranges : [];
+  if (nominal && (!Array.isArray(variant.ranges) || !Array.isArray(ranges) || rs.length !== ranges.length
+    || rs.some(r => !r || typeof r !== "object") || ranges.some(r => !r || typeof r !== "object")
+    || !isEstimate(variant.score)
+    || (variant.weights != null && (!Array.isArray(variant.weights) || !variant.weights.every(isEstimate))))) return null;
   const ranks = rs.map((_, i) => clampRank((sc.ranks ?? [])[i]));
   const j = finite(sc.just) ? clamp01(sc.just) : 1;
   const partial = j < 1;
   const g = greatFactor(sc.great);
   const pick = (x: MeanSe | undefined, xp: MeanSe | undefined): number | null => {
+    if (nominal && (!isEstimate(x) || (partial && !isEstimate(xp)))) return null;
     const a = mOf(x);
     if (a === null) return null;
     if (!partial) return a;
@@ -141,8 +156,29 @@ export function aptitudeFigures(variant: AptitudeVariant | null | undefined, ran
     return b === null ? null : b + j * (a - b);
   };
   const rank1 = ranks.every((r) => r === 1);
+  if (nominal && !rank1 && !Array.isArray(variant.rangeWeights)) return null;
+  // rangeWeights also declares the linear rank domain. Validate it before partial Just suppresses cross terms,
+  // or missing ordinary weights would otherwise bypass the domain check.
+  if (nominal && variant.rangeWeights != null && (!Array.isArray(variant.weights)
+    || !Array.isArray(variant.rangeWeights) || variant.rangeWeights.length !== variant.weights.length
+    || !variant.rangeWeights.every(w => Array.isArray(w) && w.length === rs.length && w.every(isEstimate)))) return null;
+  if (nominal && !rank1 && rs.some((_, i) => rankPercent(ranges[i], 1) === null
+    || rankPercent(ranges[i], ranks[i]!) === null)) return null;
   let score: number | null;
   if (rank1) score = pick(variant.score, variant.scorePerfect);
+  else if (nominal) {
+    score = pick(variant.score, variant.scorePerfect);
+    if (score === null) return null;
+    for (let i = 0; i < rs.length; i++) {
+      if (ranks[i] === 1) continue;
+      const r = rs[i]!;
+      const range = pick(r.rangeScore, r.rangeScorePerfect);
+      const bonus = pick(r.rankBonus, r.rankBonusPerfect);
+      const percent = rankPercent(ranges[i], ranks[i]!);
+      if (range === null || bonus === null || percent === null) return null;
+      score += range * percent / 100 - bonus;
+    }
+  }
   else {
     const tail = pick(variant.tail, variant.tailPerfect);
     const pr = rs.map((_, i) => rankPercent(ranges[i], ranks[i]!));
@@ -151,7 +187,7 @@ export function aptitudeFigures(variant: AptitudeVariant | null | undefined, ran
     if (tail === null || [...pr, ...p1].some((p) => p === null) || rsj.some((v) => v === null)) return null;
     score = tail + rsj.reduce<number>((a, v, i) => a + v! * (1 + pr[i]! / 100), 0);
   }
-  if (score === null) return null;
+  if (score === null || (nominal && !finite(score))) return null;
   let weights: number[] | null = null;
   let crossAtRank1 = false;
   if (!partial && Array.isArray(variant.weights)) {
@@ -161,9 +197,13 @@ export function aptitudeFigures(variant: AptitudeVariant | null | undefined, ran
     weights = variant.weights.map((w, k) => ((mOf(w) ?? 0)
       + shift.reduce((a, d, i) => a + (d ? d * (mOf(rw?.[k]?.[i]) ?? 0) : 0), 0)) * g);
   }
+  const base = score * g / power;
+  const baseRadius = nominal && rank1 && !partial && sc.great === 0 ? variant.score![1] / power : null;
+  if (nominal && (!finite(base) || (baseRadius !== null && !finite(baseRadius)) || (weights && !weights.every(finite)))) return null;
   return {
-    base: score * g / power,
-    baseSe: rank1 && !partial && sc.great === 0 ? seOf(variant.score) / power : null,
+    base,
+    baseSe: !nominal && rank1 && !partial && sc.great === 0 ? seOf(variant.score) / power : null,
+    baseRadius,
     weights, missingPerfectCross: partial, crossAtRank1,
     seeds: variant.seeds ?? null,
     deterministic: Boolean(variant.deterministic),
@@ -181,6 +221,11 @@ export function aptitudeRate(fig: AptitudeFigures | null | undefined, skills: It
 /** No covariance data is exported, so transformed or combined gains have no known SE. */
 export function aptitudeSe(fig: AptitudeFigures | null | undefined, skills: Iterable<unknown>): number | null {
   return fig && !skillValues(skills).some((x) => x > 0) ? fig.baseSe : null;
+}
+
+/** The raw nominal score enclosure; transformed scenarios and combined cross terms have no published bound. */
+export function aptitudeRadius(fig: AptitudeFigures | null | undefined, skills: Iterable<unknown>): number | null {
+  return fig && !skillValues(skills).some((x) => x > 0) ? fig.baseRadius : null;
 }
 
 /** Why the measured gain is zero: rank measures only, or no effect on theoretical best play. */
@@ -232,7 +277,8 @@ export function chartAptitude(data: MusicData | null | undefined, deck: ChartDec
   if (!deck || deck.unplayable || !apt || !data?.deck?.gekisouAptitude) return null;
   const shapes = tables(data).shapes;
   const n = (deck.ranges ?? []).length;
-  return (apt.variants ?? []).map((v) => {
+  const nominal = hasNominalStatistics(deck);
+  return (Array.isArray(apt.variants) ? apt.variants : []).filter(v => v && typeof v === "object").map((v) => {
     const shape = shapes.get(v.shape) ?? null;
     const bandMatch = typeof v.bandMatch === "boolean" ? v.bandMatch : null;
     return {
@@ -246,13 +292,13 @@ export function chartAptitude(data: MusicData | null | undefined, deck: ChartDec
       seeds: finite(v.seeds) ? v.seeds : null,
       seTargetMet: v.seTargetMet !== false,
       delta: aptitudeFigures(data?.deck?.gekisouAptitude?.plainKind === plainKind(data) && plainKind(data) !== null
-        ? v : { ...v, weights: null, rangeWeights: null }, deck.ranges ?? [], modelPower(data), scenario ?? null),
+        ? v : { ...v, weights: null, rangeWeights: null }, deck.ranges ?? [], modelPower(data), scenario ?? null, nominal),
       variant: v,
       measures: [...Array(n).keys()].map((i) => Object.fromEntries(MEASURES.map((k) => {
         const x = v.ranges?.[i]?.[k];
-        return [k, Array.isArray(x) && finite(x[0]) ? x : null];
+        return [k, (nominal ? isEstimate(x) : Array.isArray(x) && finite(x[0])) ? x : null];
       })) as Record<Measure, MeanSe | null>),
-      converted: Array.isArray(v.converted) && finite(v.converted[0]) ? v.converted : null,
+      converted: (nominal ? isEstimate(v.converted) : Array.isArray(v.converted) && finite(v.converted[0])) ? v.converted! : null,
     };
   });
 }

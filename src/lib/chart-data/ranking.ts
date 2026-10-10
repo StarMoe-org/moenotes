@@ -28,6 +28,7 @@
 // The deck power must be the same on both charts: song type and tag bonuses change a deck's power per song.
 
 import { scenarioSeed, scenarioSeeds, type Scenario } from "./scenario";
+import { hasNominalStatistics, scenarioExpectation } from "./expectation";
 import type { ChartDeck, DataScoreRank, DataText, MusicData } from "./types";
 
 export const DIFFICULTIES = ["easy", "normal", "hard", "expert"] as const;
@@ -53,7 +54,7 @@ const mean = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0) / xs.lengt
 
 export interface ChartFigures {
   base: number;
-  baseRange: [number, number];
+  baseRange: [number, number] | null;
   seeds: number;
   skip: number | null;
   weights: number[];
@@ -69,6 +70,15 @@ export function chartFigures(
   power = POWER,
   scenario: Scenario | null = null,
 ): ChartFigures | null {
+  if (deck && scenario?.id !== "free" && hasNominalStatistics(deck)) {
+    if (deck.unplayable || kind === null || kind === undefined || !Number.isInteger(kind) || kind < 0 || !Number.isFinite(power) || power <= 0) return null;
+    const f = scenarioExpectation(deck.expectation, deck.ranges ?? [], kind, scenario);
+    if (!f || (deck.positions !== undefined && f.weights.length !== deck.positions)) return null;
+    const base = f.score / power;
+    const baseRange: [number, number] | null = f.scoreBounds ? [f.scoreBounds[0] / power, f.scoreBounds[1] / power] : null;
+    if (!Number.isFinite(base) || (baseRange && !baseRange.every(Number.isFinite))) return null;
+    return { base, weights: f.weights, seeds: 0, skip: deck.skip ?? null, baseRange };
+  }
   const seeds = scenarioSeeds(deck, scenario);
   if (!deck || !seeds || kind === null || kind === undefined) return null;
   const figs = seeds.map((s) => scenarioSeed(s, deck.ranges ?? [], kind, scenario));

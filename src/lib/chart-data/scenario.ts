@@ -1,4 +1,5 @@
 import type { ChartDeck, DeckRange, DeckSeed, MusicData } from "./types";
+import { hasNominalStatistics, scenarioExpectation } from "./expectation";
 
 /**
  * Play scenarios: where and how a live is played, which decides what a chart's deck statistics give. A port of
@@ -99,6 +100,23 @@ export function scenarioSupport(data: MusicData | null | undefined): ScenarioSup
     for (const chart of song.charts ?? []) {
       const d = chart.deck;
       if (!d) continue;
+      if (hasNominalStatistics(d)) {
+        const e = d.expectation;
+        if ((d.offSeeds ?? []).length) has.free = true;
+        if (d.unplayable) continue;
+        const ranges = Array.isArray(d.ranges) ? d.ranges : [];
+        const kinds = Array.isArray(e?.weights) ? e.weights : [];
+        const available = (kind: number, scenario: Scenario): boolean => {
+          const f = scenarioExpectation(e, d.ranges ?? [], kind, scenario);
+          return !!f && (d.positions === undefined || f.weights.length === d.positions);
+        };
+        if (kinds.some((_, kind) => available(kind, BEST_BATTLE))) has.battle = true;
+        if (ranges.length && ranges.every(r => r && Array.isArray(r.rankBonusPercents)
+          && r.rankBonusPercents.length >= RANK_MAX && r.rankBonusPercents.slice(0, RANK_MAX).every(finite))
+          && kinds.some((_, kind) => available(kind, { ...BEST_BATTLE, ranks: ranges.map(() => RANK_MAX) }))) has.ranks = true;
+        if (kinds.some((_, kind) => available(kind, { ...BEST_BATTLE, just: 0 }))) has.just = true;
+        continue;
+      }
       const seeds = d.seeds ?? [];
       if (!d.unplayable && seeds.length) has.battle = true;
       if ((d.offSeeds ?? []).length) has.free = true;
