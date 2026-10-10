@@ -96,3 +96,9 @@ serving an `nnnotes web` site directory with CORS). Open `/tools/story-player?st
 `ournotes-player` dependency, check that a story loads and plays, that a language switch keeps the stage, and that the
 controls still drive it (`StoryControls` uses the player's public API: play, pause, next, setAuto, setSpeed, skip,
 seekToLine, seekVideo, setVolume, and the session's `setDialogOpen` for the skip confirmation).
+
+The `ournotes-player@0.1.6` Bun patch (`patches/`) also gives every uGUI draw of the story (screen canvases, story UI,
+chat) the values the engine sets outside the canvas: `_RendererColor`, `unity_SpriteColor`, `unity_SpriteProps` and
+`_GlobalMipBias` (`UIDraw.spriteGlobals`). A URP 2D Shader Graph on an Image reads them: the grayscale layer of the anime
+stills (`Graphs_UIGrayscale`, nine Ave Mujica episodes such as ADV 10021) stops the story without them. Until the player
+provides them itself, a bump keeps this part of the patch; `tests/story-player-canvas-globals.test.ts` fails without it.
