@@ -10,6 +10,8 @@ import { RECOMMENDATION_COUNT, type ChallengePointPriority, type DeckAggregation
 import type { DeckJobState } from "./use-deck-solver";
 import { BoxArtwork, cardRarityLabel, cardTitle, type BoxCatalog } from "@/components/box/BoxManager";
 import NativeFormationGroup from "@/components/chart-data/NativeFormationGroup";
+import type { RewardTerm } from "@/lib/deck/reward-mix";
+import { RewardBreakdown, RewardFormula } from "./DeckRewardMix";
 
 export interface DeckResultProps {
   locale: AppLocale;
@@ -50,6 +52,9 @@ export default function DeckResult(props: DeckResultProps) {
   const metric = result?.metric ?? (props.goal === "power" ? "power" : ["eventPoints", "challengePoints", "eventItems"].includes(props.goal) ? props.goal : "score");
   const aggregation = result?.aggregation ?? "expected";
   const secondaryPriority = result?.secondaryPriority ?? null;
+  const terms = result?.terms ?? null;
+  // A reward mix sums integer weights; the page shows it in the goal's own reward.
+  const unit = terms?.[0]?.weight ?? 1;
   const deterministic = result?.goalKind === "skip" || metric === "power";
   return <div className="dr-result" data-state={running ? "running" : "done"} aria-busy={running}>
     {props.stale && !running && <div className="dr-stale" role="status"><strong>{tr("stale")}</strong><button type="button" onClick={props.onRerun}>{tr("rerun")}</button></div>}
@@ -64,7 +69,7 @@ export default function DeckResult(props: DeckResultProps) {
         <ProofLink locale={locale} anchor="proven" label={tr("proven")} />{result?.elapsedMs !== null && result?.elapsedMs !== undefined && <small>{tr("elapsed", { n: (result.elapsedMs / 1000).toFixed(1) })}</small>}</div>
         : <div className="dr-unproven"><ProofLink locale={locale} anchor="unproven" label={tr(job.status === "done" && job.stopped ? "stoppedUnproven" : result?.exitReason === "timeLimit" ? "timedOutUnproven" : "unproven")} /></div>}
       {optimality && !optimality.proven && !secondaryPriority && optimality.upperBound !== null && optimality.lowerBound !== null && <p className="dr-bounds">
-        {tr("bounds", { best: formatValue(optimality.lowerBound, metric, locale), limit: formatValue(optimality.upperBound, metric, locale) })}
+        {tr("bounds", { best: formatValue(optimality.lowerBound / unit, metric, locale), limit: formatValue(optimality.upperBound / unit, metric, locale) })}
         {optimality.lowerBound > 0 && <span> · {tr("gapPercent", { n: percent(Math.max(0, optimality.upperBound - optimality.lowerBound) / optimality.lowerBound) })}</span>}</p>}
       {result && !result.coversAllOwnedCards && <p className="dr-note">{tr("partialBox")}</p>}
     </div>
@@ -72,11 +77,14 @@ export default function DeckResult(props: DeckResultProps) {
       <strong>{t(locale, `deckWorkspace.conditions.priorities.${secondaryPriority}`)}</strong>
       <span>{t(locale, "deckWorkspace.conditions.priorityNote")}</span>
       <span>{t(locale, "deckWorkspace.conditions.priorityTeams", { n: RECOMMENDATION_COUNT })}</span>
+    </div> : result && terms ? <div className="dr-objective">
+      <strong>{t(locale, "deckWorkspace.rewardMix.summary")}</strong>
+      <span className="rm-summary"><RewardFormula locale={locale} terms={terms} /></span>
     </div> : result && !deterministic && <p className="dr-objective"><strong>{t(locale, `deckWorkspace.objective.${aggregation}`)}</strong>
       <span>{t(locale, `deckWorkspace.objective.${aggregation}Note`)}</span></p>}
     {result && metric === "eventItems" && <p className="dr-note">{t(locale, "deckWorkspace.conditions.eventItemsNote")}</p>}
     {result?.play && <p className="dr-note">{tr("playSummary", { notes: result.play.judged, misses: result.play.misses })}</p>}
-    {result && result.teams.length > 0 ? <ol className="dr-teams">{result.teams.map((team, index) => <TeamCard key={index} {...props} team={team} metric={metric} aggregation={aggregation} secondaryPriority={secondaryPriority} deterministic={deterministic} first={index === 0} final={!running} />)}</ol>
+    {result && result.teams.length > 0 ? <ol className="dr-teams">{result.teams.map((team, index) => <TeamCard key={index} {...props} team={team} metric={metric} aggregation={aggregation} secondaryPriority={secondaryPriority} terms={terms} deterministic={deterministic} first={index === 0} final={!running} />)}</ol>
       : <p className="dr-muted">{tr(running ? "searching" : "noTeam")}</p>}
   </div>;
 }
@@ -91,11 +99,11 @@ function ProofLink({ locale, anchor, label }: { locale: AppLocale; anchor: "prov
 const percent = (gap: number) => (gap * 100).toFixed(gap < 0.01 ? 2 : 1);
 
 function formatValue(value: number, goal: string, locale: AppLocale): string {
-  const decimals = goal === "challengePoints" || goal === "eventPoints" || goal === "eventItems" ? 2 : 0;
+  const decimals = goal === "challengePoints" || goal === "eventPoints" || goal === "eventItems" || goal === "combined" ? 2 : 0;
   return new Intl.NumberFormat(locale, { maximumFractionDigits: decimals }).format(decimals ? value : Math.floor(value));
 }
 
-function TeamCard(props: DeckResultProps & { team: DeckTeam; metric: string; aggregation: DeckAggregation; secondaryPriority: ChallengePointPriority | null; deterministic: boolean; first: boolean; final: boolean }) {
+function TeamCard(props: DeckResultProps & { team: DeckTeam; metric: string; aggregation: DeckAggregation; secondaryPriority: ChallengePointPriority | null; terms: readonly RewardTerm[] | null; deterministic: boolean; first: boolean; final: boolean }) {
   const { locale, team, metric, aggregation, box, catalog } = props;
   const tr = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.solver.${key}`, values);
   const cardOf = (kind: "member" | "snap", id: number | null) => id === null ? null : box?.cards.find(card => card.kind === kind && card.identity.value === String(id)) ?? null;
@@ -103,7 +111,9 @@ function TeamCard(props: DeckResultProps & { team: DeckTeam; metric: string; agg
   const snapView = (id: number | null) => id === null ? undefined : catalog.snaps.find(card => card.id === id);
   const value = team.value;
   const payoff = metric !== "score" && metric !== "power";
-  const main = metric === "power" ? team.power : payoff ? value?.payoff?.score ?? null : value?.score ?? null;
+  const terms = props.terms;
+  const total = value?.payoff?.score ?? null;
+  const main = metric === "power" ? team.power : terms ? total === null ? null : total / terms[0]!.weight : payoff ? total : value?.score ?? null;
   const interval = payoff ? value?.payoff?.interval ?? null : metric === "power" ? null : value?.interval ?? null;
   const slots = team.layout.members.map((id, slot) => {
     const member = cardOf("member", id), snap = cardOf("snap", team.layout.snaps[slot] ?? null);
@@ -119,7 +129,7 @@ function TeamCard(props: DeckResultProps & { team: DeckTeam; metric: string; agg
   return <li className="dr-team" data-first={props.first}>
     <div className="dr-team-head">
       <span className="dr-rank">{team.rankCertified ? `#${team.rank}` : tr("candidateRank", { n: team.rank })}</span>
-      <div className="dr-value"><small>{tr(valueLabel)}</small>
+      <div className="dr-value"><small>{terms ? t(locale, `deckWorkspace.rewardMix.${props.deterministic ? "totalDeterministic" : "total"}`, { unit: t(locale, `deckWorkspace.rewardMix.rewards.${terms[0]!.kind}`) }) : tr(valueLabel)}</small>
         <strong>{main === null ? "—" : interval ? formatDeckInterval(interval, locale, payoff ? 2 : 0) : formatValue(main, metric, locale)}</strong></div>
       {metric !== "power" && <div className="dr-power"><small>{tr("power")}</small><span>{formatValue(team.power, "power", locale)}</span></div>}
     </div>
@@ -133,6 +143,7 @@ function TeamCard(props: DeckResultProps & { team: DeckTeam; metric: string; agg
         </dd></div>;
       })}</dl>
     </section>}
+    {terms && team.terms && <RewardBreakdown locale={locale} terms={terms} values={team.terms} />}
     <div className="dr-formation" data-compact={!props.first}>
       <div className="dc-stage"><NativeFormationGroup locale={locale} slots={slots} label={tr("formation")} /></div>
     </div>

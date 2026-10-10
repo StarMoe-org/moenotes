@@ -215,3 +215,47 @@ describe("challenge-point priority answers", () => {
     expect(result.teams[0]!.eventRewards).toBeUndefined();
   });
 });
+
+describe("reward mix answers", () => {
+  const payoff = (numerator: string, denominator = "120") => ({ score: Number(numerator) / Number(denominator), exact: { numerator, denominator }, interval: null });
+  const mixed = () => {
+    const raw = JSON.parse(answer({}));
+    raw.result.metric = { kind: "combined", consumption: 3, terms: [{ kind: "eventPoints", eventId: 7, weight: 2 }, { kind: "challengePoints", eventId: 7, weight: 35 }] };
+    raw.result.aggregation = "expected";
+    raw.result.teams[0].value.payoff = payoff("480000");
+    raw.result.teams[0].terms = [payoff("120000"), payoff("48000", "7")];
+    return raw;
+  };
+  test("retains the weighted terms and each team's own reward values", () => {
+    const result = parseDeckAnswer(JSON.stringify(mixed())).result!;
+    expect(result.metric).toBe("combined");
+    expect(result.terms).toEqual([{ kind: "eventPoints", weight: 2 }, { kind: "challengePoints", weight: 35 }]);
+    expect(result.teams[0]!.terms).toEqual([1000, 48000 / 7]);
+    expect(result.teams[0]!.value!.payoff!.score).toBe(4000);
+    expect(result.secondaryPriority).toBeUndefined();
+  });
+  test("other metrics carry no terms", () => {
+    const result = parseDeckAnswer(answer({})).result!;
+    expect(result.terms).toBeUndefined();
+    expect(result.teams[0]!.terms).toBeUndefined();
+  });
+  test("malformed terms, values and objectives are rejected", () => {
+    const broken: ((raw: ReturnType<typeof mixed>) => void)[] = [
+      raw => { raw.result.metric.terms = []; },
+      raw => { delete raw.result.metric.terms; },
+      raw => { raw.result.metric.terms[1].kind = "score"; },
+      raw => { raw.result.metric.terms[1].weight = 0; },
+      raw => { raw.result.metric.terms[1].weight = 1.5; },
+      raw => { raw.result.teams[0].terms.pop(); },
+      raw => { delete raw.result.teams[0].terms; },
+      raw => { raw.result.teams[0].terms[1] = null; },
+      raw => { raw.result.teams[0].value.payoff = null; },
+      raw => { raw.result.aggregation = "maximum"; },
+    ];
+    for (const patch of broken) {
+      const raw = mixed();
+      patch(raw);
+      expect(() => parseDeckAnswer(JSON.stringify(raw))).toThrow();
+    }
+  });
+});
