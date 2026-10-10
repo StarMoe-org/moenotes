@@ -22,7 +22,7 @@ export const koKR = {
     "arenaSong": "아레나 곡",
     "chooseArena": "아레나 곡 선택",
     "noArena": "현재 서버 데이터에 아레나 곡이 없습니다",
-    conditions: {"play": "연주 조건", "accuracy": "Great / Just 비율, Miss 없음", "pattern": "Miss를 포함한 전체 연주 지정", "missEvery": "판정 노트 N개마다 Miss (0 = Miss 없음)", "noMiss": "전체 연주 명시: Miss 없음.", "missPattern": "판정 노트 {n}개마다 Miss로 처리합니다.", "patternNote": "아래 Great·Just 비율을 적용한 후 지정한 노트를 Miss로 바꿉니다. 고정된 연주 조건이며 사람의 실수 확률 분포가 아닙니다.", "timeLimit": "최대 계산 시간", "timeLimitNote": "시간이 다 되면 지금까지 찾은 최선의 덱을 최적 미증명으로 표시합니다.", "timeLimits": {"30": "30초", "60": "1분", "120": "2분", "300": "5분", "none": "제한 없음"}, "eventItemsNote": "엔진은 가능한 연주 결과마다 최종 등급과 정확히 일치하는 한 단계의 보상으로 이벤트 배지 수를 계산합니다."},
+    conditions: {"play": "연주 조건", "accuracy": "Great / Just 비율, Miss 없음", "pattern": "Miss를 포함한 전체 연주 지정", "missEvery": "판정 노트 N개마다 Miss (0 = Miss 없음)", "noMiss": "전체 연주 명시: Miss 없음.", "missPattern": "판정 노트 {n}개마다 Miss로 처리합니다.", "patternNote": "아래 Great·Just 비율을 적용한 후 지정한 노트를 Miss로 바꿉니다. 고정된 연주 조건이며 사람의 실수 확률 분포가 아닙니다.", "timeLimit": "최대 계산 시간", "timeLimitNote": "시간이 다 되면 지금까지 찾은 최선의 덱을 최적 미증명으로 표시합니다.", "timeLimits": {"30": "30초", "60": "1분", "120": "2분", "300": "5분", "none": "제한 없음"}, "eventItemsNote": "엔진은 가능한 연주 결과마다 최종 등급과 정확히 일치하는 한 단계의 보상으로 이벤트 배지 수를 계산합니다.", "secondaryPriority": "CP가 같을 때 부가 보상 우선순위", "priorities": {"none": "CP만", "eventPointsFirst": "CP → PT → 배지", "eventItemsFirst": "CP → 배지 → PT"}, "priorityNote": "평균 CP를 먼저 최대화하고, CP가 같으면 선택한 부가 보상 우선순위로 덱을 정렬합니다.", "priorityTeams": "최고 CP 그룹에서 최대 {n}개 덱만 반환하며, 해당 덱 수가 더 적을 수 있습니다. 시간 초과 결과는 최적 미증명 상태입니다.", "priorityExpectedOnly": "CP 부가 보상 정렬은 평균 성능에서만 사용할 수 있습니다. 평균 성능을 선택하세요.", "priorityUnsupported": "현재 엔진은 이 조건에서 CP 우선 부가 보상 정렬을 지원하지 않습니다."},
 
     cloud: {
       "accountChanged": "로그인한 계정이 변경되었습니다. 이 기기의 컬렉션을 저장하기 전에 아래 계정을 확인하세요.",
@@ -583,6 +583,8 @@ export const koKR = {
     "othersAverage": "방의 다른 플레이어 평균 점수",
     "othersAverageSame": "비워 두면 내 점수와 같음",
     "solver": {
+      "eventRewards": "라이브 1회당 기대 보상",
+      "exactReward": "정확한 값: {numerator}/{denominator}",
       "eventItemsUnsupported": "현재 엔진은 정확한 결과 등급에 따른 이벤트 배지 계산을 지원하지 않습니다.",
       "eventItemRewardsUnsupported": "이 모드의 이벤트 보상 데이터는 지원되지 않습니다. 등급마다 보상 행이 정확히 하나이며 확률 표식이 10000이어야 합니다.",
       "maximumLabel": {"score": "이론상 최고 점수", "challengePoints": "라이브 1회 최대 획득 CP", "eventPoints": "라이브 1회 최대 PT", "eventItems": "라이브 1회 최대 배지"},
@@ -643,6 +645,7 @@ export const koKR = {
         "protocol": "편성 엔진과의 통신에 실패했습니다."
       },
       "gap": {
+        "secondaryPriority": "CP 부가 보상 정렬은 평균 성능에서만 사용할 수 있습니다. 평균 성능을 선택하세요.",
       "arenaSong": "현재 서버 데이터에서 아레나 곡을 선택하세요.",
       "play": "유효한 Miss 간격을 입력하세요: 0 또는 양의 정수.",
 

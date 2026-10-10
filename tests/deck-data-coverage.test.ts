@@ -126,3 +126,20 @@ describe("deck data coverage", () => {
     expect(gap({ goal: "free" }, null)).toBe("catalog");
   });
 });
+
+
+test("CP secondary rewards reuse badge coverage and retain the Gekisou mission gates", () => {
+  for (const secondaryPriority of ["eventPointsFirst", "eventItemsFirst"] as const) {
+    for (const venue of ["freeLive", "battleLive", "missionLive", "arenaLive", "skip"] as const) {
+      const input = { goal: "challengePoints" as const, secondaryPriority, venue, arenaMusicId: 7 };
+      expect(gap(input, updated)).toBeNull();
+      const unsupported = { ...updated, eventItemRewards: [{ id: 2, itemId: 90, normal: false, challenge: true }] };
+      expect(gap(input, unsupported)).toBe("eventItemRewards");
+      expect(gap({ ...input, secondaryPriority: null }, unsupported)).toBeNull();
+    }
+    const luck = { ...updated, musics: updated.musics.map(row => ({ ...row, hasLuck: true })) };
+    expect(gap({ goal: "challengePoints", venue: "battleLive", secondaryPriority }, luck)).toBe("luck");
+    expect(gap({ goal: "challengePoints", venue: "freeLive", secondaryPriority }, luck)).toBeNull();
+    expect(gap({ goal: "challengePoints", venue: "skip", secondaryPriority }, luck)).toBeNull();
+  }
+});

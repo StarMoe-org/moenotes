@@ -1,4 +1,4 @@
-import { isChallengeInput, playsGekisou, solverGoalKind, usesEventData, type DeckArenaMusic, type DeckEvent, type DeckGoalInput } from "./goals";
+import { isChallengeInput, playsGekisou, solverGoalKind, usesEventData, usesEventItemRewards, type DeckArenaMusic, type DeckEvent, type DeckGoalInput } from "./goals";
 import type { DeckDataCatalog } from "./worker-protocol";
 
 export type DeckDataGap = "catalog" | "event" | "eventItemRewards" | "song" | "luck" | "missions" | null;
@@ -8,7 +8,7 @@ export function deckDataGap(input: DeckGoalInput, event: DeckEvent | null, catal
   arenas: readonly DeckArenaMusic[] = []): DeckDataGap {
   if (!catalog) return "catalog";
   if (event && usesEventData(input) && !catalog.eventIds.includes(event.id)) return "event";
-  if (input.goal === "eventItems" && event) {
+  if (usesEventItemRewards(input) && event) {
     const rewards = catalog.eventItemRewards?.find(row => row.id === event.id && row.itemId === event.itemId);
     if (!rewards || !(isChallengeInput(input) ? rewards.challenge : rewards.normal)) return "eventItemRewards";
   }

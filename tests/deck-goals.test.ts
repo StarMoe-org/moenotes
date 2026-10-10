@@ -271,3 +271,65 @@ test("unsupported accuracy is rejected without mutating the player's goal or dec
   expect(computes(cap, { ...input, greatPercent: 0, justPercent: 100 })).toBe(true);
   expect(computes(cap, { ...input, goal: "free", greatPercent: 0 })).toBe(true);
 });
+
+
+describe("challenge-point secondary priorities", () => {
+  const priorities = ["eventPointsFirst", "eventItemsFirst"] as const;
+  const eventItemRewards = { selection: "exactResultGrade", eventGroupField: "eventGroup", rowsPerGrade: 1, probabilityMarker: 10000 };
+  const challengePointPriorities = { priorities, objective: "lexicographicExpected", primary: "challengePoints", bestPrimaryOnly: true, lotteryFree: true };
+  const kinds = ["freeLive", "battleLive", "missionLive", "arenaLive", "skip"];
+  const raw = { goals: kinds, metrics: Object.fromEntries(kinds.map(kind => [kind, ["challengePoints"]])), accuracy: { great: true, just: true }, eventItemRewards };
+  test("CP-only requests retain their metric and need no badge resource", () => {
+    expect(defaultDeckGoalInput("challengePoints").secondaryPriority).toBeNull();
+    expect(request({ goal: "challengePoints", musicId: 100, boosts: 3 }, { ...event, itemId: null }).metric)
+      .toEqual({ kind: "challengePoints", eventId: 7, consumption: 3 });
+    for (const secondaryPriority of priorities) {
+      expect(request({ goal: "eventPoints", musicId: 100, secondaryPriority }).metric)
+        .toEqual({ kind: "eventPoints", eventId: 7, consumption: 0 });
+    }
+  });
+  test("both priorities carry the resource and keep reward projection across ordinary venues", () => {
+    for (const secondaryPriority of priorities) for (const venue of ["freeLive", "battleLive", "missionLive", "arenaLive", "skip"] as const) {
+      const input = { ...defaultDeckGoalInput("challengePoints"), secondaryPriority, venue, musicId: 100, arenaMusicId: 42, boosts: 3 };
+      const body = request(input);
+      expect(body.metric).toEqual({ kind: "challengePoints", eventId: 7, consumption: 3, secondaryPriority, resourceType: 1, resourceId: 90 });
+      expect(body.eventContext.rewardProjection).toBe(true);
+      expect(Object.keys(body.eventContext).sort()).toEqual(["resultClock", "rewardProjection"]);
+      expect(body.aggregation).toBeUndefined();
+      expect(body.k).toBe(5);
+      expect(goalGap(input, event)).toBeNull();
+      expect(goalGap(input, { ...event, itemId: null })).toBe("eventItem");
+      expect(() => request(input, { ...event, itemId: null })).toThrow();
+    }
+  });
+  test("free maximum and challenge venues are rejected without changing preferences", () => {
+    for (const secondaryPriority of priorities) {
+      const input = { ...defaultDeckGoalInput("challengePoints"), musicId: 100, secondaryPriority, aggregation: "maximum" as const };
+      expect(goalGap(input, event)).toBe("secondaryPriority");
+      expect(() => request(input)).toThrow();
+      expect(input.aggregation).toBe("maximum");
+      for (const venue of ["challengeLive", "challengeSkip"] as const) expect(() => request({ ...input, venue, challengeMusicId: 1, aggregation: "expected" })).toThrow();
+    }
+  });
+  test("both complete capability contracts are required, while plain CP remains available", () => {
+    const valid = parseCapabilities(JSON.stringify({ ...raw, challengePointPriorities }))!;
+    for (const secondaryPriority of priorities) for (const venue of ["freeLive", "battleLive", "missionLive", "arenaLive", "skip"] as const) {
+      expect(computes(valid, { goal: "challengePoints", venue, secondaryPriority })).toBe(true);
+    }
+    expect(computes(valid, { goal: "challengePoints", venue: "freeLive", secondaryPriority: "eventItemsFirst", aggregation: "maximum" })).toBe(false);
+    const variants: unknown[] = [undefined, null, {}, { ...challengePointPriorities, priorities: ["eventPointsFirst"] },
+      { ...challengePointPriorities, priorities: ["eventPointsFirst", "eventPointsFirst"] },
+      { ...challengePointPriorities, objective: "weightedSum" }, { ...challengePointPriorities, primary: "eventPoints" },
+      { ...challengePointPriorities, bestPrimaryOnly: false }, { ...challengePointPriorities, lotteryFree: false }];
+    for (const challengePointPriorities of variants) {
+      const cap = parseCapabilities(JSON.stringify({ ...raw, challengePointPriorities }))!;
+      expect(computesGoal(cap, "challengePoints")).toBe(true);
+      for (const secondaryPriority of priorities) expect(computes(cap, { goal: "challengePoints", venue: "freeLive", secondaryPriority })).toBe(false);
+    }
+    for (const rewards of [undefined, { ...eventItemRewards, probabilityMarker: 9999 }]) {
+      const cap = parseCapabilities(JSON.stringify({ ...raw, eventItemRewards: rewards, challengePointPriorities }))!;
+      expect(computes(cap, { goal: "challengePoints", venue: "freeLive" })).toBe(true);
+      expect(computes(cap, { goal: "challengePoints", venue: "freeLive", secondaryPriority: "eventPointsFirst" })).toBe(false);
+    }
+  });
+});
