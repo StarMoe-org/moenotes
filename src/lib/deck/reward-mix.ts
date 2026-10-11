@@ -37,6 +37,10 @@ export const withRewardRate = (plan: RewardPlan, kind: EventReward, patch: Parti
 export const withFirstTieBreak = (plan: RewardPlan, kind: EventReward): RewardPlan =>
   plan.tieOrder.includes(kind) ? { ...plan, tieOrder: [kind, ...plan.tieOrder.filter(value => value !== kind)] } : plan;
 
+/** The plan once `main` is the goal's own reward: roles and tie-break order stay, and rates start over in the new unit. */
+export const withMainReward = (plan: RewardPlan, main: EventReward): RewardPlan =>
+  ({ ...withRewardRole(plan, main, "off"), rates: defaultRewardPlan().rates });
+
 /** The largest weight of a term the solver takes. */
 export const MAX_TERM_WEIGHT = 1_000_000_000;
 /** Decimals a stated rate keeps. */

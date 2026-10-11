@@ -16,13 +16,30 @@ html[data-theme="dark"] :is(.rm-mix, .rm-breakdown, .rm-summary, .rm-ties, .rm-b
 .rm-mix legend { padding: 0 0 7px; font-size: 12px; font-weight: 700; }
 .dc-composer .rm-mix p { margin: 0; font-size: 12px; line-height: 1.55; }
 
+/* The goal's own reward: one of the rewards of the live. */
+.dc-composer .rm-mix .rm-part { color: var(--mn-text-muted); font-size: 11px; font-weight: 700; }
+.rm-main { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.rm-main label { position: relative; min-width: 0; cursor: pointer; }
+.dc-composer .rm-main input[type="radio"] { position: absolute; width: 1px; height: 1px; min-height: 0; margin: 0; padding: 0; opacity: 0; }
+.rm-main label > span { display: flex; align-items: center; gap: 8px; min-width: 0; height: 100%; min-height: 46px; padding: 7px 9px; border: 1px solid var(--dc-line); border-radius: 11px;
+  background: var(--mn-paper); transition: border-color .16s, background-color .16s, box-shadow .16s; }
+.rm-main input:not(:checked) + span .rm-mark { filter: grayscale(.7); opacity: .7; }
+.rm-main label:hover input:not(:disabled):not(:checked) + span { border-color: color-mix(in oklab, var(--rm-color) 35%, var(--dc-line)); }
+.rm-main input:checked + span { border-color: var(--rm-color); background: color-mix(in oklab, var(--rm-color) 8%, var(--mn-paper));
+  box-shadow: 0 0 0 1px var(--rm-color); }
+.rm-main input:disabled + span { cursor: not-allowed; border-style: dashed; opacity: .55; }
+.rm-main input:focus-visible + span { outline: 3px solid color-mix(in oklab, #4166a9 45%, transparent); outline-offset: 2px; }
+@media (max-width: 420px) {
+  .rm-main label > span { flex-direction: column; align-items: flex-start; gap: 5px; }
+}
+
 /* One reward per row: what it is, how it counts, and the inputs of that way. */
 .rm-rows { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .rm-row { position: relative; display: grid; gap: 9px; min-width: 0; padding: 8px 10px 8px 14px; overflow: hidden;
   border: 1px solid var(--dc-line); border-radius: 11px; background: var(--mn-paper); transition: border-color .16s, background-color .16s; }
 .rm-row::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--rm-color); opacity: .22; transition: opacity .16s; }
-.rm-row:is([data-role="base"], [data-role="convert"], [data-role="tieBreak"]) { border-color: color-mix(in oklab, var(--rm-color) 42%, var(--dc-line)); background: color-mix(in oklab, var(--rm-color) 5%, var(--mn-paper)); }
-.rm-row:is([data-role="base"], [data-role="convert"])::before { opacity: 1; }
+.rm-row:is([data-role="convert"], [data-role="tieBreak"]) { border-color: color-mix(in oklab, var(--rm-color) 42%, var(--dc-line)); background: color-mix(in oklab, var(--rm-color) 5%, var(--mn-paper)); }
+.rm-row[data-role="convert"]::before { opacity: 1; }
 .rm-row[data-role="tieBreak"]::before { opacity: .55; }
 .rm-row[data-offered="false"] { border-style: dashed; }
 .rm-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; min-width: 0; min-height: 36px; }
@@ -34,8 +51,6 @@ html[data-theme="dark"] :is(.rm-mix, .rm-breakdown, .rm-summary, .rm-ties, .rm-b
 .rm-name { display: grid; min-width: 0; line-height: 1.3; }
 .rm-name strong { font-size: 13px; font-weight: 800; }
 .rm-name small { overflow: hidden; color: var(--mn-text-muted); font-size: 11px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
-.rm-base-tag { margin-left: auto; padding: 3px 9px; border-radius: 999px; color: var(--rm-color); background: color-mix(in oklab, var(--rm-color) 12%, var(--mn-paper));
-  font-size: 11px; font-weight: 700; white-space: nowrap; }
 .rm-spent { margin-left: auto; color: var(--mn-text-muted); font-size: 11px; line-height: 1.4; }
 
 /* A track with the chosen way raised above it. */
@@ -53,7 +68,7 @@ html[data-theme="dark"] :is(.rm-mix, .rm-breakdown, .rm-summary, .rm-ties, .rm-b
 :is(.rm-roles, .rm-sources) input:focus-visible + span { outline: 3px solid color-mix(in oklab, #4166a9 45%, transparent); outline-offset: 2px; }
 
 .rm-detail { display: grid; gap: 9px; min-width: 0; padding-top: 9px; border-top: 1px dashed color-mix(in oklab, var(--rm-color) 35%, var(--dc-line)); }
-.dc-composer .rm-mix .rm-detail-note { color: var(--mn-text-muted); }
+.dc-composer .rm-mix :is(.rm-detail-note, .rm-main-note) { color: var(--mn-text-muted); }
 .rm-detail .dc-field-pair > label { font-size: 12px; }
 .rm-rate { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--mn-text-muted); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .dc-composer .rm-mix .rm-rate input[type="number"] { display: inline-block; flex: 1 1 86px; width: 86px; max-width: 140px; min-height: 36px; padding: 6px 8px; color: var(--mn-text); font-weight: 750; font-variant-numeric: tabular-nums; text-align: right; }

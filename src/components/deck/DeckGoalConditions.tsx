@@ -1,18 +1,16 @@
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { TIME_LIMIT_CHOICES, readsAccuracy, type DeckGoalInput, type DeckSolverCapabilities } from "@/lib/deck/goals";
-import DeckRewardMix, { type RewardChallengeSong } from "./DeckRewardMix";
 
 /** Inputs that belong to the selected objective; the native engine resolves the declared play. */
-export default function DeckGoalConditions({ locale, input, capabilities, challengeSongs, onChange }: {
-  locale: AppLocale; input: DeckGoalInput; capabilities: DeckSolverCapabilities | null; challengeSongs: readonly RewardChallengeSong[];
+export default function DeckGoalConditions({ locale, input, capabilities, onChange }: {
+  locale: AppLocale; input: DeckGoalInput; capabilities: DeckSolverCapabilities | null;
   onChange: (patch: Partial<DeckGoalInput>) => void;
 }) {
   const tr = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.conditions.${key}`, values);
   const played = readsAccuracy(input);
   const number = (text: string) => text === "" ? NaN : Number(text);
   return <>
-    <DeckRewardMix locale={locale} input={input} capabilities={capabilities} challengeSongs={challengeSongs} onChange={onChange} />
     {played && <>
       <label>{tr("play")}<select value={input.playMode} onChange={e => onChange({ playMode: e.target.value as DeckGoalInput["playMode"] })}>
         <option value="accuracy">{tr("accuracy")}</option><option value="pattern" disabled={!capabilities?.patternPlay}>{tr("pattern")}</option>

@@ -22,7 +22,7 @@ export const jaJP = {
     "chooseArena": "アリーナ楽曲を選択",
     "noArena": "現在のサーバーデータにアリーナ楽曲はありません",
     conditions: {"play": "演奏条件", "accuracy": "Great / Just の割合、Miss なし", "pattern": "Miss を含む完全な演奏を明示", "missEvery": "判定ノーツ N 個ごとに Miss（0 は Miss なし）", "noMiss": "完全な演奏を明示：Miss なし。", "missPattern": "判定ノーツ {n} 個ごとに Miss とします。", "patternNote": "下の Great・Just 割合を適用後、指定ノーツを Miss に置換します。固定の演奏条件であり、人のミスの確率分布ではありません。", "timeLimit": "最大計算時間", "timeLimitNote": "時間になると、その時点で最良の編成を「最適未証明」として表示します。", "timeLimits": {"30": "30 秒", "60": "1 分", "120": "2 分", "300": "5 分", "none": "無制限"}, "eventItemsNote": "エンジンは演奏結果ごとに、最終ランクと完全に一致する一段階の報酬からイベントバッジ数を計算します。"},
-    rewardMix: {"label": "同じライブの他の報酬", "roles": {"off": "含めない", "convert": "換算して加算", "tieBreak": "同点時に比較"}, "roleLabel": "{reward}の扱い", "unsupported": "このエンジンは他の報酬を含めた並べ替えにまだ対応していません。", "rewards": {"eventPoints": "PT", "challengePoints": "CP", "eventItems": "バッジ"}, "units": {"eventPoints": "PT", "challengePoints": "CP", "eventItems": "バッジ"}, "names": {"eventPoints": "イベントポイント", "challengePoints": "チャレンジポイント", "eventItems": "イベントバッジ"}, "base": "主目標", "sources": {"auto": "チャレンジライブから自動", "manual": "自分で入力"}, "sourceLabel": "1 CP の価値の決め方", "autoNote": "計算の最初に、このチャレンジライブの最適編成を求めます。その編成が消費 1 CP あたりに得る {base} を、1 CP の価値として使います。", "rateSong": "換算に使うチャレンジ曲", "noChallengeSongs": "このイベントにはチャレンジ曲がありません。自分で入力してください。", "rateDifficulty": "チャレンジライブの難易度", "rateCost": "1回の消費", "rate": "1 {reward} =", "rateInput": "1 {reward} が何 {base} に相当するか", "ratePlaceholder": "換算率", "tieFirstNote": "並べ替えの基準が完全に同じ編成は、次に {reward} で比べます。", "tieNextNote": "{before} も同じ編成は、{reward} で比べます。", "tieFirst": "これを先に比べる", "spent": "チャレンジライブは CP を消費し、CP を獲得しません。", "formula": "並べ替えの基準", "autoRate": "自動", "then": "同点なら", "rateMissing": "換算して加算する報酬に、0 より大きい換算率を入力してください。", "expectedOnly": "他の報酬を含めた並べ替えは「平均を重視」で利用できます。「平均を重視」を選んでください。", "unavailable": "このエンジンは現在の条件で他の報酬を含めた並べ替えに対応していません。", "luckNote": "スキルが LUCK 抽選を行うライブは、まだ他の報酬を含められません。", "total": "1回あたりの期待合計（{unit} 換算）", "totalDeterministic": "1回あたりの合計（{unit} 換算）", "breakdown": "合計の内訳", "counted": "× {rate} = {value} {unit}", "share": "{n}%", "ties": "同点時の比較", "basisLabel": "CP の換算根拠", "basis": "1 CP = {rate} {unit}", "basisSource": "チャレンジライブ「{song}」{difficulty}、1回 {cost} CP 消費の最適編成は、1回あたり {value} {unit} 相当を期待できます。", "basisUnproven": "このチャレンジ編成は最適と証明されていないため、1 CP の価値はこれより高い可能性があります。", "basisTeam": "このチャレンジ編成を見る", "rating": "チャレンジライブの最適編成を計算中", "ratingNote": "先に 1 CP の価値を求めてから、このライブの編成を探します。"},
+    rewardMix: {"label": "報酬プラン", "others": "同じライブの他の報酬", "roles": {"off": "含めない", "convert": "換算して加算", "tieBreak": "同点時に比較"}, "roleLabel": "{reward}の扱い", "unsupported": "このエンジンは他の報酬を含めた並べ替えにまだ対応していません。", "rewards": {"eventPoints": "PT", "challengePoints": "CP", "eventItems": "バッジ"}, "units": {"eventPoints": "PT", "challengePoints": "CP", "eventItems": "バッジ"}, "names": {"eventPoints": "イベントポイント", "challengePoints": "チャレンジポイント", "eventItems": "イベントバッジ"}, "base": "主目標", "sources": {"auto": "チャレンジライブから自動", "manual": "自分で入力"}, "sourceLabel": "1 CP の価値の決め方", "autoNote": "計算の最初に、このチャレンジライブの最適編成を求めます。その編成が消費 1 CP あたりに得る {base} を、1 CP の価値として使います。", "rateSong": "換算に使うチャレンジ曲", "noChallengeSongs": "このイベントにはチャレンジ曲がありません。自分で入力してください。", "rateDifficulty": "チャレンジライブの難易度", "rateCost": "1回の消費", "rate": "1 {reward} =", "rateInput": "1 {reward} が何 {base} に相当するか", "ratePlaceholder": "換算率", "tieFirstNote": "並べ替えの基準が完全に同じ編成は、次に {reward} で比べます。", "tieNextNote": "{before} も同じ編成は、{reward} で比べます。", "tieFirst": "これを先に比べる", "spent": "チャレンジライブは CP を消費し、CP を獲得しません。", "formula": "並べ替えの基準", "autoRate": "自動", "then": "同点なら", "rateMissing": "換算して加算する報酬に、0 より大きい換算率を入力してください。", "expectedOnly": "他の報酬を含めた並べ替えは「平均を重視」で利用できます。「平均を重視」を選んでください。", "unavailable": "このエンジンは現在の条件で他の報酬を含めた並べ替えに対応していません。", "luckNote": "スキルが LUCK 抽選を行うライブは、まだ他の報酬を含められません。", "total": "1回あたりの期待合計（{unit} 換算）", "totalDeterministic": "1回あたりの合計（{unit} 換算）", "breakdown": "合計の内訳", "counted": "× {rate} = {value} {unit}", "share": "{n}%", "ties": "同点時の比較", "basisLabel": "CP の換算根拠", "basis": "1 CP = {rate} {unit}", "basisSource": "チャレンジライブ「{song}」{difficulty}、1回 {cost} CP 消費の最適編成は、1回あたり {value} {unit} 相当を期待できます。", "basisUnproven": "このチャレンジ編成は最適と証明されていないため、1 CP の価値はこれより高い可能性があります。", "basisTeam": "このチャレンジ編成を見る", "rating": "チャレンジライブの最適編成を計算中", "ratingNote": "先に 1 CP の価値を求めてから、このライブの編成を探します。"},
 
     cloud: {
       "accountChanged": "ログイン中のアカウントが変わりました。この端末のコレクションを保存する前に、下のアカウントを確認してください。",
@@ -537,9 +537,7 @@ export const jaJP = {
       "challengeSkip": "チャレンジスキップ",
 
       "challenge": "チャレンジ曲でランキング",
-      "challengePoints": "チャレンジポイントを稼ぐ",
-      "eventPoints": "イベントPTを稼ぐ",
-      "eventItems": "イベントバッジを稼ぐ",
+      "eventRewards": "イベント報酬",
       "battle": "撃奏ライブで高スコア",
       "free": "フリーライブで高スコア",
       "power": "総合力を最大に"
@@ -554,6 +552,7 @@ export const jaJP = {
       "challengePoints": "1回で獲得するCP。イベントPTボーナスはCPに掛かりません。",
       "eventPoints": "1回あたりのイベントPT。",
       "eventItems": "結果ごとの正確なランクから、1回あたりのイベントバッジ数を計算します。",
+      "eventRewards": "PT・CP・バッジを自由に組み合わせます。主目標を 1 つ選び、他は換算して加算するか、同点時に比較します。",
       "battle": "この曲で何点取れるか。",
       "free": "激走なしのソロライブで何点取れるか。",
       "power": "編成の総合力の最大値。"

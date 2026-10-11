@@ -31,7 +31,7 @@ test("event deadlines render in server time before hydration regardless of the h
 });
 
 test("a live goal offers the accuracy and pattern plays", () => {
-  const html = renderToStaticMarkup(<DeckGoalConditions locale="en-US" input={{ ...defaultDeckGoalInput("free"), playMode: "pattern", missEvery: 10 }} challengeSongs={[]}
+  const html = renderToStaticMarkup(<DeckGoalConditions locale="en-US" input={{ ...defaultDeckGoalInput("free"), playMode: "pattern", missEvery: 10 }}
     capabilities={{ goals: ["freeLive"], metrics: { freeLive: ["score"] }, accuracy: { great: true, just: false }, patternPlay: true }} onChange={() => {}} />);
   expect(html).toContain('value="pattern" selected=""');
   expect(html).toContain('value="10"');
@@ -140,15 +140,12 @@ test("a stale goal selection cannot relabel a finished result, and its proof lab
 
 test("event badge conditions show exact-grade projection and only scene-relevant inputs", () => {
   for (const venue of ["freeLive", "challengeLive", "skip", "challengeSkip"] as const) {
-    const html = renderToStaticMarkup(<DeckGoalConditions locale="en-US" input={{ ...defaultDeckGoalInput("eventItems"), venue }} challengeSongs={[]}
+    const html = renderToStaticMarkup(<DeckGoalConditions locale="en-US" input={{ ...defaultDeckGoalInput("eventItems"), venue }}
       capabilities={null} onChange={() => {}} />);
     expect(html).toContain("single matching result grade");
     expect(html).toContain("Time limit");
     expect((html.match(/<select/g) ?? []).length).toBe(venue === "skip" || venue === "challengeSkip" ? 1 : 2);
-    // The only inputs are the roles of the other rewards; a challenge live offers none for challenge points.
-    const inputs = html.match(/<input[^>]*>/g) ?? [];
-    expect(inputs.length).toBe(venue === "challengeLive" || venue === "challengeSkip" ? 3 : 6);
-    expect(inputs.every(input => /type="radio"[^>]*value="(off|convert|tieBreak)"/.test(input))).toBe(true);
+    expect(html).not.toContain("<input");
   }
 });
 
@@ -183,17 +180,24 @@ describe("reward plan", () => {
     <DeckRewardMix locale="en-US" input={input} capabilities={capabilities} challengeSongs={songs} onChange={() => {}} />);
   const role = (kind: string, value: string) => new RegExp(`<input[^>]*name="[^"]*-${kind}"[^>]*checked=""[^>]*value="${value}"`);
 
+  const main = (kind: string) => new RegExp(`<input(?=[^>]*name="[^"]*-main")(?=[^>]*value="${kind}")(?=[^>]*checked="")[^>]*>`);
+  const mainOff = (kind: string) => new RegExp(`<input(?=[^>]*name="[^"]*-main")(?=[^>]*value="${kind}")(?=[^>]*disabled="")[^>]*>`);
+
   test("only event payoff goals offer it, and every other reward starts left out", () => {
     for (const goal of ["battle", "free", "skip", "power", "challenge"] as const) expect(render(points({ goal }))).toBe("");
     const html = render(points());
-    expect(html).toContain('data-reward="eventPoints" data-role="base"');
+    expect(html).toMatch(main("eventPoints"));
     expect(html).toContain("Goal");
+    expect(html).toContain("Event points per live.");
+    expect(html).toContain("Other rewards of the same live");
+    expect((html.match(/<li class="rm-row"/g) ?? []).length).toBe(2);
     for (const kind of ["challengePoints", "eventItems"]) expect(html).toMatch(role(kind, "off"));
     expect(html).toContain('aria-label="How Challenge points count"');
     expect(html).toContain('<span class="rm-chip" data-reward="eventPoints">PT</span>');
     expect(html).not.toContain("rm-detail");
     const challengePoints = render(points({ goal: "challengePoints" }));
-    expect(challengePoints).toContain('data-reward="challengePoints" data-role="base"');
+    expect(challengePoints).toMatch(main("challengePoints"));
+    expect(challengePoints).not.toMatch(main("eventPoints"));
     expect(challengePoints).toContain('aria-label="How Event points count"');
   });
 
@@ -239,6 +243,10 @@ describe("reward plan", () => {
     expect(challenge).toContain("A Challenge Live spends CP and earns none.");
     expect(challenge).toContain('data-reward="challengePoints" data-role="off" data-offered="false"');
     expect(challenge).not.toContain('type="number"');
+    // A challenge live cannot have challenge points as its goal either.
+    expect(challenge).toMatch(mainOff("challengePoints"));
+    expect(challenge).not.toMatch(mainOff("eventItems"));
+    expect(unset).not.toMatch(mainOff("challengePoints"));
   });
 
   test("engines without levelled metrics, loading engines and other objectives gate the plan", () => {

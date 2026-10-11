@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { computes, computesGoal, defaultDeckGoalInput, effectiveAggregation, goalGap, heldEvent, jstTicks, parseCapabilities, recommendationRequest, type DeckEvent, type DeckGoalInput } from "../src/lib/deck/goals";
 import { challengeRateRequest, mixableRewards, rewardLayoutOf, usesChallengeRate, usesEventItemRewards } from "../src/lib/deck/goals";
-import { defaultRewardPlan, rewardLayout, rewardLevels, rewardShares, statedTerms, withFirstTieBreak, withRewardRate, withRewardRole,
+import { defaultRewardPlan, rewardLayout, rewardLevels, rewardShares, statedTerms, withFirstTieBreak, withMainReward, withRewardRate, withRewardRole,
   type EventReward, type RewardPlan, type RewardRole } from "../src/lib/deck/reward-mix";
 import { parseMasterDate } from "../src/lib/schedule";
 
@@ -284,6 +284,17 @@ describe("reward plan", () => {
     for (const [kind, rate] of Object.entries(rates)) value = withRewardRate(value, kind as EventReward, { auto: false, rate: rate ?? null });
     return value;
   };
+  test("a new goal reward keeps the roles and tie-break order of the others and starts their rates over", () => {
+    const before = plan([["challengePoints", "convert"], ["eventItems", "tieBreak"]], { challengePoints: 17.5 });
+    const after = withMainReward(before, "eventItems");
+    expect(after.roles).toEqual({ eventPoints: "off", challengePoints: "convert", eventItems: "off" });
+    expect(after.tieOrder).toEqual([]);
+    expect(after.rates).toEqual(defaultRewardPlan().rates);
+    // Challenge points are rated by a challenge live again; event points were the goal and stay left out.
+    expect(rewardLayout("eventItems", after, ["eventPoints", "challengePoints"])).toEqual({ base: "eventItems", converted: ["challengePoints"], ties: [], auto: true });
+    expect(withMainReward(plan([["eventPoints", "tieBreak"], ["eventItems", "tieBreak"]]), "challengePoints").tieOrder).toEqual(["eventPoints", "eventItems"]);
+  });
+
   const converted = (rates: Partial<Record<EventReward, number | null>>) => plan((Object.keys(rates) as EventReward[]).map(kind => [kind, "convert"]), rates);
   const others = ["challengePoints", "eventItems"] as const;
   const stated = (base: EventReward, rewards: RewardPlan, offered: readonly EventReward[] = others) => {

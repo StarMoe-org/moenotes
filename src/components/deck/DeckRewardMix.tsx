@@ -4,7 +4,7 @@ import { t } from "@/i18n";
 import { MUSIC_DIFFICULTIES, type MusicDifficulty } from "@/lib/music/difficulty";
 import { CHALLENGE_POINT_COSTS, computes, effectiveAggregation, isEventPayoffGoal, mixableRewards, playsGekisou, rewardLayoutOf,
   type ChallengePointCost, type DeckGoalInput, type DeckSolverCapabilities } from "@/lib/deck/goals";
-import { EVENT_REWARDS, RATE_DECIMALS, REWARD_ROLES, rewardShares, statedTerms, termRate, withFirstTieBreak, withRewardRate, withRewardRole,
+import { EVENT_REWARDS, RATE_DECIMALS, REWARD_ROLES, rewardShares, statedTerms, termRate, withFirstTieBreak, withMainReward, withRewardRate, withRewardRole,
   type EventReward, type RewardRole, type RewardTerm } from "@/lib/deck/reward-mix";
 import "@/styles/deck-reward-mix.css";
 
@@ -46,9 +46,9 @@ export function RewardOrder({ locale, levels }: { locale: AppLocale; levels: rea
 export interface RewardChallengeSong { id: number; title: string; jacketUrl: string | null; difficulties: readonly MusicDifficulty[] }
 
 /**
- * How an event payoff goal counts the rewards one live settles beside its own. Each reward is left out, added to the
- * goal's reward at a rate, or compared only between teams that are otherwise equal. The worth of a challenge point
- * comes from the best challenge-live team unless the player states it.
+ * What an event reward goal ranks teams by. One reward of the live is the goal; each other reward is left out, added
+ * to the goal's reward at a rate, or compared only between teams that are otherwise equal. The worth of a challenge
+ * point comes from the best challenge-live team unless the player states it.
  */
 export default function DeckRewardMix({ locale, input, capabilities, challengeSongs, onChange }: {
   locale: AppLocale; input: DeckGoalInput; capabilities: DeckSolverCapabilities | null; challengeSongs: readonly RewardChallengeSong[];
@@ -70,17 +70,27 @@ export default function DeckRewardMix({ locale, input, capabilities, challengeSo
     ...(kind === "challengePoints" && role === "convert" && base !== "challengePoints" && plan.rates.challengePoints.auto && !rateSong && challengeSongs[0]
       ? { challengeMusicId: challengeSongs[0].id } : {}) });
   const setAuto = (auto: boolean) => onChange({ rewards: withRewardRate(plan, "challengePoints", { auto }), ...(auto && !rateSong && challengeSongs[0] ? { challengeMusicId: challengeSongs[0].id } : {}) });
+  const spends = ["challengeLive", "challengeSkip"].includes(input.venue);
   const sum = layout && [{ kind: base, rate: 1 as number | null }, ...layout.converted.map(kind => ({ kind,
     rate: layout.auto && kind === "challengePoints" ? null : stated ? termRate(stated, stated.findIndex(term => term.kind === kind)) : NaN }))];
   return <fieldset className="rm-mix">
     <legend>{tr("label")}</legend>
+    <p className="rm-part" id={`${id}-main`}>{tr("base")}</p>
+    <div className="rm-main" role="radiogroup" aria-labelledby={`${id}-main`}>
+      {EVENT_REWARDS.map(kind => {
+        // A challenge live spends challenge points, so they cannot be its goal.
+        const spent = kind === "challengePoints" && spends;
+        return <label key={kind} data-reward={kind} title={spent ? tr("spent") : undefined}>
+          <input type="radio" name={`${id}-main`} value={kind} checked={base === kind}
+            disabled={kind !== base && (spent || !!capabilities && !computes(capabilities, { goal: kind, venue: input.venue }))}
+            onChange={() => onChange({ goal: kind, rewards: withMainReward(plan, kind) })} />
+          <span><RewardMark kind={kind} /><span className="rm-name"><strong>{short(kind)}</strong><small>{tr(`names.${kind}`)}</small></span></span>
+        </label>;
+      })}
+    </div>
+    <p className="rm-main-note">{t(locale, `deckWorkspace.goalNotes.${base}`)}</p>
+    <p className="rm-part">{tr("others")}</p>
     <ul className="rm-rows">
-      <li className="rm-row" data-reward={base} data-role="base">
-        <div className="rm-head">
-          <span className="rm-pick"><RewardMark kind={base} /><span className="rm-name"><strong>{short(base)}</strong><small>{tr(`names.${base}`)}</small></span></span>
-          <span className="rm-base-tag">{tr("base")}</span>
-        </div>
-      </li>
       {EVENT_REWARDS.filter(kind => kind !== base).map(kind => {
         const available = offered.includes(kind), role: RewardRole = available ? plan.roles[kind] : "off", rate = plan.rates[kind];
         const auto = role === "convert" && kind === "challengePoints" && base !== "challengePoints" && rate.auto;
