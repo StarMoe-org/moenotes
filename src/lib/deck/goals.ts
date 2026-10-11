@@ -5,11 +5,14 @@ import type { MusicDifficulty } from "@/lib/music/difficulty";
  * goal sends. Event goals exist only while an event is held.
  */
 export const EVENT_GOALS = ["challenge", "challengeSkip", "challengePoints", "eventPoints", "eventItems"] as const;
-export const EVERYDAY_GOALS = ["battle", "mission", "arena", "free", "skip", "power"] as const;
+export const EVERYDAY_GOALS = ["battle", "mission", "arena", "free", "peak", "skip", "power"] as const;
 export const DECK_GOALS = [...EVENT_GOALS, ...EVERYDAY_GOALS] as const;
 export type DeckGoal = typeof DECK_GOALS[number];
 export const DEFAULT_DECK_GOAL: DeckGoal = "battle";
-/** Aggregate the reachable random outcomes while keeping the declared play fixed. */
+/**
+ * How a team's random outcomes are ranked under the declared play: their mean, or their highest reachable value. Only
+ * the theoretical maximum goal (`peak`) asks for the maximum; every other goal ranks by the mean.
+ */
 export type DeckAggregation = "expected" | "maximum";
 export const CHALLENGE_POINT_PRIORITIES = ["eventPointsFirst", "eventItemsFirst"] as const;
 export type ChallengePointPriority = typeof CHALLENGE_POINT_PRIORITIES[number];
@@ -18,10 +21,18 @@ export const isChallengePointPriority = (value: unknown): value is ChallengePoin
 export const isEventGoal = (goal: DeckGoal): boolean => (EVENT_GOALS as readonly string[]).includes(goal);
 export const isEventPayoffGoal = (goal: DeckGoal): boolean => goal === "challengePoints" || goal === "eventPoints" || goal === "eventItems";
 
-/** Where an event live is played. */
+/** Where a live is played, for goals that let the player choose it. */
 export const DECK_VENUES = ["battleLive", "missionLive", "arenaLive", "freeLive", "challengeLive", "skip", "challengeSkip"] as const;
 export type DeckVenue = typeof DECK_VENUES[number];
-export const goalVenues = (goal: DeckGoal): readonly DeckVenue[] => goal === "challengePoints"
+/**
+ * The theoretical maximum is played only in the ordinary lives, where the skill order is the only random outcome and
+ * every one of the 120 orders occurs. In Gekisou modes one root seed draws the order, the LUCK lotteries and the
+ * probability skills together: their best results never meet in one live, and the reachable best needs every seed.
+ */
+export const PEAK_VENUES: readonly DeckVenue[] = ["freeLive", "challengeLive"];
+/** Whether the goal reads `venue`. */
+export const choosesVenue = (goal: DeckGoal): boolean => isEventPayoffGoal(goal) || goal === "peak";
+export const goalVenues = (goal: DeckGoal): readonly DeckVenue[] => goal === "peak" ? PEAK_VENUES : goal === "challengePoints"
   ? DECK_VENUES.filter(venue => venue !== "challengeLive" && venue !== "challengeSkip") : DECK_VENUES;
 /** Boosts spent on a battle, free or skipped live: 0..10. A challenge live spends challenge points instead. */
 export const MAX_BOOST = 10;
@@ -65,7 +76,6 @@ export function heldEvent(events: readonly DeckEvent[], now: number, parse: (dat
 /** Everything the goal controls set. Inputs a goal does not read are ignored when its request is built. */
 export interface DeckGoalInput {
   goal: DeckGoal;
-  aggregation: DeckAggregation;
   /** Optional lexicographic tie-breaks within the highest expected-CP tier. */
   secondaryPriority: ChallengePointPriority | null;
   musicId: number | null;
@@ -92,7 +102,7 @@ export interface DeckGoalInput {
 }
 
 export const defaultDeckGoalInput = (goal: DeckGoal = DEFAULT_DECK_GOAL): DeckGoalInput => ({
-  goal, aggregation: "expected", secondaryPriority: null, musicId: null, difficulty: "expert", challengeMusicId: null, venue: "freeLive", boosts: 0, challengePoints: 200, timeLimit: DEFAULT_TIME_LIMIT,
+  goal, secondaryPriority: null, musicId: null, difficulty: "expert", challengeMusicId: null, venue: "freeLive", boosts: 0, challengePoints: 200, timeLimit: DEFAULT_TIME_LIMIT,
   arenaMusicId: null,
   playMode: "accuracy", missEvery: 0,
   greatPercent: 0, justPercent: 100, powerSong: false, eventParameter: true, othersAverageScore: null,
@@ -109,6 +119,7 @@ export function solverGoalKind(input: Pick<DeckGoalInput, "goal" | "venue">): st
     case "power": return "power";
     case "challenge": return "challengeLive";
     case "challengePoints": case "eventPoints": case "eventItems": return input.venue === "challengeSkip" ? "skip" : input.venue;
+    case "peak": return input.venue;
   }
 }
 /** The solver metric kind, or null for power: the event payoff of event goals, otherwise the score. */
@@ -117,13 +128,12 @@ export function solverMetricKind(goal: DeckGoal): string | null {
 }
 /** Whether the goal input plays a live with Gekisou sections. */
 export const playsGekisou = (input: Pick<DeckGoalInput, "goal" | "venue">): boolean => ["battleLive", "missionLive", "arenaLive"].includes(solverGoalKind(input));
-export const isChallengeInput = (input: Pick<DeckGoalInput, "goal" | "venue">): boolean => input.goal === "challenge" || input.goal === "challengeSkip" || isEventPayoffGoal(input.goal) && ["challengeLive", "challengeSkip"].includes(input.venue);
+export const isChallengeInput = (input: Pick<DeckGoalInput, "goal" | "venue">): boolean => input.goal === "challenge" || input.goal === "challengeSkip" || choosesVenue(input.goal) && ["challengeLive", "challengeSkip"].includes(input.venue);
 export const isNetworkInput = (input: Pick<DeckGoalInput, "goal" | "venue">): boolean => ["battleLive", "arenaLive"].includes(solverGoalKind(input));
 /** Whether the goal input reads a play style (a played live; not power or a skip). */
 export const readsAccuracy = (input: Pick<DeckGoalInput, "goal" | "venue">): boolean => !["power", "skip"].includes(solverGoalKind(input));
-/** Retain the objective preference for supported non-Gekisou played lives. */
-export const effectiveAggregation = (input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "aggregation">>): DeckAggregation =>
-  readsAccuracy(input) && !playsGekisou(input) ? input.aggregation ?? "expected" : "expected";
+/** The theoretical maximum goal ranks by the highest reachable value, every other goal by the mean. */
+export const goalAggregation = (goal: DeckGoal): DeckAggregation => goal === "peak" ? "maximum" : "expected";
 
 /** Secondary preferences are read only by the challenge-point objective. */
 export const usesChallengePointPriority = (input: Pick<DeckGoalInput, "goal"> & Partial<Pick<DeckGoalInput, "secondaryPriority">>): boolean =>
@@ -131,8 +141,9 @@ export const usesChallengePointPriority = (input: Pick<DeckGoalInput, "goal"> & 
 export const usesEventItemRewards = (input: Pick<DeckGoalInput, "goal"> & Partial<Pick<DeckGoalInput, "secondaryPriority">>): boolean =>
   input.goal === "eventItems" || usesChallengePointPriority(input);
 
-/** Event objectives and event-boosted power require the held event's data. */
-export const usesEventData = (input: Pick<DeckGoalInput, "goal" | "eventParameter">): boolean => isEventGoal(input.goal) || input.goal === "power" && input.eventParameter;
+/** Event objectives, Challenge Live and event-boosted power require the held event's data. */
+export const usesEventData = (input: Pick<DeckGoalInput, "goal" | "venue" | "eventParameter">): boolean =>
+  isEventGoal(input.goal) || isChallengeInput(input) || input.goal === "power" && input.eventParameter;
 
 /** `DeckSolver.capabilities()`: what the loaded engine computes. */
 export interface DeckSolverCapabilities {
@@ -181,16 +192,16 @@ export function parseCapabilities(json: string | null): DeckSolverCapabilities |
   return { goals: strings(raw.goals), metrics, aggregations, ...(isChallengePointPriorityCapability(raw.challengePointPriorities) ? { challengePointPriorities: raw.challengePointPriorities } : {}), ...(eventItemRewards ? { eventItemRewards } : {}), patternPlay: raw.patternPlay === true || !!raw.patternPlay && typeof raw.patternPlay === "object", accuracy: { great: accuracy.great === true, just: accuracy.just === true } };
 }
 
-/** Whether the engine computes a goal input's goal kind and metric. */
-export function computes(capabilities: DeckSolverCapabilities, input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "playMode" | "greatPercent" | "justPercent" | "aggregation" | "secondaryPriority">>): boolean {
+/** Whether the engine computes a goal input's goal kind, metric and aggregation. */
+export function computes(capabilities: DeckSolverCapabilities, input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "playMode" | "greatPercent" | "justPercent" | "secondaryPriority">>): boolean {
   if (usesChallengePointPriority(input) && (!isChallengePointPriority(input.secondaryPriority)
-    || effectiveAggregation(input) !== "expected" || !isChallengePointPriorityCapability(capabilities.challengePointPriorities))) return false;
+    || !isChallengePointPriorityCapability(capabilities.challengePointPriorities))) return false;
   if (usesEventItemRewards(input)) {
     const rewards = capabilities.eventItemRewards;
     if (!rewards || rewards.selection !== "exactResultGrade" || rewards.eventGroupField !== "eventGroup"
       || rewards.rowsPerGrade !== 1 || rewards.probabilityMarker !== 10000) return false;
   }
-  if (input.goal === "challengePoints" && ["challengeLive", "challengeSkip"].includes(input.venue)) return false;
+  if (choosesVenue(input.goal) && !goalVenues(input.goal).includes(input.venue)) return false;
   const kind = solverGoalKind(input), metric = solverMetricKind(input.goal);
   if (input.playMode === "pattern" && readsAccuracy(input) && !capabilities.patternPlay) return false;
   if (readsAccuracy(input) && input.playMode !== "pattern") {
@@ -198,21 +209,21 @@ export function computes(capabilities: DeckSolverCapabilities, input: Pick<DeckG
     if (playsGekisou(input) && (input.justPercent ?? 100) !== 100 && !capabilities.accuracy.just) return false;
   }
   if (!capabilities.goals.includes(kind)) return false;
-  const aggregation = effectiveAggregation(input);
+  const aggregation = goalAggregation(input.goal);
   const metrics = capabilities.aggregations?.[aggregation] ?? (aggregation === "expected" ? capabilities.metrics : {});
   return metric === null || (metrics[kind] ?? []).includes(metric);
 }
 /** Whether any venue of a goal is computed; a goal whose venues are all unsupported is shown as coming soon. */
 export function computesGoal(capabilities: DeckSolverCapabilities, goal: DeckGoal): boolean {
-  const venues: readonly DeckVenue[] = isEventPayoffGoal(goal) ? goalVenues(goal) : ["freeLive"];
+  const venues: readonly DeckVenue[] = choosesVenue(goal) ? goalVenues(goal) : ["freeLive"];
   return venues.some(venue => computes(capabilities, { goal, venue }));
 }
 
 /** What the goal input still needs before it can run. */
 export type DeckGoalGap = "song" | "challengeSong" | "event" | "eventItem" | "arenaSong" | "play" | "secondaryPriority" | null;
 export function goalGap(input: DeckGoalInput, event: DeckEvent | null): DeckGoalGap {
-  if (isEventGoal(input.goal) && !event) return "event";
-  if (usesChallengePointPriority(input) && (!isChallengePointPriority(input.secondaryPriority) || effectiveAggregation(input) !== "expected")) return "secondaryPriority";
+  if ((isEventGoal(input.goal) || isChallengeInput(input)) && !event) return "event";
+  if (usesChallengePointPriority(input) && !isChallengePointPriority(input.secondaryPriority)) return "secondaryPriority";
   if (usesEventItemRewards(input) && !event?.itemId) return "eventItem";
   const kind = solverGoalKind(input);
   if (readsAccuracy(input) && input.playMode === "pattern" && (!Number.isSafeInteger(input.missEvery) || input.missEvery < 0)) return "play";
@@ -239,10 +250,11 @@ const ids = (values: readonly string[]) => values.map(value => {
 
 /**
  * The request text of a goal input. Throws when `goalGap` is not null. The held event's ID is sent for event
- * objectives and power with event bonuses enabled.
+ * objectives, Challenge Live and power with event bonuses enabled.
  */
 export function recommendationRequest(input: DeckGoalInput, context: { event: DeckEvent | null; now: number; constraints: DeckRunConstraints }): string {
   if (input.goal === "challengePoints" && ["challengeLive", "challengeSkip"].includes(input.venue)) throw new Error("Challenge Live spends challenge points; choose an ordinary venue to earn them");
+  if (choosesVenue(input.goal) && !goalVenues(input.goal).includes(input.venue)) throw new Error(`The goal cannot be played at ${input.venue}`);
   const gap = goalGap(input, context.event);
   if (gap) throw new Error(`The goal still needs: ${gap}`);
   const kind = solverGoalKind(input), event = context.event;
@@ -260,7 +272,7 @@ export function recommendationRequest(input: DeckGoalInput, context: { event: De
     default: goal = `{"kind":"power"${input.powerSong ? `,"musicId":${input.musicId}` : ""},"eventParameter":${input.eventParameter && !!event}}`;
   }
   const parts = [`"format":${JSON.stringify(REQUEST_FORMAT)}`, `"goal":${goal}`];
-  if (effectiveAggregation(input) === "maximum") parts.push('"aggregation":"maximum"');
+  if (goalAggregation(input.goal) === "maximum") parts.push('"aggregation":"maximum"');
   const consumption = isChallengeInput(input) ? input.challengePoints : Math.min(MAX_BOOST, Math.max(0, Math.trunc(input.boosts)));
   if (isEventPayoffGoal(input.goal)) {
     const secondary = usesChallengePointPriority(input)

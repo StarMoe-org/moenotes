@@ -13,8 +13,8 @@ import { mergeBoxBackup, parseBox, type BoxCard, type BoxSaveLink, type CardBox,
 import { answerDeckFields } from "@/lib/box/deck-answers";
 import { createDeckPreview } from "@/lib/box/deck-preview";
 import { boxAccountJson, gameSaveAccountJson } from "@/lib/deck/account-envelope";
-import { CHALLENGE_POINT_COSTS, DEFAULT_DECK_GOAL, EVENT_GOALS, EVERYDAY_GOALS, MAX_BOOST, computes, computesGoal, defaultDeckGoalInput, goalGap, heldEvent,
-  playsGekisou, readsAccuracy, effectiveAggregation, usesChallengePointPriority, usesEventItemRewards, isChallengeInput, isNetworkInput, recommendationRequest, solverGoalKind, goalVenues, isEventPayoffGoal, type ChallengePointCost, type DeckEvent, type DeckGoal, type DeckGoalInput, type DeckVenue, type DeckArenaMusic } from "@/lib/deck/goals";
+import { CHALLENGE_POINT_COSTS, DEFAULT_DECK_GOAL, EVENT_GOALS, EVERYDAY_GOALS, MAX_BOOST, choosesVenue, computes, computesGoal, defaultDeckGoalInput, goalAggregation, goalGap, heldEvent,
+  playsGekisou, readsAccuracy, usesChallengePointPriority, usesEventItemRewards, isChallengeInput, isNetworkInput, recommendationRequest, solverGoalKind, goalVenues, isEventPayoffGoal, type ChallengePointCost, type DeckEvent, type DeckGoal, type DeckGoalInput, type DeckVenue, type DeckArenaMusic } from "@/lib/deck/goals";
 import { displayUtcLabel, formatMasterDate, parseMasterDate } from "@/lib/schedule";
 import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { safeGetLocalStorage, safeRemoveLocalStorage, safeSetLocalStorage } from "@/lib/storage/safe-storage";
@@ -28,7 +28,7 @@ import MusicSelectDialog from "@/components/music/MusicSelectDialog";
 import { type MusicDifficulty, MUSIC_DIFFICULTIES } from "@/lib/music/difficulty";
 import DeckComposer from "./DeckComposer";
 import DeckGoalConditions from "./DeckGoalConditions";
-import DeckObjective from "./DeckObjective";
+import DeckPeakNote from "./DeckPeakNote";
 import NativeFormationGroup from "@/components/chart-data/NativeFormationGroup";
 import Modal from "@/components/shared/Modal";
 import type { PlayerFieldCatalogue } from "@/lib/box/player-catalog";
@@ -88,7 +88,7 @@ const DECK_SOURCES = [
 const GOAL_ICONS: Readonly<Record<DeckGoal, string>> = {
   challenge: "M5 21V4m0 0h11l-2 4 2 4H5", challengePoints: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 4v10m-3-5h6", eventPoints: "m12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7Z", eventItems: "M4 8h16v12H4zM2 4h20v4H2zM12 4v16",
   mission: "M4 4h16v16H4zM8 12l3 3 5-6", arena: "M4 20V8l8-5 8 5v12M8 20v-8h8v8", skip: "m4 4 12 8-12 8V4Zm16 0v16", challengeSkip: "m4 4 12 8-12 8V4Zm16 0v16",
-  battle: "M4 19 19 4M9 4h10v10", free: "m8 4 12 8-12 8V4Z", power: "m12 3 9 9-9 9-9-9 9-9Z",
+  battle: "M4 19 19 4M9 4h10v10", free: "m8 4 12 8-12 8V4Z", peak: "M3 20 9 9l4 6 3-4 5 9H3Zm6-11V4l4 2-4 2", power: "m12 3 9 9-9 9-9-9 9-9Z",
 };
 function readStoredGoal(): DeckGoal {
   const value = safeGetLocalStorage(GOAL_STORAGE_KEY);
@@ -183,13 +183,13 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
     memberLevel: preview.members[index]?.fields.level.value ?? undefined, memberRank: preview.members[index]?.fields.rank.value ?? undefined,
     supportLevel: preview.snaps[index]?.fields.level.value ?? undefined, supportRank: preview.snaps[index]?.fields.rank.value ?? undefined,
   }));
-  // Keep the stored objective preference while using the selected scene's effective objective.
+  // Preserve the player's requested goal and play. Unsupported conditions block the run rather than changing it.
   const goal = goalInput.goal;
-  const effectiveInput: DeckGoalInput = { ...goalInput, aggregation: effectiveAggregation(goalInput) };
+  const effectiveInput: DeckGoalInput = { ...goalInput };
   const gap = goalGap(effectiveInput, event);
   const dataGap = solver.engine.status === "ready" ? deckDataGap(effectiveInput, event, solver.engine.catalog,
     props.deckArenas?.find(value => value.server === server)?.songs) : null;
-  const supported = capabilities ? computes(capabilities, effectiveInput) : !usesEventItemRewards(effectiveInput) && effectiveInput.aggregation === "expected";
+  const supported = capabilities ? computes(capabilities, effectiveInput) : !usesEventItemRewards(effectiveInput) && goalAggregation(goal) === "expected";
   const idsOf = (keys: readonly string[], kind: CardKind) => keys.flatMap(key => {
     const card = box?.cards.find(item => item.key === key && item.kind === kind);
     return card?.identity.value ? [card.identity.value] : [];
@@ -460,7 +460,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
             goals: event ? EVENT_GOALS.map(value => goalCard(value)) : [] },
           { id: "everyday", title: tr("goalGroups.everyday"), goals: EVERYDAY_GOALS.map(value => goalCard(value)) },
         ]}
-        selectedGoal={goal} onGoalChange={value => { updateGoal({ goal: value as DeckGoal, ...(value === "challengePoints" && ["challengeLive", "challengeSkip"].includes(goalInput.venue) ? { venue: "freeLive" } : {}) }); safeSetLocalStorage(GOAL_STORAGE_KEY, value); }}
+        selectedGoal={goal} onGoalChange={value => { const next = value as DeckGoal; updateGoal({ goal: next, ...(choosesVenue(next) && !goalVenues(next).includes(goalInput.venue) ? { venue: "freeLive" } : {}) }); safeSetLocalStorage(GOAL_STORAGE_KEY, value); }}
         collection={<div className="dc-collection-summary">
           <div className="dc-collection-stats"><span><strong>{ownedMembers.length}</strong> {tr("member")}</span><span><strong>{ownedSnaps.length}</strong> {tr("snap")}</span>
             {box && <span className="dc-collection-source" data-source={linked ? "game-save" : "box"}><CollectionIcon name={linked ? "game" : "image"} />{tr(linked ? "gameSave.sourceSave" : "gameSave.sourceBox")}
@@ -472,9 +472,10 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
             {box && <button type="button" disabled={busy} onClick={() => setManagement(true)}>{tr("manage")}</button>}</div>
         </div>}
         conditions={<>
-          <DeckObjective locale={locale} input={effectiveInput} capabilities={capabilities} onChange={aggregation => updateGoal({ aggregation })} />
-          {isEventPayoffGoal(goal) ? <label>{tr("venue")}<select aria-label={tr("venue")} value={goalInput.venue} onChange={change => updateGoal({ venue: change.target.value as DeckVenue })}>
-            {goalVenues(goal).map(value => <option key={value} value={value} disabled={!!capabilities && !computes(capabilities, { goal, venue: value })}>{tr(`venues.${value}`)}</option>)}</select></label> : null}
+          {choosesVenue(goal) ? <label>{tr("venue")}<select aria-label={tr("venue")} value={goalInput.venue} onChange={change => updateGoal({ venue: change.target.value as DeckVenue })}>
+            {goalVenues(goal).map(value => <option key={value} value={value} disabled={!!capabilities && !computes(capabilities, { goal, venue: value })
+              || !event && isChallengeInput({ goal, venue: value })}>{tr(`venues.${value}`)}</option>)}</select></label> : null}
+          <DeckPeakNote locale={locale} input={effectiveInput} capabilities={capabilities} />
           {solverGoalKind(effectiveInput) === "arenaLive" ? <label>{tr("arenaSong")}<select value={goalInput.arenaMusicId ?? ""} onChange={change => updateGoal({ arenaMusicId: change.target.value ? Number(change.target.value) : null })}><option value="">{tr(arenas.length ? "chooseArena" : "noArena")}</option>{arenas.map(row => <option key={row.id} value={row.id}>{songs.find(song => song.id === row.musicId)?.title ?? row.musicId}</option>)}</select></label> : isChallengeInput(effectiveInput) ? <div className="dc-challenge-songs" role="group" aria-label={tr("challengeSong")}>
             {(event?.challengeMusics ?? []).map(row => {
               const music = songs.find(item => item.id === row.musicId);

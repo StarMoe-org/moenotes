@@ -17,11 +17,12 @@ export const jaJP = {
       description: "Moenotes API で公開プロフィール、ランキング、ガチャ情報、許可された gzip セーブを取得します。",
     }, developer: "開発者アプリ", developerHint: "アプリを作成するとすぐに認証情報が発行されます。Secret はサーバーのみで保管してください。", grants: "第三者アーカイブへのアクセス", grantsHint: "選択したアーカイブだけを共有します。", name: "アプリ名", website: "HTTPS ウェブサイト", description: "説明", create: "アプリを作成", emptyApps: "アプリはまだありません。", clientId: "Client ID", invite: "招待リンクをコピー", copy: "コピー", copied: "コピーしました", lookup: "アプリを検索", choose: "アップロード済みアーカイブを選択", emptyArchives: "利用できるアーカイブはありません。", authorize: "選択したアーカイブを許可", emptyGrants: "許可はまだありません。", revoke: "取り消す", confirmRevoke: "このアクセスを取り消しますか？", cancel: "キャンセル", refresh: "更新", generate: "シークレットを生成", rotate: "シークレットをローテーション", revokeSecret: "シークレットを取り消す", keyLimit: "有効なキーが2つあります。新しいキーを配置してから、古いキーを手動で取り消してください。", confirmRotate: "新しいキーを生成しますか？古いキーは手動で取り消すまで有効です。", secret: "クライアントシークレット", secretHint: "一度だけ表示されます。サーバーに安全に保存し、ブラウザコードには置かないでください。", dismiss: "シークレットを隠す", secretActive: "有効", secretMissing: "有効なシークレットなし", ready: "利用可能", disabled: "無効", error: "リクエストに失敗しました。", success: "保存しました", unavailable: "現在利用できません。", consent: "選択したアーカイブの全内容を読み取れます。信頼できるアプリだけを許可してください。" },
   deckWorkspace: {
-    objective: {"label": "探索の目標", "expected": "平均を重視", "maximum": "理論上の最高値", "unsupported": "未対応", "expectedNote": "現在の演奏条件を保ち、ランダムなスキル順や LUCK などの結果の平均で編成を比較します。", "maximumNote": "フリーライブとチャレンジライブで、現在の演奏条件を保ち、スキル順やランダムなスキル結果から到達できる最高値を探します。最高値の証明には探索の完了が必要で、毎回出せる値ではありません。", "unavailable": "この条件では理論上の最高値に未対応です。「平均を重視」で探索できます。", "loading": "理論上の最高値に対応しているか確認中…", "gekisouNote": "撃奏モードは「平均を重視」で探索します。フリーライブとチャレンジライブでは「理論上の最高値」を選べます。"},
+    objective: {"expected": "平均を重視", "maximum": "理論上の最高値", "unsupported": "未対応", "expectedNote": "現在の演奏条件を保ち、ランダムなスキル順や LUCK などの結果の平均で編成を比較します。", "maximumNote": "指定した演奏条件で、120通りのスキル順のうち最も高いスコアを取ります。最高値の証明には探索の完了が必要です。実際のライブでは、そのスキル順になったときだけ到達できます。"},
+    peak: {"ordinaryNote": "現在の通常スキルには抽選がないため、フリーライブとチャレンジライブの理論上の最高値は、120通りのスキル順のうち最もスコアが高いものです。", "noGekisou": "撃奏モードには理論上の最高値がありません。ライブ開始時に決まる1つの乱数シードが、スキル順、すべての LUCK 抽選、確率で発動する撃奏スキルをまとめて決めるため、それぞれの最良の結果が1回のライブでそろうことはありません。実際に到達できる最高スコアを求めるには、編成ごとにすべてのシードをシミュレーションする必要があります。撃奏では、平均で編成を比較する「撃奏ライブで高スコア」「ソロ Mission」「アリーナ」をお使いください。", "venueUnavailable": "読み込んだ計算エンジンは、このプレイ方法での理論上の最高値にまだ対応していません。別のプレイ方法を選ぶか、エンジンの更新後にお試しください。"},
     "arenaSong": "アリーナ楽曲",
     "chooseArena": "アリーナ楽曲を選択",
     "noArena": "現在のサーバーデータにアリーナ楽曲はありません",
-    conditions: {"play": "演奏条件", "accuracy": "Great / Just の割合、Miss なし", "pattern": "Miss を含む完全な演奏を明示", "missEvery": "判定ノーツ N 個ごとに Miss（0 は Miss なし）", "noMiss": "完全な演奏を明示：Miss なし。", "missPattern": "判定ノーツ {n} 個ごとに Miss とします。", "patternNote": "下の Great・Just 割合を適用後、指定ノーツを Miss に置換します。固定の演奏条件であり、人のミスの確率分布ではありません。", "timeLimit": "最大計算時間", "timeLimitNote": "時間になると、その時点で最良の編成を「最適未証明」として表示します。", "timeLimits": {"30": "30 秒", "60": "1 分", "120": "2 分", "300": "5 分", "none": "無制限"}, "eventItemsNote": "エンジンは演奏結果ごとに、最終ランクと完全に一致する一段階の報酬からイベントバッジ数を計算します。", "secondaryPriority": "CP が同じ場合の副報酬の優先順", "priorities": {"none": "CP のみ", "eventPointsFirst": "CP → PT → バッジ", "eventItemsFirst": "CP → バッジ → PT"}, "priorityNote": "まず平均 CP を最大化し、CP が同じ場合に選択した副報酬の優先順で編成を並べます。", "priorityTeams": "最大 CP のグループから最大 {n} 編成を返します。該当する編成が少ない場合もあります。時間切れの結果は最適未証明です。", "priorityExpectedOnly": "CP の副報酬優先順は「平均を重視」で利用できます。「平均を重視」を選んでください。", "priorityUnsupported": "このエンジンは現在の条件で CP 優先の副報酬並べ替えに対応していません。"},
+    conditions: {"play": "演奏条件", "accuracy": "Great / Just の割合、Miss なし", "pattern": "Miss を含む完全な演奏を明示", "missEvery": "判定ノーツ N 個ごとに Miss（0 は Miss なし）", "noMiss": "完全な演奏を明示：Miss なし。", "missPattern": "判定ノーツ {n} 個ごとに Miss とします。", "patternNote": "下の Great・Just 割合を適用後、指定ノーツを Miss に置換します。固定の演奏条件であり、人のミスの確率分布ではありません。", "timeLimit": "最大計算時間", "timeLimitNote": "時間になると、その時点で最良の編成を「最適未証明」として表示します。", "timeLimits": {"30": "30 秒", "60": "1 分", "120": "2 分", "300": "5 分", "none": "無制限"}, "eventItemsNote": "エンジンは演奏結果ごとに、最終ランクと完全に一致する一段階の報酬からイベントバッジ数を計算します。", "secondaryPriority": "CP が同じ場合の副報酬の優先順", "priorities": {"none": "CP のみ", "eventPointsFirst": "CP → PT → バッジ", "eventItemsFirst": "CP → バッジ → PT"}, "priorityNote": "まず平均 CP を最大化し、CP が同じ場合に選択した副報酬の優先順で編成を並べます。", "priorityTeams": "最大 CP のグループから最大 {n} 編成を返します。該当する編成が少ない場合もあります。時間切れの結果は最適未証明です。", "priorityUnsupported": "このエンジンは現在の条件で CP 優先の副報酬並べ替えに対応していません。"},
 
     cloud: {
       "accountChanged": "ログイン中のアカウントが変わりました。この端末のコレクションを保存する前に、下のアカウントを確認してください。",
@@ -541,6 +542,7 @@ export const jaJP = {
       "eventItems": "イベントバッジを稼ぐ",
       "battle": "撃奏ライブで高スコア",
       "free": "フリーライブで高スコア",
+      "peak": "理論上の最高スコア",
       "power": "総合力を最大に"
     },
     "goalNotes": {
@@ -555,6 +557,7 @@ export const jaJP = {
       "eventItems": "結果ごとの正確なランクから、1回あたりのイベントバッジ数を計算します。",
       "battle": "この曲で何点取れるか。",
       "free": "激走なしのソロライブで何点取れるか。",
+      "peak": "フリーライブとチャレンジライブで、スキル順が最適なときに何点取れるか。",
       "power": "編成の総合力の最大値。"
     },
     "venues": {
@@ -586,9 +589,9 @@ export const jaJP = {
       "exactReward": "正確な値：{numerator}/{denominator}",
       "eventItemsUnsupported": "このエンジンは、確定した結果ランクに基づくイベントバッジ計算に未対応です。",
       "eventItemRewardsUnsupported": "このモードのイベント報酬データには未対応です。各ランクの報酬行はちょうど1件で、確率マーカーが 10000 である必要があります。",
-      "maximumLabel": {"score": "理論上の最高スコア", "challengePoints": "1回の最大獲得 CP", "eventPoints": "1回の最大 PT", "eventItems": "1回の最大バッジ数"},
+      "maximumLabel": {"score": "理論上の最高スコア"},
       "deterministicLabel": {"score": "スコア", "challengePoints": "1回の獲得 CP", "eventPoints": "1回の PT", "eventItems": "1回のバッジ数"},
-      "bestOrder": "目標の最高値に到達するスキル順",
+      "bestOrder": "理論上の最高スコアになるスキル順",
       "metricLabel": {"score": "期待スコア"},
       "playSummary": "指定演奏：判定ノーツ {notes} 個 · Miss {misses} 個",
       "start": "編成を計算",
