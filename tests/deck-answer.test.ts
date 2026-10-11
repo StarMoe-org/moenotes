@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { createBox, createCard } from "../src/lib/box/model";
-import { groupIssues, isOutOfMemory, issueTarget, parseDeckAnswer } from "../src/lib/deck/answer";
+import { challengeWorth, groupIssues, isOutOfMemory, issueTarget, parseDeckAnswer } from "../src/lib/deck/answer";
 import { formatDeckInterval, parseInterval } from "../src/lib/deck/interval";
 
 const team = (score: number) => ({
@@ -153,109 +153,73 @@ describe("issues", () => {
 });
 
 
-describe("challenge-point priority answers", () => {
-  const payoff = (numerator: string, denominator = "1") => ({ score: Number(numerator) / Number(denominator), exact: { numerator, denominator }, interval: null });
-  const combo = (secondaryPriority = "eventPointsFirst") => {
-    const raw = JSON.parse(answer({}));
-    raw.result.metric = { kind: "challengePoints", eventId: 7, consumption: 3, secondaryPriority, resourceType: 1, resourceId: 90 };
-    raw.result.aggregation = "expected";
-    raw.result.teams[0].value.payoff = payoff("151", "2");
-    raw.result.teams[0].eventRewards = { challengePoints: payoff("151", "2"), eventPoints: payoff("901", "3"), eventItems: payoff("9007199254740993", "9007199254740992") };
-    return raw;
-  };
-  test("retains the echoed priority, badge resource and exact rewards with fewer than five teams", () => {
-    for (const priority of ["eventPointsFirst", "eventItemsFirst"]) for (const count of [0, 1, 3]) {
-      const raw = combo(priority);
-      raw.result.teams = Array.from({ length: count }, (_, i) => ({ ...raw.result.teams[0], rank: i + 1 }));
-      const result = parseDeckAnswer(JSON.stringify(raw)).result!;
-      expect(result.secondaryPriority).toBe(priority);
-      expect(result.resourceType).toBe(1);
-      expect(result.resourceId).toBe(90);
-      expect(result.teams).toHaveLength(count);
-      expect(result.optimality.proven).toBe(true);
-      if (count) {
-        expect(result.teams[0]!.value!.payoff!.score).toBe(75.5);
-        expect(result.teams[0]!.eventRewards!.eventItems.exact.numerator).toBe("9007199254740993");
-        expect(result.teams[0]!.eventRewards!.eventPoints.exact).toEqual({ numerator: "901", denominator: "3" });
-      }
-    }
-  });
-  test("missing or malformed combined rewards are protocol errors in progress and final answers", () => {
-    for (const final of [false, true]) {
-      for (const field of ["challengePoints", "eventPoints", "eventItems", "all"]) {
-        const raw = combo(); raw.final = final;
-        if (field === "all") delete raw.result.teams[0].eventRewards;
-        else delete raw.result.teams[0].eventRewards[field];
-        expect(() => parseDeckAnswer(JSON.stringify(raw))).toThrow();
-      }
-      for (const patch of [{ exact: null }, { exact: { numerator: "1", denominator: "0" } }, { score: "12" }, { interval: { lower: 1, upper: 2 } }]) {
-        const raw = combo(); raw.final = final;
-        Object.assign(raw.result.teams[0].eventRewards.eventPoints, patch);
-        expect(() => parseDeckAnswer(JSON.stringify(raw))).toThrow();
-      }
-    }
-  });
-  test("malformed priority metadata and a missing CP primary payoff are rejected", () => {
-    for (const patch of [{ secondaryPriority: "unknown" }, { resourceType: 2 }, { resourceId: 0 }, { kind: "eventPoints" }]) {
-      const raw = combo(); Object.assign(raw.result.metric, patch);
-      expect(() => parseDeckAnswer(JSON.stringify(raw))).toThrow();
-    }
-    const maximum = combo(); maximum.result.aggregation = "maximum";
-    expect(() => parseDeckAnswer(JSON.stringify(maximum))).toThrow();
-    const absent = combo(); absent.result.teams[0].value.payoff = null;
-    expect(() => parseDeckAnswer(JSON.stringify(absent))).toThrow();
-  });
-  test("timeouts remain unproven and non-combined answers keep their existing shape", () => {
-    const raw = combo(); raw.result.optimality.proven = false; raw.result.exitReason = "timeLimit";
-    expect(parseDeckAnswer(JSON.stringify(raw)).result!.optimality.proven).toBe(false);
-    expect(parseDeckAnswer(JSON.stringify(raw)).result!.exitReason).toBe("timeLimit");
-    const plain = JSON.parse(answer({})); plain.result.metric = { kind: "challengePoints" };
-    const result = parseDeckAnswer(JSON.stringify(plain)).result!;
-    expect(result.secondaryPriority).toBeUndefined();
-    expect(result.teams[0]!.eventRewards).toBeUndefined();
-  });
-});
-
-describe("reward mix answers", () => {
+describe("reward plan answers", () => {
   const payoff = (numerator: string, denominator = "120") => ({ score: Number(numerator) / Number(denominator), exact: { numerator, denominator }, interval: null });
-  const mixed = () => {
+  const planned = () => {
     const raw = JSON.parse(answer({}));
-    raw.result.metric = { kind: "combined", consumption: 3, terms: [{ kind: "eventPoints", eventId: 7, weight: 2 }, { kind: "challengePoints", eventId: 7, weight: 35 }] };
+    raw.result.metric = { kind: "combined", consumption: 3, levels: [
+      [{ kind: "eventPoints", eventId: 7, weight: 2 }, { kind: "challengePoints", eventId: 7, weight: 35 }],
+      [{ kind: "eventItems", eventId: 7, resourceType: 1, resourceId: 90, weight: 1 }]] };
     raw.result.aggregation = "expected";
     raw.result.teams[0].value.payoff = payoff("480000");
-    raw.result.teams[0].terms = [payoff("120000"), payoff("48000", "7")];
+    raw.result.teams[0].levels = [{ value: payoff("480000"), terms: [payoff("120000"), payoff("48000", "7")] }, { value: payoff("1170"), terms: [payoff("1170")] }];
     return raw;
   };
-  test("retains the weighted terms and each team's own reward values", () => {
-    const result = parseDeckAnswer(JSON.stringify(mixed())).result!;
+  test("retains the levels and each team's value and reward expectations on every level", () => {
+    const result = parseDeckAnswer(JSON.stringify(planned())).result!;
     expect(result.metric).toBe("combined");
-    expect(result.terms).toEqual([{ kind: "eventPoints", weight: 2 }, { kind: "challengePoints", weight: 35 }]);
-    expect(result.teams[0]!.terms).toEqual([1000, 48000 / 7]);
+    expect(result.levels).toEqual([[{ kind: "eventPoints", weight: 2 }, { kind: "challengePoints", weight: 35 }], [{ kind: "eventItems", weight: 1 }]]);
+    expect(result.teams[0]!.levels).toEqual([{ value: 4000, terms: [1000, 48000 / 7] }, { value: 9.75, terms: [9.75] }]);
     expect(result.teams[0]!.value!.payoff!.score).toBe(4000);
-    expect(result.secondaryPriority).toBeUndefined();
   });
-  test("other metrics carry no terms", () => {
+  test("fewer teams than requested and time-limited answers keep their proof state", () => {
+    for (const count of [0, 1, 3]) {
+      const raw = planned();
+      raw.result.teams = Array.from({ length: count }, (_, index) => ({ ...raw.result.teams[0], rank: index + 1 }));
+      const result = parseDeckAnswer(JSON.stringify(raw)).result!;
+      expect(result.teams).toHaveLength(count);
+      expect(result.optimality.proven).toBe(true);
+    }
+    const raw = planned(); raw.result.optimality.proven = false; raw.result.exitReason = "timeLimit";
+    expect(parseDeckAnswer(JSON.stringify(raw)).result!.optimality.proven).toBe(false);
+    expect(parseDeckAnswer(JSON.stringify(raw)).result!.exitReason).toBe("timeLimit");
+  });
+  test("other metrics carry no levels", () => {
     const result = parseDeckAnswer(answer({})).result!;
-    expect(result.terms).toBeUndefined();
-    expect(result.teams[0]!.terms).toBeUndefined();
+    expect(result.levels).toBeUndefined();
+    expect(result.teams[0]!.levels).toBeUndefined();
   });
-  test("malformed terms, values and objectives are rejected", () => {
-    const broken: ((raw: ReturnType<typeof mixed>) => void)[] = [
-      raw => { raw.result.metric.terms = []; },
-      raw => { delete raw.result.metric.terms; },
-      raw => { raw.result.metric.terms[1].kind = "score"; },
-      raw => { raw.result.metric.terms[1].weight = 0; },
-      raw => { raw.result.metric.terms[1].weight = 1.5; },
-      raw => { raw.result.teams[0].terms.pop(); },
-      raw => { delete raw.result.teams[0].terms; },
-      raw => { raw.result.teams[0].terms[1] = null; },
+  test("malformed levels, values and objectives are rejected in progress and final answers", () => {
+    const broken: ((raw: ReturnType<typeof planned>) => void)[] = [
+      raw => { raw.result.metric.levels = []; },
+      raw => { delete raw.result.metric.levels; },
+      raw => { raw.result.metric.levels[1] = []; },
+      raw => { raw.result.metric.levels[0][1].kind = "score"; },
+      raw => { raw.result.metric.levels[0][1].weight = 0; },
+      raw => { raw.result.metric.levels[0][1].weight = 1.5; },
+      raw => { raw.result.teams[0].levels.pop(); },
+      raw => { delete raw.result.teams[0].levels; },
+      raw => { raw.result.teams[0].levels[0].terms.pop(); },
+      raw => { raw.result.teams[0].levels[0].terms[1] = null; },
+      raw => { raw.result.teams[0].levels[1].value = null; },
+      raw => { raw.result.teams[0].levels[1].value.score = "9"; },
       raw => { raw.result.teams[0].value.payoff = null; },
       raw => { raw.result.aggregation = "maximum"; },
     ];
-    for (const patch of broken) {
-      const raw = mixed();
+    for (const final of [false, true]) for (const patch of broken) {
+      const raw = planned(); raw.final = final;
       patch(raw);
       expect(() => parseDeckAnswer(JSON.stringify(raw))).toThrow();
     }
+  });
+  test("the worth of challenge points is the best team's exact payoff for the points spent", () => {
+    const raw = JSON.parse(answer({}));
+    raw.result.metric = { kind: "eventPoints", eventId: 7, consumption: 400 };
+    raw.result.teams[0].value.payoff = payoff("840000");
+    expect(challengeWorth(parseDeckAnswer(JSON.stringify(raw)), 400)).toEqual({ value: { numerator: "840000", denominator: "120" }, cost: 400 });
+    expect(challengeWorth(parseDeckAnswer(JSON.stringify(planned())), 800)).toEqual({ value: { numerator: "480000", denominator: "120" }, cost: 800 });
+    raw.result.teams = [];
+    expect(challengeWorth(parseDeckAnswer(JSON.stringify(raw)), 400)).toBeNull();
+    expect(challengeWorth(parseDeckAnswer(answer({})), 400)).toBeNull();
   });
 });

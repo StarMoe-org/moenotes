@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { computes, computesGoal, defaultDeckGoalInput, effectiveAggregation, goalGap, heldEvent, jstTicks, parseCapabilities, recommendationRequest, type DeckEvent, type DeckGoalInput } from "../src/lib/deck/goals";
-import { mixTerms, mixableRewards, usesEventItemRewards } from "../src/lib/deck/goals";
-import { defaultRewardRates, rewardShares, rewardTerms, type RewardRates } from "../src/lib/deck/reward-mix";
+import { challengeRateRequest, mixableRewards, rewardLayoutOf, usesChallengeRate, usesEventItemRewards } from "../src/lib/deck/goals";
+import { defaultRewardPlan, rewardLayout, rewardLevels, rewardShares, statedTerms, withFirstTieBreak, withRewardRate, withRewardRole,
+  type EventReward, type RewardPlan, type RewardRole } from "../src/lib/deck/reward-mix";
 import { parseMasterDate } from "../src/lib/schedule";
 
 const event: DeckEvent = { id: 7, name: "Event", startAt: "2030/01/01 15:00:00+08:00", endAt: "2030/01/09 20:59:59+08:00", itemId: 90,
@@ -275,99 +276,92 @@ test("unsupported accuracy is rejected without mutating the player's goal or dec
 });
 
 
-describe("challenge-point secondary priorities", () => {
-  const priorities = ["eventPointsFirst", "eventItemsFirst"] as const;
-  const eventItemRewards = { selection: "exactResultGrade", eventGroupField: "eventGroup", rowsPerGrade: 1, probabilityMarker: 10000 };
-  const challengePointPriorities = { priorities, objective: "lexicographicExpected", primary: "challengePoints", bestPrimaryOnly: true, lotteryFree: true };
-  const kinds = ["freeLive", "battleLive", "missionLive", "arenaLive", "skip"];
-  const raw = { goals: kinds, metrics: Object.fromEntries(kinds.map(kind => [kind, ["challengePoints"]])), accuracy: { great: true, just: true }, eventItemRewards };
-  test("CP-only requests retain their metric and need no badge resource", () => {
-    expect(defaultDeckGoalInput("challengePoints").secondaryPriority).toBeNull();
-    expect(request({ goal: "challengePoints", musicId: 100, boosts: 3 }, { ...event, itemId: null }).metric)
-      .toEqual({ kind: "challengePoints", eventId: 7, consumption: 3 });
-    for (const secondaryPriority of priorities) {
-      expect(request({ goal: "eventPoints", musicId: 100, secondaryPriority }).metric)
-        .toEqual({ kind: "eventPoints", eventId: 7, consumption: 0 });
-    }
-  });
-  test("both priorities carry the resource and keep reward projection across ordinary venues", () => {
-    for (const secondaryPriority of priorities) for (const venue of ["freeLive", "battleLive", "missionLive", "arenaLive", "skip"] as const) {
-      const input = { ...defaultDeckGoalInput("challengePoints"), secondaryPriority, venue, musicId: 100, arenaMusicId: 42, boosts: 3 };
-      const body = request(input);
-      expect(body.metric).toEqual({ kind: "challengePoints", eventId: 7, consumption: 3, secondaryPriority, resourceType: 1, resourceId: 90 });
-      expect(body.eventContext.rewardProjection).toBe(true);
-      expect(Object.keys(body.eventContext).sort()).toEqual(["resultClock", "rewardProjection"]);
-      expect(body.aggregation).toBeUndefined();
-      expect(body.k).toBe(5);
-      expect(goalGap(input, event)).toBeNull();
-      expect(goalGap(input, { ...event, itemId: null })).toBe("eventItem");
-      expect(() => request(input, { ...event, itemId: null })).toThrow();
-    }
-  });
-  test("free maximum and challenge venues are rejected without changing preferences", () => {
-    for (const secondaryPriority of priorities) {
-      const input = { ...defaultDeckGoalInput("challengePoints"), musicId: 100, secondaryPriority, aggregation: "maximum" as const };
-      expect(goalGap(input, event)).toBe("secondaryPriority");
-      expect(() => request(input)).toThrow();
-      expect(input.aggregation).toBe("maximum");
-      for (const venue of ["challengeLive", "challengeSkip"] as const) expect(() => request({ ...input, venue, challengeMusicId: 1, aggregation: "expected" })).toThrow();
-    }
-  });
-  test("both complete capability contracts are required, while plain CP remains available", () => {
-    const valid = parseCapabilities(JSON.stringify({ ...raw, challengePointPriorities }))!;
-    for (const secondaryPriority of priorities) for (const venue of ["freeLive", "battleLive", "missionLive", "arenaLive", "skip"] as const) {
-      expect(computes(valid, { goal: "challengePoints", venue, secondaryPriority })).toBe(true);
-    }
-    expect(computes(valid, { goal: "challengePoints", venue: "freeLive", secondaryPriority: "eventItemsFirst", aggregation: "maximum" })).toBe(false);
-    const variants: unknown[] = [undefined, null, {}, { ...challengePointPriorities, priorities: ["eventPointsFirst"] },
-      { ...challengePointPriorities, priorities: ["eventPointsFirst", "eventPointsFirst"] },
-      { ...challengePointPriorities, objective: "weightedSum" }, { ...challengePointPriorities, primary: "eventPoints" },
-      { ...challengePointPriorities, bestPrimaryOnly: false }, { ...challengePointPriorities, lotteryFree: false }];
-    for (const challengePointPriorities of variants) {
-      const cap = parseCapabilities(JSON.stringify({ ...raw, challengePointPriorities }))!;
-      expect(computesGoal(cap, "challengePoints")).toBe(true);
-      for (const secondaryPriority of priorities) expect(computes(cap, { goal: "challengePoints", venue: "freeLive", secondaryPriority })).toBe(false);
-    }
-    for (const rewards of [undefined, { ...eventItemRewards, probabilityMarker: 9999 }]) {
-      const cap = parseCapabilities(JSON.stringify({ ...raw, eventItemRewards: rewards, challengePointPriorities }))!;
-      expect(computes(cap, { goal: "challengePoints", venue: "freeLive" })).toBe(true);
-      expect(computes(cap, { goal: "challengePoints", venue: "freeLive", secondaryPriority: "eventPointsFirst" })).toBe(false);
-    }
-  });
-});
-
-describe("reward mix", () => {
-  const rates = (patch: Partial<Record<keyof RewardRates, number | null>>): RewardRates => {
-    const all = { ...defaultRewardRates() };
-    for (const [kind, rate] of Object.entries(patch)) all[kind as keyof RewardRates] = { counted: true, rate: rate ?? null };
-    return all;
+describe("reward plan", () => {
+  /** Roles in the listed order, every stated rate entered by hand. */
+  const plan = (roles: [EventReward, RewardRole][], rates: Partial<Record<EventReward, number | null>> = {}): RewardPlan => {
+    let value = defaultRewardPlan();
+    for (const [kind, role] of roles) value = withRewardRole(value, kind, role);
+    for (const [kind, rate] of Object.entries(rates)) value = withRewardRate(value, kind as EventReward, { auto: false, rate: rate ?? null });
+    return value;
   };
+  const converted = (rates: Partial<Record<EventReward, number | null>>) => plan((Object.keys(rates) as EventReward[]).map(kind => [kind, "convert"]), rates);
   const others = ["challengePoints", "eventItems"] as const;
-  const combinedMetric = { kind: "combined", field: "metric.terms", objective: "weightedExpectedSum", termMetrics: "metrics", weights: "integer",
-    maxTerms: 8, maxWeight: 1_000_000, consumption: "metric.consumption", lotteryFree: true };
+  const stated = (base: EventReward, rewards: RewardPlan, offered: readonly EventReward[] = others) => {
+    const layout = rewardLayout(base, rewards, offered);
+    return layout && statedTerms(layout, rewards);
+  };
+  const worth = { value: { numerator: "840000", denominator: "120" }, cost: 400 };
+  const combinedMetric = { kind: "combined", field: "metric.levels", objective: "lexicographicWeightedExpectedSums", termMetrics: "metrics", weights: "integer",
+    maxLevels: 4, maxTerms: 8, maxWeight: 1_000_000_000, consumption: "metric.consumption", lotteryFree: true };
   const eventItemRewards = { selection: "exactResultGrade", eventGroupField: "eventGroup", rowsPerGrade: 1, probabilityMarker: 10000 };
   const kinds = ["freeLive", "battleLive", "challengeLive", "skip"];
-  const raw = { goals: kinds, metrics: Object.fromEntries(kinds.map(kind => [kind, ["eventPoints", "challengePoints", "eventItems"]])), accuracy: { great: true, just: true }, eventItemRewards };
+  const raw = { goals: kinds, metrics: Object.fromEntries(kinds.map(kind => [kind, kind === "challengeLive" ? ["eventPoints", "eventItems"] : ["eventPoints", "challengePoints", "eventItems"]])),
+    accuracy: { great: true, just: true }, eventItemRewards };
+  const items = { kind: "eventItems", eventId: 7, resourceType: 1, resourceId: 90 };
 
-  test("rates become the smallest integer weights with the goal's reward first", () => {
-    expect(rewardTerms("eventPoints", rates({ challengePoints: 17.5 }), others)).toEqual([{ kind: "eventPoints", weight: 2 }, { kind: "challengePoints", weight: 35 }]);
-    expect(rewardTerms("eventPoints", rates({ challengePoints: 3, eventItems: 0.25 }), others))
-      .toEqual([{ kind: "eventPoints", weight: 4 }, { kind: "challengePoints", weight: 12 }, { kind: "eventItems", weight: 1 }]);
-    expect(rewardTerms("challengePoints", rates({ eventPoints: 0.0571 }), ["eventPoints", "eventItems"]))
-      .toEqual([{ kind: "challengePoints", weight: 10000 }, { kind: "eventPoints", weight: 571 }]);
-    // Four decimals are kept, fewer while a weight would pass the limit.
-    expect(rewardTerms("eventPoints", rates({ challengePoints: 0.12345 }), others)).toEqual([{ kind: "eventPoints", weight: 2000 }, { kind: "challengePoints", weight: 247 }]);
-    expect(rewardTerms("eventPoints", rates({ challengePoints: 1234.5678 }), others)).toEqual([{ kind: "eventPoints", weight: 100 }, { kind: "challengePoints", weight: 123457 }]);
-    expect(rewardTerms("eventPoints", rates({ challengePoints: 1_000_000 }), others)).toEqual([{ kind: "eventPoints", weight: 1 }, { kind: "challengePoints", weight: 1_000_000 }]);
+  test("a plan starts with every other reward left out and challenge points rated by a challenge live", () => {
+    const start = defaultRewardPlan();
+    expect(start.roles).toEqual({ eventPoints: "off", challengePoints: "off", eventItems: "off" });
+    expect(start.rates.challengePoints).toEqual({ auto: true, rate: null });
+    expect(rewardLayout("eventPoints", start, others)).toBeNull();
+    expect(rewardLayoutOf(defaultDeckGoalInput("eventPoints"))).toBeNull();
+    expect(usesChallengeRate(defaultDeckGoalInput("eventPoints"))).toBe(false);
   });
 
-  test("a mix without a counted reward or with an unusable rate has no terms", () => {
-    expect(rewardTerms("eventPoints", defaultRewardRates(), others)).toBeNull();
-    for (const rate of [null, 0, -1, Number.NaN, Number.POSITIVE_INFINITY, 0.00004, 1_000_001]) expect(rewardTerms("eventPoints", rates({ challengePoints: rate }), others)).toBeNull();
-    expect(rewardTerms("eventPoints", rates({ challengePoints: 2, eventItems: null }), others)).toBeNull();
-    // The goal's own reward and rewards the venue cannot earn are left out.
-    expect(rewardTerms("eventPoints", rates({ eventPoints: 9, challengePoints: 2 }), others)).toEqual([{ kind: "eventPoints", weight: 1 }, { kind: "challengePoints", weight: 2 }]);
-    expect(rewardTerms("eventPoints", rates({ challengePoints: 2 }), ["eventItems"])).toBeNull();
+  test("stated rates become the smallest integer weights with the goal's reward first", () => {
+    expect(stated("eventPoints", converted({ challengePoints: 17.5 }))).toEqual([{ kind: "eventPoints", weight: 2 }, { kind: "challengePoints", weight: 35 }]);
+    expect(stated("eventPoints", converted({ eventItems: 0.25, challengePoints: 3 })))
+      .toEqual([{ kind: "eventPoints", weight: 4 }, { kind: "challengePoints", weight: 12 }, { kind: "eventItems", weight: 1 }]);
+    expect(stated("challengePoints", converted({ eventPoints: 0.0571 }), ["eventPoints", "eventItems"]))
+      .toEqual([{ kind: "challengePoints", weight: 10000 }, { kind: "eventPoints", weight: 571 }]);
+    // Four decimals at most, fewer while a weight would pass the solver's limit.
+    expect(stated("eventPoints", converted({ challengePoints: 0.12345 }))).toEqual([{ kind: "eventPoints", weight: 2000 }, { kind: "challengePoints", weight: 247 }]);
+    expect(stated("eventPoints", converted({ challengePoints: 1234.5678 }))).toEqual([{ kind: "eventPoints", weight: 5000 }, { kind: "challengePoints", weight: 6172839 }]);
+    expect(stated("eventPoints", converted({ challengePoints: 1_000_000 }))).toEqual([{ kind: "eventPoints", weight: 1 }, { kind: "challengePoints", weight: 1_000_000 }]);
+    expect(stated("eventPoints", converted({ challengePoints: 1_000_000_000 }))).toEqual([{ kind: "eventPoints", weight: 1 }, { kind: "challengePoints", weight: 1_000_000_000 }]);
+  });
+
+  test("an unusable stated rate leaves the plan without terms", () => {
+    for (const rate of [null, 0, -1, Number.NaN, Number.POSITIVE_INFINITY, 0.00004, 1_000_000_001]) expect(stated("eventPoints", converted({ challengePoints: rate }))).toBeNull();
+    expect(stated("eventPoints", converted({ challengePoints: 2, eventItems: null }))).toBeNull();
+    // The goal's own reward and a reward the venue does not offer are not part of the plan.
+    expect(stated("eventPoints", converted({ eventPoints: 9, challengePoints: 2 }))).toEqual([{ kind: "eventPoints", weight: 1 }, { kind: "challengePoints", weight: 2 }]);
+    expect(rewardLayout("eventPoints", converted({ challengePoints: 2 }), ["eventItems"])).toBeNull();
+  });
+
+  test("tie-break rewards keep the order they were chosen in and can be moved to the front", () => {
+    const both = plan([["eventPoints", "tieBreak"], ["eventItems", "tieBreak"]]);
+    expect(both.tieOrder).toEqual(["eventPoints", "eventItems"]);
+    expect(rewardLayout("challengePoints", both, ["eventPoints", "eventItems"])).toEqual({ base: "challengePoints", converted: [], ties: ["eventPoints", "eventItems"], auto: false });
+    const swapped = withFirstTieBreak(both, "eventItems");
+    expect(swapped.tieOrder).toEqual(["eventItems", "eventPoints"]);
+    expect(withFirstTieBreak(both, "challengePoints")).toBe(both);
+    expect(withRewardRole(swapped, "eventItems", "off").tieOrder).toEqual(["eventPoints"]);
+    expect(withRewardRole(swapped, "eventPoints", "tieBreak").tieOrder).toEqual(["eventItems", "eventPoints"]);
+    expect(rewardLevels(rewardLayout("challengePoints", swapped, ["eventPoints", "eventItems"])!, swapped, null))
+      .toEqual([[{ kind: "challengePoints", weight: 1 }], [{ kind: "eventItems", weight: 1 }], [{ kind: "eventPoints", weight: 1 }]]);
+  });
+
+  test("a challenge live rates challenge points exactly, in the unit of the stated terms", () => {
+    const auto = plan([["challengePoints", "convert"], ["eventItems", "tieBreak"]]);
+    const layout = rewardLayout("eventPoints", auto, others)!;
+    expect(layout).toEqual({ base: "eventPoints", converted: ["challengePoints"], ties: ["eventItems"], auto: true });
+    expect(statedTerms(layout, auto)).toEqual([{ kind: "eventPoints", weight: 1 }]);
+    expect(rewardLevels(layout, auto, null)).toBeNull();
+    // 7,000 PT for 400 CP: one challenge point counts as 17.5 PT.
+    expect(rewardLevels(layout, auto, worth)).toEqual([[{ kind: "eventPoints", weight: 2 }, { kind: "challengePoints", weight: 35 }], [{ kind: "eventItems", weight: 1 }]]);
+    // With badges stated at 40 PT each, the challenge live's value and the weights share that unit.
+    const withBadges = withRewardRate(plan([["challengePoints", "convert"], ["eventItems", "convert"]]), "eventItems", { rate: 40 });
+    expect(rewardLevels(rewardLayout("eventPoints", withBadges, others)!, withBadges, worth))
+      .toEqual([[{ kind: "eventPoints", weight: 2 }, { kind: "challengePoints", weight: 35 }, { kind: "eventItems", weight: 80 }]]);
+    // A challenge live that earns nothing leaves challenge points out.
+    expect(rewardLevels(layout, auto, { value: { numerator: "0", denominator: "120" }, cost: 400 })).toEqual([[{ kind: "eventPoints", weight: 1 }], [{ kind: "eventItems", weight: 1 }]]);
+    for (const cost of [0, 1.5]) expect(rewardLevels(layout, auto, { ...worth, cost })).toBeNull();
+    const wide = rewardLevels(layout, auto, { value: { numerator: "123456789012345678901", denominator: "7" }, cost: 1600 })!;
+    expect(wide[0]).toEqual([{ kind: "eventPoints", weight: 1 }, { kind: "challengePoints", weight: 1_000_000_000 }]);
+    // A stated rate for challenge points reads no challenge live, and a challenge-point goal has none to read.
+    expect(rewardLayout("eventPoints", converted({ challengePoints: 2 }), others)!.auto).toBe(false);
+    expect(rewardLayout("challengePoints", plan([["eventPoints", "convert"]]), ["eventPoints", "eventItems"])!.auto).toBe(false);
   });
 
   test("shares split a team's total by reward in the goal's own unit", () => {
@@ -378,66 +372,107 @@ describe("reward mix", () => {
     expect(rewardShares([{ kind: "eventPoints", weight: 1 }, { kind: "eventItems", weight: 3 }], [0, 0]).map(share => share.share)).toEqual([0, 0]);
   });
 
-  test("a mixed goal sends one combined metric with the shared consumption and every term's own fields", () => {
-    const input = { ...defaultDeckGoalInput("eventPoints"), musicId: 100, boosts: 3, rewardMix: true, rewardRates: rates({ challengePoints: 17.5, eventItems: 40 }) };
+  test("a planned goal sends one combined metric with the shared consumption and every term's own fields", () => {
+    const input = { ...defaultDeckGoalInput("eventPoints"), musicId: 100, boosts: 3, rewards: converted({ challengePoints: 17.5, eventItems: 40 }) };
     const body = request(input);
-    expect(body.metric).toEqual({ kind: "combined", consumption: 3, terms: [
-      { kind: "eventPoints", eventId: 7, weight: 2 },
-      { kind: "challengePoints", eventId: 7, weight: 35 },
-      { kind: "eventItems", eventId: 7, resourceType: 1, resourceId: 90, weight: 80 },
-    ] });
+    expect(body.metric).toEqual({ kind: "combined", consumption: 3, levels: [[
+      { kind: "eventPoints", eventId: 7, weight: 2 }, { kind: "challengePoints", eventId: 7, weight: 35 }, { ...items, weight: 80 }]] });
     expect(body.eventContext.rewardProjection).toBe(true);
-    expect(body.eventIds).toEqual([7]);
     expect(body.aggregation).toBeUndefined();
-    expect(goalGap(input, event)).toBeNull();
-    const cp = request({ goal: "challengePoints", musicId: 100, rewardMix: true, secondaryPriority: "eventItemsFirst", rewardRates: rates({ eventPoints: 0.05 }) });
-    expect(cp.metric).toEqual({ kind: "combined", consumption: 0, terms: [{ kind: "challengePoints", eventId: 7, weight: 20 }, { kind: "eventPoints", eventId: 7, weight: 1 }] });
-    // Other goals ignore a stored mix.
-    expect(request({ goal: "free", musicId: 100, rewardMix: true, rewardRates: rates({ challengePoints: 2 }) }).metric).toEqual({ kind: "score" });
-    expect(request({ goal: "eventPoints", musicId: 100, rewardRates: rates({ challengePoints: 2 }) }).metric).toEqual({ kind: "eventPoints", eventId: 7, consumption: 0 });
+    expect(body.k).toBe(5);
+    for (const [first, second] of [["eventPoints", "eventItems"], ["eventItems", "eventPoints"]] as const) {
+      const ties = request({ goal: "challengePoints", musicId: 100, rewards: plan([[first, "tieBreak"], [second, "tieBreak"]]) });
+      const term = (kind: EventReward) => kind === "eventItems" ? { ...items, weight: 1 } : { kind, eventId: 7, weight: 1 };
+      expect(ties.metric).toEqual({ kind: "combined", consumption: 0, levels: [[{ kind: "challengePoints", eventId: 7, weight: 1 }], [term(first)], [term(second)]] });
+    }
+    // Goals without an event payoff, and a plan that leaves every reward out, keep their one metric.
+    expect(request({ goal: "free", musicId: 100, rewards: converted({ challengePoints: 2 }) }).metric).toEqual({ kind: "score" });
+    expect(request({ goal: "eventPoints", musicId: 100 }).metric).toEqual({ kind: "eventPoints", eventId: 7, consumption: 0 });
+    expect(request({ goal: "challengePoints", musicId: 100, boosts: 3 }, { ...event, itemId: null }).metric).toEqual({ kind: "challengePoints", eventId: 7, consumption: 3 });
+    expect(request({ goal: "eventItems", musicId: 100 }).metric).toEqual({ ...items, consumption: 0 });
   });
 
   test("a challenge live counts badges but no challenge points, and spends the chosen cost", () => {
     const input = { ...defaultDeckGoalInput("eventPoints"), venue: "challengeLive" as const, challengeMusicId: 1, challengePoints: 400 as const,
-      rewardMix: true, rewardRates: rates({ challengePoints: 17.5, eventItems: 2 }) };
+      rewards: converted({ challengePoints: 17.5, eventItems: 2 }) };
     expect(mixableRewards(input)).toEqual(["eventItems"]);
-    expect(request(input).metric).toEqual({ kind: "combined", consumption: 400, terms: [
-      { kind: "eventPoints", eventId: 7, weight: 1 }, { kind: "eventItems", eventId: 7, resourceType: 1, resourceId: 90, weight: 2 }] });
-    expect(mixTerms({ ...input, rewardRates: rates({ challengePoints: 17.5 }) })).toBeNull();
-    expect(goalGap({ ...input, rewardRates: rates({ challengePoints: 17.5 }) }, event)).toBe("rewardMix");
+    expect(request(input).metric).toEqual({ kind: "combined", consumption: 400, levels: [[{ kind: "eventPoints", eventId: 7, weight: 1 }, { ...items, weight: 2 }]] });
+    expect(rewardLayoutOf({ ...input, rewards: converted({ challengePoints: 17.5 }) })).toBeNull();
+    expect(request({ ...input, rewards: converted({ challengePoints: 17.5 }) }).metric).toEqual({ kind: "eventPoints", eventId: 7, consumption: 400 });
   });
 
-  test("gaps name an incomplete mix, a missing badge and a non-average objective", () => {
-    const input = { ...defaultDeckGoalInput("eventPoints"), musicId: 100, rewardMix: true };
-    expect(goalGap(input, event)).toBe("rewardMix");
-    expect(() => request(input)).toThrow("rewardMix");
-    expect(goalGap({ ...input, rewardRates: rates({ challengePoints: null }) }, event)).toBe("rewardMix");
-    expect(goalGap({ ...input, rewardRates: rates({ challengePoints: 2 }), aggregation: "maximum" }, event)).toBe("rewardMix");
-    expect(usesEventItemRewards({ ...input, rewardRates: rates({ eventItems: 2 }) })).toBe(true);
-    expect(usesEventItemRewards({ ...input, rewardRates: rates({ challengePoints: 2 }) })).toBe(false);
-    expect(goalGap({ ...input, rewardRates: rates({ eventItems: 2 }) }, { ...event, itemId: null })).toBe("eventItem");
-    expect(goalGap({ ...input, rewardRates: rates({ challengePoints: 2 }) }, { ...event, itemId: null })).toBeNull();
+  test("a rated goal asks the challenge live first and builds its own request from the answer", () => {
+    const input = { ...defaultDeckGoalInput("eventPoints"), musicId: 100, boosts: 3, challengeMusicId: 2, rateDifficulty: "hard" as const, challengePoints: 800 as const,
+      greatPercent: 4, rewards: plan([["challengePoints", "convert"], ["eventItems", "tieBreak"]]) };
+    const context = { event, now, constraints: { includeMembers: ["61"], excludeMembers: ["62"], excludeSnaps: ["70"] } };
+    expect(usesChallengeRate(input)).toBe(true);
+    const rate = JSON.parse(challengeRateRequest(input, context)!);
+    expect(rate.goal).toEqual({ kind: "challengeLive", challengeMusicId: 2, difficulty: "hard", accuracy: { greatFraction: 0.04 } });
+    expect(rate.metric).toEqual({ kind: "combined", consumption: 800, levels: [[{ kind: "eventPoints", eventId: 7, weight: 1 }], [{ ...items, weight: 1 }]] });
+    expect(rate.k).toBe(1);
+    expect(rate.constraints).toEqual({ leader: null, includeMembers: [61], excludeMembers: [62], excludeSnaps: [70], noSnaps: false });
+    expect(rate.limits).toEqual({ timeLimitMs: 60000 });
+    const own = JSON.parse(recommendationRequest(input, context, { worth }));
+    expect(own.goal).toEqual({ kind: "freeLive", musicId: 100, difficulty: "expert", accuracy: { greatFraction: 0.04 } });
+    expect(own.metric).toEqual({ kind: "combined", consumption: 3, levels: [
+      [{ kind: "eventPoints", eventId: 7, weight: 2 }, { kind: "challengePoints", eventId: 7, weight: 35 }], [{ ...items, weight: 1 }]] });
+    expect(own.k).toBe(5);
+    expect(() => recommendationRequest(input, context)).toThrow("worth of a challenge point");
+    // Without another reward the challenge live is asked for the goal's reward alone.
+    const alone = JSON.parse(challengeRateRequest({ ...input, rewards: plan([["challengePoints", "convert"]]) }, context)!);
+    expect(alone.metric).toEqual({ kind: "eventPoints", eventId: 7, consumption: 800 });
+    const badges = JSON.parse(challengeRateRequest({ ...input, goal: "eventItems", rewards: plan([["challengePoints", "convert"]]) }, context)!);
+    expect(badges.metric).toEqual({ ...items, consumption: 800 });
+    expect(challengeRateRequest({ ...input, rewards: converted({ challengePoints: 17.5 }) }, context)).toBeNull();
+    expect(challengeRateRequest({ ...input, venue: "challengeLive" }, context)).toBeNull();
+    expect(challengeRateRequest(defaultDeckGoalInput("free"), context)).toBeNull();
   });
 
-  test("the engine must declare combined metrics and compute every term in the scene", () => {
+  test("an incomplete plan names what it still needs", () => {
+    const input = { ...defaultDeckGoalInput("eventPoints"), musicId: 100 };
+    expect(goalGap({ ...input, rewards: plan([["eventItems", "convert"]]) }, event)).toBe("rewardMix");
+    expect(() => request({ ...input, rewards: plan([["eventItems", "convert"]]) })).toThrow("rewardMix");
+    expect(goalGap({ ...input, rewards: converted({ challengePoints: 2 }), aggregation: "maximum" }, event)).toBe("rewardMix");
+    expect(goalGap({ ...input, rewards: plan([["eventItems", "tieBreak"]]), aggregation: "maximum" }, event)).toBe("rewardMix");
+    expect(goalGap({ ...input, rewards: plan([["challengePoints", "convert"]]) }, event)).toBe("rateSong");
+    expect(goalGap({ ...input, rewards: plan([["challengePoints", "convert"]]), challengeMusicId: 9 }, event)).toBe("rateSong");
+    expect(goalGap({ ...input, rewards: plan([["challengePoints", "convert"]]), challengeMusicId: 2 }, event)).toBeNull();
+    expect(goalGap({ ...input, rewards: converted({ challengePoints: 2 }) }, event)).toBeNull();
+    expect(usesEventItemRewards({ ...input, rewards: converted({ eventItems: 2 }) })).toBe(true);
+    expect(usesEventItemRewards({ ...input, rewards: plan([["eventItems", "tieBreak"]]) })).toBe(true);
+    expect(usesEventItemRewards({ ...input, rewards: converted({ challengePoints: 2 }) })).toBe(false);
+    expect(goalGap({ ...input, rewards: plan([["eventItems", "tieBreak"]]) }, { ...event, itemId: null })).toBe("eventItem");
+    expect(goalGap({ ...input, rewards: converted({ challengePoints: 2 }) }, { ...event, itemId: null })).toBeNull();
+  });
+
+  test("the engine must declare levelled combined metrics and compute every reward in the scene", () => {
     const capable = parseCapabilities(JSON.stringify({ ...raw, combinedMetric }))!;
-    expect(capable.combinedMetric).toEqual({ maxTerms: 8, maxWeight: 1_000_000 });
-    const input = { goal: "eventPoints" as const, venue: "freeLive" as const, rewardMix: true, rewardRates: rates({ challengePoints: 17.5 }) };
+    expect(capable.combinedMetric).toEqual({ maxLevels: 4, maxTerms: 8, maxWeight: 1_000_000_000 });
+    const input = { goal: "eventPoints" as const, venue: "freeLive" as const, rewards: converted({ challengePoints: 17.5 }) };
     expect(computes(capable, input)).toBe(true);
-    expect(computes(capable, { ...input, rewardRates: defaultRewardRates() })).toBe(true);
+    expect(computes(capable, { ...input, rewards: defaultRewardPlan() })).toBe(true);
     expect(computes(capable, { ...input, aggregation: "maximum" })).toBe(false);
     expect(computes(parseCapabilities(JSON.stringify(raw))!, input)).toBe(false);
-    expect(computes(parseCapabilities(JSON.stringify(raw))!, { ...input, rewardMix: false })).toBe(true);
-    for (const patch of [{ objective: "lexicographicExpected" }, { weights: "decimal" }, { kind: "sum" }, { maxTerms: "8" }, { maxWeight: null }]) {
+    expect(computes(parseCapabilities(JSON.stringify(raw))!, { ...input, rewards: defaultRewardPlan() })).toBe(true);
+    for (const patch of [{ objective: "weightedExpectedSum" }, { weights: "decimal" }, { kind: "sum" }, { maxTerms: "8" }, { maxWeight: null }, { maxLevels: undefined }]) {
       expect(parseCapabilities(JSON.stringify({ ...raw, combinedMetric: { ...combinedMetric, ...patch } }))!.combinedMetric).toBeUndefined();
     }
-    expect(computes(parseCapabilities(JSON.stringify({ ...raw, combinedMetric: { ...combinedMetric, maxTerms: 1 } }))!, input)).toBe(false);
-    expect(computes(parseCapabilities(JSON.stringify({ ...raw, combinedMetric: { ...combinedMetric, maxWeight: 1000 } }))!, input)).toBe(false);
+    const limited = (patch: object) => parseCapabilities(JSON.stringify({ ...raw, combinedMetric: { ...combinedMetric, ...patch } }))!;
+    expect(computes(limited({ maxTerms: 1 }), input)).toBe(false);
+    expect(computes(limited({ maxWeight: 1_000_000 }), input)).toBe(false);
+    const ties = { goal: "challengePoints" as const, venue: "freeLive" as const, rewards: plan([["eventPoints", "tieBreak"], ["eventItems", "tieBreak"]]) };
+    expect(computes(capable, ties)).toBe(true);
+    expect(computes(limited({ maxLevels: 2 }), ties)).toBe(false);
     const noChallengePoints = parseCapabilities(JSON.stringify({ ...raw, combinedMetric, metrics: { ...raw.metrics, freeLive: ["eventPoints", "eventItems"] } }))!;
     expect(computes(noChallengePoints, input)).toBe(false);
-    expect(computes(noChallengePoints, { ...input, rewardRates: rates({ eventItems: 2 }) })).toBe(true);
+    expect(computes(noChallengePoints, { ...input, rewards: converted({ eventItems: 2 }) })).toBe(true);
     const noBadges = parseCapabilities(JSON.stringify({ ...raw, combinedMetric, eventItemRewards: undefined }))!;
-    expect(computes(noBadges, { ...input, rewardRates: rates({ eventItems: 2 }) })).toBe(false);
+    expect(computes(noBadges, { ...input, rewards: converted({ eventItems: 2 }) })).toBe(false);
     expect(computes(noBadges, input)).toBe(true);
+    // Challenge points rated by a challenge live need that live and its rewards computed too.
+    const rated = { ...input, rewards: plan([["challengePoints", "convert"], ["eventItems", "tieBreak"]]) };
+    expect(computes(capable, rated)).toBe(true);
+    expect(computes(parseCapabilities(JSON.stringify({ ...raw, combinedMetric, goals: kinds.filter(kind => kind !== "challengeLive") }))!, rated)).toBe(false);
+    expect(computes(parseCapabilities(JSON.stringify({ ...raw, combinedMetric, metrics: { ...raw.metrics, challengeLive: ["eventPoints"] } }))!, rated)).toBe(false);
   });
 });

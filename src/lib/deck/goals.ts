@@ -1,5 +1,6 @@
 import type { MusicDifficulty } from "@/lib/music/difficulty";
-import { EVENT_REWARDS, MAX_TERM_WEIGHT, defaultRewardRates, rewardTerms, type EventReward, type RewardRates, type RewardTerm } from "./reward-mix";
+import { EVENT_REWARDS, MAX_TERM_WEIGHT, defaultRewardPlan, rewardLayout, rewardLevels, statedTerms,
+  type ChallengeWorth, type EventReward, type RewardLayout, type RewardPlan, type RewardTerm } from "./reward-mix";
 
 /**
  * What a team is for, in the player's terms, and the solver request (`ournotes-deck.recommendation-request/2`) each
@@ -12,10 +13,6 @@ export type DeckGoal = typeof DECK_GOALS[number];
 export const DEFAULT_DECK_GOAL: DeckGoal = "battle";
 /** Aggregate the reachable random outcomes while keeping the declared play fixed. */
 export type DeckAggregation = "expected" | "maximum";
-export const CHALLENGE_POINT_PRIORITIES = ["eventPointsFirst", "eventItemsFirst"] as const;
-export type ChallengePointPriority = typeof CHALLENGE_POINT_PRIORITIES[number];
-export const isChallengePointPriority = (value: unknown): value is ChallengePointPriority =>
-  value === "eventPointsFirst" || value === "eventItemsFirst";
 export const isEventGoal = (goal: DeckGoal): boolean => (EVENT_GOALS as readonly string[]).includes(goal);
 export const isEventPayoffGoal = (goal: DeckGoal): boolean => goal === "challengePoints" || goal === "eventPoints" || goal === "eventItems";
 
@@ -67,15 +64,14 @@ export function heldEvent(events: readonly DeckEvent[], now: number, parse: (dat
 export interface DeckGoalInput {
   goal: DeckGoal;
   aggregation: DeckAggregation;
-  /** Optional lexicographic tie-breaks within the highest expected-CP tier. */
-  secondaryPriority: ChallengePointPriority | null;
-  /** Event payoff goals: rank by the goal's reward plus the counted other rewards at their rates. */
-  rewardMix: boolean;
-  rewardRates: RewardRates;
+  /** Event payoff goals: how the other rewards of the same live take part in the ranking. */
+  rewards: RewardPlan;
   musicId: number | null;
   difficulty: MusicDifficulty;
-  /** `MasterChallengeMusic._id` of the chosen challenge song. */
+  /** `MasterChallengeMusic._id` of the chosen challenge song: the venue's, or the one that rates challenge points. */
   challengeMusicId: number | null;
+  /** The difficulty of the challenge live that rates challenge points. */
+  rateDifficulty: MusicDifficulty;
   venue: DeckVenue;
   arenaMusicId: number | null;
   playMode: "accuracy" | "pattern";
@@ -96,7 +92,7 @@ export interface DeckGoalInput {
 }
 
 export const defaultDeckGoalInput = (goal: DeckGoal = DEFAULT_DECK_GOAL): DeckGoalInput => ({
-  goal, aggregation: "expected", secondaryPriority: null, rewardMix: false, rewardRates: defaultRewardRates(), musicId: null, difficulty: "expert", challengeMusicId: null, venue: "freeLive", boosts: 0, challengePoints: 200, timeLimit: DEFAULT_TIME_LIMIT,
+  goal, aggregation: "expected", rewards: defaultRewardPlan(), musicId: null, difficulty: "expert", challengeMusicId: null, rateDifficulty: "expert", venue: "freeLive", boosts: 0, challengePoints: 200, timeLimit: DEFAULT_TIME_LIMIT,
   arenaMusicId: null,
   playMode: "accuracy", missEvery: 0,
   greatPercent: 0, justPercent: 100, powerSong: false, eventParameter: true, othersAverageScore: null,
@@ -129,20 +125,21 @@ export const readsAccuracy = (input: Pick<DeckGoalInput, "goal" | "venue">): boo
 export const effectiveAggregation = (input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "aggregation">>): DeckAggregation =>
   readsAccuracy(input) && !playsGekisou(input) ? input.aggregation ?? "expected" : "expected";
 
-type RewardInput = Pick<DeckGoalInput, "goal"> & Partial<Pick<DeckGoalInput, "venue" | "secondaryPriority" | "rewardMix" | "rewardRates">>;
-/** Whether an event payoff goal ranks by several rewards at their rates. */
-export const usesRewardMix = (input: RewardInput): boolean => isEventPayoffGoal(input.goal) && input.rewardMix === true;
+type RewardInput = Pick<DeckGoalInput, "goal"> & Partial<Pick<DeckGoalInput, "venue" | "rewards">>;
 /** The rewards a goal input can count beside its own. A challenge live spends challenge points and earns none. */
 export const mixableRewards = (input: Pick<DeckGoalInput, "goal"> & Partial<Pick<DeckGoalInput, "venue">>): readonly EventReward[] =>
   EVENT_REWARDS.filter(kind => kind !== input.goal && !(kind === "challengePoints" && ["challengeLive", "challengeSkip"].includes(input.venue ?? "freeLive")));
-/** The weighted rewards of a reward mix, the goal's own first; null while the mix is incomplete. */
-export const mixTerms = (input: RewardInput): RewardTerm[] | null =>
-  usesRewardMix(input) && input.rewardRates ? rewardTerms(input.goal as EventReward, input.rewardRates, mixableRewards(input)) : null;
-/** Secondary preferences are read only by the challenge-point objective; a reward mix replaces them. */
-export const usesChallengePointPriority = (input: RewardInput): boolean =>
-  input.goal === "challengePoints" && input.secondaryPriority != null && !usesRewardMix(input);
-export const usesEventItemRewards = (input: RewardInput): boolean =>
-  input.goal === "eventItems" || usesChallengePointPriority(input) || (mixTerms(input)?.some(term => term.kind === "eventItems") ?? false);
+/** How an event payoff goal counts the other rewards of its venue; null while it ranks by its own reward alone. */
+export const rewardLayoutOf = (input: RewardInput): RewardLayout | null =>
+  isEventPayoffGoal(input.goal) && input.rewards ? rewardLayout(input.goal as EventReward, input.rewards, mixableRewards(input)) : null;
+/** Whether challenge points are rated by the best challenge-live team, which is solved before the goal itself. */
+export const usesChallengeRate = (input: RewardInput): boolean => rewardLayoutOf(input)?.auto === true;
+export const usesEventItemRewards = (input: RewardInput): boolean => {
+  const layout = rewardLayoutOf(input);
+  return input.goal === "eventItems" || !!layout && (layout.converted.includes("eventItems") || layout.ties.includes("eventItems"));
+};
+/** The challenge live that rates challenge points: the goal's own reward plan on the chosen challenge song. */
+export const challengeRateInput = (input: DeckGoalInput): DeckGoalInput => ({ ...input, venue: "challengeLive", difficulty: input.rateDifficulty });
 
 /** Event objectives and event-boosted power require the held event's data. */
 export const usesEventData = (input: Pick<DeckGoalInput, "goal" | "eventParameter">): boolean => isEventGoal(input.goal) || input.goal === "power" && input.eventParameter;
@@ -154,19 +151,9 @@ export interface DeckSolverCapabilities {
   aggregations?: Partial<Record<DeckAggregation, Readonly<Record<string, readonly string[]>>>>;
   accuracy: { great: boolean; just: boolean };
   patternPlay?: boolean;
-  challengePointPriorities?: { priorities: readonly ChallengePointPriority[]; objective: "lexicographicExpected"; primary: "challengePoints"; bestPrimaryOnly: true; lotteryFree: true };
   eventItemRewards?: { selection: "exactResultGrade"; eventGroupField: "eventGroup"; rowsPerGrade: 1; probabilityMarker: 10000 };
-  /** Combined metrics: the expected weighted sum of several metrics with integer weights. */
-  combinedMetric?: { maxTerms: number; maxWeight: number };
-}
-
-function isChallengePointPriorityCapability(raw: unknown): raw is NonNullable<DeckSolverCapabilities["challengePointPriorities"]> {
-  if (!raw || typeof raw !== "object") return false;
-  const value = raw as Record<string, unknown>, priorities = value.priorities;
-  return value.objective === "lexicographicExpected" && value.primary === "challengePoints"
-    && value.bestPrimaryOnly === true && value.lotteryFree === true && Array.isArray(priorities)
-    && priorities.length === CHALLENGE_POINT_PRIORITIES.length
-    && CHALLENGE_POINT_PRIORITIES.every(priority => priorities.includes(priority));
+  /** Combined metrics: levels compared in turn, each the expected weighted sum of several metrics with integer weights. */
+  combinedMetric?: { maxLevels: number; maxTerms: number; maxWeight: number };
 }
 
 export function parseCapabilities(json: string | null): DeckSolverCapabilities | null {
@@ -195,23 +182,25 @@ export function parseCapabilities(json: string | null): DeckSolverCapabilities |
     ? { selection: "exactResultGrade", eventGroupField: "eventGroup", rowsPerGrade: 1, probabilityMarker: 10000 } : undefined;
   const combined = raw.combinedMetric as Record<string, unknown> | null | undefined;
   const combinedMetric: DeckSolverCapabilities["combinedMetric"] = combined && typeof combined === "object"
-    && combined.kind === "combined" && combined.objective === "weightedExpectedSum" && combined.weights === "integer"
-    && Number.isSafeInteger(combined.maxTerms) && Number.isSafeInteger(combined.maxWeight)
-    ? { maxTerms: combined.maxTerms as number, maxWeight: combined.maxWeight as number } : undefined;
-  return { goals: strings(raw.goals), metrics, aggregations, ...(isChallengePointPriorityCapability(raw.challengePointPriorities) ? { challengePointPriorities: raw.challengePointPriorities } : {}), ...(eventItemRewards ? { eventItemRewards } : {}), ...(combinedMetric ? { combinedMetric } : {}), patternPlay: raw.patternPlay === true || !!raw.patternPlay && typeof raw.patternPlay === "object", accuracy: { great: accuracy.great === true, just: accuracy.just === true } };
+    && combined.kind === "combined" && combined.objective === "lexicographicWeightedExpectedSums" && combined.weights === "integer"
+    && Number.isSafeInteger(combined.maxLevels) && Number.isSafeInteger(combined.maxTerms) && Number.isSafeInteger(combined.maxWeight)
+    ? { maxLevels: combined.maxLevels as number, maxTerms: combined.maxTerms as number, maxWeight: combined.maxWeight as number } : undefined;
+  return { goals: strings(raw.goals), metrics, aggregations, ...(eventItemRewards ? { eventItemRewards } : {}), ...(combinedMetric ? { combinedMetric } : {}), patternPlay: raw.patternPlay === true || !!raw.patternPlay && typeof raw.patternPlay === "object", accuracy: { great: accuracy.great === true, just: accuracy.just === true } };
 }
 
 /** Whether the engine computes a goal input's goal kind and metric. */
-export function computes(capabilities: DeckSolverCapabilities, input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "playMode" | "greatPercent" | "justPercent" | "aggregation" | "secondaryPriority" | "rewardMix" | "rewardRates">>): boolean {
-  const mix = usesRewardMix(input), terms = mixTerms(input);
-  if (mix) {
+export function computes(capabilities: DeckSolverCapabilities, input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "playMode" | "greatPercent" | "justPercent" | "aggregation" | "rewards">>): boolean {
+  const layout = rewardLayoutOf(input);
+  if (layout) {
     const combined = capabilities.combinedMetric;
     if (!combined || effectiveAggregation(input) !== "expected") return false;
-    if (terms && (terms.length > combined.maxTerms || combined.maxWeight < MAX_TERM_WEIGHT
-      || terms.some(term => !(capabilities.metrics[solverGoalKind(input)] ?? []).includes(term.kind)))) return false;
+    const kinds = [layout.base, ...layout.converted, ...layout.ties];
+    if (1 + layout.ties.length > combined.maxLevels || kinds.length > combined.maxTerms || combined.maxWeight < MAX_TERM_WEIGHT
+      || kinds.some(kind => !(capabilities.metrics[solverGoalKind(input)] ?? []).includes(kind))) return false;
+    // The challenge live that rates challenge points earns the other rewards of the plan.
+    if (layout.auto && (!capabilities.goals.includes("challengeLive")
+      || kinds.some(kind => kind !== "challengePoints" && !(capabilities.metrics.challengeLive ?? []).includes(kind)))) return false;
   }
-  if (usesChallengePointPriority(input) && (!isChallengePointPriority(input.secondaryPriority)
-    || effectiveAggregation(input) !== "expected" || !isChallengePointPriorityCapability(capabilities.challengePointPriorities))) return false;
   if (usesEventItemRewards(input)) {
     const rewards = capabilities.eventItemRewards;
     if (!rewards || rewards.selection !== "exactResultGrade" || rewards.eventGroupField !== "eventGroup"
@@ -236,12 +225,13 @@ export function computesGoal(capabilities: DeckSolverCapabilities, goal: DeckGoa
 }
 
 /** What the goal input still needs before it can run. */
-export type DeckGoalGap = "song" | "challengeSong" | "event" | "eventItem" | "arenaSong" | "play" | "secondaryPriority" | "rewardMix" | null;
+export type DeckGoalGap = "song" | "challengeSong" | "event" | "eventItem" | "arenaSong" | "play" | "rewardMix" | "rateSong" | null;
 export function goalGap(input: DeckGoalInput, event: DeckEvent | null): DeckGoalGap {
   if (isEventGoal(input.goal) && !event) return "event";
-  if (usesRewardMix(input) && (!mixTerms(input) || effectiveAggregation(input) !== "expected")) return "rewardMix";
-  if (usesChallengePointPriority(input) && (!isChallengePointPriority(input.secondaryPriority) || effectiveAggregation(input) !== "expected")) return "secondaryPriority";
+  const layout = rewardLayoutOf(input);
+  if (layout && (!statedTerms(layout, input.rewards) || effectiveAggregation(input) !== "expected")) return "rewardMix";
   if (usesEventItemRewards(input) && !event?.itemId) return "eventItem";
+  if (layout?.auto && !event?.challengeMusics.some(row => row.id === input.challengeMusicId)) return "rateSong";
   const kind = solverGoalKind(input);
   if (readsAccuracy(input) && input.playMode === "pattern" && (!Number.isSafeInteger(input.missEvery) || input.missEvery < 0)) return "play";
   if (kind === "arenaLive") return input.arenaMusicId === null ? "arenaSong" : null;
@@ -265,11 +255,30 @@ const ids = (values: readonly string[]) => values.map(value => {
   return value;
 });
 
+/** The levels a goal input ranks by, or null for a goal ranked by one reward. `worth` rates challenge points for a plan that reads it. */
+export function requestLevels(input: DeckGoalInput, worth: ChallengeWorth | null = null): RewardTerm[][] | null {
+  const layout = rewardLayoutOf(input);
+  if (!layout) return null;
+  const levels = rewardLevels(layout, input.rewards, worth);
+  if (!levels) throw new Error(layout.auto && !worth ? "The worth of a challenge point is not known yet" : "A reward rate is missing");
+  return levels;
+}
+
+/**
+ * The request that rates challenge points, or null for a goal input that does not read their worth: the best team
+ * of the challenge live on the chosen challenge song, for the goal's reward and the rewards converted at stated rates.
+ */
+export function challengeRateRequest(input: DeckGoalInput, context: { event: DeckEvent | null; now: number; constraints: DeckRunConstraints }): string | null {
+  return usesChallengeRate(input) ? recommendationRequest(challengeRateInput(input), context, { teams: 1 }) : null;
+}
+
 /**
  * The request text of a goal input. Throws when `goalGap` is not null. The held event's ID is sent for event
- * objectives and power with event bonuses enabled.
+ * objectives and power with event bonuses enabled. A goal input that rates challenge points by a challenge live
+ * takes its `worth` from the answer to `challengeRateRequest`.
  */
-export function recommendationRequest(input: DeckGoalInput, context: { event: DeckEvent | null; now: number; constraints: DeckRunConstraints }): string {
+export function recommendationRequest(input: DeckGoalInput, context: { event: DeckEvent | null; now: number; constraints: DeckRunConstraints },
+  options: { worth?: ChallengeWorth | null; teams?: number } = {}): string {
   if (input.goal === "challengePoints" && ["challengeLive", "challengeSkip"].includes(input.venue)) throw new Error("Challenge Live spends challenge points; choose an ordinary venue to earn them");
   const gap = goalGap(input, context.event);
   if (gap) throw new Error(`The goal still needs: ${gap}`);
@@ -291,13 +300,10 @@ export function recommendationRequest(input: DeckGoalInput, context: { event: De
   if (effectiveAggregation(input) === "maximum") parts.push('"aggregation":"maximum"');
   const consumption = isChallengeInput(input) ? input.challengePoints : Math.min(MAX_BOOST, Math.max(0, Math.trunc(input.boosts)));
   if (isEventPayoffGoal(input.goal)) {
-    const secondary = usesChallengePointPriority(input)
-      ? `,"secondaryPriority":${JSON.stringify(input.secondaryPriority)},"resourceType":${ITEM_RESOURCE_TYPE},"resourceId":${event!.itemId}` : "";
     const fields = (kind: EventReward) => `"kind":${JSON.stringify(kind)},"eventId":${event!.id}${kind === "eventItems" ? `,"resourceType":${ITEM_RESOURCE_TYPE},"resourceId":${event!.itemId}` : ""}`;
-    const terms = mixTerms(input);
-    const metric = terms ? `{"kind":"combined","consumption":${consumption},"terms":[${terms.map(term => `{${fields(term.kind)},"weight":${term.weight}}`).join(",")}]}`
-      : input.goal === "eventItems" ? `{${fields("eventItems")},"consumption":${consumption}}`
-      : `{"kind":${JSON.stringify(input.goal)},"eventId":${event!.id},"consumption":${consumption}${secondary}}`;
+    const levels = requestLevels(input, options.worth ?? null);
+    const metric = levels ? `{"kind":"combined","consumption":${consumption},"levels":[${levels.map(terms => `[${terms.map(term => `{${fields(term.kind)},"weight":${term.weight}}`).join(",")}]`).join(",")}]}`
+      : `{${fields(input.goal as EventReward)},"consumption":${consumption}}`;
     const clock = kind === "skip" ? `{"kind":"skip","serverNowJstTicks":${jstTicks(context.now)}}`
       : `{"kind":"played","liveStartJstTicks":null,"serverNowJstTicks":${jstTicks(context.now)}}`;
     parts.push(`"metric":${metric}`, `"eventContext":{"resultClock":${clock},"rewardProjection":true}`);
@@ -306,6 +312,6 @@ export function recommendationRequest(input: DeckGoalInput, context: { event: De
   const { includeMembers, excludeMembers, excludeSnaps } = context.constraints;
   parts.push(`"eventIds":[${event && usesEventData(input) ? event.id : ""}]`,
     `"constraints":{"leader":null,"includeMembers":[${ids(includeMembers).join(",")}],"excludeMembers":[${ids(excludeMembers).join(",")}],"excludeSnaps":[${ids(excludeSnaps).join(",")}],"noSnaps":false}`,
-    `"k":${RECOMMENDATION_COUNT}`, `"limits":{"timeLimitMs":${input.timeLimit === null ? "null" : input.timeLimit * 1000}}`);
+    `"k":${options.teams ?? RECOMMENDATION_COUNT}`, `"limits":{"timeLimitMs":${input.timeLimit === null ? "null" : input.timeLimit * 1000}}`);
   return `{${parts.join(",")}}`;
 }

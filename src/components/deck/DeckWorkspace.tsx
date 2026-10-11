@@ -14,14 +14,15 @@ import { answerDeckFields } from "@/lib/box/deck-answers";
 import { createDeckPreview } from "@/lib/box/deck-preview";
 import { boxAccountJson, gameSaveAccountJson } from "@/lib/deck/account-envelope";
 import { CHALLENGE_POINT_COSTS, DEFAULT_DECK_GOAL, EVENT_GOALS, EVERYDAY_GOALS, MAX_BOOST, computes, computesGoal, defaultDeckGoalInput, goalGap, heldEvent,
-  playsGekisou, readsAccuracy, effectiveAggregation, usesChallengePointPriority, usesEventItemRewards, usesRewardMix, isChallengeInput, isNetworkInput, recommendationRequest, solverGoalKind, goalVenues, isEventPayoffGoal, type ChallengePointCost, type DeckEvent, type DeckGoal, type DeckGoalInput, type DeckVenue, type DeckArenaMusic } from "@/lib/deck/goals";
+  playsGekisou, readsAccuracy, effectiveAggregation, usesEventItemRewards, rewardLayoutOf, isChallengeInput, isNetworkInput, challengeRateRequest, recommendationRequest, solverGoalKind, goalVenues, isEventPayoffGoal, type ChallengePointCost, type DeckEvent, type DeckGoal, type DeckGoalInput, type DeckVenue, type DeckArenaMusic } from "@/lib/deck/goals";
 import { displayUtcLabel, formatMasterDate, parseMasterDate } from "@/lib/schedule";
 import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { safeGetLocalStorage, safeRemoveLocalStorage, safeSetLocalStorage } from "@/lib/storage/safe-storage";
-import { defaultRewardRates } from "@/lib/deck/reward-mix";
+import { defaultRewardPlan } from "@/lib/deck/reward-mix";
+import { challengeWorth } from "@/lib/deck/answer";
 import { useDeckSolver } from "./use-deck-solver";
 import { deckDataGap } from "@/lib/deck/data-coverage";
-import DeckResult from "./DeckResult";
+import DeckResult, { type DeckRateBasis } from "./DeckResult";
 import { useCardBoxView } from "@/components/box/use-card-box";
 import BoxManager, { BoxArtwork, BoxCardEditor, cardTitle, cardSubtitle } from "@/components/box/BoxManager";
 import PlayerStateManager from "@/components/box/PlayerStateManager";
@@ -161,6 +162,8 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const baselineEditorEpoch = useRef(0);
   const [baselineTarget, setBaselineTarget] = useState<{ slot: number; kind: CardKind } | null>(null);
   const [runError, setRunError] = useState("");
+  /** The challenge live that rated challenge points for the shown run. */
+  const [rateBasis, setRateBasis] = useState<DeckRateBasis | null>(null);
   const teamPanel = useRef<HTMLDivElement>(null);
   const ownedMembers = box?.cards.filter(card => card.kind === "member") ?? [];
   const ownedSnaps = box?.cards.filter(card => card.kind === "snap") ?? [];
@@ -190,7 +193,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const gap = goalGap(effectiveInput, event);
   const dataGap = solver.engine.status === "ready" ? deckDataGap(effectiveInput, event, solver.engine.catalog,
     props.deckArenas?.find(value => value.server === server)?.songs) : null;
-  const supported = capabilities ? computes(capabilities, effectiveInput) : !usesEventItemRewards(effectiveInput) && !usesRewardMix(effectiveInput) && effectiveInput.aggregation === "expected";
+  const supported = capabilities ? computes(capabilities, effectiveInput) : !usesEventItemRewards(effectiveInput) && !rewardLayoutOf(effectiveInput) && effectiveInput.aggregation === "expected";
   const idsOf = (keys: readonly string[], kind: CardKind) => keys.flatMap(key => {
     const card = box?.cards.find(item => item.key === key && item.kind === kind);
     return card?.identity.value ? [card.identity.value] : [];
@@ -212,7 +215,15 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
         if (!saveTables) throw new Error(tr("solver.tablesUnavailable"));
         accountJson = boxAccountJson(target, box, saveTables);
       }
-      solver.run(runKey, accountJson, recommendationRequest(effectiveInput, { event, now: Date.now(), constraints }));
+      const context = { event, now: Date.now(), constraints }, cost = effectiveInput.challengePoints;
+      const rate = challengeRateRequest(effectiveInput, context);
+      setRateBasis(rate === null ? null : { song: songs.find(item => item.id === event?.challengeMusics.find(row => row.id === effectiveInput.challengeMusicId)?.musicId)?.title ?? String(effectiveInput.challengeMusicId),
+        difficulty: effectiveInput.rateDifficulty, cost });
+      solver.run(runKey, accountJson, { rate, request: answer => {
+        if (!answer) return recommendationRequest(effectiveInput, context);
+        const worth = challengeWorth(answer, cost);
+        return worth ? recommendationRequest(effectiveInput, context, { worth }) : null;
+      } });
       requestAnimationFrame(() => teamPanel.current?.closest<HTMLElement>(".dc-team")?.scrollIntoView({ block: "start", behavior: "smooth" }));
     } catch (error) { setRunError(error instanceof Error ? error.message : String(error)); }
   }
@@ -406,6 +417,10 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const selectedSong = songs.find(item => item.id === (isChallengeInput(effectiveInput)
     ? event?.challengeMusics.find(row => row.id === goalInput.challengeMusicId)?.musicId
     : solverGoalKind(effectiveInput) === "arenaLive" ? arenas.find(row => row.id === goalInput.arenaMusicId)?.musicId : goalInput.musicId));
+  const challengeSongs = (event?.challengeMusics ?? []).map(row => {
+    const music = songs.find(item => item.id === row.musicId);
+    return { id: row.id, title: music?.title ?? String(row.musicId), jacketUrl: music?.jacketUrl ?? null, difficulties: music?.difficulties.map(entry => entry.difficulty) ?? [] };
+  });
   const composer = (key: string, values?: Record<string, string | number>) => tr(`composer.${key}`, values);
   const collection = (key: string, values?: Record<string, string | number>) => tr(`collection.${key}`, values);
   function goalCard(value: DeckGoal) {
@@ -421,7 +436,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const saveReady = !linked || linkedSave.state.status === "ready";
   const canRun = engine.status === "ready" && supported && !gap && !dataGap && saveReady;
   const blocker = engine.status === "loading" ? tr("solver.loading") : engine.status === "unavailable" ? tr(`solver.unavailable.${engine.reason}`)
-    : engine.status === "failed" ? "" : !supported ? tr(usesRewardMix(effectiveInput) ? "rewardMix.unavailable" : usesChallengePointPriority(effectiveInput) ? "conditions.priorityUnsupported" : goal === "eventItems" ? "solver.eventItemsUnsupported" : "comingSoon") : gap ? tr(`solver.gap.${gap}`) : !saveReady ? tr("solver.saveNotReady") : "";
+    : engine.status === "failed" ? "" : !supported ? tr(rewardLayoutOf(effectiveInput) ? effectiveInput.aggregation === "expected" ? "rewardMix.unavailable" : "rewardMix.expectedOnly" : goal === "eventItems" ? "solver.eventItemsUnsupported" : "comingSoon") : gap ? tr(`solver.gap.${gap}`) : !saveReady ? tr("solver.saveNotReady") : "";
   function engineNotice() {
     if (engine.status === "failed") return <p className="dc-engine-note" role="alert">{tr(`solver.failure.${engine.code}`)} <button type="button" onClick={solver.retry}>{tr("retry")}</button></p>;
     if (dataGap === "eventItemRewards") return <p className="dc-engine-note" role="status">{tr("solver.eventItemRewardsUnsupported")}</p>;
@@ -461,7 +476,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
             goals: event ? EVENT_GOALS.map(value => goalCard(value)) : [] },
           { id: "everyday", title: tr("goalGroups.everyday"), goals: EVERYDAY_GOALS.map(value => goalCard(value)) },
         ]}
-        selectedGoal={goal} onGoalChange={value => { updateGoal({ goal: value as DeckGoal, ...(value !== goal ? { rewardMix: false, rewardRates: defaultRewardRates() } : {}), ...(value === "challengePoints" && ["challengeLive", "challengeSkip"].includes(goalInput.venue) ? { venue: "freeLive" } : {}) }); safeSetLocalStorage(GOAL_STORAGE_KEY, value); }}
+        selectedGoal={goal} onGoalChange={value => { updateGoal({ goal: value as DeckGoal, ...(value !== goal ? { rewards: defaultRewardPlan() } : {}), ...(value === "challengePoints" && ["challengeLive", "challengeSkip"].includes(goalInput.venue) ? { venue: "freeLive" } : {}) }); safeSetLocalStorage(GOAL_STORAGE_KEY, value); }}
         collection={<div className="dc-collection-summary">
           <div className="dc-collection-stats"><span><strong>{ownedMembers.length}</strong> {tr("member")}</span><span><strong>{ownedSnaps.length}</strong> {tr("snap")}</span>
             {box && <span className="dc-collection-source" data-source={linked ? "game-save" : "box"}><CollectionIcon name={linked ? "game" : "image"} />{tr(linked ? "gameSave.sourceSave" : "gameSave.sourceBox")}
@@ -496,7 +511,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
               : <select aria-label={tr("consumption")} value={goalInput.boosts} onChange={change => updateGoal({ boosts: Number(change.target.value) })}>
                 {Array.from({ length: MAX_BOOST + 1 }, (_, value) => <option key={value} value={value}>{tr("boosts", { n: value })}</option>)}</select>}</label>}
           </div>}
-          <DeckGoalConditions locale={locale} input={effectiveInput} capabilities={capabilities} onChange={updateGoal} />
+          <DeckGoalConditions locale={locale} input={effectiveInput} capabilities={capabilities} challengeSongs={challengeSongs} onChange={updateGoal} />
           {goal === "power" && <div className="dc-checks">
             <label><input type="checkbox" checked={goalInput.powerSong} onChange={change => updateGoal({ powerSong: change.target.checked })} />{tr("powerSong")}</label>
             {event && <label><input type="checkbox" checked={goalInput.eventParameter} onChange={change => updateGoal({ eventParameter: change.target.checked })} />{tr("powerEvent")}</label>}
@@ -516,7 +531,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
             <button type="button" disabled={!box || busy} onClick={() => setPlayerSettings(true)}>{composer("playerBonuses")}</button></div>
         </>}
         team={<div ref={teamPanel} className="dc-team-body">
-          {job.status !== "idle" ? <DeckResult locale={locale} job={job} goal={goal} stale={stale} timeLimit={goalInput.timeLimit} box={box} catalog={catalog} linked={linked} busy={busy}
+          {job.status !== "idle" ? <DeckResult locale={locale} job={job} goal={goal} rateBasis={rateBasis} stale={stale} timeLimit={goalInput.timeLimit} box={box} catalog={catalog} linked={linked} busy={busy}
             onStop={solver.stop} onRerun={runSolver} onEditCard={setEditingCardKey} onPlayer={() => setPlayerSettings(true)} onAnswerAll={(keys, name, value) => void answerAll(keys, name, value)} />
           : sample.length > 0 ? <>
             <p className="dc-team-caption" data-team-source={preview.source}>{composer(preview.source === "baseline" ? "currentTeam" : "fromCollection")}</p>

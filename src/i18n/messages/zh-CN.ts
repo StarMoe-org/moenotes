@@ -24,8 +24,8 @@ export const zhCN = {
     "arenaSong": "Arena 歌曲",
     "chooseArena": "选择 Arena 歌曲",
     "noArena": "当前服务器数据中没有 Arena 歌曲",
-    conditions: {"play": "演奏条件", "accuracy": "Great / Just 比例，无 Miss", "pattern": "明确指定含 Miss 的完整演奏", "missEvery": "每 N 个判定音符出现一次 Miss（0 为无 Miss）", "noMiss": "明确指定完整演奏：无 Miss。", "missPattern": "每第 {n} 个判定音符记为 Miss。", "patternNote": "先应用下方 Great、Just 比例，再把指定音符改为 Miss。这是固定演奏条件，不代表真人失误的概率分布。", "timeLimit": "最长计算时间", "timeLimitNote": "到时间后给出目前找到的最好队伍，并标明尚未证明最优。", "timeLimits": {"30": "30 秒", "60": "1 分钟", "120": "2 分钟", "300": "5 分钟", "none": "不限"}, "eventItemsNote": "引擎逐个演出结果计算活动徽章，每次只取与最终评级确切对应的一档奖励。", "secondaryPriority": "CP 相同时的副收益顺序", "priorities": {"none": "仅 CP", "eventPointsFirst": "CP → PT → 徽章", "eventItemsFirst": "CP → 徽章 → PT"}, "priorityNote": "先最大化平均 CP，CP 相同时再按所选副收益顺序排序。", "priorityTeams": "只返回最高 CP 层内至多 {n} 支队伍，可能少于此数。超时结果仍未证明最优。", "priorityExpectedOnly": "CP 副收益排序仅适用于平均表现，请选择平均表现继续。", "priorityUnsupported": "当前引擎不支持这些条件下的 CP 优先副收益排序。"},
-    rewardMix: {"label": "同一局的其他奖励", "modes": {"single": "只看 {reward}", "weighted": "按换算率合计", "tieBreak": "只用来分先后"}, "unsupported": "暂不支持", "singleNote": "只按 {reward} 排序，其他奖励不影响名次。", "rewards": {"eventPoints": "PT", "challengePoints": "CP", "eventItems": "徽章"}, "units": {"eventPoints": "PT", "challengePoints": "CP", "eventItems": "徽章"}, "names": {"eventPoints": "活动点数", "challengePoints": "挑战点数", "eventItems": "活动徽章"}, "base": "主目标 · 记为 1", "count": "计入{reward}", "rate": "1 {reward} =", "rateInput": "1 {reward} 折合多少 {base}", "ratePlaceholder": "换算率", "spent": "挑战 Live 消耗 CP，不会获得 CP。", "formula": "排序依据", "formulaEmpty": "勾选要计入的奖励并填写换算率。", "weightedNote": "每局结算会同时发放这些奖励。各项按你填的换算率折算后相加，再按平均合计排序。换算率由你决定，例如 1 CP 的价值可以取挑战 Live 一局的 PT 除以消耗的 CP。", "expectedOnly": "合计奖励仅适用于平均表现，请选择平均表现继续。", "unavailable": "当前引擎不支持在这些条件下合计奖励。", "loading": "正在确认能否合计奖励…", "luckNote": "技能带 LUCK 抽签的场次暂时无法合计。", "total": "每局期望合计（折合 {unit}）", "totalDeterministic": "每局合计（折合 {unit}）", "summary": "按换算率合计奖励", "breakdown": "合计的构成", "counted": "× {rate} = {value} {unit}", "share": "{n}%"},
+    conditions: {"play": "演奏条件", "accuracy": "Great / Just 比例，无 Miss", "pattern": "明确指定含 Miss 的完整演奏", "missEvery": "每 N 个判定音符出现一次 Miss（0 为无 Miss）", "noMiss": "明确指定完整演奏：无 Miss。", "missPattern": "每第 {n} 个判定音符记为 Miss。", "patternNote": "先应用下方 Great、Just 比例，再把指定音符改为 Miss。这是固定演奏条件，不代表真人失误的概率分布。", "timeLimit": "最长计算时间", "timeLimitNote": "到时间后给出目前找到的最好队伍，并标明尚未证明最优。", "timeLimits": {"30": "30 秒", "60": "1 分钟", "120": "2 分钟", "300": "5 分钟", "none": "不限"}, "eventItemsNote": "引擎逐个演出结果计算活动徽章，每次只取与最终评级确切对应的一档奖励。"},
+    rewardMix: {"label": "同一局的其他奖励", "roles": {"off": "不计", "convert": "折算计入", "tieBreak": "同分再比"}, "roleLabel": "{reward}怎么算", "unsupported": "当前引擎暂不支持把其他奖励计入排序。", "rewards": {"eventPoints": "PT", "challengePoints": "CP", "eventItems": "徽章"}, "units": {"eventPoints": "PT", "challengePoints": "CP", "eventItems": "徽章"}, "names": {"eventPoints": "活动点数", "challengePoints": "挑战点数", "eventItems": "活动徽章"}, "base": "主目标", "sources": {"auto": "按挑战 Live 自动算", "manual": "自己填"}, "sourceLabel": "1 CP 的价值怎么定", "autoNote": "开始计算时先求出这场挑战 Live 的最优队伍，它平均每消耗 1 CP 拿到多少 {base}，1 CP 就按多少 {base} 计算。", "rateSong": "用来折算的挑战曲", "noChallengeSongs": "本期活动没有挑战曲，请改为自己填。", "rateDifficulty": "挑战 Live 难度", "rateCost": "每次消耗", "rate": "1 {reward} =", "rateInput": "1 {reward} 折合多少 {base}", "ratePlaceholder": "换算率", "tieFirstNote": "排序依据完全相同时，先比较 {reward}。", "tieNextNote": "{before} 也相同时，再比较 {reward}。", "tieFirst": "改为先比这项", "spent": "挑战 Live 消耗 CP，不会获得 CP。", "formula": "排序依据", "autoRate": "自动", "then": "同分再比", "rateMissing": "请为折算计入的奖励填写大于 0 的换算率。", "expectedOnly": "把其他奖励计入排序仅适用于平均表现，请选择平均表现继续。", "unavailable": "当前引擎不支持在这些条件下把其他奖励计入排序。", "luckNote": "技能带 LUCK 抽签的场次暂时无法计入其他奖励。", "total": "每局期望合计（折合 {unit}）", "totalDeterministic": "每局合计（折合 {unit}）", "breakdown": "合计的构成", "counted": "× {rate} = {value} {unit}", "share": "{n}%", "ties": "同分再比", "basisLabel": "CP 的折算依据", "basis": "1 CP = {rate} {unit}", "basisSource": "挑战 Live「{song}」{difficulty}，每次消耗 {cost} CP，最优队伍每局期望折合 {value} {unit}。", "basisUnproven": "这支挑战队尚未证明最优，1 CP 的实际价值可能更高。", "basisTeam": "查看这支挑战队", "rating": "正在求挑战 Live 的最优队伍", "ratingNote": "先算出 1 CP 折合多少，再搜索本场的队伍。"},
 
     cloud: {
       "accountChanged": "登录账号发生了变化。保存本机卡池前，请确认下方显示的账号。",
@@ -586,8 +586,6 @@ export const zhCN = {
     "othersAverage": "房间里其他人的平均分",
     "othersAverageSame": "留空表示与你同分",
     "solver": {
-      "eventRewards": "每局期望收益",
-      "exactReward": "精确值：{numerator}/{denominator}",
       "eventItemsUnsupported": "当前引擎不支持按确切结算评级计算活动徽章。",
       "eventItemRewardsUnsupported": "当前场景的活动奖励数据不受支持：每个评级必须恰好有一条奖励，且概率标记为 10000。",
       "maximumLabel": {"score": "理论最高分数", "challengePoints": "每局最高新增 CP", "eventPoints": "每局最高 PT", "eventItems": "每局最高徽章"},
@@ -648,8 +646,8 @@ export const zhCN = {
         "protocol": "组卡引擎通信出错。"
       },
       "gap": {
-        "rewardMix": "请至少勾选一种要计入的奖励并填写大于 0 的换算率，优化目标选平均表现。",
-        "secondaryPriority": "CP 副收益排序仅适用于平均表现，请选择平均表现继续。",
+        "rewardMix": "请为折算计入的奖励填写大于 0 的换算率，并选择平均表现。",
+        "rateSong": "请选择用来折算 CP 的挑战曲。",
       "arenaSong": "请从当前服务器数据中选择 Arena 歌曲。",
       "play": "请填写有效的 Miss 间隔：0 或正整数。",
 

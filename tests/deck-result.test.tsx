@@ -10,8 +10,8 @@ const render = (locale: AppLocale, errors: DeckIssue[]) => {
   const box = createBox("tw", "box", 1);
   box.save = { server: "intl", accountId: "20000000001", sha256: "a".repeat(64), uploadedAt: 1 };
   const answer: DeckAnswer = { final: true, status: "invalid", missing: [], errors, result: null };
-  return renderToStaticMarkup(<DeckResult locale={locale} goal="power" stale={false} timeLimit={30} box={box} catalog={{ members: [], snaps: [] }} linked busy={false}
-    job={{ status: "done", key: "input", answer, stopped: false }} onStop={() => {}} onRerun={() => {}} onEditCard={() => {}} onPlayer={() => {}} onAnswerAll={() => {}} />);
+  return renderToStaticMarkup(<DeckResult locale={locale} goal="power" rateBasis={null} stale={false} timeLimit={30} box={box} catalog={{ members: [], snaps: [] }} linked busy={false}
+    job={{ status: "done", key: "input", answer, rate: null, stopped: false }} onStop={() => {}} onRerun={() => {}} onEditCard={() => {}} onPlayer={() => {}} onAnswerAll={() => {}} />);
 };
 test("grouped memory validation errors retain their diagnostic path, code and reason", () => {
   const error = { path: "_player._memory._members[0]._unlocked", code: "invalid_type", message: "Expected a boolean" };

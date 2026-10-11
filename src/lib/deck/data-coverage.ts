@@ -1,9 +1,12 @@
-import { isChallengeInput, playsGekisou, solverGoalKind, usesEventData, usesEventItemRewards, type DeckArenaMusic, type DeckEvent, type DeckGoalInput } from "./goals";
+import { challengeRateInput, isChallengeInput, playsGekisou, solverGoalKind, usesChallengeRate, usesEventData, usesEventItemRewards, type DeckArenaMusic, type DeckEvent, type DeckGoalInput } from "./goals";
 import type { DeckDataCatalog } from "./worker-protocol";
 
 export type DeckDataGap = "catalog" | "event" | "eventItemRewards" | "song" | "luck" | "missions" | null;
 
-/** Check the selected scene's coverage and supported missions in the verified Worker data. */
+/**
+ * Check the selected scene's coverage and supported missions in the verified Worker data. A goal input that rates
+ * challenge points by a challenge live needs that live covered as well.
+ */
 export function deckDataGap(input: DeckGoalInput, event: DeckEvent | null, catalog: DeckDataCatalog | null,
   arenas: readonly DeckArenaMusic[] = []): DeckDataGap {
   if (!catalog) return "catalog";
@@ -11,6 +14,10 @@ export function deckDataGap(input: DeckGoalInput, event: DeckEvent | null, catal
   if (usesEventItemRewards(input) && event) {
     const rewards = catalog.eventItemRewards?.find(row => row.id === event.id && row.itemId === event.itemId);
     if (!rewards || !(isChallengeInput(input) ? rewards.challenge : rewards.normal)) return "eventItemRewards";
+  }
+  if (usesChallengeRate(input)) {
+    const rate = deckDataGap(challengeRateInput(input), event, catalog, arenas);
+    if (rate) return rate;
   }
   const kind = solverGoalKind(input);
   let musicId: number | null;

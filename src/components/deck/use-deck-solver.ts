@@ -15,11 +15,18 @@ export type DeckEngineState =
   | { status: "unavailable"; reason: DeckRuntimeUnavailableReason }
   | { status: "failed"; code: DeckRuntimeFailureCode | DeckWorkerFailureCode; message: string };
 
+/**
+ * What a run asks of the solver. With `rate`, that request is answered first and its answer builds the goal's own
+ * request; `request` returns null when the answer cannot rate the goal, and the run ends with the rating answer.
+ */
+export interface DeckRunPlan { rate: string | null; request: (rate: DeckAnswer | null) => string | null }
+
 export type DeckJobState =
   | { status: "idle" }
-  | { status: "running"; key: string; startedAt: number; progress: DeckAnswer | null }
+  /** `stage`: the request being answered; `rate` is the finished rating answer of a run that has one. */
+  | { status: "running"; key: string; startedAt: number; stage: "rate" | "goal"; rate: DeckAnswer | null; progress: DeckAnswer | null }
   /** `stopped`: the user stopped the run; the answer is its last progress report. */
-  | { status: "done"; key: string; answer: DeckAnswer; stopped: boolean }
+  | { status: "done"; key: string; answer: DeckAnswer; rate: DeckAnswer | null; stopped: boolean }
   /** `stopped` without any progress report yet. */
   | { status: "stopped"; key: string }
   | { status: "failed"; key: string; code: DeckWorkerFailureCode | "answer"; message: string };
@@ -64,22 +71,40 @@ export function useDeckSolver(server: GameServer, active: boolean) {
 
   useEffect(() => () => client.current?.dispose(), []);
 
-  const run = useCallback((key: string, accountJson: string, requestJson: string) => {
+  const run = useCallback((key: string, accountJson: string, plan: DeckRunPlan) => {
     const worker = client.current;
     if (!worker || engine.status !== "ready") return;
-    const inputRevision = ++revision.current;
-    setJob({ status: "running", key, startedAt: performance.now(), progress: null });
-    void worker.run({ runtime: engine.runtime, jobId: `${server}:${inputRevision}`, inputRevision, accountJson, requestJson, progressIntervalMs: PROGRESS_INTERVAL_MS,
+    const inputRevision = ++revision.current, runtime = engine.runtime;
+    const current = () => revision.current === inputRevision;
+    const answerOf = (stage: "rate" | "goal", requestJson: string) => worker.run({ runtime, jobId: `${server}:${inputRevision}:${stage}`, inputRevision, accountJson, requestJson, progressIntervalMs: PROGRESS_INTERVAL_MS,
       onProgress: json => {
         const progress = readAnswer(json);
-        if (progress && revision.current === inputRevision) setJob(current => current.status === "running" && current.key === key ? { ...current, progress } : current);
-      } }).then(outcome => {
-      if (revision.current !== inputRevision || outcome.status === "superseded") return;
+        if (progress && current()) setJob(job => job.status === "running" && job.key === key && job.stage === stage ? { ...job, progress } : job);
+      } });
+    setJob({ status: "running", key, startedAt: performance.now(), stage: plan.rate === null ? "goal" : "rate", rate: null, progress: null });
+    void (async () => {
+      let rate: DeckAnswer | null = null;
+      if (plan.rate !== null) {
+        const outcome = await answerOf("rate", plan.rate);
+        if (!current() || outcome.status === "superseded") return;
+        if (outcome.status === "failed") { setJob({ status: "failed", key, code: outcome.code, message: outcome.message }); return; }
+        if (outcome.status === "stopped") { setJob({ status: "stopped", key }); return; }
+        rate = readAnswer(outcome.resultJson);
+        if (!rate) { setJob({ status: "failed", key, code: "answer", message: "The solver answer could not be read" }); return; }
+      }
+      let requestJson: string | null;
+      try { requestJson = plan.request(rate); }
+      catch (error) { setJob({ status: "failed", key, code: "answer", message: error instanceof Error ? error.message : String(error) }); return; }
+      // A rating answer that reports problems, or names no team, is the run's answer.
+      if (requestJson === null) { setJob(rate ? { status: "done", key, answer: rate, rate: null, stopped: false } : { status: "stopped", key }); return; }
+      if (rate) setJob(job => job.status === "running" && job.key === key ? { ...job, stage: "goal", rate, progress: null } : job);
+      const outcome = await answerOf("goal", requestJson);
+      if (!current() || outcome.status === "superseded") return;
       if (outcome.status === "failed") { setJob({ status: "failed", key, code: outcome.code, message: outcome.message }); return; }
       const answer = readAnswer(outcome.resultJson);
-      if (outcome.status === "complete") setJob(answer ? { status: "done", key, answer, stopped: false } : { status: "failed", key, code: "answer", message: "The solver answer could not be read" });
-      else setJob(answer ? { status: "done", key, answer, stopped: true } : { status: "stopped", key });
-    });
+      if (outcome.status === "complete") setJob(answer ? { status: "done", key, answer, rate, stopped: false } : { status: "failed", key, code: "answer", message: "The solver answer could not be read" });
+      else setJob(answer ? { status: "done", key, answer, rate, stopped: true } : { status: "stopped", key });
+    })();
   }, [engine, server]);
 
   const stop = useCallback(() => client.current?.stop(), []);

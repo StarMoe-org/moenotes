@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { deckDataGap } from "../src/lib/deck/data-coverage";
 import { defaultDeckGoalInput, type DeckEvent, type DeckGoalInput } from "../src/lib/deck/goals";
+import { defaultRewardPlan, withRewardRole } from "../src/lib/deck/reward-mix";
 import type { DeckDataCatalog } from "../src/lib/deck/worker-protocol";
 
 const event: DeckEvent = { id: 2, name: "Event", startAt: "2030/01/01 00:00:00+08:00", endAt: "2030/01/10 00:00:00+08:00",
@@ -128,18 +129,32 @@ describe("deck data coverage", () => {
 });
 
 
-test("CP secondary rewards reuse badge coverage and retain the Gekisou mission gates", () => {
-  for (const secondaryPriority of ["eventPointsFirst", "eventItemsFirst"] as const) {
-    for (const venue of ["freeLive", "battleLive", "missionLive", "arenaLive", "skip"] as const) {
-      const input = { goal: "challengePoints" as const, secondaryPriority, venue, arenaMusicId: 7 };
-      expect(gap(input, updated)).toBeNull();
-      const unsupported = { ...updated, eventItemRewards: [{ id: 2, itemId: 90, normal: false, challenge: true }] };
-      expect(gap(input, unsupported)).toBe("eventItemRewards");
-      expect(gap({ ...input, secondaryPriority: null }, unsupported)).toBeNull();
-    }
-    const luck = { ...updated, musics: updated.musics.map(row => ({ ...row, hasLuck: true })) };
-    expect(gap({ goal: "challengePoints", venue: "battleLive", secondaryPriority }, luck)).toBe("luck");
-    expect(gap({ goal: "challengePoints", venue: "freeLive", secondaryPriority }, luck)).toBeNull();
-    expect(gap({ goal: "challengePoints", venue: "skip", secondaryPriority }, luck)).toBeNull();
+test("a tie-break on badges reuses badge coverage and retains the Gekisou mission gates", () => {
+  const rewards = withRewardRole(defaultRewardPlan(), "eventItems", "tieBreak");
+  for (const venue of ["freeLive", "battleLive", "missionLive", "arenaLive", "skip"] as const) {
+    const input = { goal: "challengePoints" as const, rewards, venue, arenaMusicId: 7 };
+    expect(gap(input, updated)).toBeNull();
+    const unsupported = { ...updated, eventItemRewards: [{ id: 2, itemId: 90, normal: false, challenge: true }] };
+    expect(gap(input, unsupported)).toBe("eventItemRewards");
+    expect(gap({ ...input, rewards: defaultRewardPlan() }, unsupported)).toBeNull();
   }
+  const luck = { ...updated, musics: updated.musics.map(row => ({ ...row, hasLuck: true })) };
+  expect(gap({ goal: "challengePoints", venue: "battleLive", rewards }, luck)).toBe("luck");
+  expect(gap({ goal: "challengePoints", venue: "freeLive", rewards }, luck)).toBeNull();
+  expect(gap({ goal: "challengePoints", venue: "skip", rewards }, luck)).toBeNull();
+});
+
+test("challenge points rated by a challenge live need that live in the runtime data", () => {
+  const rewards = withRewardRole(defaultRewardPlan(), "challengePoints", "convert");
+  const input = { goal: "eventPoints" as const, venue: "freeLive" as const, rewards, challengeMusicId: 4, rateDifficulty: "hard" as const };
+  expect(gap(input, updated)).toBeNull();
+  expect(gap({ ...input, rateDifficulty: "expert" }, { ...updated, musics: updated.musics.map(row => row.id === 100111 ? { ...row, difficulties: ["hard"] } : row) })).toBe("song");
+  expect(gap(input, { ...updated, challengeMusics: catalog.challengeMusics })).toBe("song");
+  // Badges that break ties are settled by the challenge live too.
+  const withBadges = { ...input, rewards: withRewardRole(rewards, "eventItems", "tieBreak") };
+  expect(gap(withBadges, { ...updated, eventItemRewards: [{ id: 2, itemId: 90, normal: true, challenge: false }] })).toBe("eventItemRewards");
+  expect(gap(withBadges, updated)).toBeNull();
+  // A stated rate reads no challenge live.
+  const stated = { ...input, rewards: { ...rewards, rates: { ...rewards.rates, challengePoints: { auto: false, rate: 2 } } } };
+  expect(gap(stated, { ...updated, challengeMusics: catalog.challengeMusics })).toBeNull();
 });

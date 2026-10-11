@@ -21,8 +21,8 @@ export const jaJP = {
     "arenaSong": "アリーナ楽曲",
     "chooseArena": "アリーナ楽曲を選択",
     "noArena": "現在のサーバーデータにアリーナ楽曲はありません",
-    conditions: {"play": "演奏条件", "accuracy": "Great / Just の割合、Miss なし", "pattern": "Miss を含む完全な演奏を明示", "missEvery": "判定ノーツ N 個ごとに Miss（0 は Miss なし）", "noMiss": "完全な演奏を明示：Miss なし。", "missPattern": "判定ノーツ {n} 個ごとに Miss とします。", "patternNote": "下の Great・Just 割合を適用後、指定ノーツを Miss に置換します。固定の演奏条件であり、人のミスの確率分布ではありません。", "timeLimit": "最大計算時間", "timeLimitNote": "時間になると、その時点で最良の編成を「最適未証明」として表示します。", "timeLimits": {"30": "30 秒", "60": "1 分", "120": "2 分", "300": "5 分", "none": "無制限"}, "eventItemsNote": "エンジンは演奏結果ごとに、最終ランクと完全に一致する一段階の報酬からイベントバッジ数を計算します。", "secondaryPriority": "CP が同じ場合の副報酬の優先順", "priorities": {"none": "CP のみ", "eventPointsFirst": "CP → PT → バッジ", "eventItemsFirst": "CP → バッジ → PT"}, "priorityNote": "まず平均 CP を最大化し、CP が同じ場合に選択した副報酬の優先順で編成を並べます。", "priorityTeams": "最大 CP のグループから最大 {n} 編成を返します。該当する編成が少ない場合もあります。時間切れの結果は最適未証明です。", "priorityExpectedOnly": "CP の副報酬優先順は「平均を重視」で利用できます。「平均を重視」を選んでください。", "priorityUnsupported": "このエンジンは現在の条件で CP 優先の副報酬並べ替えに対応していません。"},
-    rewardMix: {"label": "同じライブの他の報酬", "modes": {"single": "{reward} のみ", "weighted": "換算して合計", "tieBreak": "同点時のみ比較"}, "unsupported": "未対応", "singleNote": "{reward} だけで編成を並べます。他の報酬は順位に影響しません。", "rewards": {"eventPoints": "PT", "challengePoints": "CP", "eventItems": "バッジ"}, "units": {"eventPoints": "PT", "challengePoints": "CP", "eventItems": "バッジ"}, "names": {"eventPoints": "イベントポイント", "challengePoints": "チャレンジポイント", "eventItems": "イベントバッジ"}, "base": "主目標 · 1 として計算", "count": "{reward}を含める", "rate": "1 {reward} =", "rateInput": "1 {reward} が何 {base} に相当するか", "ratePlaceholder": "換算率", "spent": "チャレンジライブは CP を消費し、CP を獲得しません。", "formula": "並べ替えの基準", "formulaEmpty": "含める報酬にチェックを入れ、換算率を入力してください。", "weightedNote": "ライブ 1 回の結果でこれらの報酬が同時に手に入ります。各報酬を入力した換算率で換算して合計し、その平均で編成を並べます。換算率は自由に決められます。たとえば 1 CP の価値は、チャレンジライブ 1 回の PT を消費 CP で割った値にできます。", "expectedOnly": "報酬の合計は「平均を重視」で利用できます。「平均を重視」を選んでください。", "unavailable": "このエンジンは現在の条件で報酬の合計に対応していません。", "loading": "報酬を合計できるか確認しています…", "luckNote": "スキルが LUCK 抽選を行うライブは、まだ合計できません。", "total": "1回あたりの期待合計（{unit} 換算）", "totalDeterministic": "1回あたりの合計（{unit} 換算）", "summary": "換算率で報酬を合計", "breakdown": "合計の内訳", "counted": "× {rate} = {value} {unit}", "share": "{n}%"},
+    conditions: {"play": "演奏条件", "accuracy": "Great / Just の割合、Miss なし", "pattern": "Miss を含む完全な演奏を明示", "missEvery": "判定ノーツ N 個ごとに Miss（0 は Miss なし）", "noMiss": "完全な演奏を明示：Miss なし。", "missPattern": "判定ノーツ {n} 個ごとに Miss とします。", "patternNote": "下の Great・Just 割合を適用後、指定ノーツを Miss に置換します。固定の演奏条件であり、人のミスの確率分布ではありません。", "timeLimit": "最大計算時間", "timeLimitNote": "時間になると、その時点で最良の編成を「最適未証明」として表示します。", "timeLimits": {"30": "30 秒", "60": "1 分", "120": "2 分", "300": "5 分", "none": "無制限"}, "eventItemsNote": "エンジンは演奏結果ごとに、最終ランクと完全に一致する一段階の報酬からイベントバッジ数を計算します。"},
+    rewardMix: {"label": "同じライブの他の報酬", "roles": {"off": "含めない", "convert": "換算して加算", "tieBreak": "同点時に比較"}, "roleLabel": "{reward}の扱い", "unsupported": "このエンジンは他の報酬を含めた並べ替えにまだ対応していません。", "rewards": {"eventPoints": "PT", "challengePoints": "CP", "eventItems": "バッジ"}, "units": {"eventPoints": "PT", "challengePoints": "CP", "eventItems": "バッジ"}, "names": {"eventPoints": "イベントポイント", "challengePoints": "チャレンジポイント", "eventItems": "イベントバッジ"}, "base": "主目標", "sources": {"auto": "チャレンジライブから自動", "manual": "自分で入力"}, "sourceLabel": "1 CP の価値の決め方", "autoNote": "計算の最初に、このチャレンジライブの最適編成を求めます。その編成が消費 1 CP あたりに得る {base} を、1 CP の価値として使います。", "rateSong": "換算に使うチャレンジ曲", "noChallengeSongs": "このイベントにはチャレンジ曲がありません。自分で入力してください。", "rateDifficulty": "チャレンジライブの難易度", "rateCost": "1回の消費", "rate": "1 {reward} =", "rateInput": "1 {reward} が何 {base} に相当するか", "ratePlaceholder": "換算率", "tieFirstNote": "並べ替えの基準が完全に同じ編成は、次に {reward} で比べます。", "tieNextNote": "{before} も同じ編成は、{reward} で比べます。", "tieFirst": "これを先に比べる", "spent": "チャレンジライブは CP を消費し、CP を獲得しません。", "formula": "並べ替えの基準", "autoRate": "自動", "then": "同点なら", "rateMissing": "換算して加算する報酬に、0 より大きい換算率を入力してください。", "expectedOnly": "他の報酬を含めた並べ替えは「平均を重視」で利用できます。「平均を重視」を選んでください。", "unavailable": "このエンジンは現在の条件で他の報酬を含めた並べ替えに対応していません。", "luckNote": "スキルが LUCK 抽選を行うライブは、まだ他の報酬を含められません。", "total": "1回あたりの期待合計（{unit} 換算）", "totalDeterministic": "1回あたりの合計（{unit} 換算）", "breakdown": "合計の内訳", "counted": "× {rate} = {value} {unit}", "share": "{n}%", "ties": "同点時の比較", "basisLabel": "CP の換算根拠", "basis": "1 CP = {rate} {unit}", "basisSource": "チャレンジライブ「{song}」{difficulty}、1回 {cost} CP 消費の最適編成は、1回あたり {value} {unit} 相当を期待できます。", "basisUnproven": "このチャレンジ編成は最適と証明されていないため、1 CP の価値はこれより高い可能性があります。", "basisTeam": "このチャレンジ編成を見る", "rating": "チャレンジライブの最適編成を計算中", "ratingNote": "先に 1 CP の価値を求めてから、このライブの編成を探します。"},
 
     cloud: {
       "accountChanged": "ログイン中のアカウントが変わりました。この端末のコレクションを保存する前に、下のアカウントを確認してください。",
@@ -583,8 +583,6 @@ export const jaJP = {
     "othersAverage": "ルームの他プレイヤーの平均スコア",
     "othersAverageSame": "空欄なら自分と同じスコア",
     "solver": {
-      "eventRewards": "1回あたりの期待報酬",
-      "exactReward": "正確な値：{numerator}/{denominator}",
       "eventItemsUnsupported": "このエンジンは、確定した結果ランクに基づくイベントバッジ計算に未対応です。",
       "eventItemRewardsUnsupported": "このモードのイベント報酬データには未対応です。各ランクの報酬行はちょうど1件で、確率マーカーが 10000 である必要があります。",
       "maximumLabel": {"score": "理論上の最高スコア", "challengePoints": "1回の最大獲得 CP", "eventPoints": "1回の最大 PT", "eventItems": "1回の最大バッジ数"},
@@ -645,8 +643,8 @@ export const jaJP = {
         "protocol": "編成エンジンとの通信でエラーが発生しました。"
       },
       "gap": {
-        "rewardMix": "含める報酬を 1 つ以上選び、0 より大きい換算率を入力してください。最適化の目標は「平均を重視」にします。",
-        "secondaryPriority": "CP の副報酬優先順は「平均を重視」で利用できます。「平均を重視」を選んでください。",
+        "rewardMix": "換算して加算する報酬に 0 より大きい換算率を入力し、「平均を重視」を選んでください。",
+        "rateSong": "CP の換算に使うチャレンジ曲を選んでください。",
       "arenaSong": "現在のサーバーデータからアリーナ楽曲を選択してください。",
       "play": "Miss の間隔を 0 以上の整数で入力してください。",
 
