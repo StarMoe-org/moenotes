@@ -1,11 +1,12 @@
 import { expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import DeckGoalConditions from "../src/components/deck/DeckGoalConditions";
-import DeckObjective from "../src/components/deck/DeckObjective";
+import DeckPeakNote from "../src/components/deck/DeckPeakNote";
 import DeckResult from "../src/components/deck/DeckResult";
 import DeckWorkspace from "../src/components/deck/DeckWorkspace";
-import { defaultDeckGoalInput, parseCapabilities, type DeckSolverCapabilities } from "../src/lib/deck/goals";
+import { DECK_GOALS, defaultDeckGoalInput, parseCapabilities, type DeckGoalInput, type DeckSolverCapabilities } from "../src/lib/deck/goals";
 import { parseDeckAnswer } from "../src/lib/deck/answer";
+import { t } from "../src/i18n";
 
 test("event deadlines render in server time before hydration regardless of the host timezone", () => {
   const originalZone = process.env.TZ;
@@ -36,68 +37,59 @@ test("a live goal offers the accuracy and pattern plays", () => {
   expect(html).not.toContain("Minimum life at the end");
 });
 
-test("the objective has native labelled radio choices, with maximum gated by engine capabilities", () => {
-  const cap = { goals: ["freeLive"], metrics: { freeLive: ["score", "eventPoints"] }, accuracy: { great: true, just: false } };
-  const render = (input = defaultDeckGoalInput("free"), capabilities: DeckSolverCapabilities = cap) => renderToStaticMarkup(
-    <DeckObjective locale="en-US" input={input} capabilities={capabilities} onChange={() => {}} />);
-  const html = render();
-  expect(html).toContain('type="radio"');
-  expect(html).toContain('checked="" value="expected"');
-  expect(html).toMatch(/<input[^>]*disabled=""[^>]*value="maximum"/);
-  expect(html).toContain("Average performance");
+test("the theoretical maximum is its own goal next to the score goals", () => {
+  const html = renderToStaticMarkup(<DeckWorkspace locale="en-US" page="deck" servers={["tw"]} members={[]} snaps={[]} songs={[]} />);
   expect(html).toContain("Theoretical maximum");
-  expect(html).toContain("Theoretical maximum<small>Not yet supported</small>");
-  const ready = render({ ...defaultDeckGoalInput("free"), aggregation: "maximum" }, { ...cap, aggregations: { maximum: { freeLive: ["score"] } } });
-  expect(ready).toContain('checked="" value="maximum"');
-  expect(ready).not.toContain('disabled=""');
-  expect(ready).not.toContain("Not yet supported");
-  expect(ready).toContain("not guaranteed every live");
-  expect(ready).toContain("proved only when the search completes");
-  const unavailable = render({ ...defaultDeckGoalInput("free"), aggregation: "maximum" });
-  expect(unavailable).toMatch(/<input[^>]*disabled=""[^>]*checked=""[^>]*value="maximum"/);
-  expect(unavailable).toContain("unavailable for these conditions");
-  const loading = renderToStaticMarkup(<DeckObjective locale="en-US" input={{ ...defaultDeckGoalInput("free"), aggregation: "maximum" }} capabilities={null} onChange={() => {}} />);
-  expect(loading).toMatch(/<input[^>]*disabled=""[^>]*checked=""[^>]*value="maximum"/);
-  expect(loading).toContain("Checking whether theoretical maximum is available");
-  expect(loading).not.toContain("Not yet supported");
-  expect(render(defaultDeckGoalInput("power"))).toBe("");
-  expect(render(defaultDeckGoalInput("skip"))).toBe("");
+  expect(html).toContain("in Free or Challenge Live");
+  expect(html).not.toContain("LUCK draw");
+  expect(html.indexOf("Free Live high score")).toBeLessThan(html.indexOf("Theoretical maximum"));
+  expect(html).not.toContain('type="radio"');
 });
 
-test("Gekisou scenes and payoff venues show the Expected note without an unavailable selection", () => {
-  const cap = { goals: ["freeLive", "battleLive", "missionLive", "arenaLive"], metrics: {}, accuracy: { great: true, just: true },
-    aggregations: { maximum: { battleLive: ["score"], missionLive: ["score"], arenaLive: ["score"] } } };
-  for (const goal of ["battle", "mission", "arena"] as const) {
-    const html = renderToStaticMarkup(<DeckObjective locale="en-US" input={{ ...defaultDeckGoalInput(goal), aggregation: "maximum" }} capabilities={cap} onChange={() => {}} />);
-    expect(html).not.toContain('type="radio"');
-    expect(html).toContain("Gekisou modes use Average performance");
-  }
-  for (const venue of ["battleLive", "missionLive", "arenaLive"] as const) {
-    const html = renderToStaticMarkup(<DeckObjective locale="en-US" input={{ ...defaultDeckGoalInput("eventPoints"), venue, aggregation: "maximum" }} capabilities={cap} onChange={() => {}} />);
-    expect(html).not.toContain('type="radio"');
-    expect(html).toContain("Gekisou modes use Average performance");
-  }
+test("every goal card has its title, note and coming-soon badges in each core locale", () => {
+  const keys = [...DECK_GOALS.flatMap(goal => [`goals.${goal}`, `goalNotes.${goal}`]), "comingSoon", "objective.unsupported", "solver.eventItemsUnsupported"];
+  for (const locale of ["zh-CN", "zh-TW", "ja-JP", "en-US", "ko-KR"] as const)
+    for (const key of keys) expect([key, t(locale, `deckWorkspace.${key}`)]).not.toEqual([key, ""]);
+});
+
+test("the theoretical maximum explains why Gekisou modes are not offered and flags venues the engine cannot compute yet", () => {
+  const render = (input: DeckGoalInput, capabilities: DeckSolverCapabilities | null) => renderToStaticMarkup(
+    <DeckPeakNote locale="en-US" input={input} capabilities={capabilities} />);
+  const cap = { goals: ["freeLive", "challengeLive"], metrics: { freeLive: ["score"], challengeLive: ["score"] },
+    accuracy: { great: true, just: true }, aggregations: { maximum: { freeLive: ["score"] } } };
+  const free = render({ ...defaultDeckGoalInput("peak"), venue: "freeLive" }, cap);
+  expect(free).toContain("best of the 120 skill orders");
+  expect(free).toContain("Gekisou modes have no theoretical maximum");
+  expect(free).toContain("simulating every seed");
+  expect(free).not.toContain("cannot compute");
+  expect(render({ ...defaultDeckGoalInput("peak"), venue: "challengeLive" }, cap)).toContain("cannot compute the theoretical maximum here yet");
+  // Before the engine loads, or with an engine that computes no maximum at all, the goal's own blocker explains it.
+  expect(render({ ...defaultDeckGoalInput("peak"), venue: "challengeLive" }, null)).not.toContain("cannot compute");
+  expect(render({ ...defaultDeckGoalInput("peak"), venue: "challengeLive" }, { ...cap, aggregations: {} })).not.toContain("cannot compute");
+  expect(render(defaultDeckGoalInput("free"), cap)).toBe("");
 });
 
 test("maximum results retain their own metric, objective, proof state and best order after inputs change", () => {
-  const answer = parseDeckAnswer(JSON.stringify({ format: "ournotes-deck.account-recommendation/1", final: true, status: "ok", result: {
-    goal: { kind: "freeLive" }, metric: { kind: "eventPoints" }, aggregation: "maximum", phase: "done", elapsedMs: 10,
-    optimality: { proven: false, lowerBound: 30, upperBound: 40 }, teams: [{ rank: 1, rankCertified: false,
+  const answer = (kind: string) => parseDeckAnswer(JSON.stringify({ format: "ournotes-deck.account-recommendation/1", final: true, status: "ok", result: {
+    goal: { kind }, metric: { kind: "score" }, aggregation: "maximum", phase: "done", elapsedMs: 10,
+    optimality: { proven: false, lowerBound: 900000, upperBound: 990000 }, teams: [{ rank: 1, rankCertified: false,
       leader: { member: 3, snap: null }, others: [1, 2, 4, 5].map(member => ({ member, snap: null })), power: 100,
-      value: { score: 999999, payoff: { score: 30 } }, orders: null,
-      bestOrder: { score: 950000, payoff: 30, order: [5, 4, 3, 2, 1] },
+      value: { score: 987654 }, orders: null,
+      bestOrder: { score: 987654, order: [5, 4, 3, 2, 1] },
       layout: { members: [1, 2, 3, 4, 5], snaps: [null, null, null, null, null] } }] } }));
   const noop = () => {};
-  const html = renderToStaticMarkup(<DeckResult locale="en-US" goal="battle" stale timeLimit={60} box={null} catalog={{ members: [], snaps: [] }} linked={false} busy={false}
-    job={{ status: "done", key: "maximum", answer, stopped: false }} onStop={noop} onRerun={noop} onEditCard={noop} onPlayer={noop} onAnswerAll={noop} />);
-  expect(html).toContain("Theoretical maximum");
-  expect(html).toContain("Maximum points per live");
+  const render = (kind: string) => renderToStaticMarkup(<DeckResult locale="en-US" goal="free" stale timeLimit={60} box={null} catalog={{ members: [], snaps: [] }} linked={false} busy={false}
+    job={{ status: "done", key: "maximum", answer: answer(kind), stopped: false }} onStop={noop} onRerun={noop} onEditCard={noop} onPlayer={noop} onAnswerAll={noop} />);
+  const html = render("freeLive");
+  expect(html).toContain("Theoretical maximum score");
+  expect(html).toContain("987,654");
+  expect(html).toContain("among the 120 skill orders");
   expect(html).toContain("previous result");
   expect(html).toContain("not proven");
+  expect(html).toContain("Skill order for the theoretical maximum");
   expect(html).toContain("5 → 4 → 3 → 2 → 1");
   expect(html).not.toContain("Expected score");
   expect(html).not.toContain("performance orders");
-  expect(html).not.toContain("999,999");
 });
 
 test("unproven results distinguish engine time limits, refinement stops and legacy answers", () => {
@@ -177,10 +169,6 @@ test("CP conditions preserve the selected secondary priority and explicitly gate
     expect(supported).toContain("Maximize average CP first");
     expect(supported).toContain("highest-CP tier only");
     expect(supported).not.toContain("does not support CP-first");
-    const maximum = render({ secondaryPriority, aggregation: "maximum" }, capabilities);
-    expect(maximum).toContain("require Average performance");
-    const objective = renderToStaticMarkup(<DeckObjective locale="en-US" input={{ ...input, secondaryPriority, aggregation: "maximum" }} capabilities={capabilities} onChange={() => {}} />);
-    expect(objective).toMatch(/<input[^>]*disabled=""[^>]*checked=""[^>]*value="maximum"/);
   }
   expect(render({ secondaryPriority: "eventPointsFirst" }, null)).toContain("does not support CP-first");
 });

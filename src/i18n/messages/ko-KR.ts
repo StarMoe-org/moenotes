@@ -18,11 +18,12 @@ export const koKR = {
       description: "Moenotes API로 공개 프로필, 순위표, 가챠 정보, 승인된 gzip 저장 데이터를 가져옵니다.",
     }, developer: "개발자 앱", developerHint: "앱을 만들면 즉시 인증 정보가 발급됩니다. Secret은 서버에만 보관하세요.", grants: "타사 아카이브 액세스", grantsHint: "선택한 아카이브만 공유됩니다.", name: "앱 이름", website: "HTTPS 웹사이트", description: "설명", create: "앱 만들기", emptyApps: "아직 앱이 없습니다.", clientId: "Client ID", invite: "초대 링크 복사", copy: "복사", copied: "복사됨", lookup: "앱 조회", choose: "업로드한 아카이브 선택", emptyArchives: "사용 가능한 아카이브가 없습니다.", authorize: "선택한 아카이브 승인", emptyGrants: "승인이 없습니다.", revoke: "취소", confirmRevoke: "이 액세스를 취소할까요?", cancel: "취소", refresh: "새로 고침", generate: "시크릿 생성", rotate: "시크릿 교체", revokeSecret: "시크릿 취소", keyLimit: "활성 키가 두 개 있습니다. 새 키를 배포한 후 이전 키를 직접 취소하세요.", confirmRotate: "새 키를 생성할까요? 이전 키는 직접 취소할 때까지 유지됩니다.", secret: "클라이언트 시크릿", secretHint: "한 번만 표시됩니다. 서버에 안전하게 저장하고 브라우저 코드에 넣지 마세요.", dismiss: "시크릿 숨기기", secretActive: "시크릿 활성", secretMissing: "활성 시크릿 없음", ready: "바로 사용 가능", disabled: "비활성", error: "요청에 실패했습니다.", success: "저장됨", unavailable: "현재 사용할 수 없습니다.", consent: "선택한 아카이브 전체를 읽을 수 있습니다. 신뢰하는 앱만 승인하세요." },
   deckWorkspace: {
-    objective: {"label": "탐색 목표", "expected": "평균 성능", "maximum": "이론상 최고값", "unsupported": "미지원", "expectedNote": "현재 플레이 조건을 유지하고 무작위 스킬 순서와 LUCK 등 무작위 결과의 평균으로 팀을 비교합니다.", "maximumNote": "프리 라이브와 챌린지 라이브에서 현재 플레이 조건을 유지하고 스킬 순서와 무작위 스킬 결과로 도달할 수 있는 최고값을 찾습니다. 탐색이 완료되어야 최고값을 증명할 수 있으며 매번 보장되는 값은 아닙니다.", "unavailable": "현재 조건에서는 이론상 최고값을 지원하지 않습니다. 평균 성능으로 탐색할 수 있습니다.", "loading": "이론상 최고값 지원 여부를 확인하는 중…", "gekisouNote": "격주 모드는 평균 성능으로 탐색합니다. 프리 라이브와 챌린지 라이브에서는 이론상 최고값을 선택할 수 있습니다."},
+    objective: {"expected": "평균 성능", "maximum": "이론상 최고값", "unsupported": "미지원", "expectedNote": "현재 플레이 조건을 유지하고 무작위 스킬 순서와 LUCK 등 무작위 결과의 평균으로 팀을 비교합니다.", "maximumNote": "현재 플레이 조건에서 120가지 스킬 순서 중 가장 높은 점수입니다. 탐색이 완료되어야 최고값을 증명할 수 있으며, 실제 라이브에서는 그 스킬 순서일 때만 도달합니다."},
+    peak: {"ordinaryNote": "현재 일반 스킬에는 추첨이 없으므로, 프리 라이브와 챌린지 라이브의 이론상 최고값은 120가지 스킬 순서 중 가장 높은 점수입니다.", "noGekisou": "격주 모드에는 이론상 최고값이 없습니다. 라이브가 시작될 때 정해지는 하나의 난수 시드가 스킬 순서, 모든 LUCK 추첨, 확률로 발동하는 격주 스킬을 한꺼번에 정하므로, 각각의 최상의 결과가 한 라이브에서 함께 나오지 않습니다. 실제로 도달할 수 있는 최고 점수를 찾으려면 팀마다 모든 시드를 시뮬레이션해야 합니다. 격주에서는 평균 성능으로 팀을 비교하는 ‘격주 라이브 고득점’, ‘솔로 Mission’, ‘아레나’를 사용해 주세요.", "venueUnavailable": "불러온 계산 엔진은 이 플레이 방식의 이론상 최고값을 아직 지원하지 않습니다. 다른 플레이 방식을 선택하거나 엔진이 업데이트된 뒤 다시 시도해 주세요."},
     "arenaSong": "아레나 곡",
     "chooseArena": "아레나 곡 선택",
     "noArena": "현재 서버 데이터에 아레나 곡이 없습니다",
-    conditions: {"play": "연주 조건", "accuracy": "Great / Just 비율, Miss 없음", "pattern": "Miss를 포함한 전체 연주 지정", "missEvery": "판정 노트 N개마다 Miss (0 = Miss 없음)", "noMiss": "전체 연주 명시: Miss 없음.", "missPattern": "판정 노트 {n}개마다 Miss로 처리합니다.", "patternNote": "아래 Great·Just 비율을 적용한 후 지정한 노트를 Miss로 바꿉니다. 고정된 연주 조건이며 사람의 실수 확률 분포가 아닙니다.", "timeLimit": "최대 계산 시간", "timeLimitNote": "시간이 다 되면 지금까지 찾은 최선의 덱을 최적 미증명으로 표시합니다.", "timeLimits": {"30": "30초", "60": "1분", "120": "2분", "300": "5분", "none": "제한 없음"}, "eventItemsNote": "엔진은 가능한 연주 결과마다 최종 등급과 정확히 일치하는 한 단계의 보상으로 이벤트 배지 수를 계산합니다.", "secondaryPriority": "CP가 같을 때 부가 보상 우선순위", "priorities": {"none": "CP만", "eventPointsFirst": "CP → PT → 배지", "eventItemsFirst": "CP → 배지 → PT"}, "priorityNote": "평균 CP를 먼저 최대화하고, CP가 같으면 선택한 부가 보상 우선순위로 덱을 정렬합니다.", "priorityTeams": "최고 CP 그룹에서 최대 {n}개 덱만 반환하며, 해당 덱 수가 더 적을 수 있습니다. 시간 초과 결과는 최적 미증명 상태입니다.", "priorityExpectedOnly": "CP 부가 보상 정렬은 평균 성능에서만 사용할 수 있습니다. 평균 성능을 선택하세요.", "priorityUnsupported": "현재 엔진은 이 조건에서 CP 우선 부가 보상 정렬을 지원하지 않습니다."},
+    conditions: {"play": "연주 조건", "accuracy": "Great / Just 비율, Miss 없음", "pattern": "Miss를 포함한 전체 연주 지정", "missEvery": "판정 노트 N개마다 Miss (0 = Miss 없음)", "noMiss": "전체 연주 명시: Miss 없음.", "missPattern": "판정 노트 {n}개마다 Miss로 처리합니다.", "patternNote": "아래 Great·Just 비율을 적용한 후 지정한 노트를 Miss로 바꿉니다. 고정된 연주 조건이며 사람의 실수 확률 분포가 아닙니다.", "timeLimit": "최대 계산 시간", "timeLimitNote": "시간이 다 되면 지금까지 찾은 최선의 덱을 최적 미증명으로 표시합니다.", "timeLimits": {"30": "30초", "60": "1분", "120": "2분", "300": "5분", "none": "제한 없음"}, "eventItemsNote": "엔진은 가능한 연주 결과마다 최종 등급과 정확히 일치하는 한 단계의 보상으로 이벤트 배지 수를 계산합니다.", "secondaryPriority": "CP가 같을 때 부가 보상 우선순위", "priorities": {"none": "CP만", "eventPointsFirst": "CP → PT → 배지", "eventItemsFirst": "CP → 배지 → PT"}, "priorityNote": "평균 CP를 먼저 최대화하고, CP가 같으면 선택한 부가 보상 우선순위로 덱을 정렬합니다.", "priorityTeams": "최고 CP 그룹에서 최대 {n}개 덱만 반환하며, 해당 덱 수가 더 적을 수 있습니다. 시간 초과 결과는 최적 미증명 상태입니다.", "priorityUnsupported": "현재 엔진은 이 조건에서 CP 우선 부가 보상 정렬을 지원하지 않습니다."},
 
     cloud: {
       "accountChanged": "로그인한 계정이 변경되었습니다. 이 기기의 컬렉션을 저장하기 전에 아래 계정을 확인하세요.",
@@ -542,6 +543,7 @@ export const koKR = {
       "eventItems": "이벤트 배지 모으기",
       "battle": "격주 라이브 고득점",
       "free": "프리 라이브 고득점",
+      "peak": "이론상 최고 점수",
       "power": "종합력 최대"
     },
     "goalNotes": {
@@ -556,6 +558,7 @@ export const koKR = {
       "eventItems": "각 결과의 정확한 등급으로 라이브 1회당 이벤트 배지를 계산합니다.",
       "battle": "이 곡의 점수.",
       "free": "격주 없는 솔로 라이브의 점수.",
+      "peak": "프리 라이브와 챌린지 라이브에서 스킬 순서가 가장 좋을 때의 점수.",
       "power": "만들 수 있는 최고 종합력."
     },
     "venues": {
@@ -587,9 +590,9 @@ export const koKR = {
       "exactReward": "정확한 값: {numerator}/{denominator}",
       "eventItemsUnsupported": "현재 엔진은 정확한 결과 등급에 따른 이벤트 배지 계산을 지원하지 않습니다.",
       "eventItemRewardsUnsupported": "이 모드의 이벤트 보상 데이터는 지원되지 않습니다. 등급마다 보상 행이 정확히 하나이며 확률 표식이 10000이어야 합니다.",
-      "maximumLabel": {"score": "이론상 최고 점수", "challengePoints": "라이브 1회 최대 획득 CP", "eventPoints": "라이브 1회 최대 PT", "eventItems": "라이브 1회 최대 배지"},
+      "maximumLabel": {"score": "이론상 최고 점수"},
       "deterministicLabel": {"score": "점수", "challengePoints": "라이브 1회 획득 CP", "eventPoints": "라이브 1회 PT", "eventItems": "라이브 1회 배지"},
-      "bestOrder": "목표 최고값에 도달하는 스킬 순서",
+      "bestOrder": "이론상 최고 점수가 나오는 스킬 순서",
       "metricLabel": {"score": "기대 점수"},
       "playSummary": "지정 연주: 판정 노트 {notes}개 · Miss {misses}개",
       "start": "편성 계산",

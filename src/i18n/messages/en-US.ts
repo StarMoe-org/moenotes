@@ -28,11 +28,12 @@ export const enUS = {
     consent: "This application can read the full content of the selected archives. Only authorize applications you trust.",
   },
   deckWorkspace: {
-    objective: {"label": "Search objective", "expected": "Average performance", "maximum": "Theoretical maximum", "unsupported": "Not yet supported", "expectedNote": "Keeps your play conditions and ranks teams by the average over random skill orders, LUCK and other random outcomes.", "maximumNote": "For Free and Challenge Live, finds the highest value reachable through skill orders and random skill outcomes under your play conditions. The maximum is proved only when the search completes; it is not guaranteed every live.", "unavailable": "Theoretical maximum is unavailable for these conditions. Choose Average performance to search.", "loading": "Checking whether theoretical maximum is available…", "gekisouNote": "Gekisou modes use Average performance. Theoretical maximum is available for Free and Challenge Live."},
+    objective: {"expected": "Average performance", "maximum": "Theoretical maximum", "unsupported": "Not yet supported", "expectedNote": "Keeps your play conditions and ranks teams by the average over random skill orders, LUCK and other random outcomes.", "maximumNote": "The highest score among the 120 skill orders under your play conditions. The maximum is proved only when the search completes; a live reaches it only with that skill order."},
+    peak: {"ordinaryNote": "Current ordinary skills draw no lottery, so in Free and Challenge Live the theoretical maximum is the best of the 120 skill orders.", "noGekisou": "Gekisou modes have no theoretical maximum. One random seed, set when the live starts, decides the skill order, every LUCK lottery and every probability-based Gekisou skill together, so their best results never all happen in one live. Finding the best score a live can actually reach would mean simulating every seed for each team. For Gekisou, use Gekisou Live high score, Solo Mission or Arena, which rank by average performance.", "venueUnavailable": "The loaded engine cannot compute the theoretical maximum here yet. Choose another option under “Play as”, or try again after the engine is updated."},
     "arenaSong": "Arena song",
     "chooseArena": "Choose an Arena song",
     "noArena": "No Arena songs in this server’s current data",
-    conditions: {"play": "Play assumption", "accuracy": "Great / Just rates, no Misses", "pattern": "Declare a complete play with Misses", "missEvery": "Miss every N judged notes (0 = no Misses)", "noMiss": "Explicit complete play: no Misses.", "missPattern": "Every {n}th judged note is a Miss.", "patternNote": "Great and Just rates below are applied before replacing those notes with Misses. This fixed pattern is not a distribution of human errors.", "timeLimit": "Time limit", "timeLimitNote": "When time runs out, the best teams found so far are shown, marked as not proven optimal.", "timeLimits": {"30": "30 s", "60": "1 min", "120": "2 min", "300": "5 min", "none": "No limit"}, "eventItemsNote": "For each possible live result, the engine calculates event badges from the single matching result grade.", "secondaryPriority": "CP tie-break priority", "priorities": {"none": "CP only", "eventPointsFirst": "CP → PT → badges", "eventItemsFirst": "CP → badges → PT"}, "priorityNote": "Maximize average CP first. When CP is equal, rank teams by the selected secondary rewards.", "priorityTeams": "Return up to {n} teams from the highest-CP tier only; fewer teams may qualify. A time-limited result remains unproven.", "priorityExpectedOnly": "CP secondary rewards require Average performance. Select Average performance to continue.", "priorityUnsupported": "This engine does not support CP-first secondary rewards for these conditions."},
+    conditions: {"play": "Play assumption", "accuracy": "Great / Just rates, no Misses", "pattern": "Declare a complete play with Misses", "missEvery": "Miss every N judged notes (0 = no Misses)", "noMiss": "Explicit complete play: no Misses.", "missPattern": "Every {n}th judged note is a Miss.", "patternNote": "Great and Just rates below are applied before replacing those notes with Misses. This fixed pattern is not a distribution of human errors.", "timeLimit": "Time limit", "timeLimitNote": "When time runs out, the best teams found so far are shown, marked as not proven optimal.", "timeLimits": {"30": "30 s", "60": "1 min", "120": "2 min", "300": "5 min", "none": "No limit"}, "eventItemsNote": "For each possible live result, the engine calculates event badges from the single matching result grade.", "secondaryPriority": "CP tie-break priority", "priorities": {"none": "CP only", "eventPointsFirst": "CP → PT → badges", "eventItemsFirst": "CP → badges → PT"}, "priorityNote": "Maximize average CP first. When CP is equal, rank teams by the selected secondary rewards.", "priorityTeams": "Return up to {n} teams from the highest-CP tier only; fewer teams may qualify. A time-limited result remains unproven.", "priorityUnsupported": "This engine does not support CP-first secondary rewards for these conditions."},
 
     cloud: {
       "accountChanged": "Your signed-in account changed. Confirm the account shown below before saving this device's collection.",
@@ -552,6 +553,7 @@ export const enUS = {
       "eventItems": "Event badges",
       "battle": "Gekisou Live high score",
       "free": "Free Live high score",
+      "peak": "Theoretical maximum",
       "power": "Highest power"
     },
     "goalNotes": {
@@ -566,6 +568,7 @@ export const enUS = {
       "eventItems": "Event badges per live, calculated from each result’s exact grade.",
       "battle": "Your score on this song.",
       "free": "Your score in a solo live without gekisou.",
+      "peak": "Your highest possible score in Free or Challenge Live, with the best of the 120 skill orders.",
       "power": "The highest team power you can build."
     },
     "venues": {
@@ -597,9 +600,9 @@ export const enUS = {
       "exactReward": "Exact: {numerator}/{denominator}",
       "eventItemsUnsupported": "This engine does not support event badges selected by exact result grade.",
       "eventItemRewardsUnsupported": "This scene’s event reward data is unsupported. Each grade must have exactly one reward row with probability marker 10000.",
-      "maximumLabel": {"score": "Theoretical maximum score", "challengePoints": "Maximum CP earned per live", "eventPoints": "Maximum points per live", "eventItems": "Maximum badges per live"},
+      "maximumLabel": {"score": "Theoretical maximum score"},
       "deterministicLabel": {"score": "Score", "challengePoints": "CP earned per live", "eventPoints": "Points per live", "eventItems": "Badges per live"},
-      "bestOrder": "Skill order for the highest objective value",
+      "bestOrder": "Skill order for the theoretical maximum",
       "metricLabel": {"score": "Expected score"},
       "playSummary": "Declared play: {notes} judged notes · {misses} Misses",
       "start": "Build team",

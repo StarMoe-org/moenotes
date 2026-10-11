@@ -1,6 +1,6 @@
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
-import { CHALLENGE_POINT_PRIORITIES, RECOMMENDATION_COUNT, TIME_LIMIT_CHOICES, computes, effectiveAggregation, readsAccuracy, type DeckGoalInput, type DeckSolverCapabilities } from "@/lib/deck/goals";
+import { CHALLENGE_POINT_PRIORITIES, RECOMMENDATION_COUNT, TIME_LIMIT_CHOICES, computes, readsAccuracy, type DeckGoalInput, type DeckSolverCapabilities } from "@/lib/deck/goals";
 
 /** Inputs that belong to the selected objective; the native engine resolves the declared play. */
 export default function DeckGoalConditions({ locale, input, capabilities, onChange }: {
@@ -20,8 +20,7 @@ export default function DeckGoalConditions({ locale, input, capabilities, onChan
       {input.secondaryPriority !== null && <>
         <p className="dw-muted">{tr("priorityNote")}</p>
         <p className="dw-muted">{tr("priorityTeams", { n: RECOMMENDATION_COUNT })}</p>
-        {(effectiveAggregation(input) !== "expected" || !capabilities || !computes(capabilities, input))
-          && <p className="dw-muted" role="status">{tr(effectiveAggregation(input) !== "expected" ? "priorityExpectedOnly" : "priorityUnsupported")}</p>}
+        {(!capabilities || !computes(capabilities, input)) && <p className="dw-muted" role="status">{tr("priorityUnsupported")}</p>}
       </>}
     </>}
     {played && <>

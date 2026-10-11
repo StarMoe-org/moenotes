@@ -19,11 +19,12 @@ export const zhTW = {
     developer: "開發者應用程式", developerHint: "建立應用程式即取得憑證，可立即使用。金鑰請只保存在伺服器端。", grants: "第三方存檔授權", grantsHint: "僅分享你選擇的存檔；撤銷後將停止後續請求。", name: "應用程式名稱", website: "HTTPS 網站", description: "說明", create: "建立應用程式", emptyApps: "尚無應用程式。", clientId: "Client ID", invite: "複製邀請連結", copy: "複製", copied: "已複製", lookup: "查詢應用程式", choose: "選擇已上傳存檔", emptyArchives: "沒有可用的已上傳存檔。", authorize: "授權所選存檔", emptyGrants: "尚無授權。", revoke: "撤銷", confirmRevoke: "撤銷此授權？", cancel: "取消", refresh: "重新整理", generate: "產生金鑰", rotate: "輪替金鑰", revokeSecret: "撤銷金鑰", keyLimit: "已有兩個有效金鑰。請完成新金鑰部署後，手動撤銷舊金鑰。", confirmRotate: "產生新金鑰？舊金鑰會保留，請完成部署後手動撤銷。", secret: "用戶端金鑰", secretHint: "僅顯示一次。請安全保存於伺服器，切勿放入瀏覽器程式碼。", dismiss: "隱藏金鑰", secretActive: "金鑰有效", secretMissing: "沒有有效金鑰", ready: "可立即使用", disabled: "已停用", error: "請求失敗，請檢查輸入後重試。", success: "已儲存", unavailable: "開放平台暫時無法使用。", consent: "此應用程式可讀取所選存檔的完整內容，請只授權你信任的應用程式。",
   },
   deckWorkspace: {
-    objective: {"label": "最佳化目標", "expected": "平均表現", "maximum": "理論最高", "unsupported": "尚不支援", "expectedNote": "保持目前演奏條件，依隨機技能順序及 LUCK 等隨機結果的平均表現排序。", "maximumNote": "適用於自由ライブ與挑戰ライブ：保持目前演奏條件，尋找技能順序及隨機技能結果能達到的最高值。只有搜尋完成後才能證明最高值，並非每局都能達到。", "unavailable": "目前條件尚不支援理論最高，可選擇平均表現繼續搜尋。", "loading": "正在確認理論最高是否可用…", "gekisouNote": "激奏模式依平均表現搜尋。自由ライブ與挑戰ライブ可選擇理論最高。"},
+    objective: {"expected": "平均表現", "maximum": "理論最高", "unsupported": "尚不支援", "expectedNote": "保持目前演奏條件，依隨機技能順序及 LUCK 等隨機結果的平均表現排序。", "maximumNote": "在宣告的演奏條件下，取 120 種技能順序中的最高分。只有搜尋完成後才能證明它是最高值；實際演出要排出這個技能順序才能達到。"},
+    peak: {"ordinaryNote": "現有普通技能都不抽籤，自由ライブ和挑戰ライブ的理論最高就是 120 種技能順序裡分數最高的那一種。", "noGekisou": "撃奏模式沒有理論最高。每場演出開始時會產生一個隨機種子，技能順序、每次 LUCK 抽籤和帶機率的撃奏技能都由它一起決定，它們各自的最好結果不會湊在同一場裡。要找出實際能打到的最高分，就得替每個隊伍把所有種子都模擬一遍。打撃奏請選「撃奏ライブ拿高分」「單人 Mission」或「Arena」，它們依平均表現排序。", "venueUnavailable": "目前的計算引擎還不支援在這裡計算理論最高。可以先換一個地方打，或等引擎更新後再試。"},
     "arenaSong": "Arena 歌曲",
     "chooseArena": "選擇 Arena 歌曲",
     "noArena": "目前伺服器資料中沒有 Arena 歌曲",
-    conditions: {"play": "演奏條件", "accuracy": "Great / Just 比例，無 Miss", "pattern": "明確指定含 Miss 的完整演奏", "missEvery": "每 N 個判定音符出現一次 Miss（0 為無 Miss）", "noMiss": "明確指定完整演奏：無 Miss。", "missPattern": "每第 {n} 個判定音符記為 Miss。", "patternNote": "先套用下方 Great、Just 比例，再將指定音符改為 Miss。這是固定演奏條件，不代表真人失誤的機率分布。", "timeLimit": "最長計算時間", "timeLimitNote": "到時間後給出目前找到的最佳隊伍，並標明尚未證明最優。", "timeLimits": {"30": "30 秒", "60": "1 分鐘", "120": "2 分鐘", "300": "5 分鐘", "none": "不限"}, "eventItemsNote": "引擎逐個演出結果計算活動徽章，每次只取與最終評級確切對應的一檔獎勵。", "secondaryPriority": "CP 相同時的副收益順序", "priorities": {"none": "僅 CP", "eventPointsFirst": "CP → PT → 徽章", "eventItemsFirst": "CP → 徽章 → PT"}, "priorityNote": "先最大化平均 CP，CP 相同時再依所選副收益順序排序。", "priorityTeams": "只回傳最高 CP 層內至多 {n} 支隊伍，可能少於此數。逾時結果仍未證明最優。", "priorityExpectedOnly": "CP 副收益排序僅適用於平均表現，請選擇平均表現繼續。", "priorityUnsupported": "目前引擎不支援這些條件下的 CP 優先副收益排序。"},
+    conditions: {"play": "演奏條件", "accuracy": "Great / Just 比例，無 Miss", "pattern": "明確指定含 Miss 的完整演奏", "missEvery": "每 N 個判定音符出現一次 Miss（0 為無 Miss）", "noMiss": "明確指定完整演奏：無 Miss。", "missPattern": "每第 {n} 個判定音符記為 Miss。", "patternNote": "先套用下方 Great、Just 比例，再將指定音符改為 Miss。這是固定演奏條件，不代表真人失誤的機率分布。", "timeLimit": "最長計算時間", "timeLimitNote": "到時間後給出目前找到的最佳隊伍，並標明尚未證明最優。", "timeLimits": {"30": "30 秒", "60": "1 分鐘", "120": "2 分鐘", "300": "5 分鐘", "none": "不限"}, "eventItemsNote": "引擎逐個演出結果計算活動徽章，每次只取與最終評級確切對應的一檔獎勵。", "secondaryPriority": "CP 相同時的副收益順序", "priorities": {"none": "僅 CP", "eventPointsFirst": "CP → PT → 徽章", "eventItemsFirst": "CP → 徽章 → PT"}, "priorityNote": "先最大化平均 CP，CP 相同時再依所選副收益順序排序。", "priorityTeams": "只回傳最高 CP 層內至多 {n} 支隊伍，可能少於此數。逾時結果仍未證明最優。", "priorityUnsupported": "目前引擎不支援這些條件下的 CP 優先副收益排序。"},
 
     cloud: {
       "accountChanged": "登入帳號發生了變更。儲存本機卡池前，請確認下方顯示的帳號。",
@@ -543,6 +544,7 @@ export const zhTW = {
       "eventItems": "刷活動徽章",
       "battle": "撃奏ライブ拿高分",
       "free": "自由ライブ拿高分",
+      "peak": "理論最高分",
       "power": "綜合力最高"
     },
     "goalNotes": {
@@ -557,6 +559,7 @@ export const zhTW = {
       "eventItems": "逐個結算結果依確切評級計算每局活動徽章。",
       "battle": "這首歌能打多少分。",
       "free": "不開激走的單人演出能打多少分。",
+      "peak": "在自由ライブ或挑戰ライブ裡，技能順序最理想時最高能打多少分。",
       "power": "隊伍綜合力最高是多少。"
     },
     "venues": {
@@ -588,9 +591,9 @@ export const zhTW = {
       "exactReward": "精確值：{numerator}/{denominator}",
       "eventItemsUnsupported": "目前引擎不支援依確切結算評級計算活動徽章。",
       "eventItemRewardsUnsupported": "目前場景的活動獎勵資料不受支援：每個評級必須恰好有一條獎勵，且機率標記為 10000。",
-      "maximumLabel": {"score": "理論最高分數", "challengePoints": "每局最高新增 CP", "eventPoints": "每局最高 PT", "eventItems": "每局最高徽章"},
+      "maximumLabel": {"score": "理論最高分數"},
       "deterministicLabel": {"score": "分數", "challengePoints": "每局新增 CP", "eventPoints": "每局 PT", "eventItems": "每局徽章"},
-      "bestOrder": "達到目標最高值的技能順序",
+      "bestOrder": "打出理論最高分的技能順序",
       "metricLabel": {"score": "期望分數"},
       "playSummary": "指定演奏：{notes} 個判定音符 · {misses} 個 Miss",
       "start": "開始組卡",
