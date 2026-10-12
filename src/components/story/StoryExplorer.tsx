@@ -235,12 +235,12 @@ function ChapterGroups({ stories, locale, sort }: { stories: StoryViewModel[]; l
       .map((kind) => ({ kind, episodes: episodes.filter((episode) => (episode.episodeKind ?? "main") === kind) }))
       .filter((run) => run.episodes.length > 0);
     const chapterAsset = chapter.chapterBanner || chapter.chapterImage;
-    const chapterImageUrl = chapterAsset ? assetUrl(getAssetUrl({ path: `Story/${chapter.chapterBanner ? "Banner" : "Image"}/Chapter/${chapterAsset}.png`, type: "raw" })) : "";
+    const chapterImageUrl = chapterAsset ? assetUrl(getAssetUrl({ path: `Story/${chapter.chapterBanner ? "Banner" : "Image"}/Chapter/${chapterAsset}.png`, type: "raw", locale })) : "";
     return <section key={chapter.chapterId} className="mn-list-group overflow-hidden rounded-3xl border-[1.5px] border-[var(--mn-border)] bg-[var(--mn-paper)] shadow-[var(--mn-shadow-stamp)]">
       <div className="flex flex-col">
         {chapterImageUrl && (
-          <div className="w-full aspect-[21/9] sm:aspect-[24/9] md:aspect-[3/1] bg-[var(--mn-cream-deep)] border-b-[1.5px] border-[var(--mn-border)] overflow-hidden">
-            <img src={chapterImageUrl} alt="" className="h-full w-full object-cover transition duration-300 hover:scale-[1.01]" />
+          <div className="w-full bg-[var(--mn-cream-deep)] border-b-[1.5px] border-[var(--mn-border)] overflow-hidden">
+            <img src={chapterImageUrl} alt="" className="block h-auto w-full" />
           </div>
         )}
         <div className="flex flex-col justify-center p-6 sm:p-8">
