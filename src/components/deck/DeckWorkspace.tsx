@@ -9,7 +9,8 @@ import type { SupportCardViewModel } from "@/lib/support-cards/data";
 import type { MusicViewModel } from "@/lib/music/data";
 import { listForServer, type ServerFaceted } from "@/lib/servers/facets";
 import { ContentServerProvider, useContentServer } from "@/lib/servers/use-content-server";
-import { mergeBoxBackup, parseBox, type BoxCard, type BoxSaveLink, type CardBox, type CardFieldName, type CardKind } from "@/lib/box/model";
+import { mergeBoxBackup, type BoxCard, type BoxSaveLink, type CardBox, type CardFieldName, type CardKind } from "@/lib/box/model";
+import { BOX_BACKUP_MAX_BYTES, parseBoxBackup } from "@/lib/box/backup";
 import { answerDeckFields } from "@/lib/box/deck-answers";
 import { createDeckPreview } from "@/lib/box/deck-preview";
 import { boxAccountJson, gameSaveAccountJson } from "@/lib/deck/account-envelope";
@@ -300,12 +301,15 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
     if (!input) return;
     setBackupError(false);
     try {
-      if (input.size > 20_000_000) throw new Error("size");
-      const incoming = parseBox(await input.text());
+      if (input.size > BOX_BACKUP_MAX_BYTES) throw new Error("size");
+      const { box: incoming, save } = await parseBoxBackup(await input.text());
       if (incoming.server !== server) throw new Error("server");
       const session = getCardBoxSession(server);
       if (!session.getSnapshot().box && !await session.start(mode)) throw new Error("storage");
-      if (!await session.commit(mergeBoxBackup(session.getSnapshot().box!, incoming))) throw new Error("save");
+      const current = session.getSnapshot().box!;
+      const next = mergeBoxBackup(current, incoming);
+      if (save) await keepGameSave(save, incoming.save!.uploadedAt);
+      if (!await session.commit(next, current.revision)) throw new Error("save");
     } catch { setBackupError(true); }
     if (emptyBackup.current) emptyBackup.current.value = "";
   }

@@ -1,7 +1,9 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
-import { answerField, createCard, mergeBoxBackup, parseBox, CARD_FIELDS, type BoxCard, type CardBox, type CardFieldName, type CardKind } from "@/lib/box/model";
+import { answerField, createCard, mergeBoxBackup, CARD_FIELDS, type BoxCard, type CardBox, type CardFieldName, type CardKind } from "@/lib/box/model";
+import { BOX_BACKUP_MAX_BYTES, exportBoxBackup, parseBoxBackup } from "@/lib/box/backup";
+import { keepGameSave } from "@/lib/box/game-save-source";
 import type { CardViewModel } from "@/lib/cards/data";
 import type { SupportCardViewModel } from "@/lib/support-cards/data";
 import Modal from "@/components/shared/Modal";
@@ -141,23 +143,32 @@ export default function BoxManager({ locale, box, mode, busy, commit, members, s
   const [kind, setKind] = useState<CardKind>("member");
   const [invalid, setInvalid] = useState(false);
   const [saveError, setSaveError] = useState(false);
+  const [exportError, setExportError] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const file = useRef<HTMLInputElement>(null);
   const catalog = { members, snaps };
   const review = (card: BoxCard) => card.identity.needsReview || card.identity.value === null || CARD_FIELDS.some(name => card.fields[name].needsReview);
   const visible = shown.cards.filter(card => (tab === "review" ? review(card) : card.kind === tab) && `${cardTitle(card, catalog)} ${cardSubtitle(card, catalog)} ${card.identity.value ?? ""}`.toLowerCase().includes(query.toLowerCase()));
-  function exportBox() {
-    const url = URL.createObjectURL(new Blob([JSON.stringify(box, null, 2)], { type: "application/json" }));
-    const anchor = document.createElement("a"); anchor.href = url; anchor.download = `moenotes-box-${box.server}.json`; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  async function exportBox() {
+    setExportError(false); setExporting(true);
+    try {
+      const text = await exportBoxBackup(box);
+      const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+      const anchor = document.createElement("a"); anchor.href = url; anchor.download = `moenotes-box-${box.server}.json`; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch { setExportError(true); }
+    finally { setExporting(false); }
   }
   async function importBox(input: File | undefined) {
     if (!input) return;
     setInvalid(false);
     try {
-      if (input.size > 20_000_000) throw new Error("size");
-      const incoming = parseBox(await input.text());
+      if (input.size > BOX_BACKUP_MAX_BYTES) throw new Error("size");
+      const { box: incoming, save } = await parseBoxBackup(await input.text());
       const latest = getCardBoxSession(box.server).getSnapshot().box;
       if (!latest || latest.id !== box.id) throw new Error("Card box changed during import");
-      setSaveError(!await commit(mergeBoxBackup(latest, incoming), latest.revision));
+      const next = mergeBoxBackup(latest, incoming);
+      if (save) await keepGameSave(save, incoming.save!.uploadedAt);
+      setSaveError(!await commit(next, latest.revision));
     }
     catch { setInvalid(true); }
     if (file.current) file.current.value = "";
@@ -176,7 +187,7 @@ export default function BoxManager({ locale, box, mode, busy, commit, members, s
         {onImportSave && !view && <button type="button" className="dw-primary cb-import-action" disabled={busy} onClick={onImportSave}><CollectionIcon name="game" />{tr("gameSave.importAction")}</button>}
         {onRecognize && !view && <button type="button" className={onImportSave ? "cb-secondary-action" : "dw-primary cb-import-action"} disabled={busy} onClick={onRecognize}><CollectionIcon name="image" />{tr("screenshotImport")}</button>}
         {onGuide && !view && <button type="button" className="cb-secondary-action" onClick={onGuide}><CollectionIcon name="guide" />{collection("guide")}</button>}
-        <CollectionActionMenu locale={locale} busy={busy} onAdd={view ? undefined : () => { setAdding(true); setInvalid(false); }} onExport={exportBox} onImport={view ? undefined : () => file.current?.click()} onStorage={onStorage} onDelete={onDelete} />
+        <CollectionActionMenu locale={locale} busy={busy || exporting} onAdd={view ? undefined : () => { setAdding(true); setInvalid(false); }} onExport={() => void exportBox()} onImport={view ? undefined : () => file.current?.click()} onStorage={onStorage} onDelete={onDelete} />
       </div>
     </div>
     {notice}
@@ -191,6 +202,7 @@ export default function BoxManager({ locale, box, mode, busy, commit, members, s
       }}>{tr(value === "player" ? "playerTitle" : value)}{value !== "player" && <span>{shown.cards.filter(card => value === "review" ? review(card) : card.kind === value).length}</span>}</button>)}
     </div>{tab !== "player" && <input className="cb-card-search" type="search" name="card-search" autoComplete="off" aria-label={tr("searchCards")} placeholder={tr("searchCards")} value={query} onChange={event => setQuery(event.target.value)} />}</div>
     {invalid && <p role="alert" className="dw-alert">{tr("importError")}</p>}
+    {exportError && <p role="alert" className="dw-alert">{tr("backupExportError")}</p>}
     {saveError && <p role="alert" className="dw-alert">{tr("saveError")}</p>}
     <div className="cb-collection-content" role="tabpanel" id={`${tabId}-panel`} aria-labelledby={`${tabId}-${tab}`}>
     {tab === "player" ? <PlayerStateManager locale={locale} box={box} view={view} catalogue={playerCatalogue ?? null} busy={busy} commit={commit} /> : <>
