@@ -202,7 +202,7 @@ export default function BoxManager({ locale, box, mode, busy, commit, members, s
       }}>{tr(value === "player" ? "playerTitle" : value)}{value !== "player" && <span>{shown.cards.filter(card => value === "review" ? review(card) : card.kind === value).length}</span>}</button>)}
     </div>{tab !== "player" && <input className="cb-card-search" type="search" name="card-search" autoComplete="off" aria-label={tr("searchCards")} placeholder={tr("searchCards")} value={query} onChange={event => setQuery(event.target.value)} />}</div>
     {invalid && <p role="alert" className="dw-alert">{tr("importError")}</p>}
-    {exportError && <p role="alert" className="dw-alert">{tr("backupExportError")}</p>}
+    {exportError && <p role="alert" className="dw-alert">{tr("saveError")}</p>}
     {saveError && <p role="alert" className="dw-alert">{tr("saveError")}</p>}
     <div className="cb-collection-content" role="tabpanel" id={`${tabId}-panel`} aria-labelledby={`${tabId}-${tab}`}>
     {tab === "player" ? <PlayerStateManager locale={locale} box={box} view={view} catalogue={playerCatalogue ?? null} busy={busy} commit={commit} /> : <>
