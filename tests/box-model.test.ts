@@ -55,6 +55,39 @@ describe("card box field lifecycle", () => {
     expect(mergeField(known, imported)).toMatchObject({ status: "manual", value: 2, needsReview: true });
     expect(mergeField(imported, known)).toMatchObject({ status: "manual", value: 2, needsReview: true });
   });
+  test("game-save observations cannot act as manual answers or demote retained manual answers", () => {
+    const save = { id: "save-source", source: "game-save" as const, value: 5, at: 20 };
+    const observedSave = observeField(unknownField<number>(), save);
+    expect(observedSave).toMatchObject({ status: "observed", value: 5 });
+    expect(() => answerField(observedSave, save)).toThrow("manual answer");
+    expect(() => answerField(observedSave, { ...save, value: null })).toThrow("manual answer");
+    const known = answerField(unknownField<number>(), manual("manual-source", 2, 10));
+    const descendant = { ...observedSave, history: [...known.history, save] };
+    for (const [a, b] of [[known, descendant], [descendant, known], [known, observedSave], [observedSave, known]]) {
+      expect(mergeField(a!, b!)).toMatchObject({ status: "manual", value: 2, needsReview: true });
+    }
+    const sameValue = { ...descendant, value: 2, history: [...known.history, { ...save, value: 2 }] };
+    expect(mergeField(known, sameValue)).toMatchObject({ status: "manual", value: 2, needsReview: false });
+  });
+  test("persisted game-save values require observed evidence; manual values require an answer", () => {
+    const box = createBox("jp", "snapshot", 1);
+    box.player.vipRank = observeField(unknownField<number>(), { id: "save-vip", source: "game-save", value: 2, at: 1 });
+    expect(parseBox(JSON.stringify(box))).toEqual(box);
+    const manualSave = structuredClone(box);
+    manualSave.player.vipRank.status = "manual";
+    expect(() => parseBox(JSON.stringify(manualSave))).toThrow("source evidence");
+    const manualValue = structuredClone(box);
+    manualValue.player.vipRank.history.push(manual("different-answer", 3, 2));
+    manualValue.player.vipRank.status = "manual";
+    expect(() => parseBox(JSON.stringify(manualValue))).toThrow("source evidence");
+    const answered = structuredClone(box);
+    answered.player.vipRank = answerField(box.player.vipRank, manual("explicit-answer", 2, 2));
+    expect(parseBox(JSON.stringify(answered)).player.vipRank.status).toBe("manual");
+    const falselyObserved = createBox("jp", "false-observation", 1);
+    falselyObserved.player.vipRank = answerField(unknownField(), manual("answer", 2, 2));
+    falselyObserved.player.vipRank.status = "observed";
+    expect(() => parseBox(JSON.stringify(falselyObserved))).toThrow("source evidence");
+  });
 });
 
 describe("shared card box facts", () => {

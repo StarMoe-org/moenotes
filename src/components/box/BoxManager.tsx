@@ -1,9 +1,8 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
-import { answerField, createCard, mergeBoxBackup, CARD_FIELDS, type BoxCard, type CardBox, type CardFieldName, type CardKind } from "@/lib/box/model";
-import { BOX_BACKUP_MAX_BYTES, exportBoxBackup, parseBoxBackup } from "@/lib/box/backup";
-import { keepGameSave } from "@/lib/box/game-save-source";
+import { answerField, createCard, CARD_FIELDS, type BoxCard, type CardBox, type CardFieldName, type CardKind } from "@/lib/box/model";
+import { exportBoxBackup } from "@/lib/box/backup";
 import type { CardViewModel } from "@/lib/cards/data";
 import type { SupportCardViewModel } from "@/lib/support-cards/data";
 import Modal from "@/components/shared/Modal";
@@ -13,7 +12,7 @@ import PlayerStateManager from "./PlayerStateManager";
 import type { PlayerFieldCatalogue } from "@/lib/box/player-catalog";
 import CardIdentitySelection from "./CardIdentitySelection";
 import { ObservedLevelControl, StepControl } from "@/components/shared/CardGrowthControls";
-import { getCardBoxSession, type BoxMode } from "@/lib/box/session";
+import type { BoxMode } from "@/lib/box/session";
 import CollectionIcon from "./CollectionIcon";
 import CollectionActionMenu from "./CollectionActionMenu";
 import "@/styles/card-box-collection.css";
@@ -22,6 +21,9 @@ export interface BoxCatalog { members: readonly CardViewModel[]; snaps: readonly
 export interface BoxManagerProps extends BoxCatalog {
   locale: AppLocale; box: CardBox; mode: BoxMode; busy: boolean; playerCatalogue?: PlayerFieldCatalogue | null;
   commit: (box: CardBox, expectedRevision?: number) => Promise<boolean>;
+  importBackup: (file: File, expectedBoxId: string) => Promise<boolean>;
+  /** An unavailable linked view is an empty placeholder, not an exportable snapshot. */
+  snapshotReady: boolean;
   onRecognize?: (() => void) | undefined; onGuide?: (() => void) | undefined;
   onStorage?: (() => void) | undefined; onDelete?: (() => void) | undefined;
   /** Opens the game save picker; it then becomes the primary import action. */
@@ -128,7 +130,7 @@ export function BoxCardEditor({ locale, box, cardKey, busy, commit, onClose, mem
     </Modal>
   </>;
 }
-export default function BoxManager({ locale, box, mode, busy, commit, members, snaps, playerCatalogue, onRecognize, onGuide, onStorage, onDelete, onImportSave, view, notice }: BoxManagerProps) {
+export default function BoxManager({ locale, box, mode, busy, commit, importBackup, snapshotReady, members, snaps, playerCatalogue, onRecognize, onGuide, onStorage, onDelete, onImportSave, view, notice }: BoxManagerProps) {
   const tr = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.${key}`, values);
   const collection = (key: string, values?: Record<string, string | number>) => tr(`collection.${key}`, values);
   const [tab, setTab] = useState<CardKind | "review" | "player">("member");
@@ -152,7 +154,8 @@ export default function BoxManager({ locale, box, mode, busy, commit, members, s
   async function exportBox() {
     setExportError(false); setExporting(true);
     try {
-      const text = await exportBoxBackup(box);
+      if (!snapshotReady) throw new Error("Linked save is unavailable for a snapshot");
+      const text = await exportBoxBackup(shown);
       const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
       const anchor = document.createElement("a"); anchor.href = url; anchor.download = `moenotes-box-${box.server}.json`; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch { setExportError(true); }
@@ -162,13 +165,7 @@ export default function BoxManager({ locale, box, mode, busy, commit, members, s
     if (!input) return;
     setInvalid(false);
     try {
-      if (input.size > BOX_BACKUP_MAX_BYTES) throw new Error("size");
-      const { box: incoming, save } = await parseBoxBackup(await input.text());
-      const latest = getCardBoxSession(box.server).getSnapshot().box;
-      if (!latest || latest.id !== box.id) throw new Error("Card box changed during import");
-      const next = mergeBoxBackup(latest, incoming);
-      if (save) await keepGameSave(save, incoming.save!.uploadedAt);
-      setSaveError(!await commit(next, latest.revision));
+      setSaveError(!await importBackup(input, box.id));
     }
     catch { setInvalid(true); }
     if (file.current) file.current.value = "";

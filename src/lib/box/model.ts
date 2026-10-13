@@ -4,7 +4,7 @@ import { gameSaveServer, type GameSaveServer } from "@/config/account";
 export const BOX_FORMAT = "moenotes.card-box/1" as const;
 export type CardKind = "member" | "snap";
 export type FieldStatus = "unknown" | "observed" | "manual" | "conflict";
-/** `game-save` evidence is derived in memory from a linked save and never stored in a Box. */
+/** Game-save observations may be persisted by exporting the displayed Box as a snapshot. */
 export type FieldSource = "screenshot" | "manual" | "deck-answer" | "game-save";
 export type CardFieldName = "level" | "awake" | "rank" | "liveSkillLevel" | "gekisouSkillLevel";
 export const CARD_FIELDS: readonly CardFieldName[] = ["level", "awake", "rank", "liveSkillLevel", "gekisouSkillLevel"];
@@ -25,7 +25,7 @@ export interface BoxField<T> {
   status: FieldStatus;
   value: T | null;
   history: Observation<T>[];
-  /** A later screenshot disagrees with a manual value; the manual value stays authoritative. */
+  /** A later observation disagrees with a manual value; the manual value stays authoritative. */
   needsReview: boolean;
 }
 export interface BoxCard {
@@ -86,7 +86,9 @@ function canonical(value: unknown): string {
 const same = (a: unknown, b: unknown): boolean => canonical(a) === canonical(b);
 const latestTime = <T>(field: BoxField<T>): number => field.history.reduce((latest, item) => Math.max(latest, item.at), -1);
 const containsHistory = <T>(a: BoxField<T>, b: BoxField<T>): boolean => b.history.every(item => a.history.some(other => other.id === item.id));
-const hasClear = <T>(field: BoxField<T>): boolean => field.status === "unknown" && field.history.some(item => item.source !== "screenshot" && item.value === null);
+const observedSource = (source: FieldSource): boolean => source === "screenshot" || source === "game-save";
+const answerSource = (source: FieldSource): boolean => source === "manual" || source === "deck-answer";
+const hasClear = <T>(field: BoxField<T>): boolean => field.status === "unknown" && field.history.some(item => answerSource(item.source) && item.value === null);
 
 function combineHistory<T>(a: Observation<T>[], b: Observation<T>[]): Observation<T>[] {
   const entries = new Map<string, Observation<T>>();
@@ -101,12 +103,12 @@ function combineHistory<T>(a: Observation<T>[], b: Observation<T>[]): Observatio
 /** Account/local merge: conflicting manual answers always need an explicit decision. */
 export function mergeField<T>(a: BoxField<T>, b: BoxField<T>): BoxField<T> {
   const history = combineHistory(a.history, b.history);
-  const screenshotExtension = (newer: BoxField<T>, older: BoxField<T>): boolean => older.status === "manual" && newer.history.length > older.history.length && containsHistory(newer, older)
-    && newer.history.filter(item => !older.history.some(previous => previous.id === item.id)).every(item => item.source === "screenshot");
-  // Retaining old evidence in an imported observation does not authorize a screenshot to demote manual truth.
-  if (screenshotExtension(a, b) || screenshotExtension(b, a)) {
-    const manual = screenshotExtension(a, b) ? b : a;
-    return { ...structuredClone(manual), history, needsReview: manual.needsReview || history.some(item => item.source === "screenshot" && item.value !== null && !same(item.value, manual.value)) };
+  const observedExtension = (newer: BoxField<T>, older: BoxField<T>): boolean => older.status === "manual" && newer.history.length > older.history.length && containsHistory(newer, older)
+    && newer.history.filter(item => !older.history.some(previous => previous.id === item.id)).every(item => observedSource(item.source));
+  // Retaining old evidence in an imported observation does not authorize it to demote manual truth.
+  if (observedExtension(a, b) || observedExtension(b, a)) {
+    const manual = observedExtension(a, b) ? b : a;
+    return { ...structuredClone(manual), history, needsReview: manual.needsReview || history.some(item => observedSource(item.source) && item.value !== null && !same(item.value, manual.value)) };
   }
   // A resolved/cleared descendant must not become a conflict with its own older snapshot.
   // Independent manual branches still reach the explicit-conflict case below.
@@ -134,13 +136,13 @@ export function mergeField<T>(a: BoxField<T>, b: BoxField<T>): BoxField<T> {
 }
 
 export function observeField<T>(field: BoxField<T>, observation: Observation<T>): BoxField<T> {
-  if (observation.source !== "screenshot" || observation.value === null) throw new Error("Expected a known screenshot observation");
+  if (!observedSource(observation.source) || observation.value === null) throw new Error("Expected a known observation");
   return mergeField(field, { status: "observed", value: observation.value, history: [observation], needsReview: false });
 }
 
 /** This explicit answer resolves conflicts; clearing stays unknown instead of reviving old observations. */
 export function answerField<T>(field: BoxField<T>, observation: Observation<T>): BoxField<T> {
-  if (observation.source === "screenshot") throw new Error("Expected a manual answer");
+  if (!answerSource(observation.source)) throw new Error("Expected a manual answer");
   return { status: observation.value === null ? "unknown" : "manual", value: structuredClone(observation.value),
     history: combineHistory(field.history, [observation]), needsReview: false };
 }
@@ -235,7 +237,7 @@ function checkField(value: unknown, accepts: (item: unknown) => boolean): void {
   if (["unknown", "conflict"].includes(String(value.status)) ? value.value !== null : !accepts(value.value)) throw new Error("Invalid field value");
   const ids = new Set<string>();
   for (const item of value.history) {
-    if (!record(item) || typeof item.id !== "string" || !item.id || ids.has(item.id) || !["screenshot", "manual", "deck-answer"].includes(String(item.source)) || !Number.isSafeInteger(item.at) || Number(item.at) < 0 || (item.value !== null && !accepts(item.value))) throw new Error("Invalid field evidence");
+    if (!record(item) || typeof item.id !== "string" || !item.id || ids.has(item.id) || !["screenshot", "manual", "deck-answer", "game-save"].includes(String(item.source)) || !Number.isSafeInteger(item.at) || Number(item.at) < 0 || (item.value !== null && !accepts(item.value))) throw new Error("Invalid field evidence");
     onlyKeys(item, ["id", "value", "source", "at", "screenshot", "catalog"]);
     ids.add(item.id);
     if (item.screenshot !== undefined && (!record(item.screenshot) || typeof item.screenshot.sourceId !== "string" || !Array.isArray(item.screenshot.bbox) || item.screenshot.bbox.length !== 4 || !item.screenshot.bbox.every(n => typeof n === "number" && Number.isFinite(n)))) throw new Error("Invalid screenshot reference");
@@ -261,7 +263,7 @@ function checkField(value: unknown, accepts: (item: unknown) => boolean): void {
       checkCatalogIdentity(item.catalog, ["fieldKey", "sourceEvidence"]);
     }
   }
-  if (["manual", "observed"].includes(String(value.status)) && !value.history.some(item => record(item) && same(item.value, value.value) && (value.status === "observed" ? item.source === "screenshot" : item.source !== "screenshot"))) throw new Error("Known field is missing its source evidence");
+  if (["manual", "observed"].includes(String(value.status)) && !value.history.some(item => record(item) && same(item.value, value.value) && (value.status === "observed" ? observedSource(item.source as FieldSource) : answerSource(item.source as FieldSource)))) throw new Error("Known field is missing its source evidence");
 }
 const idValue = (value: unknown) => typeof value === "string" && /^[1-9][0-9]*$/.test(value);
 const i64Value = (value: unknown) => idValue(value) && BigInt(value as string) <= 9223372036854775807n;

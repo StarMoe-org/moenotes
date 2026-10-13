@@ -9,8 +9,9 @@ import type { SupportCardViewModel } from "@/lib/support-cards/data";
 import type { MusicViewModel } from "@/lib/music/data";
 import { listForServer, type ServerFaceted } from "@/lib/servers/facets";
 import { ContentServerProvider, useContentServer } from "@/lib/servers/use-content-server";
-import { mergeBoxBackup, type BoxCard, type BoxSaveLink, type CardBox, type CardFieldName, type CardKind } from "@/lib/box/model";
+import { type BoxCard, type BoxSaveLink, type CardBox, type CardFieldName, type CardKind } from "@/lib/box/model";
 import { BOX_BACKUP_MAX_BYTES, parseBoxBackup } from "@/lib/box/backup";
+import { restoreBoxBackup } from "@/lib/box/restore-backup";
 import { answerDeckFields } from "@/lib/box/deck-answers";
 import { createDeckPreview } from "@/lib/box/deck-preview";
 import { boxAccountJson, gameSaveAccountJson } from "@/lib/deck/account-envelope";
@@ -69,7 +70,7 @@ export interface DeckWorkspaceProps {
   deckArenas?: readonly { server: GameServer; songs: readonly DeckArenaMusic[] }[];
 }
 const GOAL_STORAGE_KEY = "moenotes.deck.goal";
-/** Set per server after the user unlinks the uploaded save: the Box then keeps its own facts until a save is linked again. */
+/** Set per server after unlinking or restoring an independent backup, until a save is explicitly linked again. */
 const OWN_FACTS_KEY = "moenotes.box.own-facts";
 /** One automatic save action, keyed by the listed version it acts on. */
 interface AutoAttempt { key: string; tries: number; running: boolean }
@@ -111,7 +112,10 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const saveTables = props.saveTables?.find(value => value.server === server) ?? null;
   /** What the page shows (`box`): the stored Box, or while a save is linked, the Box the save describes. */
   const { storage, linkedSave, derivation, box } = useCardBoxView(server, saveTables, playerCatalogue);
-  const { busy, mode } = storage;
+  const [restoringBackup, setRestoringBackup] = useState(false);
+  const restoringBackupRef = useRef(false);
+  const { busy: storageBusy, mode } = storage;
+  const busy = storageBusy || restoringBackup;
   /** The stored Box: every write starts from it. */
   const stored = storage.box;
   const members = useMemo(() => listForServer(props.members, server), [props.members, server]);
@@ -124,7 +128,17 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const ownFactsKey = `${OWN_FACTS_KEY}.${server}`;
   /** Null until read. While false, a signed-in Box reads the account's uploaded save. */
   const [ownFacts, setOwnFacts] = useState<boolean | null>(null);
-  useEffect(() => { setOwnFacts(safeGetLocalStorage(ownFactsKey) === "1"); }, [ownFactsKey]);
+  const ownFactsByServer = useRef(new Map<GameServer, boolean>());
+  function readsOwnFacts(target: GameServer): boolean {
+    // Honor another tab's opt-out even when this tab last selected a save. Memory covers blocked storage.
+    return safeGetLocalStorage(`${OWN_FACTS_KEY}.${target}`) === "1" || ownFactsByServer.current.get(target) === true;
+  }
+  function preferOwnFacts(value: boolean) {
+    ownFactsByServer.current.set(server, value);
+    if (value) safeSetLocalStorage(ownFactsKey, "1"); else safeRemoveLocalStorage(ownFactsKey);
+    setOwnFacts(value);
+  }
+  useEffect(() => { setOwnFacts(readsOwnFacts(server)); }, [ownFactsKey]);
   const rawRecognitionSource = props.recognitionSources?.find(value => value.server === server);
   const recognition = useMemo(() => {
     if (!rawRecognitionSource) return { context: undefined, issue: "Master source stamp is unavailable" };
@@ -297,19 +311,25 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
     document.addEventListener("paste", paste);
     return () => document.removeEventListener("paste", paste);
   }, [page, importing, busy]);
+  async function importBackup(input: File, expectedBoxId?: string): Promise<boolean> {
+    if (restoringBackupRef.current) return false;
+    restoringBackupRef.current = true;
+    setRestoringBackup(true);
+    try {
+      if (input.size > BOX_BACKUP_MAX_BYTES) throw new Error("size");
+      const incoming = parseBoxBackup(await input.text());
+      const session = getCardBoxSession(server);
+      return await restoreBoxBackup(session, incoming, mode, { get: () => readsOwnFacts(server), set: preferOwnFacts }, expectedBoxId);
+    } finally {
+      restoringBackupRef.current = false;
+      setRestoringBackup(false);
+    }
+  }
   async function restoreBackup(input: File | undefined) {
     if (!input) return;
     setBackupError(false);
     try {
-      if (input.size > BOX_BACKUP_MAX_BYTES) throw new Error("size");
-      const { box: incoming, save } = await parseBoxBackup(await input.text());
-      if (incoming.server !== server) throw new Error("server");
-      const session = getCardBoxSession(server);
-      if (!session.getSnapshot().box && !await session.start(mode)) throw new Error("storage");
-      const current = session.getSnapshot().box!;
-      const next = mergeBoxBackup(current, incoming);
-      if (save) await keepGameSave(save, incoming.save!.uploadedAt);
-      if (!await session.commit(next, current.revision)) throw new Error("save");
+      if (!await importBackup(input)) throw new Error("save");
     } catch { setBackupError(true); }
     if (emptyBackup.current) emptyBackup.current.value = "";
   }
@@ -326,12 +346,18 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   /** Checks the source around cache storage; a Box is created in the current storage mode when there is none. */
   async function linkGameSave(meta: GameSaveMeta, save: LoadedGameSave, expectedSave?: BoxSaveLink | null): Promise<boolean> {
     if (save.server !== meta.server || save.accountId !== meta.accountId || save.sha256 !== meta.sha256) return false;
+    const automaticBlocked = () => expectedSave === null && (restoringBackupRef.current || readsOwnFacts(server));
+    if (automaticBlocked()) return false;
     const session = getCardBoxSession(server);
     if (!session.getSnapshot().box && expectedSave) return false;
     if (!session.getSnapshot().box && !await session.start(mode)) return false;
     const previous = session.getSnapshot().box?.save;
     const link = { server: meta.server, accountId: meta.accountId, sha256: save.sha256, uploadedAt: meta.uploadedAt };
-    const linked = await session.linkSave(link, expectedSave, () => keepGameSave(save, meta.uploadedAt));
+    const linked = await session.linkSave(link, expectedSave, async () => {
+      if (automaticBlocked()) throw new Error("Independent collection selected");
+      await keepGameSave(save, meta.uploadedAt);
+      if (automaticBlocked()) throw new Error("Independent collection selected");
+    });
     if (linked) {
       await pruneSaveCache(link).catch(() => undefined);
       if (previous && (previous.server !== link.server || previous.accountId !== link.accountId)) await pruneSaveCache(previous).catch(() => undefined);
@@ -359,15 +385,16 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   /** The user's own choice in the picker; it also ends an earlier opt-out. */
   async function pickGameSave(meta: GameSaveMeta, save: LoadedGameSave): Promise<boolean> {
     const linked = await linkGameSave(meta, save);
-    if (linked) { safeRemoveLocalStorage(ownFactsKey); setOwnFacts(false); }
+    if (linked) preferOwnFacts(false);
     return linked;
   }
   async function unlinkGameSave(): Promise<boolean> {
     if (!stored?.save) return false;
     const link = stored.save;
     // Opt out first: the render that sees the unlinked Box must not link the upload again.
-    safeSetLocalStorage(ownFactsKey, "1"); setOwnFacts(true);
-    if (!await storage.commit({ ...stored, save: null })) { safeRemoveLocalStorage(ownFactsKey); setOwnFacts(false); return false; }
+    const previous = readsOwnFacts(server);
+    preferOwnFacts(true);
+    if (!await storage.commit({ ...stored, save: null })) { preferOwnFacts(previous); return false; }
     forgetLoadedGameSave(link.server, link.accountId, link.sha256);
     await pruneSaveCache(link).catch(() => undefined);
     return true;
@@ -378,7 +405,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
   const autoLink = useRef<AutoAttempt | null>(null);
   useEffect(() => {
     const saves = saveList.saves;
-    if (busy || stored?.save || ownFacts !== false || saveList.access !== "signed-in" || !saves?.length) return;
+    if (busy || stored?.save || ownFacts !== false || readsOwnFacts(server) || saveList.access !== "signed-in" || !saves?.length) return;
     const attempt = startAttempt(autoLink, `${server}:${saves.map(save => save.sha256).join(",")}`);
     if (!attempt) return;
     void (async () => {
@@ -388,7 +415,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
       if (!meta) return true;
       const save = await fetchGameSave(meta.server, meta.accountId);
       if (save.sha256 !== meta.sha256) { await saveList.refresh(); return true; }
-      return safeGetLocalStorage(ownFactsKey) === "1" || await linkGameSave(meta, save, null);
+      return restoringBackupRef.current || readsOwnFacts(server) || await linkGameSave(meta, save, null);
     })().catch(() => false).then(done => finishAttempt(attempt, done));
   }, [busy, stored?.save, ownFacts, saveList.access, saveList.saves, server]);
   const follow = useRef<AutoAttempt | null>(null);
@@ -477,7 +504,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
       setDraggingScreenshots(false); if (!files.length) return;
       event.preventDefault(); importImages(files);
     }}>
-      {stored && box ? <BoxManager key={`${server}:${stored.id}`} locale={locale} box={stored} view={linked ? box : undefined} notice={saveNotice} mode={mode} busy={busy} commit={storage.commit} playerCatalogue={playerCatalogue} onRecognize={openScreenshotImport} onImportSave={openSavePicker} onGuide={openGuide} onStorage={openStorage} onDelete={() => setDeleting(true)} {...catalog} /> : <>
+      {stored && box ? <BoxManager key={`${server}:${stored.id}`} locale={locale} box={stored} view={linked ? box : undefined} notice={saveNotice} mode={mode} busy={busy} commit={storage.commit} importBackup={importBackup} snapshotReady={saveReady && (!linked || derivation !== null)} playerCatalogue={playerCatalogue} onRecognize={openScreenshotImport} onImportSave={openSavePicker} onGuide={openGuide} onStorage={openStorage} onDelete={() => setDeleting(true)} {...catalog} /> : <>
         <div className="cb-collection-tools"><span className="cb-save-status" role="status">{collection(busy ? "loading" : "noBox")}</span><div className="cb-collection-actions"><button type="button" className="dw-primary cb-import-action" disabled={busy} onClick={openSavePicker}><CollectionIcon name="game" />{tr("gameSave.importAction")}</button><button type="button" className="cb-secondary-action" disabled={busy} onClick={openScreenshotImport}><CollectionIcon name="image" />{tr("screenshotImport")}</button><button type="button" className="cb-secondary-action" onClick={openGuide}><CollectionIcon name="guide" />{collection("guide")}</button><CollectionActionMenu locale={locale} busy={busy} onAdd={openStorage} onImport={() => emptyBackup.current?.click()} onStorage={openStorage} /></div></div>
         {saveNotice}
         <input className="dw-hidden" ref={emptyBackup} type="file" accept="application/json,.json" aria-label={collection("import")} onChange={event => void restoreBackup(event.target.files?.[0])} />
@@ -581,7 +608,7 @@ export default function DeckWorkspace(props: DeckWorkspaceProps) {
       />
     </>}
     <Modal historyNavigation={false} isOpen={setup} onClose={() => setSetup(false)} title={tr(box ? "storageChoice" : "createBox")} closeLabel={tr("close")}><div className="dw-dialog"><p>{tr("storagePrompt")}</p><div className="dw-storage-options">{(["local", "temporary"] as const).map(value => <button className={choice === value ? "is-selected" : ""} aria-pressed={choice === value} key={value} onClick={() => setChoice(value)}><strong>{tr(value)}</strong><span>{tr(value === "local" ? "localNote" : "temporaryNote")}</span></button>)}</div><p className="dw-muted">{tr("cloud.storageNote")}</p>{storage.error && <p className="dw-alert" role="alert">{tr(`storageErrors.${storage.error}`)}</p>}<button disabled={busy} className="dw-primary" onClick={async () => { if (await storage.start(choice)) { setSetup(false); if (page === "deck") setManagement(true); } }}>{tr(box ? "save" : "continue")}</button></div></Modal>
-    <Modal historyNavigation={false} isOpen={management && box !== null} onClose={() => setManagement(false)} title={tr("boxTitle")} closeLabel={tr("close")} size="xl">{stored && box && <BoxManager key={`${server}:${stored.id}`} locale={locale} box={stored} view={linked ? box : undefined} notice={saveNotice} mode={mode} busy={busy} commit={storage.commit} playerCatalogue={playerCatalogue} onRecognize={openScreenshotImport} onImportSave={openSavePicker} onGuide={openGuide} onStorage={() => { setManagement(false); openStorage(); }} onDelete={() => { setManagement(false); setDeleting(true); }} {...catalog} />}</Modal>
+    <Modal historyNavigation={false} isOpen={management && box !== null} onClose={() => setManagement(false)} title={tr("boxTitle")} closeLabel={tr("close")} size="xl">{stored && box && <BoxManager key={`${server}:${stored.id}`} locale={locale} box={stored} view={linked ? box : undefined} notice={saveNotice} mode={mode} busy={busy} commit={storage.commit} importBackup={importBackup} snapshotReady={saveReady && (!linked || derivation !== null)} playerCatalogue={playerCatalogue} onRecognize={openScreenshotImport} onImportSave={openSavePicker} onGuide={openGuide} onStorage={() => { setManagement(false); openStorage(); }} onDelete={() => { setManagement(false); setDeleting(true); }} {...catalog} />}</Modal>
     {box && <BoxCardEditor locale={locale} box={box} cardKey={editingCardKey} busy={busy} commit={storage.commit} onClose={() => setEditingCardKey(null)} readOnly={linked} {...catalog} />}
     <MusicSelectDialog key={`songs:${server}`} locale={locale} songs={songs} open={songPicker} onClose={() => setSongPicker(false)}
       current={selectedSong ? { musicId: selectedSong.id, difficulty: goalInput.difficulty } : null} sortPage="deck-song"

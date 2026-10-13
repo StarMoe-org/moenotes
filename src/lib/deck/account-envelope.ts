@@ -33,7 +33,9 @@ function known<T>(field: BoxField<T> | undefined): T | null {
   return field && (field.status === "manual" || field.status === "observed") ? field.value : null;
 }
 function origin<T>(field: BoxField<T>): string {
+  if (field.status === "manual") return "entered manually";
   const evidence = [...field.history].reverse().find((item: Observation<T>) => item.value === field.value);
+  if (evidence?.source === "game-save") return "read from a game save";
   return evidence?.source === "screenshot" ? "read from a screenshot" : "entered manually";
 }
 function checkTarget(target: AccountTarget, box: CardBox): void {
@@ -67,7 +69,7 @@ export function gameSaveAccountJson(target: AccountTarget, box: CardBox, save: {
 }
 
 /**
- * A Box built from screenshots and manual answers: `_player` is assembled from its facts. Unknown values are null;
+ * An independent Box built from observations and manual answers: `_player` is assembled from its facts. Unknown values are null;
  * a known card level or character rank becomes the cumulative experience that level needs, recorded as an
  * assumption. Coverage follows the Box's completeness declarations.
  */

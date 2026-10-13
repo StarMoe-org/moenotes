@@ -198,7 +198,7 @@ describe("game save derivation", () => {
     expect(box.cards.map(card => card.identity.value)).toEqual(["101"]);
     expect(box.player.vipRank.value).toBe(4);
     expect(stored).toEqual(before);
-    expect(() => parseBox(JSON.stringify(box))).toThrow();
+    expect(parseBox(JSON.stringify(box))).toEqual(box);
     expect(unavailableGameSaveBox(stored).cards).toEqual([]);
     expect(gameSaveCounts(save({ _memberCards: [{}, {}], _supportCards: [{}] }))).toEqual({ members: 2, snaps: 1 });
   });
