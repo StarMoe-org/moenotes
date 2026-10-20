@@ -148,6 +148,8 @@ never asks for them; to rebuild an old key, delete that Release and its tag.
 | `MOENOTES_ASSET_INTERNAL` | _(unset)_ | In-cluster origin of the asset service, used for the server's version checks |
 | `MOENOTES_MASTERDATA_INTERNAL` | _(unset)_ | In-cluster origin of the metadata service, used for the server's version checks |
 | `MOENOTES_API_INTERNAL` | _(unset)_ | Origin of starmoe-api, with its scheme: in-cluster, or public `https://` when it runs on another server. `/api/*` is forwarded there. It answers 404 while the variable is unset or invalid; an invalid value is logged at startup ([account.md](account.md)) |
+| `MOENOTES_ROOM_CHECK_INTERNAL` | _(unset)_ | Absolute http(s) base URL of the Room Check service. `/api/room-check/*` is forwarded there, and the site's session is checked against `MOENOTES_API_INTERNAL` for the actions that belong to an account. The variable is unset or invalid: the route answers 404 and an invalid value is logged at startup ([room-check.md](room-check.md)) |
+| `MOENOTES_ROOM_CHECK_KEY` | _(unset)_ | Optional shared key, sent to the Room Check service as `X-Room-Check-Key`; never logged or exposed |
 | `MOENOTES_DATA_DIR` | `/data` | Volume for builds, logs and state |
 | `MOENOTES_SOURCE_DIGEST_FILE` | `/app/source-digest` in the image | The image's source digest |
 | `MOENOTES_APP_DIR` | _(unset)_ | Development: compute the source digest from this checkout instead |
@@ -209,6 +211,7 @@ Uncompressed responses support byte ranges.
 | `/readyz` | 200 once a build is live, 503 before |
 | `/_moenotes/status` | JSON: live build, source revision, build in progress (`step`, `pages`), background compression (`compressing`: build id and start), wait reason, last failure, last check |
 | `/api/*` | Forwarded to starmoe-api (`server/internal/web/proxy.go`), also before the first build; 404 without `MOENOTES_API_INTERNAL`, 502 when the API does not answer |
+| `/api/room-check/*` | Forwarded to the Room Check service (`server/internal/web/roomcheck.go`), also before the first build; 404 without `MOENOTES_ROOM_CHECK_INTERNAL`, 502 when the service does not answer. Account-bound actions answer 401 `{"error":"login_required"}` without a session ([room-check.md](room-check.md)) |
 
 Before the first build completes every site path answers 503 with `Retry-After: 60`.
 

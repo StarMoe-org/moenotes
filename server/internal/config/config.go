@@ -45,6 +45,12 @@ type Config struct {
 	// APIOrigin is starmoe-api's origin; empty disables /api/*. APIInvalid reports a value that is not a URL.
 	APIOrigin  string
 	APIInvalid bool
+	// RoomCheckOrigin is the room-check service's base URL behind /api/room-check/*; empty disables the route and
+	// RoomCheckInvalid reports a value that is not one.
+	RoomCheckOrigin  string
+	RoomCheckInvalid bool
+	// RoomCheckKey is the optional shared key sent to the room-check service. It is never logged.
+	RoomCheckKey string
 
 	// SourceDigest is the image's source digest (see upstream.SourceDigest); empty when unavailable.
 	SourceDigestFile string
@@ -94,6 +100,21 @@ func ParseAPIOrigin(raw string) (origin string, invalid bool) {
 		return "", true
 	}
 	return parsed.Scheme + "://" + parsed.Host, false
+}
+
+// ParseRoomCheckOrigin reads MOENOTES_ROOM_CHECK_INTERNAL: an absolute http(s) URL, in-cluster or public. Anything
+// else is reported as invalid and leaves /api/room-check/* disabled, so a typo does not take the site down. A path in
+// the value is kept as the base path the room-check paths are appended to.
+func ParseRoomCheckOrigin(raw string) (origin string, invalid bool) {
+	raw = strings.TrimRight(raw, "/")
+	if raw == "" {
+		return "", false
+	}
+	parsed, err := url.Parse(raw)
+	if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Host == "" {
+		return "", true
+	}
+	return raw, false
 }
 
 func origin(name string) (string, error) {
@@ -170,6 +191,8 @@ func Load() (*Config, error) {
 	c.MasterdataInternal, err = origin("MOENOTES_MASTERDATA_INTERNAL")
 	check(err)
 	c.APIOrigin, c.APIInvalid = ParseAPIOrigin(env("MOENOTES_API_INTERNAL"))
+	c.RoomCheckOrigin, c.RoomCheckInvalid = ParseRoomCheckOrigin(env("MOENOTES_ROOM_CHECK_INTERNAL"))
+	c.RoomCheckKey = env("MOENOTES_ROOM_CHECK_KEY")
 
 	if mode := env("MOENOTES_BUILD_MODE"); mode != "" && mode != "github" {
 		c.Warnings = append(c.Warnings, fmt.Sprintf("MOENOTES_BUILD_MODE=%s is no longer supported; the site is always built by GitHub Actions", mode))

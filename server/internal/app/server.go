@@ -93,6 +93,7 @@ func (s *Server) Handler() http.Handler { return s.handler }
 func (s *Server) routes() http.Handler {
 	static := &web.Static{Roots: s.store.Roots, Site: s.site}
 	api := &web.APIProxy{Origin: s.cfg.APIOrigin, Client: &http.Client{}}
+	roomCheck := &web.RoomCheckProxy{Origin: s.cfg.RoomCheckOrigin, Key: s.cfg.RoomCheckKey, APIOrigin: s.cfg.APIOrigin, Client: &http.Client{}}
 	players := &web.PlayerPages{Roots: s.store.Roots, Site: s.site, APIOrigin: s.cfg.APIOrigin, Client: &http.Client{}, Fallback: static}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
@@ -117,6 +118,9 @@ func (s *Server) routes() http.Handler {
 		case path == "/_moenotes/status":
 			w.Header().Set("Cache-Control", "no-store")
 			writeJSON(w, s.status())
+		case web.IsRoomCheckPath(path):
+			// Room Check also works before the first build, and its paths are under /api/, so they are matched first.
+			roomCheck.ServeHTTP(w, r)
 		case web.IsAPIPath(path):
 			// The account API works before the first build too: it does not depend on the site output.
 			api.ServeHTTP(w, r)
@@ -200,6 +204,18 @@ func (s *Server) Run(ctx context.Context) error {
 		logx.Printf("MOENOTES_API_INTERNAL is not an absolute http(s) URL (e.g. https://api.star.moe); /api/* is disabled")
 	} else if s.cfg.APIOrigin != "" {
 		logx.Printf("forwarding /api/* to %s", s.cfg.APIOrigin)
+	}
+	switch {
+	case s.cfg.RoomCheckInvalid:
+		logx.Printf("MOENOTES_ROOM_CHECK_INTERNAL is not an absolute http(s) URL; /api/room-check/* is disabled")
+	case s.cfg.RoomCheckOrigin != "":
+		key := "no shared key"
+		if s.cfg.RoomCheckKey != "" {
+			key = "shared key set"
+		}
+		logx.Printf("forwarding /api/room-check/* to %s (%s)", s.cfg.RoomCheckOrigin, key)
+	default:
+		logx.Printf("MOENOTES_ROOM_CHECK_INTERNAL is unset; /api/room-check/* is disabled")
 	}
 
 	scheduled := make(chan struct{})
