@@ -302,9 +302,11 @@ func SelfCheck(ctx context.Context) error {
 		return failed("the proxy should forward cookies, the body and the query, got %q", relayed.Header().Get("X-Echo"))
 	}
 
-	// /api/room-check relay: refused without its origin, and its account-bound actions need a session.
-	if code := get("/api/room-check/v1/rooms/1234567", nil, http.MethodGet).Code; code != 404 {
-		return failed("/api/room-check without MOENOTES_ROOM_CHECK_INTERNAL should answer 404, got %d", code)
+	// /api/room-check relay: an unconfigured relay answers 404, and its account-bound actions need a session.
+	disabled := httptest.NewRecorder()
+	(&web.RoomCheckProxy{}).ServeHTTP(disabled, httptest.NewRequest(http.MethodGet, "http://self-check/api/room-check/v1/rooms/1234567", nil))
+	if disabled.Code != http.StatusNotFound {
+		return failed("an unconfigured room-check relay should answer 404, got %d", disabled.Code)
 	}
 	for _, bad := range []string{"room-check.internal:8080", "ftp://room-check.internal", "//room-check.internal"} {
 		if origin, invalid := config.ParseRoomCheckOrigin(bad); !invalid || origin != "" {

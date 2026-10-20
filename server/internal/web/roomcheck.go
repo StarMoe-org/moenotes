@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -103,6 +104,11 @@ func (p *RoomCheckProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			pr.Out.Header.Del(RoomCheckUserHeader)
 			pr.Out.Header.Del(RoomCheckKeyHeader)
 			pr.Out.Header.Del("Cookie")
+			// The service limits by visitor address. Only this relay may state it; a client-supplied value is dropped.
+			pr.Out.Header.Del("X-Forwarded-For")
+			if ip := visitorIP(r); ip != "" {
+				pr.Out.Header.Set("X-Forwarded-For", ip)
+			}
 			// Ask for bytes as they are: an event stream must reach the page the way it was written, not decoded on
 			// the way. Whole responses are small JSON.
 			pr.Out.Header.Set("Accept-Encoding", "identity")
@@ -115,6 +121,19 @@ func (p *RoomCheckProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	relay.ServeHTTP(w, r)
+}
+
+// visitorIP is the browser address relayed to the service for its per-address limits. At the site edge Cloudflare
+// sets CF-Connecting-IP; otherwise the socket peer is the visitor.
+func visitorIP(r *http.Request) string {
+	if ip := net.ParseIP(strings.TrimSpace(r.Header.Get("CF-Connecting-IP"))); ip != nil {
+		return ip.String()
+	}
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return host
 }
 
 // roomCheckNeedsLogin reports whether a request acts on the signed-in visitor's behalf: creating a room, and the

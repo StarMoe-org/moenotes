@@ -46,16 +46,9 @@ func TestRoomCheckRoutePrecedesAPIRoute(t *testing.T) {
 	if me.Code != http.StatusOK || !strings.Contains(me.Body.String(), `"user":null`) {
 		t.Fatalf("/api/me: %d %q", me.Code, me.Body.String())
 	}
-	// Without an origin the route is disabled, and it does not fall through to the account API.
-	disabled := (&Server{cfg: func() *config.Config { c := testConfig(t); c.APIOrigin = account.URL; return c }(), site: siteconfig.Current(), store: &Store{Roots: &web.RootSource{}}}).routes()
-	recorder := httptest.NewRecorder()
-	disabled.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "http://site/api/room-check/v1/rooms/1234567", nil))
-	if recorder.Code != http.StatusNotFound {
-		t.Fatalf("unset room-check origin should answer 404, got %d", recorder.Code)
-	}
 	invalid := func() *config.Config { c := testConfig(t); c.RoomCheckInvalid = true; return c }()
 	handler = (&Server{cfg: invalid, site: siteconfig.Current(), store: &Store{Roots: &web.RootSource{}}}).routes()
-	recorder = httptest.NewRecorder()
+	recorder := httptest.NewRecorder()
 	handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "http://site/api/room-check/v1/rooms/1234567", nil))
 	if recorder.Code != http.StatusNotFound {
 		t.Fatalf("invalid room-check origin should answer 404, got %d", recorder.Code)

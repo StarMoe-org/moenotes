@@ -198,6 +198,8 @@ func TestRoomCheckSignedInActions(t *testing.T) {
 			"Cookie":            "session=signed-in",
 			"X-Room-Check-User": "spoofed",
 			"X-Room-Check-Key":  "spoofed-key",
+			"X-Forwarded-For":   "198.51.100.9",
+			"CF-Connecting-IP":  "198.51.100.7",
 		}))
 		if recorder.Code != http.StatusOK {
 			t.Fatalf("%s %s: %d %q", entry.method, entry.path, recorder.Code, recorder.Body.String())
@@ -220,9 +222,29 @@ func TestRoomCheckSignedInActions(t *testing.T) {
 		if got := call.Header.Get("Cookie"); got != "" {
 			t.Errorf("%d: the cookie must not be forwarded, got %q", i, got)
 		}
+		if got := call.Header.Get("X-Forwarded-For"); got != "198.51.100.7" {
+			t.Errorf("%d: visitor address %q", i, got)
+		}
 		if call.Body != "{}" {
 			t.Errorf("%d: body %q", i, call.Body)
 		}
+	}
+}
+
+// TestRoomCheckVisitorAddressFallback: without CF-Connecting-IP the socket peer is relayed, and a client-sent
+// X-Forwarded-For is dropped.
+func TestRoomCheckVisitorAddressFallback(t *testing.T) {
+	fake := newFakeRoomCheck(t)
+	proxy := &RoomCheckProxy{Origin: fake.URL}
+	proxy.ServeHTTP(httptest.NewRecorder(), roomCheckRequest(http.MethodGet, "/api/room-check/v1/rooms/1234567", "", map[string]string{
+		"X-Forwarded-For": "198.51.100.9",
+	}))
+	calls := fake.calls()
+	if len(calls) != 1 {
+		t.Fatalf("calls %d", len(calls))
+	}
+	if got := calls[0].Header.Get("X-Forwarded-For"); got != "192.0.2.1" {
+		t.Fatalf("visitor address %q", got)
 	}
 }
 

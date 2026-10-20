@@ -33,7 +33,7 @@ A null user, a non-200 answer or an empty identity counts as signed out. The ses
 the identity header is the whole contract. `MOENOTES_ROOM_CHECK_KEY`, when set, is added as `X-Room-Check-Key`.
 
 Without a session the account-bound actions answer 401 `{"error":"login_required"}` and the service is not called.
-Without `MOENOTES_ROOM_CHECK_INTERNAL` — unset, or not an absolute http(s) URL — the whole route answers 404, so a
-typo disables Room Check instead of taking the site down; the startup log says which of the two it is, and whether a
-shared key is set, without printing the key. A service that does not answer yields 502, with the address only in the
-log, never in the page's answer.
+Without `MOENOTES_ROOM_CHECK_INTERNAL` the relay uses the site's built-in Room Check origin; a value that is not an
+absolute http(s) URL answers 404 instead, so a typo disables Room Check instead of taking the site down. The startup
+log states the origin and whether a shared key is set, without printing the key. A service that does not answer
+yields 502, with the address only in the log, never in the page's answer.
