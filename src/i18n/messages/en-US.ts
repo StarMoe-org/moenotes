@@ -28,6 +28,7 @@ export const enUS = {
     consent: "This application can read the full content of the selected archives. Only authorize applications you trust.",
   },
   deckWorkspace: {
+    haneoka: { export: "Export for Haneoka", link: "Haneoka team builder" },
     objective: {"label": "Search objective", "expected": "Average performance", "maximum": "Theoretical maximum", "unsupported": "Not yet supported", "expectedNote": "Keeps your play conditions and ranks teams by the average over random skill orders, LUCK and other random outcomes.", "maximumNote": "Keeps your play conditions and takes the most favorable skill order: within each order, LUCK and other random outcomes are averaged by their true probabilities, and a team is worth the highest of its 120 order averages. It does not assume the best luck, and it is proved only when the search completes.", "unavailable": "Theoretical maximum is unavailable for these conditions. Choose Average performance to search.", "loading": "Checking whether theoretical maximum is available…"},
     "arenaSong": "Arena song",
     "chooseArena": "Choose an Arena song",

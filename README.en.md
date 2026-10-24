@@ -13,6 +13,8 @@ Built as a static site, it provides browsing, filtering, and inspection of game 
 - Material Design 3: MUI components on M3 tokens, with dynamic color seeded by the chosen band color and matching light/dark themes (see VISUAL_DESIGN.md).
 - Static First: Fast initial page loads powered by static site pre-rendering (SSG).
 
+The deck tool's card pool offers **Export for Haneoka** and a [Haneoka team builder](https://haneoka.org/en/team-builder/) link. Import the JSON in Haneoka's card box to review its values. Linked saves export the currently loaded inventory; unknown, conflicting and review states are preserved. Save links and observation history are omitted. **Export backup** continues to back up the MoeNotes box.
+
 ## Tech Stack
 
 - Site Framework: Astro

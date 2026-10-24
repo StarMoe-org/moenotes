@@ -33,6 +33,8 @@ export interface SiteConfig {
   };
 }
 
+export const haneokaUrl = "https://haneoka.org";
+
 export const siteConfig: SiteConfig = {
   name: "Moenotes",
   shortName: "Moenotes",
@@ -51,7 +53,7 @@ export const siteConfig: SiteConfig = {
     { label: "pjsk.moe (MoeSekai)", url: "https://pjsk.moe" },
   ],
   friendlySites: [
-    { label: "羽丘（haneoka.org）", url: "https://haneoka.org" },
+    { label: "羽丘（haneoka.org）", url: haneokaUrl },
   ],
   community: {
     discord: { name: "StarMoe", url: "https://discord.gg/6JQMVQ2Mku" },

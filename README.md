@@ -13,6 +13,8 @@ MoeNotes 是由 [StarMoe](https://github.com/StarMoe-org) 团队为 BanG Dream! 
 - Material Design 3：MUI 组件 + MD3 令牌，乐队颜色可作为动态取色种子，浅色/深色一致（规范见 VISUAL_DESIGN.md）。
 - 静态优先：基于静态站点生成（SSG）与预渲染，首屏加载迅速。
 
+组卡工具的「我的卡池」提供「导出到 Haneoka」和 [Haneoka 组卡](https://haneoka.org/zh-CN/team-builder/)入口。导出的 JSON 可在 Haneoka 卡库的导入窗口读取并预览。绑定存档时导出当前已读取的库存；未知、冲突和待复核状态保留，不包含存档链接或观测历史。原有「导出备份」仍用于备份 MoeNotes 卡库。
+
 ## 技术栈
 
 - 站点框架：Astro

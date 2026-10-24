@@ -20,6 +20,7 @@ export const zhCN = {
     developer: "开发者应用", developerHint: "创建应用即获得凭据，可立即使用。密钥请只保存在服务端。", grants: "第三方存档授权", grantsHint: "仅共享你选择的存档；撤销后将停止后续请求。", name: "应用名称", website: "HTTPS 网站", description: "说明", create: "创建应用", emptyApps: "还没有应用。", clientId: "Client ID", invite: "复制邀请链接", copy: "复制", copied: "已复制", lookup: "查询应用", choose: "选择已上传存档", emptyArchives: "没有可用的已上传存档。", authorize: "授权所选存档", emptyGrants: "还没有授权。", revoke: "撤销", confirmRevoke: "撤销此授权？", cancel: "取消", refresh: "刷新", generate: "生成密钥", rotate: "轮换密钥", revokeSecret: "撤销密钥", keyLimit: "已有两个有效密钥。请完成新密钥部署后，手动撤销旧密钥。", confirmRotate: "生成新密钥？旧密钥会保留，请完成部署后手动撤销。", secret: "客户端密钥", secretHint: "仅显示一次。请安全保存于服务器，绝不要放入浏览器代码。", dismiss: "隐藏密钥", secretActive: "密钥有效", secretMissing: "没有有效密钥", ready: "可立即使用", disabled: "已停用", error: "请求失败，请检查输入后重试。", success: "已保存", unavailable: "开放平台暂时不可用。", consent: "此应用可读取所选存档的完整内容，请只授权你信任的应用。",
   },
   deckWorkspace: {
+    haneoka: { export: "导出到 Haneoka", link: "Haneoka 组卡" },
     objective: {"label": "优化目标", "expected": "平均表现", "maximum": "理论最高", "unsupported": "暂不支持", "expectedNote": "保持当前打法条件，按随机技能顺序及 LUCK 等随机结果的平均表现排序。", "maximumNote": "保持当前打法条件，取最有利的技能发动顺序：每种顺序下 LUCK 等随机结果按真实概率取平均，队伍的值是 120 种顺序中最高的那个平均值。不假设运气最好；只有搜索完成后才能证明。", "unavailable": "当前条件暂不支持理论最高，可选择平均表现继续搜索。", "loading": "正在确认理论最高是否可用…"},
     "arenaSong": "Arena 歌曲",
     "chooseArena": "选择 Arena 歌曲",

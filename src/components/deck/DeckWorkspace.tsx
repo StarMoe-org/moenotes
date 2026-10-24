@@ -30,6 +30,7 @@ import PlayerStateManager from "@/components/box/PlayerStateManager";
 import MusicSelectDialog from "@/components/music/MusicSelectDialog";
 import { type MusicDifficulty, MUSIC_DIFFICULTIES } from "@/lib/music/difficulty";
 import DeckComposer from "./DeckComposer";
+import HaneokaExport from "./HaneokaExport";
 import DeckGoalConditions from "./DeckGoalConditions";
 import DeckRewardMix from "./DeckRewardMix";
 import DeckObjective from "./DeckObjective";
@@ -439,7 +440,7 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
           { id: "everyday", title: tr("goalGroups.everyday"), goals: EVERYDAY_GOALS.map(value => goalCard(value)) },
         ]}
         selectedGoal={isEventPayoffGoal(goal) ? REWARDS_CARD : goal} onGoalChange={selectGoal}
-        collection={ownedMembers.length > 0 ? <div className="dc-pool">
+        collection={<>{ownedMembers.length > 0 ? <div className="dc-pool">
           <p className="dc-pool-counts"><span><strong>{ownedMembers.length}</strong>{tr("member")}</span><span><strong>{ownedSnaps.length}</strong>{tr("snap")}</span></p>
           <p className="dc-pool-source" data-source={linked ? "game-save" : "box"}><CollectionIcon name={linked ? "game" : "image"} /><span>{[tr(linked ? "gameSave.sourceSave" : "gameSave.sourceBox"),
             ...(stored?.save ? [linkedSave.state.status === "ready" ? tr("gameSave.uploadedAt", { date: new Date(stored.save.uploadedAt).toLocaleDateString(locale) })
@@ -452,6 +453,8 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
             <Button variant="text" size="small" disabled={busy} onClick={openScreenshotImport} startIcon={<CollectionIcon name="image" />}>{tr("screenshotImport")}</Button>
             <Button variant="text" size="small" disabled={busy} onClick={() => box ? setManagement(true) : setSetup(true)}>{box ? tr("manage") : composer("manualShort")}</Button></>}</div>
         </div>}
+          <HaneokaExport locale={locale} box={box} disabled={busy || !box?.cards.length || linked && linkedSave.state.status !== "ready"} />
+        </>}
         conditions={<>
           {isEventPayoffGoal(goal) ? <label className="dc-field">{tr("venue")}<select aria-label={tr("venue")} value={goalInput.venue} onChange={change => updateGoal({ venue: change.target.value as DeckVenue })}>
             {goalVenues(goal).map(value => <option key={value} value={value} disabled={!!capabilities && !computes(capabilities, { goal, venue: value })}>{tr(`venues.${value}`)}</option>)}</select></label> : null}
