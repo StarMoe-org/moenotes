@@ -14,9 +14,9 @@ export const enUS: LegalTexts = {
           title: "Third-party components",
           paragraphs: ["The site is built with these components, each under its own license:"],
           items: [
-            "Astro and @astrojs/react, @astrojs/check: MIT License",
+            "Next.js: MIT License",
             "React and React DOM: MIT License",
-            "Tailwind CSS and @tailwindcss/vite: MIT License",
+            "Tailwind CSS and @tailwindcss/postcss: MIT License",
             "MUI (@mui/material) and Emotion: MIT License",
             "Material Color Utilities (@material/material-color-utilities): Apache License 2.0",
             "TypeScript: Apache License 2.0",

@@ -1,3 +1,5 @@
+"use client";
+
 import { useId } from "react";
 import { FilterSection } from "@/components/shared/BaseFilters";
 import type { DateRange } from "@/lib/filter/date-range";

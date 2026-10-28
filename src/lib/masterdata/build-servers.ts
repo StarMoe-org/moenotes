@@ -2,27 +2,58 @@ import { assetConfig } from "@/config/assets";
 import { buildEnv } from "@/config/build-env";
 import { GAME_SERVER_PROFILES, GAME_SERVERS, PRIMARY_SERVER, isGameServer, orderServers, type GameServer } from "@/config/servers";
 import { buildFetch } from "@/lib/build/fetch";
-import { getBuildMasterVersion } from "@/lib/masterdata/build-snapshot";
+import { currentMasterDataEpochSync, getBuildManifest, getBuildMasterVersion, isMasterDataManifestFresh } from "@/lib/masterdata/build-snapshot";
 
 /** moenotes-assets `versions/current_version.json`: the latest exported (succeeded or partial) release per region. */
 interface AssetReleaseManifest {
   regions?: Record<string, { resource_version?: string; master_version?: string }>;
 }
 
+interface ServersState {
+  epoch: number;
+  envSignature: string;
+  promise?: Promise<GameServer[]> | undefined;
+}
+
 const serversKey = Symbol.for("moenotes.masterdata.build-servers");
-const globalState = globalThis as typeof globalThis & { [serversKey]?: Promise<GameServer[]> };
+const globalState = globalThis as typeof globalThis & { [serversKey]?: ServersState };
+
+function currentEnvSignature(): string {
+  return `${buildEnv("MOENOTES_SERVERS") ?? ""}|${buildEnv("MOENOTES_VERSION_URL") ?? ""}|${buildEnv("MOENOTES_MASTERDATA_DIR") ?? ""}`;
+}
+
+function getServersState(): ServersState {
+  const existing = globalState[serversKey];
+  if (existing && typeof existing === "object" && "epoch" in existing && "envSignature" in existing) {
+    return existing;
+  }
+  const fresh: ServersState = { epoch: -1, envSignature: "" };
+  globalState[serversKey] = fresh;
+  return fresh;
+}
 
 /**
- * The servers this build shows, in switcher order. A server joins once the asset service has exported a release of
- * its region, so the files its MasterData names are published; that export also makes the deploy server rebuild
- * (docs/deployment.md). The metadata service must serve its tables too. The primary server is always built.
- *
- * `MOENOTES_SERVERS` (comma-separated, e.g. `tw,jp`) replaces the check, for local MasterData checkouts or to try a
- * server before its assets are exported.
+ * The servers this runtime shows, in switcher order. Refreshes automatically when the MasterData epoch or server
+ * override environment changes.
  */
-export function getBuildServers(): Promise<GameServer[]> {
-  globalState[serversKey] ??= resolveBuildServers();
-  return globalState[serversKey];
+export async function getBuildServers(options?: { forceBypass?: boolean; reloadOnly?: boolean }): Promise<GameServer[]> {
+  if (options?.forceBypass && !options?.reloadOnly) {
+    await getBuildManifest({ forceBypass: true });
+  } else if (!isMasterDataManifestFresh()) {
+    await getBuildManifest();
+  }
+  const state = getServersState();
+  const epoch = currentMasterDataEpochSync();
+  const envSignature = currentEnvSignature();
+  if (options?.forceBypass || options?.reloadOnly || state.epoch !== epoch || state.envSignature !== envSignature || !state.promise) {
+    state.epoch = epoch;
+    state.envSignature = envSignature;
+    state.promise = resolveBuildServers().catch((error) => {
+      state.promise = undefined;
+      throw error;
+    });
+  }
+  return state.promise;
 }
 
 async function resolveBuildServers(): Promise<GameServer[]> {
@@ -37,7 +68,7 @@ async function resolveBuildServers(): Promise<GameServer[]> {
   const url = buildEnv("MOENOTES_VERSION_URL") ?? `${assetConfig.api}/versions/current_version.json`;
   let released: Set<string>;
   try {
-    const response = await buildFetch(url, { cache: "no-store", signal: AbortSignal.timeout(15_000) });
+    const response = await buildFetch(url, { forceBypass: true, cache: "no-store", signal: AbortSignal.timeout(15_000) });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     released = new Set(Object.keys((await response.json() as AssetReleaseManifest).regions ?? {}));
   } catch (error) {

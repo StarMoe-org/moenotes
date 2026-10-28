@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 
 const css = readFileSync("src/styles/global.css", "utf8");
 const sidebar = readFileSync("src/components/shell/Sidebar.tsx", "utf8");
-const shell = readFileSync("src/components/shell/AppShell.astro", "utf8");
+const shell = readFileSync("src/components/shell/AppShellClient.tsx", "utf8");
 const handle = readFileSync("src/components/shell/filter-drawer/FilterTabHandle.tsx", "utf8");
 
 /** Tailwind's `md`, which the drawer's `md:block` and the content's `md:pl-*` both use (default 48rem). */

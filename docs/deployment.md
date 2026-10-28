@@ -1,8 +1,72 @@
 # Deployment
 
-The image (`Dockerfile`) holds one static Go binary, `moenotes` (sources in `server/`), and the source digest of the
-site sources it was built from. It contains neither Bun nor the site sources nor a built site. The container runs
-`moenotes serve`, which:
+## Next.js 16 + Go Semi-SSR Mode (Zeabur k3s One-Click Deploy & `MOENOTES_BUILD_MODE=ssr`)
+
+`Dockerfile` builds a 4-stage container carrying the Haneoka Rust WASM deck engine, the `moenotes` Go gateway
+(`/usr/local/bin/moenotes`), the Next.js 16 standalone server (`/app/nextjs` with Debian Node 22), `/data/static_archive`
+for rolling-deploy `_next/static` chunk continuity (30-day automatic pruning), `/data/html_cache`, `/data/masterdata_cache`,
+and `/app/source-digest` — matching `StarMoe-org/Moesekai`'s Zeabur k3s deployment model.
+
+### Zeabur k3s One-Click `docker build` Deployment
+
+Connect `StarMoe-org/moenotes` on Zeabur k3s (`Dockerfile` builder):
+
+- **Zero required environment variables**: Zeabur automatically supplies `ZEABUR_GIT_COMMIT_SHA` / `ZEABUR_SERVICE_ID`,
+  which auto-activates `MOENOTES_BUILD_MODE=ssr` out of the box (and automatically avoids port collision if `PORT=3000`).
+- **Optional persistent volume**: Mount a volume at `/data` to persist `html_cache`, `static_archive`, and `masterdata_cache`
+  across pod restarts (falls back cleanly to `/data` / `/app/data` inside the container if no volume is attached yet).
+- **Optional internal cluster origins**: Set `MOENOTES_ASSET_INTERNAL`, `MOENOTES_MASTERDATA_INTERNAL`, and `MOENOTES_API_INTERNAL`
+  when running alongside `moenotes-assets`, `moenotes-metadata`, and `starmoe-api` in the same k3s cluster.
+
+### Self-Hosted Docker
+
+Enable semi-SSR mode explicitly with `MOENOTES_BUILD_MODE=ssr`:
+
+```bash
+docker build --build-arg MOENOTES_REVISION=$(git rev-parse HEAD) -t moenotes .
+docker run -p 8080:80 -v moenotes-data:/data \
+  -e MOENOTES_BUILD_MODE=ssr \
+  -e MOENOTES_ASSET_INTERNAL=http://moenotes-assets.moenotes.svc.cluster.local:8080 \
+  -e MOENOTES_MASTERDATA_INTERNAL=http://moenotes-metadata.moenotes.svc.cluster.local:8080 \
+  moenotes
+```
+
+In `ssr` mode (`server/internal/ssr/`):
+
+1. **Managed Next.js Standalone**: Go supervises `node /app/nextjs/server.js` (`--max-old-space-size=512` by default,
+   configurable via `MOENOTES_NEXT_MAX_OLD_SPACE_MB`) on `127.0.0.1:3000` (or proxies to an external `FRONTEND_PROXY_URL`)
+   and gates `/readyz` on `/internal-healthz`.
+2. **Persistent HTML + Markdown Disk Cache**: Anonymous `GET`/`HEAD` HTML and Markdown responses are compressed and
+   persisted under `/data/html-cache` (`HTML_CACHE_DIR`), deduplicated with `singleflight`, and tagged with
+   `X-SSR-Cache: HIT|MISS|BYPASS` and `Vary: Accept`.
+3. **ExportLag-Aware Hot Invalidation & Runtime MasterData Refresh**: Every `MOENOTES_POLL_SECONDS`, the Go watcher checks
+   the asset service's `versions/current_version.json` and metadata service's `current_version.json`. Once asset export
+   catches up (`ExportLag == false`), Go atomically bumps `SetDataVersion(fingerprint)`, invalidating stale HTML/Markdown
+   cache entries immediately with zero rebuild wait, while Next.js refreshes its in-memory MasterData snapshot after
+   `MOENOTES_MASTERDATA_TTL_MS` (default `60000` ms) while keeping unchanged `sha256:` tables in LRU memory.
+4. **Idle Background Warmup**: When `MOENOTES_SSR_WARMUP` is enabled (default `true`), the gateway gently pre-warms
+   high-traffic localized routes during idle windows (`MOENOTES_SSR_WARMUP_CONCURRENCY`, default `1`).
+5. **Crawler & Agent Markdown Routing**:
+   - Send `Accept: text/markdown` on any canonical or localized page URL, or append `.md` (`/index.md`, `/ja/index.md`,
+     `/cards/1001.md`, `/en/events/4.md`) to receive clean YAML-frontmatter Markdown with `X-Markdown-Tokens`.
+   - `/llms.txt` and `/llms-full.txt` expose structured indexes across all 13 locales and entity catalogs.
+   - `/api/v1/meta/version` returns live build, MasterData version, locale, and Markdown capability metadata.
+   - `/robots.txt` advertises `Content-Signal: search=yes, ai-input=yes, ai-train=no` alongside `/sitemap.xml`.
+6. **Versioned MasterData Caching, Version Cache & Forced Cache Penetration (`强制穿透`)**:
+   - **Always-penetrated `current_version.json`**: Every upstream check of `https://metadata.bdon.moe/current_version.json`
+     (and `versions/current_version.json`) in both Go (`server/internal/upstream`) and Next.js (`src/lib/build/fetch.ts`)
+     unconditionally appends a unique `_t=<timestamp>-<seq>` query parameter and sends `Cache-Control: no-cache, no-store, max-age=0, must-revalidate` + `Pragma: no-cache` + `Expires: 0` (`cache: "no-store"`), penetrating Cloudflare/CDN edges and local disk caches on every fetch.
+   - **Version Cache**: Resolved per-region version numbers (`hk-tw-mo`, `jp`, `en`, `kr`) and combined `dataVersion` are held in memory for `MOENOTES_MASTERDATA_VERSION_TTL_MS` (default `30000` ms; set `0` to re-fetch `current_version.json` on every request).
+   - **Version-Keyed MasterData Cache & `?v=` URLs**: Every MasterData table fetch (`/{server}/master/{Table}.json?v={regionVersion}`), `index.json` fetch (`/index.json?v={dataVersion}`), and browser JSON index fetch (`/search-index.json?v={dataVersion}`, `/band-item-upgrades.json?v={dataVersion}`, `/character-voices.json?v={dataVersion}`) carries an explicit version query parameter. Decoded tables are cached in memory (`MOENOTES_MASTERDATA_MAX_TABLES`, default `512`) and optionally on disk (`MOENOTES_MASTERDATA_CACHE_DIR`, default `/data/masterdata_cache`) keyed by version + SHA-256.
+   - **Forced Cache Penetration (`强制穿透`)**:
+     - Append `?refresh_masterdata=1` (or `?__refresh=1` / `?nocache=1`) or send header `X-Moenotes-Bypass-Cache: 1` on any HTML page, `.md` Markdown route, or JSON endpoint to bypass Go `HTMLCache`, re-penetrate `current_version.json` + `index.json`, purge cached MasterData tables, and re-fetch upstream tables with `&_t=...` + `no-cache, no-store`.
+     - Or call `GET /api/v1/meta/version?refresh=1` / `POST /api/v1/meta/version` (optionally guarded by `MOENOTES_CACHE_PURGE_TOKEN` via `Authorization: Bearer <token>` or `X-Moenotes-Purge-Token: <token>`).
+
+---
+
+## Legacy GitHub Release Artifact Mode (`MOENOTES_BUILD_MODE=github`)
+
+When neither `MOENOTES_BUILD_MODE=ssr` nor `FRONTEND_PROXY_URL` is set, `moenotes serve` defaults to `buildMode: "github"`, which:
 
 1. serves the live build from the `/data` volume right away (before any network access), and
 2. dispatches the repository's GitHub Actions site build whenever the asset service publishes a new release or the

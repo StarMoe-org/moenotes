@@ -1,3 +1,5 @@
+"use client";
+
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import Button from "@mui/material/Button";
 import Slider from "@mui/material/Slider";

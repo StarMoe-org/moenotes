@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useRef } from "react";
 import type { AppLocale } from "@/config/locales";
 import { emptySnapRanking, SnapRankingClient, snapProfileKey, snapSourceKey, type SnapRankRequest, type SnapRankingCatalogue, type SnapRankingSource, type SnapRankingState } from "@/lib/chart-data/snap-client";

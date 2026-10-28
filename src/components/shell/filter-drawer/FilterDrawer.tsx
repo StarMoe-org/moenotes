@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useEffect, useId, useRef, useState, type UIEvent } from "react";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";

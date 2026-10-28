@@ -1209,7 +1209,9 @@ export function getBuildStoryDetail(locale: AppLocale, advId: number): Promise<S
     const characterTexts = textTable._allData.filter((entry) => characterTextIds.has(entry.id));
     const fetcher = serverReleaseFetcher(server, buildFetch as typeof fetch);
     const [script, stories] = await Promise.all([
-      getBuildStoryScriptLookups(server, locale).then((lookups) => fetchAndParseStory(adv.advEpisodeAsset, { locale, lookups, fetcher })),
+      getBuildStoryScriptLookups(server, locale)
+        .then((lookups) => fetchAndParseStory(adv.advEpisodeAsset, { locale, lookups, fetcher }))
+        .catch(() => null),
       getBuildStories(locale),
     ]);
     return {

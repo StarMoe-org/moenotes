@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Collapse from "@mui/material/Collapse";
 import Drawer from "@mui/material/Drawer";

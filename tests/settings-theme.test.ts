@@ -217,13 +217,13 @@ describe("critical inline scripts opt out of Rocket Loader", () => {
   // fold and scroll setup into a visible flip after the server markup has already painted.
   test("theme, navigation and drawer scroll scripts stay synchronous", () => {
     const files: Array<[string, string[]]> = [
-      ["../src/layouts/RootLayout.astro", ["mediaQueryCompatScript", "themeScript", "navGroupScript", "accountScript", "filterScript"]],
-      ["../src/components/shell/AppShell.astro", ["sidebarScrollScript"]],
+      ["../src/app/layout.tsx", ["mediaQueryCompatScript", "themeScript", "navGroupScript", "accountScript", "filterScript"]],
+      ["../src/components/shell/AppShellClient.tsx", ["sidebarScrollScript"]],
     ];
     for (const [path, variables] of files) {
       const lines = readFileSync(new URL(path, import.meta.url), "utf8").split("\n");
       for (const variable of variables) {
-        const tag = lines.find((line) => line.includes(`set:html={${variable}}`));
+        const tag = lines.find((line) => line.includes(`__html: ${variable}`));
         expect(tag).toBeDefined();
         expect(tag).toContain('data-cfasync="false"');
       }

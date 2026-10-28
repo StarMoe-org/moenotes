@@ -1,4 +1,15 @@
 export const cacheConfig = {
+  /**
+   * Server & runtime MasterData caching (`src/lib/masterdata/build-snapshot.ts`).
+   * `masterdataConfig.versionPath` (`current_version.json`) always bypasses HTTP/CDN caches on every network check;
+   * its parsed version map is reused in memory for `versionTtlMs` unless force-bypassed.
+   */
+  masterdata: {
+    versionTtlMs: 30 * 1000,
+    maxTables: 512,
+    versionParam: "v",
+    bustParam: "_t",
+  },
   assets: {
     ttlMs: 7 * 24 * 60 * 60 * 1000,
     staleFallbackTtlMs: 30 * 24 * 60 * 60 * 1000,

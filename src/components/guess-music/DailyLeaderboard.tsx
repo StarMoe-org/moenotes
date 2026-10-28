@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import Button from "@mui/material/Button";
 import MenuItem from "@mui/material/MenuItem";

@@ -1,3 +1,5 @@
+"use client";
+
 import SiriusLoader from "@/components/shared/SiriusLoader";
 import { useEffect, useMemo, useState } from "react";
 import PlayerProfileCard from "@/components/account/PlayerProfileCard";

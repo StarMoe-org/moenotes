@@ -1,3 +1,5 @@
+"use client";
+
 import { useId } from "react";
 import { Icon } from "@/components/shared/icons";
 

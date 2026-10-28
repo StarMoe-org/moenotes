@@ -1,3 +1,5 @@
+"use client";
+
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import { t } from "@/i18n";

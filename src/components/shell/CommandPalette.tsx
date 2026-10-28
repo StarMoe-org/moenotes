@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import Dialog from "@mui/material/Dialog";
 import IconButton from "@mui/material/IconButton";

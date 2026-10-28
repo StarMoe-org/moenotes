@@ -1,3 +1,5 @@
+"use client";
+
 import SiriusLoader, { SiriusIcon } from "@/components/shared/SiriusLoader";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { t } from "@/i18n";

@@ -1,3 +1,5 @@
+"use client";
+
 import { Component, type ReactNode, type ErrorInfo } from "react";
 import { withMd3 } from "@/components/md3/Md3Provider";
 import type { AppLocale } from "@/config/locales";

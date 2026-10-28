@@ -1,3 +1,5 @@
+"use client";
+
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import { Md3Provider } from "@/components/md3/Md3Provider";

@@ -1,6 +1,9 @@
 node_modules/
 dist/
+out/
 .astro/
+.next/
+.haneoka/
 .git/
 .github/
 .agents/
@@ -10,6 +13,7 @@ dist/
 .site-release/
 .tmp-md3/
 artifacts/
+*.tsbuildinfo
 .env
 .env.*
 *.log

@@ -1,3 +1,5 @@
+"use client";
+
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import type { AppLocale } from "@/config/locales";

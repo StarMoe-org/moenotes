@@ -2,8 +2,8 @@ import { rmSync, readdirSync, existsSync } from "node:fs";
 import { resolve, join } from "node:path";
 
 const cachePaths = [
-  ".astro",
-  "node_modules/.vite",
+  ".next",
+  "node_modules/.cache",
 ];
 
 for (const cachePath of cachePaths) {

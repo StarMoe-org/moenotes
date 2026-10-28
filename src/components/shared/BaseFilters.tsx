@@ -1,3 +1,5 @@
+"use client";
+
 import SortControl, { type SortControlProps } from "./SortControl";
 import { type ReactNode, useCallback, useEffect, useId, useRef, useState } from "react";
 import { Icon } from "@/components/shared/icons";

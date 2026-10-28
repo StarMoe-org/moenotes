@@ -65,7 +65,7 @@ func TestSourceDigestCoversSourcesOnly(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	for _, name := range []string{"astro.config.mjs", "package.json", "bun.lock", "tsconfig.json", "src/a.ts", "public/b.txt"} {
+	for _, name := range []string{"next.config.ts", "postcss.config.mjs", "package.json", "bun.lock", "tsconfig.json", "src/a.ts", "public/b.txt"} {
 		write(name, name)
 	}
 	first, err := SourceDigest(root)
@@ -84,11 +84,15 @@ func TestSourceDigestCoversSourcesOnly(t *testing.T) {
 }
 
 func TestExportLagAndRewrites(t *testing.T) {
+	var seenQueries []string
+	var seenCacheControl []string
 	masterdata := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/current_version.json" {
 			http.NotFound(w, r)
 			return
 		}
+		seenQueries = append(seenQueries, r.URL.Query().Get("_t"))
+		seenCacheControl = append(seenCacheControl, r.Header.Get("Cache-Control"))
 		_, _ = w.Write([]byte(`{"regions":{"hk-tw-mo":{"version":"m2"},"jp":{"version":"j1"}}}`))
 	}))
 	defer masterdata.Close()
@@ -109,6 +113,14 @@ func TestExportLagAndRewrites(t *testing.T) {
 	}}
 	if lag, err := ExportLag(ctx, current, fetcher, url); err != nil || lag != "" {
 		t.Fatalf("got %q, %v", lag, err)
+	}
+	if len(seenQueries) < 2 || seenQueries[0] == "" || seenQueries[1] == "" || seenQueries[0] == seenQueries[1] {
+		t.Fatalf("current_version.json must always carry unique _t cache-busting query tokens, got %v", seenQueries)
+	}
+	for _, cc := range seenCacheControl {
+		if cc != "no-cache, no-store, max-age=0, must-revalidate" {
+			t.Fatalf("expected strict no-cache, no-store header on current_version.json, got %q", cc)
+		}
 	}
 	pending := &AssetManifest{Regions: current.Regions, Pending: map[string]json.RawMessage{"tw": json.RawMessage("{}"), "kr": json.RawMessage("{}")}}
 	if lag, _ := ExportLag(ctx, pending, fetcher, url); lag != "asset release still running for tw" {

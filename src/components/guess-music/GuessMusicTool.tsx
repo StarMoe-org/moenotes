@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { withMd3 } from "@/components/md3/Md3Provider";
 import PrimaryTabs from "@/components/shared/PrimaryTabs";

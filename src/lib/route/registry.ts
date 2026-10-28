@@ -3,7 +3,14 @@ import type { AppRoute, RouteMatch, RouteParams, RouteStaticParamConfig } from "
 import { normalizePathname, stripLocaleFromPathname } from "@/i18n/routing";
 
 const routes = routeRegistry as readonly AppRoute[];
-const staticParamsCache = new WeakMap<AppRoute, Promise<readonly RouteStaticParamConfig[]>>();
+const masterdataSnapshotKey = Symbol.for("moenotes.masterdata.build-snapshot");
+let cachedParamsEpoch = -1;
+let staticParamsCache = new WeakMap<AppRoute, Promise<readonly RouteStaticParamConfig[]>>();
+
+function readMasterDataEpoch(): number {
+  const holder = (globalThis as Record<symbol, { epoch?: number } | undefined>)[masterdataSnapshotKey];
+  return holder?.epoch ?? 0;
+}
 
 interface RouteEntry {
   route: AppRoute;
@@ -106,7 +113,6 @@ export function getNavigationGroupId(pathname: string): string | undefined {
   const match = findRouteMatch(pathname);
   const matched = groupId(match?.group) ?? groupId(match?.item);
   if (matched) return matched;
-  // Unmatched paths (a 404 under a hub, the player shell) still name a group when their prefix does.
   return groups.find((group) => isCurrentRoute(pathname, group.path))?.id;
 }
 
@@ -121,13 +127,27 @@ export function buildDynamicPath(pattern: string, params: RouteParams): `/${stri
   return normalizePathname(path);
 }
 
-export function resolveRouteStaticParams(route: AppRoute): Promise<readonly RouteStaticParamConfig[]> {
+export async function resolveRouteStaticParams(route: AppRoute): Promise<readonly RouteStaticParamConfig[]> {
+  const beforeEpoch = readMasterDataEpoch();
+  if (cachedParamsEpoch !== beforeEpoch) {
+    cachedParamsEpoch = beforeEpoch;
+    staticParamsCache = new WeakMap<AppRoute, Promise<readonly RouteStaticParamConfig[]>>();
+  }
+
   const cached = staticParamsCache.get(route);
   if (cached) return cached;
 
   const resolved = Promise.resolve(
     typeof route.staticParams === "function" ? route.staticParams() : route.staticParams ?? [],
-  );
+  )
+    .then((items) => {
+      cachedParamsEpoch = readMasterDataEpoch();
+      return items;
+    })
+    .catch((error) => {
+      staticParamsCache.delete(route);
+      throw error;
+    });
   staticParamsCache.set(route, resolved);
   return resolved;
 }

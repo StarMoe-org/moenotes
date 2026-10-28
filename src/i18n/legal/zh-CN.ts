@@ -14,9 +14,9 @@ export const zhCN: LegalTexts = {
           title: "第三方组件",
           paragraphs: ["本站使用了以下组件，各自适用其许可："],
           items: [
-            "Astro 及 @astrojs/react、@astrojs/check：MIT 许可证",
+            "Next.js：MIT 许可证",
             "React 与 React DOM：MIT 许可证",
-            "Tailwind CSS 及 @tailwindcss/vite：MIT 许可证",
+            "Tailwind CSS 及 @tailwindcss/postcss：MIT 许可证",
             "MUI（@mui/material）与 Emotion：MIT 许可证",
             "Material Color Utilities（@material/material-color-utilities）：Apache License 2.0",
             "TypeScript：Apache License 2.0",

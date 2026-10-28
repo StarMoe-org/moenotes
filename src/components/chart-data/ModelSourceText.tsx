@@ -1,3 +1,5 @@
+"use client";
+
 /** Link the model name in translated prose without accepting HTML from a message pack. */
 export default function ModelSourceText({ text }: { text: string }) {
   const name = text.includes("ournotes-deck") ? "ournotes-deck" : "Rust";

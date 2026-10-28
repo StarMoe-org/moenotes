@@ -1,3 +1,5 @@
+"use client";
+
 import SiriusLoader from "@/components/shared/SiriusLoader";
 import { useListSort } from "@/lib/filter/use-list-sort";
 import { sortEntries, type ListSort } from "@/lib/filter/list-sort";
@@ -29,22 +31,13 @@ import { formatPlayTime, storyEpisodeLabel } from "@/lib/story/labels";
 import { useNow } from "@/lib/schedule/use-now";
 import { isSpoiler, useSpoiler } from "@/lib/settings/spoiler";
 
-export type StorySection = "main" | "event" | "friendship" | "birthday" | "other";
+import { inStorySection, OTHER_CATEGORIES, storyCategoryKey, type StorySection } from "@/lib/story/sections";
 
-const OTHER_CATEGORIES: readonly StoryCategory[] = ["live-result", "home", "tutorial"];
+export { inStorySection, storyCategoryKey, type StorySection };
+
 const LIST_VIEWS = ["grid", "table"] as const;
 type ListView = typeof LIST_VIEWS[number];
 const PLAY_TIME_SORT = [{ key: "playTime", labelKey: "story.ui.playTime", initialDirection: "desc" as const }];
-
-/** Whether a story belongs to a story page's list. */
-export function inStorySection(section: StorySection, story: { category: StoryCategory }): boolean {
-  return section === "other" ? OTHER_CATEGORIES.includes(story.category) : story.category === section;
-}
-
-export function storyCategoryKey(category: StoryCategory | "other"): string {
-  if (category === "live-result") return "story.categories.liveResult";
-  return `story.categories.${category}`;
-}
 
 export default function StoryExplorer({ locale, servers, initialCategory, initialStories, initialCharacters, initialTexts }: { locale: AppLocale; servers: GameServer[]; initialCategory: StorySection; initialStories: ServerFaceted<StoryViewModel>[]; initialCharacters: RawStoryCharacter[]; initialTexts: RawText[] }) {
   const sort = useListSort(`story-${initialCategory}`, locale, "date", { numeric: PLAY_TIME_SORT });

@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import Button from "@mui/material/Button";
 import type { AppLocale } from "@/config/locales";

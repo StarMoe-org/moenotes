@@ -1,3 +1,5 @@
+"use client";
+
 import { useId, useLayoutEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { DIFFICULTIES, extent, histogram, matches, ticks, type ChartRow } from "@/lib/chart-data/catalog";
 import { AXES, EFF_AXES, type Axis } from "@/lib/chart-data/query";

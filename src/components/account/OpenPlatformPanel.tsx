@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import OpenPlatform from "@/components/account/OpenPlatform";
 import SiriusLoader from "@/components/shared/SiriusLoader";

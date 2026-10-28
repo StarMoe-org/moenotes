@@ -1,3 +1,5 @@
+"use client";
+
 import Modal from "@/components/shared/Modal";
 import type { AppLocale } from "@/config/locales";
 import { shortcuts } from "@/config/shortcuts";

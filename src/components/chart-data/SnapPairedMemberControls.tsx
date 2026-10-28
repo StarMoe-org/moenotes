@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { t } from "@/i18n";
 import type { AppLocale } from "@/config/locales";

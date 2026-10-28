@@ -1,3 +1,5 @@
+"use client";
+
 import { NOTE_KINDS, type ChartRow } from "@/lib/chart-data/catalog";
 import { MEASURES, rangeMeasures, type MeasureStat } from "@/lib/chart-data/gekisou";
 import { roomSize } from "@/lib/chart-data/query";

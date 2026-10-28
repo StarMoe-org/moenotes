@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Fade from "@mui/material/Fade";
 import type { AppLocale } from "@/config/locales";

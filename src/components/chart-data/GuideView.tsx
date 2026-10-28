@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useRef, useState } from "react";
 import type { ChartDataGuide } from "@/i18n/guides/chart-data";
 import { Heading } from "./shared";

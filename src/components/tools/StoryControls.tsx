@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import type { StoryPlayer } from "ournotes-player/story";
 import type { AppLocale } from "@/config/locales";

@@ -6,7 +6,7 @@ import { GAME_SERVER_PROFILES, GAME_SERVERS, type GameServer } from "./servers";
  * contract is its docs/api.md.
  */
 export const gameApiConfig = {
-  base: `${(import.meta.env.PUBLIC_GAME_API || "https://api.bdon.moe").replace(/\/+$/, "")}/api/v1`,
+  base: `${(process.env.PUBLIC_GAME_API || "https://api.bdon.moe").replace(/\/+$/, "")}/api/v1`,
 } as const;
 
 /** Game servers rankd collects, in the order the switchers show them: every server of src/config/servers.ts. */

@@ -1,3 +1,5 @@
+"use client";
+
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { ARENA_MISSION_TYPES, ARENA_MUSIC_TYPES, DEFAULT_SONG_RULES, type DeckArenaMissions } from "@/lib/deck/arena";

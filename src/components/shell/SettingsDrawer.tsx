@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useEffect, useId, useState, type KeyboardEvent, type ReactNode, type SyntheticEvent } from "react";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
@@ -14,7 +16,7 @@ import PrimaryTabs, { rovingStep } from "@/components/shared/PrimaryTabs";
 import { withMd3 } from "@/components/md3/Md3Provider";
 import type { AppLocale } from "@/config/locales";
 import { LOCALE_LABELS, SUPPORTED_LOCALES, flagIconSrc } from "@/config/locales";
-import { flagIconSrc as serverFlagIconSrc } from "@/config/servers";
+import { GAME_SERVER_PROFILES, GAME_SERVERS, flagIconSrc as serverFlagIconSrc } from "@/config/servers";
 import { DEFAULT_ACCENT } from "@/config/settings";
 import { switchLocalePath } from "@/i18n/routing";
 import { t } from "@/i18n";
@@ -31,6 +33,14 @@ import { getBandSmallIconWhiteUrl } from "@/lib/cards/assets";
 import { formatBytes } from "@/lib/format/bytes";
 import { defaultGameServer } from "@/lib/game-api/server";
 import type { ThemeBandColor } from "@/lib/masterdata/build-settings";
+import {
+  fetchLiveMasterDataVersion,
+  forceRefreshMasterDataAndReload,
+  formatMasterDataVersionLabel,
+  getDocumentRegionVersions,
+  getLocalServerMasterDataVersion,
+  type LiveMasterDataVersionPayload,
+} from "@/lib/masterdata/client-version";
 import { MD3_DEFAULT_SEED } from "@/lib/md3/scheme";
 import { getForceJapaneseTitles, setForceJapaneseTitles, SONG_TITLE_PREFERENCE_EVENT } from "@/lib/music/title-preference";
 import { useOverlay } from "@/lib/overlay/use-overlay";
@@ -265,6 +275,149 @@ function ContentSettings({ locale }: { locale: AppLocale }) {
   );
 }
 
+/** MasterData version inspection and manual cache-bypass refresh, modeled after MoeSekai's Settings Data tab. */
+function MasterDataVersionSection({ locale }: { locale: AppLocale }) {
+  const { settings } = useSettings();
+  const activeServer = settings.gameServer === "auto" ? defaultGameServer(locale) : settings.gameServer;
+  const activeRegion = GAME_SERVER_PROFILES[activeServer].masterdataRegion;
+
+  const [checking, setChecking] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [liveInfo, setLiveInfo] = useState<LiveMasterDataVersionPayload | null>(null);
+  const [docRegions] = useState<Record<string, string>>(getDocumentRegionVersions);
+  const [localServerRaw] = useState<string | null>(() => getLocalServerMasterDataVersion(activeServer));
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setChecking(true);
+    fetchLiveMasterDataVersion(controller.signal)
+      .then((payload) => {
+        if (!controller.signal.aborted) setLiveInfo(payload);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setLiveInfo(null);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setChecking(false);
+      });
+    return () => controller.abort();
+  }, []);
+
+  const cloudRegionInfo = liveInfo?.regions?.[activeRegion];
+  const cloudRaw = cloudRegionInfo?.version ?? null;
+  const currentLocalRaw = getLocalServerMasterDataVersion(activeServer) ?? localServerRaw;
+  const cloudLabel = formatMasterDataVersionLabel(cloudRaw, cloudRegionInfo?.resource_version);
+  const localLabel = formatMasterDataVersionLabel(
+    currentLocalRaw,
+    currentLocalRaw && currentLocalRaw === cloudRaw ? cloudRegionInfo?.resource_version : null,
+  );
+  const hasUpdate = Boolean(cloudRaw && currentLocalRaw && cloudRaw !== currentLocalRaw);
+  const isUpToDate = Boolean(cloudRaw && currentLocalRaw && cloudRaw === currentLocalRaw);
+
+  const handleForceRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await forceRefreshMasterDataAndReload();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  return (
+    <Section
+      title={t(locale, "settings.data.versionTitle")}
+      aside={
+        <span className="flex items-center gap-1.5 text-label-medium text-on-surface-variant">
+          {flag(serverFlagIconSrc(activeServer))}
+          <span>{t(locale, `gameServer.names.${activeServer}`)}</span>
+        </span>
+      }
+    >
+      <div className="rounded-shape-lg bg-surface-container p-4">
+        <dl className="space-y-2.5 text-body-medium">
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-on-surface-variant">{t(locale, "settings.data.cloudVersion")}</dt>
+            <dd className="truncate font-mono text-label-large text-on-surface" title={cloudRaw ?? undefined}>
+              {checking
+                ? t(locale, "settings.data.checking")
+                : cloudLabel || t(locale, "settings.data.loadFailed")}
+            </dd>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-on-surface-variant">{t(locale, "settings.data.localVersion")}</dt>
+            <dd
+              className={`flex min-w-0 items-center gap-1.5 font-mono text-label-large ${
+                hasUpdate ? "font-medium text-tertiary" : "text-on-surface"
+              }`}
+              title={currentLocalRaw ?? undefined}
+            >
+              <span className="truncate">{localLabel || "—"}</span>
+              {isUpToDate && (
+                <span className="inline-flex shrink-0 items-center gap-0.5 rounded-shape-full bg-primary/12 px-2 py-0.5 font-sans text-label-small text-primary">
+                  <Icon name="check" className="h-3.5 w-3.5" />
+                  {t(locale, "settings.data.upToDate")}
+                </span>
+              )}
+              {hasUpdate && (
+                <span className="inline-flex shrink-0 items-center rounded-shape-full bg-tertiary-container px-2 py-0.5 font-sans text-label-small text-on-tertiary-container">
+                  {t(locale, "settings.data.updateAvailable")}
+                </span>
+              )}
+            </dd>
+          </div>
+        </dl>
+
+        <div className="mt-3 border-t border-outline-variant/50 pt-3">
+          <p className="mb-2 text-label-medium text-on-surface-variant">{t(locale, "settings.data.allServers")}</p>
+          <div className="grid grid-cols-2 gap-1.5">
+            {GAME_SERVERS.map((srv) => {
+              const regionKey = GAME_SERVER_PROFILES[srv].masterdataRegion;
+              const info = liveInfo?.regions?.[regionKey];
+              const ver = info?.version ?? docRegions[regionKey] ?? null;
+              const short = formatMasterDataVersionLabel(ver, info?.resource_version);
+              return (
+                <div
+                  key={srv}
+                  className="flex min-w-0 items-center gap-2 rounded-shape-sm bg-surface-container-high/60 px-2.5 py-1.5"
+                  title={ver ?? undefined}
+                >
+                  <img
+                    src={serverFlagIconSrc(srv)}
+                    alt=""
+                    aria-hidden="true"
+                    loading="lazy"
+                    decoding="async"
+                    className="h-4 w-4 shrink-0 rounded-full"
+                  />
+                  <span className="shrink-0 text-label-small font-medium uppercase text-on-surface-variant">{srv}</span>
+                  <span className="min-w-0 flex-1 truncate text-right font-mono text-label-small text-on-surface">
+                    {short || (checking ? "…" : "—")}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <p className="mt-3 text-body-small text-on-surface-variant [text-wrap:pretty]">
+          {t(locale, "settings.data.versionHint")}
+        </p>
+
+        <Button
+          variant="tonal"
+          fullWidth
+          className="mt-4"
+          disabled={refreshing || checking}
+          onClick={() => void handleForceRefresh()}
+          startIcon={<Icon name="refresh" className={`h-[18px] w-[18px] ${refreshing ? "animate-spin" : ""}`} />}
+        >
+          {t(locale, refreshing ? "settings.data.refreshing" : "settings.data.refreshNow")}
+        </Button>
+      </div>
+    </Section>
+  );
+}
+
 /** What the browser keeps for the site, by what the files are, each kind clearable. */
 function DataSettings({ locale }: { locale: AppLocale }) {
   const [available] = useState(isBrowserCacheAvailable);
@@ -291,7 +444,10 @@ function DataSettings({ locale }: { locale: AppLocale }) {
   const files = (count: number) => t(locale, "settings.data.fileCount", { count: count.toLocaleString(locale) });
 
   return (
-    <Section title={t(locale, "settings.data.cacheTitle")}>
+    <div className="space-y-6">
+      <MasterDataVersionSection locale={locale} />
+
+      <Section title={t(locale, "settings.data.cacheTitle")}>
       {!available ? (
         <p className="text-body-medium text-on-surface-variant [text-wrap:pretty]">{t(locale, "settings.data.unavailable")}</p>
       ) : !overview ? (
@@ -340,7 +496,8 @@ function DataSettings({ locale }: { locale: AppLocale }) {
           </Button>
         </>
       )}
-    </Section>
+      </Section>
+    </div>
   );
 }
 

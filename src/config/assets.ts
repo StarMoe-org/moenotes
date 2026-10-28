@@ -1,11 +1,13 @@
 import { buildEnvOrigin } from "./build-env";
 import { gameUiSources } from "./game-ui";
 
-const assetApi = (import.meta.env.PUBLIC_ASSET_API || "https://assets.bdon.moe").replace(/\/+$/, "");
-const recognitionSite = (import.meta.env.PUBLIC_RECOGNITION_SITE || "https://storage.bdon.moe/moenotes").replace(/\/+$/, "");
+const assetApi = (process.env.PUBLIC_ASSET_API || "https://assets.bdon.moe").replace(/\/+$/, "");
+const recognitionSite = (process.env.PUBLIC_RECOGNITION_SITE || "https://storage.bdon.moe/moenotes").replace(/\/+$/, "");
 const nativeUi = gameUiSources({
-  tw: import.meta.env.PUBLIC_GAME_UI_LIBRARY_TW, jp: import.meta.env.PUBLIC_GAME_UI_LIBRARY_JP,
-  kr: import.meta.env.PUBLIC_GAME_UI_LIBRARY_KR, en: import.meta.env.PUBLIC_GAME_UI_LIBRARY_EN,
+  tw: process.env.PUBLIC_GAME_UI_LIBRARY_TW,
+  jp: process.env.PUBLIC_GAME_UI_LIBRARY_JP,
+  kr: process.env.PUBLIC_GAME_UI_LIBRARY_KR,
+  en: process.env.PUBLIC_GAME_UI_LIBRARY_EN,
 }, {
   tw: "https://storage.bdon.moe/moenotes/game-ui/tw/0c7f77573ffb33957aa168cfd8816bf2d4a40ec67b87a26f188757a76e5132c2/manifest.json",
   jp: "https://storage.bdon.moe/moenotes/game-ui/jp/07ae20b788d94a6db8111f10614db08072f5edc0ac9630087aefa6e51a2e29b6/manifest.json",
@@ -26,23 +28,23 @@ export const assetConfig = {
    * ournotes-player chart site (charts/<musicId>_<difficulty>.json + assets/<sha256>.<ext>), published by
    * moenotes-assets at /chart-site/; see docs/chart-preview.md.
    */
-  chartSite: (import.meta.env.PUBLIC_CHART_SITE || "https://assets.bdon.moe/chart-site").replace(/\/+$/, ""),
+  chartSite: (process.env.PUBLIC_CHART_SITE || "https://assets.bdon.moe/chart-site").replace(/\/+$/, ""),
   /**
    * The story site (stories.json + stories/<advId>.json + models/ + assets/), built by the story-site workflow of
    * StarMoe-org/nnnotes into the storage bucket; see docs/story-player.md.
    */
-  storySite: (import.meta.env.PUBLIC_STORY_SITE || "https://storage.bdon.moe/moenotes").replace(/\/+$/, ""),
+  storySite: (process.env.PUBLIC_STORY_SITE || "https://storage.bdon.moe/moenotes").replace(/\/+$/, ""),
   /**
    * The music data site the chart data tool reads at runtime: `{musicDataSite}/music-data.json` (nnnotes `music-data`,
    * with the ournotes-deck statistics), published into the storage bucket by StarMoe-org/nnnotes workflows like the
    * story site. A new file needs no rebuild of this site.
    */
-  musicDataSite: (import.meta.env.PUBLIC_MUSIC_DATA_SITE || "https://storage.bdon.moe/moenotes/music-data").replace(/\/+$/, ""),
+  musicDataSite: (process.env.PUBLIC_MUSIC_DATA_SITE || "https://storage.bdon.moe/moenotes/music-data").replace(/\/+$/, ""),
   /**
    * The JP music data site, published separately from `musicDataSite` (which the tw, kr and en servers share) by the
    * same workflows: `{musicDataSiteJp}/music-data.json` and `build.json`.
    */
-  musicDataSiteJp: (import.meta.env.PUBLIC_MUSIC_DATA_SITE_JP || "https://storage.bdon.moe/moenotes/jp/music-data").replace(/\/+$/, ""),
+  musicDataSiteJp: (process.env.PUBLIC_MUSIC_DATA_SITE_JP || "https://storage.bdon.moe/moenotes/jp/music-data").replace(/\/+$/, ""),
   /**
    * The deck solver runtime (docs/deck-worker.md, docs/haneoka-engine.md). The Worker and its core module are this
    * site's own files (`public/deck/`), the deck data comes from the music data sites, and the pinned Haneoka WASM
@@ -52,8 +54,8 @@ export const assetConfig = {
    */
   deck: {
     workerUrl: "/deck/deck-worker.js",
-    recommendEngine: import.meta.env.DEV && import.meta.env.PUBLIC_DECK_RECOMMEND_ENGINE !== undefined
-      ? (String(import.meta.env.PUBLIC_DECK_RECOMMEND_ENGINE) || null)
+    recommendEngine: process.env.NODE_ENV === "development" && process.env.PUBLIC_DECK_RECOMMEND_ENGINE !== undefined
+      ? (String(process.env.PUBLIC_DECK_RECOMMEND_ENGINE) || null)
       : "/haneoka-team-engine/runtime.json",
   },
   /** Published prefab sources; TW/KR/EN reuse the international client UI. */
@@ -72,18 +74,18 @@ export const assetConfig = {
     workerUrl: "/recognition/recognition-worker.js",
   },
   /** Shared song-page modules; published at the storage site's root, beside the music-data directory. */
-  musicPlayerSite: (import.meta.env.PUBLIC_MUSIC_PLAYER_SITE || import.meta.env.PUBLIC_STORY_SITE || "https://storage.bdon.moe/moenotes").replace(/\/+$/, ""),
+  musicPlayerSite: (process.env.PUBLIC_MUSIC_PLAYER_SITE || process.env.PUBLIC_STORY_SITE || "https://storage.bdon.moe/moenotes").replace(/\/+$/, ""),
   /**
    * The JP story site, built separately (JP Live2D model ids overlap the international ones): `jp/` of the same bucket.
    * The story player lists both; an episode both have plays from `storySite`. Set `PUBLIC_STORY_SITE_JP` to the
    * `storySite` root to list one site only.
    */
-  storySiteJp: (import.meta.env.PUBLIC_STORY_SITE_JP || "https://storage.bdon.moe/moenotes/jp").replace(/\/+$/, ""),
+  storySiteJp: (process.env.PUBLIC_STORY_SITE_JP || "https://storage.bdon.moe/moenotes/jp").replace(/\/+$/, ""),
   /**
    * Live2D Cubism Core for Web, which the Live2D viewer loads before a model (ournotes-player does not bundle it; Live2D's
    * own license applies). Override with `PUBLIC_CUBISM_CORE` to serve a copy; see docs/live2d-viewer.md.
    */
-  cubismCore: import.meta.env.PUBLIC_CUBISM_CORE || "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js",
+  cubismCore: process.env.PUBLIC_CUBISM_CORE || "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js",
   /**
    * Files of the story player which ournotes-player does not bundle either (each under its maker's license).
    * The CRI Core of Live2D's MotionSync plugin (`live2dcubismmotionsynccore.min.js` 5.0.4, the voices' lip sync on
@@ -93,11 +95,11 @@ export const assetConfig = {
    * See docs/story-player.md.
    */
   motionSyncCore:
-    import.meta.env.PUBLIC_CUBISM_MOTIONSYNC_CORE
+    process.env.PUBLIC_CUBISM_MOTIONSYNC_CORE
     || "https://storage.bdon.moe/moenotes/vendor/cubism-motionsync-core-5.0.4/live2dcubismmotionsynccore.min.js",
   /** The license the MotionSync Core comes under, linked from the story player's help dialog. */
   motionSyncLicense: "https://www.live2d.com/eula/live2d-proprietary-software-license-agreement_en.html",
-  spineRuntime: import.meta.env.PUBLIC_SPINE_RUNTIME || "",
+  spineRuntime: process.env.PUBLIC_SPINE_RUNTIME || "",
   /**
    * The asset service's default region (its `region` setting), whose files are also served without the region
    * segment. It is the primary server's region (src/config/servers.ts); other servers' files carry `/{region}`.

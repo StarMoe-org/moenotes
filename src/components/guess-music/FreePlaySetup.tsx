@@ -1,3 +1,5 @@
+"use client";
+
 import { useId, type ReactNode } from "react";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";

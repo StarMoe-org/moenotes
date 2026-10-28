@@ -1,3 +1,5 @@
+"use client";
+
 import { useMemo } from "react";
 import type { ChartRow } from "@/lib/chart-data/catalog";
 import { aptitudeRate, aptitudeRadius, aptitudeSe, chartAptitude, chartFactors, MEASURES, shapeSkills, shapeBands, zeroGain } from "@/lib/chart-data/gekisou";

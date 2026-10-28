@@ -1,3 +1,5 @@
+"use client";
+
 import type { ReactNode } from "react";
 import Button from "@mui/material/Button";
 import type { AppLocale } from "@/config/locales";

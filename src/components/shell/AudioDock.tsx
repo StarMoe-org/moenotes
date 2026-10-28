@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import IconButton from "@mui/material/IconButton";
 import Slider from "@mui/material/Slider";

@@ -1,3 +1,4 @@
+import { withClientMasterDataVersion } from "@/lib/masterdata/client-version";
 import { localizeMasterText } from "@/lib/masterdata/localize-text";
 import type { ContentSearchEntry } from "@/lib/search/content-index";
 
@@ -20,18 +21,26 @@ interface SearchIndexPayload {
 }
 
 let indexPromise: Promise<ContentSearchEntry[]> | null = null;
+let indexUrlLoaded: string | null = null;
 
 /**
- * The content search index, fetched once per page load and cached; the deploy server revalidates it by ETag, so a
- * returning visit usually answers 304. Always resolves — a failed fetch just yields no content results. Fetch lives
+ * The content search index, fetched once per page version (`?v=<dataVersion>`) and cached; the deploy server
+ * revalidates or caches it by version. Always resolves — a failed fetch just yields no content results. Fetch lives
  * here (the architecture lint's search client module) so the matching/localization in client.ts stays fetch-free.
  */
-export function loadContentSearchIndex(): Promise<ContentSearchEntry[]> {
-  indexPromise ??= fetch("/search-index.json", { headers: { accept: "application/json" } })
-    .then((response) => (response.ok ? response.json() : null))
-    .then((payload: SearchIndexPayload | null) => (Array.isArray(payload?.entries) ? payload.entries : []))
-    .catch(() => []);
-  return indexPromise;
+export function loadContentSearchIndex(options?: { forceBypass?: boolean }): Promise<ContentSearchEntry[]> {
+  const url = withClientMasterDataVersion("/search-index.json", options);
+  if (options?.forceBypass || indexUrlLoaded !== url) {
+    indexUrlLoaded = url;
+    indexPromise = fetch(url, {
+      cache: options?.forceBypass ? "no-store" : "default",
+      headers: { accept: "application/json" },
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload: SearchIndexPayload | null) => (Array.isArray(payload?.entries) ? payload.entries : []))
+      .catch(() => []);
+  }
+  return indexPromise ?? Promise.resolve([]);
 }
 
 const providers: DynamicSearchProvider[] = [];

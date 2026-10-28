@@ -1,3 +1,5 @@
+"use client";
+
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import CollectionViewSwitch from "@/components/shared/CollectionViewSwitch";

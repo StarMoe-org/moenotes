@@ -1,3 +1,5 @@
+"use client";
+
 import SiriusLoader, { SiriusIcon } from "@/components/shared/SiriusLoader";
 import { useCallback, useEffect, useMemo, useState, type ReactNode, type Ref } from "react";
 import type { StoryPlayer } from "ournotes-player/story";

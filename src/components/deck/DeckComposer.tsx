@@ -1,3 +1,5 @@
+"use client";
+
 import { useId, type ReactNode } from "react";
 import { Icon } from "@/components/shared/icons";
 import "@/styles/deck-composer.css";

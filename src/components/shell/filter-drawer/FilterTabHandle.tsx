@@ -1,3 +1,5 @@
+"use client";
+
 import Fab from "@mui/material/Fab";
 import Zoom from "@mui/material/Zoom";
 import { Icon } from "@/components/shared/icons";

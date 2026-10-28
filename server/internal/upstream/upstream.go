@@ -14,10 +14,13 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -117,17 +120,39 @@ func (f *Fetcher) Target(url string) string {
 	return url
 }
 
-// JSON fetches and decodes a JSON document.
-func (f *Fetcher) JSON(ctx context.Context, url string, into any) error {
+var cacheBustSeq atomic.Uint64
+
+// WithCacheBust appends a unique `_t` query parameter so CDN and reverse-proxy URL caches
+// never serve a stale `current_version.json` response.
+func WithCacheBust(rawURL string) string {
+	token := strconv.FormatInt(time.Now().UnixNano(), 10) + "-" + strconv.FormatUint(cacheBustSeq.Add(1), 10)
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		sep := "?"
+		if strings.Contains(rawURL, "?") {
+			sep = "&"
+		}
+		return rawURL + sep + "_t=" + token
+	}
+	q := parsed.Query()
+	q.Set("_t", token)
+	parsed.RawQuery = q.Encode()
+	return parsed.String()
+}
+
+// JSON fetches and decodes a version-manifest JSON document, forcing penetration of any intermediate HTTP/CDN caches.
+func (f *Fetcher) JSON(ctx context.Context, rawURL string, into any) error {
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
-	target := f.Target(url)
+	target := WithCacheBust(f.Target(rawURL))
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
 	if err != nil {
 		return err
 	}
 	request.Header.Set("Accept", "application/json")
-	request.Header.Set("Cache-Control", "no-cache")
+	request.Header.Set("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
+	request.Header.Set("Pragma", "no-cache")
+	request.Header.Set("Expires", "0")
 	client := f.Client
 	if client == nil {
 		client = http.DefaultClient
@@ -184,7 +209,7 @@ func ExportLag(ctx context.Context, manifest *AssetManifest, fetcher *Fetcher, m
 
 // SourceRoots are the files of the repository that shape the built site.
 var (
-	sourceFiles = []string{"astro.config.mjs", "package.json", "bun.lock", "tsconfig.json"}
+	sourceFiles = []string{"next.config.ts", "postcss.config.mjs", "package.json", "bun.lock", "tsconfig.json"}
 	sourceDirs  = []string{"src", "public"}
 )
 

@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useMemo, useState } from "react";
 import type { AppLocale } from "@/config/locales";
 import { PRIMARY_SERVER } from "@/config/servers";
