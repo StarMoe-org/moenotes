@@ -1,4 +1,5 @@
 import { useId, type ReactNode } from "react";
+import { Icon } from "@/components/shared/icons";
 import "@/styles/deck-composer.css";
 
 export interface DeckComposerGoal {
@@ -39,38 +40,62 @@ export interface DeckComposerProps {
 export default function DeckComposer({ goalGroups, selectedGoal, onGoalChange, labels, collection, conditions, run, results }: DeckComposerProps) {
   const id = useId();
   const selected = goalGroups.flatMap(group => group.goals).find(goal => goal.id === selectedGoal);
-  return <div className="dc-composer">
-    <div className="dc-bench">
-      <aside className="dc-setup" aria-label={labels.setup}>
-        <div className="dc-setup-body">
-          <section className="dc-block dc-collection" aria-labelledby={`${id}-collection`}>
-            <h2 id={`${id}-collection`}>{labels.collection}</h2>
+  return (
+    <div className="dc-composer">
+      <div className="dc-bench">
+        <aside className="dc-setup" aria-label={labels.setup}>
+          <section className="dc-card dc-collection" aria-labelledby={`${id}-collection`}>
+            <h2 id={`${id}-collection`} className="dc-card-title">{labels.collection}</h2>
             {collection}
           </section>
-          <section className="dc-block dc-goal-section" aria-labelledby={`${id}-goal`}>
-            <h2 id={`${id}-goal`}>{labels.goal}</h2>
-            {goalGroups.map(group => <div className="dc-goal-group" key={group.id} role="group" aria-labelledby={`${id}-goal-${group.id}`}>
-              <h3 className="dc-goal-group-title" id={`${id}-goal-${group.id}`}>{group.title}</h3>
-              {group.goals.length ? <div className="dc-goals">{group.goals.map(goal => <button className="dc-goal md3-state" type="button" key={goal.id} aria-pressed={selectedGoal === goal.id}
-                disabled={goal.disabled} onClick={() => onGoalChange(goal.id)} title={goal.description}>
-                {goal.icon && <span className="dc-goal-icon" aria-hidden="true">{goal.icon}</span>}
-                <span className="dc-goal-title">{goal.title}</span>
-                {goal.badge && <span className="dc-goal-badge">{goal.badge}</span>}
-              </button>)}</div> : group.empty && <p className="dc-goal-empty">{group.empty}</p>}
-            </div>)}
-            {selected && <p className="dc-goal-description" aria-live="polite">{selected.description}</p>}
+          <section className="dc-card dc-goal-section" aria-labelledby={`${id}-goal`}>
+            <h2 id={`${id}-goal`} className="dc-card-title">{labels.goal}</h2>
+            {goalGroups.map(group => (
+              <div className="dc-goal-group" key={group.id} role="group" aria-labelledby={`${id}-goal-${group.id}`}>
+                <h3 className="dc-goal-group-title" id={`${id}-goal-${group.id}`}>{group.title}</h3>
+                {group.goals.length ? (
+                  <div className="dc-goals">
+                    {group.goals.map(goal => (
+                      <button
+                        className="dc-goal md3-state"
+                        type="button"
+                        key={goal.id}
+                        aria-pressed={selectedGoal === goal.id}
+                        disabled={goal.disabled}
+                        onClick={() => onGoalChange(goal.id)}
+                        title={goal.description}
+                      >
+                        {goal.icon && <span className="dc-goal-icon" aria-hidden="true">{goal.icon}</span>}
+                        <span className="dc-goal-title">{goal.title}</span>
+                        {goal.badge && <span className="dc-goal-badge">{goal.badge}</span>}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  group.empty && <p className="dc-goal-empty">{group.empty}</p>
+                )}
+              </div>
+            ))}
+            {selected && (
+              <div className="dc-goal-description" aria-live="polite">
+                <Icon name="info" className="dc-goal-description-icon" />
+                <p>{selected.description}</p>
+              </div>
+            )}
           </section>
-          <section className="dc-block dc-settings" aria-labelledby={`${id}-conditions`}>
-            <h2 id={`${id}-conditions`}>{labels.conditions}</h2>
-            <div className="dc-conditions">{conditions}</div>
+          <section className="dc-card dc-settings-card" aria-labelledby={`${id}-conditions`}>
+            <div className="dc-settings">
+              <h2 id={`${id}-conditions`} className="dc-card-title">{labels.conditions}</h2>
+              <div className="dc-conditions">{conditions}</div>
+            </div>
+            <div className="dc-run">{run}</div>
           </section>
-        </div>
-        <div className="dc-run">{run}</div>
-      </aside>
-      <section className="dc-results dc-team" aria-labelledby={`${id}-results`}>
-        <h2 id={`${id}-results`} className="dc-results-title">{labels.results}</h2>
-        {results}
-      </section>
+        </aside>
+        <section className="dc-results dc-team" aria-labelledby={`${id}-results`}>
+          <h2 id={`${id}-results`} className="dc-results-title">{labels.results}</h2>
+          {results}
+        </section>
+      </div>
     </div>
-  </div>;
+  );
 }
