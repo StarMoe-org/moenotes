@@ -19,28 +19,45 @@ import { formatMasterDataVersionLabel, withClientMasterDataVersion } from "@/lib
 
 describe("Runtime MasterData version cache, versioned table cache & forced cache penetration", () => {
   test("memo caches selectors per epoch and invalidates when epoch advances", async () => {
-    await getBuildManifest();
-    expect(isMasterDataManifestFresh()).toBe(true);
+    const savedMasterdataDir = process.env.MOENOTES_MASTERDATA_DIR;
+    delete process.env.MOENOTES_MASTERDATA_DIR;
+    setBuildFetchTransportForTests(async () => new Response(JSON.stringify({
+      regions: {
+        "hk-tw-mo": { version: "a1ba9587e3255fddc96e2c88f511b18f" },
+        jp: { version: "1.1.0.100/9cb2cd74f02a7b69ba4069f064f177fe" },
+      },
+    }), { status: 200, headers: { "Content-Type": "application/json" } }));
 
-    let runs = 0;
-    const key = "test:masterdata-epoch-probe";
-    state.selectors.delete(key);
+    try {
+      resetMasterDataSnapshotForTests();
+      await getBuildManifest();
+      expect(isMasterDataManifestFresh()).toBe(true);
 
-    const first = await memo(key, async () => ++runs);
-    const second = await memo(key, async () => ++runs);
-    expect(first).toBe(1);
-    expect(second).toBe(1);
+      let runs = 0;
+      const key = "test:masterdata-epoch-probe";
+      state.selectors.delete(key);
 
-    const beforeEpoch = currentMasterDataEpochSync();
-    state.epoch = beforeEpoch - 1;
-    const third = await memo(key, async () => ++runs);
-    expect(third).toBe(2);
-    expect(state.epoch).toBe(beforeEpoch);
+      const first = await memo(key, async () => ++runs);
+      const second = await memo(key, async () => ++runs);
+      expect(first).toBe(1);
+      expect(second).toBe(1);
 
-    state.selectors.delete(key);
-    resetMasterDataSnapshotForTests();
-    const manifestAfterReset = await getBuildManifest();
-    expect(manifestAfterReset.dataVersion.length).toBeGreaterThan(0);
+      const beforeEpoch = currentMasterDataEpochSync();
+      state.epoch = beforeEpoch - 1;
+      const third = await memo(key, async () => ++runs);
+      expect(third).toBe(2);
+      expect(state.epoch).toBe(beforeEpoch);
+
+      state.selectors.delete(key);
+      resetMasterDataSnapshotForTests();
+      const manifestAfterReset = await getBuildManifest();
+      expect(manifestAfterReset.dataVersion.length).toBeGreaterThan(0);
+    } finally {
+      setBuildFetchTransportForTests(null);
+      resetMasterDataSnapshotForTests();
+      if (savedMasterdataDir === undefined) delete process.env.MOENOTES_MASTERDATA_DIR;
+      else process.env.MOENOTES_MASTERDATA_DIR = savedMasterdataDir;
+    }
   });
 
   test("current_version.json always penetrates cache, all MasterData fetches carry ?v=, and forceRefreshMasterData bypasses memory/disk/CDN caches", async () => {

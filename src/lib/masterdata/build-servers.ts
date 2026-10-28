@@ -11,15 +11,30 @@ interface AssetReleaseManifest {
 
 interface ServersState {
   epoch: number;
+  envSignature: string;
   promise?: Promise<GameServer[]> | undefined;
 }
 
-const serversKey = Symbol.for("moenotes.masterdata.build-servers.v2");
+const serversKey = Symbol.for("moenotes.masterdata.build-servers");
 const globalState = globalThis as typeof globalThis & { [serversKey]?: ServersState };
-const state = globalState[serversKey] ??= { epoch: -1 };
+
+function currentEnvSignature(): string {
+  return `${buildEnv("MOENOTES_SERVERS") ?? ""}|${buildEnv("MOENOTES_VERSION_URL") ?? ""}|${buildEnv("MOENOTES_MASTERDATA_DIR") ?? ""}`;
+}
+
+function getServersState(): ServersState {
+  const existing = globalState[serversKey];
+  if (existing && typeof existing === "object" && "epoch" in existing && "envSignature" in existing) {
+    return existing;
+  }
+  const fresh: ServersState = { epoch: -1, envSignature: "" };
+  globalState[serversKey] = fresh;
+  return fresh;
+}
 
 /**
- * The servers this runtime shows, in switcher order. Refreshes automatically when the MasterData epoch advances.
+ * The servers this runtime shows, in switcher order. Refreshes automatically when the MasterData epoch or server
+ * override environment changes.
  */
 export async function getBuildServers(options?: { forceBypass?: boolean; reloadOnly?: boolean }): Promise<GameServer[]> {
   if (options?.forceBypass && !options?.reloadOnly) {
@@ -27,9 +42,12 @@ export async function getBuildServers(options?: { forceBypass?: boolean; reloadO
   } else if (!isMasterDataManifestFresh()) {
     await getBuildManifest();
   }
+  const state = getServersState();
   const epoch = currentMasterDataEpochSync();
-  if (options?.forceBypass || options?.reloadOnly || state.epoch !== epoch || !state.promise) {
+  const envSignature = currentEnvSignature();
+  if (options?.forceBypass || options?.reloadOnly || state.epoch !== epoch || state.envSignature !== envSignature || !state.promise) {
     state.epoch = epoch;
+    state.envSignature = envSignature;
     state.promise = resolveBuildServers().catch((error) => {
       state.promise = undefined;
       throw error;

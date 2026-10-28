@@ -35,6 +35,7 @@ export interface MasterDataCacheStats {
 interface BuildSnapshotState {
   manifest?: Promise<VersionManifest> | undefined;
   resolvedManifest?: VersionManifest | undefined;
+  manifestLocalDir?: string | undefined;
   regionVersions: Record<string, string>;
   manifestCheckedAt: number;
   manifestFetchCount: number;
@@ -210,21 +211,40 @@ function extractRegionVersions(manifest: VersionManifest): Record<string, string
 
 function recordManifest(loaded: VersionManifest): void {
   state.resolvedManifest = loaded;
+  state.manifestLocalDir = localSourceDir() ?? "";
   state.regionVersions = extractRegionVersions(loaded);
   state.manifest = Promise.resolve(loaded);
   state.manifestCheckedAt = Date.now();
 }
 
+function syncSourceEnvironment(): void {
+  const currentDir = localSourceDir() ?? "";
+  if (state.manifestLocalDir !== undefined && state.manifestLocalDir !== currentDir) {
+    state.manifest = undefined;
+    state.resolvedManifest = undefined;
+    state.manifestLocalDir = currentDir;
+    state.regionVersions = {};
+    state.manifestCheckedAt = 0;
+    state.index = undefined;
+    state.indexVersion = undefined;
+    state.tables.clear();
+    state.penetratedKeys.clear();
+    state.epoch += 1;
+  }
+}
+
 /** Current epoch without awaiting; increments every time `dataVersion` rotates or a force-bypass refresh runs. */
 export function currentMasterDataEpochSync(): number {
+  syncSourceEnvironment();
   return state.epoch;
 }
 
 /** Whether the in-memory version manifest is still within its configured TTL window. */
 export function isMasterDataManifestFresh(): boolean {
+  syncSourceEnvironment();
   const ttl = versionTtlMs();
   if (ttl <= 0) return false;
-  return Boolean(state.resolvedManifest) && Date.now() - state.manifestCheckedAt < ttl;
+  return Boolean(state.manifest) && Boolean(state.resolvedManifest) && Date.now() - state.manifestCheckedAt < ttl;
 }
 
 /** Diagnostic snapshot of the Version Cache and Version-Keyed MasterData Cache. */
@@ -282,6 +302,7 @@ export async function peekCloudMasterDataManifest(): Promise<VersionManifest> {
 }
 
 export function getBuildManifest(options?: MasterDataReadOptions): Promise<VersionManifest> {
+  syncSourceEnvironment();
   if (options?.forceBypass) {
     return forceRefreshMasterData({ purgeTables: true });
   }
