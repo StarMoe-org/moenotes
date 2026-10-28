@@ -7,6 +7,7 @@ import { CARD_FIELDS, type CardBox, type CardFieldName } from "@/lib/box/model";
 import type { BoxMode } from "@/lib/box/session";
 import { bindRecognitionSource, decodeScreenshot, loadRecognitionBundle } from "@/lib/recognition/client";
 import { RecognitionError } from "@/lib/recognition/errors";
+import { clipboardImageFiles } from "@/lib/browser/image-input";
 import { RecognitionBatch, type RecognitionFileSnapshot } from "@/lib/recognition/batch";
 import { correctRecognizedBoxIdentity, correctRecognizedValue, mergeRecognizedBox, unidentifiedCardKey, type RecognitionBinding, type RecognitionBox, type RecognitionConfiguration, type RecognitionSource } from "@/lib/recognition/protocol";
 import { RecognitionWorkerClient } from "@/lib/recognition/worker-client";
@@ -131,14 +132,7 @@ export default function ScreenshotImport({ locale, server, source, sourceIssue, 
       const dialog = input.current?.closest('[role="dialog"]');
       if (event.defaultPrevented || !dialog || !(event.target instanceof Node) || !dialog.contains(event.target)) return;
       if (event.target instanceof Element && event.target.closest('input, textarea, [contenteditable]:not([contenteditable="false"])')) return;
-      const data = event.clipboardData;
-      if (!data) return;
-      const files = Array.from(data.files).filter(file => file.type.startsWith("image/"));
-      if (!files.length) for (const item of Array.from(data.items)) {
-        if (item.kind !== "file" || !item.type.startsWith("image/")) continue;
-        const file = item.getAsFile();
-        if (file) files.push(file);
-      }
+      const files = clipboardImageFiles(event.clipboardData);
       if (files.length && enqueueRef.current(files)) event.preventDefault();
     };
     document.addEventListener("paste", paste);

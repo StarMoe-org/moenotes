@@ -1,0 +1,16 @@
+---
+import type { AppLocale } from "@/config/locales";
+import PageLayout from "@/layouts/PageLayout.astro";
+import { getBuildMusic } from "@/lib/masterdata/build-data";
+import { getBuildServers } from "@/lib/masterdata/build-servers";
+import SlidingPuzzleTool from "./SlidingPuzzleTool";
+import "@/styles/sliding-puzzle.css";
+
+interface Props { locale: AppLocale }
+const { locale } = Astro.props;
+const [songs, servers] = await Promise.all([getBuildMusic(locale), getBuildServers()]);
+---
+
+<PageLayout locale={locale} titleKey="slidingPuzzle.title" descriptionKey="slidingPuzzle.description">
+  <SlidingPuzzleTool client:load locale={locale} songs={songs} servers={servers} />
+</PageLayout>

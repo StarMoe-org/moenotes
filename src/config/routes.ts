@@ -907,6 +907,21 @@ export const routeRegistry = [
         keywords: ["asset", "viewer", "s3", "files"],
       },
       {
+        id: "sliding-puzzle",
+        path: "/tools/sliding-puzzle",
+        labelKey: "slidingPuzzle.title",
+        component: "sliding-puzzle",
+        seo: {
+          titleKey: "slidingPuzzle.title",
+          descriptionKey: "slidingPuzzle.description",
+          keywords: ["Our Notes sliding puzzle solver", "BanG Dream artwork puzzle", "3x3 puzzle", "8x8 puzzle", "sliding puzzle solution"],
+          sitemap: { priority: 0.5, changefreq: "monthly" },
+        },
+        nav: { order: 35, icon: "wrench" },
+        searchable: true,
+        keywords: ["sliding puzzle", "puzzle solver", "artwork puzzle", "15 puzzle"],
+      },
+      {
         id: "design-system",
         path: "/tools/design-system",
         labelKey: "nav.items.designSystem",

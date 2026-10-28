@@ -71,6 +71,7 @@ const routePaths: Record<string, ReactNode> = {
   "birthday-story": <><path d="M3.5 21h17M5 21v-7.5h14V21"/><path d="M5 17c1.2.9 2.3.9 3.5 0s2.3-.9 3.5 0 2.3.9 3.5 0 2.3-.9 3.5 0"/><path d="M12 13.5V9.5"/><path d="M12 4c.9 1.1.9 2.3 0 3-.9-.7-.9-1.9 0-3z"/></>,
   "other-story": <><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 0-3 3z"/><path d="M9 9h6M9 13h4"/><path d="m17.5 2 .6 1.9 1.9.6-1.9.6-.6 1.9-.6-1.9-1.9-.6 1.9-.6z"/></>,
   // Tools
+  "sliding-puzzle": <><rect x="3" y="3" width="18" height="18" rx="2.5"/><path d="M9 3v18M15 3v12M3 9h18M3 15h12"/><path d="m17 18 1.5-1.5L20 18M18.5 16.5v4"/></>,
   "live2d-viewer": <><circle cx="12" cy="7" r="3.5"/><path d="M6 21c.5-4.6 2.5-7 6-7s5.5 2.4 6 7"/><path d="M4 9.5 2.5 8M20 9.5 21.5 8M4.5 14 3 15M19.5 14l1.5 1"/></>,
   "story-player": <><rect x="2.5" y="5" width="19" height="12" rx="2.5"/><path d="m10 8.5 4.5 2.5-4.5 2.5z"/><path d="M6 20.5h12"/></>,
   // A formation of five card slots: the deck builder.

@@ -1,5 +1,6 @@
 ---
 import DesignSystemPage from "@/components/design-system/DesignSystemPage.astro";
+import SlidingPuzzlePage from "@/components/sliding-puzzle/SlidingPuzzlePage.astro";
 import AssetViewerPage from "@/components/tools/AssetViewerPage.astro";
 import ChartPreview3DPage from "@/components/tools/ChartPreview3DPage.astro";
 import Live2DViewerPage from "@/components/tools/Live2DViewerPage.astro";
@@ -148,6 +149,8 @@ const component = match.item.component ?? "page";
     </PageLayout>
   ) : component === "design-system" ? (
     <DesignSystemPage locale={locale} />
+  ) : component === "sliding-puzzle" ? (
+    <SlidingPuzzlePage locale={locale} />
   ) : component === "asset-viewer" ? (
     <AssetViewerPage locale={locale} />
   ) : component === "chart-preview" ? (
