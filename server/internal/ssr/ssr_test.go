@@ -107,8 +107,8 @@ func TestGatewayForceBypassPenetration(t *testing.T) {
 
 	cache := NewHTMLCache(t.TempDir(), "build-1", "tw@1.0.0")
 	gw, err := NewGateway(GatewayOptions{
-		UpstreamURL:    upstream.URL,
-		Cache:          cache,
+		UpstreamURL: upstream.URL,
+		Cache:       cache,
 		OnForceRefresh: func(context.Context) {
 			forceHookCalls.Add(1)
 		},
