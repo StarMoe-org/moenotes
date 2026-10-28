@@ -1,18 +1,77 @@
 import { useEffect, useRef, useState } from "react";
+import Button from "@mui/material/Button";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import { accountLoginUrl, STARMOE_BOX_APP } from "@/config/account";
 import { t } from "@/i18n";
+import { Icon } from "@/components/shared/icons";
 import Modal from "@/components/shared/Modal";
 import { GameSaveError, type GameSaveErrorCode, type GameSaveMeta } from "@/lib/account/game-saves";
 import { gameSaveCounts, type GameSaveCounts, type GameSaveDerivation } from "@/lib/box/game-save";
 import { fetchGameSave, type LoadedGameSave } from "@/lib/box/game-save-source";
 import type { BoxSaveLink } from "@/lib/box/model";
+import { safeGetLocalStorage, safeSetLocalStorage } from "@/lib/storage/safe-storage";
 import CollectionIcon from "./CollectionIcon";
 import type { GameSaveList, LinkedGameSaveState } from "./use-game-save";
 
 const dateTime = (locale: AppLocale, at: number) => new Date(at).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" });
 const errorCode = (error: unknown): GameSaveErrorCode => error instanceof GameSaveError ? error.code : "invalid";
+const TOKEN_NOTICE_STORAGE_KEY = `moenotes:starmoe-box-token-notice:${STARMOE_BOX_APP.minRecommendedVersion}`;
+
+/**
+ * Dismissible MD3 tonal info banner explaining StarMoe Box's `unable to fetch refresh token` error
+ * (expired login session on <= v0.1.3 without update checks or localized prompts) and linking v0.1.4+.
+ */
+export function StarMoeBoxTokenNotice({ locale }: { locale: AppLocale }) {
+  const gs = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.gameSave.${key}`, values);
+  const [dismissed, setDismissed] = useState(false);
+  useEffect(() => {
+    setDismissed(safeGetLocalStorage(TOKEN_NOTICE_STORAGE_KEY) === "1");
+  }, []);
+  if (dismissed) return null;
+  function dismiss() {
+    safeSetLocalStorage(TOKEN_NOTICE_STORAGE_KEY, "1");
+    setDismissed(true);
+  }
+  return (
+    <section className="dw-md3-notice" aria-label={gs("tokenNoticeTitle")} data-testid="starmoe-box-token-notice">
+      <span className="dw-md3-notice-icon" aria-hidden="true">
+        <Icon name="info" className="h-5 w-5" />
+      </span>
+      <div className="dw-md3-notice-copy">
+        <strong>{gs("tokenNoticeTitle")}</strong>
+        <p>{gs("tokenNoticeBody", { version: STARMOE_BOX_APP.minRecommendedVersion })}</p>
+      </div>
+      <div className="dw-md3-notice-actions">
+        <Button variant="tonal" size="small" href={STARMOE_BOX_APP.download} target="_blank" rel="noopener noreferrer">
+          {gs("appDownloadLatest", { version: STARMOE_BOX_APP.minRecommendedVersion })}
+        </Button>
+        <Button variant="text" size="small" href={STARMOE_BOX_APP.releases} target="_blank" rel="noopener noreferrer">
+          {gs("appReleases")}
+        </Button>
+        <Button variant="text" size="small" onClick={dismiss}>
+          {gs("tokenNoticeDismiss")}
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+/** Permanent contextual troubleshooting hint inside save import/status surfaces. */
+function StarMoeBoxTokenHelp({ locale }: { locale: AppLocale }) {
+  const gs = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.gameSave.${key}`, values);
+  return (
+    <div className="cb-token-help" role="note">
+      <Icon name="info" className="h-4 w-4 shrink-0" />
+      <p>
+        <span>{gs("tokenHelpInline", { version: STARMOE_BOX_APP.minRecommendedVersion })}</span>{" "}
+        <a href={STARMOE_BOX_APP.download} target="_blank" rel="noopener noreferrer">
+          {gs("appDownloadLatest", { version: STARMOE_BOX_APP.minRecommendedVersion })}
+        </a>
+      </p>
+    </div>
+  );
+}
 
 /**
  * The App is also discoverable before the user has uploaded a first save. `onPick` is set when uploads exist but none
@@ -23,7 +82,7 @@ export function GameSaveHint({ locale, server, list, returnTo, onPick }: { local
   if (list.access === "signed-out") return <p className="cb-save-hint"><CollectionIcon name="game" /><span>{gs("signInPrompt")}</span><a href={accountLoginUrl(locale, returnTo)}>{gs("signIn")}</a></p>;
   if (list.access !== "signed-in") return null;
   if (list.error) return <p className="cb-save-hint"><CollectionIcon name="game" /><span>{gs("listError")}</span><button type="button" className="cb-save-hint-action" onClick={() => void list.refresh()}>{gs("retry")}</button></p>;
-  if (list.saves?.length === 0) return <p className="cb-save-hint"><CollectionIcon name="game" /><span>{gs("noSaves", { server: t(locale, `gameServer.names.${server}`) })}</span><a href={STARMOE_BOX_APP.download}>{gs("appDownload")}</a><button type="button" className="cb-save-hint-action" onClick={() => void list.refresh()}>{gs("refreshUploads")}</button></p>;
+  if (list.saves?.length === 0) return <p className="cb-save-hint"><CollectionIcon name="game" /><span>{gs("noSaves", { server: t(locale, `gameServer.names.${server}`) })}</span><a href={STARMOE_BOX_APP.download} target="_blank" rel="noopener noreferrer">{gs("appDownload")}</a><button type="button" className="cb-save-hint-action" onClick={() => void list.refresh()}>{gs("refreshUploads")}</button></p>;
   if (onPick && list.saves?.length) return <p className="cb-save-hint"><CollectionIcon name="game" /><span>{gs("pickPrompt")}</span><button type="button" className="cb-save-hint-action" onClick={onPick}>{gs("importAction")}</button></p>;
   return null;
 }
@@ -71,8 +130,10 @@ export function GameSavePicker({ locale, server, isOpen, onClose, list, busy, on
     <div className="dw-dialog cb-save-picker">
       <p className="dw-muted">{gs("appIntro")}</p>
       <ol className="cb-app-steps"><li>{gs("appStepInstall")}</li><li>{gs("appStepUpload")}</li><li>{gs("appStepReturn")}</li></ol>
-      <div className="cb-app-actions"><a className={!saves?.length ? "dw-primary" : ""} href={STARMOE_BOX_APP.download}>{gs("appDownload")}</a>
-        <a href={STARMOE_BOX_APP.guide} target="_blank" rel="noopener noreferrer">{gs("appGuide")}</a></div>
+      <div className="cb-app-actions"><a className={!saves?.length ? "dw-primary" : ""} href={STARMOE_BOX_APP.download} target="_blank" rel="noopener noreferrer">{gs("appDownload")}</a>
+        <a href={STARMOE_BOX_APP.guide} target="_blank" rel="noopener noreferrer">{gs("appGuide")}</a>
+        <a href={STARMOE_BOX_APP.releases} target="_blank" rel="noopener noreferrer">{gs("appReleases")}</a></div>
+      <StarMoeBoxTokenHelp locale={locale} />
       {list.access === "signed-out" ? <p className="cb-save-hint"><span>{gs("signInPrompt")}</span><a href={accountLoginUrl(locale, returnTo)}>{gs("signIn")}</a></p>
         : list.access === "unavailable" ? <p className="dw-alert" role="alert">{gs("appUnavailable")}</p>
         : list.access === "loading" ? <p className="dw-muted" role="status">{gs("listLoading")}</p> : <>
@@ -154,6 +215,7 @@ export function GameSaveBanner({ locale, link, state, derivation, list, busy, re
       {state.status === "ready" && unknownCards > 0 && <p>{gs("unknownCards", { count: unknownCards })}</p>}
       {state.status === "ready" && otherIssues > 0 && <p>{gs("issues", { count: otherIssues })}</p>}
     </div>
+    <StarMoeBoxTokenHelp locale={locale} />
     <Modal historyNavigation={false} isOpen={unlinking} onClose={() => setUnlinking(false)} title={gs("unlinkTitle")} closeLabel={t(locale, "deckWorkspace.close")}>
       <div className="dw-dialog"><p>{gs("unlinkNote")}</p>{unlinkError && <p className="dw-alert" role="alert">{gs("unlinkError")}</p>}
         <button type="button" className="dw-danger" disabled={busy} onClick={async () => { const done = await onUnlink().catch(() => false); setUnlinkError(!done); if (done) setUnlinking(false); }}>{gs("unlinkConfirm")}</button></div>

@@ -1,5 +1,5 @@
 import type { MusicDifficulty } from "@/lib/music/difficulty";
-import type { DeckArenaRule } from "./arena";
+import { activeSongRules, type DeckArenaRule, type DeckSongRules } from "./arena";
 import { EVENT_REWARDS, MAX_TERM_WEIGHT, defaultRewardPlan, rewardLayout, rewardLevels, statedTerms,
   type ChallengeWorth, type EventReward, type RewardLayout, type RewardPlan, type RewardTerm } from "./reward-mix";
 
@@ -66,6 +66,10 @@ export interface DeckGoalInput {
   goal: DeckGoal;
   aggregation: DeckAggregation;
   allSongs?: boolean;
+  /** Multi-song search mode when `allSongs` is enabled on score goals: per-song top teams (`individual`) or one shared formation maximizing average score (`mean`). */
+  multiSongMode?: "individual" | "mean";
+  /** Optional song attribute / Gekisou range mission overrides for non-Arena played/skip goals. */
+  songRules?: DeckSongRules;
   /** Event payoff goals: how the other rewards of the same live take part in the ranking. */
   rewards: RewardPlan;
   musicId: number | null;
@@ -129,9 +133,16 @@ export const isChallengeInput = (input: Pick<DeckGoalInput, "goal" | "venue">): 
 export const isNetworkInput = (input: Pick<DeckGoalInput, "goal" | "venue">): boolean => ["battleLive", "arenaLive"].includes(solverGoalKind(input));
 /** Whether the goal input reads a play style (a played live; not power or a skip). */
 export const readsAccuracy = (input: Pick<DeckGoalInput, "goal" | "venue">): boolean => !["power", "skip"].includes(solverGoalKind(input));
+/** Whether a goal supports optimizing one shared formation for average score across all songs. */
+export const supportsCrossSongMean = (input: Pick<DeckGoalInput, "goal" | "venue">): boolean =>
+  !isEventPayoffGoal(input.goal) && ["freeLive", "challengeLive", "battleLive", "missionLive"].includes(solverGoalKind(input));
 /** Retain the objective preference for supported non-Gekisou played lives. */
-export const effectiveAggregation = (input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "aggregation" | "arenaRule">>): DeckAggregation =>
-  readsAccuracy(input) && !(solverGoalKind(input) === "arenaLive" && input.arenaRule?.mode === "shared") ? input.aggregation ?? "expected" : "expected";
+export const effectiveAggregation = (input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "aggregation" | "arenaRule" | "allSongs" | "multiSongMode">>): DeckAggregation =>
+  readsAccuracy(input)
+  && !(solverGoalKind(input) === "arenaLive" && input.arenaRule?.mode === "shared")
+  && !(input.allSongs && input.multiSongMode === "mean" && supportsCrossSongMean(input))
+    ? input.aggregation ?? "expected"
+    : "expected";
 
 type RewardInput = Pick<DeckGoalInput, "goal"> & Partial<Pick<DeckGoalInput, "venue" | "rewards">>;
 /** The rewards a goal input can count beside its own. A challenge live spends challenge points and earns none. */
@@ -147,7 +158,7 @@ export const usesEventItemRewards = (input: RewardInput): boolean => {
   return input.goal === "eventItems" || !!layout && (layout.converted.includes("eventItems") || layout.ties.includes("eventItems"));
 };
 /** The challenge live that rates challenge points: the goal's own reward plan on the chosen challenge song. */
-export const challengeRateInput = (input: DeckGoalInput): DeckGoalInput => ({ ...input, venue: "challengeLive", difficulty: input.rateDifficulty });
+export const challengeRateInput = (input: DeckGoalInput): DeckGoalInput => ({ ...input, allSongs: false, multiSongMode: "individual", venue: "challengeLive", difficulty: input.rateDifficulty });
 
 /** Event objectives and event-boosted power require the held event's data. */
 export const usesEventData = (input: Pick<DeckGoalInput, "goal" | "eventParameter">): boolean => isEventGoal(input.goal) || input.goal === "power" && input.eventParameter;
@@ -160,6 +171,8 @@ export interface DeckSolverCapabilities {
   accuracy: { great: boolean; just: boolean };
   patternPlay?: boolean;
   crossSong?: boolean;
+  crossSongMean?: boolean;
+  songRules?: boolean;
   resume?: boolean;
   eventItemRewards?: { selection: "exactResultGrade"; eventGroupField: "eventGroup"; rowsPerGrade: 1; probabilityMarker: 10000 };
   /** Combined metrics: levels compared in turn, each the expected weighted sum of several metrics with integer weights. */
@@ -206,13 +219,14 @@ export function parseCapabilities(json: string | null): DeckSolverCapabilities |
     ? { maxLevels: combined.maxLevels as number, maxTerms: combined.maxTerms as number, maxWeight: combined.maxWeight as number,
       ...(combined.goals === undefined ? {} : { goals: strings(combined.goals) }) } : undefined;
   return { goals: strings(raw.goals), metrics, aggregations, ...(eventItemRewards ? { eventItemRewards } : {}), ...(combinedMetric ? { combinedMetric } : {}),
-    crossSong: raw.crossSong === true, resume: raw.resume === true, luckMissions: raw.luckMissions === true, luckGreatConversions: raw.luckGreatConversions === true,
+    crossSong: raw.crossSong === true, crossSongMean: raw.crossSongMean === true, songRules: raw.songRules === true,
+    resume: raw.resume === true, luckMissions: raw.luckMissions === true, luckGreatConversions: raw.luckGreatConversions === true,
     arenaRules: raw.arenaRules === true, gekisouRank: raw.gekisouRank === true,
     patternPlay: raw.patternPlay === true || !!raw.patternPlay && typeof raw.patternPlay === "object", accuracy: { great: accuracy.great === true, just: accuracy.just === true } };
 }
 
 /** Whether the engine computes a goal input's goal kind and metric. */
-export function computes(capabilities: DeckSolverCapabilities, input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "playMode" | "greatPercent" | "justPercent" | "aggregation" | "rewards" | "arenaRule" | "gekisouRank">>): boolean {
+export function computes(capabilities: DeckSolverCapabilities, input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "playMode" | "greatPercent" | "justPercent" | "aggregation" | "rewards" | "arenaRule" | "gekisouRank" | "allSongs" | "multiSongMode" | "songRules">>): boolean {
   const layout = rewardLayoutOf(input);
   if (layout) {
     const combined = capabilities.combinedMetric;
@@ -234,6 +248,10 @@ export function computes(capabilities: DeckSolverCapabilities, input: Pick<DeckG
   if (kind === "arenaLive" && input.arenaRule !== undefined) {
     if (!capabilities.arenaRules) return false;
     if (input.arenaRule?.mode === "shared" && (isEventPayoffGoal(input.goal) || effectiveAggregation(input) !== "expected")) return false;
+  }
+  if (kind !== "power" && kind !== "arenaLive" && activeSongRules(input.songRules, playsGekisou(input)) && !capabilities.songRules) return false;
+  if (input.allSongs && input.multiSongMode === "mean") {
+    if (!capabilities.crossSongMean || !supportsCrossSongMean(input) || effectiveAggregation(input) !== "expected") return false;
   }
   if (playsGekisou(input) && input.gekisouRank !== undefined && input.gekisouRank !== 1 && !capabilities.gekisouRank) return false;
   if (input.playMode === "pattern" && readsAccuracy(input) && !capabilities.patternPlay) return false;
@@ -361,7 +379,12 @@ export function recommendationRequest(input: DeckGoalInput, context: { event: De
   }
   if (options.songScope) {
     if (!options.songScope.ids.length) throw new Error("The song scope is empty");
-    goal = goal.replace("{", `{${JSON.stringify(options.songScope.field)}:${JSON.stringify(options.songScope.ids)},`);
+    const multiSongPrefix = input.multiSongMode === "mean" && supportsCrossSongMean(input) ? `"multiSong":"mean",` : "";
+    goal = goal.replace("{", `{${multiSongPrefix}${JSON.stringify(options.songScope.field)}:${JSON.stringify(options.songScope.ids)},`);
+  }
+  if (kind !== "power" && kind !== "arenaLive") {
+    const rule = activeSongRules(input.songRules, playsGekisou(input));
+    if (rule) goal = goal.replace("{", `{"songRules":${JSON.stringify(rule)},`);
   }
   const parts = [`"format":${JSON.stringify(REQUEST_FORMAT)}`, `"goal":${goal}`];
   if (effectiveAggregation(input) === "maximum") parts.push('"aggregation":"maximum"');

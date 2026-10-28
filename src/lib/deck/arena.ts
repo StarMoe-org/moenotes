@@ -13,6 +13,42 @@ export interface DeckArenaRule {
   mode?: DeckArenaMode;
 }
 
+export interface DeckSongRules {
+  /** 0 = song's own attribute, 1..5 = specific attribute, 99 = All attributes. */
+  musicType: number;
+  /** Per-range Gekisou mission override: 0 = song's own, 1 = Combo, 2 = Luck, 3 = Just count. */
+  missions: DeckArenaMissions;
+}
+
+export const DEFAULT_SONG_RULES: DeckSongRules = {
+  musicType: 0,
+  missions: [0, 0, 0],
+};
+
+export function isValidSongRules(value: unknown): value is DeckSongRules {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const raw = value as Record<string, unknown>;
+  const typeOk = typeof raw.musicType === "number" && Number.isInteger(raw.musicType)
+    && ((raw.musicType >= 0 && raw.musicType <= 5) || raw.musicType === 99);
+  const missionsOk = Array.isArray(raw.missions) && raw.missions.length === 3
+    && raw.missions.every((m) => typeof m === "number" && Number.isInteger(m) && m >= 0 && m <= 3);
+  return typeOk && missionsOk;
+}
+
+/** Active non-default song rule overrides; non-Gekisou modes strip Gekisou range missions to `[0, 0, 0]`. */
+export function activeSongRules(
+  rule: DeckSongRules | null | undefined,
+  gekiso: boolean,
+): { musicType: number; missions: [number, number, number] } | undefined {
+  if (!rule || !isValidSongRules(rule)) return undefined;
+  const missions: [number, number, number] = gekiso
+    ? [rule.missions[0], rule.missions[1], rule.missions[2]]
+    : [0, 0, 0];
+  return rule.musicType !== 0 || missions.some((m) => m !== 0)
+    ? { musicType: rule.musicType, missions }
+    : undefined;
+}
+
 export interface DeckArenaSeason {
   id: number;
   name?: string;

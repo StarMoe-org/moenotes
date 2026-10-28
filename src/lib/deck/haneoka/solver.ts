@@ -78,7 +78,7 @@ function answer(response: EngineResponse, request: RecommendationRequest, covers
     };
   });
   const bound = rows.length === 1 && Number.isFinite(rows[0]!.bound) ? rows[0]!.bound : null;
-  const scopedIds = request.goal.musicIds ?? request.goal.challengeMusicIds ?? request.goal.arenaMusicIds;
+  const scopedIds = request.goal.multiSong === "mean" ? undefined : (request.goal.musicIds ?? request.goal.challengeMusicIds ?? request.goal.arenaMusicIds);
   const multiArenaIndividual = Array.isArray(request.goal.songs) && request.goal.songs.length > 1 && request.goal.arena?.mode !== "shared";
   const coverageTotal = scopedIds ? scopedIds.length : multiArenaIndividual ? request.goal.songs!.length : null;
   return JSON.stringify({
@@ -129,19 +129,19 @@ export class DeckSolver {
     const gekiso = converted.goal.kind === "gekiso" || converted.goal.kind === "event" && "gekiso" in converted.goal;
     const musics = new Map((gekiso ? table(this.data, "MasterLiveMusic") : []).map(row => [row.id, row]));
     const arenas = new Map((request.goal.kind === "arenaLive" ? optionalTable(this.data, "MasterArenaMusic") : []).map(row => [row.id, row]));
-    const arenaMissions = request.goal.arena?.missions;
+    const overrideMissions = request.goal.arena?.missions ?? request.goal.songRules?.missions;
     const luck = gekiso && songs.some(song => {
       if (!song) return false;
       const arena = arenas.get("arenaMusicId" in song ? song.arenaMusicId : undefined);
       const music = musics.get("baseSongId" in song ? song.baseSongId : song.songId);
-      return ["gekisouMission1", "gekisouMission2", "gekisouMission3"].some((field, idx) => (arenaMissions?.[idx] || arena?.[field] || music?.[field]) === 2);
+      return ["gekisouMission1", "gekisouMission2", "gekisouMission3"].some((field, idx) => (overrideMissions?.[idx] || arena?.[field] || music?.[field]) === 2);
     });
     const reserve = luck ? Math.min(40, converted.timeLimitMs ?? 0) : 0;
     const deadline = converted.timeLimitMs === null ? Infinity : performance.timeOrigin + started + converted.timeLimitMs - reserve;
     const warm: EngineHit[] = [];
     const candidates = new Map<string, EngineHit>();
     const covered = new Set<string>();
-    const retainRewards = converted.goal.kind === "event" && "gekiso" in converted.goal || !!(request.goal.musicIds ?? request.goal.challengeMusicIds ?? request.goal.arenaMusicIds) || (Array.isArray(request.goal.songs) && request.goal.songs.length > 1 && request.goal.arena?.mode !== "shared");
+    const retainRewards = converted.goal.kind === "event" && "gekiso" in converted.goal || !!(request.goal.multiSong !== "mean" && (request.goal.musicIds ?? request.goal.challengeMusicIds ?? request.goal.arenaMusicIds)) || (Array.isArray(request.goal.songs) && request.goal.songs.length > 1 && request.goal.arena?.mode !== "shared");
     const combined = request.metric?.kind === "combined";
     const identity = (hit: EngineHit) => JSON.stringify([hit.song, combined ? hit.members : [...hit.members].sort(), ...(combined ? [hit.snaps] : [])]);
     const compare = (a: EngineHit, b: EngineHit) => {
@@ -216,7 +216,7 @@ export class DeckSolver {
             return { ...team, members: order.map(slot => team.members[slot]!), snaps: order.map(slot => team.snaps[slot]!) };
           }))];
       }
-      if (converted.goal.kind === "gekiso" && luck && !seedJson && request.goal.arena?.mode !== "shared"
+      if (converted.goal.kind === "gekiso" && luck && !seedJson && request.goal.arena?.mode !== "shared" && request.goal.multiSong !== "mean"
         && performance.timeOrigin + performance.now() < deadline) {
         const song = converted.charts[0]!.song;
         const arena = "arena" in converted.goal ? converted.goal.arena : undefined;
@@ -229,6 +229,7 @@ export class DeckSolver {
           try {
             preview = engine!.invoke<{ evaluations: typeof preview[] }>({
               op: "evaluateAll", handle: this.handle, charts: [converted.charts[0]!], request: { ...prepared,
+                ...(converted.songRules ? { songRules: converted.songRules } : {}),
                 team: { members: team.members, snaps: team.snaps, leader: team.members[0] }, songs: [song],
                 gekiso: { accuracy: converted.goal.accuracy, rank: converted.goal.rank, seeds: 0, ...(arena ? { arena } : {}) }, event: null } }).evaluations[0]!;
           } catch (error) {

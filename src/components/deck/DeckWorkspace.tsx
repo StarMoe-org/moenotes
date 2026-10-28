@@ -20,7 +20,7 @@ import { mergeBoxBackup, parseBox, type BoxCard, type BoxSaveLink, type CardBox,
 import { answerDeckFields } from "@/lib/box/deck-answers";
 import { boxAccountJson, gameSaveAccountJson } from "@/lib/deck/account-envelope";
 import { CHALLENGE_POINT_COSTS, DEFAULT_DECK_GOAL, EVENT_GOALS, EVERYDAY_GOALS, MAX_BOOST, computes, computesGoal, defaultDeckGoalInput, goalGap, heldEvent,
-  playsGekisou, readsAccuracy, effectiveAggregation, usesEventItemRewards, rewardLayoutOf, isChallengeInput, isNetworkInput, challengeRateRequest, recommendationRequest, solverGoalKind, goalVenues, isEventPayoffGoal, type ChallengePointCost, type DeckEvent, type DeckGoal, type DeckGoalInput, type DeckVenue, type DeckArenaMusic } from "@/lib/deck/goals";
+  playsGekisou, readsAccuracy, effectiveAggregation, usesEventItemRewards, rewardLayoutOf, isChallengeInput, isNetworkInput, challengeRateRequest, recommendationRequest, solverGoalKind, supportsCrossSongMean, goalVenues, isEventPayoffGoal, type ChallengePointCost, type DeckEvent, type DeckGoal, type DeckGoalInput, type DeckVenue, type DeckArenaMusic } from "@/lib/deck/goals";
 import { arenaPeriod, arenaSongMatchesBand, resolveArenaRule, type DeckArenaCatalog, type DeckArenaMode, type DeckArenaRuleSource } from "@/lib/deck/arena";
 import DeckArenaControls, { type DeckArenaSongEntry } from "./DeckArenaControls";
 import { displayUtcLabel, formatMasterDate, parseMasterDate } from "@/lib/schedule";
@@ -60,7 +60,7 @@ import { defaultGameSave, fetchGameSave, forgetLoadedGameSave, keepGameSave, typ
 import { loadGameAccounts } from "@/lib/account/game-accounts";
 import { pruneCachedGameSaves } from "@/lib/box/save-cache";
 import { readLocalBox } from "@/lib/box/store";
-import { GameSaveBanner, GameSaveHint, GameSavePicker } from "@/components/box/GameSave";
+import { GameSaveBanner, GameSaveHint, GameSavePicker, StarMoeBoxTokenNotice } from "@/components/box/GameSave";
 import { useGameSaveList } from "@/components/box/use-game-save";
 import CloudBoxPanel from "@/components/box/CloudBoxPanel";
 
@@ -242,7 +242,11 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
   };
   const scopeCatalog = solver.engine.status === "ready" ? solver.engine.catalog : null;
   const scopeKind = solverGoalKind(effectiveInput);
-  const eligibleSongs = scopeCatalog?.musics.filter(song => song.difficulties.includes(effectiveInput.difficulty)) ?? [];
+  const allOverriddenNonLuck = effectiveInput.songRules?.missions.every(m => m === 1 || m === 3) ?? false;
+  const eligibleSongs = scopeCatalog?.musics.filter(song =>
+    song.difficulties.includes(effectiveInput.difficulty)
+    && (!playsGekisou(effectiveInput) || scopeKind === "arenaLive" || allOverriddenNonLuck || song.hasLuck !== null),
+  ) ?? [];
   const eligibleIds = new Set(eligibleSongs.map(song => song.id));
   const arenaEligibleIdSet = new Set(arenaEligibleSongs.map(song => song.id));
   const songScope = effectiveInput.allSongs ? scopeKind === "arenaLive"
@@ -579,6 +583,7 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
         )}
       </div>
     </header>
+    <StarMoeBoxTokenNotice locale={locale} />
     {storage.error && (
       <div role="alert" className="dw-md3-alert">
         <Icon name="info" className="h-5 w-5 shrink-0" />
@@ -645,6 +650,18 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
               label={tr("solver.allSongs")}
               checked={!!effectiveInput.allSongs}
               onChange={(checked) => updateGoal({ allSongs: checked })}
+            />
+          )}
+          {canAllSongs && effectiveInput.allSongs && supportsCrossSongMean(effectiveInput) && capabilities?.crossSongMean && (
+            <DeckSegmented
+              label={tr("solver.multiSongModeLabel")}
+              value={effectiveInput.multiSongMode ?? "individual"}
+              onChange={(multiSongMode) => updateGoal({ multiSongMode })}
+              hint={tr((effectiveInput.multiSongMode ?? "individual") === "mean" ? "solver.multiSongMeanNote" : "solver.multiSongIndividualNote")}
+              options={[
+                { value: "individual" as const, label: tr("solver.multiSongIndividual") },
+                { value: "mean" as const, label: tr("solver.multiSongMean") },
+              ]}
             />
           )}
           {isEventPayoffGoal(goal) ? (

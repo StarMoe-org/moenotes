@@ -43,7 +43,9 @@ export const guessMusicApi = {
 export const GAME_SAVE_SERVERS = ["jp", "intl"] as const;
 /** Official Android release and the project's upload instructions. */
 export const STARMOE_BOX_APP = {
-  download: "https://github.com/StarMoe-org/StarMoe-box/releases/download/v0.1.2/app-release.apk",
+  minRecommendedVersion: "0.1.4",
+  download: "https://github.com/StarMoe-org/StarMoe-box/releases/latest/download/app-release.apk",
+  releases: "https://github.com/StarMoe-org/StarMoe-box/releases/latest",
   guide: "https://github.com/StarMoe-org/StarMoe-box#how-it-works",
 } as const;
 export type GameSaveServer = typeof GAME_SAVE_SERVERS[number];

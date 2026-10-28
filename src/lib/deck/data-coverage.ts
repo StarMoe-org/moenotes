@@ -56,13 +56,23 @@ export function deckDataGap(input: DeckGoalInput, event: DeckEvent | null, catal
     if (kind === "power" && !input.powerSong) return null;
     musicId = input.musicId;
   }
-  if (musicId === null) return null;
+  if (musicId === null) {
+    if (playsGekisou(input) && input.songRules?.missions.includes(2)) {
+      if (!capabilities?.luckMissions) return "luck";
+      if (input.greatPercent > 0 && !capabilities?.luckGreatConversions) return "luckGreat";
+    }
+    return null;
+  }
   const music = catalog.musics.find(row => row.id === musicId);
   if (!music || kind !== "power" && !music.difficulties.includes(input.difficulty)) return "song";
   if (playsGekisou(input)) {
-    if (music.hasLuck === null) return "missions";
-    if (music.hasLuck && !capabilities?.luckMissions) return "luck";
-    if (music.hasLuck && input.greatPercent > 0 && !capabilities?.luckGreatConversions) return "luckGreat";
+    const ruleMissions = input.songRules?.missions;
+    const hasOverrideLuck = ruleMissions?.includes(2) ?? false;
+    const allOverriddenNonLuck = ruleMissions ? ruleMissions.every(m => m === 1 || m === 3) : false;
+    if (!hasOverrideLuck && !allOverriddenNonLuck && music.hasLuck === null) return "missions";
+    const effectiveLuck = hasOverrideLuck ? true : allOverriddenNonLuck ? false : music.hasLuck === true;
+    if (effectiveLuck && !capabilities?.luckMissions) return "luck";
+    if (effectiveLuck && input.greatPercent > 0 && !capabilities?.luckGreatConversions) return "luckGreat";
   }
   return null;
 }
