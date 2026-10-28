@@ -34,7 +34,7 @@ export default function ComicsExplorer({ locale, servers, initialComics, initial
   const { server, pickServer, items: serverItems } = useServerList(locale, servers, initialComics);
   const { showSpoiler, now } = useSpoilerSetting();
   const visibleServerItems = useMemo(() => {
-    if (showSpoiler || now === null) return serverItems;
+    if (showSpoiler) return serverItems;
     return serverItems.filter((comic) => !isSpoiler(comic.startAt, now));
   }, [serverItems, showSpoiler, now]);
   const comics = useServerFiles(visibleServerItems, server, COMIC_FILES);

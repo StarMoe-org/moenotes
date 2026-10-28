@@ -78,7 +78,7 @@ export default function RewardsExplorer({ locale, servers, initialEntries }: Pro
 
   const { showSpoiler } = useSpoiler();
   const visibleEntries = useMemo(() => {
-    if (showSpoiler || now === null) return entries;
+    if (showSpoiler) return entries;
     return entries.filter((entry) => !isSpoiler(entry.startAt, now));
   }, [entries, showSpoiler, now]);
 

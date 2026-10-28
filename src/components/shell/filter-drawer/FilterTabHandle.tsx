@@ -36,7 +36,9 @@ export default function FilterTabHandle({ locale, titleKey }: FilterTabHandlePro
         aria-controls={FILTER_DRAWER_ID}
         aria-expanded={isOpen}
         title={t(locale, "filter.openQuickFilter")}
-        className="mn-filter-fab mn-shell-offset !fixed bottom-6 z-30"
+        // Beneath the drawer's glass (z-30) like the content column: while the drawer folds, the button slides out
+        // from under it instead of crossing over it.
+        className="mn-filter-fab mn-shell-offset !fixed bottom-6 z-20"
       >
         <Icon name="filter" />
         <span className="max-w-[10rem] truncate">{label}</span>

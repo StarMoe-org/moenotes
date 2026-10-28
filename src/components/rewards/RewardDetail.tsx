@@ -54,7 +54,7 @@ function RewardDetailView({ locale, entry, serverSwitch, schedules }: { locale: 
   const now = useNow();
   const timeZone = useDisplayTimeZone();
   const { showSpoiler } = useSpoiler();
-  const isUnreleased = Boolean(now !== null && entry?.startAt && isSpoiler(entry.startAt, now));
+  const isUnreleased = Boolean(entry?.startAt && isSpoiler(entry.startAt, now));
 
   if (!entry) return <NotFound locale={locale} />;
   if (!showSpoiler && isUnreleased) return <SpoilerNotice locale={locale} />;

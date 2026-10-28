@@ -40,7 +40,7 @@ export default function SearchPage({ locale }: Props) {
 
   const { showSpoiler, now } = useSpoilerSetting();
   const visibleContent = useMemo(() => {
-    if (showSpoiler || now === null) return content;
+    if (showSpoiler) return content;
     return content.filter((result) => !isSpoiler(result.startAt, now));
   }, [content, showSpoiler, now]);
 

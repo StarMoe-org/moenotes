@@ -55,7 +55,7 @@ export default function StoryDetail({ servers, advServers, story, ...props }: St
 function StoryDetailView({ locale, advId, initialTitle, initialScript, initialCharacters, initialTexts, story, previous, next, serverSwitch }: Omit<StoryDetailProps, "story"> & { story: StoryViewModel | null; serverSwitch: ReactNode }) {
   const now = useNow();
   const { showSpoiler } = useSpoiler();
-  const isUnreleased = Boolean(now !== null && story?.startAt && isSpoiler(story.startAt, now));
+  const isUnreleased = Boolean(story?.startAt && isSpoiler(story.startAt, now));
   const [artworkFailed, setArtworkFailed] = useState(false);
   const artworkUrl = useAssetUrl()(story ? getStoryArtworkUrl(story, locale) : "");
 

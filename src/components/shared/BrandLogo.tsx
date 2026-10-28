@@ -14,7 +14,7 @@ interface BrandLogoProps {
  * The copies under src/assets/brand exist because Vite cannot import from public/; the public files stay the brand's
  * source of truth, and tests/brand-logo.test.tsx fails when the two drift apart.
  */
-const inlineSignature = (svg: string): string => `data:image/svg+xml,${encodeURIComponent(svg)}`;
+const inlineSignature = (svg: string): string => `data:image/svg+xml,${encodeURIComponent(svg.replace(/\r\n/g, "\n"))}`;
 const INK = inlineSignature(signatureInk);
 const STARLIGHT = inlineSignature(signatureLight);
 

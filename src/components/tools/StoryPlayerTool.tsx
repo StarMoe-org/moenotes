@@ -86,11 +86,11 @@ export default function StoryPlayerTool({ locale, stories }: Props) {
 
   const { showSpoiler, now } = useSpoilerSetting();
   const visibleEntries = useMemo(() => {
-    if (showSpoiler || now === null) return entries;
+    if (showSpoiler) return entries;
     return entries.filter((entry) => !entry.startAt || !isSpoiler(entry.startAt, now));
   }, [entries, showSpoiler, now]);
   const rawCurrent = useMemo(() => entries.find((entry) => entry.advId === advId) ?? null, [entries, advId]);
-  const isUnreleased = Boolean(now !== null && rawCurrent?.startAt && isSpoiler(rawCurrent.startAt, now));
+  const isUnreleased = Boolean(rawCurrent?.startAt && isSpoiler(rawCurrent.startAt, now));
   const index = useMemo(() => visibleEntries.findIndex((entry) => entry.advId === advId), [visibleEntries, advId]);
   const current = !showSpoiler && isUnreleased ? null : (index >= 0 ? visibleEntries[index]! : rawCurrent);
 

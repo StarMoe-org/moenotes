@@ -14,6 +14,7 @@ import { searchContent } from "@/lib/search/client";
 import { CONTENT_KIND_ORDER, KIND_LABEL_KEY } from "@/lib/search/kinds";
 import { getRoutePathById } from "@/lib/route/registry";
 import { isSpoiler, useSpoilerSetting } from "@/lib/settings/spoiler";
+import { SPOILER_REFERENCE_NOW } from "@/lib/settings/spoiler-reference";
 
 interface CommandPaletteProps {
   locale: AppLocale;
@@ -61,8 +62,10 @@ function CommandPalette({ locale }: CommandPaletteProps) {
     let cancelled = false;
     void searchContent(query, locale).then((results) => {
       if (cancelled) return;
-      const filtered = !showSpoiler && now !== null
-        ? results.filter((result) => !isSpoiler(result.startAt, now))
+      // No live clock yet (first render): judge against the page's serialized reference, as the server render did.
+      const reference = now ?? SPOILER_REFERENCE_NOW;
+      const filtered = !showSpoiler
+        ? results.filter((result) => !isSpoiler(result.startAt, reference))
         : results;
       setContent(filtered.map((result) => ({ id: result.key, kind: result.kind, label: result.title, href: result.href })));
     });

@@ -31,7 +31,7 @@ export default function ExchangeExplorer({ locale, servers, initialCategories }:
   const [activeId, setActiveId] = useState<number | null>(null);
 
   const visibleCategories = useMemo(() => {
-    if (showSpoiler || now === null) return categories;
+    if (showSpoiler) return categories;
     return categories
       .map((category) => ({
         ...category,

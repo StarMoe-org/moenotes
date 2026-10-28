@@ -73,7 +73,7 @@ function MusicDetailView({ locale, song, liveDetail, extras, serverSwitch }: { l
 
   const now = useNow();
   const { showSpoiler } = useSpoiler();
-  const isUnreleased = Boolean(now !== null && song?.startAt && isSpoiler(song.startAt, now));
+  const isUnreleased = Boolean(song?.startAt && isSpoiler(song.startAt, now));
 
   if (!song) {
     return (

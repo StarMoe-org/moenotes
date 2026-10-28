@@ -76,22 +76,22 @@ function Updates({ locale, module, servers, availability, rewards, songs, cards,
   const upcoming = t(locale, "schedule.upcoming");
 
   const visibleRewards = useMemo(() => {
-    if (showSpoiler || now === null) return rewards;
+    if (showSpoiler) return rewards;
     return rewards.filter((entry) => !isSpoiler(entry.startAt, now));
   }, [rewards, showSpoiler, now]);
 
   const visibleSongs = useMemo(() => {
-    if (showSpoiler || now === null) return songs;
+    if (showSpoiler) return songs;
     return songs.filter((song) => !isSpoiler(song.startAt, now));
   }, [songs, showSpoiler, now]);
 
   const visibleCards = useMemo(() => {
-    if (showSpoiler || now === null) return cards;
+    if (showSpoiler) return cards;
     return cards.filter((card) => !isSpoiler(card.startAt, now));
   }, [cards, showSpoiler, now]);
 
   const visibleSupportCards = useMemo(() => {
-    if (showSpoiler || now === null) return supportCards;
+    if (showSpoiler) return supportCards;
     return supportCards.filter((card) => !isSpoiler(card.startAt, now));
   }, [supportCards, showSpoiler, now]);
 

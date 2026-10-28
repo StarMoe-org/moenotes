@@ -3,6 +3,7 @@ import { storageKeys } from "@/config/storage";
 import { parseMasterDate } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
 import { safeGetLocalStorage, safeSetLocalStorage } from "@/lib/storage/safe-storage";
+import { SPOILER_REFERENCE_NOW } from "./spoiler-reference";
 
 export const SPOILER_PREFERENCE_EVENT = "moenotes:spoiler-preference";
 
@@ -98,12 +99,11 @@ export function useSpoiler(): SpoilerState {
 
 export const useSpoilerSetting = useSpoiler;
 
-/** Whether a timestamp represents an unreleased / upcoming entity. */
+/** Whether a timestamp represents an unreleased / upcoming entity. Without a live clock (SSR and the first client
+ * render) it uses the serialized page render time, so both sides hide the same items before the first paint. */
 export function isSpoiler(startAt: string | number | null | undefined, now?: number | null): boolean {
   if (startAt == null || startAt === "") return false;
   const start = typeof startAt === "number" ? startAt : parseMasterDate(startAt);
   if (start === null || start <= 0) return false;
-  const current = now ?? (typeof window !== "undefined" ? Date.now() : null);
-  if (current === null) return false;
-  return start > current;
+  return start > (now ?? SPOILER_REFERENCE_NOW);
 }

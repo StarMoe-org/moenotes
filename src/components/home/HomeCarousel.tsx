@@ -13,6 +13,7 @@ import type { HomeLink, HomeSlide } from "@/lib/home/data";
 import { entityLinkPath } from "@/lib/route/entity-link";
 import { getRoutePathById } from "@/lib/route/registry";
 import { formatScheduleRange, scheduleStatus } from "@/lib/schedule";
+import { SPOILER_REFERENCE_NOW } from "@/lib/settings/spoiler-reference";
 import { useNow } from "@/lib/schedule/use-now";
 import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 
@@ -60,11 +61,13 @@ function Carousel({ locale, slides }: { locale: AppLocale; slides: HomeSlide[] }
   const [paused, setPaused] = useState(false);
   const [interacting, setInteracting] = useState(false);
 
-  // Built pages only drop banners that had ended at build time; the browser clock decides the rest.
-  const visible = useMemo(() => (now === null ? slides : slides.filter((slide) => {
-    const status = scheduleStatus(slide.startAt, slide.endAt, now);
+  // Built pages drop banners that had ended at build time; the same serialized reference keeps upcoming ones out of
+  // the first paint instead of rendering them until the browser clock arrives.
+  const reference = now ?? SPOILER_REFERENCE_NOW;
+  const visible = useMemo(() => slides.filter((slide) => {
+    const status = scheduleStatus(slide.startAt, slide.endAt, reference);
     return status === "ongoing" || status === "permanent";
-  })), [slides, now]);
+  }), [slides, reference]);
 
   const count = visible.length;
   const activeIndex = count ? index % count : 0;
