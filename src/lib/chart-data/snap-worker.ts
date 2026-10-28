@@ -3,8 +3,10 @@ import type { AppLocale } from "@/config/locales";
 import { createSnapEvaluator, loadSnapReplayRuntime, SnapReplayError, validateSnapProfile, type LoadedSnapReplay } from "./snap-bridge";
 import { buildSnapSkillCatalogue } from "./snap-catalogue";
 import { buildSnapLabeler } from "./snap-labels";
-import { snapProfileKey, type SnapMeasuredRank, type SnapMeasuredRow, type SnapRankRequest, type SnapRankingCatalogue, type SnapRankingSource, type SnapWorkerRequest, type SnapWorkerResponse } from "./snap-client";
+import type { SnapMeasuredRank, SnapMeasuredRow, SnapRankRequest, SnapRankingCatalogue, SnapRankingSource, SnapWorkerRequest, SnapWorkerResponse } from "./snap-client";
 import type { SnapEvaluationProfile, SnapPowerDomain, SnapRankProgress, SnapReplayResult } from "./snap-types";
+
+const snapProfileKey = (profile: SnapEvaluationProfile, analysis?: SnapRankRequest): string => JSON.stringify(analysis ? { profile, analysis } : profile);
 
 type RankJob = { status(): SnapRankProgress; advance(count: number): SnapRankProgress; dispose(): void };
 type Evaluator = { evaluate(scoreId: number): SnapReplayResult; startRank?(scoreId: number, threshold: number, domain: SnapPowerDomain): RankJob; dispose(): void };
