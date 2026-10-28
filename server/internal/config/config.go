@@ -19,6 +19,17 @@ type Config struct {
 	Host string
 	Port int
 
+	// BuildMode selects "ssr" (Next.js semi-SSR + persistent HTML/Markdown disk cache) or "github" (CI artifact mode).
+	BuildMode            string
+	FrontendProxyURL     string
+	FrontendProxyManaged bool
+	NextjsStandaloneDir  string
+	NextMaxOldSpaceMB    string
+	NextBuildID          string
+	HTMLCacheDir         string
+	StaticArchiveDir     string
+	WarmupEnabled        bool
+
 	DataDir     string
 	BuildsDir   string
 	LogsDir     string
@@ -46,7 +57,7 @@ type Config struct {
 	APIOrigin  string
 	APIInvalid bool
 
-	// SourceDigest is the image's source digest (see upstream.SourceDigest); empty when unavailable.
+	// SourceDigestFile is the image's source digest (see upstream.SourceDigest); empty when unavailable.
 	SourceDigestFile string
 	// AppDir is a source checkout to compute the digest from when no digest file is shipped (development).
 	AppDir string
@@ -55,13 +66,11 @@ type Config struct {
 	Warnings []string
 }
 
-// Retired settings of the Bun server; reported once at startup.
+// Retired settings of the Bun server; reported once at startup in github artifact mode.
 var retired = map[string]string{
-	"MOENOTES_SPLIT_LOCALES":     "the server no longer renders the site; GitHub Actions builds all locales together",
+	"MOENOTES_SPLIT_LOCALES":     "the server no longer splits locale batches",
 	"MOENOTES_SYNC_WAIT_SECONDS": "builds always wait for the asset export to catch up with MasterData",
-	"MOENOTES_SERVERS":           "set it in the site build instead; the deploy server only installs CI builds",
 	"MOENOTES_VERSION_URL":       "the server reads the public release manifest (or MOENOTES_ASSET_INTERNAL)",
-	"MOENOTES_MASTERDATA_DIR":    "local MasterData overrides apply to local `astro build` runs only",
 }
 
 func env(name string) string { return strings.TrimSpace(os.Getenv(name)) }
@@ -122,21 +131,68 @@ func Load() (*Config, error) {
 	}
 	dataDir, err := filepath.Abs(dataDir)
 	check(err)
+
+	rawMode := strings.ToLower(env("MOENOTES_BUILD_MODE"))
+	frontendProxy, proxyErr := origin("FRONTEND_PROXY_URL")
+	check(proxyErr)
+
+	buildMode := "github"
+	if rawMode == "ssr" || (rawMode == "" && frontendProxy != "") {
+		buildMode = "ssr"
+	} else if rawMode != "" && rawMode != "github" {
+		errs = append(errs, fmt.Errorf("MOENOTES_BUILD_MODE must be \"ssr\" or \"github\", got %q", rawMode))
+	}
+
+	nextjsDir := env("MOENOTES_NEXTJS_DIR")
+	if nextjsDir == "" {
+		nextjsDir = "/app/nextjs"
+	}
+	managedNext := false
+	if buildMode == "ssr" && frontendProxy == "" {
+		frontendProxy = "http://127.0.0.1:3000"
+		managedNext = true
+	}
+
+	htmlCacheDir := env("HTML_CACHE_DIR")
+	if htmlCacheDir == "" {
+		htmlCacheDir = filepath.Join(dataDir, "html_cache")
+	}
+	nextBuildID := env("NEXT_BUILD_ID")
+	if nextBuildID == "" {
+		if rawID, readErr := os.ReadFile(filepath.Join(nextjsDir, ".next", "BUILD_ID")); readErr == nil {
+			nextBuildID = strings.TrimSpace(string(rawID))
+		}
+	}
+	nextMaxMem := env("MOENOTES_NEXT_MAX_OLD_SPACE_MB")
+	if nextMaxMem == "" {
+		nextMaxMem = "512"
+	}
+	warmup := env("MOENOTES_SSR_WARMUP") != "0" && env("MOENOTES_WARMUP") != "0"
+
 	c := &Config{
-		Host:             env("HOST"),
-		DataDir:          dataDir,
-		BuildsDir:        filepath.Join(dataDir, "builds"),
-		LogsDir:          filepath.Join(dataDir, "logs"),
-		StatePath:        filepath.Join(dataDir, "state.json"),
-		PendingPath:      filepath.Join(dataDir, "github-build.json"),
-		GithubToken:      env("MOENOTES_GITHUB_TOKEN"),
-		GithubRepo:       env("MOENOTES_GITHUB_REPO"),
-		GithubRef:        env("MOENOTES_GITHUB_REF"),
-		GithubCommit:     env("MOENOTES_REVISION"),
-		GithubWorkflow:   "build-site.yml",
-		KeepLogs:         10,
-		SourceDigestFile: env("MOENOTES_SOURCE_DIGEST_FILE"),
-		AppDir:           env("MOENOTES_APP_DIR"),
+		Host:                 env("HOST"),
+		BuildMode:            buildMode,
+		FrontendProxyURL:     frontendProxy,
+		FrontendProxyManaged: managedNext,
+		NextjsStandaloneDir:  nextjsDir,
+		NextMaxOldSpaceMB:    nextMaxMem,
+		NextBuildID:          nextBuildID,
+		HTMLCacheDir:         htmlCacheDir,
+		StaticArchiveDir:     filepath.Join(dataDir, "static_archive"),
+		WarmupEnabled:        warmup,
+		DataDir:              dataDir,
+		BuildsDir:            filepath.Join(dataDir, "builds"),
+		LogsDir:              filepath.Join(dataDir, "logs"),
+		StatePath:            filepath.Join(dataDir, "state.json"),
+		PendingPath:          filepath.Join(dataDir, "github-build.json"),
+		GithubToken:          env("MOENOTES_GITHUB_TOKEN"),
+		GithubRepo:           env("MOENOTES_GITHUB_REPO"),
+		GithubRef:            env("MOENOTES_GITHUB_REF"),
+		GithubCommit:         env("MOENOTES_REVISION"),
+		GithubWorkflow:       "build-site.yml",
+		KeepLogs:             10,
+		SourceDigestFile:     env("MOENOTES_SOURCE_DIGEST_FILE"),
+		AppDir:               env("MOENOTES_APP_DIR"),
 	}
 	if c.Host == "" {
 		c.Host = "0.0.0.0"
@@ -171,10 +227,7 @@ func Load() (*Config, error) {
 	check(err)
 	c.APIOrigin, c.APIInvalid = ParseAPIOrigin(env("MOENOTES_API_INTERNAL"))
 
-	if mode := env("MOENOTES_BUILD_MODE"); mode != "" && mode != "github" {
-		c.Warnings = append(c.Warnings, fmt.Sprintf("MOENOTES_BUILD_MODE=%s is no longer supported; the site is always built by GitHub Actions", mode))
-	}
-	for _, name := range []string{"MOENOTES_SPLIT_LOCALES", "MOENOTES_SYNC_WAIT_SECONDS", "MOENOTES_SERVERS", "MOENOTES_VERSION_URL", "MOENOTES_MASTERDATA_DIR"} {
+	for _, name := range []string{"MOENOTES_SPLIT_LOCALES", "MOENOTES_SYNC_WAIT_SECONDS", "MOENOTES_VERSION_URL"} {
 		if env(name) != "" {
 			c.Warnings = append(c.Warnings, fmt.Sprintf("%s is ignored: %s", name, retired[name]))
 		}

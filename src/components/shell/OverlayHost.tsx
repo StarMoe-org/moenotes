@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect } from "react";
 import type { AppLocale } from "@/config/locales";
 import { localizePath } from "@/i18n/routing";

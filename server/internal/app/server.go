@@ -7,7 +7,9 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -16,6 +18,7 @@ import (
 	"github.com/StarMoe-org/moenotes/server/internal/github"
 	"github.com/StarMoe-org/moenotes/server/internal/logx"
 	"github.com/StarMoe-org/moenotes/server/internal/siteconfig"
+	"github.com/StarMoe-org/moenotes/server/internal/ssr"
 	"github.com/StarMoe-org/moenotes/server/internal/upstream"
 	"github.com/StarMoe-org/moenotes/server/internal/web"
 )
@@ -44,7 +47,7 @@ type check struct {
 	OK bool   `json:"ok"`
 }
 
-// Server runs the HTTP server and the build scheduler.
+// Server runs the HTTP server and either the semi-SSR Next.js gateway or the GitHub build scheduler.
 type Server struct {
 	cfg      *config.Config
 	site     *siteconfig.Site
@@ -54,11 +57,16 @@ type Server struct {
 	revision string
 	handler  http.Handler
 
+	ssrCache      *ssr.HTMLCache
+	ssrGateway    *ssr.Gateway
+	ssrSupervisor *ssr.Supervisor
+
 	mu        sync.Mutex
 	building  *struct{ Data, StartedAt string }
 	failure   *failure
 	waiting   *waiting
 	lastCheck *check
+	ssrLabel  string
 }
 
 // New wires a server from its configuration; life bounds every background task.
@@ -80,6 +88,26 @@ func New(life context.Context, cfg *config.Config, site *siteconfig.Site) *Serve
 			Workflow: cfg.GithubWorkflow, PendingPath: cfg.PendingPath, Poll: cfg.GithubPoll, Environ: os.Environ(),
 		}),
 	}
+	if cfg.BuildMode == "ssr" {
+		s.ssrCache = ssr.NewHTMLCache(cfg.HTMLCacheDir, cfg.NextBuildID, "initial")
+		s.ssrSupervisor = &ssr.Supervisor{
+			StandaloneDir: cfg.NextjsStandaloneDir,
+			Port:          "3000",
+			MaxOldSpaceMB: cfg.NextMaxOldSpaceMB,
+		}
+		gw, err := ssr.NewGateway(ssr.GatewayOptions{
+			UpstreamURL:      cfg.FrontendProxyURL,
+			Cache:            s.ssrCache,
+			StaticArchiveDir: cfg.StaticArchiveDir,
+			NextStaticDir:    filepath.Join(cfg.NextjsStandaloneDir, ".next", "static"),
+			PublicDir:        filepath.Join(cfg.NextjsStandaloneDir, "public"),
+			Site:             site,
+			Ready:            s.ssrSupervisor.Ready,
+		})
+		if err == nil {
+			s.ssrGateway = gw
+		}
+	}
 	s.handler = s.routes()
 	return s
 }
@@ -89,6 +117,17 @@ func (s *Server) Store() *Store { return s.store }
 
 // Handler returns the HTTP handler.
 func (s *Server) Handler() http.Handler { return s.handler }
+
+func (s *Server) isSSR() bool {
+	return s.cfg != nil && s.cfg.BuildMode == "ssr" && s.ssrGateway != nil
+}
+
+func (s *Server) isReady() bool {
+	if s.isSSR() {
+		return s.ssrSupervisor != nil && s.ssrSupervisor.Ready()
+	}
+	return s.store.Current() != nil
+}
 
 func (s *Server) routes() http.Handler {
 	static := &web.Static{Roots: s.store.Roots, Site: s.site}
@@ -108,7 +147,7 @@ func (s *Server) routes() http.Handler {
 		case path == "/healthz":
 			_, _ = w.Write([]byte("ok\n"))
 		case path == "/readyz":
-			if s.store.Current() == nil {
+			if !s.isReady() {
 				w.WriteHeader(http.StatusServiceUnavailable)
 				_, _ = w.Write([]byte("no build yet\n"))
 				return
@@ -125,6 +164,10 @@ func (s *Server) routes() http.Handler {
 			// The account API works before the first build too: it does not depend on the site output.
 			api.ServeHTTP(w, r)
 		default:
+			if s.isSSR() {
+				s.ssrGateway.ServeHTTP(w, r)
+				return
+			}
 			if _, ok := s.site.PlayerShellPath(path); ok {
 				players.ServeHTTP(w, r)
 				return
@@ -135,6 +178,23 @@ func (s *Server) routes() http.Handler {
 }
 
 func (s *Server) status() map[string]any {
+	if s.isSSR() {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		return map[string]any{
+			"ready":           s.isReady(),
+			"revision":        s.revision,
+			"buildMode":       "ssr",
+			"nextBuildId":     s.cfg.NextBuildID,
+			"dataVersion":     s.ssrCache.DataVersion(),
+			"dataLabel":       s.ssrLabel,
+			"markdown":        true,
+			"localesRendered": s.site.LocaleCodes(),
+			"waiting":         nil,
+			"lastCheck":       s.lastCheck,
+		}
+	}
+
 	current := s.store.Current()
 	progress, compressing := s.store.Snapshot()
 	s.mu.Lock()
@@ -178,15 +238,16 @@ func (s *Server) status() map[string]any {
 	return result
 }
 
-// Run listens and schedules builds until ctx is cancelled.
+// Run listens and runs either the semi-SSR supervisor/watcher or the GitHub artifact scheduler until ctx is cancelled.
 func (s *Server) Run(ctx context.Context) error {
 	for _, warning := range s.cfg.Warnings {
 		logx.Printf("%s", warning)
 	}
-	if err := s.store.Load(); err != nil {
-		return err
+	if !s.isSSR() {
+		if err := s.store.Load(); err != nil {
+			return err
+		}
 	}
-	// Listen before anything slow: the previous build is served while cleanup and the first check run.
 	listener, err := net.Listen("tcp", net.JoinHostPort(s.cfg.Host, strconv.Itoa(s.cfg.Port)))
 	if err != nil {
 		return err
@@ -194,21 +255,30 @@ func (s *Server) Run(ctx context.Context) error {
 	server := &http.Server{Handler: s.handler, ReadHeaderTimeout: 15 * time.Second, IdleTimeout: 2 * time.Minute}
 	served := make(chan error, 1)
 	go func() { served <- server.Serve(listener) }()
-	current := s.store.Current()
-	if current != nil {
+
+	if s.isSSR() {
+		ssr.SyncStaticArchive(filepath.Join(s.cfg.NextjsStandaloneDir, ".next", "static"), s.cfg.StaticArchiveDir)
+		logx.Printf("listening on %s in semi-SSR mode (upstream %s, html cache %s)", listener.Addr(), s.cfg.FrontendProxyURL, s.cfg.HTMLCacheDir)
+	} else if current := s.store.Current(); current != nil {
 		logx.Printf("listening on %s; serving %s (%s)", listener.Addr(), current.ID, current.Data)
 	} else {
 		logx.Printf("listening on %s; no build yet", listener.Addr())
 	}
+
 	if s.cfg.APIInvalid {
 		logx.Printf("MOENOTES_API_INTERNAL is not an absolute http(s) URL (e.g. https://api.star.moe); /api/* is disabled")
 	} else if s.cfg.APIOrigin != "" {
 		logx.Printf("forwarding /api/* to %s", s.cfg.APIOrigin)
 	}
+
 	scheduled := make(chan struct{})
 	go func() {
 		defer close(scheduled)
-		s.schedule(ctx)
+		if s.isSSR() {
+			s.runSSRBackground(ctx)
+		} else {
+			s.schedule(ctx)
+		}
 	}()
 	select {
 	case err := <-served:
@@ -224,6 +294,78 @@ func (s *Server) Run(ctx context.Context) error {
 		err = nil
 	}
 	return err
+}
+
+func (s *Server) runSSRBackground(ctx context.Context) {
+	if digest, err := LoadSourceDigest(s.cfg); err == nil {
+		s.mu.Lock()
+		s.revision = upstream.SourceRevision(digest, os.Environ())
+		s.mu.Unlock()
+	}
+	var wg sync.WaitGroup
+	if s.cfg.FrontendProxyManaged {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			s.ssrSupervisor.Run(ctx)
+		}()
+	} else {
+		healthURL := strings.TrimRight(s.cfg.FrontendProxyURL, "/") + "/internal-healthz"
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			s.ssrSupervisor.ProbeExternal(ctx, healthURL)
+		}()
+	}
+
+	if s.cfg.WarmupEnabled {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			s.ssrGateway.RunIdleWarmup(ctx)
+		}()
+	}
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		s.watchSSRDataVersion(ctx)
+	}()
+
+	wg.Wait()
+}
+
+func (s *Server) watchSSRDataVersion(ctx context.Context) {
+	for {
+		var manifest upstream.AssetManifest
+		if err := s.fetcher.JSON(ctx, s.site.AssetVersionURL(), &manifest); err != nil {
+			if ctx.Err() != nil {
+				return
+			}
+			s.mu.Lock()
+			s.lastCheck = &check{At: now(), OK: false}
+			s.mu.Unlock()
+			logx.Printf("ssr version check failed: %v", err)
+		} else if data, descErr := upstream.Describe(&manifest); descErr == nil {
+			lag, lagErr := upstream.ExportLag(ctx, &manifest, s.fetcher, s.site.MasterdataVersionURL())
+			s.mu.Lock()
+			s.lastCheck = &check{At: now(), OK: lagErr == nil}
+			s.mu.Unlock()
+			if lagErr == nil && lag == "" {
+				if s.ssrCache.SetDataVersion(data.Fingerprint) {
+					s.mu.Lock()
+					s.ssrLabel = data.Label
+					s.mu.Unlock()
+					logx.Printf("ssr cache namespace switched to %s (%s)", data.Label, data.Fingerprint)
+				}
+			}
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(s.cfg.Poll):
+		}
+	}
 }
 
 func (s *Server) schedule(ctx context.Context) {

@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useRef, useState } from "react";
 import type { GameServer } from "@/config/game-api";
 import type { AppLocale } from "@/config/locales";

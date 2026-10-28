@@ -1,3 +1,4 @@
+import { buildEnv } from "@/config/build-env";
 import { masterdataConfig } from "@/config/masterdata";
 import { GAME_SERVER_PROFILES, PRIMARY_SERVER, type GameServer } from "@/config/servers";
 import { buildFetch } from "@/lib/build/fetch";
@@ -9,47 +10,143 @@ interface MasterdataIndex {
 }
 
 interface BuildSnapshotState {
-  manifest?: Promise<VersionManifest>;
-  index?: Promise<MasterdataIndex | null>;
+  manifest?: Promise<VersionManifest> | undefined;
+  resolvedManifest?: VersionManifest | undefined;
+  manifestCheckedAt: number;
+  refreshing?: Promise<VersionManifest> | undefined;
+  index?: Promise<MasterdataIndex | null> | undefined;
   tables: Map<string, Promise<unknown>>;
+  epoch: number;
   activeRequests: number;
   waiters: Array<() => void>;
 }
 
 const snapshotKey = Symbol.for("moenotes.masterdata.build-snapshot");
 const globalState = globalThis as typeof globalThis & { [snapshotKey]?: BuildSnapshotState };
-const state = globalState[snapshotKey] ??= { tables: new Map(), activeRequests: 0, waiters: [] };
+const state = globalState[snapshotKey] ??= {
+  manifestCheckedAt: 0,
+  tables: new Map(),
+  epoch: 0,
+  activeRequests: 0,
+  waiters: [],
+};
+
 const MAX_CONCURRENT_REQUESTS = 6;
+const MAX_CACHED_TABLES = 256;
+const DEFAULT_MANIFEST_TTL_MS = 60_000;
+
+function manifestTtlMs(): number {
+  const raw = buildEnv("MOENOTES_MASTERDATA_TTL_MS");
+  if (!raw) return DEFAULT_MANIFEST_TTL_MS;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : DEFAULT_MANIFEST_TTL_MS;
+}
 
 function sourceBases(): string[] {
   return [...new Set(Object.values(masterdataConfig.sources).map((base) => base.replace(/\/+$/, "")))];
 }
 
 /**
- * Build-time override: read a local checkout of the data repository (StarMoe-org/moenotes-masterdata:
- * `current_version.json` plus one directory per region, `hk-tw-mo/`, `jp/`, …) instead of the network. A checkout
- * with the older single `master/` directory still serves the primary server.
+ * Local checkout override: read StarMoe-org/moenotes-masterdata (`current_version.json` plus one directory per
+ * region, `hk-tw-mo/`, `jp/`, …) instead of the network.
  */
 function localSourceDir(): string | undefined {
-  const processEnv = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env;
-  const dir = (import.meta.env.MOENOTES_MASTERDATA_DIR as string | undefined) ?? processEnv?.MOENOTES_MASTERDATA_DIR;
-  return dir?.trim() || undefined;
+  return buildEnv("MOENOTES_MASTERDATA_DIR");
 }
 
 interface NodeFs {
   readFile(path: string, encoding: "utf8"): Promise<string>;
 }
-// A variable specifier keeps the Node built-in out of type checking and client bundles; only builds reach it.
+// A variable specifier keeps the Node built-in out of client bundles.
 const NODE_FS = "node:fs/promises";
 
 async function readLocalJson(dir: string, path: string): Promise<unknown> {
-  const { readFile } = await import(/* @vite-ignore */ NODE_FS) as NodeFs;
+  const { readFile } = await import(/* webpackIgnore: true */ NODE_FS) as NodeFs;
   return JSON.parse(await readFile(`${dir.replace(/[\\/]+$/, "")}/${path.replace(/^\/+/, "")}`, "utf8")) as unknown;
 }
 
+/** Current epoch without awaiting; increments every time `dataVersion` rotates. */
+export function currentMasterDataEpochSync(): number {
+  return state.epoch;
+}
+
+/** Whether the in-memory manifest is still within its freshness window. */
+export function isMasterDataManifestFresh(): boolean {
+  return Boolean(state.resolvedManifest) && Date.now() - state.manifestCheckedAt < manifestTtlMs();
+}
+
 export function getBuildManifest(): Promise<VersionManifest> {
-  state.manifest ??= fetchBuildManifest();
-  return state.manifest;
+  if (!state.manifest) {
+    state.manifest = fetchBuildManifest().then((loaded) => {
+      state.resolvedManifest = loaded;
+      state.manifestCheckedAt = Date.now();
+      return loaded;
+    }).catch((error) => {
+      state.manifest = undefined;
+      throw error;
+    });
+    return state.manifest;
+  }
+
+  if (isMasterDataManifestFresh()) {
+    return state.manifest;
+  }
+
+  state.refreshing ??= refreshManifestIfChanged().finally(() => {
+    state.refreshing = undefined;
+  });
+  return state.refreshing;
+}
+
+async function refreshManifestIfChanged(): Promise<VersionManifest> {
+  try {
+    const next = await fetchBuildManifest();
+    const prevVersion = state.resolvedManifest?.dataVersion;
+    state.resolvedManifest = next;
+    state.manifest = Promise.resolve(next);
+    state.manifestCheckedAt = Date.now();
+    if (prevVersion && next.dataVersion !== prevVersion) {
+      state.epoch += 1;
+      state.index = fetchBuildIndex();
+      evictMutableTables();
+    }
+    return next;
+  } catch (error) {
+    // Keep serving the last known good manifest during transient upstream blips.
+    if (state.resolvedManifest) {
+      state.manifestCheckedAt = Date.now();
+      return state.resolvedManifest;
+    }
+    throw error;
+  }
+}
+
+function evictMutableTables(): void {
+  for (const key of state.tables.keys()) {
+    if (!key.startsWith("sha256:")) {
+      state.tables.delete(key);
+    }
+  }
+  pruneTableLru();
+}
+
+function pruneTableLru(): void {
+  while (state.tables.size > MAX_CACHED_TABLES) {
+    const oldest = state.tables.keys().next().value;
+    if (oldest === undefined) break;
+    state.tables.delete(oldest);
+  }
+}
+
+/** Reset snapshot state (used by runtime cache invalidation tests). */
+export function resetMasterDataSnapshotForTests(): void {
+  state.manifest = undefined;
+  state.resolvedManifest = undefined;
+  state.manifestCheckedAt = 0;
+  state.refreshing = undefined;
+  state.index = undefined;
+  state.tables.clear();
+  state.epoch += 1;
 }
 
 /** The MasterData version a server's tables are at, or undefined when the metadata service does not serve it. */
@@ -65,7 +162,9 @@ export async function getBuildTableKey(server: GameServer, path: string): Promis
   const name = path.replace(/^\/+/, "");
   const index = await getBuildIndex();
   const sha256 = index?.regions?.[GAME_SERVER_PROFILES[server].masterdataRegion]?.files?.[name];
-  return sha256 ? `sha256:${sha256}` : `${server}:${name}`;
+  if (sha256) return `sha256:${sha256}`;
+  const version = await getBuildMasterVersion(server) ?? (await getBuildManifest()).dataVersion;
+  return `${server}:${name}@${version}`;
 }
 
 export async function getBuildMasterData<T>(
@@ -76,9 +175,17 @@ export async function getBuildMasterData<T>(
   const name = path.replace(/^\/+/, "");
   const cacheKey = await getBuildTableKey(server, name);
   let request = state.tables.get(cacheKey);
-  if (!request) {
-    request = fetchBuildTable(server, name);
+  if (request) {
+    // Refresh LRU order.
+    state.tables.delete(cacheKey);
     state.tables.set(cacheKey, request);
+  } else {
+    request = fetchBuildTable(server, name).catch((error) => {
+      state.tables.delete(cacheKey);
+      throw error;
+    });
+    state.tables.set(cacheKey, request);
+    pruneTableLru();
   }
   return validate(await request);
 }

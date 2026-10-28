@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import ButtonBase from "@mui/material/ButtonBase";
 import Menu from "@mui/material/Menu";

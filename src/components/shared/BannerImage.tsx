@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { useAssetUrl } from "@/lib/servers/use-content-server";
 

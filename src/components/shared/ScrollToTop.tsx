@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import Fab from "@mui/material/Fab";
 import Zoom from "@mui/material/Zoom";

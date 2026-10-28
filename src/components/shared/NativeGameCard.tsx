@@ -1,3 +1,5 @@
+"use client";
+
 import { SiriusIcon } from "@/components/shared/SiriusLoader";
 import { useEffect, useRef, useState } from "react";
 import type { GameServer } from "@/config/servers";

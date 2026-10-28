@@ -5,6 +5,7 @@ import { activeBuildLocales } from "@/config/build-locales";
 import { buildDynamicPath, findRouteMatch, findRouteById, getAllRoutes, getAllStaticRoutes, isDynamicRoute, resolveRouteStaticParams } from "@/lib/route/registry";
 import type { AppRoute, BreadcrumbDetail, RouteMatch, RouteParams } from "@/types/route";
 import type { PageMetadata } from "@/lib/seo/metadata";
+import { memo } from "@/lib/masterdata/build-core";
 import {
   getBuildCards,
   getBuildCharacters,
@@ -40,22 +41,16 @@ function routePathToParam(path: string): string {
   return path.replace(/^\//, "");
 }
 
-const detailLabels = new Map<string, Promise<Map<string, BreadcrumbDetail>>>();
-
-/** Breadcrumb labels of one detail route in one locale, by route parameter, from the merged catalog. */
+/** Breadcrumb labels of one detail route in one locale, by route parameter, memoized per MasterData epoch. */
 function detailLabelsFor(component: string, locale: AppLocale): Promise<Map<string, BreadcrumbDetail>> | null {
   const load = detailLabelLoaders[component];
   if (!load) return null;
-  const key = `${component}:${locale}`;
-  let labels = detailLabels.get(key);
-  if (!labels) {
-    labels = load(locale).catch((error: unknown) => {
+  return memo(`detail-labels:${component}:${locale}`, () =>
+    load(locale).catch((error: unknown) => {
       console.error(`Failed to preload dynamic ${component} breadcrumbs:`, error);
       return new Map();
-    });
-    detailLabels.set(key, labels);
-  }
-  return labels;
+    }),
+  );
 }
 
 const label = (value: string): BreadcrumbDetail | null => (value ? { label: value } : null);
@@ -67,6 +62,12 @@ const byId = <T>(entries: readonly T[], id: (entry: T) => string | number, detai
 
 const storyCategoryRoutes: Record<string, string> = { main: "main-story", event: "event-story", friendship: "friendship-story", birthday: "birthday-story" };
 
+function plainRoute(route: AppRoute | undefined): AppRoute | null {
+  if (!route) return null;
+  const { children: _children, staticParams: _staticParams, ...plain } = route;
+  return plain;
+}
+
 const detailLabelLoaders: Record<string, (locale: AppLocale) => Promise<Map<string, BreadcrumbDetail>>> = {
   "card-detail": async (locale) => byId(await getBuildCards(locale), (card) => card.id, (card) => label(`${card.characterName} - ${card.title}`)),
   "support-card-detail": async (locale) => byId(await getBuildSupportCards(locale), (card) => card.id, (card) => label(`${card.name} - ${card.title}`)),
@@ -77,24 +78,24 @@ const detailLabelLoaders: Record<string, (locale: AppLocale) => Promise<Map<stri
   "exchange-detail": async (locale) => byId(await getBuildExchangeSummaries(locale), (exchange) => exchange.id, (exchange) => label(exchange.name)),
   "event-detail": async (locale) => {
     // `/events/:id` is not under the list's path, so name the list as the ancestor the navigation marks.
-    const ancestors = [findRouteById("events"), findRouteById("event-list")].filter(Boolean) as AppRoute[];
+    const ancestors = [plainRoute(findRouteById("events")), plainRoute(findRouteById("event-list"))].filter((r): r is AppRoute => r !== null);
     return byId(await getBuildEvents(locale), (event) => event.id, (event) => ({ label: event.name, ancestors }));
   },
   "item-detail": async (locale) => byId(await getBuildItems(locale), (item) => item.id, (item) => label(item.name)),
   "shop-detail": async (locale) => byId(await getBuildShops(locale), (shop) => shop.id, (shop) => label(shop.name)),
   "help-detail": async (locale) => byId(await getBuildHelpTopics(locale), (topic) => topic.id, (topic) => label(topic.title)),
   "story-detail": async (locale) => {
-    const storyRoute = findRouteById("story");
+    const storyRoute = plainRoute(findRouteById("story"));
     // An ADV in several lists takes its first one's title and category.
     const stories = (await getBuildStories(locale)).filter((story, index, all) => all.findIndex((other) => other.advId === story.advId) === index);
     return byId(stories, (story) => story.advId, (story) => ({
       label: story.title || `ADV ${story.advId}`,
-      ancestors: [storyRoute, findRouteById(storyCategoryRoutes[story.category] ?? "other-story")].filter(Boolean) as AppRoute[],
+      ancestors: [storyRoute, plainRoute(findRouteById(storyCategoryRoutes[story.category] ?? "other-story"))].filter((r): r is AppRoute => r !== null),
     }));
   },
 };
 
-async function detailBreadcrumb(component: string | undefined, id: string, locale: AppLocale): Promise<BreadcrumbDetail | undefined> {
+export async function getDetailBreadcrumb(component: string | undefined, id: string, locale: AppLocale): Promise<BreadcrumbDetail | undefined> {
   const labels = component ? detailLabelsFor(component, locale) : null;
   return (await labels)?.get(id);
 }
@@ -114,7 +115,7 @@ export async function getStaticLocalizedPaths(locales: readonly AppLocale[] = ac
     for (const config of configs) {
       const pathname = buildDynamicPath(route.pattern ?? route.path, config.params);
       for (const locale of locales) {
-        const detail = await detailBreadcrumb(route.component, config.params.id ?? "", locale);
+        const detail = await getDetailBreadcrumb(route.component, config.params.id ?? "", locale);
         const breadcrumbDetail = detail ?? config.breadcrumbDetail;
         paths.push(createLocalizedPath(locale, pathname, routePathToParam(pathname), config.params, breadcrumbDetail, config.meta));
       }
@@ -158,3 +159,5 @@ function createLocalizedPath(
     },
   };
 }
+
+export { SUPPORTED_LOCALES };

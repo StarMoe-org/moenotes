@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import MemberCardArtwork from "@/components/shared/MemberCardArtwork";
 import { playerCardPath } from "@/config/account";

@@ -1,5 +1,4 @@
-import signatureLight from "../../../public/assets/brand/moenotes-signature-light.svg?raw";
-import signatureInk from "../../../public/assets/brand/moenotes-signature.svg?raw";
+import { signatureInk, signatureLight } from "./brand-signatures";
 
 interface BrandLogoProps {
   className?: string;

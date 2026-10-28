@@ -1,3 +1,5 @@
+"use client";
+
 import SiriusLoader from "@/components/shared/SiriusLoader";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import type { AppLocale } from "@/config/locales";

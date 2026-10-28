@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { assetConfig } from "@/config/assets";
 import { loadNativeUiLibrary } from "@/lib/game-ui/source";

@@ -1,3 +1,5 @@
+"use client";
+
 import { useId, type ReactNode } from "react";
 import InputAdornment from "@mui/material/InputAdornment";
 import MenuItem from "@mui/material/MenuItem";

@@ -1,3 +1,5 @@
+"use client";
+
 import "@/styles/character-rank-artwork.css";
 
 /** A character avatar with its Rank on a plate rotated 45 degrees across the top-left corner. */

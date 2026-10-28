@@ -1,3 +1,5 @@
+"use client";
+
 import { startTransition, useEffect, useState, type CSSProperties } from "react";
 import { X_MAX, meanSkill } from "@/lib/chart-data/ranking";
 import { RANGES, RANK_MAX, type ScenarioId } from "@/lib/chart-data/scenario";

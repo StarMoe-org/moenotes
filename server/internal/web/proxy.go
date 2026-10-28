@@ -32,7 +32,12 @@ var (
 )
 
 // IsAPIPath reports whether a path is relayed to starmoe-api.
+// `/api/v1/meta/*` and `/api/v1/markdown` are served directly by the Next.js frontend rather than starmoe-api.
 func IsAPIPath(pathname string) bool {
+	if pathname == "/api/v1/meta" || strings.HasPrefix(pathname, "/api/v1/meta/") ||
+		pathname == "/api/v1/markdown" || strings.HasPrefix(pathname, "/api/v1/markdown/") {
+		return false
+	}
 	return pathname == "/api" || strings.HasPrefix(pathname, "/api/")
 }
 

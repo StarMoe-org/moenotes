@@ -71,7 +71,7 @@ test('account UI reuses real system sections, action cards and native archive co
   assert.match(grants, /disabled=\{busy \|\| !selected.length\}/);
   assert.match(grants, /setSelected\(\[\]\)/);
   assert.doesNotMatch(platform.match(/<form[\s\S]*?<\/form>/)[0], /mn-list-card|md3-card-outlined/);
-  const page = source('OpenPlatformPage.astro');
+  const page = source('OpenPlatformPage.tsx');
   assert.match(page, /md3-surface/);
   assert.match(page, /mn-list-card md3-card-outlined/);
   assert.equal((page.match(/<a\s/g) || []).length, 1);

@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useId, useRef, useState } from "react";
 import ButtonBase from "@mui/material/ButtonBase";
 import IconButton from "@mui/material/IconButton";

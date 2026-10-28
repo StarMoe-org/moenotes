@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, type ReactNode } from "react";
 import Alert from "@mui/material/Alert";
 import Autocomplete from "@mui/material/Autocomplete";

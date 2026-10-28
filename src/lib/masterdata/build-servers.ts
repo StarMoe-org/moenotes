@@ -2,27 +2,38 @@ import { assetConfig } from "@/config/assets";
 import { buildEnv } from "@/config/build-env";
 import { GAME_SERVER_PROFILES, GAME_SERVERS, PRIMARY_SERVER, isGameServer, orderServers, type GameServer } from "@/config/servers";
 import { buildFetch } from "@/lib/build/fetch";
-import { getBuildMasterVersion } from "@/lib/masterdata/build-snapshot";
+import { currentMasterDataEpochSync, getBuildManifest, getBuildMasterVersion, isMasterDataManifestFresh } from "@/lib/masterdata/build-snapshot";
 
 /** moenotes-assets `versions/current_version.json`: the latest exported (succeeded or partial) release per region. */
 interface AssetReleaseManifest {
   regions?: Record<string, { resource_version?: string; master_version?: string }>;
 }
 
-const serversKey = Symbol.for("moenotes.masterdata.build-servers");
-const globalState = globalThis as typeof globalThis & { [serversKey]?: Promise<GameServer[]> };
+interface ServersState {
+  epoch: number;
+  promise?: Promise<GameServer[]> | undefined;
+}
+
+const serversKey = Symbol.for("moenotes.masterdata.build-servers.v2");
+const globalState = globalThis as typeof globalThis & { [serversKey]?: ServersState };
+const state = globalState[serversKey] ??= { epoch: -1 };
 
 /**
- * The servers this build shows, in switcher order. A server joins once the asset service has exported a release of
- * its region, so the files its MasterData names are published; that export also makes the deploy server rebuild
- * (docs/deployment.md). The metadata service must serve its tables too. The primary server is always built.
- *
- * `MOENOTES_SERVERS` (comma-separated, e.g. `tw,jp`) replaces the check, for local MasterData checkouts or to try a
- * server before its assets are exported.
+ * The servers this runtime shows, in switcher order. Refreshes automatically when the MasterData epoch advances.
  */
-export function getBuildServers(): Promise<GameServer[]> {
-  globalState[serversKey] ??= resolveBuildServers();
-  return globalState[serversKey];
+export async function getBuildServers(): Promise<GameServer[]> {
+  if (!isMasterDataManifestFresh()) {
+    await getBuildManifest();
+  }
+  const epoch = currentMasterDataEpochSync();
+  if (state.epoch !== epoch || !state.promise) {
+    state.epoch = epoch;
+    state.promise = resolveBuildServers().catch((error) => {
+      state.promise = undefined;
+      throw error;
+    });
+  }
+  return state.promise;
 }
 
 async function resolveBuildServers(): Promise<GameServer[]> {

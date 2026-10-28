@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";

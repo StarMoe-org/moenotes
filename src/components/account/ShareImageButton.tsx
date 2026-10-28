@@ -1,3 +1,5 @@
+"use client";
+
 import SiriusLoader from "@/components/shared/SiriusLoader";
 import { useEffect, useState } from "react";
 import Modal from "@/components/shared/Modal";

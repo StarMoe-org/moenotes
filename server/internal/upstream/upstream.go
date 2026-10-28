@@ -184,7 +184,7 @@ func ExportLag(ctx context.Context, manifest *AssetManifest, fetcher *Fetcher, m
 
 // SourceRoots are the files of the repository that shape the built site.
 var (
-	sourceFiles = []string{"astro.config.mjs", "package.json", "bun.lock", "tsconfig.json"}
+	sourceFiles = []string{"next.config.ts", "postcss.config.mjs", "package.json", "bun.lock", "tsconfig.json"}
 	sourceDirs  = []string{"src", "public"}
 )
 

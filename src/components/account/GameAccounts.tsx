@@ -1,3 +1,5 @@
+"use client";
+
 import SiriusLoader, { SiriusIcon } from "@/components/shared/SiriusLoader";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import PlayerProfileCard from "@/components/account/PlayerProfileCard";

@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useRef, useState } from "react";
 import type { ChartPlayer, LiveOptionItem, LiveSettingValue } from "ournotes-player";
 import type { AppLocale } from "@/config/locales";

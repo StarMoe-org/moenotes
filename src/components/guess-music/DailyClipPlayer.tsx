@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";

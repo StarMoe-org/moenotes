@@ -19,6 +19,7 @@ import (
 	"github.com/StarMoe-org/moenotes/server/internal/config"
 	"github.com/StarMoe-org/moenotes/server/internal/finalize"
 	"github.com/StarMoe-org/moenotes/server/internal/siteconfig"
+	"github.com/StarMoe-org/moenotes/server/internal/ssr"
 	"github.com/StarMoe-org/moenotes/server/internal/upstream"
 	"github.com/StarMoe-org/moenotes/server/internal/web"
 )
@@ -300,6 +301,40 @@ func SelfCheck(ctx context.Context) error {
 	}
 	if relayed.Header().Get("X-Echo") != "1|hello|x=1" {
 		return failed("the proxy should forward cookies, the body and the query, got %q", relayed.Header().Get("X-Echo"))
+	}
+
+	// Semi-SSR gateway: HTML cache, Accept: text/markdown negotiation, and dataVersion invalidation.
+	ssrBackend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.Header.Get("Accept"), "text/markdown") || strings.HasSuffix(r.URL.Path, ".md") {
+			w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
+			_, _ = w.Write([]byte("# Check Markdown\n"))
+			return
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = w.Write([]byte(page))
+	}))
+	defer ssrBackend.Close()
+	ssrCache := ssr.NewHTMLCache(filepath.Join(dir, "html_cache"), "selfcheck-build", "tw@1")
+	ssrGateway, err := ssr.NewGateway(ssr.GatewayOptions{UpstreamURL: ssrBackend.URL, Cache: ssrCache, Site: site})
+	if err != nil {
+		return failed("ssr gateway init: %v", err)
+	}
+	ssrMiss := httptest.NewRecorder()
+	ssrGateway.ServeHTTP(ssrMiss, httptest.NewRequest(http.MethodGet, "http://self-check/cards", nil))
+	if ssrMiss.Code != 200 || ssrMiss.Header().Get("X-Moenotes-Cache") != "MISS" {
+		return failed("ssr first HTML request should MISS, got %d / %q", ssrMiss.Code, ssrMiss.Header().Get("X-Moenotes-Cache"))
+	}
+	ssrHit := httptest.NewRecorder()
+	ssrGateway.ServeHTTP(ssrHit, httptest.NewRequest(http.MethodGet, "http://self-check/cards", nil))
+	if ssrHit.Code != 200 || ssrHit.Header().Get("X-Moenotes-Cache") != "HIT" {
+		return failed("ssr second HTML request should HIT, got %d / %q", ssrHit.Code, ssrHit.Header().Get("X-Moenotes-Cache"))
+	}
+	mdReq := httptest.NewRequest(http.MethodGet, "http://self-check/cards", nil)
+	mdReq.Header.Set("Accept", "text/markdown")
+	mdResp := httptest.NewRecorder()
+	ssrGateway.ServeHTTP(mdResp, mdReq)
+	if mdResp.Code != 200 || !strings.HasPrefix(mdResp.Header().Get("Content-Type"), "text/markdown") {
+		return failed("ssr Accept: text/markdown should serve markdown, got %d / %q", mdResp.Code, mdResp.Header().Get("Content-Type"))
 	}
 
 	fmt.Println("self-check passed")

@@ -50,7 +50,7 @@ describe("site data identity (shared with the Go server)", () => {
   test("the Go server computes the same source digest", async () => {
     const root = await mkdtemp(join(tmpdir(), "site-digest-"));
     try {
-      for (const name of ["astro.config.mjs", "package.json", "bun.lock", "tsconfig.json"]) await Bun.write(join(root, name), name);
+      for (const name of ["next.config.ts", "postcss.config.mjs", "package.json", "bun.lock", "tsconfig.json"]) await Bun.write(join(root, name), name);
       await mkdir(join(root, "src", "a", "b"), { recursive: true });
       await Bun.write(join(root, "src", "a", "b", "Z.ts"), "z");
       await Bun.write(join(root, "src", "a", "B.ts"), "upper case sorts first in byte order");

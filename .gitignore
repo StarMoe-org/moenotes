@@ -1,6 +1,10 @@
 node_modules/
 dist/
+out/
 .astro/
+.next/
+next-env.d.ts
+*.tsbuildinfo
 .miaomiaomiao/
 .env
 .env.*

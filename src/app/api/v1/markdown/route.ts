@@ -1,0 +1,34 @@
+import type { NextRequest } from "next/server";
+import { renderMarkdownForPath } from "@/lib/markdown/render";
+
+export const dynamic = "force-dynamic";
+
+export async function GET(request: NextRequest) {
+  const path =
+    request.nextUrl.searchParams.get("path") ||
+    request.headers.get("x-moenotes-markdown-path") ||
+    (request.nextUrl.pathname !== "/api/v1/markdown" ? request.nextUrl.pathname : "/");
+  const doc = await renderMarkdownForPath(path);
+  if (!doc) {
+    return new Response("# 404 Not Found\n\nThe requested Markdown document does not exist.\n", {
+      status: 404,
+      headers: {
+        "Content-Type": "text/markdown; charset=utf-8",
+        "Cache-Control": "no-store",
+        Vary: "Accept",
+      },
+    });
+  }
+
+  return new Response(doc.markdown, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/markdown; charset=utf-8",
+      "X-Markdown-Tokens": String(doc.tokens),
+      "X-Moenotes-Data-Version": doc.dataVersion,
+      Link: `<${doc.canonicalUrl}>; rel="canonical"`,
+      "Cache-Control": "public, max-age=60, stale-while-revalidate=600",
+      Vary: "Accept",
+    },
+  });
+}

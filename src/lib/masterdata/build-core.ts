@@ -1,6 +1,12 @@
 import { PRIMARY_SERVER, GAME_SERVER_PROFILES, type GameServer } from "@/config/servers";
 import type { AppLocale } from "@/config/locales";
-import { getBuildMasterData, getBuildTableKey } from "@/lib/masterdata/build-snapshot";
+import {
+  currentMasterDataEpochSync,
+  getBuildManifest,
+  getBuildMasterData,
+  getBuildTableKey,
+  isMasterDataManifestFresh,
+} from "@/lib/masterdata/build-snapshot";
 import { getBuildServers } from "@/lib/masterdata/build-servers";
 import { mergeServerLists, mergeServerValues, type ServerFaceted, type ServerFacetedValue } from "@/lib/servers/facets";
 import { validateMasterTable, type MasterTable, type RawText } from "@/lib/cards/data";
@@ -8,33 +14,69 @@ import { MASTER_TEXT_FIELDS, isUsableMasterText, type LocalizableMasterText } fr
 import { MASTER_UTC_OFFSET, isUntaggedMasterDate } from "@/lib/schedule";
 
 /*
- * Domain-free plumbing of the build-time catalog (moved verbatim out of build-data.ts so domain selectors can live in
- * their own build-<domain>.ts files): the shared table cache, selector memoization, the per-server merge helpers, the
- * cross-filled MasterText, and the helpers the content search index builds titles and search texts with.
+ * Domain-free plumbing of the catalog: the shared table cache, version-aware selector memoization, the per-server
+ * merge helpers, the cross-filled MasterText, and the helpers the content search index builds titles and search texts
+ * with. When the runtime MasterData manifest rotates to a new dataVersion, derived selectors clear automatically while
+ * unchanged SHA-256 content-addressed tables stay warm.
  */
 
 interface BuildDataState {
+  epoch: number;
   tables: Map<string, Promise<MasterTable<unknown>>>;
   selectors: Map<string, Promise<unknown>>;
 }
 
-// Versioned: a dev server keeps this state across reloads, and the merged selectors reuse the earlier keys.
-const buildDataKey = Symbol.for("moenotes.masterdata.build-data.v2");
+const buildDataKey = Symbol.for("moenotes.masterdata.build-data.v3");
 const globalState = globalThis as typeof globalThis & { [buildDataKey]?: BuildDataState };
-export const state = globalState[buildDataKey] ??= { tables: new Map(), selectors: new Map() };
+export const state = globalState[buildDataKey] ??= { epoch: -1, tables: new Map(), selectors: new Map() };
+
+const MAX_TAGGED_TABLES = 256;
+
+function syncEpoch(): void {
+  const epoch = currentMasterDataEpochSync();
+  if (state.epoch === epoch) return;
+  state.epoch = epoch;
+  state.selectors.clear();
+  for (const key of state.tables.keys()) {
+    if (!key.startsWith("sha256:")) {
+      state.tables.delete(key);
+    }
+  }
+}
+
+async function ensureEpochFresh(): Promise<void> {
+  if (!isMasterDataManifestFresh()) {
+    await getBuildManifest();
+  }
+  syncEpoch();
+}
 
 /**
  * A server's table, shared with every server serving the same bytes in the same time zone. Timestamps of a server
  * whose MasterData is not timed in UTC+8 get its offset appended, so parseMasterDate reads them right everywhere.
  */
 export async function table<T>(path: string, server: GameServer): Promise<MasterTable<T>> {
+  await ensureEpochFresh();
   const offset = GAME_SERVER_PROFILES[server].masterdataUtcOffset;
   const tagged = offset !== MASTER_UTC_OFFSET && path !== "MasterText.json";
   const key = `${await getBuildTableKey(server, path)}${tagged ? `@${offset}` : ""}`;
   let request = state.tables.get(key);
-  if (!request) {
-    request = getBuildMasterData(path, validateMasterTable<unknown>, server).then((loaded) => tagged ? tagMasterDates(loaded, offset) : loaded);
+  if (request) {
+    state.tables.delete(key);
     state.tables.set(key, request);
+  } else {
+    request = getBuildMasterData(path, validateMasterTable<unknown>, server)
+      .then((loaded) => tagged ? tagMasterDates(loaded, offset) : loaded)
+      .catch((error) => {
+        state.tables.delete(key);
+        throw error;
+      });
+    state.tables.set(key, request);
+    while (state.tables.size > MAX_TAGGED_TABLES) {
+      const oldest = state.tables.keys().next().value;
+      if (oldest === undefined) break;
+      state.tables.delete(oldest);
+    }
   }
   return request as Promise<MasterTable<T>>;
 }
@@ -49,12 +91,23 @@ export function tagMasterDates(loaded: MasterTable<unknown>, offset: string): Ma
 }
 
 export function memo<T>(key: string, load: () => Promise<T>): Promise<T> {
-  let request = state.selectors.get(key);
-  if (!request) {
-    request = load();
-    state.selectors.set(key, request);
+  if (isMasterDataManifestFresh()) {
+    syncEpoch();
+    const cached = state.selectors.get(key);
+    if (cached) return cached as Promise<T>;
   }
-  return request as Promise<T>;
+  return (async () => {
+    await ensureEpochFresh();
+    let request = state.selectors.get(key);
+    if (!request) {
+      request = load().catch((error) => {
+        state.selectors.delete(key);
+        throw error;
+      });
+      state.selectors.set(key, request);
+    }
+    return request as Promise<T>;
+  })();
 }
 
 export async function eachServer<T>(load: (server: GameServer) => Promise<T>): Promise<Array<readonly [GameServer, T]>> {

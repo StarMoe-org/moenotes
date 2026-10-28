@@ -1,8 +1,49 @@
 # Deployment
 
-The image (`Dockerfile`) holds one static Go binary, `moenotes` (sources in `server/`), and the source digest of the
-site sources it was built from. It contains neither Bun nor the site sources nor a built site. The container runs
-`moenotes serve`, which:
+## Next.js 16 + Go Semi-SSR Mode (`MOENOTES_BUILD_MODE=ssr`)
+
+`Dockerfile` builds a multi-stage container carrying both the `moenotes` Go gateway (`/usr/local/bin/moenotes`),
+the Next.js 16 standalone server (`/app/nextjs` with Node 22), `/app/static_archive` for rolling-deploy `_next/static`
+chunk continuity, and `/app/source-digest`.
+
+Enable semi-SSR mode in production with `MOENOTES_BUILD_MODE=ssr`:
+
+```bash
+docker build --build-arg MOENOTES_REVISION=$(git rev-parse HEAD) -t moenotes .
+docker run -p 8080:80 -v moenotes-data:/data \
+  -e MOENOTES_BUILD_MODE=ssr \
+  -e MOENOTES_ASSET_INTERNAL=http://moenotes-assets.moenotes.svc.cluster.local:8080 \
+  -e MOENOTES_MASTERDATA_INTERNAL=http://moenotes-metadata.moenotes.svc.cluster.local:8080 \
+  moenotes
+```
+
+In `ssr` mode (`server/internal/ssr/`):
+
+1. **Managed Next.js Standalone**: Go supervises `node /app/nextjs/server.js` (`--max-old-space-size=512` by default,
+   configurable via `MOENOTES_NEXT_MAX_OLD_SPACE_MB`) on `127.0.0.1:3000` (or proxies to an external `FRONTEND_PROXY_URL`)
+   and gates `/readyz` on `/internal-healthz`.
+2. **Persistent HTML + Markdown Disk Cache**: Anonymous `GET`/`HEAD` HTML and Markdown responses are compressed and
+   persisted under `/data/html-cache` (`HTML_CACHE_DIR`), deduplicated with `singleflight`, and tagged with
+   `X-SSR-Cache: HIT|MISS|BYPASS` and `Vary: Accept`.
+3. **ExportLag-Aware Hot Invalidation & Runtime MasterData Refresh**: Every `MOENOTES_POLL_SECONDS`, the Go watcher checks
+   the asset service's `versions/current_version.json` and metadata service's `current_version.json`. Once asset export
+   catches up (`ExportLag == false`), Go atomically bumps `SetDataVersion(fingerprint)`, invalidating stale HTML/Markdown
+   cache entries immediately with zero rebuild wait, while Next.js refreshes its in-memory MasterData snapshot after
+   `MOENOTES_MASTERDATA_TTL_MS` (default `60000` ms) while keeping unchanged `sha256:` tables in LRU memory.
+4. **Idle Background Warmup**: When `MOENOTES_SSR_WARMUP` is enabled (default `true`), the gateway gently pre-warms
+   high-traffic localized routes during idle windows (`MOENOTES_SSR_WARMUP_CONCURRENCY`, default `1`).
+5. **Crawler & Agent Markdown Routing**:
+   - Send `Accept: text/markdown` on any canonical or localized page URL, or append `.md` (`/index.md`, `/ja/index.md`,
+     `/cards/1001.md`, `/en/events/4.md`) to receive clean YAML-frontmatter Markdown with `X-Markdown-Tokens`.
+   - `/llms.txt` and `/llms-full.txt` expose structured indexes across all 13 locales and entity catalogs.
+   - `/api/v1/meta/version` returns live build, MasterData version, locale, and Markdown capability metadata.
+   - `/robots.txt` advertises `Content-Signal: search=yes, ai-input=yes, ai-train=no` alongside `/sitemap.xml`.
+
+---
+
+## Legacy GitHub Release Artifact Mode (`MOENOTES_BUILD_MODE=github`)
+
+When neither `MOENOTES_BUILD_MODE=ssr` nor `FRONTEND_PROXY_URL` is set, `moenotes serve` defaults to `buildMode: "github"`, which:
 
 1. serves the live build from the `/data` volume right away (before any network access), and
 2. dispatches the repository's GitHub Actions site build whenever the asset service publishes a new release or the

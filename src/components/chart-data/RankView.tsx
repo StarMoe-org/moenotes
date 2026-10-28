@@ -1,3 +1,5 @@
+"use client";
+
 import { useMemo, type ReactNode } from "react";
 import { matches, sortBy, type ChartRow } from "@/lib/chart-data/catalog";
 import { EFF_RANKS, RANKS, SPEEDS, roomSize, type RankBy } from "@/lib/chart-data/query";

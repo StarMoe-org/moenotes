@@ -1,3 +1,5 @@
+"use client";
+
 import { useListSort } from "@/lib/filter/use-list-sort";
 import { sortEntries } from "@/lib/filter/list-sort";
 import { useEffect, useMemo, useState, useCallback } from "react";

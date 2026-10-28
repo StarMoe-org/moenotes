@@ -1,3 +1,5 @@
+"use client";
+
 import SiriusLoader from "@/components/shared/SiriusLoader";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type { ChartPlayer, LiveSettingsInput } from "ournotes-player";

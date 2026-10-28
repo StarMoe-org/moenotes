@@ -1,18 +1,17 @@
 /**
- * Emotion cache for the MUI islands.
+ * Emotion cache for Material 3 components.
  *
  * - Every rule goes into `@layer mui` (declared in src/styles/global.css between Tailwind's base and utilities), so
  *   Tailwind utilities on a MUI component win without `!important`.
- * - The key stays `css`: Emotion moves server-rendered `<style data-emotion="css …">` tags out of the island into
- *   <head> before React hydrates, and skips re-inserting rules it finds there.
- * - On the server every render gets its own cache (Astro renders many pages in one process; a shared cache would
- *   mark rules as inserted and leave later pages without them). In the browser one cache serves all islands.
+ * - Standalone renders (unit tests) get a fresh cache per call on the server; Next.js App Router renders share one
+ *   `compat` cache per request via NextMd3Registry and flush rules through `useServerInsertedHTML`.
  */
 import createCache, { type EmotionCache } from "@emotion/cache";
 
 const LAYER = "mui";
 
-function layered(cache: EmotionCache): EmotionCache {
+export function createLayeredMd3Cache(): EmotionCache {
+  const cache = createCache({ key: "css" });
   const insert = cache.insert;
   cache.insert = (selector, serialized, sheet, shouldCache) => {
     if (!serialized.styles.startsWith("@layer")) {
@@ -26,9 +25,7 @@ function layered(cache: EmotionCache): EmotionCache {
 let browserCache: EmotionCache | null = null;
 
 export function getMd3EmotionCache(): EmotionCache {
-  if (typeof document === "undefined") return layered(createCache({ key: "css" }));
-  // Appended (not prepended): the cascade layer order is declared first in <head> (RootLayout), and a `@layer mui`
-  // rule before that statement would make `mui` the lowest layer, under Tailwind's preflight.
-  browserCache ??= layered(createCache({ key: "css" }));
+  if (typeof document === "undefined") return createLayeredMd3Cache();
+  browserCache ??= createLayeredMd3Cache();
   return browserCache;
 }

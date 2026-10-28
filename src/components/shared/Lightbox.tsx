@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useEffect, useId, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { AppLocale } from "@/config/locales";

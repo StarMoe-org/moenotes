@@ -1,3 +1,5 @@
+"use client";
+
 import { useMemo } from "react";
 import { FilterSection } from "@/components/shared/BaseFilters";
 import FilterButton from "@/components/shared/FilterButton";

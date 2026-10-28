@@ -1,39 +1,54 @@
+"use client";
+
 /**
- * Material 3 context for one Astro island: Emotion cache (layered, src/lib/md3/emotion-cache.ts) + the MUI theme.
+ * Material 3 context for client components: Emotion cache (layered, src/lib/md3/emotion-cache.ts) + the MUI theme.
  *
- * Every hydrated island is its own React root, so each needs the provider; wrap the island's default export with
- * `withMd3`. The provider renders no stylesheet: MUI's CSS variables are emitted once per page by
- * src/components/md3/Md3ThemeVars.astro, and `data-theme` on <html> belongs to the settings pipeline.
+ * Inside Next.js App Router, `NextMd3Registry` supplies a request-scoped `compat` Emotion cache that flushes styles
+ * via `useServerInsertedHTML`. In standalone `renderToString` unit tests, `Md3Provider` falls back to its own cache.
  */
+import type { EmotionCache } from "@emotion/cache";
 import { CacheProvider } from "@emotion/react";
 import { ThemeProvider } from "@mui/material/styles";
-import { useSyncExternalStore, type ComponentType, type ReactNode } from "react";
-import { getMd3EmotionCache } from "@/lib/md3/emotion-cache";
-import { buildMd3Theme, type Md3Density } from "@/lib/md3/mui-theme";
-import { getSettings, subscribeSettings } from "@/lib/settings/store";
+import { createContext, useContext, useSyncExternalStore, type ComponentType, type ReactNode } from "react";
 import { defaultSettings } from "@/config/settings";
+import { getMd3EmotionCache } from "@/lib/md3/emotion-cache";
+import { type Md3Density } from "@/lib/md3/mui-theme";
+import { getMd3Theme, md3ThemeVariablesCss } from "@/lib/md3/theme-vars";
+import { getSettings, subscribeSettings } from "@/lib/settings/store";
 
-const themes: Partial<Record<Md3Density, ReturnType<typeof buildMd3Theme>>> = {};
-function themeFor(density: Md3Density) {
-  return (themes[density] ??= buildMd3Theme(density));
-}
+export const Md3RegistryCacheContext = createContext<EmotionCache | null>(null);
 
 const subscribeDensity = (onChange: () => void) => subscribeSettings(onChange);
 const getDensity = (): Md3Density => getSettings().density;
 const getServerDensity = (): Md3Density => defaultSettings.density;
 
 export function Md3Provider({ children }: { children: ReactNode }) {
+  const registryCache = useContext(Md3RegistryCacheContext);
   const density = useSyncExternalStore(subscribeDensity, getDensity, getServerDensity);
+  const content = (
+    <ThemeProvider
+      theme={getMd3Theme(density)}
+      disableStyleSheetGeneration
+      storageManager={null}
+      colorSchemeNode={null}
+      disableTransitionOnChange
+    >
+      {children}
+    </ThemeProvider>
+  );
+
+  if (registryCache) {
+    return content;
+  }
+
   return (
     <CacheProvider value={getMd3EmotionCache()}>
-      <ThemeProvider theme={themeFor(density)} disableStyleSheetGeneration storageManager={null} colorSchemeNode={null} disableTransitionOnChange>
-        {children}
-      </ThemeProvider>
+      {content}
     </CacheProvider>
   );
 }
 
-/** An island component rendered inside Md3Provider. */
+/** A client island rendered inside Md3Provider. */
 export function withMd3<P extends object>(Component: ComponentType<P>): ComponentType<P> {
   function Md3Island(props: P) {
     return (
@@ -46,15 +61,4 @@ export function withMd3<P extends object>(Component: ComponentType<P>): Componen
   return Md3Island;
 }
 
-/** The MUI CSS variables of the theme (both color schemes), as CSS text for one `<style>` in the page head. */
-export function md3ThemeVariablesCss(): string {
-  const theme = themeFor("comfortable") as unknown as { generateStyleSheets: () => Array<Record<string, Record<string, string>>> };
-  const blocks: string[] = [];
-  for (const sheet of theme.generateStyleSheets()) {
-    for (const [selector, declarations] of Object.entries(sheet)) {
-      const body = Object.entries(declarations).map(([name, value]) => `${name}:${value}`).join(";");
-      blocks.push(`${selector}{${body}}`);
-    }
-  }
-  return blocks.join("\n");
-}
+export { md3ThemeVariablesCss };

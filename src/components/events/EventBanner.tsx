@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import BannerImage from "@/components/shared/BannerImage";
 import type { EventViewModel } from "@/lib/events/data";

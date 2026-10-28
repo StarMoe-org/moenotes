@@ -1,3 +1,5 @@
+"use client";
+
 import SiriusLoader from "@/components/shared/SiriusLoader";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { ModelPlayer } from "ournotes-player/live2d";

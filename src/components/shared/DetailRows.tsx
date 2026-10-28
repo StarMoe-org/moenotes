@@ -1,3 +1,5 @@
+"use client";
+
 import type { ReactNode } from "react";
 
 /** A detail page's facts: a label on the left, the value on the right, one per row. */

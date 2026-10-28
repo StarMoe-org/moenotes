@@ -1,3 +1,5 @@
+"use client";
+
 import { Fragment, useId } from "react";
 import Button from "@mui/material/Button";
 import type { AppLocale } from "@/config/locales";

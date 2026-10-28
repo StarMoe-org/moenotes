@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
 import type { ChartRow } from "@/lib/chart-data/catalog";

@@ -1,3 +1,5 @@
+"use client";
+
 import { useMemo, useRef } from "react";
 import type { AppLocale } from "@/config/locales";
 import type { CardViewModel } from "@/lib/cards/data";

@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useEffect, useId, useState, type KeyboardEvent, type ReactNode, type SyntheticEvent } from "react";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";

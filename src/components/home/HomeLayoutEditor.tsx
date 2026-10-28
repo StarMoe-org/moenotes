@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import type { AppLocale } from "@/config/locales";
 import Modal from "@/components/shared/Modal";

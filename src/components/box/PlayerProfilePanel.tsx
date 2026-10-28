@@ -1,3 +1,5 @@
+"use client";
+
 import { useId, useState, type CSSProperties, type KeyboardEvent } from "react";
 import type { PlayerProfileFieldView, PlayerProfileGroupView, PlayerProfileLabels, PlayerProfilePanelProps } from "@/lib/box/player-profile-view";
 import "@/styles/player-profile.css";

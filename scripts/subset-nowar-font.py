@@ -88,7 +88,7 @@ REPORT_BLOCKS = [
 ]
 
 TEXT_SUFFIXES = {".astro", ".css", ".html", ".js", ".jsx", ".json", ".mjs", ".svg", ".ts", ".tsx", ".txt"}
-EXCLUDED_DIRS = {".astro", ".git", ".miaomiaomiao", ".plan", "dist", "node_modules"}
+EXCLUDED_DIRS = {".astro", ".git", ".miaomiaomiao", ".next", ".plan", "dist", "node_modules", "out"}
 
 
 @dataclass(frozen=True)
@@ -253,7 +253,7 @@ def iter_project_text_files() -> Iterable[Path]:
             if "fonts" in rel_parts and path.suffix.lower() not in {".txt"}:
                 continue
             yield path
-    for path in (ROOT / "package.json", ROOT / "astro.config.mjs", ROOT / "tsconfig.json"):
+    for path in (ROOT / "package.json", ROOT / "next.config.ts", ROOT / "postcss.config.mjs", ROOT / "tsconfig.json"):
         if path.exists():
             yield path
 

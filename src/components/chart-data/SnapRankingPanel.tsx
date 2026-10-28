@@ -1,3 +1,5 @@
+"use client";
+
 import { useMemo, useState } from "react";
 import { isGameServer, PRIMARY_SERVER } from "@/config/servers";
 import { t } from "@/i18n";

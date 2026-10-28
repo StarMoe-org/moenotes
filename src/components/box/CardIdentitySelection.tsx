@@ -1,3 +1,5 @@
+"use client";
+
 import { useMemo, useState } from "react";
 import type { AppLocale } from "@/config/locales";
 import type { CardKind } from "@/lib/box/model";

@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useState, type ReactNode } from "react";
 import MuiPopover from "@mui/material/Popover";
 import { Md3Provider } from "@/components/md3/Md3Provider";

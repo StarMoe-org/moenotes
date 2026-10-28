@@ -1,3 +1,5 @@
+"use client";
+
 import Button from "@mui/material/Button";
 import { Icon } from "@/components/shared/icons";
 import { t } from "@/i18n";

@@ -1,3 +1,5 @@
+"use client";
+
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { hoursUntil, parseMasterDate, scheduleStatus, type ScheduleStatus } from "@/lib/schedule";

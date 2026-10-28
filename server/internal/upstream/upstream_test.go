@@ -65,7 +65,7 @@ func TestSourceDigestCoversSourcesOnly(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	for _, name := range []string{"astro.config.mjs", "package.json", "bun.lock", "tsconfig.json", "src/a.ts", "public/b.txt"} {
+	for _, name := range []string{"next.config.ts", "postcss.config.mjs", "package.json", "bun.lock", "tsconfig.json", "src/a.ts", "public/b.txt"} {
 		write(name, name)
 	}
 	first, err := SourceDigest(root)

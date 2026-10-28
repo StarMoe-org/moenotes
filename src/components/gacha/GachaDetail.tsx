@@ -1,3 +1,5 @@
+"use client";
+
 import { useMemo, useState, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";

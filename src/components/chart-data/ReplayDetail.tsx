@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useRef, useState } from "react";
 import { assetConfig } from "@/config/assets";
 import type { ChartRow } from "@/lib/chart-data/catalog";

@@ -62,14 +62,24 @@ const allowedInternalRouteFiles = new Set([
   "src/lib/route/static-paths.ts",
   "src/lib/seo/metadata.ts",
   "src/lib/seo/jsonld.ts",
-  "src/pages/index.astro",
-  "src/pages/robots.txt.ts",
-  "src/pages/sitemap.xml.ts",
+  "src/lib/markdown/negotiate.ts",
+  "src/lib/markdown/render.ts",
+  "src/components/shell/ShellBootClient.tsx",
+  "src/proxy.ts",
+  "src/app/layout.tsx",
+  "src/app/not-found.tsx",
+  "src/app/[[...segments]]/page.tsx",
+  "src/app/api/v1/markdown/route.ts",
+  "src/app/robots.txt/route.ts",
+  "src/app/sitemap.xml/route.ts",
+  "src/app/sitemaps/[locale]/route.ts",
+  "src/app/api/v1/meta/version/route.ts",
 ]);
 
 const allowedProtocolUrls = [
   "https://schema.org",
   "http://www.sitemaps.org",
+  "http://www.w3.org/2000/svg",
   "https://github.com",
 ];
 
@@ -86,7 +96,7 @@ function walk(dir) {
     const file = resolve(dir, name);
     const stat = statSync(file);
     if (stat.isDirectory()) {
-      if (name === "dist" || name === "node_modules" || name === ".astro") continue;
+      if (name === "dist" || name === "node_modules" || name === ".astro" || name === ".next" || name === "out") continue;
       walk(file);
       continue;
     }
@@ -182,7 +192,7 @@ function checkInternalRouteLiterals(repoPath, source) {
 
 function isAllowedInternalPathLiteral(value) {
   if (value.startsWith("/favicon")) return true;
-  if (value.startsWith("/_astro")) return true;
+  if (value.startsWith("/_astro") || value.startsWith("/_next")) return true;
   if (value.includes(".")) return true;
   return false;
 }

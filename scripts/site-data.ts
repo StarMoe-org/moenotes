@@ -84,7 +84,7 @@ export async function assetExportLag(
   return null;
 }
 
-const SOURCE_FILES = ["astro.config.mjs", "package.json", "bun.lock", "tsconfig.json"];
+const SOURCE_FILES = ["next.config.ts", "postcss.config.mjs", "package.json", "bun.lock", "tsconfig.json"];
 const SOURCE_DIRS = ["src", "public"];
 
 async function listFiles(root: string, dir: string): Promise<string[]> {

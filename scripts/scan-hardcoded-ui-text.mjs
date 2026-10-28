@@ -31,7 +31,7 @@ function walk(dir) {
     const file = resolve(dir, name);
     const stat = statSync(file);
     if (stat.isDirectory()) {
-      if (["node_modules", "dist", ".astro"].includes(name)) continue;
+      if (["node_modules", "dist", ".astro", ".next", "out"].includes(name)) continue;
       walk(file);
       continue;
     }
