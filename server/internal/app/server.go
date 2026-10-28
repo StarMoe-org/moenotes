@@ -103,6 +103,7 @@ func New(life context.Context, cfg *config.Config, site *siteconfig.Site) *Serve
 			PublicDir:        filepath.Join(cfg.NextjsStandaloneDir, "public"),
 			Site:             site,
 			Ready:            s.ssrSupervisor.Ready,
+			OnForceRefresh:   s.refreshSSRDataVersionNow,
 		})
 		if err == nil {
 			s.ssrGateway = gw
@@ -335,30 +336,41 @@ func (s *Server) runSSRBackground(ctx context.Context) {
 	wg.Wait()
 }
 
+func (s *Server) refreshSSRDataVersionNow(ctx context.Context) {
+	var manifest upstream.AssetManifest
+	if err := s.fetcher.JSON(ctx, s.site.AssetVersionURL(), &manifest); err != nil {
+		if ctx.Err() != nil {
+			return
+		}
+		s.mu.Lock()
+		s.lastCheck = &check{At: now(), OK: false}
+		s.mu.Unlock()
+		logx.Printf("ssr version check failed: %v", err)
+		return
+	}
+	data, descErr := upstream.Describe(&manifest)
+	if descErr != nil {
+		return
+	}
+	lag, lagErr := upstream.ExportLag(ctx, &manifest, s.fetcher, s.site.MasterdataVersionURL())
+	s.mu.Lock()
+	s.lastCheck = &check{At: now(), OK: lagErr == nil}
+	s.mu.Unlock()
+	if lagErr == nil && lag == "" {
+		if s.ssrCache.SetDataVersion(data.Fingerprint) {
+			s.mu.Lock()
+			s.ssrLabel = data.Label
+			s.mu.Unlock()
+			logx.Printf("ssr cache namespace switched to %s (%s)", data.Label, data.Fingerprint)
+		}
+	}
+}
+
 func (s *Server) watchSSRDataVersion(ctx context.Context) {
 	for {
-		var manifest upstream.AssetManifest
-		if err := s.fetcher.JSON(ctx, s.site.AssetVersionURL(), &manifest); err != nil {
-			if ctx.Err() != nil {
-				return
-			}
-			s.mu.Lock()
-			s.lastCheck = &check{At: now(), OK: false}
-			s.mu.Unlock()
-			logx.Printf("ssr version check failed: %v", err)
-		} else if data, descErr := upstream.Describe(&manifest); descErr == nil {
-			lag, lagErr := upstream.ExportLag(ctx, &manifest, s.fetcher, s.site.MasterdataVersionURL())
-			s.mu.Lock()
-			s.lastCheck = &check{At: now(), OK: lagErr == nil}
-			s.mu.Unlock()
-			if lagErr == nil && lag == "" {
-				if s.ssrCache.SetDataVersion(data.Fingerprint) {
-					s.mu.Lock()
-					s.ssrLabel = data.Label
-					s.mu.Unlock()
-					logx.Printf("ssr cache namespace switched to %s (%s)", data.Label, data.Fingerprint)
-				}
-			}
+		s.refreshSSRDataVersionNow(ctx)
+		if ctx.Err() != nil {
+			return
 		}
 		select {
 		case <-ctx.Done():

@@ -160,6 +160,11 @@ func (c *HTMLCache) Write(version, variant, reqPath string, meta cacheMeta, plai
 	}
 }
 
+// BuildID returns the Next.js build identifier associated with this cache.
+func (c *HTMLCache) BuildID() string {
+	return c.buildID
+}
+
 // ServeCached writes a cached response, honoring Accept-Encoding: gzip.
 func ServeCached(w http.ResponseWriter, r *http.Request, meta cacheMeta, gzBody []byte) {
 	h := w.Header()
@@ -174,6 +179,9 @@ func ServeCached(w http.ResponseWriter, r *http.Request, meta cacheMeta, gzBody 
 	}
 	if meta.DataVersion != "" {
 		h.Set("X-Moenotes-Data-Version", meta.DataVersion)
+		if strings.HasPrefix(meta.ContentType, "text/html") {
+			h.Set("Server-Timing", `page;desc="`+strings.ReplaceAll(meta.DataVersion, `"`, "")+`"`)
+		}
 	}
 	h.Set("Vary", "Accept, Accept-Encoding")
 	h.Set("Cache-Control", "public, max-age=0, must-revalidate")

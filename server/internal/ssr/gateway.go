@@ -27,20 +27,22 @@ type GatewayOptions struct {
 	Site             *siteconfig.Site
 	Client           *http.Client
 	Ready            func() bool
+	OnForceRefresh   func(ctx context.Context)
 }
 
 // Gateway fronts Next.js with persistent HTML/Markdown caching, Accept: text/markdown negotiation,
 // immutable static chunk serving, and idle background warmup.
 type Gateway struct {
-	upstream      *url.URL
-	cache         *HTMLCache
-	staticArchive string
-	nextStatic    string
-	publicDir     string
-	site          *siteconfig.Site
-	client        *http.Client
-	readyFn       func() bool
-	lastTraffic   atomic.Int64
+	upstream       *url.URL
+	cache          *HTMLCache
+	staticArchive  string
+	nextStatic     string
+	publicDir      string
+	site           *siteconfig.Site
+	client         *http.Client
+	readyFn        func() bool
+	onForceRefresh func(ctx context.Context)
+	lastTraffic    atomic.Int64
 }
 
 // NewGateway constructs a semi-SSR Gateway.
@@ -54,14 +56,15 @@ func NewGateway(opts GatewayOptions) (*Gateway, error) {
 		client = &http.Client{Timeout: 30 * time.Second}
 	}
 	g := &Gateway{
-		upstream:      parsed,
-		cache:         opts.Cache,
-		staticArchive: opts.StaticArchiveDir,
-		nextStatic:    opts.NextStaticDir,
-		publicDir:     opts.PublicDir,
-		site:          opts.Site,
-		client:        client,
-		readyFn:       opts.Ready,
+		upstream:       parsed,
+		cache:          opts.Cache,
+		staticArchive:  opts.StaticArchiveDir,
+		nextStatic:     opts.NextStaticDir,
+		publicDir:      opts.PublicDir,
+		site:           opts.Site,
+		client:         client,
+		readyFn:        opts.Ready,
+		onForceRefresh: opts.OnForceRefresh,
 	}
 	g.lastTraffic.Store(time.Now().UnixNano())
 	return g, nil
@@ -106,7 +109,39 @@ func PrefersMarkdown(accept string) bool {
 	return mdQ > 0 && mdQ >= htmlQ
 }
 
+func isTruthyFlag(v string) bool {
+	switch strings.ToLower(strings.TrimSpace(v)) {
+	case "1", "true", "yes":
+		return true
+	default:
+		return false
+	}
+}
+
+// IsForceBypassRequest reports whether r explicitly requests forced cache penetration (`强制穿透`).
+func IsForceBypassRequest(r *http.Request) bool {
+	if isTruthyFlag(r.Header.Get("X-Moenotes-Bypass-Cache")) || isTruthyFlag(r.Header.Get("X-Moenotes-Refresh-Masterdata")) {
+		return true
+	}
+	if r.Method == http.MethodPost && r.URL.Path == "/api/v1/meta/version" {
+		return true
+	}
+	if r.URL.RawQuery == "" {
+		return false
+	}
+	q := r.URL.Query()
+	for _, key := range []string{"refresh_masterdata", "__refresh", "nocache", "refresh"} {
+		if isTruthyFlag(q.Get(key)) {
+			return true
+		}
+	}
+	return false
+}
+
 func isBypassCacheRequest(r *http.Request) bool {
+	if IsForceBypassRequest(r) {
+		return true
+	}
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		return true
 	}
@@ -163,8 +198,13 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	forceBypass := IsForceBypassRequest(r)
+	if forceBypass && g.onForceRefresh != nil {
+		g.onForceRefresh(r.Context())
+	}
+
 	if isBypassCacheRequest(r) || g.cache == nil {
-		g.proxyDirect(w, r)
+		g.proxyDirect(w, r, forceBypass)
 		return
 	}
 
@@ -221,6 +261,15 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	outHdr.Set("Vary", "Accept, Accept-Encoding")
 	outHdr.Set("X-Moenotes-Cache", "MISS")
+	if !wantsMd {
+		dv := hdr.Get("X-Moenotes-Data-Version")
+		if dv == "" {
+			dv = ver
+		}
+		if dv != "" {
+			outHdr.Set("Server-Timing", `page;desc="`+strings.ReplaceAll(dv, `"`, "")+`"`)
+		}
+	}
 	w.WriteHeader(status)
 	if r.Method != http.MethodHead {
 		_, _ = w.Write(body)
@@ -268,7 +317,7 @@ func (g *Gateway) fetchUpstream(ctx context.Context, path string, wantsMd bool) 
 	return resp.StatusCode, resp.Header.Clone(), body, nil
 }
 
-func (g *Gateway) proxyDirect(w http.ResponseWriter, r *http.Request) {
+func (g *Gateway) proxyDirect(w http.ResponseWriter, r *http.Request, forceBypass bool) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 	target := g.upstream.String() + r.URL.RequestURI()
@@ -290,6 +339,9 @@ func (g *Gateway) proxyDirect(w http.ResponseWriter, r *http.Request) {
 	req.Header.Del("Host")
 	req.Header.Del("Connection")
 	req.Header.Del("Accept-Encoding")
+	if forceBypass {
+		req.Header.Set("X-Moenotes-Bypass-Cache", "1")
+	}
 
 	relay := *g.client
 	relay.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
@@ -307,6 +359,10 @@ func (g *Gateway) proxyDirect(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		hdr[k] = append([]string(nil), vals...)
+	}
+	if forceBypass {
+		hdr.Set("Cache-Control", "no-store")
+		hdr.Set("X-Moenotes-Cache", "BYPASS")
 	}
 	w.WriteHeader(resp.StatusCode)
 	if r.Method != http.MethodHead {

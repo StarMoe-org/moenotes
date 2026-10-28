@@ -1,6 +1,7 @@
 package ssr
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -83,5 +84,57 @@ func TestGatewayCacheNegotiationAndVersionInvalidation(t *testing.T) {
 	gw.ServeHTTP(r4, httptest.NewRequest(http.MethodGet, "http://site/cards/1001", nil))
 	if r4.Header().Get("X-Moenotes-Cache") != "MISS" || htmlHits.Load() != 2 {
 		t.Fatalf("expected cache invalidation on version bump: cache=%s hits=%d", r4.Header().Get("X-Moenotes-Cache"), htmlHits.Load())
+	}
+}
+
+func TestGatewayForceBypassPenetration(t *testing.T) {
+	var upstreamHits atomic.Int32
+	var sawBypassHeader atomic.Bool
+	var forceHookCalls atomic.Int32
+
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		upstreamHits.Add(1)
+		if r.Header.Get("X-Moenotes-Bypass-Cache") == "1" {
+			sawBypassHeader.Store(true)
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = w.Write([]byte("<!doctype html><h1>Fresh</h1>"))
+	}))
+	defer upstream.Close()
+
+	cache := NewHTMLCache(t.TempDir(), "build-1", "tw@1.0.0")
+	gw, err := NewGateway(GatewayOptions{
+		UpstreamURL: upstream.URL,
+		Cache:       cache,
+		OnForceRefresh: func(context.Context) {
+			forceHookCalls.Add(1)
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Prime cache.
+	r1 := httptest.NewRecorder()
+	gw.ServeHTTP(r1, httptest.NewRequest(http.MethodGet, "http://site/cards/71", nil))
+	if r1.Header().Get("X-Moenotes-Cache") != "MISS" || upstreamHits.Load() != 1 {
+		t.Fatalf("expected initial MISS, got %s", r1.Header().Get("X-Moenotes-Cache"))
+	}
+
+	// Header-based force bypass penetrates HTMLCache, triggers OnForceRefresh, and forwards X-Moenotes-Bypass-Cache: 1.
+	bypassReq := httptest.NewRequest(http.MethodGet, "http://site/cards/71", nil)
+	bypassReq.Header.Set("X-Moenotes-Bypass-Cache", "1")
+	r2 := httptest.NewRecorder()
+	gw.ServeHTTP(r2, bypassReq)
+	if r2.Header().Get("X-Moenotes-Cache") != "BYPASS" || upstreamHits.Load() != 2 || !sawBypassHeader.Load() || forceHookCalls.Load() != 1 {
+		t.Fatalf("expected BYPASS penetration: cache=%s hits=%d header=%v hook=%d", r2.Header().Get("X-Moenotes-Cache"), upstreamHits.Load(), sawBypassHeader.Load(), forceHookCalls.Load())
+	}
+
+	// Query-based force bypass (?refresh_masterdata=1) also penetrates and triggers OnForceRefresh.
+	sawBypassHeader.Store(false)
+	r3 := httptest.NewRecorder()
+	gw.ServeHTTP(r3, httptest.NewRequest(http.MethodGet, "http://site/cards/71?refresh_masterdata=1", nil))
+	if r3.Header().Get("X-Moenotes-Cache") != "BYPASS" || upstreamHits.Load() != 3 || !sawBypassHeader.Load() || forceHookCalls.Load() != 2 {
+		t.Fatalf("expected query BYPASS penetration: cache=%s hits=%d header=%v hook=%d", r3.Header().Get("X-Moenotes-Cache"), upstreamHits.Load(), sawBypassHeader.Load(), forceHookCalls.Load())
 	}
 }

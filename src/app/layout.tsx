@@ -12,6 +12,7 @@ import { getLocaleFromPathname, stripLocaleFromPathname } from "@/i18n/routing";
 import { buildAccountBootstrapScript } from "@/lib/account/bootstrap";
 import { buildMediaQueryCompatScript } from "@/lib/browser/media-query-compat";
 import { buildFilterBootstrapScript } from "@/lib/filter/bootstrap";
+import { resolveRequestMasterDataManifest } from "@/lib/masterdata/request-refresh";
 import { md3ThemeVariablesCss } from "@/lib/md3/theme-vars";
 import { findRouteMatch, getNavigationGroupId } from "@/lib/route/registry";
 import { buildNavGroupBootstrapScript, buildThemeBootstrapScript } from "@/lib/settings/apply-theme";
@@ -27,6 +28,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const locale: AppLocale =
     rawLocale && isAppLocale(rawLocale) ? rawLocale : getLocaleFromPathname(rawPathname) || DEFAULT_LOCALE;
   const canonicalPath = (reqHeaders.get("x-moenotes-canonical-path") || stripLocaleFromPathname(rawPathname)) as `/${string}`;
+  const manifest = await resolveRequestMasterDataManifest();
 
   const mediaQueryCompatScript = buildMediaQueryCompatScript();
   const themeScript = buildThemeBootstrapScript();
@@ -41,7 +43,12 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     : "";
 
   return (
-    <html lang={HTML_LANG[locale]} data-locale={locale} suppressHydrationWarning>
+    <html
+      lang={HTML_LANG[locale]}
+      data-locale={locale}
+      data-masterdata-version={manifest?.dataVersion || undefined}
+      suppressHydrationWarning
+    >
       <head>
         <style dangerouslySetInnerHTML={{ __html: "@layer theme, base, mui, components, utilities;" }} />
         <style data-md3-theme-vars="" dangerouslySetInnerHTML={{ __html: themeVarsCss }} />

@@ -21,12 +21,14 @@ const state = globalState[serversKey] ??= { epoch: -1 };
 /**
  * The servers this runtime shows, in switcher order. Refreshes automatically when the MasterData epoch advances.
  */
-export async function getBuildServers(): Promise<GameServer[]> {
-  if (!isMasterDataManifestFresh()) {
+export async function getBuildServers(options?: { forceBypass?: boolean; reloadOnly?: boolean }): Promise<GameServer[]> {
+  if (options?.forceBypass && !options?.reloadOnly) {
+    await getBuildManifest({ forceBypass: true });
+  } else if (!isMasterDataManifestFresh()) {
     await getBuildManifest();
   }
   const epoch = currentMasterDataEpochSync();
-  if (state.epoch !== epoch || !state.promise) {
+  if (options?.forceBypass || options?.reloadOnly || state.epoch !== epoch || !state.promise) {
     state.epoch = epoch;
     state.promise = resolveBuildServers().catch((error) => {
       state.promise = undefined;
@@ -48,7 +50,7 @@ async function resolveBuildServers(): Promise<GameServer[]> {
   const url = buildEnv("MOENOTES_VERSION_URL") ?? `${assetConfig.api}/versions/current_version.json`;
   let released: Set<string>;
   try {
-    const response = await buildFetch(url, { cache: "no-store", signal: AbortSignal.timeout(15_000) });
+    const response = await buildFetch(url, { forceBypass: true, cache: "no-store", signal: AbortSignal.timeout(15_000) });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     released = new Set(Object.keys((await response.json() as AssetReleaseManifest).regions ?? {}));
   } catch (error) {

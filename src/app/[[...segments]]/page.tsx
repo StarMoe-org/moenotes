@@ -7,6 +7,7 @@ import { siteConfig } from "@/config/site";
 import { t } from "@/i18n";
 import { getLocaleFromPathname, localizePath, normalizePathname, stripLocaleFromPathname } from "@/i18n/routing";
 import { markdownAbsoluteUrl } from "@/lib/markdown/negotiate";
+import { resolveRequestMasterDataManifest } from "@/lib/masterdata/request-refresh";
 import { findRouteMatch, isDynamicRoute } from "@/lib/route/registry";
 import { getDetailBreadcrumb } from "@/lib/route/static-paths";
 import { resolveEntitySeo } from "@/lib/seo/entity-seo";
@@ -55,6 +56,7 @@ function robotsDirective(indexable: boolean): string {
 }
 
 export async function generateMetadata({ params }: CatchAllPageProps): Promise<Metadata> {
+  await resolveRequestMasterDataManifest();
   const { segments } = await params;
   const { rawPathname, locale, canonicalPathname } = resolvePathsFromSegments(segments);
 
@@ -132,6 +134,7 @@ export async function generateMetadata({ params }: CatchAllPageProps): Promise<M
 }
 
 export default async function CatchAllPage({ params }: CatchAllPageProps) {
+  await resolveRequestMasterDataManifest();
   const { segments } = await params;
   const { rawPathname, locale, canonicalPathname } = resolvePathsFromSegments(segments);
 
