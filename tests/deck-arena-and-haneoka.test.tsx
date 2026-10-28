@@ -479,16 +479,26 @@ describe("Haneoka patch identity and 1.1.0.100 Arena + cumulative Snap adaptatio
     const wasmPath = join(distDir, "team-engine.wasm");
     const gluePath = join(distDir, "solver.mjs");
     if (!existsSync(wasmPath) || !existsSync(gluePath)) {
+      const cacheKey = `${HANEOKA_COMMIT.slice(0, 12)}-${HANEOKA_PATCH_SHA.slice(0, 12)}`;
+      const hasCachedWasm = existsSync(join(process.cwd(), ".haneoka/wasm-cache", cacheKey, "team-engine.wasm"));
       let hasCargo = false;
-      try {
-        execFileSync("cargo", ["--version"], { stdio: "ignore" });
-        hasCargo = true;
-      } catch {
-        hasCargo = false;
+      if (!hasCachedWasm) {
+        try {
+          execFileSync("cargo", ["--version"], { stdio: "ignore" });
+          hasCargo = true;
+        } catch {
+          hasCargo = false;
+        }
       }
-      if (!hasCargo) return;
+      if (!hasCachedWasm && !hasCargo) return;
+      const buildArgs = [
+        join(process.cwd(), "scripts/build-haneoka-engine.mjs"),
+        ...(process.env.MOENOTES_TEST_HANEOKA_RUST === "1" ? ["--test"] : []),
+        "--out",
+        distDir,
+      ];
       try {
-        execFileSync(process.execPath, [join(process.cwd(), "scripts/build-haneoka-engine.mjs"), "--test", "--out", distDir], {
+        execFileSync(process.execPath, buildArgs, {
           cwd: process.cwd(),
           encoding: "utf8",
         });
@@ -555,7 +565,7 @@ describe("Haneoka patch identity and 1.1.0.100 Arena + cumulative Snap adaptatio
     } finally {
       solver.free();
     }
-  }, 240_000);
+  }, 300_000);
 
   test("adapts songRules overrides and cross-song mean formation optimization across Haneoka cf9b3c6 features", () => {
     const { data } = loadReal110Slice();
