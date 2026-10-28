@@ -25,6 +25,7 @@ import { useNow } from "@/lib/schedule/use-now";
 import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 import { useSpoiler } from "@/lib/settings/spoiler";
+import { SPOILER_REFERENCE_NOW } from "@/lib/settings/spoiler-reference";
 
 interface Props {
   locale: AppLocale;
@@ -92,8 +93,8 @@ export default function GachaExplorer({ locale, servers, initialGachas, bands }:
   const filteredGachas = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase();
     return gachas.filter((gacha) => {
-      // Spoiler filtering: if spoiler display is disabled, hide upcoming gachas
-      if (!showSpoiler && now !== null && scheduleStatus(gacha.startAt, gacha.endAt, now) === "upcoming") return false;
+      // Spoiler filtering: without a live clock yet, use the page's serialized render time (see isSpoiler).
+      if (!showSpoiler && scheduleStatus(gacha.startAt, gacha.endAt, now ?? SPOILER_REFERENCE_NOW) === "upcoming") return false;
       // Status depends on the visitor's clock, so it only filters once that is known.
       if (selectedStatuses.length > 0 && now !== null && !selectedStatuses.includes(scheduleStatus(gacha.startAt, gacha.endAt, now))) return false;
       if (selectedBands.length > 0 && !gacha.bandIds.some((id) => selectedBands.includes(id))) return false;

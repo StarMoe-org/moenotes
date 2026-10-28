@@ -16,6 +16,7 @@ import { resolveRequestMasterDataManifest } from "@/lib/masterdata/request-refre
 import { md3ThemeVariablesCss } from "@/lib/md3/theme-vars";
 import { findRouteMatch, getNavigationGroupId } from "@/lib/route/registry";
 import { buildNavGroupBootstrapScript, buildThemeBootstrapScript } from "@/lib/settings/apply-theme";
+import { SPOILER_REFERENCE_NOW } from "@/lib/settings/spoiler-reference";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.baseUrl),
@@ -51,6 +52,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html
       lang={HTML_LANG[locale]}
       data-locale={locale}
+      data-spoiler-now={SPOILER_REFERENCE_NOW}
       data-masterdata-version={manifest?.dataVersion || undefined}
       data-masterdata-regions={serializedRegions}
       suppressHydrationWarning

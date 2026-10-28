@@ -152,15 +152,34 @@ html[data-theme="dark"] .mn-brand .mn-brand-starlight, .mn-brand.mn-brand-light 
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: .01ms !important;
+    transition-delay: 0ms !important;
   }
 }
 
 /* ── Desktop navigation drawer: slides with the M3 emphasized curve; fades only under reduced motion ── */
-.mn-desktop-sidebar { opacity: 1; transform: translateX(0); }
+/* Mobile first: below md the modal drawer takes over. The docked one is hidden through the same opacity/transform
+   it folds with, not `display: none`, so narrowing or widening the window fades and slides it instead of popping;
+   visibility waits for that motion before it leaves the tab order. The `min-width` query (not range syntax) also
+   keeps older WebViews from showing the docked drawer over the phone layout. */
+.mn-desktop-sidebar { opacity: 0; transform: translateX(-24px); visibility: hidden; pointer-events: none; }
 .mn-desktop-sidebar[data-ready="true"] {
-  transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard), transform var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized-decelerate);
+  transition:
+    opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    transform var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized-decelerate),
+    top var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+    visibility 0s linear var(--md-sys-motion-duration-medium2);
 }
 .mn-desktop-sidebar[data-open="false"] { opacity: 0; transform: translateX(-24px); pointer-events: none; }
+@media (min-width: 48rem) {
+  .mn-desktop-sidebar { opacity: 1; transform: translateX(0); visibility: visible; pointer-events: auto; }
+  .mn-desktop-sidebar[data-ready="true"] {
+    transition:
+      opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+      transform var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized-decelerate),
+      top var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+      visibility 0s linear;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .mn-desktop-sidebar[data-ready="true"] {
     transition-property: opacity;
@@ -168,6 +187,116 @@ html[data-theme="dark"] .mn-brand .mn-brand-starlight, .mn-brand.mn-brand-light 
     transition-timing-function: ease;
   }
   .mn-desktop-sidebar[data-open] { transform: none; }
+}
+
+/* ── Top app bar: at md the trail moves from its own row into the brand's capsule, with the bar's height following ──
+   The row and the inline trail are always mounted and morph (height, grid track, opacity) instead of one popping in as
+   the other pops out; visibility waits for the motion so neither takes focus while clipped. */
+.mn-app-bar-trail {
+  height: 2.5rem;
+  overflow: hidden;
+  opacity: 1;
+  transition:
+    height var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+    opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    visibility 0s linear;
+}
+.mn-app-bar-crumbs {
+  display: grid;
+  grid-template-columns: 0fr;
+  min-width: 0;
+  margin-left: -0.25rem;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    grid-template-columns var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+    margin-left var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+    opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    visibility 0s linear var(--md-sys-motion-duration-medium2);
+}
+.mn-app-bar-crumbs > * { min-width: 0; overflow: hidden; }
+@media (min-width: 48rem) {
+  .mn-app-bar-trail {
+    height: 0;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      height var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+      opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+      visibility 0s linear var(--md-sys-motion-duration-medium2);
+  }
+  .mn-app-bar-crumbs {
+    grid-template-columns: 1fr;
+    margin-left: 0;
+    opacity: 1;
+    visibility: visible;
+    transition:
+      grid-template-columns var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+      margin-left var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+      opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+      visibility 0s linear;
+  }
+}
+
+/* At lg the wide search field replaces the compact search icon. Both keep their box and animate (width/padding,
+   opacity) so the field unfolds from the icon's end instead of the bar snapping; visibility keeps the clipped one out
+   of the tab order. */
+.mn-top-search {
+  width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  margin-right: -0.5rem;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    width var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+    padding-left var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+    padding-right var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+    margin-right var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+    opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    visibility 0s linear var(--md-sys-motion-duration-medium2);
+}
+.mn-top-search-compact {
+  width: 2.5rem;
+  padding: 0.5rem;
+  overflow: hidden;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    width var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+    padding var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+    opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    visibility 0s linear;
+}
+@media (min-width: 64rem) {
+  .mn-top-search {
+    width: 18rem;
+    padding-left: 1rem;
+    padding-right: 0.75rem;
+    margin-right: 0;
+    opacity: 1;
+    visibility: visible;
+    transition:
+      width var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+      padding-left var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+      padding-right var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+      margin-right var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+      opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+      visibility 0s linear;
+  }
+  .mn-top-search-compact {
+    width: 0;
+    padding: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      width var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+      padding var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+      opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+      visibility 0s linear var(--md-sys-motion-duration-medium2);
+  }
 }
 /* The drawer's account pane renders both rows; `data-account` on <html> picks one before the first paint
    (src/lib/account/bootstrap.ts). Without an answer yet, the sign-in row is the default. */
@@ -180,11 +309,55 @@ html[data-account="unavailable"] .mn-sidebar-account { display: none; }
 .mn-account-initial::after { content: var(--mn-account-initial, "?"); }
 [data-account-resolved] .mn-account-name::after { content: none; }
 
+/* The docked filter sheet (src/components/shell/filter-drawer/FilterDrawer.tsx): a standard side sheet that slides and
+   fades out of the content column, and keeps sliding with the navigation drawer when it folds (left follows
+   --mn-sidebar-offset). It mounts when opened and unmounts after its exit; the entrance is an animation on the
+   [data-open] element, so it starts with the element even when hydration drops the first frames. */
+.mn-filter-sheet {
+  opacity: 0;
+  transform: translateX(-24px);
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    left var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+    opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    transform var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized-decelerate),
+    visibility 0s linear var(--md-sys-motion-duration-medium2);
+}
+@keyframes mn-filter-sheet-in {
+  from { opacity: 0; transform: translateX(-24px); }
+}
+.mn-filter-sheet[data-open="true"] {
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+  pointer-events: auto;
+  /* Starts with the element, so dropped frames during hydration cannot skip it the way a mount-time transition can. */
+  animation: mn-filter-sheet-in var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized-decelerate);
+  transition:
+    left var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+    opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    transform var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized-decelerate),
+    visibility 0s linear;
+}
+
 /* The filter button (src/components/shell/filter-drawer/FilterTabHandle.tsx) sits at the content column's bottom-left,
-   at the docked drawer's edge from lg up. It is positioned here, not inline, so the server-rendered button starts at
-   its final place; an open sheet hides it from the first paint (src/lib/filter/bootstrap.ts). */
-.mn-filter-fab { left: 1rem; }
-@media (min-width: 1024px) {
+   past the drawer from the same `md` width the drawer docks and the content is padded for it (Sidebar.tsx/AppShell.astro);
+   a wider breakpoint would leave the button over the drawer on portrait-ish windows. It is positioned here, not inline,
+   so the server-rendered button starts at its final place; an open sheet hides it from the first paint
+   (src/lib/filter/bootstrap.ts). */
+.mn-filter-fab {
+  left: 1rem;
+  /* Slide with the drawer as it folds (the drawer's own motion: medium2, emphasized-decelerate) instead of jumping
+     while the content reflows. The shorthand replaces the Fab's MUI transitions, so its hover/elevation ones are
+     restated. */
+  transition:
+    left var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized-decelerate),
+    background-color 250ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+@media (min-width: 48rem) {
   .mn-filter-fab {
     left: calc(max(0px, (100vw - var(--mn-layout-max-width, 120rem)) / 2) + max(var(--mn-sidebar-offset, 17rem), 0.75rem) + 1.5rem);
   }

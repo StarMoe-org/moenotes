@@ -49,7 +49,7 @@ export default function ShopExplorer({ locale, servers, initialShops }: Props) {
 
   const { showSpoiler } = useSpoiler();
   const visibleShops = useMemo(() => {
-    if (showSpoiler || now === null) return shops;
+    if (showSpoiler) return shops;
     return shops.filter((shop) => !isSpoiler(shop.startAt, now));
   }, [shops, showSpoiler, now]);
 

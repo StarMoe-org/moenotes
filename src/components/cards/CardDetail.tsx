@@ -85,7 +85,7 @@ function CardDetailView({ locale, data, materials, serverSwitch }: { locale: App
   const card = data.card;
   const now = useNow();
   const { showSpoiler } = useSpoiler();
-  const isUnreleased = Boolean(now !== null && card?.startAt && isSpoiler(card.startAt, now));
+  const isUnreleased = Boolean(card?.startAt && isSpoiler(card.startAt, now));
   const growth = data.growth;
   const maxBuild = useMemo(() => maxMemberCardBuild(growth), [growth]);
   const [build, setBuild] = useState<MemberCardBuild>(maxBuild);

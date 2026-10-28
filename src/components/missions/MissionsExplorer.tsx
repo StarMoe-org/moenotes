@@ -48,7 +48,7 @@ export default function MissionsExplorer({ locale, servers, categories: initialC
   const { showSpoiler, now } = useSpoilerSetting();
 
   const visibleCategories = useMemo(() => {
-    if (showSpoiler || now === null) return categories;
+    if (showSpoiler) return categories;
     return categories.map((cat) => ({
       ...cat,
       missions: cat.missions.filter((mission) => !isSpoiler(mission.startAt, now)),
@@ -56,7 +56,7 @@ export default function MissionsExplorer({ locale, servers, categories: initialC
   }, [categories, showSpoiler, now]);
 
   const visibleGroups = useMemo(() => {
-    if (showSpoiler || now === null) return groups;
+    if (showSpoiler) return groups;
     return groups.filter((group) => !isSpoiler(group.startAt, now));
   }, [groups, showSpoiler, now]);
 

@@ -66,11 +66,11 @@ function CharacterDetailView({ locale, data, progression, extras, serverSwitch }
   const assetUrl = useAssetUrl();
   const { showSpoiler, now } = useSpoilerSetting();
   const visibleCards = useMemo(() => {
-    if (showSpoiler || now === null) return data.cards;
+    if (showSpoiler) return data.cards;
     return data.cards.filter((card) => !isSpoiler(card.startAt, now));
   }, [data.cards, showSpoiler, now]);
   const visibleExtras = useMemo(() => {
-    if (showSpoiler || now === null) return extras;
+    if (showSpoiler) return extras;
     return {
       ...extras,
       supportCards: extras.supportCards.filter((card) => !isSpoiler(card.startAt, now)),

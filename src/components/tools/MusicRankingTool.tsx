@@ -33,7 +33,7 @@ export default function MusicRankingTool({ locale, songs: allSongs, deckCards }:
   const [restored, setRestored] = useState(false);
   const { showSpoiler, now } = useSpoilerSetting();
   const song = useMemo(() => songs.find((entry) => entry.id === selectedId) ?? null, [songs, selectedId]);
-  const isUnreleased = Boolean(now !== null && song?.startAt && isSpoiler(song.startAt, now));
+  const isUnreleased = Boolean(song?.startAt && isSpoiler(song.startAt, now));
 
   useEffect(() => {
     const musicId = parseMusicRankingSearch(window.location.search);

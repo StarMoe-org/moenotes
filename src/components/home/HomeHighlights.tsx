@@ -19,6 +19,8 @@ import { getRoutePathById } from "@/lib/route/registry";
 import { browserTimeZone, formatScheduleRange } from "@/lib/schedule";
 import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { useNow } from "@/lib/schedule/use-now";
+import { isSpoiler, useSpoiler } from "@/lib/settings/spoiler";
+import { SPOILER_REFERENCE_NOW } from "@/lib/settings/spoiler-reference";
 import { valueForServer, type ServerFacetedValue } from "@/lib/servers/facets";
 import { useAssetUrl, useContentServer } from "@/lib/servers/use-content-server";
 
@@ -44,8 +46,14 @@ export default function HomeHighlights({ locale, home, servers, module }: Props)
 function CurrentEvent({ locale, events }: { locale: AppLocale; events: HomeEvent[] }) {
   const now = useNow();
   const timeZone = useDisplayTimeZone();
-  // Before the clock is known, the build's first unfinished event (the static HTML).
-  const event = now === null ? events[0] ?? null : currentHomeEvent(events, now);
+  const { showSpoiler } = useSpoiler();
+  // The reference is the page's render time until the browser clock is known, so the server markup and the first
+  // client render feature the same event (an upcoming one could otherwise show for a frame and then be replaced).
+  const reference = now ?? SPOILER_REFERENCE_NOW;
+  const event = useMemo(() => {
+    const visible = showSpoiler ? events : events.filter((entry) => !isSpoiler(entry.startAt, reference));
+    return currentHomeEvent(visible, reference);
+  }, [events, showSpoiler, reference]);
   return (
     <section aria-labelledby="home-event">
       <SectionHeading id="home-event" title={t(locale, "home.currentEvent")}>

@@ -31,6 +31,7 @@ import { formatMasterDate, formatScheduleRange, scheduleStatus } from "@/lib/sch
 import { useNow } from "@/lib/schedule/use-now";
 import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { useSpoiler } from "@/lib/settings/spoiler";
+import { SPOILER_REFERENCE_NOW } from "@/lib/settings/spoiler-reference";
 import { SpoilerNotice, DeveloperTestingBanner } from "@/components/shared/SpoilerNotice";
 import { entityServer, valueForServer, type ServerFacetedValue } from "@/lib/servers/facets";
 import { useAssetUrl, useContentServer } from "@/lib/servers/use-content-server";
@@ -101,7 +102,7 @@ function EventDetailView({ locale, server, event, serverSwitch, schedules }: { l
 
   if (!event) return <NotFound locale={locale} />;
 
-  const isUnreleased = Boolean(now !== null && scheduleStatus(event.startAt, event.endAt, now) === "upcoming");
+  const isUnreleased = scheduleStatus(event.startAt, event.endAt, now ?? SPOILER_REFERENCE_NOW) === "upcoming";
   if (isUnreleased && !showSpoiler) {
     return <SpoilerNotice locale={locale} />;
   }

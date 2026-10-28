@@ -60,7 +60,7 @@ function ShopDetailView({ locale, shop, serverSwitch, schedules }: { locale: App
   const now = useNow();
   const timeZone = useDisplayTimeZone();
   const { showSpoiler } = useSpoiler();
-  const isUnreleased = Boolean(now !== null && shop?.startAt && isSpoiler(shop.startAt, now));
+  const isUnreleased = Boolean(shop?.startAt && isSpoiler(shop.startAt, now));
 
   if (!shop) return <NotFound locale={locale} />;
   if (!showSpoiler && isUnreleased) return <SpoilerNotice locale={locale} />;

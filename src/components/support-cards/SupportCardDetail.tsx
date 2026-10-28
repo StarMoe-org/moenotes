@@ -84,7 +84,7 @@ function SupportCardDetailView({ locale, data, materials, serverSwitch }: { loca
   const card = data.card;
   const now = useNow();
   const { showSpoiler } = useSpoiler();
-  const isUnreleased = Boolean(now !== null && card?.startAt && isSpoiler(card.startAt, now));
+  const isUnreleased = Boolean(card?.startAt && isSpoiler(card.startAt, now));
   const growth = data.growth;
   const maxBuild = useMemo(() => maxSupportCardBuild(growth), [growth]);
   const [build, setBuild] = useState<SupportCardBuild>(maxBuild);

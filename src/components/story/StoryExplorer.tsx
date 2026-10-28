@@ -59,7 +59,7 @@ export default function StoryExplorer({ locale, servers, initialCategory, initia
   const now = useNow();
   const { showSpoiler } = useSpoiler();
   const visibleStories = useMemo(() => {
-    if (showSpoiler || now === null) return stories;
+    if (showSpoiler) return stories;
     return stories.filter((story) => !isSpoiler(story.startAt, now));
   }, [stories, showSpoiler, now]);
 

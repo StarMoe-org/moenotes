@@ -36,7 +36,7 @@ export default function StampsExplorer({ locale, servers, initialStamps, initial
   const { server, pickServer, items: serverItems } = useServerList(locale, servers, initialStamps);
   const { showSpoiler, now } = useSpoilerSetting();
   const visibleServerItems = useMemo(() => {
-    if (showSpoiler || now === null) return serverItems;
+    if (showSpoiler) return serverItems;
     return serverItems.filter((stamp) => !isSpoiler(stamp.startAt, now));
   }, [serverItems, showSpoiler, now]);
   const stamps = useServerFiles(visibleServerItems, server, STAMP_FILES);

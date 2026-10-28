@@ -18,7 +18,7 @@ export interface RenderReport {
   arrow_body_box_overlaps: number; inline_arrow_body_box_overlaps: number;
   flick_callouts: Array<{note_id: number; column: number; offset_x: number; y: number}>;
   unresolved_flick_note_ids: number[]; flick_rail_width: number;
-  chart_offset_y: number;
+  chart_offset_y: number; chart_text_scale: number; columns_top_aligned: boolean;
   [key: string]: unknown;
 }
 export interface RenderResult {png: Uint8Array; report: RenderReport; width: number; height: number; logicalWidth: number; logicalHeight: number;}

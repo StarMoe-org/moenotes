@@ -38,7 +38,7 @@ export default function ChartPreview3D({ locale, songs: allSongs }: Props) {
 
   const song = useMemo(() => songs.find((entry) => entry.id === selectedId) ?? null, [songs, selectedId]);
   const difficulty = song ? resolveDifficulty(song, preferred) : null;
-  const isUnreleased = Boolean(now !== null && song?.startAt && isSpoiler(song.startAt, now));
+  const isUnreleased = Boolean(song?.startAt && isSpoiler(song.startAt, now));
 
   useEffect(() => {
     const { musicId, difficulty: requested } = parseChartPreviewSearch(window.location.search);

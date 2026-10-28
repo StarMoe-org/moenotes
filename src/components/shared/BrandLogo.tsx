@@ -9,8 +9,11 @@ interface BrandLogoProps {
  * The signature travels in the markup as a data URI instead of a URL. `/assets/` answers `no-cache`, so the top app
  * bar's capsule stayed empty until the browser had revalidated the SVG on every page load; inline, the mark is in the
  * first frame and no request is made.
+ *
+ * `public/assets/brand/` and `src/assets/brand/` stay the brand's source of truth, and `tests/brand-logo.test.tsx`
+ * fails when the bundled strings or copies drift apart.
  */
-const inlineSignature = (svg: string): string => `data:image/svg+xml,${encodeURIComponent(svg)}`;
+const inlineSignature = (svg: string): string => `data:image/svg+xml,${encodeURIComponent(svg.replace(/\r\n/g, "\n"))}`;
 const INK = inlineSignature(signatureInk);
 const STARLIGHT = inlineSignature(signatureLight);
 

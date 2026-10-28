@@ -24,6 +24,7 @@ import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 import type { ServerFaceted } from "@/lib/servers/facets";
 import { useAssetUrl, useServerList } from "@/lib/servers/use-content-server";
 import { useSpoiler } from "@/lib/settings/spoiler";
+import { SPOILER_REFERENCE_NOW } from "@/lib/settings/spoiler-reference";
 
 interface Props {
   locale: AppLocale;
@@ -89,8 +90,8 @@ export default function EventsExplorer({ locale, servers, initialEvents, bands }
   const filteredEvents = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase();
     return events.filter((event) => {
-      // Spoiler filtering: if spoiler display is disabled, hide upcoming events
-      if (!showSpoiler && now !== null && scheduleStatus(event.startAt, event.endAt, now) === "upcoming") return false;
+      // Spoiler filtering: without a live clock yet, use the page's serialized render time (see isSpoiler).
+      if (!showSpoiler && scheduleStatus(event.startAt, event.endAt, now ?? SPOILER_REFERENCE_NOW) === "upcoming") return false;
       // Status depends on the visitor's clock, so it only filters once that is known.
       if (selectedStatuses.length > 0 && now !== null && !selectedStatuses.includes(scheduleStatus(event.startAt, event.endAt, now))) return false;
       if (selectedBands.length > 0 && !event.bandIds.some((id) => selectedBands.includes(id))) return false;
