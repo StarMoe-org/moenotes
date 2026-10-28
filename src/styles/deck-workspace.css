@@ -91,13 +91,13 @@
 .dw-warning{background:#fcf1d5;color:#81571a}
 /* Element defaults of the older workspace markup. In the base layer so MUI controls, MD3 primitives and component classes override them. */
 @layer base{
-.dw-workspace button,.dw-workspace .dw-button,.dw-dialog button,.dw-box-manager button,.dw-edit button{cursor:pointer;border:1px solid var(--md-sys-color-outline-variant);border-radius:8px;background:var(--md-sys-color-surface-container-low);padding:8px 12px;font:inherit;font-size:12px;font-weight:500;min-height:38px;transition:background .15s,border-color .15s}
-.dw-workspace button:hover,.dw-dialog button:hover,.dw-box-manager button:hover,.dw-edit button:hover{border-color:var(--dw-blue);background:var(--dw-soft)}
-.dw-workspace button:disabled:not(.md3-button,.md3-icon-button),.dw-box-manager button:disabled:not(.md3-button,.md3-icon-button),.dw-dialog button:disabled:not(.md3-button,.md3-icon-button){opacity:.5;cursor:not-allowed}
-.dw-workspace a:not(.dw-button){color:var(--dw-blue);text-decoration:underline;text-underline-offset:3px}
-.dw-workspace input:not([type=checkbox]),.dw-workspace select,.dw-dialog input:not([type=checkbox]),.dw-dialog select,.dw-box-manager input:not([type=checkbox]),.dw-box-manager select,.dw-edit select,.dw-edit input:not([type=checkbox]){display:block;width:100%;min-width:0;border:1px solid var(--md-sys-color-outline-variant);border-radius:8px;background:var(--md-sys-color-surface-container-low);color:var(--md-sys-color-on-surface);padding:9px 11px;font:inherit;font-size:13px;min-height:42px}
-.dw-workspace label,.dw-dialog label,.dw-edit label{display:block;font-size:12px;font-weight:500}
-.dw-workspace label>select,.dw-dialog label>select,.dw-edit label>input{margin-top:5px}
+:is(.dw-workspace,.dw-dialog,.dw-box-manager,.dw-edit) button:not([class*="Mui"],.md3-segment,.md3-filter-chip,.md3-button,.md3-icon-button,.dc-composer *,.dc-options *,.dw-md3-dialog *),.dw-workspace .dw-button{cursor:pointer;border:1px solid var(--md-sys-color-outline-variant);border-radius:8px;background:var(--md-sys-color-surface-container-low);padding:8px 12px;font:inherit;font-size:12px;font-weight:500;min-height:38px;transition:background .15s,border-color .15s}
+:is(.dw-workspace,.dw-dialog,.dw-box-manager,.dw-edit) button:not([class*="Mui"],.md3-segment,.md3-filter-chip,.md3-button,.md3-icon-button,.dc-composer *,.dc-options *,.dw-md3-dialog *):hover,.dw-workspace .dw-button:hover{border-color:var(--dw-blue);background:var(--dw-soft)}
+:is(.dw-workspace,.dw-dialog,.dw-box-manager,.dw-edit) button:disabled:not([class*="Mui"],.md3-segment,.md3-filter-chip,.md3-button,.md3-icon-button,.dc-composer *,.dc-options *,.dw-md3-dialog *){opacity:.5;cursor:not-allowed}
+.dw-workspace a:not(.dw-button,[class*="Mui"],.md3-button,.md3-icon-button){color:var(--dw-blue);text-decoration:underline;text-underline-offset:3px}
+:is(.dw-workspace,.dw-dialog,.dw-box-manager,.dw-edit) :is(input:not([type=checkbox]),select):not([class*="Mui"],.dc-composer *,.dc-options *,.dw-md3-dialog *){display:block;width:100%;min-width:0;border:1px solid var(--md-sys-color-outline-variant);border-radius:8px;background:var(--md-sys-color-surface-container-low);color:var(--md-sys-color-on-surface);padding:9px 11px;font:inherit;font-size:13px;min-height:42px}
+:is(.dw-workspace,.dw-dialog,.dw-edit) label:not([class*="Mui"],.dc-composer *,.dc-options *,.dw-md3-dialog *){display:block;font-size:12px;font-weight:500}
+:is(.dw-workspace,.dw-dialog) label:not([class*="Mui"],.dc-composer *,.dc-options *,.dw-md3-dialog *)>select,.dw-edit label>input{margin-top:5px}
 /* Action buttons, drawn like the site's MD3 buttons (src/styles/md3/primitives.css): label-large, corners at half the
    height (--dw-button-height, 40px unless a layout sets it) that tighten while pressed, and a state layer. A plain
    button (no class, not a toggle or tab) is outlined, .dw-primary filled, .dw-danger outlined in the error color; the
@@ -110,6 +110,18 @@
 :is(:is(.dw-workspace,.dw-dialog,.dw-box-manager,.dw-edit,.dw-card-identity-selection) button:not([class],[aria-pressed],[role]),.dw-primary,.dw-danger,.dw-correct-card,.cb-secondary-action,.cb-save-hint-action,.cb-app-alternative,.cb-app-actions>a,.cb-cloud-actions>button):active:not(:disabled){border-radius:var(--md-sys-shape-corner-small);box-shadow:none}
 :is(:is(.dw-workspace,.dw-dialog,.dw-box-manager,.dw-edit,.dw-card-identity-selection) button:not([class],[aria-pressed],[role]),.dw-primary,.dw-danger,.dw-correct-card,.cb-secondary-action,.cb-save-hint-action,.cb-app-alternative,.cb-app-actions>a,.cb-cloud-actions>button):disabled{--dw-button-outline:rgb(var(--md-sys-color-on-surface-rgb) / 0.12);opacity:1;box-shadow:none;color:rgb(var(--md-sys-color-on-surface-rgb) / 0.38)}
 }
+.dw-header-copy{min-width:0;flex:1}
+.dw-md3-alert{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:12px 16px;margin:0 0 20px;border-radius:var(--md-sys-shape-corner-medium);background:var(--md-sys-color-error-container);color:var(--md-sys-color-on-error-container);font-size:var(--md-sys-typescale-body-medium-size);line-height:var(--md-sys-typescale-body-medium-line-height)}
+.dw-md3-alert>span{flex:1;min-width:0}
+.dw-md3-dialog{display:grid;gap:16px;min-width:0;color:var(--md-sys-color-on-surface);font-size:var(--md-sys-typescale-body-medium-size);line-height:var(--md-sys-typescale-body-medium-line-height)}
+.dw-md3-dialog p{margin:0}
+.dw-dialog-lead{color:var(--md-sys-color-on-surface-variant)}
+.dw-storage-card{display:grid;gap:4px;min-width:0;padding:14px 16px;border:1px solid var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-medium);background:var(--md-sys-color-surface-container-low);color:var(--md-sys-color-on-surface);font:inherit;text-align:left;cursor:pointer;transition:border-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),background-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard)}
+.dw-storage-card strong{font-size:var(--md-sys-typescale-title-small-size);line-height:var(--md-sys-typescale-title-small-line-height);font-weight:500}
+.dw-storage-card span{color:var(--md-sys-color-on-surface-variant);font-size:var(--md-sys-typescale-body-small-size);line-height:var(--md-sys-typescale-body-small-line-height);font-weight:400}
+.dw-storage-card.is-selected{border-color:var(--md-sys-color-primary);background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);box-shadow:inset 0 0 0 1px var(--md-sys-color-primary)}
+.dw-storage-card.is-selected span{color:var(--md-sys-color-on-secondary-container);opacity:.85}
+.dw-dialog-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;padding-top:4px}
 .dw-edit .mn-level-switch{min-width:0;max-width:100%}
 .dw-edit .mn-level-switch button{font-weight:500;color:var(--md-sys-color-on-surface-variant)}
 .dw-edit .mn-level-switch button[aria-pressed=true]{background:var(--md-sys-color-secondary-container);border-color:var(--md-sys-color-primary);color:var(--md-sys-color-primary);font-weight:500}
@@ -119,7 +131,7 @@
 .dw-danger{--dw-button-label:var(--md-sys-color-error)}
 .dw-button{text-decoration:none;display:inline-flex;align-items:center}
 .dw-server{min-width:105px}
-.dw-header-actions{flex-wrap:nowrap;margin-top:10px}
+.dw-header-actions{flex-wrap:wrap;margin-top:4px;gap:12px}
 .dw-header .dw-server{display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap}
 .dw-header .dw-server>select{width:auto;min-width:120px;min-height:40px;margin-top:0}
 .dw-header .dw-actions>.dw-button{min-height:40px;white-space:nowrap}

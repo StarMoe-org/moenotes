@@ -1,5 +1,7 @@
+import type { ReactNode } from "react";
 import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
+import { Md3Provider } from "../src/components/md3/Md3Provider";
 import DeckGoalConditions from "../src/components/deck/DeckGoalConditions";
 import DeckObjective from "../src/components/deck/DeckObjective";
 import DeckResult from "../src/components/deck/DeckResult";
@@ -8,6 +10,9 @@ import DeckWorkspace from "../src/components/deck/DeckWorkspace";
 import { defaultDeckGoalInput, parseCapabilities, type DeckSolverCapabilities } from "../src/lib/deck/goals";
 import { defaultRewardPlan, withRewardRate, withRewardRole, type EventReward, type RewardPlan, type RewardRole } from "../src/lib/deck/reward-mix";
 import { parseDeckAnswer } from "../src/lib/deck/answer";
+
+const renderMd3 = (node: ReactNode) =>
+  renderToStaticMarkup(<Md3Provider>{node}</Md3Provider>).replace(/<style[^>]*>[\s\S]*?<\/style>/g, "");
 
 test("event deadlines render in server time before hydration regardless of the host timezone", () => {
   const originalZone = process.env.TZ;
@@ -30,36 +35,37 @@ test("event deadlines render in server time before hydration regardless of the h
   }
 });
 
-test("a live goal offers the accuracy and pattern plays", () => {
-  const html = renderToStaticMarkup(<DeckGoalConditions locale="en-US" input={{ ...defaultDeckGoalInput("free"), playMode: "pattern", missEvery: 10 }}
+test("a live goal offers the accuracy and pattern plays using MD3 controls without raw native selects", () => {
+  const html = renderMd3(<DeckGoalConditions locale="en-US" input={{ ...defaultDeckGoalInput("free"), playMode: "pattern", missEvery: 10 }}
     capabilities={{ goals: ["freeLive"], metrics: { freeLive: ["score"] }, accuracy: { great: true, just: false }, patternPlay: true }} onChange={() => {}} />);
-  expect(html).toContain('value="pattern" selected=""');
+  expect(html).not.toContain("<select");
+  expect(html).toContain('role="combobox"');
+  expect(html).toContain('value="pattern"');
   expect(html).toContain('value="10"');
   expect(html).not.toContain("Minimum life at the end");
 });
 
-test("the objective has native labelled radio choices, with maximum gated by engine capabilities", () => {
+test("the objective uses MD3 segmented buttons, with maximum gated by engine capabilities", () => {
   const cap = { goals: ["freeLive"], metrics: { freeLive: ["score", "eventPoints"] }, accuracy: { great: true, just: false } };
-  const render = (input = defaultDeckGoalInput("free"), capabilities: DeckSolverCapabilities = cap) => renderToStaticMarkup(
+  const render = (input = defaultDeckGoalInput("free"), capabilities: DeckSolverCapabilities = cap) => renderMd3(
     <DeckObjective locale="en-US" input={input} capabilities={capabilities} onChange={() => {}} />);
   const html = render();
-  expect(html).toContain('type="radio"');
-  expect(html).toContain('checked="" value="expected"');
-  expect(html).toMatch(/<input[^>]*disabled=""[^>]*value="maximum"/);
+  expect(html).toMatch(/<button(?=[^>]*value="expected")(?=[^>]*aria-pressed="true")[^>]*>/);
+  expect(html).toMatch(/<button(?=[^>]*disabled="")(?=[^>]*value="maximum")(?=[^>]*aria-pressed="false")[^>]*>/);
   expect(html).toContain("Average performance");
   expect(html).toContain("Theoretical maximum");
-  expect(html).toContain("Theoretical maximum<small>Not yet supported</small>");
+  expect(html).toContain("<span>Theoretical maximum</span><small>Not yet supported</small>");
   const ready = render({ ...defaultDeckGoalInput("free"), aggregation: "maximum" }, { ...cap, aggregations: { maximum: { freeLive: ["score"] } } });
-  expect(ready).toContain('checked="" value="maximum"');
+  expect(ready).toMatch(/<button(?=[^>]*value="maximum")(?=[^>]*aria-pressed="true")[^>]*>/);
   expect(ready).not.toContain('disabled=""');
   expect(ready).not.toContain("Not yet supported");
   expect(ready).toContain("highest of its 120 order averages");
   expect(ready).toContain("proved only when the search completes");
   const unavailable = render({ ...defaultDeckGoalInput("free"), aggregation: "maximum" });
-  expect(unavailable).toMatch(/<input[^>]*disabled=""[^>]*checked=""[^>]*value="maximum"/);
+  expect(unavailable).toMatch(/<button(?=[^>]*disabled="")(?=[^>]*value="maximum")(?=[^>]*aria-pressed="true")[^>]*>/);
   expect(unavailable).toContain("unavailable for these conditions");
-  const loading = renderToStaticMarkup(<DeckObjective locale="en-US" input={{ ...defaultDeckGoalInput("free"), aggregation: "maximum" }} capabilities={null} onChange={() => {}} />);
-  expect(loading).toMatch(/<input[^>]*disabled=""[^>]*checked=""[^>]*value="maximum"/);
+  const loading = renderMd3(<DeckObjective locale="en-US" input={{ ...defaultDeckGoalInput("free"), aggregation: "maximum" }} capabilities={null} onChange={() => {}} />);
+  expect(loading).toMatch(/<button(?=[^>]*disabled="")(?=[^>]*value="maximum")(?=[^>]*aria-pressed="true")[^>]*>/);
   expect(loading).toContain("Checking whether theoretical maximum is available");
   expect(loading).not.toContain("Not yet supported");
   expect(render(defaultDeckGoalInput("power"))).toBe("");
@@ -70,17 +76,17 @@ test("Gekisou scenes and payoff venues offer the maximum their engine computes",
   const cap = { goals: ["freeLive", "battleLive", "missionLive", "arenaLive"], metrics: {}, accuracy: { great: true, just: true },
     aggregations: { maximum: { battleLive: ["score", "eventPoints"], missionLive: ["score", "eventPoints"], arenaLive: ["score", "eventPoints"] } } };
   for (const goal of ["battle", "mission", "arena"] as const) {
-    const html = renderToStaticMarkup(<DeckObjective locale="en-US" input={{ ...defaultDeckGoalInput(goal), aggregation: "maximum" }} capabilities={cap} onChange={() => {}} />);
-    expect(html).toContain('checked="" value="maximum"');
+    const html = renderMd3(<DeckObjective locale="en-US" input={{ ...defaultDeckGoalInput(goal), aggregation: "maximum" }} capabilities={cap} onChange={() => {}} />);
+    expect(html).toMatch(/<button(?=[^>]*value="maximum")(?=[^>]*aria-pressed="true")[^>]*>/);
     expect(html).not.toContain('disabled=""');
   }
   for (const venue of ["battleLive", "missionLive", "arenaLive"] as const) {
-    const html = renderToStaticMarkup(<DeckObjective locale="en-US" input={{ ...defaultDeckGoalInput("eventPoints"), venue, aggregation: "maximum" }} capabilities={cap} onChange={() => {}} />);
-    expect(html).toContain('checked="" value="maximum"');
+    const html = renderMd3(<DeckObjective locale="en-US" input={{ ...defaultDeckGoalInput("eventPoints"), venue, aggregation: "maximum" }} capabilities={cap} onChange={() => {}} />);
+    expect(html).toMatch(/<button(?=[^>]*value="maximum")(?=[^>]*aria-pressed="true")[^>]*>/);
   }
   const without = { ...cap, aggregations: { maximum: { freeLive: ["score"] } } };
-  const html = renderToStaticMarkup(<DeckObjective locale="en-US" input={{ ...defaultDeckGoalInput("battle"), aggregation: "maximum" }} capabilities={without} onChange={() => {}} />);
-  expect(html).toMatch(/<input[^>]*disabled=""[^>]*checked=""[^>]*value="maximum"/);
+  const html = renderMd3(<DeckObjective locale="en-US" input={{ ...defaultDeckGoalInput("battle"), aggregation: "maximum" }} capabilities={without} onChange={() => {}} />);
+  expect(html).toMatch(/<button(?=[^>]*disabled="")(?=[^>]*value="maximum")(?=[^>]*aria-pressed="true")[^>]*>/);
   expect(html).toContain("unavailable for these conditions");
 });
 
@@ -141,15 +147,24 @@ test("a stale goal selection cannot relabel a finished result, and its proof lab
 });
 
 
-test("event badge conditions show exact-grade projection and only scene-relevant inputs", () => {
+test("event badge conditions show exact-grade projection and only scene-relevant MD3 selects", () => {
   for (const venue of ["freeLive", "challengeLive", "skip", "challengeSkip"] as const) {
-    const html = renderToStaticMarkup(<DeckGoalConditions locale="en-US" input={{ ...defaultDeckGoalInput("eventItems"), venue }}
+    const html = renderMd3(<DeckGoalConditions locale="en-US" input={{ ...defaultDeckGoalInput("eventItems"), venue }}
       capabilities={null} onChange={() => {}} />);
     expect(html).toContain("single matching result grade");
     expect(html).toContain("Time limit");
-    expect((html.match(/<select/g) ?? []).length).toBe(venue === "skip" || venue === "challengeSkip" ? 1 : 2);
-    expect(html).not.toContain("<input");
+    expect(html).not.toContain("<select");
+    expect((html.match(/role="combobox"/g) ?? []).length).toBe(venue === "skip" || venue === "challengeSkip" ? 1 : 2);
+    expect(html).not.toContain('type="number"');
   }
+});
+
+test("deck workspace renders MD3 server switcher and zero raw native select controls", () => {
+  const html = renderToStaticMarkup(
+    <DeckWorkspace locale="zh-CN" page="deck" servers={["jp", "tw"]} members={[]} snaps={[]} songs={[]} />,
+  ).replace(/<style[^>]*>[\s\S]*?<\/style>/g, "");
+  expect(html).not.toContain("<select");
+  expect(html).toContain('class="md3-segmented w-fit"');
 });
 
 test("event badge results explain exact-grade rewards using the result metric", () => {
@@ -179,12 +194,20 @@ describe("reward plan", () => {
   };
   const songs = [{ id: 1, title: "First challenge", jacketUrl: null, difficulties: ["easy", "hard"] as const }, { id: 2, title: "Second challenge", jacketUrl: null, difficulties: [] }];
   const points = (patch = {}) => ({ ...defaultDeckGoalInput("eventPoints"), ...patch });
-  const render = (input: ReturnType<typeof points>, capabilities: DeckSolverCapabilities | null = capable) => renderToStaticMarkup(
+  const render = (input: ReturnType<typeof points>, capabilities: DeckSolverCapabilities | null = capable) => renderMd3(
     <DeckRewardMix locale="en-US" input={input} capabilities={capabilities} challengeSongs={songs} onChange={() => {}} />);
-  const role = (kind: string, value: string) => new RegExp(`<input[^>]*name="[^"]*-${kind}"[^>]*checked=""[^>]*value="${value}"`);
+  const roleLabel: Record<string, string> = {
+    eventPoints: "How Event points count",
+    challengePoints: "How Challenge points count",
+    eventItems: "How Event badges count",
+  };
+  const role = (kind: string, value: string) =>
+    new RegExp(`aria-label="${roleLabel[kind]}"[\\s\\S]*?<button(?=[^>]*value="${value}")(?=[^>]*aria-pressed="true")[^>]*>`);
 
-  const main = (kind: string) => new RegExp(`<input(?=[^>]*name="[^"]*-main")(?=[^>]*value="${kind}")(?=[^>]*checked="")[^>]*>`);
-  const mainOff = (kind: string) => new RegExp(`<input(?=[^>]*name="[^"]*-main")(?=[^>]*value="${kind}")(?=[^>]*disabled="")[^>]*>`);
+  const main = (kind: string) =>
+    new RegExp(`<button(?=[^>]*role="radio")(?=[^>]*aria-checked="true")(?=[^>]*data-reward="${kind}")[^>]*>`);
+  const mainOff = (kind: string) =>
+    new RegExp(`<button(?=[^>]*role="radio")(?=[^>]*disabled="")(?=[^>]*data-reward="${kind}")[^>]*>`);
 
   test("only event payoff goals offer it, and every other reward starts left out", () => {
     for (const goal of ["battle", "free", "skip", "power", "challenge"] as const) expect(render(points({ goal }))).toBe("");
@@ -207,25 +230,26 @@ describe("reward plan", () => {
   test("challenge points are rated by a challenge live unless the player states a rate", () => {
     const html = render(points({ rewards: plan([["challengePoints", "convert"]]), challengeMusicId: 1, rateDifficulty: "hard", challengePoints: 800 }));
     expect(html).toMatch(role("challengePoints", "convert"));
-    expect(html).toMatch(/<input[^>]*name="[^"]*-source"[^>]*checked=""\/><span>From a Challenge Live<\/span>/);
+    expect(html).toMatch(/<button(?=[^>]*value="auto")(?=[^>]*aria-pressed="true")[^>]*>.*?From a Challenge Live/);
     expect(html).toContain("1 CP then counts as the PT that team earns per CP spent.");
     expect(html).toMatch(/<button[^>]*aria-pressed="true"[^>]*>.*?First challenge/);
     expect(html).toMatch(/<button[^>]*aria-pressed="false"[^>]*>.*?Second challenge/);
     // The chosen song's own difficulties, and the challenge points one live spends.
-    expect(html).toContain('<option value="hard" selected="">HARD</option>');
-    expect(html).not.toContain('<option value="expert"');
-    expect(html).toContain('<option value="800" selected="">');
+    expect(html).not.toContain("<select");
+    expect(html).toContain(">HARD</div>");
+    expect(html).toContain('value="hard"');
+    expect(html).toContain('value="800"');
     expect(html).toContain('data-reward="challengePoints">CP<span aria-hidden="true">×</span><b>auto</b></span>');
     expect(html).not.toContain('type="number"');
     const stated = render(points({ rewards: plan([["challengePoints", "convert"]], { challengePoints: 17.5 }) }));
-    expect(stated).toMatch(/<input[^>]*name="[^"]*-source"[^>]*checked=""\/><span>My own rate<\/span>/);
-    expect(stated).toMatch(/<input[^>]*type="number"[^>]*aria-label="How many PT one CP is worth"[^>]*aria-invalid="false"[^>]*value="17.5"/);
+    expect(stated).toMatch(/<button(?=[^>]*value="manual")(?=[^>]*aria-pressed="true")[^>]*>.*?My own rate/);
+    expect(stated).toMatch(/<input(?=[^>]*type="number")(?=[^>]*aria-label="How many PT one CP is worth")(?=[^>]*aria-invalid="false")(?=[^>]*value="17\.5")[^>]*>/);
     expect(stated).toContain('data-reward="challengePoints">CP<span aria-hidden="true">×</span><b>17.5</b></span>');
     expect(stated).not.toContain("First challenge");
     // A challenge-point goal has no challenge live to read; its other rewards take stated rates.
     const cp = render(points({ goal: "challengePoints", rewards: plan([["eventPoints", "convert"]], { eventPoints: 0.05 }) }));
     expect(cp).not.toContain("From a Challenge Live");
-    expect(cp).toMatch(/<input[^>]*type="number"[^>]*aria-label="How many CP one PT is worth"[^>]*value="0.05"/);
+    expect(cp).toMatch(/<input(?=[^>]*type="number")(?=[^>]*aria-label="How many CP one PT is worth")(?=[^>]*value="0\.05")[^>]*>/);
   });
 
   test("tie-break rewards show their order and offer to move ahead", () => {
@@ -240,7 +264,7 @@ describe("reward plan", () => {
 
   test("an incomplete plan asks for a rate and a challenge live cannot count challenge points", () => {
     const unset = render(points({ rewards: plan([["eventItems", "convert"]]) }));
-    expect(unset).toMatch(/<input[^>]*type="number"[^>]*aria-invalid="true"/);
+    expect(unset).toMatch(/<input(?=[^>]*type="number")(?=[^>]*aria-invalid="true")[^>]*>/);
     expect(unset).toContain("Enter a rate above 0 for every reward that is added in.");
     const challenge = render(points({ venue: "challengeLive", rewards: plan([["challengePoints", "convert"]], { challengePoints: 17.5 }) }));
     expect(challenge).toContain("A Challenge Live spends CP and earns none.");
@@ -254,21 +278,21 @@ describe("reward plan", () => {
 
   test("engines without levelled metrics, loading engines and other objectives gate the plan", () => {
     const old = render(points(), parseCapabilities(JSON.stringify(legacy))!);
-    expect(old).toMatch(/<input[^>]*disabled=""[^>]*value="convert"/);
-    expect(old).toMatch(/<input[^>]*disabled=""[^>]*value="tieBreak"/);
-    expect(old).not.toMatch(/<input[^>]*disabled=""[^>]*value="off"/);
+    expect(old).toMatch(/<button(?=[^>]*disabled="")(?=[^>]*value="convert")[^>]*>/);
+    expect(old).toMatch(/<button(?=[^>]*disabled="")(?=[^>]*value="tieBreak")[^>]*>/);
+    expect(old).not.toMatch(/<button(?=[^>]*disabled="")(?=[^>]*value="off")[^>]*>/);
     expect(old).toContain("does not rank by other rewards yet");
     const planned = points({ rewards: plan([["challengePoints", "convert"]], { challengePoints: 17.5 }) });
     expect(render(planned, parseCapabilities(JSON.stringify(legacy))!)).toContain("does not rank by other rewards for these conditions");
     const loading = render(planned, null);
     expect(loading).not.toContain("does not rank by other rewards");
-    expect(loading).not.toMatch(/<input[^>]*disabled=""[^>]*value="convert"/);
+    expect(loading).not.toMatch(/<button(?=[^>]*disabled="")(?=[^>]*value="convert")[^>]*>/);
     expect(render({ ...planned, aggregation: "maximum" })).toContain("requires Average performance");
     expect(render({ ...planned, venue: "battleLive" })).toContain("LUCK lotteries");
     expect(render(planned)).not.toContain("LUCK lotteries");
     expect(render(points({ venue: "battleLive" }))).not.toContain("LUCK lotteries");
-    const objective = renderToStaticMarkup(<DeckObjective locale="en-US" input={{ ...planned, aggregation: "maximum" }} capabilities={capable} onChange={() => {}} />);
-    expect(objective).toMatch(/<input[^>]*checked=""[^>]*value="maximum"/);
+    const objective = renderMd3(<DeckObjective locale="en-US" input={{ ...planned, aggregation: "maximum" }} capabilities={capable} onChange={() => {}} />);
+    expect(objective).toMatch(/<button(?=[^>]*value="maximum")(?=[^>]*aria-pressed="true")[^>]*>/);
   });
 
   const value = (numerator: number) => ({ score: numerator / 120, exact: { numerator: String(numerator), denominator: "120" }, interval: null });

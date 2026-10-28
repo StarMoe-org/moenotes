@@ -1,5 +1,8 @@
 import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import LinearProgress from "@mui/material/LinearProgress";
 import type { AppLocale } from "@/config/locales";
+import { Icon } from "@/components/shared/icons";
 import { haneokaUrl } from "@/config/site";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
@@ -79,14 +82,19 @@ export default function DeckResult(props: DeckResultProps) {
     {props.stale && !running && <div className="dr-stale" role="status"><strong>{tr("stale")}</strong><Button variant="text" size="small" onClick={props.onRerun}>{tr("rerun")}</Button></div>}
     <div className="dr-status" data-proof={running ? "running" : optimality?.proven && rateProven ? "proven" : "unproven"}>
       {running ? <>
-        <div className="dr-phase"><span className="dr-spinner" aria-hidden="true" /><strong>{rating ? t(locale, "deckWorkspace.rewardMix.rating") : tr(`phase.${result?.phase ?? "preprocess"}`)}</strong>
+        <div className="dr-phase"><CircularProgress size={18} thickness={5} /><strong>{rating ? t(locale, "deckWorkspace.rewardMix.rating") : tr(`phase.${result?.phase ?? "preprocess"}`)}</strong>
           <small>{tr("elapsed", { n: ((elapsed ?? 0) / 1000).toFixed(1) })}</small>
           {props.timeLimit !== null && <small className="dr-remaining">{tr("remaining", { n: Math.max(0, props.timeLimit - (elapsed ?? 0) / 1000).toFixed(0) })}</small>}
           <Button className="dr-stop" variant="text" size="small" onClick={props.onStop}>{tr("stop")}</Button></div>
-        <progress className="dr-progress" max={1} value={optimality?.fraction ?? undefined} aria-label={tr("progressLabel")} />
-      </> : optimality?.proven && rateProven ? <div className="dr-proven"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true"><path d="m3.5 8 3 3 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+        <LinearProgress
+          className="dr-progress"
+          variant={optimality?.fraction != null ? "determinate" : "indeterminate"}
+          value={optimality?.fraction != null ? Math.min(100, Math.max(0, optimality.fraction * 100)) : undefined}
+          aria-label={tr("progressLabel")}
+        />
+      </> : optimality?.proven && rateProven ? <div className="dr-proven"><Icon name="check" className="h-[18px] w-[18px] shrink-0" />
         <ProofLink locale={locale} anchor="proven" label={tr("proven")} />{elapsed !== null && <small>{tr("elapsed", { n: (elapsed / 1000).toFixed(1) })}</small>}</div>
-        : <div className="dr-unproven"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true"><path d="M8 4.5v4M8 11.2v.3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /><circle cx="8" cy="8" r="6.2" stroke="currentColor" strokeWidth="1.4" /></svg>
+        : <div className="dr-unproven"><Icon name="info" className="h-[18px] w-[18px] shrink-0" />
           <ProofLink locale={locale} anchor="unproven" label={tr(job.status === "done" && job.stopped ? "stoppedUnproven" : result?.exitReason === "timeLimit" ? "timedOutUnproven" : "unproven")} />
           {elapsed !== null && <small>{tr("elapsed", { n: (elapsed / 1000).toFixed(1) })}</small>}</div>}
       {!rating && optimality && !optimality.proven && optimality.upperBound !== null && optimality.lowerBound !== null && <p className="dr-bounds">
@@ -191,7 +199,7 @@ function TeamCard(props: DeckResultProps & { team: DeckTeam; best: DeckTeam; met
         {metric !== "power" && <span className="dr-power"><small>{tr("power")}</small><span>{formatValue(team.power, "power", locale)}</span></span>}
         <TeamFaces team={team} best={props.first ? null : props.best} catalog={catalog} locale={locale} />
         {changed > 0 && <span className="dr-changed">{tr("changedCards", { n: changed })}</span>}
-        <svg className="dr-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+        <Icon name="chevronDown" className="dr-chevron h-5 w-5" />
       </summary>
       <div className="dr-team-body">
         {value.terms && value.mixed && team.levels && <RewardBreakdown locale={locale} terms={value.terms} values={team.levels[0]!.terms} />}

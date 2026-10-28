@@ -1,8 +1,10 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import Button from "@mui/material/Button";
-import Checkbox from "@mui/material/Checkbox";
-import FormControlLabel from "@mui/material/FormControlLabel";
+import Slider from "@mui/material/Slider";
 import { withMd3 } from "@/components/md3/Md3Provider";
+import GameServerSwitch from "@/components/shared/GameServerSwitch";
+import { Icon } from "@/components/shared/icons";
+import { DeckNumberField, DeckSegmented, DeckSelect, DeckSwitchRow } from "./DeckControls";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import { t } from "@/i18n";
@@ -521,20 +523,71 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
   const blocker = engine.status === "loading" ? tr("solver.loading") : engine.status === "unavailable" ? tr(`solver.unavailable.${engine.reason}`)
     : engine.status === "failed" ? "" : !supported ? tr(rewardLayoutOf(effectiveInput) ? effectiveInput.aggregation === "expected" ? "rewardMix.unavailable" : "rewardMix.expectedOnly" : goal === "eventItems" ? "solver.eventItemsUnsupported" : "comingSoon") : gap ? tr(`solver.gap.${gap}`) : !saveReady ? tr("solver.saveNotReady") : "";
   const runBlocker = ownedMembers.length ? "" : tr(linked && !saveReady ? "solver.saveNotReady" : "solver.emptyBox");
+  const activeConstraintCount = required.length + excluded.length + (leaderKey ? 1 : 0) + (noSnaps ? 1 : 0);
+  const requiredConstraintCount = new Set([...required, ...(leaderKey ? [leaderKey] : [])]).size;
   function engineNotice() {
-    if (engine.status === "failed") return <p className="dc-engine-note" role="alert">{tr(`solver.failure.${engine.code}`)} <button type="button" onClick={solver.retry}>{tr("retry")}</button></p>;
+    if (engine.status === "failed") {
+      return (
+        <div className="dc-engine-note" role="alert">
+          <Icon name="info" className="h-[18px] w-[18px] shrink-0" />
+          <span className="dc-engine-note-text">{tr(`solver.failure.${engine.code}`)}</span>
+          <Button variant="text" size="small" onClick={solver.retry}>{tr("retry")}</Button>
+        </div>
+      );
+    }
     if (dataGap === "eventItemRewards") return <p className="dc-engine-note" role="status">{tr("solver.eventItemRewardsUnsupported")}</p>;
     if (dataGap === "luck") return <p className="dc-engine-note" role="status">{tr("solver.luckUnsupported")}</p>;
     if (dataGap === "luckGreat") return <p className="dc-engine-note" role="status">{tr("solver.luckGreatUnsupported")}</p>;
-    if (dataGap) return <p className="dc-engine-note" role="status">{tr(dataGap === "missions" ? "solver.missionsUnavailable" : "solver.dataUpdating")} <button type="button" onClick={solver.retry}>{tr("retry")}</button></p>;
+    if (dataGap) {
+      return (
+        <div className="dc-engine-note" role="status">
+          <Icon name="info" className="h-[18px] w-[18px] shrink-0" />
+          <span className="dc-engine-note-text">{tr(dataGap === "missions" ? "solver.missionsUnavailable" : "solver.dataUpdating")}</span>
+          <Button variant="text" size="small" onClick={solver.retry}>{tr("retry")}</Button>
+        </div>
+      );
+    }
     if (runError) return <p className="dc-engine-note" role="alert">{runError}</p>;
     return null;
   }
   function toggle(values: string[], key: string, update: (value: string[]) => void) { update(values.includes(key) ? values.filter(value => value !== key) : [...values, key]); }
   return <ContentServerProvider server={server} servers={servers}><div className={`dw-workspace ${page === "box" ? "dw-collection" : "dw-deck"}`} data-testid="deck-workspace">
-    <header className="dw-header"><div><h1>{tr(page === "box" ? "boxTitle" : "title")}{page === "deck" && <span className="dw-beta">{tr("beta")}</span>}</h1><p>{page === "box" ? tr("boxDescription") : composer("workspaceNote")}</p>
-      {page === "deck" && <p className="dw-sources"><a href={href("deck-guide")}>{tr("deckGuide.link")}</a> · {tr("sources.label")}: {DECK_SOURCES.map((source, index) => <Fragment key={source.key}>{index > 0 && " · "}<a href={source.url} target="_blank" rel="noopener noreferrer">{tr(`sources.${source.key}`)}</a></Fragment>)}</p>}</div><div className="dw-actions dw-header-actions"><label className="dw-server"><span>{tr("server")}</span><select aria-label={tr("server")} value={server} disabled={busy} onChange={event => pickServer(event.target.value as GameServer)}>{servers.map(value => <option key={value} value={value}>{t(locale, `gameServer.names.${value}`)}</option>)}</select></label>{page === "box" && <Button variant="tonal" href={href("deck")} onClick={(event: MouseEvent<HTMLAnchorElement>) => changePage(event, "deck")}>{tr("goDeck")}</Button>}</div></header>
-    {storage.error && <p role="alert" className="dw-alert">{tr(`storageErrors.${storage.error}`)} <button disabled={busy || mode === "temporary"} onClick={() => void storage.reload()}>{tr("retry")}</button></p>}
+    <header className="dw-header">
+      <div className="dw-header-copy">
+        <h1>{tr(page === "box" ? "boxTitle" : "title")}{page === "deck" && <span className="dw-beta">{tr("beta")}</span>}</h1>
+        <p>{page === "box" ? tr("boxDescription") : composer("workspaceNote")}</p>
+        {page === "deck" && (
+          <p className="dw-sources">
+            <a href={href("deck-guide")}>{tr("deckGuide.link")}</a> · {tr("sources.label")}:{" "}
+            {DECK_SOURCES.map((source, index) => (
+              <Fragment key={source.key}>
+                {index > 0 && " · "}
+                <a href={source.url} target="_blank" rel="noopener noreferrer">{tr(`sources.${source.key}`)}</a>
+              </Fragment>
+            ))}
+          </p>
+        )}
+      </div>
+      <div className="dw-actions dw-header-actions">
+        <div className={busy ? "pointer-events-none opacity-60" : undefined}>
+          <GameServerSwitch locale={locale} value={server} onChange={pickServer} servers={servers} />
+        </div>
+        {page === "box" && (
+          <Button variant="tonal" href={href("deck")} onClick={(event: MouseEvent<HTMLAnchorElement>) => changePage(event, "deck")}>
+            {tr("goDeck")}
+          </Button>
+        )}
+      </div>
+    </header>
+    {storage.error && (
+      <div role="alert" className="dw-md3-alert">
+        <Icon name="info" className="h-5 w-5 shrink-0" />
+        <span>{tr(`storageErrors.${storage.error}`)}</span>
+        <Button variant="text" size="small" disabled={busy || mode === "temporary"} onClick={() => void storage.reload()}>
+          {tr("retry")}
+        </Button>
+      </div>
+    )}
     {page === "box" && <CloudBoxPanel locale={locale} server={server} box={stored} busy={busy} returnTo={returnTo} />}
     {page === "box" ? <section className={`cb-workspace dw-box-main ${draggingScreenshots ? " is-dragging-screenshots" : ""}`} onDragOver={event => {
       if (busy || ![...event.dataTransfer.types].includes("Files")) return;
@@ -550,7 +603,12 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
         <input className="dw-hidden" ref={emptyBackup} type="file" accept="application/json,.json" aria-label={collection("import")} onChange={event => void restoreBackup(event.target.files?.[0])} />
         <div className="cb-empty-collection"><div className="cb-empty-copy"><h2>{collection("emptyTitle")}</h2><p>{collection("emptyDescription")}</p></div><div className="cb-empty-art" aria-hidden="true">{members.filter(card => card.rarity === 4).slice(0, 3).map(card => <div key={card.id}><MemberSquareArtwork card={card} locale={locale} /></div>)}</div></div>
       </>}
-      {backupError && <p className="dw-alert" role="alert">{tr("importError")}</p>}
+      {backupError && (
+        <div className="dw-md3-alert" role="alert">
+          <Icon name="info" className="h-5 w-5 shrink-0" />
+          <span>{tr("importError")}</span>
+        </div>
+      )}
       <p className="cb-input-note">{linked ? <span>{tr("gameSave.vipNote")}</span> : <>{collection("pasteDropHint")}<span>{collection("saveGrowth")}</span></>}</p>
     </section> : <DeckComposer
         labels={{ setup: composer("setupTitle"), collection: composer("collectionTitle"), goal: composer("goalTitle"), conditions: composer("conditionsTitle"), results: composer("resultsTitle") }}
@@ -561,24 +619,46 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
         ]}
         selectedGoal={isEventPayoffGoal(goal) ? REWARDS_CARD : goal} onGoalChange={selectGoal}
         collection={<>{ownedMembers.length > 0 ? <div className="dc-pool">
-          <p className="dc-pool-counts"><span><strong>{ownedMembers.length}</strong>{tr("member")}</span><span><strong>{ownedSnaps.length}</strong>{tr("snap")}</span></p>
-          <p className="dc-pool-source" data-source={linked ? "game-save" : "box"}><CollectionIcon name={linked ? "game" : "image"} /><span>{[tr(linked ? "gameSave.sourceSave" : "gameSave.sourceBox"),
-            ...(stored?.save ? [linkedSave.state.status === "ready" ? tr("gameSave.uploadedAt", { date: new Date(stored.save.uploadedAt).toLocaleDateString(locale) })
-              : tr(linkedSave.state.status === "loading" ? "gameSave.loadingShort" : "gameSave.unavailableShort")] : []), tr(mode)].join(" · ")}</span></p>
+          <div className="dc-pool-counts">
+            <span className="dc-pool-stat"><strong>{ownedMembers.length}</strong><span>{tr("member")}</span></span>
+            <span className="dc-pool-stat"><strong>{ownedSnaps.length}</strong><span>{tr("snap")}</span></span>
+          </div>
+          <p className="dc-pool-source" data-source={linked ? "game-save" : "box"}>
+            <CollectionIcon name={linked ? "game" : "image"} />
+            <span>{[tr(linked ? "gameSave.sourceSave" : "gameSave.sourceBox"),
+              ...(stored?.save ? [linkedSave.state.status === "ready" ? tr("gameSave.uploadedAt", { date: new Date(stored.save.uploadedAt).toLocaleDateString(locale) })
+                : tr(linkedSave.state.status === "loading" ? "gameSave.loadingShort" : "gameSave.unavailableShort")] : []), tr(mode)].join(" · ")}</span>
+          </p>
           <Button className="dc-pool-manage" variant="tonal" size="small" disabled={busy} onClick={() => setManagement(true)}>{tr("manage")}</Button>
         </div> : <div className="dc-pool" data-empty="true">
           <p className="dc-pool-empty">{linked ? tr(linkedSave.state.status === "loading" ? "gameSave.loading" : "solver.saveNotReady") : tr("solver.emptyBox")}</p>
           <div className="dc-pool-actions">{linked ? <Button variant="tonal" size="small" disabled={busy} onClick={() => setManagement(true)}>{tr("manage")}</Button> : <>
             <Button size="small" disabled={busy} onClick={openSavePicker} startIcon={<CollectionIcon name="game" />}>{tr("gameSave.importAction")}</Button>
-            <Button variant="text" size="small" disabled={busy} onClick={openScreenshotImport} startIcon={<CollectionIcon name="image" />}>{tr("screenshotImport")}</Button>
+            <Button variant="tonal" size="small" disabled={busy} onClick={openScreenshotImport} startIcon={<CollectionIcon name="image" />}>{tr("screenshotImport")}</Button>
             <Button variant="text" size="small" disabled={busy} onClick={() => box ? setManagement(true) : setSetup(true)}>{box ? tr("manage") : composer("manualShort")}</Button></>}</div>
         </div>}
           <HaneokaExport locale={locale} box={box} disabled={busy || !box?.cards.length || linked && linkedSave.state.status !== "ready"} />
         </>}
         conditions={<>
-          {canAllSongs && <FormControlLabel control={<Checkbox checked={!!effectiveInput.allSongs} onChange={(_, checked) => updateGoal({ allSongs: checked })} />} label={tr("solver.allSongs")} />}
-          {isEventPayoffGoal(goal) ? <label className="dc-field">{tr("venue")}<select aria-label={tr("venue")} value={goalInput.venue} onChange={change => updateGoal({ venue: change.target.value as DeckVenue })}>
-            {goalVenues(goal).map(value => <option key={value} value={value} disabled={!!capabilities && !computes(capabilities, { goal, venue: value })}>{tr(`venues.${value}`)}</option>)}</select></label> : null}
+          {canAllSongs && (
+            <DeckSwitchRow
+              label={tr("solver.allSongs")}
+              checked={!!effectiveInput.allSongs}
+              onChange={(checked) => updateGoal({ allSongs: checked })}
+            />
+          )}
+          {isEventPayoffGoal(goal) ? (
+            <DeckSelect
+              label={tr("venue")}
+              value={goalInput.venue}
+              onChange={(venue) => updateGoal({ venue })}
+              options={goalVenues(goal).map((value) => ({
+                value: value as DeckVenue,
+                label: tr(`venues.${value}`),
+                disabled: !!capabilities && !computes(capabilities, { goal, venue: value }),
+              }))}
+            />
+          ) : null}
           {solverGoalKind(effectiveInput) === "arenaLive" ? (
             useModernArena && arenaCatalog && resolvedArena ? <DeckArenaControls
               locale={locale}
@@ -613,61 +693,204 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
               onEntriesChange={setArenaPool}
               onOpenSongPicker={() => setArenaPickerOpen(true)}
             />
-            : <label className="dc-field">{tr("arenaSong")}<select disabled={!!effectiveInput.allSongs} value={goalInput.arenaMusicId ?? ""} onChange={change => updateGoal({ arenaMusicId: change.target.value ? Number(change.target.value) : null })}><option value="">{tr(arenas.length ? "chooseArena" : "noArena")}</option>{arenas.map(row => <option key={row.id} value={row.id}>{songs.find(song => song.id === row.musicId)?.title ?? row.musicId}</option>)}</select></label>
+            : (
+              <DeckSelect
+                label={tr("arenaSong")}
+                disabled={!!effectiveInput.allSongs}
+                value={goalInput.arenaMusicId === null ? "" : String(goalInput.arenaMusicId)}
+                onChange={(raw) => updateGoal({ arenaMusicId: raw ? Number(raw) : null })}
+                options={[
+                  { value: "", label: tr(arenas.length ? "chooseArena" : "noArena") },
+                  ...arenas.map((row) => ({
+                    value: String(row.id),
+                    label: songs.find((song) => song.id === row.musicId)?.title ?? String(row.musicId),
+                  })),
+                ]}
+              />
+            )
           ) : isChallengeInput(effectiveInput) ? <div className="dc-challenge-songs" role="group" aria-label={tr("challengeSong")}>
             {(event?.challengeMusics ?? []).map(row => {
               const music = songs.find(item => item.id === row.musicId);
               return <button type="button" key={row.id} className="dc-song-button md3-state" disabled={!!effectiveInput.allSongs} aria-pressed={goalInput.challengeMusicId === row.id} onClick={() => updateGoal({ challengeMusicId: row.id })}>
-                {music ? <img className="dc-song-cover" src={music.jacketUrl} alt="" /> : <span className="dc-song-cover" aria-hidden="true" />}
+                {music ? <img className="dc-song-cover" src={music.jacketUrl} alt="" /> : <span className="dc-song-cover dc-song-cover--empty" aria-hidden="true" />}
                 <span className="dc-song-summary"><strong>{music?.title ?? row.musicId}</strong></span></button>;
             })}</div>
             : (goal !== "power" || goalInput.powerSong) && <button type="button" className="dc-song-button md3-state" disabled={!!effectiveInput.allSongs} onClick={() => setSongPicker(true)} aria-haspopup="dialog">
-              {selectedSong ? <img className="dc-song-cover" src={selectedSong.jacketUrl} alt="" /> : <svg className="dc-song-cover" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M12 23V9l15-3v14M12 9l15-3M12 23c0 2-2 4-4 4s-4-1-4-3 2-4 4-4 4 1 4 3Zm15-3c0 2-2 4-4 4s-4-1-4-3 2-4 4-4 4 1 4 3Z" /></svg>}
+              {selectedSong ? <img className="dc-song-cover" src={selectedSong.jacketUrl} alt="" /> : <span className="dc-song-cover dc-song-cover--empty" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.7" width="22" height="22"><path d="M12 23V9l15-3v14M12 9l15-3M12 23c0 2-2 4-4 4s-4-1-4-3 2-4 4-4 4 1 4 3Zm15-3c0 2-2 4-4 4s-4-1-4-3 2-4 4-4 4 1 4 3Z" /></svg></span>}
               <span className="dc-song-summary"><small>{tr("song")}</small><strong>{selectedSong?.title ?? composer("emptySong")}</strong></span>
-              <svg className="dc-song-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+              <Icon name="chevronRight" className="dc-song-chevron h-[18px] w-[18px]" />
             </button>}
           {goal !== "power" && (!(useModernArena && !effectiveInput.allSongs) || isEventPayoffGoal(goal)) && <div className="dc-field-pair">
-            {!(useModernArena && !effectiveInput.allSongs) && <label className="dc-field">{tr("difficulty")}<select aria-label={tr("difficulty")} value={goalInput.difficulty} onChange={change => updateGoal({ difficulty: change.target.value as MusicDifficulty })}>
-              {MUSIC_DIFFICULTIES.filter(value => !selectedSong || selectedSong.difficulties.some(entry => entry.difficulty === value)).map(value => <option key={value} value={value}>{value.toUpperCase()}</option>)}</select></label>}
-            {isEventPayoffGoal(goal) && <label className="dc-field">{tr("consumption")}{isChallengeInput(effectiveInput)
-              ? <select aria-label={tr("consumption")} value={goalInput.challengePoints} onChange={change => updateGoal({ challengePoints: Number(change.target.value) as ChallengePointCost })}>
-                {CHALLENGE_POINT_COSTS.map(value => <option key={value} value={value}>{tr("challengePoints", { n: value })}</option>)}</select>
-              : <select aria-label={tr("consumption")} value={goalInput.boosts} onChange={change => updateGoal({ boosts: Number(change.target.value) })}>
-                {Array.from({ length: MAX_BOOST + 1 }, (_, value) => <option key={value} value={value}>{tr("boosts", { n: value })}</option>)}</select>}</label>}
+            {!(useModernArena && !effectiveInput.allSongs) && (
+              <DeckSelect
+                label={tr("difficulty")}
+                value={goalInput.difficulty}
+                onChange={(difficulty) => updateGoal({ difficulty: difficulty as MusicDifficulty })}
+                options={MUSIC_DIFFICULTIES.filter(
+                  (value) => !selectedSong || selectedSong.difficulties.some((entry) => entry.difficulty === value),
+                ).map((value) => ({ value, label: value.toUpperCase() }))}
+              />
+            )}
+            {isEventPayoffGoal(goal) && (isChallengeInput(effectiveInput) ? (
+              <DeckSelect
+                label={tr("consumption")}
+                value={goalInput.challengePoints}
+                onChange={(challengePoints) => updateGoal({ challengePoints: challengePoints as ChallengePointCost })}
+                options={CHALLENGE_POINT_COSTS.map((value) => ({
+                  value,
+                  label: tr("challengePoints", { n: value }),
+                }))}
+              />
+            ) : (
+              <DeckSelect
+                label={tr("consumption")}
+                value={goalInput.boosts}
+                onChange={(boosts) => updateGoal({ boosts })}
+                options={Array.from({ length: MAX_BOOST + 1 }, (_, value) => ({
+                  value,
+                  label: tr("boosts", { n: value }),
+                }))}
+              />
+            ))}
           </div>}
           <DeckRewardMix locale={locale} input={effectiveInput} capabilities={capabilities} challengeSongs={challengeSongs}
             onChange={patch => { updateGoal(patch); if (patch.goal) safeSetLocalStorage(GOAL_STORAGE_KEY, patch.goal); }} />
           {!(useModernArena && effectiveArenaMode === "shared") && <DeckObjective locale={locale} input={effectiveInput} capabilities={capabilities} onChange={aggregation => updateGoal({ aggregation })} />}
           <DeckGoalConditions locale={locale} input={effectiveInput} capabilities={capabilities} onChange={updateGoal} />
-          {goal === "power" && <div className="dc-checks">
-            <label><input type="checkbox" className="md3-checkbox" checked={goalInput.powerSong} onChange={change => updateGoal({ powerSong: change.target.checked })} />{tr("powerSong")}</label>
-            {event && <label><input type="checkbox" className="md3-checkbox" checked={goalInput.eventParameter} onChange={change => updateGoal({ eventParameter: change.target.checked })} />{tr("powerEvent")}</label>}
-          </div>}
+          {goal === "power" && (
+            <div className="dc-switch-group">
+              <DeckSwitchRow
+                label={tr("powerSong")}
+                checked={goalInput.powerSong}
+                onChange={(powerSong) => updateGoal({ powerSong })}
+              />
+              {event && (
+                <DeckSwitchRow
+                  label={tr("powerEvent")}
+                  checked={goalInput.eventParameter}
+                  onChange={(eventParameter) => updateGoal({ eventParameter })}
+                />
+              )}
+            </div>
+          )}
           {isNetworkInput(effectiveInput) && (!capabilities || capabilities.gekisouRank ? (
-            <label className="dc-field">{tr("gekisouRankLabel")}
-              <select aria-label={tr("gekisouRankLabel")} value={goalInput.gekisouRank ?? 1} onChange={change => updateGoal({ gekisouRank: Number(change.target.value) })}>
-                {[1, 2, 3, 4, 5].map(place => <option key={place} value={place}>{tr("gekisouRankOption", { n: place })}</option>)}
-              </select>
-            </label>
-          ) : <p className="dw-muted">{tr("rankFixed")}</p>)}
-          {readsAccuracy(effectiveInput) && <details className="dc-play-style"><summary>{composer("advanced")}</summary>
-            <label>{tr("greatRate", { n: effectiveInput.greatPercent })}<input className="md3-range" style={{ "--md3-range-progress": `${effectiveInput.greatPercent / (playsGekisou(effectiveInput) ? 100 - effectiveInput.justPercent || 1 : 100) * 100}%` } as CSSProperties} aria-label={tr("greatRate", { n: effectiveInput.greatPercent })} type="range" min={0} max={playsGekisou(effectiveInput) ? 100 - effectiveInput.justPercent : 100}
-              value={effectiveInput.greatPercent} onChange={change => updateGoal({ greatPercent: Number(change.target.value) })} /></label>
-            {playsGekisou(effectiveInput) && <label>{tr("justRate", { n: effectiveInput.justPercent })}<input className="md3-range" style={{ "--md3-range-progress": `${effectiveInput.justPercent / (100 - effectiveInput.greatPercent || 1) * 100}%` } as CSSProperties} aria-label={tr("justRate", { n: effectiveInput.justPercent })} type="range" min={0} max={100 - effectiveInput.greatPercent}
-              value={effectiveInput.justPercent} onChange={change => updateGoal({ justPercent: Number(change.target.value) })} /></label>}
-            {capabilities && (!capabilities.accuracy.great || playsGekisou(effectiveInput) && !capabilities.accuracy.just) ? <p className="dw-muted">{tr("accuracyComing")}</p>
-              : <p className="dw-muted">{tr(playsGekisou(effectiveInput) ? "accuracyNoteGekisou" : "accuracyNote")}</p>}
-            {isEventPayoffGoal(goal) && isNetworkInput(effectiveInput) && <label>{tr("othersAverage")}<input type="number" min={0} inputMode="numeric" placeholder={tr("othersAverageSame")}
-              value={goalInput.othersAverageScore ?? ""} onChange={change => updateGoal({ othersAverageScore: change.target.value === "" ? null : Number(change.target.value) })} /></label>}
-          </details>}
-          <div className="dc-condition-actions"><Button variant="outlined" size="small" disabled={!box || busy} onClick={openConstraints}>{composer("searchConstraints")}{required.length + excluded.length + (leaderKey ? 1 : 0) + (noSnaps ? 1 : 0) > 0 && <span className="dc-count">{required.length + excluded.length + (leaderKey ? 1 : 0) + (noSnaps ? 1 : 0)}</span>}</Button>
-            <Button variant="outlined" size="small" disabled={!box || busy} onClick={() => setPlayerSettings(true)}>{composer("playerBonuses")}</Button></div>
+            <DeckSelect
+              label={tr("gekisouRankLabel")}
+              value={goalInput.gekisouRank ?? 1}
+              onChange={(gekisouRank) => updateGoal({ gekisouRank })}
+              options={[1, 2, 3, 4, 5].map((place) => ({
+                value: place,
+                label: tr("gekisouRankOption", { n: place }),
+              }))}
+            />
+          ) : <p className="dc-field-hint">{tr("rankFixed")}</p>)}
+          {readsAccuracy(effectiveInput) && (
+            <details className="dc-play-style">
+              <summary className="dc-play-style-summary md3-state">
+                <span className="dc-play-style-title">
+                  <Icon name="tune" className="h-[18px] w-[18px] text-on-surface-variant" />
+                  <span>{composer("advanced")}</span>
+                </span>
+                <Icon name="chevronDown" className="dc-play-style-chevron h-[18px] w-[18px]" />
+              </summary>
+              <div className="dc-play-style-body">
+                <div className="dc-slider-field">
+                  <div className="dc-slider-head">
+                    <span>{tr("greatRate", { n: effectiveInput.greatPercent })}</span>
+                    <strong>{effectiveInput.greatPercent}%</strong>
+                  </div>
+                  <Slider
+                    size="small"
+                    min={0}
+                    max={playsGekisou(effectiveInput) ? 100 - effectiveInput.justPercent : 100}
+                    value={effectiveInput.greatPercent}
+                    aria-label={tr("greatRate", { n: effectiveInput.greatPercent })}
+                    onChange={(_, next) => updateGoal({ greatPercent: Array.isArray(next) ? next[0] ?? 0 : next })}
+                  />
+                </div>
+                {playsGekisou(effectiveInput) && (
+                  <div className="dc-slider-field">
+                    <div className="dc-slider-head">
+                      <span>{tr("justRate", { n: effectiveInput.justPercent })}</span>
+                      <strong>{effectiveInput.justPercent}%</strong>
+                    </div>
+                    <Slider
+                      size="small"
+                      min={0}
+                      max={100 - effectiveInput.greatPercent}
+                      value={effectiveInput.justPercent}
+                      aria-label={tr("justRate", { n: effectiveInput.justPercent })}
+                      onChange={(_, next) => updateGoal({ justPercent: Array.isArray(next) ? next[0] ?? 0 : next })}
+                    />
+                  </div>
+                )}
+                {capabilities && (!capabilities.accuracy.great || playsGekisou(effectiveInput) && !capabilities.accuracy.just)
+                  ? <p className="dc-field-hint">{tr("accuracyComing")}</p>
+                  : <p className="dc-field-hint">{tr(playsGekisou(effectiveInput) ? "accuracyNoteGekisou" : "accuracyNote")}</p>}
+                {isEventPayoffGoal(goal) && isNetworkInput(effectiveInput) && (
+                  <DeckNumberField
+                    label={tr("othersAverage")}
+                    min={0}
+                    inputMode="numeric"
+                    placeholder={tr("othersAverageSame")}
+                    value={goalInput.othersAverageScore}
+                    onChange={(othersAverageScore) => updateGoal({ othersAverageScore })}
+                  />
+                )}
+              </div>
+            </details>
+          )}
+          <div className="dc-condition-actions">
+            <Button
+              variant={activeConstraintCount > 0 ? "tonal" : "outlined"}
+              size="small"
+              disabled={!box || busy}
+              onClick={openConstraints}
+              startIcon={<Icon name="filter" className="h-[18px] w-[18px]" />}
+            >
+              {composer("searchConstraints")}
+              {activeConstraintCount > 0 && <span className="dc-count">{activeConstraintCount}</span>}
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              disabled={!box || busy}
+              onClick={() => setPlayerSettings(true)}
+              startIcon={<Icon name="tune" className="h-[18px] w-[18px]" />}
+            >
+              {composer("playerBonuses")}
+            </Button>
+          </div>
         </>}
         run={<>
           {engineNotice()}
-          {job.status === "running" ? <Button className="dc-run-button" variant="tonal" size="large" fullWidth onClick={solver.stop}>{tr("solver.stop")}</Button>
-            : <Button className="dc-run-button" size="large" fullWidth disabled={busy || !ownedMembers.length || !canRun} onClick={runSolver}>{tr(job.status === "idle" ? "solver.start" : "solver.rerun")}</Button>}
-          {capabilities?.resume && job.status === "done" && job.answer.status === "ok" && job.answer.result && !job.answer.result.optimality.proven && !stale && <Button variant="text" fullWidth disabled={busy || !canRun} onClick={solver.resume}>{tr("solver.resumeSearch")}</Button>}
+          {job.status === "running" ? (
+            <Button
+              className="dc-run-button"
+              variant="tonal"
+              size="large"
+              fullWidth
+              startIcon={<Icon name="pause" className="h-[18px] w-[18px]" />}
+              onClick={solver.stop}
+            >
+              {tr("solver.stop")}
+            </Button>
+          ) : (
+            <Button
+              className="dc-run-button"
+              variant="filled"
+              size="large"
+              fullWidth
+              startIcon={<Icon name="play" className="h-[18px] w-[18px]" />}
+              disabled={busy || !ownedMembers.length || !canRun}
+              onClick={runSolver}
+            >
+              {tr(job.status === "idle" ? "solver.start" : "solver.rerun")}
+            </Button>
+          )}
+          {capabilities?.resume && job.status === "done" && job.answer.status === "ok" && job.answer.result && !job.answer.result.optimality.proven && !stale && (
+            <Button variant="text" fullWidth disabled={busy || !canRun} onClick={solver.resume}>{tr("solver.resumeSearch")}</Button>
+          )}
           {job.status !== "running" && (runBlocker || blocker) && <small className="dc-blocker">{runBlocker || blocker}</small>}
         </>}
         results={<div ref={teamPanel} className="dc-team-body">
@@ -677,7 +900,47 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
             <h3>{composer(ownedMembers.length ? "readyTitle" : "emptyTitle")}</h3><p>{composer(ownedMembers.length ? "readyDescription" : "emptyDescription")}</p></div>}
         </div>}
       />}
-    <Modal historyNavigation={false} isOpen={setup} onClose={() => setSetup(false)} title={tr(box ? "storageChoice" : "createBox")} closeLabel={tr("close")}><div className="dw-dialog"><p>{tr("storagePrompt")}</p><div className="dw-storage-options">{(["local", "temporary"] as const).map(value => <button className={choice === value ? "is-selected" : ""} aria-pressed={choice === value} key={value} onClick={() => setChoice(value)}><strong>{tr(value)}</strong><span>{tr(value === "local" ? "localNote" : "temporaryNote")}</span></button>)}</div><p className="dw-muted">{tr("cloud.storageNote")}</p>{storage.error && <p className="dw-alert" role="alert">{tr(`storageErrors.${storage.error}`)}</p>}<button disabled={busy} className="dw-primary" onClick={async () => { if (await storage.start(choice)) { setSetup(false); if (page === "deck") setManagement(true); } }}>{tr(box ? "save" : "continue")}</button></div></Modal>
+    <Modal historyNavigation={false} isOpen={setup} onClose={() => setSetup(false)} title={tr(box ? "storageChoice" : "createBox")} closeLabel={tr("close")}>
+      <div className="dw-md3-dialog">
+        <p className="dw-dialog-lead">{tr("storagePrompt")}</p>
+        <div className="dw-storage-options">
+          {(["local", "temporary"] as const).map((value) => (
+            <button
+              type="button"
+              key={value}
+              aria-pressed={choice === value}
+              className={`dw-storage-card md3-state ${choice === value ? "is-selected" : ""}`.trim()}
+              onClick={() => setChoice(value)}
+            >
+              <strong>{tr(value)}</strong>
+              <span>{tr(value === "local" ? "localNote" : "temporaryNote")}</span>
+            </button>
+          ))}
+        </div>
+        <p className="dc-field-hint">{tr("cloud.storageNote")}</p>
+        {storage.error && (
+          <div className="dw-md3-alert" role="alert">
+            <Icon name="info" className="h-5 w-5 shrink-0" />
+            <span>{tr(`storageErrors.${storage.error}`)}</span>
+          </div>
+        )}
+        <div className="dw-dialog-actions">
+          <Button variant="text" onClick={() => setSetup(false)}>{tr("close")}</Button>
+          <Button
+            variant="filled"
+            disabled={busy}
+            onClick={async () => {
+              if (await storage.start(choice)) {
+                setSetup(false);
+                if (page === "deck") setManagement(true);
+              }
+            }}
+          >
+            {tr(box ? "save" : "continue")}
+          </Button>
+        </div>
+      </div>
+    </Modal>
     <Modal historyNavigation={false} isOpen={management && box !== null} onClose={() => setManagement(false)} title={tr("boxTitle")} closeLabel={tr("close")} size="xl">{stored && box && <CloudBoxPanel locale={locale} server={server} box={stored} busy={busy} returnTo={returnTo} />}{stored && box && <BoxManager key={`${server}:${stored.id}`} locale={locale} box={stored} view={linked ? box : undefined} notice={saveNotice} mode={mode} busy={busy} commit={storage.commit} playerCatalogue={playerCatalogue} onRecognize={openScreenshotImport} onImportSave={openSavePicker} onGuide={openGuide} onStorage={() => { setManagement(false); openStorage(); }} onDelete={() => { setManagement(false); setDeleting(true); }} {...catalog} />}</Modal>
     {box && <BoxCardEditor locale={locale} box={box} cardKey={editingCardKey} busy={busy} commit={storage.commit} onClose={() => setEditingCardKey(null)} readOnly={linked} {...catalog} />}
     <MusicSelectDialog key={`songs:${server}`} locale={locale} songs={songs} open={songPicker} onClose={() => setSongPicker(false)}
@@ -700,19 +963,136 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
     <ScreenshotImport locale={locale} server={server} source={recognition.context?.source} sourceIssue={recognition.issue} box={box} mode={mode} catalog={catalog} isOpen={importing} onClose={() => { setImporting(false); setPendingScreenshots([]); }} onSave={saveScreenshot} pendingFiles={pendingScreenshots} onPendingFilesConsumed={() => setPendingScreenshots([])} />
     <CardBoxGuide key={`guide:${server}`} locale={locale} members={members} snaps={snaps} isOpen={guideOpen} onClose={() => setGuideOpen(false)} onStartImport={openScreenshotImport} />
     <GameSavePicker locale={locale} server={server} isOpen={savePicker} onClose={() => setSavePicker(false)} list={saveList} busy={busy} onLink={pickGameSave} returnTo={returnTo} onScreenshot={openScreenshotImport} />
-    <Modal historyNavigation={false} isOpen={constraintsOpen} onClose={() => setConstraintsOpen(false)} title={composer("constraintsTitle")} closeLabel={tr("close")} size="lg"><div className="dw-dialog dc-options">
-        <p className="dw-muted">{composer("constraintDescription")}</p>
-        <div className="dc-checks">
-          <label><input type="checkbox" className="md3-checkbox" checked={noSnaps} onChange={event => setNoSnaps(event.target.checked)} />{composer("noSnaps")}</label>
+    <Modal historyNavigation={false} isOpen={constraintsOpen} onClose={() => setConstraintsOpen(false)} title={composer("constraintsTitle")} closeLabel={tr("close")} size="lg">
+      <div className="dw-md3-dialog dc-options">
+        <p className="dc-field-hint">{composer("constraintDescription")}</p>
+        <DeckSwitchRow
+          label={composer("noSnaps")}
+          checked={noSnaps}
+          onChange={setNoSnaps}
+        />
+        <div className="dc-constraint-toolbar">
+          {ownedMembers.length > 0 && ownedSnaps.length > 0 && (
+            <DeckSegmented
+              size="small"
+              fullWidth={false}
+              ariaLabel={composer("constraintKind")}
+              value={shownConstraintKind}
+              onChange={setConstraintKind}
+              options={(["member", "snap"] as const).map((kind) => ({
+                value: kind,
+                label: tr(kind),
+              }))}
+            />
+          )}
+          <DeckSegmented
+            size="small"
+            fullWidth={false}
+            ariaLabel={composer("constraintsTitle")}
+            value={constraintFilter}
+            onChange={setConstraintFilter}
+            options={(["all", "required", "excluded"] as const).map((value) => ({
+              value,
+              label:
+                value === "all"
+                  ? composer("constraintAll")
+                  : value === "required"
+                    ? `${composer("constraintRequired")}${requiredConstraintCount ? ` (${requiredConstraintCount})` : ""}`
+                    : `${composer("constraintExcluded")}${excluded.length ? ` (${excluded.length})` : ""}`,
+            }))}
+          />
         </div>
-        {ownedMembers.length > 0 && ownedSnaps.length > 0 && <div className="dc-option-tabs" role="group" aria-label={composer("constraintKind")}>{(["member", "snap"] as const).map(kind => <button type="button" key={kind} aria-pressed={shownConstraintKind === kind} onClick={() => setConstraintKind(kind)}>{tr(kind)}</button>)}</div>}
-        <div className="dc-option-tabs" role="group" aria-label={composer("constraintsTitle")}>{(["all", "required", "excluded"] as const).map(value => <button type="button" key={value} aria-pressed={constraintFilter === value} onClick={() => setConstraintFilter(value)}>{composer(value === "all" ? "constraintAll" : value === "required" ? "constraintRequired" : "constraintExcluded")}</button>)}</div>
         <CardFilters locale={locale} kind={shownConstraintKind === "member" ? "member" : "support"} controller={constraintCards} variant="card" searchPlaceholder={tr("searchCards")} />
-        <div className="dc-constraint-list">{constraintCards.sorted.map(({ card }) => <div key={card.key} className="dc-constraint-card"><BoxArtwork card={card} catalog={catalog} locale={locale} square /><div className="dc-constraint-info"><strong>{cardTitle(card, catalog)}</strong><small>{cardSubtitle(card, catalog)}</small></div>
-            <div className="dc-constraint-actions">{card.kind === "member" && <label><input type="checkbox" className="md3-checkbox" checked={leaderKey === card.key} disabled={excluded.includes(card.key)} onChange={() => setLeaderKey(prev => prev === card.key ? null : card.key)} />{composer("leaderShort")}</label>}{card.kind === "member" && <label><input type="checkbox" className="md3-checkbox" checked={required.includes(card.key)} disabled={excluded.includes(card.key) || required.filter(key => box?.cards.find(other => other.key === key)?.kind === card.kind).length >= 5 && !required.includes(card.key)} onChange={() => toggle(required, card.key, setRequired)} />{tr("required")}</label>}<label><input type="checkbox" className="md3-checkbox" checked={excluded.includes(card.key)} disabled={required.includes(card.key) || leaderKey === card.key} onChange={() => toggle(excluded, card.key, setExcluded)} />{tr("excluded")}</label></div></div>)}</div>
-        {!constraintCards.sorted.length && <p className="dw-muted">{tr("emptyCards")}</p>}
-      <Button variant="tonal" onClick={() => setConstraintsOpen(false)}>{tr("done")}</Button></div></Modal>
-    <Modal historyNavigation={false} isOpen={deleting} onClose={() => setDeleting(false)} title={tr("deleteBox")} closeLabel={tr("close")}><div className="dw-dialog"><p>{tr("deleteNote")}</p><button className="dw-danger" disabled={busy} onClick={async () => { if (await storage.remove()) setDeleting(false); }}>{tr("confirmDelete")}</button></div></Modal>
+        <div className="dc-constraint-list">
+          {constraintCards.sorted.map(({ card }) => {
+            const isLeader = leaderKey === card.key;
+            const isRequired = required.includes(card.key);
+            const isExcluded = excluded.includes(card.key);
+            const memberRequiredCount = required.filter((key) => box?.cards.find((other) => other.key === key)?.kind === card.kind).length;
+            return (
+              <div key={card.key} className="dc-constraint-card">
+                <BoxArtwork card={card} catalog={catalog} locale={locale} square />
+                <div className="dc-constraint-info">
+                  <strong>{cardTitle(card, catalog)}</strong>
+                  <small>{cardSubtitle(card, catalog)}</small>
+                </div>
+                <div className="dc-constraint-actions">
+                  {card.kind === "member" && (
+                    <button
+                      type="button"
+                      className="md3-filter-chip md3-state dc-constraint-chip"
+                      aria-pressed={isLeader}
+                      disabled={isExcluded}
+                      onClick={() => setLeaderKey((prev) => (prev === card.key ? null : card.key))}
+                    >
+                      {isLeader && <Icon name="check" className="h-4 w-4" />}
+                      <span>{composer("leaderShort")}</span>
+                    </button>
+                  )}
+                  {card.kind === "member" && (
+                    <button
+                      type="button"
+                      className="md3-filter-chip md3-state dc-constraint-chip"
+                      aria-pressed={isRequired}
+                      disabled={isExcluded || (memberRequiredCount >= 5 && !isRequired)}
+                      onClick={() => toggle(required, card.key, setRequired)}
+                    >
+                      {isRequired && <Icon name="check" className="h-4 w-4" />}
+                      <span>{tr("required")}</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="md3-filter-chip md3-state dc-constraint-chip dc-constraint-chip--exclude"
+                    aria-pressed={isExcluded}
+                    disabled={isRequired || isLeader}
+                    onClick={() => toggle(excluded, card.key, setExcluded)}
+                  >
+                    {isExcluded && <Icon name="close" className="h-4 w-4" />}
+                    <span>{tr("excluded")}</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        {!constraintCards.sorted.length && <p className="dc-field-hint">{tr("emptyCards")}</p>}
+        <div className="dw-dialog-actions">
+          {(activeConstraintCount > 0) && (
+            <Button
+              variant="text"
+              onClick={() => {
+                setLeaderKey(null);
+                setRequired([]);
+                setExcluded([]);
+                setNoSnaps(false);
+              }}
+            >
+              {t(locale, "filters.reset")}
+            </Button>
+          )}
+          <Button variant="filled" onClick={() => setConstraintsOpen(false)}>{tr("done")}</Button>
+        </div>
+      </div>
+    </Modal>
+    <Modal historyNavigation={false} isOpen={deleting} onClose={() => setDeleting(false)} title={tr("deleteBox")} closeLabel={tr("close")}>
+      <div className="dw-md3-dialog">
+        <p className="dw-dialog-lead">{tr("deleteNote")}</p>
+        <div className="dw-dialog-actions">
+          <Button variant="text" onClick={() => setDeleting(false)}>{tr("close")}</Button>
+          <Button
+            variant="filled"
+            color="error"
+            disabled={busy}
+            onClick={async () => {
+              if (await storage.remove()) setDeleting(false);
+            }}
+          >
+            {tr("confirmDelete")}
+          </Button>
+        </div>
+      </div>
+    </Modal>
   </div></ContentServerProvider>;
 }
 export default withMd3(DeckWorkspace);
