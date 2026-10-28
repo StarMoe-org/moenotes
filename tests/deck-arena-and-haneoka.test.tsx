@@ -7,12 +7,17 @@ import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import DeckResult from "../src/components/deck/DeckResult";
 import DeckArenaControls from "../src/components/deck/DeckArenaControls";
+import DeckGoalConditions from "../src/components/deck/DeckGoalConditions";
+import DeckWorkspace from "../src/components/deck/DeckWorkspace";
+import { GameSaveBanner, StarMoeBoxTokenNotice } from "../src/components/box/GameSave";
+import { Md3Provider } from "../src/components/md3/Md3Provider";
+import { STARMOE_BOX_APP } from "../src/config/account";
 import {
-  arenaPeriod, arenaSongMatchesBand, effectiveArenaSongRule, isValidArenaRule, resolveArenaRule,
+  activeSongRules, arenaPeriod, arenaSongMatchesBand, effectiveArenaSongRule, isValidArenaRule, isValidSongRules, resolveArenaRule,
   type DeckArenaCatalog, type DeckArenaRule,
 } from "../src/lib/deck/arena";
 import {
-  computes, defaultDeckGoalInput, goalGap, recommendationRequest, type DeckGoalInput,
+  computes, defaultDeckGoalInput, goalGap, parseCapabilities, recommendationRequest, type DeckGoalInput,
 } from "../src/lib/deck/goals";
 import { deckDataGap, type DeckDataCatalog } from "../src/lib/deck/data-coverage";
 import { parseDeckAnswer } from "../src/lib/deck/answer";
@@ -365,7 +370,7 @@ describe("Haneoka patch identity and 1.1.0.100 Arena + cumulative Snap adaptatio
     const patchBytes = readFileSync(join(process.cwd(), "patches/haneoka-rewards.patch"));
     const actualSha = createHash("sha256").update(patchBytes).digest("hex");
     expect(actualSha).toBe(HANEOKA_PATCH_SHA);
-    expect(HANEOKA_COMMIT).toBe("8b6915c140b6239cff5f4bca78380b654ed722e6");
+    expect(HANEOKA_COMMIT).toBe("cf9b3c64f517e5033e0280e65a556bb7a67a83e3");
 
     const { data, datasetId } = loadReal110Slice();
     const engineData = adaptData(data, datasetId);
@@ -508,7 +513,12 @@ describe("Haneoka patch identity and 1.1.0.100 Arena + cumulative Snap adaptatio
     const solver = new mod.DeckSolver(rawBytes, { datasetId });
     try {
       expect(solver.datasetId).toBe(datasetId);
-      expect(JSON.parse(solver.capabilities())).toMatchObject({ arenaRules: true, gekisouRank: true });
+      expect(JSON.parse(solver.capabilities())).toMatchObject({
+        arenaRules: true,
+        gekisouRank: true,
+        songRules: true,
+        crossSongMean: true,
+      });
 
       const accountJson = JSON.stringify(e2eAccount);
 
@@ -546,4 +556,122 @@ describe("Haneoka patch identity and 1.1.0.100 Arena + cumulative Snap adaptatio
       solver.free();
     }
   }, 240_000);
+
+  test("adapts songRules overrides and cross-song mean formation optimization across Haneoka cf9b3c6 features", () => {
+    const { data } = loadReal110Slice();
+    const caps = parseCapabilities(JSON.stringify(CAPABILITIES))!;
+    expect(caps.songRules).toBe(true);
+    expect(caps.crossSongMean).toBe(true);
+
+    expect(isValidSongRules({ musicType: 99, missions: [1, 2, 3] })).toBe(true);
+    expect(isValidSongRules({ musicType: 6, missions: [0, 0, 0] })).toBe(false);
+    expect(activeSongRules({ musicType: 0, missions: [0, 0, 0] }, true)).toBeUndefined();
+    expect(activeSongRules({ musicType: 0, missions: [1, 2, 3] }, false)).toBeUndefined();
+    expect(activeSongRules({ musicType: 3, missions: [1, 2, 3] }, false)).toEqual({ musicType: 3, missions: [0, 0, 0] });
+    expect(activeSongRules({ musicType: 3, missions: [1, 2, 3] }, true)).toEqual({ musicType: 3, missions: [1, 2, 3] });
+
+    const battleGoal: DeckGoalInput = {
+      ...defaultDeckGoalInput("battle"),
+      musicId: 100001,
+      difficulty: "expert",
+      songRules: { musicType: 99, missions: [1, 2, 3] },
+    };
+    expect(computes(caps, battleGoal)).toBe(true);
+    expect(computes({ ...caps, songRules: false }, battleGoal)).toBe(false);
+    const battleReqJson = recommendationRequest(battleGoal, {
+      event: null,
+      now: Date.now(),
+      constraints: { includeMembers: [], excludeMembers: [], excludeSnaps: [] },
+    });
+    const adaptedBattle = adaptRequest(data, JSON.parse(battleReqJson) as RecommendationRequest);
+    expect(adaptedBattle.songRules).toEqual({ musicType: 99, missions: [1, 2, 3] });
+
+    const freeMeanGoal: DeckGoalInput = {
+      ...defaultDeckGoalInput("free"),
+      allSongs: true,
+      multiSongMode: "mean",
+      difficulty: "expert",
+      songRules: { musicType: 2, missions: [2, 2, 2] },
+    };
+    expect(computes(caps, freeMeanGoal)).toBe(true);
+    expect(computes({ ...caps, crossSongMean: false }, freeMeanGoal)).toBe(false);
+    const freeMeanReqJson = recommendationRequest(
+      freeMeanGoal,
+      {
+        event: null,
+        now: Date.now(),
+        constraints: { includeMembers: [], excludeMembers: [], excludeSnaps: [] },
+      },
+      { songScope: { field: "musicIds", ids: [100001, 100002] } },
+    );
+    const adaptedFreeMean = adaptRequest(data, JSON.parse(freeMeanReqJson) as RecommendationRequest);
+    expect((adaptedFreeMean as { aggregation?: string }).aggregation).toBe("mean");
+    expect(adaptedFreeMean.songRules).toEqual({ musicType: 2, missions: [0, 0, 0] });
+    expect((adaptedFreeMean.goal as { songs: unknown[] }).songs).toHaveLength(2);
+
+    // Rejects cross-song mean on event reward metrics or maximum aggregation
+    expect(() =>
+      adaptRequest(data, {
+        format: "ournotes-deck.recommendation-request/2",
+        goal: { kind: "freeLive", musicIds: [100001, 100002], multiSong: "mean", difficulty: "expert" },
+        metric: { kind: "score" },
+        aggregation: "maximum",
+        k: 3,
+      }),
+    ).toThrow("haneoka-cross-song-mean");
+
+    const conditionsHtml = renderToStaticMarkup(
+      <Md3Provider>
+        <DeckGoalConditions locale="zh-CN" input={battleGoal} capabilities={caps} onChange={() => {}} />
+      </Md3Provider>,
+    ).replace(/<style[^>]*>[\s\S]*?<\/style>/g, "");
+    expect(conditionsHtml).not.toContain("<select");
+    expect(conditionsHtml).toContain("歌曲属性");
+    expect(conditionsHtml).toContain("任务 1");
+    expect(conditionsHtml).toContain("COMBO");
+    expect(conditionsHtml).toContain("LUCK");
+    expect(conditionsHtml).toContain("JUST");
+  });
+});
+
+describe("StarMoe Box refresh-token expiry notice and v0.1.4+ upgrade guidance", () => {
+  test("points STARMOE_BOX_APP to latest release APK and renders refresh-token expiry notice on Deck & Save UI", () => {
+    expect(STARMOE_BOX_APP.minRecommendedVersion).toBe("0.1.4");
+    expect(STARMOE_BOX_APP.download).toBe("https://github.com/StarMoe-org/StarMoe-box/releases/latest/download/app-release.apk");
+    expect(STARMOE_BOX_APP.releases).toBe("https://github.com/StarMoe-org/StarMoe-box/releases/latest");
+
+    const zhWorkspaceHtml = renderToStaticMarkup(
+      <DeckWorkspace locale="zh-CN" page="deck" servers={["jp"]} members={[]} snaps={[]} songs={[]} />,
+    ).replace(/<style[^>]*>[\s\S]*?<\/style>/g, "");
+    expect(zhWorkspaceHtml).toContain("unable to fetch refresh token");
+    expect(zhWorkspaceHtml).toContain("登录状态已过期");
+    expect(zhWorkspaceHtml).toContain("v0.1.4+");
+    expect(zhWorkspaceHtml).toContain(STARMOE_BOX_APP.download);
+
+    const enNoticeHtml = renderToStaticMarkup(
+      <Md3Provider>
+        <StarMoeBoxTokenNotice locale="en-US" />
+      </Md3Provider>,
+    ).replace(/<style[^>]*>[\s\S]*?<\/style>/g, "");
+    expect(enNoticeHtml).toContain("unable to fetch refresh token");
+    expect(enNoticeHtml).toContain("expired");
+    expect(enNoticeHtml).toContain("v0.1.4+");
+
+    const bannerHtml = renderToStaticMarkup(
+      <GameSaveBanner
+        locale="zh-CN"
+        link={{ server: "jp", accountId: "10000001", sha256: "a".repeat(64), uploadedAt: 1_760_000_000_000 }}
+        state={{ status: "ready", save: { server: "jp", accountId: "10000001", sha256: "a".repeat(64), player: {} } }}
+        derivation={null}
+        list={{ access: "signed-in", saves: [], error: false, refresh: async () => [] }}
+        busy={false}
+        returnTo="/tools/card-box"
+        onRetry={() => {}}
+        onUpdate={async () => true}
+        onUnlink={async () => true}
+      />,
+    );
+    expect(bannerHtml).toContain("unable to fetch refresh token");
+    expect(bannerHtml).toContain("v0.1.4+");
+  });
 });

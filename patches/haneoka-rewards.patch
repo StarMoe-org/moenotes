@@ -1,5 +1,5 @@
 diff --git a/src/api.rs b/src/api.rs
-index 2cd63f4..a0ddadd 100644
+index f89d135..2231c73 100644
 --- a/src/api.rs
 +++ b/src/api.rs
 @@ -1,3 +1,6 @@
@@ -9,7 +9,7 @@ index 2cd63f4..a0ddadd 100644
  //! Engine context and platform-neutral team evaluation. Chart loading is owned
  //! by the caller; the same release-bound context can serve native and WASM.
  use crate::{
-@@ -517,6 +520,45 @@ impl crate::search::Objective for PowerObjective {
+@@ -518,6 +521,45 @@ impl crate::search::Objective for PowerObjective {
          })
      }
  }
@@ -55,7 +55,7 @@ index 2cd63f4..a0ddadd 100644
  fn constraints(
      input: &Value,
      members: &[power::Member],
-@@ -687,7 +729,9 @@ impl Engine {
+@@ -688,7 +730,9 @@ impl Engine {
                  challenge,
              )?)
          };
@@ -66,7 +66,7 @@ index 2cd63f4..a0ddadd 100644
              .and_then(|id| self.master.events.get(&id))
              .map(|e| e.effects.as_slice())
              .unwrap_or_default();
-@@ -717,6 +761,9 @@ impl Engine {
+@@ -718,6 +762,9 @@ impl Engine {
                      &cards.snaps,
                      master::number(&request["goal"]["windowSeconds"], 120.0),
                  ))
@@ -76,7 +76,7 @@ index 2cd63f4..a0ddadd 100644
              } else {
                  Box::new(PowerObjective)
              };
-@@ -745,7 +792,7 @@ impl Engine {
+@@ -746,7 +793,7 @@ impl Engine {
              on_candidate: Some(&mut crate::progress::emit),
              progress: None,
          })?;
@@ -85,7 +85,7 @@ index 2cd63f4..a0ddadd 100644
          Ok(
              json!({"results":[{"song":song,"hits":hits,"proven":output.proven,"bound":output.bound,"stats":output.stats}],"overall":hits,"unknownCards":cards.unknown,"elapsedMs":now()-started,"stopReason":if output.proven{None}else if generation!=crate::cancellation_generation(){Some("cancelled")}else{Some("budget")}}),
          )
-@@ -1631,6 +1678,8 @@ impl Engine {
+@@ -1644,6 +1691,8 @@ impl Engine {
                  source,
              ))
          });
@@ -94,7 +94,7 @@ index 2cd63f4..a0ddadd 100644
          let output = gekiso_objective::search_scored(
              gekiso_objective::Input {
                  env: gekiso_objective::Environment {
-@@ -1661,11 +1710,20 @@ impl Engine {
+@@ -1674,11 +1723,20 @@ impl Engine {
                  seeded: request["seeded"] == true,
                  shard,
                  floor,
@@ -117,7 +117,7 @@ index 2cd63f4..a0ddadd 100644
          #[cfg(not(target_arch = "wasm32"))]
          let output =
              {
-@@ -1703,7 +1761,7 @@ impl Engine {
+@@ -1716,7 +1774,7 @@ impl Engine {
          let hits:Vec<_>=output.hits.iter().map(|hit|{if hit.detail["pendingScores"] == true { return json!({"comboBonus":hit.detail["comboBonus"],"song":song,"members":hit.team.members.iter().map(|&i|cards.members[i].key.clone()).collect::<Vec<_>>(),"snaps":hit.team.snaps.iter().map(|&j|if j<0{None}else{Some(cards.snaps[j as usize].key.clone())}).collect::<Vec<_>>(),"power":hit.power,"slotPowers":hit.slot_powers,"key":hit.key,"score":null,"pendingScores":true}); } let scores=&hit.detail["scores"];let values:Vec<_>=master::rows(&scores["scores"]).iter().map(|v|master::number(v,0.0)).collect();let mut sorted=values.clone();sorted.sort_by(f64::total_cmp);let mut ranks:BTreeMap<i32,i32>=BTreeMap::new();for &value in &values{*ranks.entry(crate::chart::battle_rank(&compiled,value)).or_default()+=1;}let keys=|order:usize|live::orders()[order].map(|slot|cards.members[hit.team.members[slot]].key.clone());json!({"comboBonus":hit.detail["comboBonus"],"song":song,"members":hit.team.members.iter().map(|&i|cards.members[i].key.clone()).collect::<Vec<_>>(),"snaps":hit.team.snaps.iter().map(|&j|if j<0{None}else{Some(cards.snaps[j as usize].key.clone())}).collect::<Vec<_>>(),"power":hit.power,"slotPowers":hit.slot_powers,"key":hit.key,"score":{"mean":scores["mean"],"min":scores["min"],"max":scores["max"],"median":(sorted[59]+sorted[60])/2.0,"worstOrder":keys(master::int(&scores["minOrder"]) as usize),"bestOrder":keys(master::int(&scores["maxOrder"]) as usize),"orders":values.iter().map(|v|crate::num::round(*v)).collect::<Vec<_>>(),"ranks":ranks,"rangeScores":scores["rangeScores"]}})}).collect();
          self.gekiso_cache.replace(Some((cache_key, chart)));
          Ok(
@@ -126,7 +126,7 @@ index 2cd63f4..a0ddadd 100644
          )
      }
  }
-@@ -1741,7 +1799,10 @@ impl Engine {
+@@ -1754,7 +1812,10 @@ impl Engine {
              Some("skip") => RouteKind::Skip,
              _ => RouteKind::Live,
          };
@@ -138,7 +138,7 @@ index 2cd63f4..a0ddadd 100644
          let songs = if kind == RouteKind::Skip && master::rows(&goal["songs"]).is_empty() {
              vec![Value::Null]
          } else {
-@@ -1798,7 +1859,7 @@ impl Engine {
+@@ -1811,7 +1872,7 @@ impl Engine {
                          .ok_or("missing-chart")?,
                  )?;
              }
@@ -147,7 +147,7 @@ index 2cd63f4..a0ddadd 100644
                  Some(master::int(&goal["eventId"]))
              } else {
                  None
-@@ -1813,21 +1874,21 @@ impl Engine {
+@@ -1826,21 +1887,21 @@ impl Engine {
                  )?)
              };
              let member_pct = |m: &power::Member| {
@@ -172,7 +172,7 @@ index 2cd63f4..a0ddadd 100644
                      let key = json!([
                          song,
                          request["members"],
-@@ -1868,7 +1929,7 @@ impl Engine {
+@@ -1881,7 +1942,7 @@ impl Engine {
                              floor_exclusive: false,
  
                              streaming: true,
@@ -181,7 +181,7 @@ index 2cd63f4..a0ddadd 100644
                              member_power_percent: Some(&member_pct),
                              snap_power_percent: Some(&snap_pct),
                              on_candidate: None,
-@@ -1903,7 +1964,8 @@ impl Engine {
+@@ -1916,7 +1977,8 @@ impl Engine {
                      0.0,
                      exchange,
                      score_cap,
@@ -191,7 +191,7 @@ index 2cd63f4..a0ddadd 100644
                  match weights {
                      Some((cp, other)) => objective.with_weights(cp, other),
                      None => objective,
-@@ -1922,6 +1984,7 @@ impl Engine {
+@@ -1935,6 +1997,7 @@ impl Engine {
              {
                  return Err("event-reward-phase".into());
              }
@@ -199,7 +199,7 @@ index 2cd63f4..a0ddadd 100644
              let mut objective: Box<dyn Objective> = if let Some(plan) = &plan {
                  use crate::reward_plan::{Context, Metric, Ranked, Source};
                  Box::new(Ranked::new(Source::Ordinary(Box::new(EventObjective::new(
-@@ -1929,6 +1992,12 @@ impl Engine {
+@@ -1942,6 +2005,12 @@ impl Engine {
                      plan.anchor() == Metric::Points, &goal["play"], true, 0.0, None, score_cap,
                  ))), Context { plan: plan.clone(), source_anchor: plan.anchor(), route: route.clone(), chart, members: &cards.members,
                      snaps: &cards.snaps, k, floor: f64::NEG_INFINITY, skip_rank: self.master.params.skip_rank, observations: 120 }))
@@ -212,7 +212,7 @@ index 2cd63f4..a0ddadd 100644
              } else if cp_measure {
                  Box::new(ChallengePoints::new(
                      LiveObjective {
-@@ -1944,7 +2013,7 @@ impl Engine {
+@@ -1957,7 +2026,7 @@ impl Engine {
                      },
                      chart.unwrap().clone(),
                      route.clone(),
@@ -221,7 +221,7 @@ index 2cd63f4..a0ddadd 100644
              } else {
                  Box::new(make_event())
              };
-@@ -1989,7 +2058,7 @@ impl Engine {
+@@ -2002,7 +2071,7 @@ impl Engine {
                      floor_exclusive: false,
  
                      streaming: true,
@@ -230,7 +230,7 @@ index 2cd63f4..a0ddadd 100644
                      member_power_percent: Some(&member_pct),
                      snap_power_percent: Some(&snap_pct),
                      on_candidate: if notify { Some(&mut publish) } else { None },
-@@ -1998,6 +2067,31 @@ impl Engine {
+@@ -2011,6 +2080,31 @@ impl Engine {
              };
              let mut seeds = seed_teams(request, &song, &cards.members, &cards.snaps);
              seeds.extend(cap_seeds);
@@ -262,7 +262,7 @@ index 2cd63f4..a0ddadd 100644
              let mut output = if phase.is_some_and(|phase| phase != "primary") {
                  let target = request["rewardPhase"]["reward"]
                      .as_f64()
-@@ -2052,14 +2146,18 @@ impl Engine {
+@@ -2065,14 +2159,18 @@ impl Engine {
                      )]
                      .as_f64()
                      .unwrap_or(f64::NEG_INFINITY)
@@ -282,7 +282,7 @@ index 2cd63f4..a0ddadd 100644
              }) {
                  let mut keys: Vec<_> = output.hits.iter().map(|h| h.key).collect();
                  keys.sort_by(|a, b| b.total_cmp(a));
-@@ -2152,7 +2250,7 @@ impl Engine {
+@@ -2165,7 +2263,7 @@ impl Engine {
                  }
                  output.hits = ordered;
              }
@@ -291,7 +291,7 @@ index 2cd63f4..a0ddadd 100644
                  let mut keys: Vec<_> = output.hits.iter().map(|h| h.key).collect();
                  keys.sort_by(|a, b| b.total_cmp(a));
                  keys.dedup();
-@@ -2193,15 +2291,26 @@ impl Engine {
+@@ -2206,15 +2304,26 @@ impl Engine {
                  }
                  output.hits = ordered;
              }
@@ -320,7 +320,7 @@ index 2cd63f4..a0ddadd 100644
              if let Some(phase) = phase {
                  part["rewardPhase"] = json!(phase);
              }
-@@ -2504,7 +2613,7 @@ impl Engine {
+@@ -2526,7 +2635,7 @@ impl Engine {
          if kind == "plan" {
              return self.plan(input, started, now);
          }
@@ -329,7 +329,7 @@ index 2cd63f4..a0ddadd 100644
              vec![request["goal"]["song"].clone()]
          } else {
              master::rows(&request["goal"]["songs"])
-@@ -2517,7 +2626,7 @@ impl Engine {
+@@ -2539,7 +2648,7 @@ impl Engine {
          } else {
              songs
          };
@@ -338,7 +338,7 @@ index 2cd63f4..a0ddadd 100644
              return Err(format!("unsupported-goal:{kind}"));
          }
          let deadline = request["deadline"].as_f64().unwrap_or_else(|| {
-@@ -2567,6 +2676,7 @@ impl Engine {
+@@ -2589,6 +2698,7 @@ impl Engine {
              crate::progress::chart(self.charts.get(&key), kind == "gekiso");
              let mut single = request.clone();
              single["goal"]["songs"] = json!([song]);
@@ -346,7 +346,7 @@ index 2cd63f4..a0ddadd 100644
              let current = now();
              let song_deadline = (current
                  + (deadline - current).max(0.0) / (songs.len() - index) as f64)
-@@ -2575,13 +2685,15 @@ impl Engine {
+@@ -2597,13 +2707,15 @@ impl Engine {
                  single["deadline"] = json!(song_deadline);
              }
              let mut response = match kind {
@@ -364,7 +364,7 @@ index 2cd63f4..a0ddadd 100644
                      }
                  }
                  "gekiso" => self.search_gekiso(
-@@ -3891,6 +4003,21 @@ fn merge_reward_candidates(
+@@ -3913,6 +4025,21 @@ fn merge_reward_candidates(
  }
  
  fn compare_hits(a: &Value, b: &Value) -> std::cmp::Ordering {
@@ -386,7 +386,7 @@ index 2cd63f4..a0ddadd 100644
      let ranking = crate::reward_plan::compare(&b["rewardRanking"], &a["rewardRanking"]);
      ranking.unwrap_or_else(|| master::number(&b["key"], 0.0)
          .total_cmp(&master::number(&a["key"], 0.0))
-@@ -3911,6 +4038,8 @@ impl Engine {
+@@ -3937,6 +4064,8 @@ impl Engine {
              return scoped.evaluate_all(&scoped_input);
          }
          let request = &input["request"];
@@ -395,7 +395,7 @@ index 2cd63f4..a0ddadd 100644
          let mut out = Vec::new();
          for song in master::rows(&request["songs"]) {
              self.load_source(input, song)?;
-@@ -4092,3 +4221,77 @@ pub(crate) fn normalize_hit(hit: &mut Value) {
+@@ -4122,3 +4251,77 @@ pub(crate) fn normalize_hit(hit: &mut Value) {
          }
      }
  }
@@ -474,7 +474,7 @@ index 2cd63f4..a0ddadd 100644
 +    }
 +}
 diff --git a/src/api/arena.rs b/src/api/arena.rs
-index 976d584..7a2c3f0 100644
+index dcce107..c3d5713 100644
 --- a/src/api/arena.rs
 +++ b/src/api/arena.rs
 @@ -1,3 +1,4 @@
@@ -482,24 +482,49 @@ index 976d584..7a2c3f0 100644
  //! Arena Master overrides are scoped to one call; raw chart cache entries never change identity.
  use super::*;
  use crate::{gekiso, gekiso_objective, search};
-@@ -57,7 +58,7 @@ impl Engine {
-             let item = Arc::make_mut(&mut master.songs)
-                 .get_mut(&id)
-                 .ok_or("unknown song")?;
--            if !item.band_ids.contains(&band) {
+@@ -37,13 +38,8 @@ impl Engine {
+         let master = crate::song_rules::view(&self.master, rule)?;
+         for song in &songs {
+             let id = master::int(&song["songId"]);
+-            if !master
+-                .songs
+-                .get(&id)
+-                .ok_or("unknown song")?
+-                .band_ids
+-                .contains(&band)
+-            {
++            let item = master.songs.get(&id).ok_or("unknown song")?;
 +            if !item.band_ids.is_empty() && !item.band_ids.contains(&band) {
                  return Err("arena-song-band".into());
              }
-             if music_type != 0 {
-@@ -165,6 +166,8 @@ impl Engine {
+         }
+@@ -203,6 +199,8 @@ impl Engine {
                  .map(|ms| started + ms)
                  .unwrap_or(f64::INFINITY)
          });
 +        #[cfg(target_arch="wasm32")]
 +        let _scope = crate::clock::deadline_scope(Some(deadline));
+         let mut initial = seed_teams(request, &Value::Null, &cards.members, &cards.snaps);
+         if initial.is_empty()
+             && !(self.trusted_scores && request["seeded"] == true)
+@@ -218,9 +216,14 @@ impl Engine {
+             for key in ["shard", "floors", "completed", "seeded"] {
+                 trial["request"][key] = Value::Null;
+             }
+-            let warm = crate::progress::with_callback(None, || scoped.run(&trial, started, now))?;
+-            trial["request"]["seeds"] = warm["overall"].clone();
+-            initial = seed_teams(&trial["request"], &songs[0], &cards.members, &cards.snaps);
++            match crate::progress::with_callback(None, || scoped.run(&trial, started, now)) {
++                Ok(warm) => {
++                    trial["request"]["seeds"] = warm["overall"].clone();
++                    initial = seed_teams(&trial["request"], &songs[0], &cards.members, &cards.snaps);
++                }
++                Err(error) if error == "search-deadline" => {}
++                Err(error) => return Err(error),
++            }
+         }
          let shard = request["shard"].is_object().then(|| {
              (
-                 master::int(&request["shard"]["index"]) as usize,
 diff --git a/src/api/gekiso_result_cache.rs b/src/api/gekiso_result_cache.rs
 index e794c22..69b0c13 100644
 --- a/src/api/gekiso_result_cache.rs
@@ -645,7 +670,7 @@ index 8bfc101..583ee4a 100644
 +    SEARCH_DEADLINE.with(|value|value.get().is_finite() && milliseconds()>=value.get())
 +}
 diff --git a/src/event.rs b/src/event.rs
-index 9074211..34feaee 100644
+index 4ca19e3..661d273 100644
 --- a/src/event.rs
 +++ b/src/event.rs
 @@ -1,3 +1,6 @@
@@ -731,7 +756,7 @@ index 9074211..34feaee 100644
              self.rank_row(rank).map_or(0, |row| row.challenge_points) as f64 * self.rate
          } else {
              0.0
-@@ -573,12 +570,28 @@ pub(crate) fn top_character_bonus(members: &[Member], values: &[f64]) -> f64 {
+@@ -690,12 +687,28 @@ pub(crate) fn top_character_bonus(members: &[Member], values: &[f64]) -> f64 {
      }
      top_five(characters.into_values())
  }
@@ -760,7 +785,7 @@ index 9074211..34feaee 100644
      pub cp_weight: f64,
      pub exchange: Option<(f64, f64)>,
      pub score_cap: f64,
-@@ -661,7 +674,13 @@ impl EventObjective {
+@@ -798,7 +811,13 @@ impl EventObjective {
              chart: chart.filter(|_| played).cloned(),
              route,
              points_measure,
@@ -774,7 +799,7 @@ index 9074211..34feaee 100644
              cp_weight,
              exchange,
              score_cap,
-@@ -699,6 +718,32 @@ impl EventObjective {
+@@ -838,6 +857,32 @@ impl EventObjective {
              mean_frontiers: vec![Vec::new(); members.len()],
          }
      }
@@ -807,15 +832,17 @@ index 9074211..34feaee 100644
      /// Ranks by `measure + cp·CP + other·(the other reward)`, the weights already divided by the measure's weight.
      pub fn with_weights(mut self, cp: f64, other: f64) -> Self {
          self.targets.clear();
-@@ -733,6 +778,7 @@ impl EventObjective {
+@@ -893,6 +938,9 @@ impl EventObjective {
          }
      }
      fn reward_bound(&self, bonus: f64, rank: i32) -> f64 {
-+        if self.unsafe_maximum() { return f64::INFINITY; }
-         self.value(bonus, rank) + self.tie * self.other(self.max_other, rank)
-     }
-     fn rank_points(&self) -> Vec<(i32, i32)> {
-@@ -781,8 +827,10 @@ impl EventObjective {
++        if self.unsafe_maximum() {
++            return f64::INFINITY;
++        }
+         let value = |grade| {
+             self.value_upper(bonus, grade) + self.tie * self.other_upper(self.max_other, grade)
+         };
+@@ -949,8 +997,10 @@ impl EventObjective {
          self.curves.get(&key).and_then(Option::as_ref)
      }
      fn mean_bound(&mut self, bonus: f64, other: f64, score: f64) -> f64 {
@@ -827,7 +854,7 @@ index 9074211..34feaee 100644
      }
      fn cp_curve(&mut self) -> Option<&RewardCurve> {
          if self.cp_curve.is_none() {
-@@ -909,6 +957,7 @@ impl EventObjective {
+@@ -1106,6 +1156,7 @@ impl EventObjective {
          from: usize,
          t: Totals,
          other: f64,
@@ -835,7 +862,7 @@ index 9074211..34feaee 100644
      ) -> Option<(f64, f64)> {
          if self.core.as_ref()?.input.judgements.is_some() {
              return None;
-@@ -920,10 +969,13 @@ impl EventObjective {
+@@ -1117,10 +1168,13 @@ impl EventObjective {
                  self.assignment_profiles[slot]
              }
          });
@@ -850,7 +877,7 @@ index 9074211..34feaee 100644
          let key = other.to_bits();
          self.other_mean_bound(other, f64::INFINITY);
          let secondary = self
-@@ -933,14 +985,97 @@ impl EventObjective {
+@@ -1130,14 +1184,97 @@ impl EventObjective {
              .map_or(f64::INFINITY, |curve| curve.orders(&coefficients, t.power));
          Some((primary, secondary))
      }
@@ -951,7 +978,7 @@ index 9074211..34feaee 100644
          let core = self.core.as_ref()?;
          if core.input.judgements.is_some() {
              return None;
-@@ -989,38 +1124,17 @@ impl EventObjective {
+@@ -1186,38 +1323,17 @@ impl EventObjective {
              (((sum * sum).next_up() / (4.0 * converted)).next_up() * (1.0 + RELATIVE_ERROR))
                  .next_up()
          });
@@ -999,7 +1026,7 @@ index 9074211..34feaee 100644
          self.other_mean_bound(other, f64::INFINITY);
          let secondary = self
              .other_curves
-@@ -1071,6 +1185,7 @@ impl EventObjective {
+@@ -1268,6 +1384,7 @@ impl EventObjective {
          t: Totals,
          from: usize,
          other: f64,
@@ -1007,7 +1034,7 @@ index 9074211..34feaee 100644
      ) -> Option<(f64, f64)> {
          if self.core.as_ref()?.input.judgements.is_some() {
              return None;
-@@ -1082,10 +1197,13 @@ impl EventObjective {
+@@ -1279,10 +1396,13 @@ impl EventObjective {
                  self.suffix_profiles[from]
              }
          });
@@ -1022,13 +1049,13 @@ index 9074211..34feaee 100644
          self.other_mean_bound(other, f64::INFINITY);
          let secondary = self
              .other_curves
-@@ -1166,6 +1284,16 @@ impl EventObjective {
+@@ -1363,6 +1483,16 @@ impl EventObjective {
      }
  }
  impl Objective for EventObjective {
 +    fn generic_assignment_product(&self)->bool {!self.power_ties}
 +    fn discrete_upper(&self,upper:f64)->f64 {
-+        if !self.power_ties || !self.points_measure && self.route.rewards.iter().any(|row|(row.probability as f64)%10000.0!=0.0) || self.tie!=0.0 || self.cp_weight!=0.0 || self.exchange.is_some() || !upper.is_finite() || upper.abs()>i32::MAX as f64 {return upper;}
++        if self.nonmonotone() || !self.power_ties || !self.points_measure && self.route.rewards.iter().any(|row|(row.probability as f64)%10000.0!=0.0) || self.tie!=0.0 || self.cp_weight!=0.0 || self.exchange.is_some() || !upper.is_finite() || upper.abs()>i32::MAX as f64 {return upper;}
 +        let count=if self.core.is_some() && !self.maximum {120.0} else {1.0};
 +        (upper*count).next_up().floor()/count
 +    }
@@ -1039,34 +1066,40 @@ index 9074211..34feaee 100644
      fn seed_objective(&self) -> Option<Box<dyn Objective>> {
          (!self.points_measure
              && self
-@@ -1215,14 +1343,15 @@ impl Objective for EventObjective {
-             .as_ref()
+@@ -1414,17 +1544,19 @@ impl Objective for EventObjective {
              .is_none_or(|core| core.shape(member, a) == core.shape(member, b))
      }
-+    fn preserve_snap_options(&self) -> bool { self.unsafe_maximum() }
+     fn preserve_snap_options(&self) -> bool {
+-        self.nonmonotone()
++        self.nonmonotone() || self.unsafe_maximum()
+     }
      fn conditional_snap_dominance(&self) -> bool {
--        true
-+        !self.unsafe_maximum()
+-        !self.nonmonotone()
++        !self.nonmonotone() && !self.unsafe_maximum()
      }
      fn canonical_leader(&self) -> bool {
          true
      }
      fn numeric_member_dominance(&mut self, better: usize, worse: usize, power_delta: f64) -> bool {
--        self.other_member[better] >= self.other_member[worse]
-+        !self.unsafe_maximum() && (self.power_ties && self.tie == 0.0 || self.other_member[better] >= self.other_member[worse])
+         !self.nonmonotone()
+-            && self.other_member[better] >= self.other_member[worse]
++            && !self.unsafe_maximum()
++            && (self.power_ties && self.tie == 0.0
++                || self.other_member[better] >= self.other_member[worse])
              && self
                  .core
                  .as_mut()
-@@ -1245,7 +1374,7 @@ impl Objective for EventObjective {
-         worse: i32,
+@@ -1448,7 +1580,8 @@ impl Objective for EventObjective {
          power_delta: f64,
      ) -> bool {
--        self.other_snap(better) >= self.other_snap(worse)
-+        !self.unsafe_maximum() && (self.power_ties && self.tie == 0.0 || self.other_snap(better) >= self.other_snap(worse))
+         !self.nonmonotone()
+-            && self.other_snap(better) >= self.other_snap(worse)
++            && !self.unsafe_maximum()
++            && (self.power_ties && self.tie == 0.0 || self.other_snap(better) >= self.other_snap(worse))
              && self
                  .core
                  .as_mut()
-@@ -1291,6 +1420,7 @@ impl Objective for EventObjective {
+@@ -1494,6 +1627,7 @@ impl Objective for EventObjective {
          self.snap_width = width;
      }
      fn prepare_assignment_power(&mut self, power: f64) {
@@ -1074,7 +1107,7 @@ index 9074211..34feaee 100644
          self.base_power = power;
      }
      fn prepare_members(&mut self, characters: &[Vec<usize>]) {
-@@ -1327,7 +1457,7 @@ impl Objective for EventObjective {
+@@ -1530,7 +1664,7 @@ impl Objective for EventObjective {
                  + self.other_member_suffix[from][left]
                  + self.other_snap_top
          };
@@ -1083,15 +1116,16 @@ index 9074211..34feaee 100644
              .map(|bounds| bounds.0)
      }
      fn product_base(&self) -> Option<f64> {
-@@ -1355,6 +1485,7 @@ impl Objective for EventObjective {
+@@ -1558,7 +1692,7 @@ impl Objective for EventObjective {
          self.value(totals.bonus, rank) + self.tie * self.other(other, rank)
      }
      fn joint_targets(&mut self, limit: f64) -> Option<Vec<JointTarget>> {
-+        if self.unsafe_maximum() { return None; }
+-        if self.nonmonotone() {
++        if self.nonmonotone() || self.unsafe_maximum() {
+             return None;
+         }
          let scale = self.core.as_ref()?.input.converted_count as f64 / (1.0 + RELATIVE_ERROR);
-         if let Some(rows) = self.targets.get(&limit.to_bits()) {
-             return Some(rows.clone());
-@@ -1393,6 +1524,7 @@ impl Objective for EventObjective {
+@@ -1599,6 +1733,7 @@ impl Objective for EventObjective {
          })
      }
      fn prepare_assignment(&mut self, _members: &[usize], options: &[Vec<i32>]) {
@@ -1099,7 +1133,7 @@ index 9074211..34feaee 100644
          if self.core.is_some() {
              for (slot, choices) in options.iter().enumerate() {
                  let member = _members[slot];
-@@ -1506,18 +1638,28 @@ impl Objective for EventObjective {
+@@ -1712,18 +1847,28 @@ impl Objective for EventObjective {
          } else {
              self.assignment_other_bonus(members, assigned, from)
          };
@@ -1131,7 +1165,7 @@ index 9074211..34feaee 100644
              return Some(bounds.0);
          }
  
-@@ -1537,6 +1679,7 @@ impl Objective for EventObjective {
+@@ -1743,6 +1888,7 @@ impl Objective for EventObjective {
          }
      }
      fn interval(&mut self, team: &Team, t: Totals) -> (f64, f64) {
@@ -1139,7 +1173,7 @@ index 9074211..34feaee 100644
          let other = self.other_bonus(team);
          let Some(core) = &self.core else {
              let key =
-@@ -1560,12 +1703,34 @@ impl Objective for EventObjective {
+@@ -1766,12 +1912,34 @@ impl Objective for EventObjective {
              let mean = self.value(bonus, self.skip_rank);
              let direct = self.direct(bonus, self.skip_rank);
              let other_mean = self.other(other, self.skip_rank);
@@ -1175,7 +1209,7 @@ index 9074211..34feaee 100644
          let mut per_order = Vec::with_capacity(scores.scores.len());
          let mut ranks = BTreeMap::<i32, i32>::new();
          let (mut total, mut cp, mut reward_sum, mut direct_min, mut direct_max, mut other_sum) =
-@@ -1604,7 +1769,7 @@ impl Objective for EventObjective {
+@@ -1810,7 +1978,7 @@ impl Objective for EventObjective {
          let other_mean = (other_sum / count).clamp(other_min, other_max);
          Ok(Exact {
              key: (mean + self.tie * other_mean).clamp(key_min, key_max),
@@ -1184,7 +1218,7 @@ index 9074211..34feaee 100644
          })
      }
  }
-@@ -1730,6 +1895,7 @@ impl ScoreTie {
+@@ -1938,6 +2106,7 @@ impl ScoreTie {
      }
  }
  impl Objective for ScoreTie {
@@ -1192,7 +1226,7 @@ index 9074211..34feaee 100644
      fn exchange_snap_equivalent(&mut self, member: usize, a: i32, b: i32) -> bool {
          self.mean.core.shape(member, a) == self.mean.core.shape(member, b)
      }
-@@ -1825,7 +1991,7 @@ impl Objective for ScoreTie {
+@@ -2033,7 +2202,7 @@ impl Objective for ScoreTie {
              .sum::<f64>()
              + self.member_suffix[from][left]
              + self.other_snaps;
@@ -1201,7 +1235,7 @@ index 9074211..34feaee 100644
              if primary < self.target || self.other_target.is_some_and(|target| other < target) {
                  return Some(-1.0);
              }
-@@ -1960,7 +2126,7 @@ impl Objective for ScoreTie {
+@@ -2168,7 +2337,7 @@ impl Objective for ScoreTie {
                  .map(|&s| self.event.other_snap(s))
                  .sum::<f64>()
              + self.other_suffix[from].min(distinct);
@@ -1210,7 +1244,7 @@ index 9074211..34feaee 100644
          let upper =
              if primary < self.target || self.other_target.is_some_and(|target| other < target) {
                  -1.0
-@@ -1974,7 +2140,7 @@ impl Objective for ScoreTie {
+@@ -2182,7 +2351,7 @@ impl Objective for ScoreTie {
          }
          if let Some((primary, other, mean)) = self
              .event
@@ -1219,7 +1253,7 @@ index 9074211..34feaee 100644
          {
              if primary < self.target || self.other_target.is_some_and(|target| other < target) {
                  return Some(-1.0);
-@@ -2180,6 +2346,10 @@ pub struct ChallengePoints {
+@@ -2389,6 +2558,10 @@ pub struct ChallengePoints {
      pub chart: Chart,
      pub route: Route,
      curve: Option<RewardCurve>,
@@ -1230,7 +1264,7 @@ index 9074211..34feaee 100644
  }
  impl ChallengePoints {
      pub fn new(mean: crate::objectives::LiveObjective, chart: Chart, route: Route) -> Self {
-@@ -2205,8 +2375,33 @@ impl ChallengePoints {
+@@ -2414,7 +2587,32 @@ impl ChallengePoints {
              chart,
              route,
              curve,
@@ -1238,8 +1272,8 @@ index 9074211..34feaee 100644
 +            maximum: false,
 +            maximum_monotone: true,
 +            member_ids: Vec::new(),
-         }
-     }
++        }
++    }
 +    pub fn primary_only(mut self, enabled: bool) -> Self {
 +        self.primary_only = enabled;
 +        self
@@ -1252,7 +1286,7 @@ index 9074211..34feaee 100644
 +            let mut ranks = self.chart.ranks.clone();
 +            ranks.sort_by_key(|r|r.required);
 +            self.maximum_monotone = ranks.windows(2).all(|pair|self.route.cp(pair[0].rank)<=self.route.cp(pair[1].rank));
-+        }
+         }
 +        self
 +    }
 +    fn payoff_range(&self) -> (f64,f64) {
@@ -1260,11 +1294,10 @@ index 9074211..34feaee 100644
 +    }
 +    fn score_tie(&self, score: f64) -> f64 {
 +        if self.primary_only { 0.0 } else { score / 68719476736.0 }
-+    }
+     }
      fn value(&self, score: f64) -> f64 {
          *self
-             .route
-@@ -2217,8 +2412,12 @@ impl ChallengePoints {
+@@ -2426,8 +2624,12 @@ impl ChallengePoints {
      }
  }
  impl Objective for ChallengePoints {
@@ -1278,7 +1311,7 @@ index 9074211..34feaee 100644
      }
      fn needs_power_cap(&self) -> bool {
          self.mean.needs_power_cap()
-@@ -2227,17 +2426,17 @@ impl Objective for ChallengePoints {
+@@ -2436,17 +2638,17 @@ impl Objective for ChallengePoints {
          self.mean.prepare_dominance(power);
      }
      fn numeric_snap_dominance(&mut self, m: usize, a: i32, b: i32, power: f64) -> bool {
@@ -1299,7 +1332,7 @@ index 9074211..34feaee 100644
      }
      fn canonical_leader(&self) -> bool {
          true
-@@ -2246,20 +2445,22 @@ impl Objective for ChallengePoints {
+@@ -2455,20 +2657,22 @@ impl Objective for ChallengePoints {
          self.mean.skill(m, s)
      }
      fn bound(&mut self, t: Totals) -> f64 {
@@ -1325,7 +1358,7 @@ index 9074211..34feaee 100644
          )
      }
      fn exact(&mut self, team: &Team, power: f64, slots: &[f64]) -> Result<Exact, String> {
-@@ -2269,10 +2470,358 @@ impl Objective for ChallengePoints {
+@@ -2478,10 +2682,358 @@ impl Objective for ChallengePoints {
              .into_iter()
              .map(|s| self.value(crate::master::number(s, 0.0)))
              .collect();
@@ -1688,7 +1721,7 @@ index 9074211..34feaee 100644
 +    }
 +}
 diff --git a/src/gekiso.rs b/src/gekiso.rs
-index 2861e1d..0bc33a7 100644
+index eb46cc9..0e622ee 100644
 --- a/src/gekiso.rs
 +++ b/src/gekiso.rs
 @@ -1,3 +1,4 @@
@@ -1696,7 +1729,7 @@ index 2861e1d..0bc33a7 100644
  //! Gekiso context simulation, nominal lottery expectation and per-order scores.
  use crate::{
      chart::Source,
-@@ -1619,10 +1620,16 @@ struct ReplayTree<'a> {
+@@ -1652,10 +1653,16 @@ struct ReplayTree<'a> {
      observe: Option<&'a (dyn Fn(f64, usize) -> bool + Sync)>,
      multiplicities: &'a [usize],
      stopped: AtomicBool,
@@ -1713,7 +1746,7 @@ index 2861e1d..0bc33a7 100644
              if self.generation != crate::cancellation_generation() {
                  return Err("cancelled".into());
              }
-@@ -1716,7 +1723,20 @@ pub fn replay_orders(
+@@ -1749,7 +1756,20 @@ pub fn replay_orders(
      seeds: &[i32],
      power: i32,
  ) -> Result<ReplayedScores, String> {
@@ -1735,7 +1768,7 @@ index 2861e1d..0bc33a7 100644
  }
  
  /// Completed leaf orders carry their multiplicity in the native 120-order set.
-@@ -1728,7 +1748,7 @@ pub(crate) fn replay_orders_with_cutoff(
+@@ -1761,7 +1781,7 @@ pub(crate) fn replay_orders_with_cutoff(
      power: i32,
      observe: &(dyn Fn(f64, usize) -> bool + Sync),
  ) -> Result<Option<ReplayedScores>, String> {
@@ -1744,7 +1777,7 @@ index 2861e1d..0bc33a7 100644
  }
  
  fn replay_orders_observed(
-@@ -1738,6 +1758,7 @@ fn replay_orders_observed(
+@@ -1771,6 +1791,7 @@ fn replay_orders_observed(
      seeds: &[i32],
      power: i32,
      observe: Option<&(dyn Fn(f64, usize) -> bool + Sync)>,
@@ -1752,7 +1785,7 @@ index 2861e1d..0bc33a7 100644
  ) -> Result<Option<ReplayedScores>, String> {
      if deck.len() != 5 {
          return Err("a team requires five performers".into());
-@@ -1794,7 +1815,7 @@ fn replay_orders_observed(
+@@ -1827,7 +1848,7 @@ fn replay_orders_observed(
          seeds.to_vec()
      };
      let orders: Vec<_> = (0..live::orders().len()).collect();
@@ -1761,7 +1794,7 @@ index 2861e1d..0bc33a7 100644
      else {
          return Ok(None);
      };
-@@ -1821,9 +1842,29 @@ pub(crate) fn replay_order_subset(
+@@ -1854,9 +1875,29 @@ pub(crate) fn replay_order_subset(
      if chart.luck {
          return Err("order completion requires a non-LUCK chart".into());
      }
@@ -1792,7 +1825,7 @@ index 2861e1d..0bc33a7 100644
  fn replay_selected_orders(
      master: &Master,
      chart: &Chart,
-@@ -1832,6 +1873,7 @@ fn replay_selected_orders(
+@@ -1865,6 +1906,7 @@ fn replay_selected_orders(
      power: i32,
      orders: &[usize],
      observe: Option<&(dyn Fn(f64, usize) -> bool + Sync)>,
@@ -1800,7 +1833,7 @@ index 2861e1d..0bc33a7 100644
  ) -> Result<Option<Vec<ReplayValue>>, String> {
      if orders.is_empty() {
          return Ok(Some(Vec::new()));
-@@ -1877,6 +1919,8 @@ fn replay_selected_orders(
+@@ -1910,6 +1952,8 @@ fn replay_selected_orders(
          observe,
          multiplicities: &multiplicities,
          stopped: AtomicBool::new(false),
@@ -2086,7 +2119,7 @@ index 1dba20f..6ce5b0e 100644
          kernel.global_fixed_preparation = bounds.preparation.clone();
          kernel.global_fixed_luck = bounds.luck.clone();
 diff --git a/src/gekiso_objective/shared.rs b/src/gekiso_objective/shared.rs
-index 19056d1..2d9e758 100644
+index c980bcb..de680d0 100644
 --- a/src/gekiso_objective/shared.rs
 +++ b/src/gekiso_objective/shared.rs
 @@ -1,3 +1,4 @@
@@ -2094,7 +2127,7 @@ index 19056d1..2d9e758 100644
  //! A single physical formation optimized over a complete set of Gekiso charts.
  use super::*;
  
-@@ -598,14 +599,20 @@ pub(crate) fn search_shared(input: SharedInput<'_>) -> Result<search::Output, St
+@@ -798,14 +799,20 @@ pub(crate) fn search_shared(input: SharedInput<'_>) -> Result<search::Output, St
      let mut kernels: Vec<_> = charts
          .iter_mut()
          .map(|chart| {
@@ -2117,7 +2150,7 @@ index 19056d1..2d9e758 100644
          })
          .collect();
      let same_levels = kernels
-@@ -661,7 +668,7 @@ pub(crate) fn search_shared(input: SharedInput<'_>) -> Result<search::Output, St
+@@ -952,7 +959,7 @@ pub(crate) fn search_shared(input: SharedInput<'_>) -> Result<search::Output, St
                  callback(&ranked(&hits, k));
              }
          };
@@ -2125,8 +2158,8 @@ index 19056d1..2d9e758 100644
 +        let out = match env.run(
              &mut objective,
              Run {
-                 constraints: if same_levels {
-@@ -681,7 +688,14 @@ pub(crate) fn search_shared(input: SharedInput<'_>) -> Result<search::Output, St
+                 constraints,
+@@ -968,7 +975,14 @@ pub(crate) fn search_shared(input: SharedInput<'_>) -> Result<search::Output, St
              },
              None,
              Some(&mut accept),

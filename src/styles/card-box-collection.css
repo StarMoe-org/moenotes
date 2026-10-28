@@ -97,6 +97,11 @@
 .cb-save-picker .cb-save-list{display:grid;gap:10px;margin:4px 0;padding:0;list-style:none}
 .cb-app-steps{display:grid;gap:12px;padding-left:24px;margin:0;color:var(--md-sys-color-on-surface-variant);font-size:14px;line-height:1.7}
 .cb-app-actions,.cb-app-saves-heading{display:flex;align-items:center;flex-wrap:wrap;gap:12px;min-width:0}
+.cb-token-help{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:var(--md-sys-shape-corner-small);background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container);font-size:12px;line-height:1.65}
+.cb-token-help>svg{flex-shrink:0;margin-top:2px;color:var(--md-sys-color-primary)}
+.cb-token-help>p{margin:0;min-width:0}
+.cb-token-help a{color:var(--md-sys-color-primary);font-weight:500;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.cb-save-banner>.cb-token-help{margin-top:10px}
 .cb-app-saves-heading{justify-content:space-between;margin-top:12px;padding-top:20px;border-top:1px solid var(--md-sys-color-outline-variant)}
 .cb-app-saves-heading h3{font-size:16px;margin:0}
 .cb-app-alternative{align-self:flex-start}

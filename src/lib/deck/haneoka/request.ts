@@ -3,8 +3,9 @@ import { chartSource, integer, optionalTable, table, type DeckData } from "./dat
 export interface RewardTermInput { kind: string; eventId?: number; resourceType?: number; resourceId?: number; weight: number }
 export interface RecommendationRequest {
   format: string;
-  goal: { kind: string; rank?: number; arenaMusicId?: number; musicIds?: number[]; challengeMusicIds?: number[]; arenaMusicIds?: number[]; eventParameter?: boolean; musicId?: number; difficulty?: string; challengeMusicId?: number;
+  goal: { kind: string; rank?: number; arenaMusicId?: number; musicIds?: number[]; challengeMusicIds?: number[]; arenaMusicIds?: number[]; multiSong?: "individual" | "mean"; eventParameter?: boolean; musicId?: number; difficulty?: string; challengeMusicId?: number;
     arena?: { bandId?: number; musicType?: number; missions?: number[]; mode?: string };
+    songRules?: { musicType?: number; missions?: number[] };
     songs?: { musicId?: number; difficulty?: string }[];
     play?: { kind?: string; greatFraction?: number; justFraction?: number; missEvery?: number };
     accuracy?: { greatFraction?: number; justFraction?: number } };
@@ -18,8 +19,8 @@ export interface RecommendationRequest {
   k: number;
   limits?: { timeLimitMs: number | null };
 }
-export const HANEOKA_COMMIT = "8b6915c140b6239cff5f4bca78380b654ed722e6";
-export const HANEOKA_PATCH_SHA = "3478e6717e462fbd49b3d3667384a540bb0533eb690be5a57a0620371007f31a";
+export const HANEOKA_COMMIT = "cf9b3c64f517e5033e0280e65a556bb7a67a83e3";
+export const HANEOKA_PATCH_SHA = "b281a1b45f4069da2cf677f705087e8ca6f5468afff1dda7834247973c5c6d07";
 export const CAPABILITIES = {
   goals: ["power", "freeLive", "challengeLive", "battleLive", "missionLive", "arenaLive", "skip"],
   metrics: { freeLive: ["score", "eventPoints", "eventItems", "challengePoints"], challengeLive: ["score", "eventPoints", "eventItems"], battleLive: ["score", "eventPoints", "eventItems", "challengePoints"], missionLive: ["score", "eventPoints", "eventItems", "challengePoints"], arenaLive: ["score", "eventPoints", "eventItems", "challengePoints"], skip: ["score", "eventPoints", "eventItems", "challengePoints"] },
@@ -29,7 +30,7 @@ export const CAPABILITIES = {
   },
   combinedMetric: { goals: ["freeLive", "challengeLive", "battleLive", "missionLive", "arenaLive", "skip"], kind: "combined", objective: "lexicographicWeightedExpectedSums", weights: "integer", maxLevels: 3, maxTerms: 9, maxWeight: 1_000_000_000 },
   eventItemRewards: { selection: "exactResultGrade", eventGroupField: "eventGroup", rowsPerGrade: 1, probabilityMarker: 10000 },
-  crossSong: true, resume: true, arenaRules: true, gekisouRank: true,
+  crossSong: true, crossSongMean: true, songRules: true, resume: true, arenaRules: true, gekisouRank: true,
   accuracy: { great: true, just: true }, patternPlay: true, luckMissions: true, luckGreatConversions: true,
 };
 function adaptSingleRequest(data: DeckData, request: RecommendationRequest) {
@@ -67,6 +68,18 @@ function adaptSingleRequest(data: DeckData, request: RecommendationRequest) {
     if (mode !== undefined && mode !== "shared" && mode !== "individual") throw new Error("haneoka-arena-mode");
     if (mode === "shared" && (rewards || request.aggregation === "maximum")) throw new Error("haneoka-arena-shared");
     return { bandId: bandId!, musicType: musicType!, missions: [missions[0]!, missions[1]!, missions[2]!], ...(mode ? { mode } : {}) };
+  })() : null;
+  const songRules = request.goal.songRules !== undefined ? (() => {
+    if (kind === "power" || arenaRule !== null) throw new Error("haneoka-song-rules");
+    const raw = request.goal.songRules;
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("haneoka-song-rules");
+    const musicType = raw.musicType ?? 0;
+    const rawMissions = raw.missions ?? [0, 0, 0];
+    if (!Number.isInteger(musicType) || !((musicType >= 0 && musicType <= 5) || musicType === 99)) throw new Error("haneoka-song-rules");
+    if (!Array.isArray(rawMissions) || rawMissions.length !== 3 || rawMissions.some(m => !Number.isInteger(m) || m < 0 || m > 3))
+      throw new Error("haneoka-song-rules");
+    const missions: [number, number, number] = gekiso ? [rawMissions[0]!, rawMissions[1]!, rawMissions[2]!] : [0, 0, 0];
+    return musicType !== 0 || missions.some(Boolean) ? { musicType, missions } : null;
   })() : null;
   const difficulty = ["easy", "normal", "hard", "expert"].indexOf(request.goal.difficulty ?? "");
   let musicId: unknown = request.goal.musicId, challengeEventId: number | null = null;
@@ -145,15 +158,26 @@ function adaptSingleRequest(data: DeckData, request: RecommendationRequest) {
       leader: c.leader == null ? null : key(c.leader, "m"),
       noSnaps: c.noSnaps === true, bindings: [], minBonusPercent: null,
     },
+    ...(songRules ? { songRules } : {}),
     k: integer(request.k, "k"), timeLimitMs,
   };
 }
 
+const CROSS_SONG_MEAN_KINDS = new Set(["freeLive", "challengeLive", "battleLive", "missionLive"]);
+
 export function adaptRequest(data: DeckData, request: RecommendationRequest) {
   if (!request.goal || typeof request.goal !== "object") return adaptSingleRequest(data, request);
+  const multiSong = request.goal.multiSong ?? "individual";
+  if (multiSong !== "individual" && multiSong !== "mean") throw new Error("haneoka-cross-song-mean");
   const fields = ["musicIds", "challengeMusicIds", "arenaMusicIds"] as const;
   const supplied = fields.filter(field => request.goal[field] !== undefined);
-  if (!supplied.length) return adaptSingleRequest(data, request);
+  if (!supplied.length) {
+    if (multiSong === "mean") throw new Error("haneoka-cross-song-mean");
+    return adaptSingleRequest(data, request);
+  }
+  if (multiSong === "mean" && (request.aggregation === "maximum" || request.metric?.kind !== "score" || !CROSS_SONG_MEAN_KINDS.has(request.goal.kind))) {
+    throw new Error("haneoka-cross-song-mean");
+  }
   const field = supplied[0]!, ids = request.goal[field];
   const arenaWithRule = request.goal.kind === "arenaLive" && request.goal.arena !== undefined && request.goal.arena?.mode !== "shared";
   const wrongScope = field === "arenaMusicIds" ? request.goal.kind !== "arenaLive" || request.goal.arena !== undefined
@@ -163,11 +187,11 @@ export function adaptRequest(data: DeckData, request: RecommendationRequest) {
     || ids.length > data.charts.length || new Set(ids).size !== ids.length || ids.some(id => !Number.isInteger(id) || id <= 0))
     throw new Error("haneoka-cross-song");
   const key = field === "musicIds" ? "musicId" : field === "challengeMusicIds" ? "challengeMusicId" : "arenaMusicId";
-  const { songs: _songs, musicIds: _musicIds, challengeMusicIds: _challengeIds, arenaMusicIds: _arenaIds, ...goalRest } = request.goal;
+  const { songs: _songs, musicIds: _musicIds, challengeMusicIds: _challengeIds, arenaMusicIds: _arenaIds, multiSong: _multiSong, ...goalRest } = request.goal;
   const singles = ids.map(id => adaptSingleRequest(data, { ...request, goal: { ...goalRest, [key]: id } }));
   const first = singles[0]!;
   const songs = singles.map(single => "songs" in single.goal ? single.goal.songs![0]! : single.goal.song!);
-  return { ...first, goal: { ...first.goal, songs }, charts: singles.flatMap(single => single.charts) };
+  return { ...first, ...(multiSong === "mean" ? { aggregation: "mean" as const } : {}), goal: { ...first.goal, songs }, charts: singles.flatMap(single => single.charts) };
 }
 
 function eventGoal(data: DeckData, request: RecommendationRequest, song: { songId: number; difficulty: number },
