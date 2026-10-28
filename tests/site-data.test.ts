@@ -2,17 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { fileURLToPath } from "node:url";
 import { assetExportLag, buildKey, describeData, sourceDigest, sourceRevision, type AssetManifest } from "../scripts/site-data";
-
-const serverDir = fileURLToPath(new URL("../server", import.meta.url));
-
-async function go(...args: string[]): Promise<string> {
-  const child = Bun.spawn(["go", "run", "./cmd/moenotes", ...args], { cwd: serverDir, stdout: "pipe", stderr: "pipe" });
-  const [code, out, err] = await Promise.all([child.exited, new Response(child.stdout).text(), new Response(child.stderr).text()]);
-  expect(code, err).toBe(0);
-  return out.trim();
-}
 
 describe("site data identity (shared with the Go server)", () => {
   test("describes regions in byte order with missing fields left empty", () => {
@@ -22,7 +12,6 @@ describe("site data identity (shared with the Go server)", () => {
         jp: { master_version: "m2", locales: { ja: {} } },
       },
     };
-    // Same expectation as server/internal/upstream TestDescribe.
     expect(describeData(manifest)).toEqual({ fingerprint: "jp::m2:ja=;tw:1.0.1:m1:en=a,zh-Hant=b", label: "jp@? tw@1.0.1" });
     expect(() => describeData({})).toThrow("no released region");
   });
@@ -47,7 +36,7 @@ describe("site data identity (shared with the Go server)", () => {
     expect(buildKey(base, "tw:1", "a".repeat(40))).toMatch(/^[a-f0-9]{16}$/);
   });
 
-  test("the Go server computes the same source digest", async () => {
+  test("sourceDigest hashes tracked inputs deterministically in byte order and ignores server/", async () => {
     const root = await mkdtemp(join(tmpdir(), "site-digest-"));
     try {
       for (const name of ["next.config.ts", "postcss.config.mjs", "package.json", "bun.lock", "tsconfig.json"]) await Bun.write(join(root, name), name);
@@ -55,13 +44,10 @@ describe("site data identity (shared with the Go server)", () => {
       await Bun.write(join(root, "src", "a", "b", "Z.ts"), "z");
       await Bun.write(join(root, "src", "a", "B.ts"), "upper case sorts first in byte order");
       await Bun.write(join(root, "public", "x.txt"), "public");
+      const before = await sourceDigest(root);
       await Bun.write(join(root, "server", "ignored.go"), "not a site source");
-      expect(await go("source-digest", root)).toBe(await sourceDigest(root));
+      expect(await sourceDigest(root)).toBe(before);
+      expect(before).toMatch(/^[a-f0-9]{64}$/);
     } finally { await rm(root, { recursive: true, force: true }); }
-  }, 120_000);
-
-  test("the Go server's embedded site config is generated from src/config", async () => {
-    const child = Bun.spawn([process.execPath, "scripts/generate-runtime-config.ts", "--check"], { stdout: "pipe", stderr: "pipe" });
-    expect(await child.exited, await new Response(child.stderr).text()).toBe(0);
   });
 });

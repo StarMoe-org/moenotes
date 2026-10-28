@@ -14,7 +14,7 @@ export interface RecognitionJob {
 export class RecognitionWorkerClient {
   private active: { worker: WorkerLike; binding: RecognitionBinding; finish: (result: RecognitionResult) => void;
     empty: (status: RecognitionResult["status"], error?: string) => RecognitionResult } | null = null;
-  constructor(private readonly factory: (url: string) => WorkerLike = url => new Worker(url),
+  constructor(private readonly factory: (url: string) => WorkerLike = url => new globalThis.Worker(url),
     private readonly clock: () => number = () => performance.timeOrigin + performance.now()) {}
   cancel(status: "cancelled" | "stale" = "cancelled"): void {
     const job = this.active;

@@ -4,6 +4,7 @@ import { t } from "../src/i18n";
 import { getAllRoutes, getAllStaticRoutes, isDynamicRoute } from "../src/lib/route/registry";
 import { buildStaticSearchIndex } from "../src/lib/search/static-index";
 import { getSitemapEntries } from "../src/lib/seo/sitemap";
+import { withSyntheticMasterData } from "../tests/fixtures/synthetic-masterdata";
 
 const errors: string[] = [];
 
@@ -42,7 +43,9 @@ for (const route of indexableStaticRoutes) {
 // so a core-locale batch (MOENOTES_BUILD_LOCALES=core) is still fully valid against the same script.
 const buildLocales = activeBuildLocales();
 
-const sitemapEntries = await getSitemapEntries();
+const sitemapEntries = process.env.MOENOTES_MASTERDATA_DIR
+  ? await getSitemapEntries()
+  : await withSyntheticMasterData(() => getSitemapEntries());
 const sitemapLocs = new Set(sitemapEntries.map((entry) => entry.loc));
 const expectedStaticSitemapCount = indexableStaticRoutes.length * buildLocales.length;
 

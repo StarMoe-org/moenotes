@@ -56,6 +56,8 @@ if (process.env.PUBLIC_DECK_RECOMMEND_ENGINE !== undefined) {
   publicEnv.PUBLIC_DECK_RECOMMEND_ENGINE = process.env.PUBLIC_DECK_RECOMMEND_ENGINE;
 }
 
+const BROWSER_EMPTY_SHIM = "./src/lib/build/browser-empty-shim.ts";
+
 const nextConfig: NextConfig = {
   output: "standalone",
   cacheMaxMemorySize: 50 * 1024 * 1024,
@@ -67,6 +69,21 @@ const nextConfig: NextConfig = {
   transpilePackages: SERVER_BUNDLED,
   allowedDevOrigins: ["*.e2b.app", "localhost", "127.0.0.1"],
   env: publicEnv,
+  turbopack: {
+    resolveAlias: {
+      "node:fs": { browser: BROWSER_EMPTY_SHIM },
+      "node:path": { browser: BROWSER_EMPTY_SHIM },
+      "node:url": { browser: BROWSER_EMPTY_SHIM },
+      "node:module": { browser: BROWSER_EMPTY_SHIM },
+      "node:crypto": { browser: BROWSER_EMPTY_SHIM },
+      fs: { browser: BROWSER_EMPTY_SHIM },
+      path: { browser: BROWSER_EMPTY_SHIM },
+      url: { browser: BROWSER_EMPTY_SHIM },
+      module: { browser: BROWSER_EMPTY_SHIM },
+      crypto: { browser: BROWSER_EMPTY_SHIM },
+      "@/lib/route/masterdata-params": { browser: BROWSER_EMPTY_SHIM },
+    },
+  },
   webpack(config, { isServer, webpack }) {
     if (!isServer) {
       // Strip `node:` URI scheme for Emscripten's dead-code `if (ENVIRONMENT_IS_NODE)` guards in browser/worker bundles,

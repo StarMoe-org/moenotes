@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readdir, rm } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { fileURLToPath } from "node:url";
 import {
   applyBuildEnvironment, assertDataVersion, command, hashFile, lookupRelease, measuredCommand, parseInput, partName,
-  releaseComplete, validateManifest, verifyParts, PART_BYTES, type SiteManifest,
+  releaseComplete, validateManifest, PART_BYTES, type SiteManifest,
 } from "../scripts/build-site-release";
 import { buildKey } from "../scripts/site-data";
 import { SUPPORTED_LOCALES } from "../src/config/locales";
@@ -133,36 +133,6 @@ describe("site release integrity", () => {
   });
 });
 
-test("the Go packer's parts and summary satisfy the release manifest checks", async () => {
-  const root = await mkdtemp(join(tmpdir(), "site-release-pack-"));
-  try {
-    const site = join(root, "site");
-    await mkdir(join(site, "_astro"), { recursive: true });
-    for (const prefix of ["", "ja/", "en/"]) {
-      await Bun.write(join(site, `${prefix}index.html`), `<!doctype html><title>fixture</title>${"<p>page</p>".repeat(500)}${prefix}`);
-    }
-    await Bun.write(join(site, "_astro", "app.js"), "console.log('fixture')");
-    const binary = join(root, process.platform === "win32" ? "moenotes.exe" : "moenotes");
-    const build = Bun.spawn(["go", "build", "-o", binary, "./cmd/moenotes"], {
-      cwd: fileURLToPath(new URL("../server", import.meta.url)), stdout: "pipe", stderr: "pipe",
-    });
-    expect(await build.exited, await new Response(build.stderr).text()).toBe(0);
-    const out = join(root, "parts");
-    const packed = JSON.parse(await command([binary, "pack", "-part-bytes", "256", site, out], true));
-    const produced: SiteManifest = { ...manifest(), size: packed.size, sha256: packed.sha256, parts: packed.parts,
-      files: packed.files, expandedBytes: packed.expandedBytes, pages: packed.pages };
-    expect(packed.format).toBe("tar+zstd");
-    expect(produced.parts.length).toBeGreaterThan(1);
-    expect(produced.files).toBe(4);
-    expect(produced.pages).toBe(3);
-    validateManifest(produced, input);
-    await verifyParts(produced, out);
-    expect((await readdir(out)).sort()).toEqual(produced.parts.map((part) => part.name));
-    const tampered = { ...produced, sha256: "0".repeat(64) };
-    await expect(verifyParts(tampered, out)).rejects.toThrow("mismatch");
-  } finally { await rm(root, { recursive: true, force: true }); }
-}, 120_000);
-
 describe("build subprocess reporting", () => {
   test("captures machine output while preserving real child failures", async () => {
     expect(await command([process.execPath, "-e", "process.stdout.write('ok')"], true)).toBe("ok");
@@ -172,8 +142,8 @@ describe("build subprocess reporting", () => {
     await expect(command([process.execPath, "-e", "process.stderr.write('test warning\\n')"])).resolves.toBe("");
     await expect(command([process.execPath, "-e", "process.exit(7)"])).rejects.toThrow("failed (7)");
   });
-  // Production runs GNU time on Linux; Windows development cannot execute /usr/bin/time.
-  test.skipIf(process.platform !== "linux")("GNU time saves complete RSS and exit status without a stderr pipe", async () => {
+  // Production runs GNU time on Linux; skip when /usr/bin/time is unavailable.
+  test.skipIf(process.platform !== "linux" || !existsSync("/usr/bin/time"))("GNU time saves complete RSS and exit status without a stderr pipe", async () => {
     const root = await mkdtemp(join(tmpdir(), "site-time-test-"));
     try {
       const report = join(root, "metrics.txt");

@@ -79,7 +79,7 @@ export class DeckWorkerClient {
   private active: ActiveJob | null = null;
 
   constructor(
-    private readonly factory: (url: string) => DeckWorkerPort = (url) => new Worker(url),
+    private readonly factory: (url: string) => DeckWorkerPort = (url) => new globalThis.Worker(url),
     private readonly workerUrl: string = assetConfig.deck.workerUrl,
   ) {}
 
