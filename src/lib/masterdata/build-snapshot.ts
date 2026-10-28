@@ -162,7 +162,7 @@ const NODE_FS = "node:fs/promises";
 let fsPromise: Promise<NodeFs> | undefined;
 
 function nodeFs(): Promise<NodeFs> {
-  fsPromise ??= import(/* webpackIgnore: true */ NODE_FS) as Promise<NodeFs>;
+  fsPromise ??= import(/* turbopackIgnore: true */ /* webpackIgnore: true */ NODE_FS) as Promise<NodeFs>;
   return fsPromise;
 }
 

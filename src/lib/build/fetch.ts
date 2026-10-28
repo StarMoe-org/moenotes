@@ -204,7 +204,7 @@ function ifNoneMatch(etag: string): string {
 }
 
 function nodeFs(): Promise<NodeFs> {
-  state.fs ??= import(/* webpackIgnore: true */ NODE_FS) as Promise<NodeFs>;
+  state.fs ??= import(/* turbopackIgnore: true */ /* webpackIgnore: true */ NODE_FS) as Promise<NodeFs>;
   return state.fs;
 }
 

@@ -151,7 +151,7 @@ export async function loadSnapReplayRuntime(site: string, reference: SnapReplayR
   const labelSource = labels ? JSON.parse(new TextDecoder().decode(labels)) as SnapLabelSource : undefined;
   const moduleUrl = URL.createObjectURL(new Blob([js], { type: "text/javascript" }));
   try {
-    const engine = await import(/* @vite-ignore */ moduleUrl) as { default(options: { module_or_path: ArrayBuffer }): Promise<void>; ReplaySession: new (input: string) => SnapReplayEngine };
+    const engine = await import(/* turbopackIgnore: true */ /* webpackIgnore: true */ moduleUrl) as { default(options: { module_or_path: ArrayBuffer }): Promise<void>; ReplaySession: new (input: string) => SnapReplayEngine };
     await engine.default({ module_or_path: wasm });
     return { data: immutable(data), manifestSha256: reference.sha256, dataSha256: manifest.deckData.sha256, modelCommit: expected.modelCommit, factory: (json) => new engine.ReplaySession(json), ...(labelSource ? { labelSource: immutable(labelSource) } : {}) };
   } finally { URL.revokeObjectURL(moduleUrl); }

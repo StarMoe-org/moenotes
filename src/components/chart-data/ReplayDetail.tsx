@@ -20,7 +20,7 @@ export default function ReplayDetail({ ctx, row }: { ctx: ChartDataContext; row:
     const site = `${assetConfig.musicDataSite}/`;
     const moduleUrl = new URL("songs/replay-panel.js", `${assetConfig.musicPlayerSite}/`).href;
     const options = { site, reference, scoreId: row.scoreId, power: ctx.state.power || 300000, mode: ctx.state.mode === "free" ? { kind: "normal" } : { kind: "fixedSoloGekisou", ranks: ctx.state.ranks }, text: Object.fromEntries(KEYS.map(key => [key, ctx.tr(`replay.${key}`)])), noteKindLabels: Object.fromEntries(["tap","flick","slide","trace","combo"].map(key => [key, ctx.tr(`kinds.${key}`)])) };
-    void import(/* @vite-ignore */ moduleUrl).then((module: PanelModule) => {
+    void import(/* turbopackIgnore: true */ /* webpackIgnore: true */ moduleUrl).then((module: PanelModule) => {
       if (!disposed) cleanup = module.mountReplayPanel(element, options);
     }).catch((reason: unknown) => { if (!disposed) setError(String(reason instanceof Error ? reason.message : reason)); });
     return () => { disposed = true; cleanup?.(); };

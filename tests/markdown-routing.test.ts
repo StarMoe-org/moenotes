@@ -8,6 +8,7 @@ import {
   prefersMarkdownAccept,
 } from "@/lib/markdown/negotiate";
 import { renderLlmsTxt, renderMarkdownForPath } from "@/lib/markdown/render";
+import { withSyntheticMasterData } from "../scripts/synthetic-masterdata";
 
 describe("Markdown content negotiation & path mapping", () => {
   test("prefersMarkdownAccept respects RFC quality weights", () => {
@@ -37,56 +38,52 @@ describe("Markdown content negotiation & path mapping", () => {
 
   test("estimateMarkdownTokens produces positive UTF-8 token estimate", () => {
     expect(estimateMarkdownTokens("# Hello Our Notes")).toBeGreaterThan(0);
-    expect(estimateMarkdownTokens("BanG Dream! 我们的音符")).toBeGreaterThan(3);
+    expect(estimateMarkdownTokens("BanG Dream! Our Notes")).toBeGreaterThan(3);
   });
 });
 
 describe("Markdown document & llms.txt rendering", () => {
-  test("renders Home, Catalog, and Detail routes with YAML frontmatter and structured Markdown", async () => {
-    const homeDoc = await renderMarkdownForPath("/index.md");
-    expect(homeDoc).not.toBeNull();
-    expect(homeDoc!.markdown).toContain("---\n");
-    expect(homeDoc!.markdown).toContain('locale: "zh-CN"');
-    expect(homeDoc!.tokens).toBeGreaterThan(20);
+  test("renders Home, Detail routes, 404s, and /llms.txt offline against synthetic MasterData", async () => {
+    await withSyntheticMasterData(async () => {
+      const homeDoc = await renderMarkdownForPath("/index.md");
+      expect(homeDoc).not.toBeNull();
+      expect(homeDoc!.markdown).toContain("---\n");
+      expect(homeDoc!.markdown).toContain('locale: "zh-CN"');
+      expect(homeDoc!.tokens).toBeGreaterThan(20);
 
-    const cards = await getBuildCards("ja-JP");
-    expect(cards.length).toBeGreaterThan(0);
-    const firstCard = cards[0]!;
-    const cardDoc = await renderMarkdownForPath(`/ja/cards/${firstCard.id}.md`);
-    expect(cardDoc).not.toBeNull();
-    expect(cardDoc!.markdown).toContain('locale: "ja-JP"');
-    expect(cardDoc!.markdown).toContain(`/ja/cards/${firstCard.id}`);
-    expect(cardDoc!.markdownUrl).toEndWith(`/ja/cards/${firstCard.id}.md`);
+      const cards = await getBuildCards("ja-JP");
+      expect(cards.length).toBeGreaterThan(0);
+      const firstCard = cards[0]!;
+      const cardDoc = await renderMarkdownForPath(`/ja/cards/${firstCard.id}.md`);
+      expect(cardDoc).not.toBeNull();
+      expect(cardDoc!.markdown).toContain('locale: "ja-JP"');
+      expect(cardDoc!.markdown).toContain(`/ja/cards/${firstCard.id}`);
+      expect(cardDoc!.markdownUrl).toEndWith(`/ja/cards/${firstCard.id}.md`);
 
-    const events = await getBuildEvents("zh-CN");
-    if (events.length > 0) {
+      const events = await getBuildEvents("zh-CN");
+      expect(events.length).toBeGreaterThan(0);
       const eventDoc = await renderMarkdownForPath(`/events/${events[0]!.id}.md`);
       expect(eventDoc).not.toBeNull();
-      expect(eventDoc!.markdown).toContain(`data_version:`);
-    }
+      expect(eventDoc!.markdown).toContain("data_version:");
 
-    const songs = await getBuildMusic("en-US");
-    if (songs.length > 0) {
+      const songs = await getBuildMusic("en-US");
+      expect(songs.length).toBeGreaterThan(0);
       const songDoc = await renderMarkdownForPath(`/en/music/${songs[0]!.id}.md`);
       expect(songDoc).not.toBeNull();
       expect(songDoc!.markdown).toContain('locale: "en-US"');
-    }
-  });
 
-  test("returns null for unknown routes and nonexistent entity IDs", async () => {
-    expect(await renderMarkdownForPath("/nonexistent-route-xyz.md")).toBeNull();
-    expect(await renderMarkdownForPath("/cards/999999999.md")).toBeNull();
-    expect(await renderMarkdownForPath("/events/999999999.md")).toBeNull();
-  });
+      expect(await renderMarkdownForPath("/nonexistent-route-xyz.md")).toBeNull();
+      expect(await renderMarkdownForPath("/cards/999999999.md")).toBeNull();
+      expect(await renderMarkdownForPath("/events/999999999.md")).toBeNull();
 
-  test("renders /llms.txt and /llms-full.txt indexes", async () => {
-    const summary = await renderLlmsTxt(false);
-    expect(summary.body).toContain("# ");
-    expect(summary.body).toContain("/llms-full.txt");
-    expect(summary.body).toContain(".md");
+      const summary = await renderLlmsTxt(false);
+      expect(summary.body).toContain("# ");
+      expect(summary.body).toContain("/llms-full.txt");
+      expect(summary.body).toContain(".md");
 
-    const full = await renderLlmsTxt(true);
-    expect(full.body.length).toBeGreaterThan(summary.body.length);
-    expect(full.dataVersion.length).toBeGreaterThan(0);
+      const full = await renderLlmsTxt(true);
+      expect(full.body.length).toBeGreaterThan(summary.body.length);
+      expect(full.dataVersion.length).toBeGreaterThan(0);
+    });
   });
 });

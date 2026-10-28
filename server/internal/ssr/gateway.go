@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/StarMoe-org/moenotes/server/internal/logx"
 	"github.com/StarMoe-org/moenotes/server/internal/siteconfig"
+	"github.com/StarMoe-org/moenotes/server/internal/web"
 )
 
 // GatewayOptions configures the semi-SSR HTTP gateway in front of Next.js standalone.
@@ -205,23 +207,48 @@ func normalizeCachePath(p string) string {
 	return strings.TrimRight(p, "/")
 }
 
+func cleanRelativeAssetPath(raw string) (string, bool) {
+	if raw == "" || strings.ContainsRune(raw, '\\') || strings.ContainsRune(raw, 0) {
+		return "", false
+	}
+	cleaned := path.Clean("/" + raw)
+	rel := strings.TrimPrefix(cleaned, "/")
+	if rel == "" || rel == "." || strings.HasPrefix(rel, "..") {
+		return "", false
+	}
+	return rel, true
+}
+
 func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	g.lastTraffic.Store(time.Now().UnixNano())
+
+	isRead := r.Method == http.MethodGet || r.Method == http.MethodHead
+
+	// Serve /_next/static/* directly from NextStaticDir or persistent StaticArchiveDir with immutable caching,
+	// even while Next.js is starting or restarting across rolling deploys.
+	if isRead && strings.HasPrefix(r.URL.Path, "/_next/static/") {
+		if rel, ok := cleanRelativeAssetPath(strings.TrimPrefix(r.URL.Path, "/_next/static/")); ok {
+			if g.serveDiskFile(w, r, g.nextStatic, rel, "public, max-age=31536000, immutable") ||
+				g.serveDiskFile(w, r, g.staticArchive, rel, "public, max-age=31536000, immutable") {
+				return
+			}
+		}
+	}
+
+	// Serve public/* static assets (/favicon.svg, /assets/*, /haneoka-team-engine/*.wasm, etc.) directly from disk
+	// so binary/static assets never enter HTMLCache or hit the Node loop unnecessarily.
+	if isRead && g.publicDir != "" && r.URL.Path != "/" && !strings.HasPrefix(r.URL.Path, "/_next/") && !strings.HasPrefix(r.URL.Path, "/api/") {
+		if rel, ok := cleanRelativeAssetPath(r.URL.Path); ok {
+			if g.serveDiskFile(w, r, g.publicDir, rel, "no-cache") {
+				return
+			}
+		}
+	}
 
 	if g.readyFn != nil && !g.readyFn() {
 		w.Header().Set("Cache-Control", "no-store")
 		http.Error(w, "Service Unavailable", http.StatusServiceUnavailable)
 		return
-	}
-
-	// Serve /_next/static/* directly from NextStaticDir or StaticArchiveDir with immutable caching.
-	if strings.HasPrefix(r.URL.Path, "/_next/static/") && (r.Method == http.MethodGet || r.Method == http.MethodHead) {
-		rel := strings.TrimPrefix(r.URL.Path, "/_next/static/")
-		if !strings.Contains(rel, "..") {
-			if g.serveImmutableFile(w, r, g.nextStatic, rel) || g.serveImmutableFile(w, r, g.staticArchive, rel) {
-				return
-			}
-		}
 	}
 
 	forceBypass := IsForceBypassRequest(r)
@@ -309,17 +336,25 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (g *Gateway) serveImmutableFile(w http.ResponseWriter, r *http.Request, baseDir, rel string) bool {
+func (g *Gateway) serveDiskFile(w http.ResponseWriter, r *http.Request, baseDir, rel, cacheControl string) bool {
 	if baseDir == "" {
 		return false
 	}
 	full := filepath.Join(baseDir, filepath.FromSlash(rel))
 	info, err := os.Stat(full)
-	if err != nil || info.IsDir() {
+	if err != nil || !info.Mode().IsRegular() {
 		return false
 	}
-	w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
-	http.ServeFile(w, r, full)
+	f, err := os.Open(full)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+	if ct := web.ContentType(full); ct != "" {
+		w.Header().Set("Content-Type", ct)
+	}
+	w.Header().Set("Cache-Control", cacheControl)
+	http.ServeContent(w, r, info.Name(), info.ModTime(), f)
 	return true
 }
 
@@ -539,11 +574,17 @@ func (g *Gateway) RunIdleWarmup(ctx context.Context) {
 	}
 }
 
-// SyncStaticArchive copies current .next/static assets into archiveDir so rolling deploys never 404 old chunks.
-func SyncStaticArchive(nextStaticDir, archiveDir string) {
-	if nextStaticDir == "" || archiveDir == "" {
-		return
+// SyncStaticArchive copies current .next/static assets into archiveDir on the persistent volume
+// so rolling deploys never 404 previous builds' chunks, refreshes mtimes on reused chunks so active
+// chunks are never prematurely evicted, and sweeps archived assets older than maxDays (when > 0).
+func SyncStaticArchive(nextStaticDir, archiveDir string, maxDays int) (copied, refreshed int) {
+	if archiveDir != "" {
+		_ = os.MkdirAll(archiveDir, 0o755)
 	}
+	if nextStaticDir == "" || archiveDir == "" {
+		return 0, 0
+	}
+	now := time.Now()
 	_ = filepath.WalkDir(nextStaticDir, func(src string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return nil
@@ -553,25 +594,50 @@ func SyncStaticArchive(nextStaticDir, archiveDir string) {
 			return nil
 		}
 		dst := filepath.Join(archiveDir, rel)
-		if _, statErr := os.Stat(dst); statErr == nil {
+		srcInfo, srcStatErr := d.Info()
+		if dstInfo, statErr := os.Stat(dst); statErr == nil && srcStatErr == nil && dstInfo.Size() == srcInfo.Size() && !strings.HasSuffix(rel, "Manifest.js") {
+			_ = os.Chtimes(dst, now, now)
+			refreshed++
 			return nil
 		}
 		if os.MkdirAll(filepath.Dir(dst), 0o755) != nil {
 			return nil
 		}
-		if raw, readErr := os.ReadFile(src); readErr == nil {
-			_ = os.WriteFile(dst, raw, 0o644)
-		}
-		return nil
-	})
-	cutoff := time.Now().Add(-30 * 24 * time.Hour)
-	_ = filepath.WalkDir(archiveDir, func(p string, d os.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
+		raw, readErr := os.ReadFile(src)
+		if readErr != nil {
 			return nil
 		}
-		if info, statErr := d.Info(); statErr == nil && info.ModTime().Before(cutoff) {
-			_ = os.Remove(p)
+		tmp := dst + ".tmp"
+		if os.WriteFile(tmp, raw, 0o644) == nil {
+			if os.Rename(tmp, dst) == nil {
+				copied++
+			} else {
+				_ = os.Remove(tmp)
+			}
 		}
 		return nil
 	})
+	if maxDays > 0 {
+		cutoff := now.Add(-time.Duration(maxDays) * 24 * time.Hour)
+		var dirs []string
+		_ = filepath.WalkDir(archiveDir, func(p string, d os.DirEntry, err error) error {
+			if err != nil {
+				return nil
+			}
+			if d.IsDir() {
+				if p != archiveDir {
+					dirs = append(dirs, p)
+				}
+				return nil
+			}
+			if info, statErr := d.Info(); statErr == nil && info.ModTime().Before(cutoff) {
+				_ = os.Remove(p)
+			}
+			return nil
+		})
+		for i := len(dirs) - 1; i >= 0; i-- {
+			_ = os.Remove(dirs[i])
+		}
+	}
+	return copied, refreshed
 }

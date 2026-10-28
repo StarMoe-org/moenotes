@@ -4,9 +4,12 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 )
 
 func TestPrefersMarkdown(t *testing.T) {
@@ -143,5 +146,121 @@ func TestGatewayForceBypassPenetration(t *testing.T) {
 	gw.ServeHTTP(r4, httptest.NewRequest(http.MethodGet, "http://site/cards/71", nil))
 	if r4.Header().Get("X-Moenotes-Cache") != "HIT" || upstreamHits.Load() != 3 {
 		t.Fatalf("expected HTMLCache HIT after _refresh overwrite: cache=%s hits=%d", r4.Header().Get("X-Moenotes-Cache"), upstreamHits.Load())
+	}
+}
+
+func TestStaticArchivePersistenceAndPublicServing(t *testing.T) {
+	root := t.TempDir()
+	buildAStatic := filepath.Join(root, "build-a", ".next", "static")
+	buildBStatic := filepath.Join(root, "build-b", ".next", "static")
+	archiveDir := filepath.Join(root, "data", "static_archive")
+	publicDir := filepath.Join(root, "public")
+
+	writeFile := func(base, rel, body string) string {
+		t.Helper()
+		full := filepath.Join(base, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return full
+	}
+
+	writeFile(buildAStatic, "chunks/old-only.js", "console.log('old');")
+	writeFile(buildAStatic, "chunks/shared.js", "console.log('shared');")
+	copied, refreshed := SyncStaticArchive(buildAStatic, archiveDir, 30)
+	if copied != 2 || refreshed != 0 {
+		t.Fatalf("first sync copied=%d refreshed=%d, want 2/0", copied, refreshed)
+	}
+
+	// Backdate both archived files to 31 days ago; build B reuses shared.js so its mtime is refreshed and kept,
+	// whereas old-only.js is older than 30 days and gets swept.
+	staleTime := time.Now().Add(-31 * 24 * time.Hour)
+	_ = os.Chtimes(filepath.Join(archiveDir, "chunks", "old-only.js"), staleTime, staleTime)
+	_ = os.Chtimes(filepath.Join(archiveDir, "chunks", "shared.js"), staleTime, staleTime)
+
+	writeFile(buildBStatic, "chunks/shared.js", "console.log('shared');")
+	writeFile(buildBStatic, "chunks/new-only.js", "console.log('new');")
+	copied2, refreshed2 := SyncStaticArchive(buildBStatic, archiveDir, 30)
+	if copied2 != 1 || refreshed2 != 1 {
+		t.Fatalf("second sync copied=%d refreshed=%d, want 1/1", copied2, refreshed2)
+	}
+	if _, err := os.Stat(filepath.Join(archiveDir, "chunks", "old-only.js")); !os.IsNotExist(err) {
+		t.Fatalf("expected 31-day-old unused chunk to be swept, err=%v", err)
+	}
+	if _, err := os.Stat(filepath.Join(archiveDir, "chunks", "shared.js")); err != nil {
+		t.Fatalf("expected reused chunk to remain in archive: %v", err)
+	}
+
+	// Archive also keeps recent chunks (<30d) from previous builds when NextStaticDir moves to a newer build.
+	recentOld := writeFile(archiveDir, "chunks/prev-build.js", "console.log('prev');")
+	_ = recentOld
+	writeFile(publicDir, "haneoka-team-engine/engine.wasm", "\x00asm")
+
+	var upstreamHits atomic.Int32
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		upstreamHits.Add(1)
+		http.NotFound(w, r)
+	}))
+	defer upstream.Close()
+
+	gw, err := NewGateway(GatewayOptions{
+		UpstreamURL:      upstream.URL,
+		Cache:            NewHTMLCache(filepath.Join(root, "html_cache"), "build-b", "tw@1"),
+		StaticArchiveDir: archiveDir,
+		NextStaticDir:    buildBStatic,
+		PublicDir:        publicDir,
+		Ready:            func() bool { return false },
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Even while Ready() == false, /_next/static/* and public/* serve directly from disk/volume.
+	recPrev := httptest.NewRecorder()
+	gw.ServeHTTP(recPrev, httptest.NewRequest(http.MethodGet, "http://site/_next/static/chunks/prev-build.js", nil))
+	if recPrev.Code != http.StatusOK || !strings.Contains(recPrev.Header().Get("Cache-Control"), "immutable") {
+		t.Fatalf("archived chunk failed: code=%d cc=%q", recPrev.Code, recPrev.Header().Get("Cache-Control"))
+	}
+
+	recWasm := httptest.NewRecorder()
+	gw.ServeHTTP(recWasm, httptest.NewRequest(http.MethodGet, "http://site/haneoka-team-engine/engine.wasm", nil))
+	if recWasm.Code != http.StatusOK || recWasm.Header().Get("Content-Type") != "application/wasm" {
+		t.Fatalf("public wasm failed: code=%d ct=%q", recWasm.Code, recWasm.Header().Get("Content-Type"))
+	}
+	if upstreamHits.Load() != 0 {
+		t.Fatalf("expected 0 upstream hits for static/public files, got %d", upstreamHits.Load())
+	}
+}
+
+func TestHTMLCachePersistsActiveBuildAcrossPrune(t *testing.T) {
+	dir := t.TempDir()
+	c1 := NewHTMLCache(dir, "build-1", "tw@1")
+	c1.Write("tw@1", "html", "/cards", cacheMeta{ContentType: "text/html; charset=utf-8"}, []byte("<html>old-build</html>"))
+
+	c2 := NewHTMLCache(dir, "build-2", "tw@2")
+	c2.Write("tw@2", "html", "/cards", cacheMeta{ContentType: "text/html; charset=utf-8"}, []byte("<html>active-build</html>"))
+
+	// Backdate every file in dir to 5 hours ago (> 2h prune cutoff).
+	past := time.Now().Add(-5 * time.Hour)
+	_ = filepath.WalkDir(dir, func(p string, d os.DirEntry, err error) error {
+		if err == nil && !d.IsDir() {
+			_ = os.Chtimes(p, past, past)
+		}
+		return nil
+	})
+
+	c2.pruneOldEntries(2 * time.Hour)
+
+	// Active (build-2, tw@2) entry MUST still be readable on the persistent volume!
+	if _, _, ok := c2.Read("html", "/cards"); !ok {
+		t.Fatal("active (buildID, dataVersion) entry was unexpectedly pruned")
+	}
+
+	// Superseded (build-1, tw@1) entry older than cutoff MUST be pruned from disk.
+	if _, _, ok := c1.Read("html", "/cards"); ok {
+		t.Fatal("stale previous-build entry should have been pruned")
 	}
 }

@@ -89,18 +89,31 @@ func New(life context.Context, cfg *config.Config, site *siteconfig.Site) *Serve
 		}),
 	}
 	if cfg.BuildMode == "ssr" {
+		nextStaticDir := cfg.NextStaticDir
+		if nextStaticDir == "" {
+			nextStaticDir = filepath.Join(cfg.NextjsStandaloneDir, ".next", "static")
+		}
+		nextPublicDir := cfg.NextPublicDir
+		if nextPublicDir == "" {
+			nextPublicDir = filepath.Join(cfg.NextjsStandaloneDir, "public")
+		}
+		var extraEnv []string
+		if cfg.MasterdataCacheDir != "" {
+			extraEnv = append(extraEnv, "MOENOTES_MASTERDATA_CACHE_DIR="+cfg.MasterdataCacheDir)
+		}
 		s.ssrCache = ssr.NewHTMLCache(cfg.HTMLCacheDir, cfg.NextBuildID, "initial")
 		s.ssrSupervisor = &ssr.Supervisor{
 			StandaloneDir: cfg.NextjsStandaloneDir,
 			Port:          cfg.NextjsPort,
 			MaxOldSpaceMB: cfg.NextMaxOldSpaceMB,
+			ExtraEnv:      extraEnv,
 		}
 		gw, err := ssr.NewGateway(ssr.GatewayOptions{
 			UpstreamURL:      cfg.FrontendProxyURL,
 			Cache:            s.ssrCache,
 			StaticArchiveDir: cfg.StaticArchiveDir,
-			NextStaticDir:    filepath.Join(cfg.NextjsStandaloneDir, ".next", "static"),
-			PublicDir:        filepath.Join(cfg.NextjsStandaloneDir, "public"),
+			NextStaticDir:    nextStaticDir,
+			PublicDir:        nextPublicDir,
 			Site:             site,
 			Ready:            s.ssrSupervisor.Ready,
 			OnForceRefresh:   s.refreshSSRDataVersionNow,
@@ -260,8 +273,26 @@ func (s *Server) Run(ctx context.Context) error {
 	go func() { served <- server.Serve(listener) }()
 
 	if s.isSSR() {
-		ssr.SyncStaticArchive(filepath.Join(s.cfg.NextjsStandaloneDir, ".next", "static"), s.cfg.StaticArchiveDir)
-		logx.Printf("listening on %s in semi-SSR mode (upstream %s, html cache %s)", listener.Addr(), s.cfg.FrontendProxyURL, s.cfg.HTMLCacheDir)
+		for _, dir := range []string{
+			s.cfg.HTMLCacheDir,
+			s.cfg.StaticArchiveDir,
+			s.cfg.MasterdataCacheDir,
+			filepath.Join(s.cfg.NextjsStandaloneDir, ".next", "cache"),
+		} {
+			if dir != "" {
+				_ = os.MkdirAll(dir, 0o755)
+			}
+		}
+		nextStaticDir := s.cfg.NextStaticDir
+		if nextStaticDir == "" {
+			nextStaticDir = filepath.Join(s.cfg.NextjsStandaloneDir, ".next", "static")
+		}
+		copied, refreshed := ssr.SyncStaticArchive(nextStaticDir, s.cfg.StaticArchiveDir, s.cfg.StaticCacheMaxDays)
+		if s.cfg.NextBuildID == "" {
+			logx.Printf("warning: Next.js BUILD_ID not found under %s/.next/BUILD_ID; falling back to buildID=dev", s.cfg.NextjsStandaloneDir)
+		}
+		logx.Printf("listening on %s in semi-SSR mode (build=%s, upstream=%s, html_cache=%s, static_archive=%s [copied=%d refreshed=%d], masterdata_cache=%s)",
+			listener.Addr(), s.cfg.NextBuildID, s.cfg.FrontendProxyURL, s.cfg.HTMLCacheDir, s.cfg.StaticArchiveDir, copied, refreshed, s.cfg.MasterdataCacheDir)
 	} else if current := s.store.Current(); current != nil {
 		logx.Printf("listening on %s; serving %s (%s)", listener.Addr(), current.ID, current.Data)
 	} else {
