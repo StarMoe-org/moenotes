@@ -11,6 +11,8 @@ export const masterdataConfig = {
    */
   internal: buildEnvOrigin("MOENOTES_MASTERDATA_INTERNAL"),
   versionPath: "/current_version.json",
+  /** Same-origin version & MasterData cache management endpoint (`src/app/api/v1/meta/version/route.ts`). */
+  metaVersionApi: "/api/v1/meta/version",
   /** Per region: its path and the SHA-256 of each file, so identical tables of several servers load once. */
   indexPath: "/index.json",
   /**

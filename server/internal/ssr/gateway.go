@@ -118,7 +118,7 @@ func isTruthyFlag(v string) bool {
 	}
 }
 
-// IsForceBypassRequest reports whether r explicitly requests forced cache penetration (`强制穿透`).
+// IsForceBypassRequest reports whether r explicitly requests forced cache penetration.
 func IsForceBypassRequest(r *http.Request) bool {
 	if isTruthyFlag(r.Header.Get("X-Moenotes-Bypass-Cache")) || isTruthyFlag(r.Header.Get("X-Moenotes-Refresh-Masterdata")) {
 		return true
@@ -130,6 +130,9 @@ func IsForceBypassRequest(r *http.Request) bool {
 		return false
 	}
 	q := r.URL.Query()
+	if tok := strings.TrimSpace(q.Get("_refresh")); tok != "" && tok != "0" && !strings.EqualFold(tok, "false") {
+		return true
+	}
 	for _, key := range []string{"refresh_masterdata", "__refresh", "nocache", "refresh"} {
 		if isTruthyFlag(q.Get(key)) {
 			return true
@@ -138,14 +141,8 @@ func IsForceBypassRequest(r *http.Request) bool {
 	return false
 }
 
-func isBypassCacheRequest(r *http.Request) bool {
-	if IsForceBypassRequest(r) {
-		return true
-	}
+func isNonCacheablePathOrHeaders(r *http.Request) bool {
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
-		return true
-	}
-	if r.URL.RawQuery != "" {
 		return true
 	}
 	if r.Header.Get("RSC") != "" || r.Header.Get("Next-Router-Prefetch") != "" || r.Header.Get("Next-Action") != "" {
@@ -165,11 +162,40 @@ func isBypassCacheRequest(r *http.Request) bool {
 		p == "/internal-healthz" {
 		return true
 	}
-	if gSite := p; strings.HasPrefix(gSite, "/u/") || strings.Contains(gSite, "/u/") {
+	if strings.HasPrefix(p, "/u/") || strings.Contains(p, "/u/") {
 		// Player profile pages depend on dynamic player API state; bypass shared HTML cache.
 		return true
 	}
 	return false
+}
+
+func hasNonBypassQueryParams(rawQuery string) bool {
+	if rawQuery == "" {
+		return false
+	}
+	q, err := url.ParseQuery(rawQuery)
+	if err != nil {
+		return true
+	}
+	for key := range q {
+		switch key {
+		case "_refresh", "refresh_masterdata", "__refresh", "nocache", "refresh":
+			continue
+		default:
+			return true
+		}
+	}
+	return false
+}
+
+func isBypassCacheRequest(r *http.Request) bool {
+	if IsForceBypassRequest(r) {
+		return true
+	}
+	if r.URL.RawQuery != "" {
+		return true
+	}
+	return isNonCacheablePathOrHeaders(r)
 }
 
 func normalizeCachePath(p string) string {
@@ -201,6 +227,13 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	forceBypass := IsForceBypassRequest(r)
 	if forceBypass && g.onForceRefresh != nil {
 		g.onForceRefresh(r.Context())
+	}
+
+	// When a user manually refreshes a cacheable page (e.g. `?_refresh=<ts>` from Settings -> Data),
+	// penetrate Next.js upstream AND overwrite HTMLCache for the clean path so subsequent normal visits see fresh HTML too.
+	if forceBypass && g.cache != nil && !isNonCacheablePathOrHeaders(r) && !hasNonBypassQueryParams(r.URL.RawQuery) {
+		g.refreshAndUpdateCache(w, r)
+		return
 	}
 
 	if isBypassCacheRequest(r) || g.cache == nil {
@@ -291,6 +324,10 @@ func (g *Gateway) serveImmutableFile(w http.ResponseWriter, r *http.Request, bas
 }
 
 func (g *Gateway) fetchUpstream(ctx context.Context, path string, wantsMd bool) (int, http.Header, []byte, error) {
+	return g.fetchUpstreamWithOptions(ctx, path, wantsMd, false)
+}
+
+func (g *Gateway) fetchUpstreamWithOptions(ctx context.Context, path string, wantsMd bool, forceBypass bool) (int, http.Header, []byte, error) {
 	ctx, cancel := context.WithTimeout(ctx, 25*time.Second)
 	defer cancel()
 	target := g.upstream.ResolveReference(&url.URL{Path: path}).String()
@@ -302,6 +339,9 @@ func (g *Gateway) fetchUpstream(ctx context.Context, path string, wantsMd bool) 
 		req.Header.Set("Accept", "text/markdown; charset=utf-8")
 	} else {
 		req.Header.Set("Accept", "text/html,application/xhtml+xml")
+	}
+	if forceBypass {
+		req.Header.Set("X-Moenotes-Bypass-Cache", "1")
 	}
 	// Request uncompressed body from loopback Next.js so HTMLCache compresses once cleanly.
 	req.Header.Set("Accept-Encoding", "identity")
@@ -315,6 +355,59 @@ func (g *Gateway) fetchUpstream(ctx context.Context, path string, wantsMd bool) 
 		return 0, nil, nil, err
 	}
 	return resp.StatusCode, resp.Header.Clone(), body, nil
+}
+
+func (g *Gateway) refreshAndUpdateCache(w http.ResponseWriter, r *http.Request) {
+	isMdPath := strings.HasSuffix(r.URL.Path, ".md")
+	wantsMd := isMdPath || PrefersMarkdown(r.Header.Get("Accept"))
+	variant := "html"
+	if wantsMd {
+		variant = "md"
+	}
+	cachePath := normalizeCachePath(r.URL.Path)
+
+	status, hdr, body, err := g.fetchUpstreamWithOptions(r.Context(), cachePath, wantsMd, true)
+	if err != nil {
+		logx.Printf("ssr force-bypass refresh failed for %s: %v", r.URL.Path, err)
+		w.Header().Set("Cache-Control", "no-store")
+		http.Error(w, "Bad Gateway", http.StatusBadGateway)
+		return
+	}
+
+	ver := g.cache.DataVersion()
+	if status == http.StatusOK && len(body) > 0 {
+		ct := hdr.Get("Content-Type")
+		if wantsMd && ct == "" {
+			ct = "text/markdown; charset=utf-8"
+		} else if ct == "" {
+			ct = "text/html; charset=utf-8"
+		}
+		meta := cacheMeta{
+			ContentType:   ct,
+			MarkdownToken: hdr.Get("X-Markdown-Tokens"),
+			CanonicalLink: hdr.Get("Link"),
+			DataVersion:   hdr.Get("X-Moenotes-Data-Version"),
+		}
+		if meta.DataVersion == "" {
+			meta.DataVersion = ver
+		}
+		g.cache.Write(ver, variant, cachePath, meta, body)
+	}
+
+	outHdr := w.Header()
+	for k, vals := range hdr {
+		if strings.EqualFold(k, "Content-Length") || strings.EqualFold(k, "Content-Encoding") || strings.EqualFold(k, "Transfer-Encoding") || strings.EqualFold(k, "Connection") {
+			continue
+		}
+		outHdr[k] = append([]string(nil), vals...)
+	}
+	outHdr.Set("Vary", "Accept, Accept-Encoding")
+	outHdr.Set("Cache-Control", "no-store")
+	outHdr.Set("X-Moenotes-Cache", "BYPASS")
+	w.WriteHeader(status)
+	if r.Method != http.MethodHead {
+		_, _ = w.Write(body)
+	}
 }
 
 func (g *Gateway) proxyDirect(w http.ResponseWriter, r *http.Request, forceBypass bool) {
@@ -468,6 +561,16 @@ func SyncStaticArchive(nextStaticDir, archiveDir string) {
 		}
 		if raw, readErr := os.ReadFile(src); readErr == nil {
 			_ = os.WriteFile(dst, raw, 0o644)
+		}
+		return nil
+	})
+	cutoff := time.Now().Add(-30 * 24 * time.Hour)
+	_ = filepath.WalkDir(archiveDir, func(p string, d os.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return nil
+		}
+		if info, statErr := d.Info(); statErr == nil && info.ModTime().Before(cutoff) {
+			_ = os.Remove(p)
 		}
 		return nil
 	})

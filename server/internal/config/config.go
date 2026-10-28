@@ -24,6 +24,7 @@ type Config struct {
 	FrontendProxyURL     string
 	FrontendProxyManaged bool
 	NextjsStandaloneDir  string
+	NextjsPort           string
 	NextMaxOldSpaceMB    string
 	NextBuildID          string
 	HTMLCacheDir         string
@@ -117,6 +118,28 @@ func origin(name string) (string, error) {
 	return raw, nil
 }
 
+func isZeaburEnvironment() bool {
+	return env("ZEABUR_SERVICE_ID") != "" ||
+		env("ZEABUR_PROJECT_ID") != "" ||
+		env("ZEABUR_ENVIRONMENT_ID") != "" ||
+		env("ZEABUR_GIT_COMMIT_SHA") != ""
+}
+
+func resolveSSRDataDir(rawDataDir string, explicit bool) string {
+	if explicit {
+		return rawDataDir
+	}
+	if os.MkdirAll(filepath.Join(rawDataDir, "html_cache"), 0o755) == nil {
+		return rawDataDir
+	}
+	if os.MkdirAll("/app/data/html_cache", 0o755) == nil {
+		return "/app/data"
+	}
+	fallback := filepath.Join(os.TempDir(), "moenotes-data")
+	_ = os.MkdirAll(filepath.Join(fallback, "html_cache"), 0o755)
+	return fallback
+}
+
 // Load reads the configuration from the process environment.
 func Load() (*Config, error) {
 	var errs []error
@@ -125,31 +148,53 @@ func Load() (*Config, error) {
 			errs = append(errs, err)
 		}
 	}
-	dataDir := env("MOENOTES_DATA_DIR")
-	if dataDir == "" {
-		dataDir = "/data"
+	rawDataDir := env("MOENOTES_DATA_DIR")
+	explicitDataDir := rawDataDir != "" && rawDataDir != "/data"
+	if rawDataDir == "" {
+		rawDataDir = "/data"
 	}
-	dataDir, err := filepath.Abs(dataDir)
+	dataDir, err := filepath.Abs(rawDataDir)
 	check(err)
 
 	rawMode := strings.ToLower(env("MOENOTES_BUILD_MODE"))
 	frontendProxy, proxyErr := origin("FRONTEND_PROXY_URL")
 	check(proxyErr)
 
+	// One-click Zeabur k3s `docker build` deployments automatically start in semi-SSR mode without needing manual env vars,
+	// while bare non-Zeabur containers keep legacy "github" default unless MOENOTES_BUILD_MODE=ssr or FRONTEND_PROXY_URL is set.
 	buildMode := "github"
-	if rawMode == "ssr" || (rawMode == "" && frontendProxy != "") {
+	if rawMode == "ssr" || (rawMode == "" && (frontendProxy != "" || isZeaburEnvironment())) {
 		buildMode = "ssr"
 	} else if rawMode != "" && rawMode != "github" {
 		errs = append(errs, fmt.Errorf("MOENOTES_BUILD_MODE must be \"ssr\" or \"github\", got %q", rawMode))
 	}
 
+	if buildMode == "ssr" {
+		dataDir = resolveSSRDataDir(dataDir, explicitDataDir)
+	}
+
+	port, portErr := positive("PORT", 80)
+	check(portErr)
+	if portErr == nil && (port != math.Trunc(port) || port > 65535) {
+		check(fmt.Errorf("PORT must be a TCP port, got %v", port))
+	}
+	goPort := int(port)
+
 	nextjsDir := env("MOENOTES_NEXTJS_DIR")
 	if nextjsDir == "" {
 		nextjsDir = "/app/nextjs"
 	}
+	nextjsPort := env("NEXTJS_PORT")
+	if nextjsPort == "" {
+		if goPort == 3000 {
+			nextjsPort = "3001"
+		} else {
+			nextjsPort = "3000"
+		}
+	}
 	managedNext := false
 	if buildMode == "ssr" && frontendProxy == "" {
-		frontendProxy = "http://127.0.0.1:3000"
+		frontendProxy = "http://127.0.0.1:" + nextjsPort
 		managedNext = true
 	}
 
@@ -175,6 +220,7 @@ func Load() (*Config, error) {
 		FrontendProxyURL:     frontendProxy,
 		FrontendProxyManaged: managedNext,
 		NextjsStandaloneDir:  nextjsDir,
+		NextjsPort:           nextjsPort,
 		NextMaxOldSpaceMB:    nextMaxMem,
 		NextBuildID:          nextBuildID,
 		HTMLCacheDir:         htmlCacheDir,
@@ -203,12 +249,7 @@ func Load() (*Config, error) {
 	if c.GithubRef == "" {
 		c.GithubRef = "main"
 	}
-	port, err := positive("PORT", 80)
-	check(err)
-	if port != math.Trunc(port) || port > 65535 {
-		check(fmt.Errorf("PORT must be a TCP port, got %v", port))
-	}
-	c.Port = int(port)
+	c.Port = goPort
 	c.GithubPoll, err = seconds("MOENOTES_GITHUB_POLL_SECONDS", 30)
 	check(err)
 	c.Poll, err = seconds("MOENOTES_POLL_SECONDS", 60)

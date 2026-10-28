@@ -25,4 +25,11 @@ export const storageKeys = {
   showSpoiler: "moenotes:show-spoiler",
   /** Whether developer testing mode for spoiler content is unlocked via ?Spoiler=allow: "1" / "0". */
   spoilerUnlocked: "moenotes:spoiler-unlocked",
+  /** Last synchronized MasterData dataVersion fingerprint in browser storage. */
+  masterdataVersion: "moenotes:masterdata-version",
+  /** Session-scoped cache-bypass flag set during manual MasterData refresh landing. */
+  masterdataBypassSession: "moenotes:masterdata-bypass",
+  /** Circuit-breaker counter & timestamp preventing infinite manual refresh loops. */
+  masterdataRefreshCount: "moenotes:masterdata-refresh-count",
+  masterdataRefreshTs: "moenotes:masterdata-refresh-ts",
 } as const;

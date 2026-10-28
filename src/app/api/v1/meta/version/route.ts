@@ -5,6 +5,7 @@ import {
   forceRefreshMasterData,
   getBuildManifest,
   getMasterDataCacheStats,
+  peekCloudMasterDataManifest,
   shouldBypassMasterDataCache,
 } from "@/lib/masterdata/build-snapshot";
 
@@ -26,6 +27,7 @@ async function handleVersionRequest(request: NextRequest, forceByMethod: boolean
       searchParams: request.nextUrl.searchParams,
       headers: request.headers,
     });
+  const checkCloud = request.nextUrl.searchParams.get("check_cloud") === "1";
 
   if (forceBypass && !isPurgeAuthorized(request)) {
     return Response.json(
@@ -37,7 +39,9 @@ async function handleVersionRequest(request: NextRequest, forceByMethod: boolean
   const previousDataVersion = getMasterDataCacheStats().dataVersion;
   const manifest = forceBypass
     ? await forceRefreshMasterData({ purgeTables: true })
-    : await getBuildManifest();
+    : checkCloud
+      ? await peekCloudMasterDataManifest()
+      : await getBuildManifest();
   const servers = await getBuildServers(forceBypass ? { reloadOnly: true } : undefined);
   const stats = getMasterDataCacheStats();
 
@@ -46,6 +50,7 @@ async function handleVersionRequest(request: NextRequest, forceByMethod: boolean
       dataVersion: manifest.dataVersion || "unknown",
       previousDataVersion,
       refreshed: forceBypass,
+      checkedCloud: forceBypass || checkCloud,
       generatedAt: manifest.generatedAt || null,
       regions: manifest.regions ?? {},
       servers,

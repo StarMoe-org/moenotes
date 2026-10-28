@@ -29,6 +29,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     rawLocale && isAppLocale(rawLocale) ? rawLocale : getLocaleFromPathname(rawPathname) || DEFAULT_LOCALE;
   const canonicalPath = (reqHeaders.get("x-moenotes-canonical-path") || stripLocaleFromPathname(rawPathname)) as `/${string}`;
   const manifest = await resolveRequestMasterDataManifest();
+  const regionVersionMap: Record<string, string> = {};
+  for (const [region, info] of Object.entries(manifest?.regions ?? {})) {
+    if (info?.version) regionVersionMap[region] = info.version;
+  }
+  const serializedRegions = Object.keys(regionVersionMap).length > 0 ? JSON.stringify(regionVersionMap) : undefined;
 
   const mediaQueryCompatScript = buildMediaQueryCompatScript();
   const themeScript = buildThemeBootstrapScript();
@@ -47,6 +52,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       lang={HTML_LANG[locale]}
       data-locale={locale}
       data-masterdata-version={manifest?.dataVersion || undefined}
+      data-masterdata-regions={serializedRegions}
       suppressHydrationWarning
     >
       <head>

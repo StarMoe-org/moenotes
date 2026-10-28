@@ -15,7 +15,7 @@ import {
   shouldBypassMasterDataCache,
   withMasterDataVersionParam,
 } from "@/lib/masterdata/build-snapshot";
-import { withClientMasterDataVersion } from "@/lib/masterdata/client-version";
+import { formatMasterDataVersionLabel, withClientMasterDataVersion } from "@/lib/masterdata/client-version";
 
 describe("Runtime MasterData version cache, versioned table cache & forced cache penetration", () => {
   test("memo caches selectors per epoch and invalidates when epoch advances", async () => {
@@ -254,9 +254,18 @@ describe("Runtime MasterData version cache, versioned table cache & forced cache
     expect(withClientMasterDataVersion("/search-index.json", { forceBypass: true })).toContain("refresh_masterdata=1");
 
     expect(shouldBypassMasterDataCache({ searchParams: new URLSearchParams("refresh_masterdata=1") })).toBe(true);
+    expect(shouldBypassMasterDataCache({ searchParams: new URLSearchParams("_refresh=1793250000") })).toBe(true);
     expect(shouldBypassMasterDataCache({ searchParams: new URLSearchParams("__refresh=true") })).toBe(true);
     expect(shouldBypassMasterDataCache({ searchParams: new URLSearchParams("nocache=1") })).toBe(true);
     expect(shouldBypassMasterDataCache({ headers: new Headers({ "x-moenotes-bypass-cache": "1" }) })).toBe(true);
     expect(shouldBypassMasterDataCache({ searchParams: new URLSearchParams("page=2"), headers: new Headers() })).toBe(false);
+
+    expect(formatMasterDataVersionLabel("1.1.0.100/9cb2cd74f02a7b69ba4069f064f177fe")).toBe("1.1.0.100 · 9cb2cd74");
+    expect(
+      formatMasterDataVersionLabel(
+        "a1ba9587e3255fddc96e2c88f511b18f",
+        "0.0.1.78_5a972f86b779b5b33d60b649b76508d86bc556bc5e96dc8da818e0ab298b827b",
+      ),
+    ).toBe("0.0.1.78 · a1ba9587");
   });
 });

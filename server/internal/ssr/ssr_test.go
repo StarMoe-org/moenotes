@@ -130,11 +130,18 @@ func TestGatewayForceBypassPenetration(t *testing.T) {
 		t.Fatalf("expected BYPASS penetration: cache=%s hits=%d header=%v hook=%d", r2.Header().Get("X-Moenotes-Cache"), upstreamHits.Load(), sawBypassHeader.Load(), forceHookCalls.Load())
 	}
 
-	// Query-based force bypass (?refresh_masterdata=1) also penetrates and triggers OnForceRefresh.
+	// Query-based force bypass (?_refresh=<ts>, matching MoeSekai Settings refresh) penetrates, updates HTMLCache, and triggers OnForceRefresh.
 	sawBypassHeader.Store(false)
 	r3 := httptest.NewRecorder()
-	gw.ServeHTTP(r3, httptest.NewRequest(http.MethodGet, "http://site/cards/71?refresh_masterdata=1", nil))
+	gw.ServeHTTP(r3, httptest.NewRequest(http.MethodGet, "http://site/cards/71?_refresh=1793250000", nil))
 	if r3.Header().Get("X-Moenotes-Cache") != "BYPASS" || upstreamHits.Load() != 3 || !sawBypassHeader.Load() || forceHookCalls.Load() != 2 {
 		t.Fatalf("expected query BYPASS penetration: cache=%s hits=%d header=%v hook=%d", r3.Header().Get("X-Moenotes-Cache"), upstreamHits.Load(), sawBypassHeader.Load(), forceHookCalls.Load())
+	}
+
+	// Subsequent normal GET hits the freshly updated HTMLCache without another upstream call.
+	r4 := httptest.NewRecorder()
+	gw.ServeHTTP(r4, httptest.NewRequest(http.MethodGet, "http://site/cards/71", nil))
+	if r4.Header().Get("X-Moenotes-Cache") != "HIT" || upstreamHits.Load() != 3 {
+		t.Fatalf("expected HTMLCache HIT after _refresh overwrite: cache=%s hits=%d", r4.Header().Get("X-Moenotes-Cache"), upstreamHits.Load())
 	}
 }

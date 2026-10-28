@@ -60,14 +60,16 @@ RUN /out/moenotes source-digest /site > /out/source-digest
 RUN /out/moenotes self-check
 
 FROM node:22-bookworm-slim
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates tini tzdata && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates tini tzdata && rm -rf /var/lib/apt/lists/* && \
+    mkdir -p /data/html_cache /data/static_archive /data/masterdata_cache /app/data
 COPY --from=go-build /out/moenotes /usr/local/bin/moenotes
 COPY --from=go-build /out/source-digest /app/source-digest
 COPY --from=web-build /nextjs /app/nextjs
 
 ARG ZEABUR_GIT_COMMIT_SHA=""
 ARG MOENOTES_REVISION=${ZEABUR_GIT_COMMIT_SHA}
-ENV MOENOTES_REVISION=${MOENOTES_REVISION} \
+ENV ZEABUR_GIT_COMMIT_SHA=${ZEABUR_GIT_COMMIT_SHA} \
+    MOENOTES_REVISION=${MOENOTES_REVISION} \
     MOENOTES_SOURCE_DIGEST_FILE=/app/source-digest \
     MOENOTES_NEXTJS_DIR=/app/nextjs \
     MOENOTES_DATA_DIR=/data \

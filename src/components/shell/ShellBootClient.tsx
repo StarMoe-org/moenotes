@@ -6,6 +6,7 @@ import { HTML_LANG, type AppLocale } from "@/config/locales";
 import { pruneAssetCache } from "@/lib/cache/asset-cache";
 import { installFetchCache } from "@/lib/cache/cached-fetch";
 import { registerImageCacheWorker } from "@/lib/cache/service-worker";
+import { syncMasterDataRefreshLanding } from "@/lib/masterdata/client-version";
 import { restoreScrollState, saveScrollState } from "@/lib/scroll/scroll-memory";
 
 const BYPASS_PREFIXES = ["/api/", "/_next/", "/assets/", "/deck/", "/recognition/", "/haneoka-team-engine/", "/sitemaps/"];
@@ -35,6 +36,7 @@ export default function ShellBootClient({ locale }: { locale: AppLocale }) {
     installFetchCache();
     void pruneAssetCache();
     registerImageCacheWorker();
+    return syncMasterDataRefreshLanding();
   }, []);
 
   useEffect(() => {

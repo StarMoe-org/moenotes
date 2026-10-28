@@ -1,12 +1,26 @@
 # Deployment
 
-## Next.js 16 + Go Semi-SSR Mode (`MOENOTES_BUILD_MODE=ssr`)
+## Next.js 16 + Go Semi-SSR Mode (Zeabur k3s One-Click Deploy & `MOENOTES_BUILD_MODE=ssr`)
 
-`Dockerfile` builds a multi-stage container carrying both the `moenotes` Go gateway (`/usr/local/bin/moenotes`),
-the Next.js 16 standalone server (`/app/nextjs` with Node 22), `/app/static_archive` for rolling-deploy `_next/static`
-chunk continuity, and `/app/source-digest`.
+`Dockerfile` builds a 4-stage container carrying the Haneoka Rust WASM deck engine, the `moenotes` Go gateway
+(`/usr/local/bin/moenotes`), the Next.js 16 standalone server (`/app/nextjs` with Debian Node 22), `/data/static_archive`
+for rolling-deploy `_next/static` chunk continuity (30-day automatic pruning), `/data/html_cache`, `/data/masterdata_cache`,
+and `/app/source-digest` — matching `StarMoe-org/Moesekai`'s Zeabur k3s deployment model.
 
-Enable semi-SSR mode in production with `MOENOTES_BUILD_MODE=ssr`:
+### Zeabur k3s One-Click `docker build` Deployment
+
+Connect `StarMoe-org/moenotes` on Zeabur k3s (`Dockerfile` builder):
+
+- **Zero required environment variables**: Zeabur automatically supplies `ZEABUR_GIT_COMMIT_SHA` / `ZEABUR_SERVICE_ID`,
+  which auto-activates `MOENOTES_BUILD_MODE=ssr` out of the box (and automatically avoids port collision if `PORT=3000`).
+- **Optional persistent volume**: Mount a volume at `/data` to persist `html_cache`, `static_archive`, and `masterdata_cache`
+  across pod restarts (falls back cleanly to `/data` / `/app/data` inside the container if no volume is attached yet).
+- **Optional internal cluster origins**: Set `MOENOTES_ASSET_INTERNAL`, `MOENOTES_MASTERDATA_INTERNAL`, and `MOENOTES_API_INTERNAL`
+  when running alongside `moenotes-assets`, `moenotes-metadata`, and `starmoe-api` in the same k3s cluster.
+
+### Self-Hosted Docker
+
+Enable semi-SSR mode explicitly with `MOENOTES_BUILD_MODE=ssr`:
 
 ```bash
 docker build --build-arg MOENOTES_REVISION=$(git rev-parse HEAD) -t moenotes .

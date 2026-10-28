@@ -136,8 +136,13 @@ export function shouldBypassMasterDataCache(options: {
   if (!searchParams) return false;
   const keys = ["refresh_masterdata", "__refresh", "nocache", "refresh"] as const;
   if (searchParams instanceof URLSearchParams) {
+    const rawRefreshToken = searchParams.get("_refresh")?.trim();
+    if (rawRefreshToken && rawRefreshToken !== "0" && rawRefreshToken.toLowerCase() !== "false") return true;
     return keys.some((key) => isTruthyFlag(searchParams.get(key)));
   }
+  const rawToken = searchParams["_refresh"];
+  const firstToken = (Array.isArray(rawToken) ? rawToken[0] : rawToken)?.trim();
+  if (firstToken && firstToken !== "0" && firstToken.toLowerCase() !== "false") return true;
   return keys.some((key) => {
     const raw = searchParams[key];
     const first = Array.isArray(raw) ? raw[0] : raw;
@@ -266,6 +271,14 @@ export function forceRefreshMasterData(options: ForceRefreshMasterDataOptions = 
     state.forceRefreshing = undefined;
   });
   return state.forceRefreshing;
+}
+
+/**
+ * Penetrate `current_version.json` immediately (`_t` + `no-cache, no-store`) to inspect the latest cloud version
+ * (used when the Settings -> Data sheet opens). If upstream has moved, rotates the in-memory epoch right away.
+ */
+export async function peekCloudMasterDataManifest(): Promise<VersionManifest> {
+  return refreshManifestIfChanged();
 }
 
 export function getBuildManifest(options?: MasterDataReadOptions): Promise<VersionManifest> {

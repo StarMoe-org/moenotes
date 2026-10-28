@@ -16,6 +16,7 @@ const allowedStorageFiles = new Set([
 const allowedFetchFiles = new Set([
   "src/lib/build/fetch.ts",
   "src/lib/masterdata/build-snapshot.ts",
+  "src/lib/masterdata/client-version.ts",
   "src/lib/search/dynamic-index.ts",
   "src/components/cards/CardDetail.tsx",
   "src/components/characters/CharacterDetail.tsx",

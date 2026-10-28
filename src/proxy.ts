@@ -38,6 +38,8 @@ function hasForceBypassSignal(request: NextRequest): boolean {
     return true;
   }
   const sp = request.nextUrl.searchParams;
+  const token = sp.get("_refresh")?.trim();
+  if (token && token !== "0" && token.toLowerCase() !== "false") return true;
   return ["refresh_masterdata", "__refresh", "nocache", "refresh"].some((key) => isTruthyFlag(sp.get(key)));
 }
 

@@ -92,7 +92,7 @@ func New(life context.Context, cfg *config.Config, site *siteconfig.Site) *Serve
 		s.ssrCache = ssr.NewHTMLCache(cfg.HTMLCacheDir, cfg.NextBuildID, "initial")
 		s.ssrSupervisor = &ssr.Supervisor{
 			StandaloneDir: cfg.NextjsStandaloneDir,
-			Port:          "3000",
+			Port:          cfg.NextjsPort,
 			MaxOldSpaceMB: cfg.NextMaxOldSpaceMB,
 		}
 		gw, err := ssr.NewGateway(ssr.GatewayOptions{
@@ -145,6 +145,8 @@ func (s *Server) routes() http.Handler {
 			}
 		}()
 		switch path := r.URL.Path; {
+		case path == "/internal-healthz" || path == "/internal-healthz/":
+			http.NotFound(w, r)
 		case path == "/healthz":
 			_, _ = w.Write([]byte("ok\n"))
 		case path == "/readyz":
