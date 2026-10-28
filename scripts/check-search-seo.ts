@@ -4,7 +4,7 @@ import { t } from "../src/i18n";
 import { getAllRoutes, getAllStaticRoutes, isDynamicRoute } from "../src/lib/route/registry";
 import { buildStaticSearchIndex } from "../src/lib/search/static-index";
 import { getSitemapEntries } from "../src/lib/seo/sitemap";
-import { withSyntheticMasterData } from "../tests/fixtures/synthetic-masterdata";
+import { withSyntheticMasterData } from "./synthetic-masterdata";
 
 const errors: string[] = [];
 

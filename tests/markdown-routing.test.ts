@@ -8,7 +8,7 @@ import {
   prefersMarkdownAccept,
 } from "@/lib/markdown/negotiate";
 import { renderLlmsTxt, renderMarkdownForPath } from "@/lib/markdown/render";
-import { withSyntheticMasterData } from "./fixtures/synthetic-masterdata";
+import { withSyntheticMasterData } from "../scripts/synthetic-masterdata";
 
 describe("Markdown content negotiation & path mapping", () => {
   test("prefersMarkdownAccept respects RFC quality weights", () => {

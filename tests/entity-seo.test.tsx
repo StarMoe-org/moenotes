@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import DetailSemanticSeoShell from "@/components/seo/DetailSemanticSeoShell";
 import { getBuildCards, getBuildCharacters, getBuildEvents, getBuildMusic } from "@/lib/masterdata/build-data";
 import { resolveEntitySeo } from "@/lib/seo/entity-seo";
-import { withSyntheticMasterData } from "./fixtures/synthetic-masterdata";
+import { withSyntheticMasterData } from "../scripts/synthetic-masterdata";
 
 describe("Dynamic Entity SEO & DetailSemanticSeoShell", () => {
   test("resolves localized title, OpenGraph cover, and sr-only semantic shell for member cards, events, music, and characters", async () => {
