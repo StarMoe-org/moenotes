@@ -61,7 +61,8 @@ function CommandPalette({ locale }: CommandPaletteProps) {
     let cancelled = false;
     void searchContent(query, locale).then((results) => {
       if (cancelled) return;
-      const filtered = !showSpoiler && now !== null
+      // isSpoiler falls back to the serialized page reference while no live clock is known.
+      const filtered = !showSpoiler
         ? results.filter((result) => !isSpoiler(result.startAt, now))
         : results;
       setContent(filtered.map((result) => ({ id: result.key, kind: result.kind, label: result.title, href: result.href })));

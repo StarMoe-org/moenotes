@@ -78,7 +78,7 @@ function Sidebar({ locale, pathname, activePath }: SidebarProps) {
   return (
     <>
       <aside
-        className="mn-desktop-sidebar glass fixed bottom-3 top-[calc(var(--md-app-bar-height,64px)+0.75rem)] z-30 hidden w-[calc(17rem-1.5rem)] overflow-hidden rounded-shape-xl md:block"
+        className="mn-desktop-sidebar glass fixed bottom-3 top-[calc(var(--md-app-bar-height,64px)+0.75rem)] z-30 w-[calc(17rem-1.5rem)] overflow-hidden rounded-shape-xl"
         data-open={desktopOpen}
         data-ready={ready}
         inert={!desktopOpen}

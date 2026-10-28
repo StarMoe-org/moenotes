@@ -34,7 +34,7 @@ export default function SupportCardsExplorer({ locale, servers, initialSupportCa
   const { showSpoiler } = useSpoiler();
   const { server, pickServer, items: cards } = useServerList(locale, servers, initialSupportCards);
   const visibleCards = useMemo(() => {
-    if (showSpoiler || now === null) return cards;
+    if (showSpoiler) return cards;
     return cards.filter((card) => !isSpoiler(card.startAt, now));
   }, [cards, showSpoiler, now]);
   const skillOf = useCallback((card: SupportCardViewModel) => skillNames.support[String(card.supportSkillId01)] ?? "", [skillNames]);

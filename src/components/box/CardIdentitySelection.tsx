@@ -26,8 +26,8 @@ export default function CardIdentitySelection({ locale, kind, catalog, value, on
   const [selected, setSelected] = useState(value);
   const { showSpoiler, now } = useSpoilerSetting();
   const choices = useMemo<IdentityChoice[]>(() => {
-    const members = !showSpoiler && now !== null ? catalog.members.filter(card => !isSpoiler(card.startAt, now)) : catalog.members;
-    const snaps = !showSpoiler && now !== null ? catalog.snaps.filter(card => !isSpoiler(card.startAt, now)) : catalog.snaps;
+    const members = !showSpoiler ? catalog.members.filter(card => !isSpoiler(card.startAt, now)) : catalog.members;
+    const snaps = !showSpoiler ? catalog.snaps.filter(card => !isSpoiler(card.startAt, now)) : catalog.snaps;
     return kind === "member" ? members.map(card => ({ kind: "member", card })) : snaps.map(card => ({ kind: "snap", card }));
   }, [kind, catalog, showSpoiler, now]);
   const filters = useCardFilters(choices, locale, `box-identity-${kind}`, describeChoice);

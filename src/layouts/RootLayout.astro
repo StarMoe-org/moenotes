@@ -14,6 +14,7 @@ import {
 import { localizePath } from "@/i18n/routing";
 import { getNavigationGroupId, findRouteMatch } from "@/lib/route/registry";
 import { buildNavGroupBootstrapScript, buildThemeBootstrapScript } from "@/lib/settings/apply-theme";
+import { SPOILER_REFERENCE_NOW } from "@/lib/settings/spoiler-reference";
 import { buildAccountBootstrapScript } from "@/lib/account/bootstrap";
 import { buildFilterBootstrapScript } from "@/lib/filter/bootstrap";
 import { buildMediaQueryCompatScript } from "@/lib/browser/media-query-compat";
@@ -46,7 +47,7 @@ const googleAnalyticsBootstrapScript = isGoogleAnalyticsEnabled
 ---
 
 <!doctype html>
-<html lang={HTML_LANG[locale]} data-locale={locale}>
+<html lang={HTML_LANG[locale]} data-locale={locale} data-spoiler-now={SPOILER_REFERENCE_NOW}>
   <head>
     <meta charset="utf-8" />
     <!-- Cascade layer order, before any stylesheet: MUI (Emotion) styles sit between Tailwind's base and utilities. -->

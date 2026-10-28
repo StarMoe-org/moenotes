@@ -3,8 +3,9 @@
 Project-authored Rust code and original built-in vector skin: MIT (LICENSE).
 The built-in skin and synthetic fixtures contain no game images or charts.
 
-- `vendor/moenotes-chart-parser`: v0.3.0, MIT; exact upstream commit and source
-  SHA-256 are in UPSTREAM.json. Its yyjson source is MIT with a separate notice.
+- `vendor/moenotes-chart-parser`: v0.3.0 plus the unreleased sub-beat Combo fix
+  (issue #1), MIT; exact upstream commit and source SHA-256 are in UPSTREAM.json.
+  Its yyjson source is MIT with a separate notice.
   Parser source is copied unchanged, not reimplemented.
 - `libz-sys` and the linked stock zlib: wrapper MIT/Apache-2.0, zlib license.
 - `skia-safe` bindings: MIT; Skia: BSD-3-Clause plus bundled component notices.

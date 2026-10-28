@@ -34,7 +34,7 @@ export default function RealLivesView({ locale, servers, lives: initialLives }: 
   const { showSpoiler, now } = useSpoilerSetting();
   const timeZone = useDisplayTimeZone();
   const visibleLives = useMemo(() => {
-    if (showSpoiler || now === null) return lives;
+    if (showSpoiler) return lives;
     return lives.filter((live) => !isSpoiler(live.startAt, now));
   }, [lives, showSpoiler, now]);
   return (

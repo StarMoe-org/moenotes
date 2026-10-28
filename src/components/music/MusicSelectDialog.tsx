@@ -48,7 +48,7 @@ export default function MusicSelectDialog({
 }: MusicSelectDialogProps) {
   const { showSpoiler, now } = useSpoilerSetting();
   const visibleSongs = useMemo(() => {
-    if (showSpoiler || now === null) return songs;
+    if (showSpoiler) return songs;
     return songs.filter((song) => !isSpoiler(song.startAt, now));
   }, [songs, showSpoiler, now]);
 

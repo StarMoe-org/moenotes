@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState, type UIEvent } from "react";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
-import Slide from "@mui/material/Slide";
 import { Icon } from "@/components/shared/icons";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
@@ -34,6 +33,20 @@ export default function FilterDrawer({ locale, pathname }: FilterDrawerProps) {
   useEffect(() => setMounted(true), []);
 
   const shouldShow = Boolean(hasFilters && filterContent && isOpen);
+  // The docked sheet mounts when the reader opens it and leaves the DOM after its exit transition. The entrance is a
+  // CSS animation on [data-open="true"] rather than a transition: an animation starts with the element even if the
+  // first frames are dropped while the page is still hydrating, so the entrance is never skipped or played at a
+  // different speed (a transition from the freshly mounted closed state could be coalesced away).
+  const [present, setPresent] = useState(false);
+  useEffect(() => {
+    if (shouldShow) {
+      setPresent(true);
+      return;
+    }
+    // One frame longer than the 300ms exit, so the slide is never cut off.
+    const timer = setTimeout(() => setPresent(false), 350);
+    return () => clearTimeout(timer);
+  }, [shouldShow]);
   const resolvedTitle = filterTitle || t(locale, "filter.title");
 
   // Scroll restoration per route.
@@ -76,16 +89,20 @@ export default function FilterDrawer({ locale, pathname }: FilterDrawerProps) {
     );
   }
 
+  // Docked pages mount the sheet in the same commit that opens it, so the content's width change and the entrance
+  // start together; `present` only keeps it in the DOM through the exit transition.
+  if (!hasFilters || (!shouldShow && !present)) return null;
+
   return (
-    <Slide direction="right" in={shouldShow} mountOnEnter unmountOnExit>
-      <aside
-        id={FILTER_DRAWER_ID}
-        aria-labelledby={titleId}
-        className="mn-shell-offset glass fixed bottom-3 top-[calc(var(--md-app-bar-height,64px)+0.75rem)] z-30 flex flex-col overflow-hidden rounded-shape-xl transition-[left] duration-300 ease-[var(--md-sys-motion-easing-emphasized)]"
-        style={{ left: FILTER_DOCK_LEFT, width: `calc(${FILTER_SHEET_WIDTH} - 0.75rem)` }}
-      >
-        {sheet}
-      </aside>
-    </Slide>
+    <aside
+      id={FILTER_DRAWER_ID}
+      aria-labelledby={titleId}
+      data-open={shouldShow}
+      inert={!shouldShow}
+      className="mn-filter-sheet mn-shell-offset glass fixed bottom-3 top-[calc(var(--md-app-bar-height,64px)+0.75rem)] z-30 flex flex-col overflow-hidden rounded-shape-xl"
+      style={{ left: FILTER_DOCK_LEFT, width: `calc(${FILTER_SHEET_WIDTH} - 0.75rem)` }}
+    >
+      {sheet}
+    </aside>
   );
 }

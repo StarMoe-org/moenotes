@@ -43,7 +43,7 @@ export default function MusicExplorer({ locale, servers, initialSongs, categorie
 
   const { server, pickServer, items: songs } = useServerList(locale, servers, initialSongs);
   const visibleSongs = useMemo(() => {
-    if (showSpoiler || now === null) return songs;
+    if (showSpoiler) return songs;
     return songs.filter((song) => !isSpoiler(song.startAt, now));
   }, [songs, showSpoiler, now]);
   const { index: metrics } = useChartMetrics();

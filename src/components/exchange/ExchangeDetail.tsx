@@ -56,7 +56,7 @@ function ExchangeDetailView({ locale, exchange, serverSwitch, schedules }: { loc
   const now = useNow();
   const timeZone = useDisplayTimeZone();
   const { showSpoiler } = useSpoiler();
-  const isUnreleased = Boolean(now !== null && exchange?.startAt && isSpoiler(exchange.startAt, now));
+  const isUnreleased = Boolean(exchange?.startAt && isSpoiler(exchange.startAt, now));
 
   if (!exchange) return <NotFound locale={locale} />;
   if (!showSpoiler && isUnreleased) return <SpoilerNotice locale={locale} />;

@@ -31,6 +31,7 @@ import { formatScheduleRange, scheduleStatus } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
 import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { useSpoiler } from "@/lib/settings/spoiler";
+import { SPOILER_REFERENCE_NOW } from "@/lib/settings/spoiler-reference";
 import { SpoilerNotice, DeveloperTestingBanner } from "@/components/shared/SpoilerNotice";
 import { getSupportRarityIconUrl, type SupportCardRarity } from "@/lib/support-cards/assets";
 
@@ -75,7 +76,7 @@ function GachaDetailView({ locale, gacha, serverSwitch, schedules }: { locale: A
 
   if (!gacha) return <NotFound locale={locale} />;
 
-  const isUnreleased = Boolean(now !== null && scheduleStatus(gacha.startAt, gacha.endAt, now) === "upcoming");
+  const isUnreleased = scheduleStatus(gacha.startAt, gacha.endAt, now ?? SPOILER_REFERENCE_NOW) === "upcoming";
   if (isUnreleased && !showSpoiler) {
     return <SpoilerNotice locale={locale} />;
   }

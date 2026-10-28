@@ -63,21 +63,26 @@ function TopAppBar({ locale, homeHref, crumbs }: Props) {
           <a href={homeHref} className="md3-state flex shrink-0 items-center rounded-full px-1 py-1 text-on-surface" aria-label={t(locale, "nav.home")}>
             <BrandLogo className="mn-brand-shell" />
           </a>
-          <Breadcrumbs locale={locale} crumbs={crumbs} />
+          {/* Beside the brand from md up; below md it collapses so the trail fits on its own row. */}
+          {crumbs.length > 0 && (
+            <div className="mn-app-bar-crumbs">
+              <Breadcrumbs locale={locale} crumbs={crumbs} />
+            </div>
+          )}
         </div>
         <div className="min-w-0 flex-1" />
         <ButtonBase
           onClick={() => toggleOverlay("command")}
           aria-label={t(locale, "shell.openCommandPalette")}
-          className="glass md3-state !hidden h-12 w-72 shrink items-center gap-2 !rounded-full !pl-4 !pr-3 !text-on-surface-variant lg:!flex"
+          className="mn-top-search glass md3-state flex h-12 shrink items-center gap-2 !rounded-full !text-on-surface-variant"
         >
           <Icon name="search" className="h-5 w-5" />
           <span className="min-w-0 flex-1 truncate text-left text-body-medium">{t(locale, "shell.searchPlaceholder")}</span>
           <kbd className="inline-flex h-6 items-center rounded-shape-xs border border-outline-variant px-1.5 font-sans text-label-small">{shortcut}</kbd>
         </ButtonBase>
-        <div className="glass flex h-12 shrink-0 items-center gap-0.5 rounded-full px-1">
+        <div className="glass flex h-12 shrink-0 items-center gap-0.5 rounded-full px-1 lg:gap-0">
           <Tooltip title={t(locale, "shell.openCommandPalette")}>
-            <IconButton className="lg:!hidden" aria-label={t(locale, "shell.openCommandPalette")} onClick={() => toggleOverlay("command")}>
+            <IconButton className="mn-top-search-compact" aria-label={t(locale, "shell.openCommandPalette")} onClick={() => toggleOverlay("command")}>
               <Icon name="search" />
             </IconButton>
           </Tooltip>
@@ -89,7 +94,7 @@ function TopAppBar({ locale, homeHref, crumbs }: Props) {
         </div>
       </div>
       {crumbs.length > 0 && (
-        <div className="mn-app-bar-trail flex h-10 items-start px-2 md:hidden">
+        <div className="mn-app-bar-trail flex items-start px-2">
           <div className="glass flex h-9 min-w-0 max-w-full items-center rounded-full px-1.5">
             <Breadcrumbs locale={locale} crumbs={crumbs} row />
           </div>
@@ -111,7 +116,7 @@ function Breadcrumbs({ locale, crumbs, row = false }: { locale: AppLocale; crumb
     <nav
       ref={scrollRef}
       aria-label={t(locale, "shell.breadcrumb")}
-      className={`no-scrollbar min-w-0 overflow-x-auto ${row ? "flex" : "flex max-md:hidden"}`}
+      className="no-scrollbar flex min-w-0 overflow-x-auto"
     >
       <ol className="flex min-w-max items-center gap-0.5 text-body-medium text-on-surface-variant">
         {crumbs.map((crumb, index) => (
