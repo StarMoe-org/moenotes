@@ -1307,6 +1307,7 @@ export const koKR = {
     challengeRanking: "곡 랭킹 보상",
     challengeRankingNote: "이벤트 종료 후 해당 곡의 최종 순위에 따라 지급됩니다.",
     bannerAlt: "{name} 배너",
+    assets: { banner: "이벤트 배너", background: "배경 일러스트", logo: "이벤트 로고" },
     backToList: "이벤트 목록으로",
     notFoundTitle: "이벤트를 찾을 수 없습니다",
     notFoundDescription: "이 이벤트는 이미 막을 내렸거나 아직 막이 오르지 않았습니다. 이벤트 목록에서 다른 무대를 찾아보세요.",

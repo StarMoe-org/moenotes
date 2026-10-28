@@ -529,6 +529,7 @@ export const thTH = {
     liveItems: "ไอเท็ม",
     probability: "โอกาส {rate}%",
     bannerAlt: "แบนเนอร์ {name}",
+    assets: { banner: "แบนเนอร์อีเวนต์", background: "ภาพพื้นหลัง", logo: "โลโก้อีเวนต์" },
     backToList: "กลับสู่รายการอีเวนต์",
     notFoundTitle: "ไม่พบบันทึกอีเวนต์นี้",
     notFoundDescription: "อีเวนต์นี้อาจปิดฉากลงไปนานแล้ว หรือยังไม่ถึงเวลาเปิดม่านการแสดง กลับสู่รายการอีเวนต์เพื่อค้นหาเวทีอื่น"

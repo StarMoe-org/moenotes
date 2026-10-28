@@ -1318,6 +1318,7 @@ export const enUS = {
     challengeRanking: "Song ranking rewards",
     challengeRankingNote: "Given out after the event, by your final song rank.",
     bannerAlt: "{name} banner",
+    assets: { banner: "Event banner", background: "Background art", logo: "Event logo" },
     backToList: "Back to Event List",
     notFoundTitle: "Event not found",
     notFoundDescription: "This event has either drawn its curtain long ago or has yet to raise it. Head back to the event list to find another stage.",

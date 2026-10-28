@@ -677,7 +677,7 @@ export function eventDetailsOn(server: GameServer, locale: AppLocale): Promise<E
       events, effects, pickUpCards, achievementRewards, loopRewards, livePoints, liveRewards, challengePoints, challengeRewards, rewards,
       eventMissions, exchanges, chapters, episodesRaw, advs, boxGachas, boxGachaRewards, rankingRewards, challengeMusic, challengeBoosts, challengeMusicRanking,
       characters, bands, textTable, resolve, cards, supportCards, music, stories,
-      rawGachas, gachaLots, gachaPrizes, gachaSummaries,
+      rawGachas, gachaLots, gachaPrizes, gachaSummaries, homeBanners,
     ] = await Promise.all([
       table<RawEvent>("MasterEvent.json", server),
       table<RawEventEffect>("MasterEventEffect.json", server),
@@ -713,6 +713,7 @@ export function eventDetailsOn(server: GameServer, locale: AppLocale): Promise<E
       table<RawGachaLot>("MasterGachaLot.json", server),
       table<RawGachaPrize>("MasterGachaPrize.json", server),
       gachasOn(server, locale),
+      table<RawHomeBanner>("MasterHomeBanner.json", server).catch(() => ({ _allData: [] as RawHomeBanner[] })),
     ]);
     const missionLookups: EventMissionLookups = {
       exchanges: exchanges._allData,
@@ -743,6 +744,7 @@ export function eventDetailsOn(server: GameServer, locale: AppLocale): Promise<E
       characters: characters._allData,
       bands: bands._allData,
       texts: textTable._allData,
+      homeBanners: homeBanners._allData,
     }, {
       cards, supportCards, music, stories,
       gachas: {

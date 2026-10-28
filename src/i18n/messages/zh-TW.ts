@@ -1361,6 +1361,7 @@ export const zhTW = {
     challengeRanking: "曲目排名獎勵",
     challengeRankingNote: "活動結束後依該曲目最終排名發放。",
     bannerAlt: "{name} 活動橫幅",
+    assets: { banner: "活動橫幅", background: "背景插畫", logo: "活動標誌" },
     backToList: "返回活動一覽",
     notFoundTitle: "未尋得這場活動",
     notFoundDescription: "這場活動或許已隨時光落幕，又或尚未拉開帷幕。回到活動一覽，看看其他的舞台吧。",

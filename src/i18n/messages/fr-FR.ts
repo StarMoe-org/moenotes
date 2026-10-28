@@ -528,6 +528,7 @@ export const frFR = {
     liveItems: "Objets",
     probability: "{rate}% de chances",
     bannerAlt: "Bannière {name}",
+    assets: { banner: "Bannière d’événement", background: "Illustration de fond", logo: "Logo d’événement" },
     backToList: "Retour à la liste des événements",
     notFoundTitle: "Événement introuvable",
     notFoundDescription: "Cet événement a déjà tiré sa révérence ou n'a pas encore levé son rideau. Retournez à la liste des événements pour trouver une autre scène."

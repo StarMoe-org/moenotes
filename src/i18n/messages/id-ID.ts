@@ -524,6 +524,7 @@ export const idID = {
     liveItems: "Item",
     probability: "Peluang {rate}%",
     bannerAlt: "Banner event {name}",
+    assets: { banner: "Banner event", background: "Ilustrasi latar", logo: "Logo event" },
     backToList: "Kembali ke Daftar Event",
     notFoundTitle: "Event tidak ditemukan",
     notFoundDescription: "Pentas event ini mungkin telah lama berakhir, atau tirainya belum dibuka. Kembali ke daftar event untuk mencari panggung lainnya."

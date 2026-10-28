@@ -528,6 +528,7 @@ export const ptBR = {
     liveItems: "Itens",
     probability: "{rate}% de chance",
     bannerAlt: "Banner de {name}",
+    assets: { banner: "Banner do evento", background: "Arte de fundo", logo: "Logo do evento" },
     backToList: "Voltar para a lista de eventos",
     notFoundTitle: "Evento não encontrado",
     notFoundDescription: "As cortinas deste evento já se fecharam há muito tempo ou ainda estão por se abrir. Volte para a lista de eventos para encontrar outro palco."

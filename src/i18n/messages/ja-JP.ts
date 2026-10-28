@@ -1352,6 +1352,7 @@ export const jaJP = {
     challengeRanking: "楽曲ランキング報酬",
     challengeRankingNote: "イベント終了後、その楽曲の最終順位に応じて配布されます。",
     bannerAlt: "{name} のバナー",
+    assets: { banner: "イベントバナー", background: "背景イラスト", logo: "イベントロゴ" },
     backToList: "イベント一覧に戻る",
     notFoundTitle: "イベントが見つかりません",
     notFoundDescription: "このイベントはすでに幕を下ろしたか、まだ幕が上がっていないようです。イベント一覧から他のステージを探してみましょう。",

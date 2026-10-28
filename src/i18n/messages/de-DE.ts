@@ -524,6 +524,7 @@ export const deDE = {
     liveItems: "Items",
     probability: "{rate} % Chance",
     bannerAlt: "Banner: {name}",
+    assets: { banner: "Event-Banner", background: "Hintergrundbild", logo: "Event-Logo" },
     backToList: "Zurück zur Event-Liste",
     notFoundTitle: "Event nicht gefunden",
     notFoundDescription: "Für dieses Event ist der Vorhang entweder längst gefallen oder er hat sich noch gar nicht gehoben. Kehre zur Event-Liste zurück, um eine andere Bühne zu finden."

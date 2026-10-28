@@ -1362,6 +1362,7 @@ export const zhCN = {
     challengeRanking: "曲目排名奖励",
     challengeRankingNote: "活动结束后按该曲目最终排名发放。",
     bannerAlt: "{name} 活动横幅",
+    assets: { banner: "活动横幅", background: "背景插画", logo: "活动标志" },
     backToList: "返回活动一览",
     notFoundTitle: "未寻得这场活动",
     notFoundDescription: "这场活动或许已随时光落幕，又或尚未拉开帷幕。回到活动一览，看看其他的舞台吧。",
