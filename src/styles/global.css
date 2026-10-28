@@ -152,35 +152,32 @@ html[data-theme="dark"] .mn-brand .mn-brand-starlight, .mn-brand.mn-brand-light 
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: .01ms !important;
+    transition-delay: 0ms !important;
   }
 }
 
 /* ── Desktop navigation drawer: slides with the M3 emphasized curve; fades only under reduced motion ── */
-.mn-desktop-sidebar { opacity: 1; transform: translateX(0); }
+/* Mobile first: below md the modal drawer takes over. The docked one is hidden through the same opacity/transform
+   it folds with, not `display: none`, so narrowing or widening the window fades and slides it instead of popping;
+   visibility waits for that motion before it leaves the tab order. The `min-width` query (not range syntax) also
+   keeps older WebViews from showing the docked drawer over the phone layout. */
+.mn-desktop-sidebar { opacity: 0; transform: translateX(-24px); visibility: hidden; pointer-events: none; }
 .mn-desktop-sidebar[data-ready="true"] {
   transition:
     opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
     transform var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized-decelerate),
     top var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
-    visibility 0s linear;
+    visibility 0s linear var(--md-sys-motion-duration-medium2);
 }
 .mn-desktop-sidebar[data-open="false"] { opacity: 0; transform: translateX(-24px); pointer-events: none; }
-/* Below md the modal drawer takes over. The docked one is hidden through the same opacity/transform it folds with,
-   not `display: none`, so narrowing or widening the window fades and slides it instead of popping; visibility waits
-   for that motion before it leaves the tab order. */
-@media (width < 48rem) {
-  .mn-desktop-sidebar {
-    opacity: 0;
-    transform: translateX(-24px);
-    visibility: hidden;
-    pointer-events: none;
-  }
+@media (min-width: 48rem) {
+  .mn-desktop-sidebar { opacity: 1; transform: translateX(0); visibility: visible; pointer-events: auto; }
   .mn-desktop-sidebar[data-ready="true"] {
     transition:
       opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
       transform var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized-decelerate),
       top var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
-      visibility 0s linear var(--md-sys-motion-duration-medium2);
+      visibility 0s linear;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -208,10 +205,12 @@ html[data-theme="dark"] .mn-brand .mn-brand-starlight, .mn-brand.mn-brand-light 
   display: grid;
   grid-template-columns: 0fr;
   min-width: 0;
+  margin-left: -0.25rem;
   opacity: 0;
   visibility: hidden;
   transition:
     grid-template-columns var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+    margin-left var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
     opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
     visibility 0s linear var(--md-sys-motion-duration-medium2);
 }
@@ -229,10 +228,12 @@ html[data-theme="dark"] .mn-brand .mn-brand-starlight, .mn-brand.mn-brand-light 
   }
   .mn-app-bar-crumbs {
     grid-template-columns: 1fr;
+    margin-left: 0;
     opacity: 1;
     visibility: visible;
     transition:
       grid-template-columns var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+      margin-left var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
       opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
       visibility 0s linear;
   }
@@ -245,6 +246,7 @@ html[data-theme="dark"] .mn-brand .mn-brand-starlight, .mn-brand.mn-brand-light 
   width: 0;
   padding-left: 0;
   padding-right: 0;
+  margin-right: -0.5rem;
   overflow: hidden;
   opacity: 0;
   visibility: hidden;
@@ -252,6 +254,7 @@ html[data-theme="dark"] .mn-brand .mn-brand-starlight, .mn-brand.mn-brand-light 
     width var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
     padding-left var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
     padding-right var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+    margin-right var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
     opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
     visibility 0s linear var(--md-sys-motion-duration-medium2);
 }
@@ -272,12 +275,14 @@ html[data-theme="dark"] .mn-brand .mn-brand-starlight, .mn-brand.mn-brand-light 
     width: 18rem;
     padding-left: 1rem;
     padding-right: 0.75rem;
+    margin-right: 0;
     opacity: 1;
     visibility: visible;
     transition:
       width var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
       padding-left var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
       padding-right var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
+      margin-right var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized),
       opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
       visibility 0s linear;
   }

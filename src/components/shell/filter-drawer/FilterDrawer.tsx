@@ -89,8 +89,9 @@ export default function FilterDrawer({ locale, pathname }: FilterDrawerProps) {
     );
   }
 
-  // Docked pages keep the sheet in the DOM only while open or during its exit transition.
-  if (!hasFilters || !present) return null;
+  // Docked pages mount the sheet in the same commit that opens it, so the content's width change and the entrance
+  // start together; `present` only keeps it in the DOM through the exit transition.
+  if (!hasFilters || (!shouldShow && !present)) return null;
 
   return (
     <aside

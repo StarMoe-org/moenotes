@@ -64,9 +64,11 @@ function TopAppBar({ locale, homeHref, crumbs }: Props) {
             <BrandLogo className="mn-brand-shell" />
           </a>
           {/* Beside the brand from md up; below md it collapses so the trail fits on its own row. */}
-          <div className="mn-app-bar-crumbs">
-            <Breadcrumbs locale={locale} crumbs={crumbs} />
-          </div>
+          {crumbs.length > 0 && (
+            <div className="mn-app-bar-crumbs">
+              <Breadcrumbs locale={locale} crumbs={crumbs} />
+            </div>
+          )}
         </div>
         <div className="min-w-0 flex-1" />
         <ButtonBase
@@ -78,7 +80,7 @@ function TopAppBar({ locale, homeHref, crumbs }: Props) {
           <span className="min-w-0 flex-1 truncate text-left text-body-medium">{t(locale, "shell.searchPlaceholder")}</span>
           <kbd className="inline-flex h-6 items-center rounded-shape-xs border border-outline-variant px-1.5 font-sans text-label-small">{shortcut}</kbd>
         </ButtonBase>
-        <div className="glass flex h-12 shrink-0 items-center gap-0.5 rounded-full px-1">
+        <div className="glass flex h-12 shrink-0 items-center gap-0.5 rounded-full px-1 lg:gap-0">
           <Tooltip title={t(locale, "shell.openCommandPalette")}>
             <IconButton className="mn-top-search-compact" aria-label={t(locale, "shell.openCommandPalette")} onClick={() => toggleOverlay("command")}>
               <Icon name="search" />

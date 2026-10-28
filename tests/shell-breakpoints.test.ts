@@ -8,7 +8,9 @@ const topBar = readFileSync("src/components/shell/TopAppBar.tsx", "utf8");
 describe("the shell crosses the md breakpoint with motion, not a pop", () => {
   test("the docked drawer fades and slides away below md instead of display:none", () => {
     expect(sidebar).not.toContain("md:block");
-    expect(css).toMatch(/@media \(width < 48rem\) \{\s*\.mn-desktop-sidebar \{/);
+    // Mobile first: no range syntax, so older WebViews still hide the docked drawer on phones.
+    expect(css).toMatch(/\.mn-desktop-sidebar \{[^}]*visibility: hidden/s);
+    expect(css).toMatch(/@media \(min-width: 48rem\) \{\s*\.mn-desktop-sidebar \{/);
     expect(css).toContain("visibility 0s linear var(--md-sys-motion-duration-medium2)");
   });
 
@@ -34,5 +36,12 @@ describe("the shell crosses the md breakpoint with motion, not a pop", () => {
     expect(css).toContain("width: 18rem;");
     expect(css).toMatch(/\.mn-top-search-compact \{\s*width: 2\.5rem;/);
     expect(css).toMatch(/\.mn-top-search \{[^}]*transition:[^}]*width var\(--md-sys-motion-duration-medium2\)/s);
+  });
+
+  test("the collapsible top-bar pieces leave no flex gap behind", () => {
+    expect(topBar).toContain("crumbs.length > 0 &&");
+    expect(topBar).toContain("lg:gap-0");
+    expect(css).toMatch(/\.mn-app-bar-crumbs \{[^}]*margin-left: -0\.25rem/s);
+    expect(css).toMatch(/\.mn-top-search \{[^}]*margin-right: -0\.5rem/s);
   });
 });

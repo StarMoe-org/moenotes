@@ -28,7 +28,9 @@ export default function FilterTabHandle({ locale, titleKey }: FilterTabHandlePro
   return (
     // `appear={false}`: the server-rendered button is already in place, so the first client commit must not replay
     // the zoom-in. Later openings (a sheet just closed) still animate.
-    <Zoom in={visible} appear={false} unmountOnExit>
+    // Zoom leaves `transition: transform ...` inline after entering, which would shadow .mn-filter-fab's `left`
+    // transition; clear it once the zoom-in is done so a later drawer fold still slides the button.
+    <Zoom in={visible} appear={false} unmountOnExit onEntered={(node) => { node.style.transition = ""; }}>
       <Fab
         variant="extended"
         color="primary"

@@ -20,4 +20,9 @@ describe("the docked filter sheet keeps a steady position animation", () => {
     expect(css).toMatch(/\.mn-filter-sheet \{[^}]*left var\(--md-sys-motion-duration-medium2\)/s);
     expect(css).toMatch(/\.mn-filter-sheet \{[^}]*transform var\(--md-sys-motion-duration-medium2\)/s);
   });
+
+  test("it mounts in the opening commit so the content shift and the entrance start together", () => {
+    // `present` alone would mount the aside one render late; it only has to keep the sheet through the exit.
+    expect(drawer).toContain("(!shouldShow && !present)");
+  });
 });
