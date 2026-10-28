@@ -22,6 +22,7 @@ type cacheMeta struct {
 	ContentType   string `json:"ct"`
 	MarkdownToken string `json:"mt,omitempty"`
 	CanonicalLink string `json:"cl,omitempty"`
+	BuildID       string `json:"bid,omitempty"`
 	DataVersion   string `json:"dv,omitempty"`
 	CreatedAt     int64  `json:"ts"`
 }
@@ -74,7 +75,7 @@ func (c *HTMLCache) DataVersion() string {
 }
 
 // SetDataVersion atomically switches the cache namespace to a new MasterData version
-// and schedules background pruning of older cache files.
+// and schedules background pruning of inactive build/version cache files.
 func (c *HTMLCache) SetDataVersion(version string) bool {
 	if version == "" {
 		return false
@@ -137,6 +138,10 @@ func (c *HTMLCache) Write(version, variant, reqPath string, meta cacheMeta, plai
 	}
 	if gw.Close() != nil {
 		return
+	}
+	meta.BuildID = c.buildID
+	if meta.DataVersion == "" {
+		meta.DataVersion = version
 	}
 	meta.CreatedAt = time.Now().Unix()
 	rawMeta, err := json.Marshal(meta)
@@ -238,6 +243,8 @@ func (c *HTMLCache) DoCoalesced(key string, fn func() (int, http.Header, []byte,
 	return call.status, call.header, call.body, call.err
 }
 
+// pruneOldEntries removes expired cache entries belonging to older builds or superseded MasterData versions,
+// while keeping entries of the active (buildID, dataVersion) intact across container restarts on a persistent volume.
 func (c *HTMLCache) pruneOldEntries(maxAge time.Duration) {
 	c.pruneMu.Lock()
 	if c.pruning {
@@ -252,14 +259,35 @@ func (c *HTMLCache) pruneOldEntries(maxAge time.Duration) {
 		c.pruneMu.Unlock()
 	}()
 
+	activeBuild := c.buildID
+	activeVersion := c.DataVersion()
 	cutoff := time.Now().Add(-maxAge)
+
 	_ = filepath.WalkDir(c.dir, func(path string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return nil
 		}
 		info, statErr := d.Info()
-		if statErr == nil && info.ModTime().Before(cutoff) {
+		if statErr != nil || !info.ModTime().Before(cutoff) {
+			return nil
+		}
+		switch {
+		case strings.HasSuffix(path, ".tmp"):
 			_ = os.Remove(path)
+		case strings.HasSuffix(path, ".json"):
+			var meta cacheMeta
+			if raw, readErr := os.ReadFile(path); readErr == nil && json.Unmarshal(raw, &meta) == nil {
+				if meta.BuildID == activeBuild && meta.DataVersion == activeVersion {
+					return nil
+				}
+			}
+			_ = os.Remove(path)
+			_ = os.Remove(strings.TrimSuffix(path, ".json") + ".gz")
+		case strings.HasSuffix(path, ".gz"):
+			metaPath := strings.TrimSuffix(path, ".gz") + ".json"
+			if _, mErr := os.Stat(metaPath); os.IsNotExist(mErr) {
+				_ = os.Remove(path)
+			}
 		}
 		return nil
 	})

@@ -24,11 +24,15 @@ type Config struct {
 	FrontendProxyURL     string
 	FrontendProxyManaged bool
 	NextjsStandaloneDir  string
+	NextStaticDir        string
+	NextPublicDir        string
 	NextjsPort           string
 	NextMaxOldSpaceMB    string
 	NextBuildID          string
 	HTMLCacheDir         string
 	StaticArchiveDir     string
+	StaticCacheMaxDays   int
+	MasterdataCacheDir   string
 	WarmupEnabled        bool
 
 	DataDir     string
@@ -88,6 +92,18 @@ func positive(name string, fallback float64) (float64, error) {
 	return value, nil
 }
 
+func nonNegativeInt(name string, fallback int) (int, error) {
+	raw := env(name)
+	if raw == "" {
+		return fallback, nil
+	}
+	value, err := strconv.Atoi(raw)
+	if err != nil || value < 0 {
+		return 0, fmt.Errorf("%s must be a non-negative integer, got %q", name, raw)
+	}
+	return value, nil
+}
+
 func seconds(name string, fallback float64) (time.Duration, error) {
 	value, err := positive(name, fallback)
 	return time.Duration(value * float64(time.Second)), err
@@ -140,6 +156,65 @@ func resolveSSRDataDir(rawDataDir string, explicit bool) string {
 	return fallback
 }
 
+func isFile(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.Mode().IsRegular()
+}
+
+func isDir(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir()
+}
+
+// resolveNextLayout locates standalone server.js, .next/static, public, and BUILD_ID across Docker (/app/nextjs),
+// nested monorepo standalone layouts, and local .next/standalone checkouts.
+func resolveNextLayout(rawDir string) (appRoot, staticDir, publicDir, buildID string) {
+	appRoot = rawDir
+	if !isFile(filepath.Join(rawDir, "server.js")) {
+		if entries, err := os.ReadDir(rawDir); err == nil {
+			for _, entry := range entries {
+				if !entry.IsDir() || strings.HasPrefix(entry.Name(), ".") || entry.Name() == "node_modules" {
+					continue
+				}
+				candidate := filepath.Join(rawDir, entry.Name())
+				if isFile(filepath.Join(candidate, "server.js")) {
+					appRoot = candidate
+					break
+				}
+			}
+		}
+	}
+
+	staticDir = filepath.Join(appRoot, ".next", "static")
+	if !isDir(staticDir) {
+		alt := filepath.Clean(filepath.Join(rawDir, "..", "static"))
+		if isDir(alt) {
+			staticDir = alt
+		}
+	}
+
+	publicDir = filepath.Join(appRoot, "public")
+	if !isDir(publicDir) {
+		alt := filepath.Clean(filepath.Join(rawDir, "..", "..", "public"))
+		if isDir(alt) {
+			publicDir = alt
+		}
+	}
+
+	for _, candidate := range []string{
+		filepath.Join(appRoot, ".next", "BUILD_ID"),
+		filepath.Clean(filepath.Join(rawDir, "..", "BUILD_ID")),
+	} {
+		if rawID, err := os.ReadFile(candidate); err == nil {
+			if trimmed := strings.TrimSpace(string(rawID)); trimmed != "" {
+				buildID = trimmed
+				break
+			}
+		}
+	}
+	return appRoot, staticDir, publicDir, buildID
+}
+
 // Load reads the configuration from the process environment.
 func Load() (*Config, error) {
 	var errs []error
@@ -180,10 +255,12 @@ func Load() (*Config, error) {
 	}
 	goPort := int(port)
 
-	nextjsDir := env("MOENOTES_NEXTJS_DIR")
-	if nextjsDir == "" {
-		nextjsDir = "/app/nextjs"
+	rawNextjsDir := env("MOENOTES_NEXTJS_DIR")
+	if rawNextjsDir == "" {
+		rawNextjsDir = "/app/nextjs"
 	}
+	nextjsDir, nextStaticDir, nextPublicDir, detectedBuildID := resolveNextLayout(rawNextjsDir)
+
 	nextjsPort := env("NEXTJS_PORT")
 	if nextjsPort == "" {
 		if goPort == 3000 {
@@ -202,11 +279,21 @@ func Load() (*Config, error) {
 	if htmlCacheDir == "" {
 		htmlCacheDir = filepath.Join(dataDir, "html_cache")
 	}
+	staticArchiveDir := env("STATIC_ARCHIVE_DIR")
+	if staticArchiveDir == "" {
+		staticArchiveDir = filepath.Join(dataDir, "static_archive")
+	}
+	staticMaxDays, maxDaysErr := nonNegativeInt("STATIC_CACHE_MAX_DAYS", 30)
+	check(maxDaysErr)
+
+	masterdataCacheDir := env("MOENOTES_MASTERDATA_CACHE_DIR")
+	if masterdataCacheDir == "" || (masterdataCacheDir == "/data/masterdata_cache" && dataDir != "/data") {
+		masterdataCacheDir = filepath.Join(dataDir, "masterdata_cache")
+	}
+
 	nextBuildID := env("NEXT_BUILD_ID")
 	if nextBuildID == "" {
-		if rawID, readErr := os.ReadFile(filepath.Join(nextjsDir, ".next", "BUILD_ID")); readErr == nil {
-			nextBuildID = strings.TrimSpace(string(rawID))
-		}
+		nextBuildID = detectedBuildID
 	}
 	nextMaxMem := env("MOENOTES_NEXT_MAX_OLD_SPACE_MB")
 	if nextMaxMem == "" {
@@ -220,11 +307,15 @@ func Load() (*Config, error) {
 		FrontendProxyURL:     frontendProxy,
 		FrontendProxyManaged: managedNext,
 		NextjsStandaloneDir:  nextjsDir,
+		NextStaticDir:        nextStaticDir,
+		NextPublicDir:        nextPublicDir,
 		NextjsPort:           nextjsPort,
 		NextMaxOldSpaceMB:    nextMaxMem,
 		NextBuildID:          nextBuildID,
 		HTMLCacheDir:         htmlCacheDir,
-		StaticArchiveDir:     filepath.Join(dataDir, "static_archive"),
+		StaticArchiveDir:     staticArchiveDir,
+		StaticCacheMaxDays:   staticMaxDays,
+		MasterdataCacheDir:   masterdataCacheDir,
 		WarmupEnabled:        warmup,
 		DataDir:              dataDir,
 		BuildsDir:            filepath.Join(dataDir, "builds"),

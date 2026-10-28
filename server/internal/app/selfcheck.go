@@ -315,9 +315,40 @@ func SelfCheck(ctx context.Context) error {
 	}))
 	defer ssrBackend.Close()
 	ssrCache := ssr.NewHTMLCache(filepath.Join(dir, "html_cache"), "selfcheck-build", "tw@1")
-	ssrGateway, err := ssr.NewGateway(ssr.GatewayOptions{UpstreamURL: ssrBackend.URL, Cache: ssrCache, Site: site})
+	ssrNextStatic := filepath.Join(dir, "next_static")
+	ssrArchive := filepath.Join(dir, "static_archive")
+	ssrPublic := filepath.Join(dir, "public")
+	if err := write(ssrNextStatic, "chunks/app-123.js", "console.log('chunk');"); err != nil {
+		return err
+	}
+	if err := write(ssrPublic, "haneoka-team-engine/engine.wasm", "\x00asm"); err != nil {
+		return err
+	}
+	if copied, _ := ssr.SyncStaticArchive(ssrNextStatic, ssrArchive, 30); copied != 1 {
+		return failed("ssr SyncStaticArchive copied %d files, want 1", copied)
+	}
+	_ = os.RemoveAll(ssrNextStatic)
+	ssrGateway, err := ssr.NewGateway(ssr.GatewayOptions{
+		UpstreamURL:      ssrBackend.URL,
+		Cache:            ssrCache,
+		StaticArchiveDir: ssrArchive,
+		NextStaticDir:    ssrNextStatic,
+		PublicDir:        ssrPublic,
+		Site:             site,
+	})
 	if err != nil {
 		return failed("ssr gateway init: %v", err)
+	}
+	ssrChunk := httptest.NewRecorder()
+	ssrGateway.ServeHTTP(ssrChunk, httptest.NewRequest(http.MethodGet, "http://self-check/_next/static/chunks/app-123.js", nil))
+	if ssrChunk.Code != 200 || !strings.Contains(ssrChunk.Header().Get("Cache-Control"), "immutable") {
+		return failed("ssr archived /_next/static chunk should answer 200 immutable, got %d / %q", ssrChunk.Code, ssrChunk.Header().Get("Cache-Control"))
+	}
+	ssrWasm := httptest.NewRecorder()
+	ssrGateway.ServeHTTP(ssrWasm, httptest.NewRequest(http.MethodGet, "http://self-check/haneoka-team-engine/engine.wasm", nil))
+	if ssrWasm.Code != 200 || ssrWasm.Header().Get("Content-Type") != "application/wasm" || ssrWasm.Header().Get("X-Moenotes-Cache") != "" {
+		return failed("ssr public wasm should serve directly as application/wasm without HTMLCache, got %d / %q / %q",
+			ssrWasm.Code, ssrWasm.Header().Get("Content-Type"), ssrWasm.Header().Get("X-Moenotes-Cache"))
 	}
 	ssrMiss := httptest.NewRecorder()
 	ssrGateway.ServeHTTP(ssrMiss, httptest.NewRequest(http.MethodGet, "http://self-check/cards", nil))
