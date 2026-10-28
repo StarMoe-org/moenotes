@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { SPOILER_REFERENCE_NOW } from "../src/lib/settings/spoiler-reference";
 import { isSpoiler } from "../src/lib/settings/spoiler";
 
 describe("spoiler clock", () => {
@@ -9,9 +10,10 @@ describe("spoiler clock", () => {
   });
 
   test("without a live clock it uses the page's serialized reference", () => {
-    // No `now` covers SSR and the first client render: both sides must hide the same items.
-    expect(isSpoiler(Date.now() + 60_000, null)).toBe(true);
-    expect(isSpoiler(Date.now() - 60_000, null)).toBe(false);
+    // The reference is fixed when the module loads, so a fixed offset from it (not Date.now()) keeps this stable
+    // even when the whole suite runs for minutes, as it does in CI.
+    expect(isSpoiler(SPOILER_REFERENCE_NOW + 60_000, null)).toBe(true);
+    expect(isSpoiler(SPOILER_REFERENCE_NOW - 60_000, null)).toBe(false);
   });
 
   test("empty or invalid start times are not spoilers", () => {
