@@ -141,6 +141,7 @@ export function buildHomeData(
   extra: Pick<HomeSources, "events" | "characters" | "gachaPickups" | "targets"> = {},
 ): HomeData {
   const gachaMap = new Map(gachas.map((gacha) => [gacha.id, gacha]));
+  const eventMap = new Map((extra.events ?? []).map((event) => [event.id, event]));
   const rewardMap = new Map(rewards.map((entry) => [`${entry.kind}:${entry.id}`, entry]));
   const rewardBySlug = new Map(rewards.map((entry) => [entry.slug, entry]));
   const { targets = {} } = extra;
@@ -169,11 +170,18 @@ export function buildHomeData(
           slide.link = { routeId: "exchange" };
         }
       } else if (kind === "story") {
-        // contentId is not the chapter (TW 2026-10: contentId 1 on chapter 6's banner); the artwork names it.
-        const chapter = storyChapterOf(banner, targets.chapters ?? []);
-        if (chapter) slide.title = chapter.title;
-        // The chapter may open after its banner (a teaser), so the list of main chapters rather than an episode.
-        slide.link = { routeId: "main-story" };
+        // displayType 1 carries contentId = MasterEvent.id for event banners (including banner-only events without a story chapter),
+        // or names a story chapter via its banner asset when no matching event is supplied.
+        const event = eventMap.get(banner.contentId);
+        if (event) {
+          slide.kind = "event";
+          slide.title = event.name;
+          slide.link = { routeId: "events", detailId: event.id };
+        } else {
+          const chapter = storyChapterOf(banner, targets.chapters ?? []);
+          if (chapter) slide.title = chapter.title;
+          slide.link = { routeId: "main-story" };
+        }
       } else if (kind === "shop" || kind === "seasonPass") {
         // A season pass banner, or a shop pack: the pass the pack sells when it sells one, else the pack itself.
         const shop = targets.shops?.get(banner.contentId);

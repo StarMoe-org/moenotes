@@ -1,34 +1,42 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import Modal from "@/components/shared/Modal";
 import { SiriusIcon } from "@/components/shared/SiriusLoader";
 import { copyImage, downloadImage, imageFileName } from "@/lib/collectibles/image-client";
 
+const frameShapes = { portrait: "aspect-[3/4]", square: "aspect-square", wide: "aspect-video", banner: "aspect-[7/3]" } as const;
+export type GalleryShape = keyof typeof frameShapes;
+
 export interface GalleryAsset {
   id: string;
   label: string;
   /** A note under the switch: the size, "transparent layer". */
-  description?: string;
+  description?: string | undefined;
   url: string;
+  /** Optional per-asset frame shape overriding the gallery's default `shape`. */
+  shape?: GalleryShape | undefined;
   /** The saved file's name; the URL's file name by default. */
-  downloadName?: string;
+  downloadName?: string | undefined;
   /** Drawn on the transparency grid. */
-  transparent?: boolean;
+  transparent?: boolean | undefined;
   /** Small art (icons, strips) drawn whole with room around it instead of filling the frame. */
-  compact?: boolean;
+  compact?: boolean | undefined;
 }
 
 interface Props {
   locale: AppLocale;
   assets: readonly GalleryAsset[];
-  /** The frame's shape: a card or a standing picture, a jacket, landscape art. */
-  shape?: "portrait" | "square" | "wide";
+  /** The frame's shape: a card or a standing picture, a jacket, landscape art, or a 7:3 banner. */
+  shape?: GalleryShape | undefined;
+  /** Load the active image eagerly when used as a primary above-the-fold visual. */
+  eager?: boolean | undefined;
+  /** Rendered when no asset URL is present or all asset URLs fail to load. */
+  fallback?: ReactNode | undefined;
   /** Under the switch, e.g. a song's audio. */
-  children?: ReactNode;
+  children?: ReactNode | undefined;
 }
 
-const frameShapes = { portrait: "aspect-[3/4]", square: "aspect-square", wide: "aspect-video" } as const;
 const actionButton = "md3-icon-button md3-icon-button--outlined md3-icon-button--small";
 const checkIcon = <svg className="text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>;
 
@@ -36,13 +44,31 @@ const checkIcon = <svg className="text-success" viewBox="0 0 24 24" fill="none" 
  * A detail page's images, one at a time in a frame, with chips to switch between them below it; the frame opens the
  * image in a dialog that downloads or copies it.
  */
-export default function AssetGallery({ locale, assets, shape = "portrait", children }: Props) {
+export default function AssetGallery({ locale, assets, shape = "portrait", eager = false, fallback = null, children }: Props) {
   const [activeId, setActiveId] = useState(assets[0]?.id);
+  const [failedUrls, setFailedUrls] = useState<ReadonlySet<string>>(() => new Set());
   const [open, setOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [copyState, setCopyState] = useState<"idle" | "copying" | "image" | "link" | "error">("idle");
-  const active = assets.find((asset) => asset.id === activeId) ?? assets[0];
-  if (!active) return null;
+
+  const assetSignature = useMemo(() => assets.map((asset) => `${asset.id}:${asset.url}`).join("|"), [assets]);
+  useEffect(() => {
+    setFailedUrls(new Set());
+  }, [assetSignature]);
+
+  const availableAssets = useMemo(
+    () => assets.filter((asset) => Boolean(asset.url) && !failedUrls.has(asset.url)),
+    [assets, failedUrls],
+  );
+  const active = availableAssets.find((asset) => asset.id === activeId) ?? availableAssets[0];
+  if (!active) return <>{fallback}</>;
+
+  const activeShape = active.shape ?? shape;
+  const imageFitClass = active.compact
+    ? "absolute inset-0 m-auto max-h-full max-w-full object-contain p-6 sm:p-8"
+    : activeShape === "banner" || activeShape === "wide"
+      ? "h-full w-full object-cover"
+      : "h-full w-full object-cover object-top";
 
   const download = async () => {
     setDownloading(true);
@@ -61,21 +87,31 @@ export default function AssetGallery({ locale, assets, shape = "portrait", child
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`group relative block w-full overflow-hidden rounded-shape-lg border border-outline-variant bg-surface-container-high ${frameShapes[shape]} ${active.transparent ? "md3-transparency-grid" : ""}`}
+        className={`group relative block w-full overflow-hidden rounded-shape-lg border border-outline-variant bg-surface-container-high ${frameShapes[activeShape]} ${active.transparent ? "md3-transparency-grid" : ""}`}
         aria-label={t(locale, "lightbox.open", { name: active.label })}
       >
         <img
-          className={active.compact ? "absolute inset-0 m-auto max-h-full max-w-full object-contain p-8" : "h-full w-full object-cover object-top"}
+          className={imageFitClass}
           src={active.url}
           alt={active.label}
+          loading={eager ? "eager" : "lazy"}
+          decoding="async"
+          onError={() => {
+            setFailedUrls((prev) => {
+              if (prev.has(active.url)) return prev;
+              const next = new Set(prev);
+              next.add(active.url);
+              return next;
+            });
+          }}
         />
         <span className="absolute inset-0 grid place-items-center bg-black/0 transition group-hover:bg-black/10" aria-hidden="true">
           <svg className="h-8 w-8 text-white opacity-0 transition group-hover:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m4-3H6" /></svg>
         </span>
       </button>
-      {assets.length > 1 && (
+      {availableAssets.length > 1 && (
         <div className="flex flex-wrap gap-2" role="group" aria-label={t(locale, "lightbox.images")}>
-          {assets.map((asset) => (
+          {availableAssets.map((asset) => (
             <button key={asset.id} type="button" aria-pressed={asset.id === active.id} onClick={() => setActiveId(asset.id)} className="md3-filter-chip md3-state">
               {asset.label}
             </button>

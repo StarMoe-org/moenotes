@@ -3,6 +3,7 @@ import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import MemberCardItem from "@/components/cards/MemberCardItem";
 import EventBanner, { EventScene } from "@/components/events/EventBanner";
+import AssetGallery, { type GalleryAsset } from "@/components/shared/AssetGallery";
 import BandLogo from "@/components/shared/BandLogo";
 import BannerImage from "@/components/shared/BannerImage";
 import ScheduleCountdown from "@/components/shared/ScheduleCountdown";
@@ -56,9 +57,46 @@ export default function EventDetail({ locale, event: faceted, servers }: Props) 
 }
 
 function EventDetailView({ locale, server, event, serverSwitch, schedules }: { locale: AppLocale; server: GameServer; event: EventDetailViewModel | null; serverSwitch: ReactNode; schedules: ReactNode }) {
+  const assetUrl = useAssetUrl();
   const now = useNow();
   const { showSpoiler } = useSpoiler();
   const timeZone = useDisplayTimeZone();
+  const galleryAssets = useMemo<GalleryAsset[]>(() => {
+    if (!event) return [];
+    const items: GalleryAsset[] = [];
+    if (event.bannerUrl) {
+      items.push({
+        id: "banner",
+        label: t(locale, "events.assets.banner"),
+        url: assetUrl(event.bannerUrl),
+        shape: "banner",
+        downloadName: `event-${event.id}-banner.png`,
+      });
+    }
+    if (event.backgroundUrl) {
+      items.push({
+        id: "background",
+        label: t(locale, "events.assets.background"),
+        url: assetUrl(event.backgroundUrl),
+        shape: "wide",
+        downloadName: `event-${event.id}-background.png`,
+      });
+    }
+    if (event.logoUrl) {
+      items.push({
+        id: "logo",
+        label: t(locale, "events.assets.logo"),
+        description: t(locale, "cards.assets.transparentLayer"),
+        url: assetUrl(event.logoUrl),
+        shape: "banner",
+        transparent: true,
+        compact: true,
+        downloadName: `event-${event.id}-logo.png`,
+      });
+    }
+    return items;
+  }, [event, locale, assetUrl]);
+
   if (!event) return <NotFound locale={locale} />;
 
   const isUnreleased = Boolean(now !== null && scheduleStatus(event.startAt, event.endAt, now) === "upcoming");
@@ -67,6 +105,7 @@ function EventDetailView({ locale, server, event, serverSwitch, schedules }: { l
   }
 
   const alt = t(locale, "events.bannerAlt", { name: event.name });
+  const hasHeroScene = Boolean(event.backgroundUrl);
   const rankings = (["score", "music", "totalMusic"] as const).filter((kind) => event.rankings[kind]);
   const facts: Array<[string, ReactNode]> = [
     [t(locale, "events.period"), <span className="tabular-nums">{formatScheduleRange(event.startAt, event.endAt, locale, timeZone)}</span>],
@@ -86,14 +125,23 @@ function EventDetailView({ locale, server, event, serverSwitch, schedules }: { l
         {event.chapterDescription && <p className="mt-1 line-clamp-3 max-w-[60ch] whitespace-pre-line text-body-large text-on-surface-variant">{event.chapterDescription}</p>}
       </DetailHero>
 
-      <div className="overflow-hidden rounded-shape-lg border border-outline-variant bg-surface-container-low shadow-elevation-1">
-        {event.backgroundUrl
-          ? <EventScene event={event} alt={alt} eager className="aspect-[4/3] sm:aspect-[16/9] xl:aspect-[5/2]" />
-          : <EventBanner event={event} alt={alt} eager />}
-      </div>
+      {hasHeroScene && (
+        <div className="overflow-hidden rounded-shape-lg border border-outline-variant bg-surface-container-low shadow-elevation-1">
+          <EventScene event={event} alt={alt} eager className="aspect-[4/3] sm:aspect-[16/9] xl:aspect-[5/2]" />
+        </div>
+      )}
 
       <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(22rem,2fr)_3fr] lg:items-start">
         <aside className="flex w-full flex-col gap-6 lg:sticky lg:top-24">
+          <div className="md3-surface p-4">
+            <AssetGallery
+              locale={locale}
+              assets={galleryAssets}
+              shape="banner"
+              eager={!hasHeroScene}
+              fallback={<EventBanner event={event} alt={alt} eager={!hasHeroScene} className="rounded-shape-md border border-outline-variant" />}
+            />
+          </div>
           <div className="md3-surface overflow-hidden">
             <dl className="divide-y divide-outline-variant px-6">
               {facts.map(([label, value]) => <DetailRow key={label} label={label} value={value} />)}

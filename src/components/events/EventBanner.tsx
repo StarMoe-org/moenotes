@@ -12,9 +12,9 @@ interface Props {
   className?: string;
 }
 
-/** An event's 7:3 artwork: its story chapter's banner, or else its top-screen art with the logo. */
+/** An event's 7:3 artwork: its event/chapter banner, or else its top-screen art / logo scene. */
 export default function EventBanner({ event, alt, eager = false, className = "" }: Props) {
-  if (event.bannerUrl || !event.backgroundUrl) {
+  if (event.bannerUrl || (!event.backgroundUrl && !event.logoUrl)) {
     return <BannerImage src={event.bannerUrl} alt={alt} fallback={event.name} eager={eager} className={className} />;
   }
   return <EventScene event={event} alt={alt} eager={eager} className={`aspect-[7/3] ${className}`} />;

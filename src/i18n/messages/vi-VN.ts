@@ -530,6 +530,7 @@ export const viVN = {
     liveItems: "Vật phẩm",
     probability: "Tỷ lệ {rate}%",
     bannerAlt: "Banner sự kiện {name}",
+    assets: { banner: "Banner sự kiện", background: "Ảnh nền", logo: "Logo sự kiện" },
     backToList: "Quay lại danh sách sự kiện",
     notFoundTitle: "Không tìm thấy sự kiện",
     notFoundDescription: "Sự kiện này có thể đã khép màn từ lâu, hoặc bức màn vẫn chưa được kéo lên. Hãy quay lại danh sách sự kiện để tìm kiếm sân khấu khác nhé."

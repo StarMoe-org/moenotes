@@ -33,6 +33,9 @@ export interface RawEvent {
   /** Under Image/Event/, e.g. "01/Logo/event_logo_01_0001". */
   logoAsset: string;
   backgroundAsset: string;
+  /** Standalone 7:3 event banner under Image/Event/, e.g. "04/Banner/event_banner_00004". */
+  bannerAsset?: string;
+  imageAsset?: string;
 }
 
 /** One bonus: the cards it applies to (at most one target field is set) and its value per card rank, in basis points. */
@@ -201,6 +204,8 @@ export interface EventMasterData {
   characters: RawCharacter[];
   bands: RawBand[];
   texts: RawText[];
+  /** Home carousel banners (displayType 1 carries the native composed 7:3 event banner by contentId = event.id). */
+  homeBanners?: ReadonlyArray<{ id: number; imageAsset: string; displayType: number; contentId: number; displayOrder: number }> | undefined;
 }
 
 export interface EventSources {
@@ -219,7 +224,7 @@ export interface EventViewModel {
   startAt: string;
   endAt: string;
   displayEndAt: string;
-  /** 7:3 artwork with the logo: the event story chapter's banner. Empty when the event has no story. */
+  /** 7:3 event banner: native home/event banner or story chapter banner. */
   bannerUrl: string;
   logoUrl: string;
   backgroundUrl: string;
@@ -380,8 +385,13 @@ function groupBy<T, K>(rows: readonly T[], key: (row: T) => K): Map<K, T[]> {
   return groups;
 }
 
-function eventImageUrl(asset: string, locale: AppLocale): string {
-  return asset ? getImageAssetUrl(`Image/Event/${asset}`, locale) : "";
+function eventImageUrl(asset: string | undefined, locale: AppLocale): string {
+  const trimmed = asset?.replace(/^\/+/, "") ?? "";
+  if (!trimmed) return "";
+  if (trimmed.startsWith("Image/") || trimmed.startsWith("Story/")) {
+    return getImageAssetUrl(trimmed, locale);
+  }
+  return getImageAssetUrl(`Image/Event/${trimmed}`, locale);
 }
 
 function effectValues(effect: RawEventEffect): number[] {
@@ -406,6 +416,12 @@ export function normalizeEvents(data: EventMasterData, sources: EventSources, re
   const achievementsByEvent = groupBy(data.achievementRewards, (reward) => reward.eventId);
   const loopsByEvent = new Map(data.loopRewards.map((reward) => [reward.eventId, reward]));
   const storiesByChapter = groupBy(sources.stories.filter((story) => story.category === "main" && story.chapterId !== null), (story) => story.chapterId);
+  const homeBannerByEvent = new Map<number, string>();
+  for (const row of [...(data.homeBanners ?? [])].sort((a, b) => b.displayOrder - a.displayOrder || b.id - a.id)) {
+    if (row.displayType === 1 && row.imageAsset && !homeBannerByEvent.has(row.contentId)) {
+      homeBannerByEvent.set(row.contentId, row.imageAsset);
+    }
+  }
   const missionsByGroup = groupBy(data.eventMissions, (row) => row.eventMissionGroupId);
   const boxGachasByEvent = groupBy(data.boxGachas, (row) => row.eventId);
   const boxRewardsByGacha = groupBy(data.boxGachaRewards, (row) => row.eventBoxGachaId);
@@ -569,13 +585,20 @@ export function normalizeEvents(data: EventMasterData, sources: EventSources, re
         .sort((a, b) => a.consumedChallengePointCount - b.consumedChallengePointCount || a.id - b.id)
         .map((row) => ({ challengePoint: row.consumedChallengePointCount, eventPointRate: row.eventPointRate, rewardRate: row.liveMusicRewardRate }));
 
+      const homeBannerAsset = homeBannerByEvent.get(event.id);
+      const bannerUrl = homeBannerAsset
+        ? getImageAssetUrl(homeBannerAsset, locale)
+        : chapter?.chapterBanner
+          ? getAssetUrl({ path: `Story/Banner/Chapter/${chapter.chapterBanner}.png`, type: "raw", locale })
+          : eventImageUrl(event.bannerAsset, locale) || eventImageUrl(event.imageAsset, locale);
+
       return {
         id: event.id,
         name,
         startAt: event.startAt,
         endAt: event.endAt,
         displayEndAt: event.displayEndAt,
-        bannerUrl: chapter?.chapterBanner ? getAssetUrl({ path: `Story/Banner/Chapter/${chapter.chapterBanner}.png`, type: "raw", locale }) : "",
+        bannerUrl,
         logoUrl: eventImageUrl(event.logoAsset, locale),
         backgroundUrl: eventImageUrl(event.backgroundAsset, locale),
         bandIds,

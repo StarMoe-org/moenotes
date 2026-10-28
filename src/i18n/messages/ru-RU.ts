@@ -530,6 +530,7 @@ export const ruRU = {
     liveItems: "Предметы",
     probability: "Шанс {rate}%",
     bannerAlt: "Баннер события {name}",
+    assets: { banner: "Баннер события", background: "Фоновый арт", logo: "Логотип события" },
     backToList: "Назад к списку событий",
     notFoundTitle: "Событие не найдено",
     notFoundDescription: "Это событие либо уже завершилось, либо его занавес ещё не поднялся. Вернитесь к списку событий, чтобы найти другую сцену."

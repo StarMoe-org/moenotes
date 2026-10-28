@@ -277,6 +277,43 @@ describe("home data", () => {
     ]);
   });
 
+  test("displayType 1 banners matching an event open that event instead of mislabeling banner-only events as main story chapters", () => {
+    const live: RawHomeBanner[] = [
+      { id: 23, imageAsset: "Image/Event/04/Banner/event_banner_00004", displayType: 1, contentId: 4, displayOrder: 10, startAt: "2026-10-28 12:00:00", endAt: "2026-11-07 14:59:59" },
+    ];
+    const home = buildHomeData(live, [], [], [], [], [], Date.parse("2026-10-28T15:00:00+08:00"), {
+      events: [
+        {
+          id: 4,
+          name: "A day〜#HalloweenSnap〜",
+          startAt: "2026/10/28 12:00:00",
+          endAt: "2026/11/07 14:59:59",
+          displayEndAt: "2026/11/09 14:59:59",
+          bannerUrl: "https://assets.bdon.moe/zh-Hans/Image/Event/04/Banner/event_banner_00004/event_banner_00004.webp",
+          logoUrl: "",
+          backgroundUrl: "",
+          bandIds: [],
+          characters: [],
+          searchText: "halloween",
+        },
+      ],
+      targets: {
+        chapters: [{ id: 4, banner: "ui_banner_chapter_4", title: "Main Story Chapter 4" }],
+      },
+    });
+    expect(home.slides).toEqual([
+      {
+        id: 23,
+        kind: "event",
+        title: "A day〜#HalloweenSnap〜",
+        imagePath: "Image/Event/04/Banner/event_banner_00004",
+        startAt: "2026-10-28 12:00:00",
+        endAt: "2026-11-07 14:59:59",
+        link: { routeId: "events", detailId: 4 },
+      },
+    ]);
+  });
+
   test("only time-limited reward entries are listed, newest first", () => {
     expect(data.rewards.map((item) => item.slug)).toEqual(["missions-2", "season-pass-1"]);
   });
