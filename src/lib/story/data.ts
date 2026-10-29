@@ -288,6 +288,7 @@ export function normalizeStories(data: StoryMasterData, locale: AppLocale): Stor
   const eventChapterMap = new Map((data.eventChapters ?? []).map((entry) => [entry.chapterId, entry.eventId]));
   const eventStartMap = new Map((data.eventChapters ?? []).map((entry) => [entry.chapterId, entry.startAt]));
   const birthdayChapters = birthdayChapterCharacters(data.chapters, data.loginLandings ?? []);
+  const birthdayEpisodes = birthdayEpisodeCharacters(data.loginLandings ?? []);
   const playTimeMap = new Map((data.playTimes ?? []).filter((entry) => entry.playTime > 0).map((entry) => [entry.id, entry.playTime]));
   const rewardsByGroup = groupStoryRewards(data.storyRewards ?? [], data.resolveReward);
   const episodeAdvMap = new Map(data.episodes.map((entry) => [entry.id, entry.advId]));
@@ -312,7 +313,7 @@ export function normalizeStories(data: StoryMasterData, locale: AppLocale): Stor
       : chapter?.mainCharacterIds ?? (episode.characterId ? [episode.characterId] : []);
     const eventId = eventChapterMap.get(episode.chapterId) ?? null;
     // Birthday chapters are special chapters of their own, listed apart from the main story.
-    const birthdayCharacter = eventId === null ? birthdayChapters.get(episode.chapterId) : undefined;
+    const birthdayCharacter = eventId === null ? birthdayEpisodes.get(episode.id) ?? birthdayChapters.get(episode.chapterId) : undefined;
     stories.push(buildStory({
       sourceId: episode.id,
       category: birthdayCharacter !== undefined ? "birthday" : eventId === null ? "main" : "event",
@@ -496,7 +497,8 @@ const EPISODE_KIND_ORDER: Readonly<Record<StoryEpisodeKind, number>> = { main: 0
 /**
  * Birthday chapters and whose birthday they are: the chapters a `Birthday/…` login landing opens (its character), and
  * the chapters MasterStoryChapter marks as special stories (their first main character). The JP server's landing table
- * may be empty; its special chapters still count.
+ * may be empty; its special chapters still count. A game year's chapter holds every character's birthday episode, so
+ * this chapter-level fallback names only the first; prefer birthdayEpisodeCharacters per episode.
  */
 export function birthdayChapterCharacters(chapters: readonly RawStoryChapter[], landings: readonly RawStoryLoginLanding[]): Map<number, number> {
   const result = new Map<number, number>();
@@ -507,6 +509,20 @@ export function birthdayChapterCharacters(chapters: readonly RawStoryChapter[], 
   }
   for (const chapter of chapters) {
     if (chapter.isSpecialStory && !result.has(chapter.id)) result.set(chapter.id, chapter.mainCharacterIds?.[0] ?? 0);
+  }
+  return result;
+}
+
+/**
+ * The birthday character of each story episode, from the same `Birthday/…` login landings. Only the landing knows which
+ * character an episode celebrates: the episode row leaves characterId 0 and the chapter is shared by all birthdays.
+ */
+export function birthdayEpisodeCharacters(landings: readonly RawStoryLoginLanding[]): Map<number, number> {
+  const result = new Map<number, number>();
+  for (const landing of landings) {
+    const address = landing.contentPrefabAddress ?? "";
+    if (!address.startsWith("Birthday/") || address.length <= "Birthday/".length || !landing.storyEpisodeId) continue;
+    if (!result.has(landing.storyEpisodeId)) result.set(landing.storyEpisodeId, landing.characterId);
   }
   return result;
 }
