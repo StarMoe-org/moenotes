@@ -218,7 +218,7 @@ describe("critical inline scripts opt out of Rocket Loader", () => {
   test("theme, navigation and drawer scroll scripts stay synchronous", () => {
     const files: Array<[string, string[]]> = [
       ["../src/app/layout.tsx", ["mediaQueryCompatScript", "themeScript", "navGroupScript", "accountScript", "filterScript"]],
-      ["../src/components/shell/AppShellClient.tsx", ["sidebarScrollScript"]],
+      ["../src/components/shell/AppShell.tsx", ["sidebarScrollScript"]],
     ];
     for (const [path, variables] of files) {
       const lines = readFileSync(new URL(path, import.meta.url), "utf8").split("\n");
