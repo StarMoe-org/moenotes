@@ -41,6 +41,20 @@ export interface DeckSolverRuntime {
   modelCommit: string | null;
   /** True when a development engine descriptor replaced the published `recommendEngine`. */
   override: boolean;
+  /** Optional Next.js live MasterData overlay endpoint merged over `deckData.master` in the Worker. */
+  masterOverlayUrl?: string;
+}
+
+/** Build the version-scoped Next.js live MasterData overlay URL for a game server. */
+export function buildDeckMasterOverlayUrl(
+  server: GameServer,
+  version?: string | null,
+  basePath: string = assetConfig.deck.masterOverlayUrl,
+): string {
+  const params = new URLSearchParams({ server });
+  const trimmedVersion = version?.trim();
+  if (trimmedVersion) params.set("v", trimmedVersion);
+  return `${basePath}?${params.toString()}`;
 }
 
 /** The published data offers no recommendation runtime; retrying does not help until the data is published again. */

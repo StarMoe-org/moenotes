@@ -85,10 +85,11 @@ against the message before using it. Then it:
    then checks the commit against `modelCommit` (unless `null`);
 2. imports the glue, a wasm-bindgen `--target web` ES module, from a `blob:` URL of its verified bytes, and calls its
    default export with `{ module_or_path: wasmBytes }`, so the WASM is never fetched again unverified;
-3. constructs `new DeckSolver(deckDataBytes, { datasetId: deckDataSha256 })` with the verified data as a
-   `Uint8Array`; existing wasm-bindgen engines ignore the extra options argument. The
-   [Haneoka development adapter](haneoka-engine.md) binds its context to this verified hash;
-4. checks that `solver.datasetId`, the lowercase hex SHA-256 of the deck data bytes, equals `deckDataSha256`;
+3. when `masterOverlayUrl` (`/api/v1/meta/deck-master?server=…&v=…`) is present on `init`, merges the live Next.js
+   columnar `master` tables (`moenotes.deck-master-overlay/1`) onto the verified `deck-data.json` snapshot, recomputes
+   the merged dataset SHA-256, and constructs `new DeckSolver(mergedBytes, { datasetId: mergedSha256 })` (falling back
+   cleanly to the baseline `deckDataBytes` if the overlay endpoint is unreachable or rejected);
+4. checks that `solver.datasetId`, the lowercase hex SHA-256 of the active deck data bytes, matches the expected hash;
 5. reads `solver.capabilities()` as JSON text, when the solver has it, and returns the dataset catalogue in `ready`.
 
 The catalogue contains `eventIds`, `musics: [{id, difficulties, hasLuck}]`,

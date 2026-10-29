@@ -66,15 +66,24 @@ export function gameSaveAccountJson(target: AccountTarget, box: CardBox, save: {
   return document(target, save.sha256, coverage, [], box, save.text);
 }
 
+export interface BoxAccountOptions {
+  /**
+   * Default unset or partially configured furniture (`_player._bandItems`) to level 0 so manual/unlinked bonus edits
+   * never block Deck Solver execution when `bandItemsComplete` is unchecked or an item level is left blank.
+   */
+  fallbackBandItems?: boolean;
+}
+
 /**
  * A Box built from screenshots and manual answers: `_player` is assembled from its facts. Unknown values are null;
  * a known card level or character rank becomes the cumulative experience that level needs, recorded as an
  * assumption. Coverage follows the Box's completeness declarations.
  */
-export function boxAccountJson(target: AccountTarget, box: CardBox, tables: GameSaveTables): string {
+export function boxAccountJson(target: AccountTarget, box: CardBox, tables: GameSaveTables, options?: BoxAccountOptions): string {
   checkTarget(target, box);
   if (box.save) throw new Error("A linked Box reads its save");
   if (tables.server !== box.server) throw new Error("Save tables belong to another server");
+  const fallbackBandItems = options?.fallbackBandItems === true;
   const assumptions: AccountAssumption[] = [];
   const cards = (kind: BoxCard["kind"]) => box.cards.filter(card => card.kind === kind && card.identity.value !== null && card.identity.status !== "conflict");
   function experience(path: string, card: BoxCard, rows: readonly (readonly [number, number])[] | undefined): string {
@@ -103,12 +112,44 @@ export function boxAccountJson(target: AccountTarget, box: CardBox, tables: Game
     return `{"_masterId":${long(id)},"_exp":${int(exp)}}`;
   });
 
-  const itemIds = [...new Set([...Object.keys(box.player.bandItemStates), ...Object.keys(box.player.bandItems)])];
+  const itemIds = [...new Set([
+    ...(fallbackBandItems ? Object.keys(tables.bandItems) : []),
+    ...Object.keys(box.player.bandItemStates),
+    ...Object.keys(box.player.bandItems),
+  ])];
+  let defaultedBandItems = false;
   const bandItems = itemIds.map(id => {
-    const state = known(box.player.bandItemStates[id]);
-    const level = state === "not-owned" || state === "no-bonus" ? 0 : known(box.player.bandItems[id]);
+    const stateField = box.player.bandItemStates[id];
+    const state = known(stateField);
+    const clearedToUnknown = state === null && (stateField?.history.length ?? 0) > 0;
+    let level: number | null;
+    if (state === "not-owned" || state === "no-bonus") {
+      level = 0;
+    } else if (fallbackBandItems) {
+      if (clearedToUnknown) {
+        level = 0;
+        defaultedBandItems = true;
+      } else {
+        const raw = known(box.player.bandItems[id]);
+        const allowed = tables.bandItems[id];
+        if (raw === null || raw <= 0) {
+          level = 0;
+          if (raw === null) defaultedBandItems = true;
+        } else if (!allowed || allowed.includes(raw)) {
+          level = raw;
+        } else {
+          level = [...allowed].sort((a, b) => a - b).filter(v => v <= raw).at(-1) ?? 0;
+          defaultedBandItems = true;
+        }
+      }
+    } else {
+      level = clearedToUnknown ? null : known(box.player.bandItems[id]);
+    }
     return `{"_masterId":${long(id)},"_level":${int(level)}}`;
   });
+  if (fallbackBandItems && (!box.player.bandItemsComplete || defaultedBandItems)) {
+    assumptions.push({ path: "_player._bandItems", reason: "Unset or incomplete band items default to level 0" });
+  }
 
   const memory = known(box.player.memory);
   const groups = new Map<string, string[]>();
@@ -126,7 +167,7 @@ export function boxAccountJson(target: AccountTarget, box: CardBox, tables: Game
     "_player._memberCards": box.coverage.member.complete ? "complete" : "partial",
     "_player._supportCards": box.coverage.snap.complete ? "complete" : "partial",
     "_player._characters": characterCoverage,
-    "_player._bandItems": box.player.bandItemsComplete ? "complete" : "partial",
+    "_player._bandItems": fallbackBandItems || box.player.bandItemsComplete ? "complete" : "partial",
     "_player._memory._musicGroups": memoryCoverage, "_player._memory._members": memoryCoverage, "_player._memory._supports": memoryCoverage,
   };
   return document(target, `box:${box.id}:${box.revision}`, coverage, assumptions, box, player);

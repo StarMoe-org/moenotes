@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { GameServer } from "@/config/servers";
-import { resolveDeckRuntime, type DeckRuntimeFailureCode, type DeckRuntimeUnavailableReason, type DeckSolverRuntime } from "@/lib/deck/runtime-source";
+import { buildDeckMasterOverlayUrl, resolveDeckRuntime, type DeckRuntimeFailureCode, type DeckRuntimeUnavailableReason, type DeckSolverRuntime } from "@/lib/deck/runtime-source";
 import { DeckWorkerClient } from "@/lib/deck/worker-client";
 import type { DeckDataCatalog, DeckWorkerFailureCode } from "@/lib/deck/worker-protocol";
 import { parseCapabilities, type DeckSolverCapabilities } from "@/lib/deck/goals";
 import { parseDeckAnswer, type DeckAnswer } from "@/lib/deck/answer";
+import { getLocalServerMasterDataVersion } from "@/lib/masterdata/client-version";
 
 /** Progress reports arrive at most this often. */
 const PROGRESS_INTERVAL_MS = 250;
@@ -63,9 +64,13 @@ export function useDeckSolver(server: GameServer, active: boolean) {
       if (!resolved || abort.signal.aborted) return;
       if (resolved.status === "unavailable") { setEngine({ status: "unavailable", reason: resolved.reason }); return; }
       if (resolved.status === "failed") { setEngine({ status: "failed", code: resolved.code, message: resolved.message }); return; }
-      const ready = await worker.prepare(resolved.runtime);
+      const runtime: DeckSolverRuntime = {
+        ...resolved.runtime,
+        masterOverlayUrl: buildDeckMasterOverlayUrl(server, getLocalServerMasterDataVersion(server)),
+      };
+      const ready = await worker.prepare(runtime);
       if (abort.signal.aborted) return;
-      if (ready.status === "ready") setEngine({ status: "ready", runtime: resolved.runtime, datasetId: ready.datasetId, capabilities: parseCapabilities(ready.capabilitiesJson), catalog: ready.catalog });
+      if (ready.status === "ready") setEngine({ status: "ready", runtime, datasetId: ready.datasetId, capabilities: parseCapabilities(ready.capabilitiesJson), catalog: ready.catalog });
       else if (ready.status === "failed") setEngine({ status: "failed", code: ready.code, message: ready.message });
     })();
     return () => { abort.abort(); worker.dispose(); };

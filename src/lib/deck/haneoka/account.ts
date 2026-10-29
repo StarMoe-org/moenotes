@@ -8,8 +8,17 @@ export interface AccountInput {
   account: { _player: Record<string, unknown> };
 }
 const list = (value: unknown): Row[] => {
+  if (value === undefined || value === null) return [];
   if (!Array.isArray(value) || value.some(row => !row || typeof row !== "object" || Array.isArray(row))) throw new Error("haneoka-account-list");
   return value as Row[];
+};
+const safeBandItemId = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isSafeInteger(value)) return value;
+  if (typeof value === "string" && /^(0|-?[1-9][0-9]*)$/.test(value)) {
+    const parsed = Number(value);
+    if (Number.isSafeInteger(parsed)) return parsed;
+  }
+  return null;
 };
 export function adaptAccount(data: DeckData, account: AccountInput, request: RecommendationRequest, datasetId: string) {
   if (account.format !== "ournotes.account/1" || account.datasetId !== datasetId
@@ -49,6 +58,7 @@ export function adaptAccount(data: DeckData, account: AccountInput, request: Rec
   const memberMaster = new Map(rows("MasterMemberCard").map(row => [row.id, row]));
   const snapMaster = new Map(rows("MasterSupportCard").map(row => [row.id, row]));
   const seen = new Set<string>();
+  let skippedUnknownCards = false;
   const cards = (name: string, snap: boolean) => list(p[name]).flatMap((card, index) => {
     const path = "_player." + name + "[" + index + "]";
     const id = known(card._masterId, path + "._masterId");
@@ -58,7 +68,7 @@ export function adaptAccount(data: DeckData, account: AccountInput, request: Rec
     if (seen.has(identity)) { issue(path + "._masterId", "duplicate_id"); return []; }
     seen.add(identity);
     const master = (snap ? snapMaster : memberMaster).get(id);
-    if (!master) { issue(path + "._masterId", "unknown_id"); return []; }
+    if (!master) { skippedUnknownCards = true; return []; }
     if (!snap && characterBand && characterBand.get(master.characterID) !== arenaBandId) return [];
     const growth = {
       key: identity, cardId: id,
@@ -98,8 +108,8 @@ export function adaptAccount(data: DeckData, account: AccountInput, request: Rec
     const ids = new Set(rows(master).map(row => row.id));
     for (const [i, row] of list(p[name]).entries()) {
       const path = "_player." + name + "[" + i + "]._masterId";
-      if (entries.has(row._masterId)) issue(path, "duplicate_id");
-      if (!ids.has(row._masterId)) issue(path, "unknown_id");
+      if (entries.has(row._masterId)) { issue(path, "duplicate_id"); continue; }
+      if (!ids.has(row._masterId)) continue;
       entries.set(row._masterId, { row, i });
     }
     return entries;
@@ -113,14 +123,45 @@ export function adaptAccount(data: DeckData, account: AccountInput, request: Rec
     if (rank !== null) characterRanks[String(c.id)] = rank;
   }
   const bandItems: Record<string, number> = {};
-  for (const { row, i } of unique("_bandItems", "MasterBandItem").values()) {
-    const id = known(row._masterId, "_player._bandItems[" + i + "]._masterId"), value = known(row._level, "_player._bandItems[" + i + "]._level");
-    if (id !== null && value !== null) {
-      if (value !== 0 && !rows("MasterBandItemLevel").some(row => row.bandItemId === id && row.level === value)) issue("_player._bandItems[" + i + "]._level", "invalid_value");
-      bandItems[String(id)] = value;
+  for (const item of rows("MasterBandItem")) bandItems[String(item.id)] = 0;
+  const bandItemLevels = new Map<number, number[]>();
+  for (const row of rows("MasterBandItemLevel")) {
+    const itemId = Number(row.bandItemId), lvl = Number(row.level);
+    if (!Number.isSafeInteger(itemId) || !Number.isSafeInteger(lvl)) continue;
+    const listForItem = bandItemLevels.get(itemId) ?? [];
+    listForItem.push(lvl);
+    bandItemLevels.set(itemId, listForItem);
+  }
+  for (const levelsForItem of bandItemLevels.values()) levelsForItem.sort((a, b) => a - b);
+  if (Array.isArray(p._bandItems)) {
+    for (const rawRow of p._bandItems) {
+      if (!rawRow || typeof rawRow !== "object" || Array.isArray(rawRow)) continue;
+      const row = rawRow as Row;
+      const id = safeBandItemId(row._masterId);
+      if (id === null || !Object.prototype.hasOwnProperty.call(bandItems, String(id))) continue;
+      const rawLevel = row._level;
+      if (rawLevel === null || rawLevel === undefined) {
+        bandItems[String(id)] = 0;
+        continue;
+      }
+      if (typeof rawLevel === "number" && Number.isFinite(rawLevel)) {
+        const truncated = Math.trunc(rawLevel);
+        if (truncated <= 0) {
+          bandItems[String(id)] = 0;
+        } else {
+          const allowed = bandItemLevels.get(id) ?? [];
+          if (allowed.includes(truncated)) {
+            bandItems[String(id)] = truncated;
+          } else {
+            const clamped = allowed.filter(lvl => lvl <= truncated).at(-1) ?? 0;
+            bandItems[String(id)] = clamped;
+          }
+        }
+      } else {
+        bandItems[String(id)] = 0;
+      }
     }
   }
-  if (account.coverage["_player._bandItems"] !== "complete") issue("_player._bandItems", "missing");
   const vipRank = known(account.declared?._vip?._rank, "declared._vip._rank");
   if (vipRank !== null && !rows("MasterVip").some(row => row.vipRank === vipRank)) issue("declared._vip._rank", "invalid_value");
   const memory = accountMemory(data, account, missing, errors);
@@ -129,6 +170,8 @@ export function adaptAccount(data: DeckData, account: AccountInput, request: Rec
     members, snaps, player: { characterRanks, characterTotalRank: Object.values(characterRanks).reduce((a, b) => a + b, 0),
       bandItems, vipRank, characterMemory: {}, musicMemory: {}, memory },
     missing, errors,
-    coversAllOwnedCards: account.coverage["_player._memberCards"] === "complete" && account.coverage["_player._supportCards"] === "complete",
+    coversAllOwnedCards: !skippedUnknownCards
+      && account.coverage["_player._memberCards"] === "complete"
+      && account.coverage["_player._supportCards"] === "complete",
   };
 }

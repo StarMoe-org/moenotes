@@ -337,7 +337,7 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
         accountJson = gameSaveAccountJson(target, stored, linkedSave.state.save);
       } else {
         if (!saveTables) throw new Error(tr("solver.tablesUnavailable"));
-        accountJson = boxAccountJson(target, box, saveTables);
+        accountJson = boxAccountJson(target, box, saveTables, { fallbackBandItems: true });
       }
       const context = { event, now: Date.now(), constraints }, cost = effectiveInput.challengePoints;
       const rate = challengeRateRequest(effectiveInput, context);

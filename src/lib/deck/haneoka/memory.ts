@@ -13,17 +13,19 @@ export function accountMemory(data: DeckData, account: AccountInput, missing: Is
     return value.flatMap((entry, index) => {
       if (!entry || typeof entry !== 'object' || Array.isArray(entry)) { issue(`${path}[${index}]`, 'invalid_value'); return []; }
       const row = entry as Row;
-      if (!Number.isInteger(row[key]) || !valid.has(row[key])) { issue(`${path}[${index}].${key}`, 'unknown_id'); return []; }
+      if (!Number.isInteger(row[key])) { issue(`${path}[${index}].${key}`, 'invalid_value'); return []; }
+      if (!valid.has(row[key])) return [];
       if (seen.has(row[key])) { issue(`${path}[${index}].${key}`, 'duplicate_id'); return []; }
       seen.add(row[key]); return [{ row, path: `${path}[${index}]` }];
     });
   };
   const unlocked = (name: string, ownedName: string, master: string, levels: string) => {
     const path = `_player._memory.${name}`, hasLevels = rows(levels).length > 0;
-    const cards = entries(memory[name], path, '_id', new Set(rows(master).map(r => r.id)));
+    const validIds = new Set(rows(master).map(r => r.id));
+    const cards = entries(memory[name], path, '_id', validIds);
     const ownedRows = account.account._player[ownedName];
     if (hasLevels && ownedRows != null && !Array.isArray(ownedRows)) issue(`_player.${ownedName}`, "invalid_value");
-    const owned = new Set((Array.isArray(ownedRows) ? ownedRows as Row[] : []).map(r => r._masterId));
+    const owned = new Set((Array.isArray(ownedRows) ? ownedRows as Row[] : []).map(r => r._masterId).filter(id => validIds.has(id)));
     const result: number[] = [];
     for (const { row, path: p } of cards) {
       if (row._unlocked == null) issue(`${p}._unlocked`, 'missing');

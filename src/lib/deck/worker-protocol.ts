@@ -16,6 +16,8 @@ export interface DeckWorkerInit {
   glueUrl: string; glueSha256: string; glueBytes: number;
   /** The commit the deck data's `provenance.deck.commit` must name; `null` skips the check. */
   modelCommit: string | null;
+  /** Optional live MasterData overlay endpoint merged over `deckData.master` before solver initialization. */
+  masterOverlayUrl?: string;
 }
 /** Page -> Worker: one recommendation. The Worker runs one at a time. */
 export interface DeckWorkerRun {
@@ -94,6 +96,7 @@ export function deckWorkerInit(runtime: DeckSolverRuntime): DeckWorkerInit {
     wasmUrl: runtime.engine.wasm.url, wasmSha256: runtime.engine.wasm.sha256, wasmBytes: runtime.engine.wasm.bytes,
     glueUrl: runtime.engine.js.url, glueSha256: runtime.engine.js.sha256, glueBytes: runtime.engine.js.bytes,
     modelCommit: runtime.modelCommit,
+    ...(runtime.masterOverlayUrl ? { masterOverlayUrl: runtime.masterOverlayUrl } : {}),
   };
 }
 
