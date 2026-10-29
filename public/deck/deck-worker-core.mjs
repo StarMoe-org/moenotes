@@ -87,6 +87,7 @@ export async function loadDeckSolverModule({ glue, wasm }) {
 }
 
 const FILES = [['deckData', 'deck data'], ['wasm', 'engine WASM'], ['glue', 'engine glue']];
+const DECK_MASTER_OVERLAY_FORMAT = 'moenotes.deck-master-overlay/1';
 
 function invalidInit(message) {
   if (message.protocol !== DECK_WORKER_PROTOCOL) return 'Unsupported protocol ' + String(message.protocol);
@@ -95,6 +96,7 @@ function invalidInit(message) {
     if (typeof url !== 'string' || !url || typeof sha256 !== 'string' || !HEX64.test(sha256) || !Number.isSafeInteger(bytes) || bytes < 1) return 'Invalid ' + name + ' file';
   }
   if (message.modelCommit !== null && (typeof message.modelCommit !== 'string' || !message.modelCommit)) return 'Invalid modelCommit';
+  if (message.masterOverlayUrl !== undefined && (typeof message.masterOverlayUrl !== 'string' || !message.masterOverlayUrl)) return 'Invalid masterOverlayUrl';
   return null;
 }
 
@@ -159,11 +161,27 @@ export function createDeckWorkerCore({
     return value === undefined ? null : JSON.stringify(value);
   }
 
+  async function downloadOverlay(rawUrl) {
+    if (typeof rawUrl !== 'string' || !rawUrl) return null;
+    const url = rawUrl.startsWith('/') && typeof globalThis.location?.origin === 'string' && globalThis.location.origin !== 'null'
+      ? new URL(rawUrl, globalThis.location.origin).href
+      : rawUrl;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) return null;
+      const parsed = await response.json();
+      if (!record(parsed) || parsed.format !== DECK_MASTER_OVERLAY_FORMAT || !record(parsed.master)) return null;
+      return parsed;
+    } catch {
+      return null;
+    }
+  }
+
   async function initialize(message) {
     const problem = invalidInit(message);
     if (problem) { post({ type: 'failed', code: 'protocol', message: problem }); return; }
     const key = JSON.stringify([message.deckDataUrl, message.deckDataSha256, message.deckDataBytes, message.wasmUrl, message.wasmSha256,
-      message.wasmBytes, message.glueUrl, message.glueSha256, message.glueBytes, message.modelCommit]);
+      message.wasmBytes, message.glueUrl, message.glueSha256, message.glueBytes, message.modelCommit, message.masterOverlayUrl ?? null]);
     if (initKey !== null) {
       if (key !== initKey) post({ type: 'failed', code: 'protocol', message: 'This Worker is bound to another runtime' });
       else post(ready ?? failure);
@@ -172,19 +190,49 @@ export function createDeckWorkerCore({
     initKey = key;
     const started = now();
     try {
-      const [deckData, wasm, glue] = await Promise.all(FILES.map(([name, label]) => download(message, name, label)));
+      const [[deckData, wasm, glue], overlay] = await Promise.all([
+        Promise.all(FILES.map(([name, label]) => download(message, name, label))),
+        downloadOverlay(message.masterOverlayUrl),
+      ]);
       const data = readDeckData(deckData);
       if (message.modelCommit !== null) checkModelCommit(data, message.modelCommit);
-      const catalog = dataCatalog(data);
-      let DeckSolver, created;
+      let DeckSolver;
       try { DeckSolver = await loadSolver({ glue, wasm }); }
       catch (error) { throw new Failure('init', 'Engine: ' + describe(error)); }
-      try { created = new DeckSolver(new Uint8Array(deckData), { datasetId: message.deckDataSha256 }); }
-      catch (error) { throw new Failure('init', 'DeckSolver: ' + describe(error)); }
+
+      let created = null;
+      let expectedDatasetId = message.deckDataSha256;
+      let activeData = data;
+      if (overlay) {
+        try {
+          const mergedData = { ...data, master: { ...(record(data.master) ? data.master : {}), ...overlay.master } };
+          const mergedBytes = new TextEncoder().encode(JSON.stringify(mergedData));
+          const mergedSha256 = hex(await digest(mergedBytes.buffer));
+          const candidate = new DeckSolver(mergedBytes, { datasetId: mergedSha256 });
+          if (candidate && typeof candidate.datasetId === 'string' && candidate.datasetId === mergedSha256) {
+            created = candidate;
+            expectedDatasetId = mergedSha256;
+            activeData = mergedData;
+          } else {
+            candidate?.free?.();
+          }
+        } catch {
+          // Fall back cleanly to the verified baseline deck-data.json if the engine rejects overlaid tables.
+        }
+      }
+
+      if (!created) {
+        try { created = new DeckSolver(new Uint8Array(deckData), { datasetId: message.deckDataSha256 }); }
+        catch (error) { throw new Failure('init', 'DeckSolver: ' + describe(error)); }
+        expectedDatasetId = message.deckDataSha256;
+        activeData = data;
+      }
+
+      const catalog = dataCatalog(activeData);
       const datasetId = typeof created.datasetId === 'string' ? created.datasetId : '';
-      if (datasetId !== message.deckDataSha256) {
+      if (datasetId !== expectedDatasetId) {
         created.free?.();
-        throw new Failure('integrity', 'The solver reports dataset ' + (datasetId || '(none)') + ', expected ' + message.deckDataSha256);
+        throw new Failure('integrity', 'The solver reports dataset ' + (datasetId || '(none)') + ', expected ' + expectedDatasetId);
       }
       let capabilitiesJson;
       try { capabilitiesJson = capabilities(created); }
