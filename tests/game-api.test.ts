@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { announcementSrcdoc, isUpdatedSinceSeen, newsCategory } from "../src/lib/game-api/announcements";
-import { challengeReadable, hasPointRanking, pointRankingReadable, rewardBoundaries } from "../src/lib/game-api/events";
+import { challengeReadable, hasPointRanking, pointRankingReadable, rewardBoundaries, totalRankingReadable } from "../src/lib/game-api/events";
 import { parseEventTrackerSearch } from "../src/lib/game-api/links";
 import { levelFromExp, toRankingRows } from "../src/lib/game-api/music-ranking";
 import { defaultGameServer, formatAge, parseGameSeconds } from "../src/lib/game-api/server";
@@ -85,6 +85,22 @@ describe("event challenge boards", () => {
     expect(hasPointRanking(event)).toBe(false);
     expect(pointRankingReadable(event)).toBe(false);
     expect(hasPointRanking({ ...event, pointRanking: { enabled: true, collectStatus: "collecting" } })).toBe(true);
+  });
+
+  test("the event-level total board is readable on the same states as a song board", () => {
+    const board = { rankingEnabled: true, collectStatus: "collecting" as const };
+    expect(totalRankingReadable(board)).toBe(true);
+    expect(totalRankingReadable({ ...board, collectStatus: "archived" })).toBe(true);
+    expect(totalRankingReadable({ ...board, collectStatus: "pending" })).toBe(false);
+    expect(totalRankingReadable({ ...board, collectStatus: "disabled" })).toBe(false);
+    expect(totalRankingReadable({ ...board, rankingEnabled: false })).toBe(false);
+    // A payload from a service that predates the board carries no `totalRanking` at all.
+    expect(totalRankingReadable(undefined)).toBe(false);
+  });
+
+  test("the total board's reward bands give the same cut-offs as a song board", () => {
+    expect(rewardBoundaries({ rewardBands: [{ rankStart: 1, rankEnd: 1, rewardIds: [287] }, { rankStart: 2, rankEnd: 100, rewardIds: ["288"] }] })).toEqual([1, 100]);
+    expect(rewardBoundaries({})).toEqual([]);
   });
 
   test("tracker links keep only valid query parts", () => {

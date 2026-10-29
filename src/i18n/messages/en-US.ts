@@ -2076,9 +2076,16 @@ export const enUS = {
       missed: "This ranking was not collected",
       startsAt: "Opens {time}",
     },
+    total: {
+      title: "Challenge Overall Ranking",
+      disabled: "This event has no overall challenge ranking. The song boards above are ranked separately.",
+      unknown: "The game data does not say whether this event has an overall challenge ranking",
+      pending: "The overall challenge ranking has not opened yet",
+      missed: "This overall challenge ranking was not collected",
+    },
     points: {
       title: "Event Point Ranking",
-      disabled: "This event has no point ranking. Only the challenge song rankings above are ranked.",
+      disabled: "This event has no point ranking. Only the challenge boards above are ranked.",
       interrupted: "collection interrupted, may be out of date",
       frozen: "counting, scores frozen",
       tied: "Tied",

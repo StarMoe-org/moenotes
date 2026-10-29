@@ -2120,9 +2120,16 @@ export const zhTW = {
       missed: "沒有採集到這個排行榜",
       startsAt: "{time} 開放",
     },
+    total: {
+      title: "挑戰總榜",
+      disabled: "本活動沒有挑戰總榜，只有上方的單曲榜。",
+      unknown: "遊戲資料沒有說明本活動是否有挑戰總榜",
+      pending: "挑戰總榜還沒開放",
+      missed: "沒有採集到這個挑戰總榜",
+    },
     points: {
       title: "活動積分排行榜",
-      disabled: "本活動沒有積分排行榜，只有上方的挑戰歌曲排行榜。",
+      disabled: "本活動沒有積分排行榜，只有上方的挑戰歌曲榜與總榜。",
       interrupted: "採集中斷，資料可能已過時",
       frozen: "集計中，分數已凍結",
       tied: "並列",
