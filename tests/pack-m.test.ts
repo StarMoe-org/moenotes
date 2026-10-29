@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { degreeRankUnlocks, degreeSourceCardId, isDegreeRetired, normalizeDegrees } from "../src/lib/degrees/data";
-import { birthdayChapterCharacters, normalizeStories, type RawStoryChapter, type RawStoryEpisode, type StoryMasterData } from "../src/lib/story/data";
+import { birthdayChapterCharacters, birthdayEpisodeCharacters, normalizeStories, type RawStoryChapter, type RawStoryEpisode, type StoryMasterData } from "../src/lib/story/data";
 import { carouselImagePaths, normalizeHelp, stripHelpBrackets } from "../src/lib/help/data";
 import { formatPlayTime, storyUnlockLabels } from "../src/lib/story/labels";
 import type { RewardResolver } from "../src/lib/rewards/resources";
@@ -65,6 +65,13 @@ describe("birthday stories", () => {
     expect([...birthdayChapterCharacters([chapter(33, true, [22])], [])]).toEqual([[33, 22]]);
   });
 
+  test("each Birthday/ landing names its own episode's birthday character", () => {
+    const second = { ...landing, id: 2, storyEpisodeId: 3302, characterId: 20 };
+    expect([...birthdayEpisodeCharacters([landing, second])]).toEqual([[3301, 22], [3302, 20]]);
+    // Only Birthday/ landings count; other login landings name no birthday.
+    expect([...birthdayEpisodeCharacters([{ ...landing, contentPrefabAddress: "Event/effect" }])]).toEqual([]);
+  });
+
   const resolve: RewardResolver = (resource) => ({ kind: "item", id: resource.resourceId, count: resource.resourceCount, name: `Item ${resource.resourceId}`, imageUrl: "" });
   const data: StoryMasterData = {
     chapters: [chapter(5, false, [1]), chapter(33, true, [22])],
@@ -83,6 +90,21 @@ describe("birthday stories", () => {
     const stories = normalizeStories(data, "en-US");
     expect(stories.map((story) => [story.advId, story.category])).toEqual([[5001, "main"], [3301, "birthday"]]);
     expect(stories.find((story) => story.advId === 3301)?.birthday).toEqual({ characterId: 22, characterName: "Miku", month: 10, day: 4 });
+  });
+
+  test("a shared birthday chapter names each episode's own character, not the first one", () => {
+    const shared: StoryMasterData = {
+      ...data,
+      episodes: [...data.episodes, episode(3302, 33)],
+      advs: [...data.advs, { id: 3302, advEpisodeAsset: "adv_script_test_3302", playbackMode: 0, sheetName: "", titleTextId: "T3302" }],
+      characters: [...data.characters, { id: 20, bandID: 1, displayOrder: 20, nameTextID: "N20", shortNameTextID: "S20", mainColorCode: "", birthdayMonth: 10, birthdayDay: 24 }],
+      texts: [...data.texts, text("N20", "Izumi")],
+      loginLandings: [...data.loginLandings, { ...landing, id: 2, storyEpisodeId: 3302, characterId: 20 }],
+    };
+    const birthdays = normalizeStories(shared, "en-US")
+      .filter((story) => story.category === "birthday")
+      .map((story) => [story.advId, story.birthday?.characterId, story.birthday?.characterName, story.birthday?.day]);
+    expect(birthdays).toEqual([[3301, 22, "Miku", 4], [3302, 20, "Izumi", 24]]);
   });
 
   test("episodes carry their play time and clear rewards", () => {
