@@ -1,7 +1,7 @@
 "use client";
 
 import SiriusLoader from "@/components/shared/SiriusLoader";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import EventBanner from "@/components/events/EventBanner";
@@ -17,6 +17,7 @@ import type { EventViewModel } from "@/lib/events/data";
 import {
   GameApiError,
   fetchChallengeRanking,
+  fetchChallengeTotalRanking,
   fetchCurrentEvent,
   fetchEvent,
   fetchEvents,
@@ -29,12 +30,14 @@ import {
   missingRanks,
   pointRankingReadable,
   rewardBoundaries,
+  totalRankingReadable,
   type ChallengeRanking,
+  type ChallengeTotalRanking,
   type PointRankingLatest,
   type RankdEvent,
 } from "@/lib/game-api/events";
 import { getEventTrackerHref, parseEventTrackerSearch } from "@/lib/game-api/links";
-import { toRankingRows, type DeckCardLookup, type RankingRow } from "@/lib/game-api/music-ranking";
+import { toRankingRows, type DeckCardLookup, type MusicRanking, type RankingRow } from "@/lib/game-api/music-ranking";
 import { formatAge, formatServerSchedule, formatServerTimeInZone } from "@/lib/game-api/server";
 import { useGameServer } from "@/lib/game-api/use-game-server";
 import { usePollTick } from "@/lib/game-api/use-poll";
@@ -228,6 +231,17 @@ export default function EventTracker({ locale, events, songs, deckCards, servers
             )}
           </section>
 
+          {event.totalRanking && (
+            <TotalRankingBoard
+              key={`${server}:${event.eventId}:total`}
+              locale={locale}
+              server={server}
+              eventId={event.eventId}
+              board={event.totalRanking}
+              cards={deckCards}
+            />
+          )}
+
           <PointRankingPanel key={`${server}:${event.eventId}`} locale={locale} server={server} event={event} servers={servers} />
         </>
       )}
@@ -364,28 +378,20 @@ type BoardLoad =
   | { state: "ready"; response: GameApiResponse<unknown>; rows: RankingRow[] }
   | { state: "error"; kind: ErrorKind | "notStarted" | "disabled" | "missed" | "unknown" };
 
-/** One challenge song's board, kept in the game's order and refreshed every minute while collection runs. */
-function ChallengeBoard({ locale, server, eventId, challenge, song, cards, servers }: {
-  locale: AppLocale;
-  server: GameServer;
-  eventId: string;
-  challenge: ChallengeRanking;
-  song: TrackerSong | null;
-  cards: DeckCardLookup;
-  servers: GameServer[];
-}) {
-  const readable = challengeReadable(challenge);
-  const live = readable && (challenge.collectStatus === "collecting" || challenge.collectStatus === "finalizing");
+/**
+ * Loads a challenge board (a song's or the event's total) and the retry button's trigger: `pending` answers get one
+ * automatic retry, and a failed refresh keeps the copy already on screen.
+ */
+function useChallengeBoard(request: ((signal: AbortSignal) => Promise<GameApiResponse<MusicRanking>>) | null, live: boolean) {
   const tick = usePollTick(live ? BOARD_POLL_MS : null);
   const [attempt, setAttempt] = useState(0);
   const [load, setLoad] = useState<BoardLoad>({ state: "loading" });
-  const assetUrl = useServerAssetUrl(server);
 
   useEffect(() => {
-    if (!readable) return;
+    if (!request) return;
     const controller = new AbortController();
     let retry: number | undefined;
-    fetchChallengeRanking(server, eventId, challenge.challengeMusicId, controller.signal)
+    request(controller.signal)
       .then((response) => setLoad({ state: "ready", response, rows: toRankingRows(response.data, "response") }))
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
@@ -407,11 +413,35 @@ function ChallengeBoard({ locale, server, eventId, challenge, song, cards, serve
       controller.abort();
       window.clearTimeout(retry);
     };
-  }, [server, eventId, challenge.challengeMusicId, readable, attempt, tick]);
+    // `request` changes with the board it loads; `attempt` and `tick` re-run it.
+  }, [request, attempt, tick]);
+
+  return { load, retry: () => setAttempt((value) => value + 1) };
+}
+
+/** One challenge song's board, kept in the game's order and refreshed every minute while collection runs. */
+function ChallengeBoard({ locale, server, eventId, challenge, song, cards, servers }: {
+  locale: AppLocale;
+  server: GameServer;
+  eventId: string;
+  challenge: ChallengeRanking;
+  song: TrackerSong | null;
+  cards: DeckCardLookup;
+  servers: GameServer[];
+}) {
+  const readable = challengeReadable(challenge);
+  const live = readable && (challenge.collectStatus === "collecting" || challenge.collectStatus === "finalizing");
+  const request = useCallback(
+    (signal: AbortSignal) => fetchChallengeRanking(server, eventId, challenge.challengeMusicId, signal),
+    [server, eventId, challenge.challengeMusicId],
+  );
+  const { load, retry } = useChallengeBoard(readable ? request : null, live);
+  const assetUrl = useServerAssetUrl(server);
 
   const boundaries = useMemo(() => rewardBoundaries(challenge), [challenge]);
   const top = load.state === "ready" ? load.rows : [];
-  const fetchedAt = load.state === "ready" ? load.response.fetchedAt ?? challenge.lastFetchedAt ?? null : challenge.lastFetchedAt ?? null;
+  // A board the service never fetched reports `lastFetchedAt: 0`, not a missing field.
+  const fetchedAt = (load.state === "ready" ? load.response.fetchedAt : null) || challenge.lastFetchedAt || null;
   const serverTime = load.state === "ready" ? load.response.serverTime : null;
   const finalQuality = load.state === "ready" ? load.response.finalQuality : null;
   const stale = load.state === "ready" ? load.response.stale : Boolean(challenge.stale);
@@ -452,7 +482,7 @@ function ChallengeBoard({ locale, server, eventId, challenge, song, cards, serve
             compact
             title={t(locale, `music.ranking.errors.${load.kind}`)}
             hint={t(locale, `music.ranking.errors.${load.kind}Hint`)}
-            action={<RetryButton locale={locale} onClick={() => setAttempt((value) => value + 1)} />}
+            action={<RetryButton locale={locale} onClick={retry} />}
           />
         ) : (
           <BoardNotice locale={locale} server={server} challenge={{ ...challenge, collectStatus: load.kind === "notStarted" ? "pending" : load.kind }} />
@@ -481,6 +511,96 @@ function BoardNotice({ locale, server, challenge }: { locale: AppLocale; server:
       title={t(locale, `eventTracker.board.${key === "collecting" || key === "finalizing" || key === "archived" ? "pending" : key}`)}
       hint={key === "pending" && start ? t(locale, "eventTracker.board.startsAt", { time: formatServerTimeInZone(start, server, locale) }) : ""}
     />
+  );
+}
+
+/** A total board state as the copy it shows: its switch, its collection, or "the game does not say". */
+function totalNotice(status: string): "disabled" | "unknown" | "pending" | "missed" {
+  return status === "disabled" || status === "unknown" || status === "missed" ? status : "pending";
+}
+
+/**
+ * The event's challenge total board: one list for the whole event, summed by the game. It is a separate observation
+ * from the song boards, so a missing one never hides them.
+ */
+function TotalRankingBoard({ locale, server, eventId, board, cards }: {
+  locale: AppLocale;
+  server: GameServer;
+  eventId: string;
+  board: ChallengeTotalRanking;
+  cards: DeckCardLookup;
+}) {
+  const readable = totalRankingReadable(board);
+  const status = board.collectStatus;
+  const live = readable && (status === "collecting" || status === "finalizing");
+  const request = useCallback(
+    (signal: AbortSignal) => fetchChallengeTotalRanking(server, eventId, signal),
+    [server, eventId],
+  );
+  const { load, retry } = useChallengeBoard(readable ? request : null, live);
+  const assetUrl = useServerAssetUrl(server);
+
+  const boundaries = useMemo(() => rewardBoundaries(board), [board]);
+  const rows = load.state === "ready" ? load.rows : [];
+  // A board the service never fetched reports `lastFetchedAt: 0`, not a missing field.
+  const fetchedAt = (load.state === "ready" ? load.response.fetchedAt : null) || board.lastFetchedAt || null;
+  const serverTime = load.state === "ready" ? load.response.serverTime : null;
+  const finalQuality = load.state === "ready" ? load.response.finalQuality : null;
+  const stale = load.state === "ready" ? load.response.stale : Boolean(board.stale);
+
+  return (
+    <section className="md3-surface overflow-hidden" aria-labelledby="event-tracker-total">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant px-6 py-4 sm:px-8">
+        <h2 id="event-tracker-total" className="font-[var(--md-ref-typeface-brand)] text-headline-small text-on-surface sm:text-headline-small">
+          {t(locale, "eventTracker.total.title")}
+        </h2>
+        <div className="flex flex-col items-end gap-1 text-right text-label-small text-on-surface-variant">
+          <span className="flex items-center gap-1.5">
+            <StatusDot status={status} />
+            {t(locale, `eventTracker.collect.${status}`)}
+          </span>
+          {fetchedAt !== null && (
+            <span title={formatServerTimeInZone(fetchedAt, server, locale)}>
+              {t(locale, "music.ranking.updatedAgo", { time: formatAge(fetchedAt, serverTime ?? Date.now(), locale) })}
+              {stale && ` · ${t(locale, "eventTracker.stale")}`}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="px-4 py-4 sm:px-6">
+        {!readable ? (
+          <p className="px-2 py-4 text-body-medium leading-7 text-on-surface-variant">
+            {t(locale, `eventTracker.total.${totalNotice(status)}`)}
+          </p>
+        ) : load.state === "loading" ? (
+          <RankingLoading locale={locale} label={t(locale, "music.ranking.loading")} />
+        ) : load.state === "error" ? (
+          load.kind === "pending" || load.kind === "upstream" || load.kind === "failed" ? (
+            <Notice
+              compact
+              title={t(locale, `music.ranking.errors.${load.kind}`)}
+              hint={t(locale, `music.ranking.errors.${load.kind}Hint`)}
+              action={<RetryButton locale={locale} onClick={retry} />}
+            />
+          ) : (
+            <p className="px-2 py-4 text-body-medium leading-7 text-on-surface-variant">
+              {t(locale, `eventTracker.total.${totalNotice(load.kind === "notStarted" ? "pending" : load.kind)}`)}
+            </p>
+          )
+        ) : rows.length === 0 ? (
+          <p className="px-2 py-8 text-center text-label-large text-on-surface-variant">{t(locale, "music.ranking.empty")}</p>
+        ) : (
+          <RankingList locale={locale} rows={rows} cards={cards} assetUrl={assetUrl} boundaries={boundaries} server={server} />
+        )}
+
+        {finalQuality === "lastSeen" && (
+          <p className="mt-4 border-t border-outline-variant px-2 pt-3 text-body-small leading-6 text-on-surface-variant">
+            {t(locale, "eventTracker.challenges.lastSeen")}
+          </p>
+        )}
+      </div>
+    </section>
   );
 }
 

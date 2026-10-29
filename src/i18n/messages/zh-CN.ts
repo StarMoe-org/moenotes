@@ -2121,9 +2121,16 @@ export const zhCN = {
       missed: "没有采集到这个排行榜",
       startsAt: "{time} 开放",
     },
+    total: {
+      title: "挑战总榜",
+      disabled: "本活动没有挑战总榜，只有上方的单曲榜。",
+      unknown: "游戏数据没有说明本活动是否有挑战总榜",
+      pending: "挑战总榜还没开放",
+      missed: "没有采集到这个挑战总榜",
+    },
     points: {
       title: "活动积分排行榜",
-      disabled: "本活动没有积分排行榜，只有上方的挑战歌曲排行榜。",
+      disabled: "本活动没有积分排行榜，只有上方的挑战歌曲榜与总榜。",
       interrupted: "采集中断，数据可能已过时",
       frozen: "集计中，分数已冻结",
       tied: "并列",

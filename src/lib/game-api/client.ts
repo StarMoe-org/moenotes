@@ -77,6 +77,11 @@ export function fetchChallengeRanking(server: GameServer, eventId: string, chall
   return getJson(`${gameApiConfig.base}/${server}/events/${encodeURIComponent(eventId)}/challenges/${encodeURIComponent(challengeMusicId)}/ranking`, signal);
 }
 
+/** The event-level challenge total board: the game's own sum over the event, shaped like a song ranking. */
+export function fetchChallengeTotalRanking(server: GameServer, eventId: string, signal?: AbortSignal): Promise<GameApiResponse<MusicRanking>> {
+  return getJson(`${gameApiConfig.base}/${server}/events/${encodeURIComponent(eventId)}/challenge-total-ranking`, signal);
+}
+
 /** The latest version, or the one whose `lastUpdatedAt` is `revision`. */
 export function fetchAnnouncement(server: GameServer, id: string, revision?: string, signal?: AbortSignal): Promise<GameApiResponse<{ announcement?: Announcement }>> {
   const query = revision ? `?${new URLSearchParams({ rev: revision })}` : "";
