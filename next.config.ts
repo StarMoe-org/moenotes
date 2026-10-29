@@ -115,10 +115,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/_next/static/:path*",
-        headers: [
-          { key: "Cache-Control", value: "private, no-cache, no-store, must-revalidate" },
-          { key: "CDN-Cache-Control", value: "no-store" },
-        ],
+        headers: [{ key: "CDN-Cache-Control", value: "no-store" }],
       },
     ];
   },
