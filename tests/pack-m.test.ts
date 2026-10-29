@@ -107,6 +107,14 @@ describe("birthday stories", () => {
     expect(birthdays).toEqual([[3301, 22, "Miku", 4], [3302, 20, "Izumi", 24]]);
   });
 
+  test("a special chapter without landing rows still resolves its birthday", () => {
+    // The JP server's landing table is empty; its special chapter still marks the episode as a birthday.
+    const jp: StoryMasterData = { ...data, loginLandings: [] };
+    const story = normalizeStories(jp, "en-US").find((item) => item.advId === 3301);
+    expect(story?.category).toBe("birthday");
+    expect(story?.birthday).toEqual({ characterId: 22, characterName: "Miku", month: 10, day: 4 });
+  });
+
   test("episodes carry their play time and clear rewards", () => {
     const main = normalizeStories(data, "en-US").find((story) => story.advId === 5001)!;
     expect(main.playTime).toBe(633);
