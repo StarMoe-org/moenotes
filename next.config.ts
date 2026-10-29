@@ -109,6 +109,19 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
+  async headers() {
+    if (process.env.NODE_ENV === "production") return [];
+    // Prevent reverse proxies / CDNs in dev preview environments from caching unhashed `/_next/static/chunks/app/*.js`.
+    return [
+      {
+        source: "/_next/static/:path*",
+        headers: [
+          { key: "Cache-Control", value: "private, no-cache, no-store, must-revalidate" },
+          { key: "CDN-Cache-Control", value: "no-store" },
+        ],
+      },
+    ];
+  },
   async rewrites() {
     const apiDev = process.env.MOENOTES_API_DEV?.trim();
     if (!apiDev) return [];

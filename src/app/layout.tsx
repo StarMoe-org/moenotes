@@ -52,6 +52,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html
       lang={HTML_LANG[locale]}
       data-locale={locale}
+      data-scroll-behavior="smooth"
       data-spoiler-now={SPOILER_REFERENCE_NOW}
       data-masterdata-version={manifest?.dataVersion || undefined}
       data-masterdata-regions={serializedRegions}
