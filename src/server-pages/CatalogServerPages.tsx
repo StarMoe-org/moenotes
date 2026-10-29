@@ -16,6 +16,7 @@ import RewardsExplorer from "@/components/rewards/RewardsExplorer";
 import RouteGlyph from "@/components/shared/RouteGlyph";
 import PageHeader from "@/components/shell/PageHeader";
 import ShopExplorer from "@/components/shop/ShopExplorer";
+import SkillsExplorer from "@/components/skills/SkillsExplorer";
 import StampsExplorer from "@/components/stamps/StampsExplorer";
 import StoryExplorer from "@/components/story/StoryExplorer";
 import { inStorySection, type StorySection } from "@/lib/story/sections";
@@ -66,11 +67,10 @@ import { MASTER_TIME_ZONE } from "@/lib/schedule";
 import type { AppRoute } from "@/types/route";
 
 export async function CardsServerPage({ locale }: { locale: AppLocale }) {
-  const [cards, servers, skillNames, skillDictionaries] = await Promise.all([
+  const [cards, servers, skillNames] = await Promise.all([
     getBuildCards(locale),
     getBuildServers(),
     getBuildCardSkillNames(locale),
-    getBuildSkillDictionaries(locale),
   ]);
   return (
     <PageHeader locale={locale} titleKey="seo.cards.title" descriptionKey="seo.cards.description">
@@ -79,6 +79,25 @@ export async function CardsServerPage({ locale }: { locale: AppLocale }) {
         initialCards={cards}
         servers={servers}
         skillNames={skillNames}
+      />
+    </PageHeader>
+  );
+}
+
+export async function SkillsServerPage({ locale }: { locale: AppLocale }) {
+  const [cards, bandNames, servers, skillDictionaries] = await Promise.all([
+    getBuildCards(locale),
+    getBuildBandNames(locale),
+    getBuildServers(),
+    getBuildSkillDictionaries(locale),
+  ]);
+  return (
+    <PageHeader locale={locale} titleKey="seo.skills.title" descriptionKey="seo.skills.description">
+      <SkillsExplorer
+        locale={locale}
+        servers={servers}
+        initialCards={cards}
+        bands={bandNames}
         skillDictionaries={skillDictionaries}
       />
     </PageHeader>

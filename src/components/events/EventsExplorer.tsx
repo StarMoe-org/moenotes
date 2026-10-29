@@ -20,7 +20,7 @@ import { useListSort } from "@/lib/filter/use-list-sort";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import { eventPath } from "@/lib/events/links";
 import { readQueryParam, replaceQueryParam } from "@/lib/route/url-state";
-import { formatScheduleRange, scheduleStatus, type ScheduleStatus } from "@/lib/schedule";
+import { compareByStartDesc, formatScheduleRange, scheduleStatus, type ScheduleStatus } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
 import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
@@ -52,6 +52,9 @@ export default function EventsExplorer({ locale, servers, initialEvents, bands, 
   const sort = useListSort("event-list", locale, "date,endingSoon");
   const [selectedStatuses, setSelectedStatuses] = useState<ScheduleStatus[]>([]);
   const [selectedBands, setSelectedBands] = useState<number[]>([]);
+  const [arenaQuery, setArenaQuery] = useState("");
+  const [arenaSeasonId, setArenaSeasonId] = useState<number | null>(null);
+  const [arenaBands, setArenaBands] = useState<number[]>([]);
 
   useEffect(() => {
     const rawTab = readQueryParam("tab");
@@ -118,7 +121,10 @@ export default function EventsExplorer({ locale, servers, initialEvents, bands, 
     });
   }, [events, query, selectedStatuses, selectedBands, now, showSpoiler]);
 
-  const sortedEvents = useMemo(() => sortEntries(filteredEvents, sort.value, locale, now === null ? {} : { now }), [filteredEvents, sort.value, locale, now]);
+  const sortedEvents = useMemo(
+    () => (sort.value === "default" ? [...filteredEvents].sort(compareByStartDesc) : sortEntries(filteredEvents, sort.value, locale, now === null ? {} : { now })),
+    [filteredEvents, sort.value, locale, now],
+  );
 
   const hasActiveFilters = sort.value !== "default" || Boolean(query) || selectedStatuses.length > 0 || selectedBands.length > 0;
 
@@ -170,20 +176,81 @@ export default function EventsExplorer({ locale, servers, initialEvents, bands, 
   );
 
   const serverArenaCatalog = arenaCatalogs?.[server];
-  const arenaSeasonCount = serverArenaCatalog?.seasons.length ?? 0;
+  const arenaSeasons = serverArenaCatalog?.seasons ?? [];
+  const arenaSeasonCount = arenaSeasons.length;
+  const arenaLeagueBands = useMemo(() => {
+    const used = new Set(arenaSeasons.flatMap((s) => s.leagues.map((l) => l.bandId)));
+    return bands.filter(([id]) => used.has(id));
+  }, [arenaSeasons, bands]);
+  const hasActiveArenaFilters = Boolean(arenaQuery.trim()) || arenaSeasonId !== null || arenaBands.length > 0;
+  const resetArenaFilters = () => {
+    setArenaQuery("");
+    setArenaSeasonId(null);
+    setArenaBands([]);
+  };
 
-  useQuickFilter(t(locale, "events.filterTitle"), tab === "events" ? quickFilterContent : null, [
-    tab,
-    sort.value,
-    query,
-    selectedStatuses,
-    selectedBands,
-    eventBands,
-    hasActiveFilters,
-    filteredEvents.length,
-    events.length,
-    locale,
-  ]);
+  const arenaFilterContent = (
+    <BaseFilters
+      locale={locale}
+      variant="plain"
+      title={t(locale, "skillsDictionary.arenaFilterTitle")}
+      searchValue={arenaQuery}
+      onSearchChange={setArenaQuery}
+      searchLabel={t(locale, "filter.search")}
+      searchPlaceholder={t(locale, "skillsDictionary.arenaSearchPlaceholder")}
+      hasActiveFilters={hasActiveArenaFilters}
+      onReset={resetArenaFilters}
+      resetLabel={t(locale, "filter.reset")}
+      expandLabel={t(locale, "filter.expand")}
+    >
+      {arenaSeasons.length > 1 && (
+        <FilterSection title={t(locale, "arenaOverview.seasonLabel")}>
+          <div className="flex flex-wrap gap-2">
+            {arenaSeasons.map((seasonEntry) => (
+              <FilterButton
+                key={seasonEntry.id}
+                active={arenaSeasonId === seasonEntry.id}
+                onClick={() => setArenaSeasonId(arenaSeasonId === seasonEntry.id ? null : seasonEntry.id)}
+              >
+                {seasonEntry.title}
+              </FilterButton>
+            ))}
+          </div>
+        </FilterSection>
+      )}
+      {arenaLeagueBands.length > 0 && (
+        <BandFilter
+          title={t(locale, "events.band")}
+          bands={arenaLeagueBands}
+          selectedBands={arenaBands}
+          onChange={setArenaBands}
+        />
+      )}
+    </BaseFilters>
+  );
+
+  useQuickFilter(
+    t(locale, tab === "arena" ? "skillsDictionary.arenaFilterTitle" : "events.filterTitle"),
+    tab === "events" ? quickFilterContent : arenaFilterContent,
+    [
+      tab,
+      sort.value,
+      query,
+      selectedStatuses,
+      selectedBands,
+      eventBands,
+      hasActiveFilters,
+      filteredEvents.length,
+      events.length,
+      arenaQuery,
+      arenaSeasonId,
+      arenaBands,
+      arenaSeasons,
+      arenaLeagueBands,
+      hasActiveArenaFilters,
+      locale,
+    ],
+  );
 
   return (
     <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
@@ -214,7 +281,14 @@ export default function EventsExplorer({ locale, servers, initialEvents, bands, 
 
       <section className="min-w-0" aria-live="polite">
         {tab === "arena" ? (
-          <ArenaOverviewPanel locale={locale} catalog={serverArenaCatalog} />
+          <ArenaOverviewPanel
+            locale={locale}
+            catalog={serverArenaCatalog}
+            query={arenaQuery}
+            selectedSeasonId={arenaSeasonId}
+            onSelectSeasonId={setArenaSeasonId}
+            selectedBandIds={arenaBands}
+          />
         ) : events.length === 0 ? (
           <NoEventsOnServer locale={locale} server={server} eventServers={eventServers} onPick={pickServer} />
         ) : filteredEvents.length === 0 ? (

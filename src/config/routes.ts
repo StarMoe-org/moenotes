@@ -93,7 +93,7 @@ export const routeRegistry = [
         },
         nav: { order: 15, icon: "sparkles" },
         searchable: true,
-        keywords: ["cards", "illustration", "gacha", "skills", "skills dictionary", "leader skill", "live skill", "gekisou skill", "support skill"],
+        keywords: ["cards", "illustration", "gacha"],
         children: [
           {
             id: "card-detail",
@@ -146,6 +146,22 @@ export const routeRegistry = [
             staticParams: async () => (await import("@/lib/route/masterdata-params")).getMasterdataDetailParams("support-cards"),
           },
         ],
+      },
+      {
+        id: "skills",
+        path: "/skills",
+        labelKey: "nav.items.skills",
+        component: "skills",
+        filterTitleKey: "skillsDictionary.filterTitle",
+        seo: {
+          titleKey: "seo.skills.title",
+          descriptionKey: "seo.skills.description",
+          keywords: ["BanG Dream! Our Notes skills", "live skills", "leader skills", "Gekisou skills", "support skills", "skill upgrade materials"],
+          sitemap: { priority: 0.8, changefreq: "daily" },
+        },
+        nav: { order: 19, icon: "sparkles" },
+        searchable: true,
+        keywords: ["skills", "skills dictionary", "leader skill", "live skill", "gekisou skill", "support skill", "snap skill"],
       },
       {
         id: "stamps",
@@ -268,6 +284,7 @@ export const routeRegistry = [
         path: "/help",
         labelKey: "nav.items.help",
         component: "help",
+        filterTitleKey: "skillsDictionary.progressionFilterTitle",
         seo: {
           titleKey: "seo.help.title",
           descriptionKey: "seo.help.description",

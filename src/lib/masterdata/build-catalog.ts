@@ -10,6 +10,7 @@ import { entityServer } from "@/lib/servers/facets";
 import { getStoryArtworkUrl } from "@/lib/story/assets";
 import { getSupportCardThumbnailUrl } from "@/lib/support-cards/assets";
 import { getBuildShops } from "@/lib/masterdata/build-shop";
+import { getBuildSkillDictionaries } from "@/lib/masterdata/build-skill-dictionary";
 import {
   getBuildBackgrounds,
   getBuildBandItems,
@@ -43,6 +44,11 @@ const COUNTERS: Readonly<Record<string, Counter>> = {
   characters: async (locale) => (await getBuildCharacters(locale)).characters.length,
   cards: length(getBuildCards),
   "support-cards": length(getBuildSupportCards),
+  skills: async (locale) => {
+    const dicts = await getBuildSkillDictionaries(locale);
+    const keys = new Set(Object.values(dicts).flatMap((dict) => (dict?.entries ?? []).map((e) => e.key)));
+    return keys.size;
+  },
   stamps: length(getBuildStamps),
   titles: length(getBuildDegrees),
   backgrounds: length(getBuildBackgrounds),
@@ -107,6 +113,12 @@ const COVERS: Readonly<Record<string, CoverPicker>> = {
   "support-cards": async (locale, now) => {
     const card = latestStarted(await getBuildSupportCards(locale), now);
     return cover(card, card && getSupportCardThumbnailUrl(card.assetId));
+  },
+  skills: async (locale) => {
+    const dicts = await getBuildSkillDictionaries(locale);
+    const server = (Object.keys(dicts)[0] as GameServer | undefined) ?? PRIMARY_SERVER;
+    const entry = dicts[server]?.entries.find((e) => Boolean(e.iconUrl));
+    return entry?.iconUrl ? { url: serverAssetUrl(entry.iconUrl, server), fit: "contain" } : null;
   },
   stamps: async (locale, now) => {
     const stamp = latestStarted(await getBuildStamps(locale), now);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { FilterButton } from "@/components/shared/BaseFilters";
 import RewardChip from "@/components/shared/RewardChip";
 import ScheduleBadge from "@/components/shared/ScheduleBadge";
 import ScheduleCountdown from "@/components/shared/ScheduleCountdown";
@@ -28,6 +29,10 @@ import { useAssetUrl } from "@/lib/servers/use-content-server";
 interface Props {
   locale: AppLocale;
   catalog: ArenaCatalogViewModel | undefined;
+  query?: string;
+  selectedSeasonId?: number | null;
+  onSelectSeasonId?: (id: number) => void;
+  selectedBandIds?: readonly number[];
 }
 
 const REWARD_TABS = ["ranks", "daily", "season"] as const;
@@ -47,19 +52,32 @@ function formatDurationLeft(ms: number): string {
   return `${mins}m`;
 }
 
-export default function ArenaOverviewPanel({ locale, catalog }: Props) {
+export default function ArenaOverviewPanel({
+  locale,
+  catalog,
+  query = "",
+  selectedSeasonId: controlledSeasonId = null,
+  onSelectSeasonId,
+  selectedBandIds = [],
+}: Props) {
   const now = useNow();
   const timeZone = useDisplayTimeZone();
   const assetUrl = useAssetUrl();
   const seasons = catalog?.seasons ?? [];
   const defaultSeason = useMemo(() => selectDefaultArenaSeason(seasons, now), [seasons, now]);
-  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
+  const [localSeasonId, setLocalSeasonId] = useState<number | null>(null);
   const [rewardTab, setRewardTab] = useState<RewardTab>("ranks");
   const [selectedLeagueId, setSelectedLeagueId] = useState<number | null>(null);
 
+  const effectiveSeasonId = controlledSeasonId ?? localSeasonId;
+  const pickSeason = (id: number) => {
+    setLocalSeasonId(id);
+    onSelectSeasonId?.(id);
+  };
+
   const season = useMemo(
-    () => seasons.find((entry) => entry.id === selectedSeasonId) ?? defaultSeason,
-    [seasons, selectedSeasonId, defaultSeason],
+    () => seasons.find((entry) => entry.id === effectiveSeasonId) ?? defaultSeason,
+    [seasons, effectiveSeasonId, defaultSeason],
   );
 
   const nextTransition = useMemo(() => nextArenaTransitionAt(season, now), [season, now]);
@@ -72,8 +90,13 @@ export default function ArenaOverviewPanel({ locale, catalog }: Props) {
     );
   }
 
+  const visibleLeagues =
+    selectedBandIds.length > 0
+      ? season.leagues.filter((entry) => selectedBandIds.includes(entry.bandId))
+      : season.leagues;
+
   const activeRewardLeague =
-    season.leagues.find((entry) => entry.id === selectedLeagueId) ?? season.leagues[0] ?? null;
+    visibleLeagues.find((entry) => entry.id === selectedLeagueId) ?? visibleLeagues[0] ?? season.leagues[0] ?? null;
 
   return (
     <div className="space-y-5">
@@ -82,17 +105,15 @@ export default function ArenaOverviewPanel({ locale, catalog }: Props) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
             {seasons.length > 1 ? (
-              <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={t(locale, "arenaOverview.seasonLabel")}>
+              <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t(locale, "arenaOverview.seasonLabel")}>
                 {seasons.map((entry) => (
-                  <button
+                  <FilterButton
                     key={entry.id}
-                    type="button"
-                    aria-pressed={entry.id === season.id}
-                    onClick={() => setSelectedSeasonId(entry.id)}
-                    className="md3-filter-chip md3-state"
+                    active={entry.id === season.id}
+                    onClick={() => pickSeason(entry.id)}
                   >
                     {entry.title}
-                  </button>
+                  </FilterButton>
                 ))}
               </div>
             ) : (
@@ -124,11 +145,12 @@ export default function ArenaOverviewPanel({ locale, catalog }: Props) {
 
       {/* 5-Band League Rotation Grid */}
       <section className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
-        {season.leagues.map((league) => (
+        {visibleLeagues.map((league) => (
           <LeagueCard
             key={`${season.id}:${league.id}`}
             locale={locale}
             league={league}
+            query={query}
             now={now}
             timeZone={timeZone}
             assetUrl={assetUrl}
@@ -138,18 +160,19 @@ export default function ArenaOverviewPanel({ locale, catalog }: Props) {
 
       {/* Consolidated Rank LP & Rewards Section */}
       <section className="md3-surface space-y-4 p-4 sm:p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="space-y-3">
           <h3 className="text-title-medium font-semibold text-on-surface">
             {t(locale, "arenaOverview.rewardsHeading")}
           </h3>
-          <div className="md3-segmented w-fit" role="group" aria-label={t(locale, "arenaOverview.rewardsHeading")}>
+          <div className="md3-tabs" role="tablist" aria-label={t(locale, "arenaOverview.rewardsHeading")}>
             {REWARD_TABS.map((key) => (
               <button
                 key={key}
                 type="button"
-                aria-pressed={rewardTab === key}
+                role="tab"
+                aria-selected={rewardTab === key}
                 onClick={() => setRewardTab(key)}
-                className="md3-segment md3-state"
+                className="md3-tab md3-state"
               >
                 {t(locale, `arenaOverview.rewardTabs.${key}`)}
               </button>
@@ -159,19 +182,17 @@ export default function ArenaOverviewPanel({ locale, catalog }: Props) {
 
         {rewardTab === "ranks" ? (
           <div className="space-y-3">
-            {season.leagues.length > 1 && (
-              <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={t(locale, "arenaOverview.rankBandLabel")}>
-                {season.leagues.map((league) => (
-                  <button
+            {visibleLeagues.length > 1 && (
+              <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t(locale, "arenaOverview.rankBandLabel")}>
+                {visibleLeagues.map((league) => (
+                  <FilterButton
                     key={league.id}
-                    type="button"
-                    aria-pressed={activeRewardLeague?.id === league.id}
+                    active={activeRewardLeague?.id === league.id}
                     onClick={() => setSelectedLeagueId(league.id)}
-                    className="md3-filter-chip md3-state inline-flex items-center gap-1.5"
                   >
-                    <img src={assetUrl(getBandSmallIconUrl(league.bandId))} alt="" className="h-4 w-4 object-contain" />
+                    <img src={assetUrl(getBandSmallIconUrl(league.bandId))} alt="" className="mr-1.5 h-4 w-4 object-contain" />
                     <span>{league.name}</span>
-                  </button>
+                  </FilterButton>
                 ))}
               </div>
             )}
@@ -224,16 +245,23 @@ export default function ArenaOverviewPanel({ locale, catalog }: Props) {
 function LeagueCard({
   locale,
   league,
+  query,
   now,
   timeZone,
   assetUrl,
 }: {
   locale: AppLocale;
   league: ArenaLeagueViewModel;
+  query: string;
   now: number | null;
   timeZone: string | null;
   assetUrl: (url: string) => string;
 }) {
+  const needle = query.trim().toLocaleLowerCase();
+  const filteredSongs = useMemo(
+    () => (needle ? league.songs.filter((song) => song.title.toLocaleLowerCase().includes(needle)) : league.songs),
+    [league.songs, needle],
+  );
   const liveIndex = useMemo(() => selectActiveLeagueRuleIndex(league.rules, now), [league.rules, now]);
   const [weekIndex, setWeekIndex] = useState<number>(() => Math.max(0, liveIndex));
 
@@ -373,14 +401,14 @@ function LeagueCard({
       )}
 
       {/* Collapsible Band Eligible Song Pool */}
-      {league.songs.length > 0 && (
-        <details className="group mt-auto rounded-shape-md border border-outline-variant/60 bg-surface-container-lowest">
+      {filteredSongs.length > 0 && (
+        <details open={Boolean(needle)} className="group mt-auto rounded-shape-md border border-outline-variant/60 bg-surface-container-lowest">
           <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2 text-label-medium text-on-surface-variant hover:text-on-surface">
-            <span>{t(locale, "arenaOverview.songPool", { count: league.songs.length })}</span>
+            <span>{t(locale, "arenaOverview.songPool", { count: filteredSongs.length })}</span>
             <Icon name="chevronDown" className="h-4 w-4 transition-transform group-open:rotate-180" />
           </summary>
           <div className="flex max-h-56 flex-wrap gap-1.5 overflow-y-auto border-t border-outline-variant/60 p-2.5">
-            {league.songs.map((song) => (
+            {filteredSongs.map((song) => (
               <a
                 key={song.id}
                 href={localizePath(`${getRoutePathById("music")}/${song.id}`, locale)}

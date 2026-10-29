@@ -1,6 +1,7 @@
 import type { AppLocale } from "@/config/locales";
 import type { RawCharacter, RawBand, RawText } from "@/lib/cards/data";
 import { localizeMasterText } from "@/lib/masterdata/localize-text";
+import { compareByReleaseDesc } from "@/lib/schedule";
 
 export interface RawSupportCard {
   id: number;
@@ -117,6 +118,6 @@ export function normalizeSupportCards(
         searchText: [title, name, bandName, characterNamesString, card.id].join(" ").toLowerCase(),
       };
     })
-    .sort((a, b) => b.rarity - a.rarity || b.id - a.id);
+    .sort(compareByReleaseDesc);
 }
 

@@ -875,7 +875,7 @@ export const enUS = {
   nav: {
     home: "Home",
     groups: { database: "Database", music: "Music", events: "Events", story: "Story", tools: "Tools", community: "About" },
-    items: { characters: "Characters", cards: "Cards", supportCards: "Support Cards", music: "Music List", eventList: "Event List", gacha: "Gacha", rewards: "Missions & Rewards", titles: "Titles", backgrounds: "Backgrounds", stamps: "Stickers", comics: "Comics", items: "Items", bandItems: "Band Gear", mainStory: "Main Story", eventStory: "Event Story", friendshipStory: "Bond Stories", otherStory: "Other Stories", liveResultStory: "Post-live Talks", homeStory: "Home Stories", tutorialStory: "Tutorial Stories", assetViewer: "Asset Viewer", designSystem: "Design System", chartPreview: "Chart Previewer", exchange: "Exchange Shop", live2dViewer: "Live2D Viewer", storyPlayer: "Story Player", guessMusic: "Guess the Song", news: "News", eventTracker: "Event Tracker", musicRanking: "Song Rankings", roomCheck: "Room Check", chartData: "Song Meta", search: "Search", shop: "Shop", missions: "Missions", tgwCard: "T.G.W CARD", realLives: "Real Lives", birthdayStory: "Birthday Stories", help: "Help", songMeta: "Chart Table", calendar: "Calendar", catalog: "Catalog", license: "License", terms: "Terms of Use", privacy: "Privacy", },
+    items: { characters: "Characters", cards: "Cards", supportCards: "Support Cards", skills: "Skills", music: "Music List", eventList: "Event List", gacha: "Gacha", rewards: "Missions & Rewards", titles: "Titles", backgrounds: "Backgrounds", stamps: "Stickers", comics: "Comics", items: "Items", bandItems: "Band Gear", mainStory: "Main Story", eventStory: "Event Story", friendshipStory: "Bond Stories", otherStory: "Other Stories", liveResultStory: "Post-live Talks", homeStory: "Home Stories", tutorialStory: "Tutorial Stories", assetViewer: "Asset Viewer", designSystem: "Design System", chartPreview: "Chart Previewer", exchange: "Exchange Shop", live2dViewer: "Live2D Viewer", storyPlayer: "Story Player", guessMusic: "Guess the Song", news: "News", eventTracker: "Event Tracker", musicRanking: "Song Rankings", roomCheck: "Room Check", chartData: "Song Meta", search: "Search", shop: "Shop", missions: "Missions", tgwCard: "T.G.W CARD", realLives: "Real Lives", birthdayStory: "Birthday Stories", help: "Help", songMeta: "Chart Table", calendar: "Calendar", catalog: "Catalog", license: "License", terms: "Terms of Use", privacy: "Privacy", },
 
   },
   shell: {
@@ -3046,6 +3046,10 @@ export const enUS = {
       title: "Support Card Detail",
       description: "Listen to heartfelt words whispered from behind the stage curtains. Subtle harmony and shared wishes quietly settle into a warm strength, accompanying the girls on their path forward.",
     },
+    skills: {
+      title: "Skills Compendium",
+      description: "Explore all BanG Dream! Our Notes live, leader, Gekisou, and support skills with Lv.1–5 multipliers, upgrade material costs, and owning cards.",
+    },
     music: {
       title: "Our Notes Melody & Song Database",
       description: "Listen to youthful echoes ringing beneath the vast expanse of the starry sky. Girls pluck their strings and sing aloud, sending vibrant notes as sincere letters to the distant future.",
@@ -3245,6 +3249,7 @@ export const enUS = {
     cardDetail: "Detail",
     supportCards: "Compendium",
     supportCardDetail: "Detail",
+    skills: "Compendium",
     music: "Database",
     musics: "Charts",
     gacha: "Compendium",
@@ -3572,6 +3577,15 @@ export const enUS = {
     footerRight: "Powered by Haneoka Solver · bdon.moe",
   },
   skillsDictionary: {
+    filterTitle: "Filter Skills",
+    bandLabel: "Owning card band",
+    sortCardCount: "Owning cards",
+    onlyOwned: "Only skills with released cards",
+    onlyUpgradable: "Only skills with upgrade costs",
+    arenaFilterTitle: "Filter Arena",
+    arenaSearchPlaceholder: "Search Arena songs or rewards…",
+    progressionFilterTitle: "Filter Ranks & Ratings",
+    progressionSearchPlaceholder: "Filter by rank number or grade…",
     tabsLabel: "Member cards and skills dictionary switch",
     tabCards: "Member Cards",
     tabSkills: "Skills Dictionary",

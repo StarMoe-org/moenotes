@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { FilterButton } from "@/components/shared/BaseFilters";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import {
@@ -14,10 +15,15 @@ import {
 interface Props {
   locale: AppLocale;
   data: ProgressionReferenceViewModel | undefined;
+  query?: string;
+  expSource?: ExpSource;
+  onExpSourceChange?: (next: ExpSource) => void;
+  milestonesOnly?: boolean;
+  onMilestonesOnlyChange?: (next: boolean) => void;
 }
 
-const EXP_SOURCES = ["player", "character", "friendship"] as const;
-type ExpSource = (typeof EXP_SOURCES)[number];
+export const EXP_SOURCES = ["player", "character", "friendship"] as const;
+export type ExpSource = (typeof EXP_SOURCES)[number];
 
 const GRADE_TONES: Record<HighScoreGradeKind, string> = {
   bronze: "bg-amber-700/15 text-amber-900 dark:text-amber-300",
@@ -25,9 +31,27 @@ const GRADE_TONES: Record<HighScoreGradeKind, string> = {
   gold: "bg-yellow-500/20 text-yellow-900 dark:text-yellow-300",
 };
 
-export default function ProgressionReferenceView({ locale, data }: Props) {
-  const [expSource, setExpSource] = useState<ExpSource>("player");
-  const [milestonesOnly, setMilestonesOnly] = useState(true);
+export default function ProgressionReferenceView({
+  locale,
+  data,
+  query = "",
+  expSource: controlledSource,
+  onExpSourceChange,
+  milestonesOnly: controlledMilestones,
+  onMilestonesOnlyChange,
+}: Props) {
+  const [localExpSource, setLocalExpSource] = useState<ExpSource>("player");
+  const [localMilestonesOnly, setLocalMilestonesOnly] = useState(true);
+  const expSource = controlledSource ?? localExpSource;
+  const milestonesOnly = controlledMilestones ?? localMilestonesOnly;
+  const setExpSource = (next: ExpSource) => {
+    setLocalExpSource(next);
+    onExpSourceChange?.(next);
+  };
+  const setMilestonesOnly = (next: boolean) => {
+    setLocalMilestonesOnly(next);
+    onMilestonesOnlyChange?.(next);
+  };
   const [fromRank, setFromRank] = useState(1);
   const [toRank, setToRank] = useState(50);
   const [carryExp, setCarryExp] = useState(0);
@@ -70,13 +94,18 @@ export default function ProgressionReferenceView({ locale, data }: Props) {
     setToRank((prev) => Math.min(max, Math.max(min, prev === 50 && max < 50 ? max : prev)));
   }, [activeExpRows]);
 
+  const needle = query.trim().toLocaleLowerCase();
+
   const visibleExpRows = useMemo(() => {
-    if (!milestonesOnly || activeExpRows.length <= 25) return activeExpRows;
-    const lastRank = activeExpRows.at(-1)?.rank;
-    return activeExpRows.filter(
-      (row) => row.rank === 1 || row.rank % 5 === 0 || row.rank === lastRank,
-    );
-  }, [activeExpRows, milestonesOnly]);
+    const base =
+      !milestonesOnly || activeExpRows.length <= 25 || Boolean(needle)
+        ? activeExpRows
+        : activeExpRows.filter(
+            (row) => row.rank === 1 || row.rank % 5 === 0 || row.rank === activeExpRows.at(-1)?.rank,
+          );
+    if (!needle) return base;
+    return base.filter((row) => `lv.${row.rank}`.includes(needle) || String(row.rank).includes(needle));
+  }, [activeExpRows, milestonesOnly, needle]);
 
   const hasBonusColumn = useMemo(
     () => expSource === "character" && activeExpRows.some((row) => (row.bonus ?? 0) > 0),
@@ -101,19 +130,20 @@ export default function ProgressionReferenceView({ locale, data }: Props) {
       {/* Interactive Rank EXP Gap Calculator */}
       {activeExpRows.length > 1 && expCalc && (
         <section className="md3-surface space-y-3.5 p-4 sm:p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="space-y-3">
             <h2 className="text-title-medium font-semibold text-on-surface">
               {t(locale, "progressionRef.calcHeading")}
             </h2>
             {availableExpSources.length > 1 && (
-              <div className="md3-segmented w-fit" role="group" aria-label={t(locale, "progressionRef.calcSource")}>
+              <div className="md3-tabs" role="tablist" aria-label={t(locale, "progressionRef.calcSource")}>
                 {availableExpSources.map((src) => (
                   <button
                     key={src}
                     type="button"
-                    aria-pressed={expSource === src}
+                    role="tab"
+                    aria-selected={expSource === src}
                     onClick={() => setExpSource(src)}
-                    className="md3-segment md3-state"
+                    className="md3-tab md3-state"
                   >
                     {t(locale, `progressionRef.expTabs.${src}`)}
                   </button>
@@ -188,16 +218,14 @@ export default function ProgressionReferenceView({ locale, data }: Props) {
                 {t(locale, "progressionRef.expHeading")}
               </h3>
               {activeExpRows.length > 25 && (
-                <button
-                  type="button"
-                  aria-pressed={!milestonesOnly}
-                  onClick={() => setMilestonesOnly((prev) => !prev)}
-                  className="md3-filter-chip md3-state"
+                <FilterButton
+                  active={!milestonesOnly}
+                  onClick={() => setMilestonesOnly(!milestonesOnly)}
                 >
                   {milestonesOnly
                     ? t(locale, "progressionRef.showAllRanks", { count: activeExpRows.length })
                     : t(locale, "progressionRef.milestonesOnly")}
-                </button>
+                </FilterButton>
               )}
             </div>
 

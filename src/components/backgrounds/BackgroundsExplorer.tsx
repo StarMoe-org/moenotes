@@ -76,7 +76,10 @@ export default function BackgroundsExplorer({ locale, servers, initialBackground
       return !needle || background.searchText.includes(needle);
     });
   }, [backgrounds, query, selectedTypes]);
-  const sortedBackgrounds = useMemo(() => sortEntries(filteredBackgrounds, sort.value, locale), [filteredBackgrounds, sort.value, locale]);
+  const sortedBackgrounds = useMemo(
+    () => (sort.value === "default" ? [...filteredBackgrounds].sort((a, b) => b.id - a.id) : sortEntries(filteredBackgrounds, sort.value, locale)),
+    [filteredBackgrounds, sort.value, locale],
+  );
   const hasActiveFilters = sort.value !== "default" || Boolean(query) || selectedTypes.length > 0;
 
   const resetFilters = () => {

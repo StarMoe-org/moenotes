@@ -1,6 +1,7 @@
 import type { AppLocale } from "@/config/locales";
 import { localizeMasterText, type MasterTextRow } from "@/lib/masterdata/localize-text";
 import type { CardRarity, CardType } from "@/lib/cards/assets";
+import { compareByReleaseDesc } from "@/lib/schedule";
 
 export interface MasterTable<T> {
   _allData: T[];
@@ -131,7 +132,7 @@ export function normalizeCards(
         formationBackgroundKey: formationBackgroundKey || null,
       };
     })
-    .sort((a, b) => b.rarity - a.rarity || b.id - a.id);
+    .sort(compareByReleaseDesc);
 }
 
 

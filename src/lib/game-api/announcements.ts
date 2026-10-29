@@ -29,7 +29,17 @@ export function newsCategory(value: string | undefined): NewsCategory {
 }
 
 export function listAnnouncements(list: AnnouncementList): Announcement[] {
-  return Array.isArray(list.announcements) ? list.announcements.filter((item) => item && typeof item.id === "string") : [];
+  if (!Array.isArray(list.announcements)) return [];
+  return list.announcements
+    .filter((item) => item && typeof item.id === "string")
+    .sort((a, b) => {
+      const aTime = Number(a.startAt ?? a.lastUpdatedAt ?? 0);
+      const bTime = Number(b.startAt ?? b.lastUpdatedAt ?? 0);
+      if (Number.isFinite(aTime) && Number.isFinite(bTime) && aTime !== bTime) {
+        return bTime - aTime;
+      }
+      return Number(b.id) - Number(a.id);
+    });
 }
 
 /**

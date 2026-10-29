@@ -2,6 +2,7 @@ import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import { getAssetUrl } from "@/lib/assets/url";
 import { localizeMasterText, type MasterTextRow } from "@/lib/masterdata/localize-text";
+import { compareByStartDesc } from "@/lib/schedule";
 
 export interface RawComic {
   id: number;
@@ -91,6 +92,6 @@ export function normalizeComics(
         searchText: [name, ...charNames, comic.id].join(" ").toLowerCase(),
       };
     })
-    .sort((a, b) => a.id - b.id);
+    .sort(compareByStartDesc);
 }
 

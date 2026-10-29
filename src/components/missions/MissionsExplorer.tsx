@@ -15,7 +15,7 @@ import type { LimitedMissionGroupSummary } from "@/lib/masterdata/build-missions
 import { missionCategoryKey, parseMissionsDeepLink, type MissionCategoryViewModel, type RegularMissionViewModel } from "@/lib/missions/data";
 import { entityLinkPath } from "@/lib/route/entity-link";
 import { replaceQueryParam } from "@/lib/route/url-state";
-import { formatScheduleRange } from "@/lib/schedule";
+import { compareByStartDesc, formatScheduleRange } from "@/lib/schedule";
 import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { useNow } from "@/lib/schedule/use-now";
 import type { ServerFaceted } from "@/lib/servers/facets";
@@ -56,8 +56,8 @@ export default function MissionsExplorer({ locale, servers, categories: initialC
   }, [categories, showSpoiler, now]);
 
   const visibleGroups = useMemo(() => {
-    if (showSpoiler) return groups;
-    return groups.filter((group) => !isSpoiler(group.startAt, now));
+    const base = showSpoiler ? groups : groups.filter((group) => !isSpoiler(group.startAt, now));
+    return [...base].sort(compareByStartDesc);
   }, [groups, showSpoiler, now]);
 
   const [tab, setTab] = useState<Tab | null>(null);

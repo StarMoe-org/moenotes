@@ -19,6 +19,7 @@ import { imageFileName } from "@/lib/collectibles/image-client";
 import { parsePositiveIntParam, useQueryOverlay } from "@/lib/overlay/use-query-overlay";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 import type { ComicViewModel } from "@/lib/comics/data";
+import { compareByStartDesc } from "@/lib/schedule";
 import { isSpoiler, useSpoilerSetting } from "@/lib/settings/spoiler";
 
 interface Props {
@@ -42,7 +43,7 @@ export default function ComicsExplorer({ locale, servers, initialComics, initial
   const comics = useServerFiles(visibleServerItems, server, COMIC_FILES);
   
   const [query, setQuery] = useState("");
-  const sort = useListSort("comics", locale, "");
+  const sort = useListSort("comics", locale, "date");
   const [selectedBands, setSelectedBands] = useState<number[]>([]);
   const [selectedCharacters, setSelectedCharacters] = useState<number[]>([]);
   
@@ -127,7 +128,10 @@ export default function ComicsExplorer({ locale, servers, initialComics, initial
     });
   }, [comics, query, selectedBands, selectedCharacters]);
 
-  const sortedEntries = useMemo(() => sortEntries(filteredComics, sort.value, locale), [filteredComics, sort.value, locale]);
+  const sortedEntries = useMemo(
+    () => (sort.value === "default" ? [...filteredComics].sort(compareByStartDesc) : sortEntries(filteredComics, sort.value, locale)),
+    [filteredComics, sort.value, locale],
+  );
 
   const hasActiveFilters = sort.value !== "default" || Boolean(query) || selectedBands.length > 0 || selectedCharacters.length > 0;
 

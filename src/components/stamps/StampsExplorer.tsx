@@ -19,6 +19,7 @@ import { imageFileName } from "@/lib/collectibles/image-client";
 import { parsePositiveIntParam, useQueryOverlay } from "@/lib/overlay/use-query-overlay";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
 import type { StampViewModel } from "@/lib/stamps/data";
+import { compareByStartDesc } from "@/lib/schedule";
 import { isSpoiler, useSpoilerSetting } from "@/lib/settings/spoiler";
 
 interface Props {
@@ -42,7 +43,7 @@ export default function StampsExplorer({ locale, servers, initialStamps, initial
   const stamps = useServerFiles(visibleServerItems, server, STAMP_FILES);
   
   const [query, setQuery] = useState("");
-  const sort = useListSort("stamps", locale, "");
+  const sort = useListSort("stamps", locale, "date");
   const [selectedBands, setSelectedBands] = useState<number[]>([]);
   const [selectedCharacters, setSelectedCharacters] = useState<number[]>([]);
   
@@ -150,7 +151,10 @@ export default function StampsExplorer({ locale, servers, initialStamps, initial
     });
   }, [stamps, query, selectedBands, selectedCharacters]);
 
-  const sortedEntries = useMemo(() => sortEntries(filteredStamps, sort.value, locale), [filteredStamps, sort.value, locale]);
+  const sortedEntries = useMemo(
+    () => (sort.value === "default" ? [...filteredStamps].sort(compareByStartDesc) : sortEntries(filteredStamps, sort.value, locale)),
+    [filteredStamps, sort.value, locale],
+  );
 
   const hasActiveFilters = sort.value !== "default" || Boolean(query) || selectedBands.length > 0 || selectedCharacters.length > 0;
 

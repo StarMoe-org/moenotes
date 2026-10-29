@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useCallback, useMemo } from "react";
+import { useEffect, useCallback, useMemo, useState } from "react";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import ServerScope from "@/components/shared/ServerScope";
+import { FilterButton, FilterSection } from "@/components/shared/BaseFilters";
 import CollectionViewSwitch, { useCollectionView } from "@/components/shared/CollectionViewSwitch";
 import AudioPlayButton from "@/components/shared/AudioPlayButton";
 import type { ServerFaceted } from "@/lib/servers/facets";
@@ -22,7 +23,8 @@ import { useSongTitle } from "@/lib/music/title-preference";
 import { songQueue, songTrack } from "@/lib/music/tracks";
 import { useChartMetrics } from "@/lib/music/use-chart-metrics";
 import MusicFilters, { chartMetricsOf, useMusicFilters, type MusicFiltersController } from "@/components/music/MusicFilters";
-import MusicProgressView from "@/components/music/MusicProgressView";
+import MusicProgressView, { PROGRESS_FILTERS } from "@/components/music/MusicProgressView";
+import type { SongProgressFilter } from "@/lib/music/song-progress";
 import MusicTable, { songHref } from "@/components/music/MusicTable";
 import SongCard from "@/components/music/SongCard";
 import { useNow } from "@/lib/schedule/use-now";
@@ -43,6 +45,7 @@ export default function MusicExplorer({ locale, servers, initialSongs, categorie
   const now = useNow();
   const { showSpoiler } = useSpoiler();
   const [view, setView] = useCollectionView("music", VIEWS, "grid");
+  const [progressFilter, setProgressFilter] = useState<SongProgressFilter>("all");
 
   const { server, pickServer, items: songs } = useServerList(locale, servers, initialSongs);
   const visibleSongs = useMemo(() => {
@@ -88,12 +91,38 @@ export default function MusicExplorer({ locale, servers, initialSongs, categorie
 
   const resetFilters = () => {
     music.reset();
+    setProgressFilter("all");
     memory.clearState();
   };
 
-  const quickFilterContent = <MusicFilters locale={locale} controller={music} onReset={resetFilters} />;
+  const quickFilterContent = (
+    <MusicFilters
+      locale={locale}
+      controller={music}
+      extraActive={view === "progress" && progressFilter !== "all"}
+      onReset={resetFilters}
+    >
+      {view === "progress" && (
+        <FilterSection title={t(locale, "songProgress.filterLabel")}>
+          <div className="flex flex-wrap gap-2">
+            {PROGRESS_FILTERS.map((item) => (
+              <FilterButton
+                key={item}
+                active={progressFilter === item}
+                onClick={() => setProgressFilter(item)}
+              >
+                {t(locale, `songProgress.filters.${item}`)}
+              </FilterButton>
+            ))}
+          </div>
+        </FilterSection>
+      )}
+    </MusicFilters>
+  );
 
   useQuickFilter(t(locale, "music.filterTitle"), quickFilterContent, [
+    view,
+    progressFilter,
     music.sort.value,
     filters,
     music.bands,
@@ -133,6 +162,9 @@ export default function MusicExplorer({ locale, servers, initialSongs, categorie
             locale={locale}
             server={server}
             songs={music.sorted}
+            focusDifficulty={music.focus}
+            progressFilter={progressFilter}
+            onProgressFilterChange={setProgressFilter}
             titleOf={titleOf}
             assetUrl={assetUrl}
             onOpen={saveCurrentState}

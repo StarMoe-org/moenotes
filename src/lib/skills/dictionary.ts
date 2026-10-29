@@ -1,6 +1,7 @@
 import type { AppLocale } from "@/config/locales";
 import type { CardViewModel, RawBand, RawCharacter, RawText } from "@/lib/cards/data";
 import type { CardMaterialCost, CardMaterialStep, ItemCostResolver } from "@/lib/cards/materials";
+import { compareByStartDesc, parseMasterDate } from "@/lib/schedule";
 import {
   normalizeSkill,
   type RawSkillCondition,
@@ -38,6 +39,8 @@ export interface SkillDictionaryEntry {
   name: string;
   iconUrl: string;
   levels: SkillDictionaryLevel[];
+  startAt: string;
+  bandIds: number[];
   memberIds: number[];
   supportOwners: SkillSupportOwnerSummary[];
   upgradeGroupIds: number[];
@@ -189,7 +192,9 @@ export function normalizeSkillDictionary(input: BuildSkillDictionaryInput): Skil
         bandMap,
       );
       if (!vm) continue;
-      const owners = ownersMap.get(def.id) ?? [];
+      const owners = [...(ownersMap.get(def.id) ?? [])].sort(compareByStartDesc);
+      const newestStartAt = owners.find((c) => parseMasterDate(c.startAt) !== null)?.startAt ?? "";
+      const bandIds = [...new Set(owners.map((c) => c.bandId).filter((id) => id > 0))].sort((a, b) => a - b);
       const levels = vm.levels.map((lv) => ({ level: lv.level, description: lv.description }));
       const searchParts = [
         String(def.id),
@@ -204,6 +209,8 @@ export function normalizeSkillDictionary(input: BuildSkillDictionaryInput): Skil
         name: vm.name,
         iconUrl: vm.iconUrl,
         levels,
+        startAt: newestStartAt,
+        bandIds,
         memberIds: owners.map((c) => c.id),
         supportOwners: [],
         upgradeGroupIds: [...(resMap?.get(def.id) ?? [])].sort((a, b) => a - b),
@@ -240,7 +247,9 @@ export function normalizeSkillDictionary(input: BuildSkillDictionaryInput): Skil
         input.skillTargets,
       );
       if (!vm) continue;
-      const owners = ownersMap.get(def.id) ?? [];
+      const owners = [...(ownersMap.get(def.id) ?? [])].sort(compareByStartDesc);
+      const newestStartAt = owners.find((c) => parseMasterDate(c.startAt) !== null)?.startAt ?? "";
+      const bandIds = [...new Set(owners.map((c) => c.bandId).filter((id) => id > 0))].sort((a, b) => a - b);
       const supportOwners: SkillSupportOwnerSummary[] = owners.map((c) => ({
         id: c.id,
         assetId: c.assetId,
@@ -263,6 +272,8 @@ export function normalizeSkillDictionary(input: BuildSkillDictionaryInput): Skil
         name: vm.name,
         iconUrl: vm.iconUrl,
         levels,
+        startAt: newestStartAt,
+        bandIds,
         memberIds: [],
         supportOwners,
         upgradeGroupIds: [],
@@ -273,6 +284,8 @@ export function normalizeSkillDictionary(input: BuildSkillDictionaryInput): Skil
 
   collectSupportFamily("support", input.supportSkills, input.supportEffects, supportBySkill);
   collectSupportFamily("gekisouSupport", input.gekisouSupportSkills, input.gekisouSupportEffects, supportByGekisou);
+
+  entries.sort((a, b) => compareByStartDesc(a, b) || b.id - a.id);
 
   return { entries, upgradeGroups };
 }

@@ -20,7 +20,7 @@ import { useListSort } from "@/lib/filter/use-list-sort";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import type { GachaCategory, GachaPickupCharacter, GachaViewModel } from "@/lib/gacha/data";
 import { getRoutePathById } from "@/lib/route/registry";
-import { formatScheduleRange, scheduleStatus, type ScheduleStatus } from "@/lib/schedule";
+import { compareByStartDesc, formatScheduleRange, scheduleStatus, type ScheduleStatus } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
 import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
@@ -44,8 +44,7 @@ export default function GachaExplorer({ locale, servers, initialGachas, bands }:
   const timeZone = useDisplayTimeZone();
   const { server, pickServer, items: gachas } = useServerList(locale, servers, initialGachas);
   const [query, setQuery] = useState("");
-  // Most pools have no start date, so the date ordering is left out; "ending soon" reads the end dates they do have.
-  const sort = useListSort("gacha", locale, "endingSoon");
+  const sort = useListSort("gacha", locale, "date,endingSoon");
   const [selectedStatuses, setSelectedStatuses] = useState<ScheduleStatus[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<GachaCategory[]>([]);
   const [selectedBands, setSelectedBands] = useState<number[]>([]);
@@ -103,7 +102,10 @@ export default function GachaExplorer({ locale, servers, initialGachas, bands }:
     });
   }, [gachas, query, selectedStatuses, selectedBands, selectedCategories, now, showSpoiler]);
 
-  const sortedGachas = useMemo(() => sortEntries(filteredGachas, sort.value, locale, now === null ? {} : { now }), [filteredGachas, sort.value, locale, now]);
+  const sortedGachas = useMemo(
+    () => (sort.value === "default" ? [...filteredGachas].sort(compareByStartDesc) : sortEntries(filteredGachas, sort.value, locale, now === null ? {} : { now })),
+    [filteredGachas, sort.value, locale, now],
+  );
 
   const hasActiveFilters = sort.value !== "default" || Boolean(query) || selectedStatuses.length > 0 || selectedBands.length > 0 || selectedCategories.length > 0;
 

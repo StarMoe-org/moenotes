@@ -5,9 +5,11 @@ import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
+import BaseFilters, { FilterButton, FilterSection, FilterToggle } from "@/components/shared/BaseFilters";
 import ServerScope from "@/components/shared/ServerScope";
 import { HelpCarousels, HelpRichText } from "@/components/help/HelpParts";
-import ProgressionReferenceView from "@/components/help/ProgressionReferenceView";
+import ProgressionReferenceView, { EXP_SOURCES, type ExpSource } from "@/components/help/ProgressionReferenceView";
+import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import type { HelpCategoryViewModel, HelpEntryViewModel, HelpTopicViewModel } from "@/lib/help/data";
 import { helpTopicPath } from "@/lib/help/paths";
 import type { ProgressionReferenceViewModel } from "@/lib/progression/data";
@@ -51,6 +53,9 @@ export default function HelpExplorer({
   const [tab, setTab] = useState<HelpTab>("manual");
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [query, setQuery] = useState("");
+  const [progressionQuery, setProgressionQuery] = useState("");
+  const [expSource, setExpSource] = useState<ExpSource>("player");
+  const [milestonesOnly, setMilestonesOnly] = useState(true);
 
   useEffect(() => {
     const fromUrl = readQueryParam("tab");
@@ -86,6 +91,50 @@ export default function HelpExplorer({
     faq: faq.length,
     progression: progressionCount,
   };
+
+  const hasProgressionFilter = Boolean(progressionQuery.trim()) || expSource !== "player" || !milestonesOnly;
+  const resetProgressionFilter = () => {
+    setProgressionQuery("");
+    setExpSource("player");
+    setMilestonesOnly(true);
+  };
+
+  const progressionQuickFilter = (
+    <BaseFilters
+      locale={locale}
+      variant="plain"
+      title={t(locale, "skillsDictionary.progressionFilterTitle")}
+      searchValue={progressionQuery}
+      onSearchChange={setProgressionQuery}
+      searchLabel={t(locale, "filter.search")}
+      searchPlaceholder={t(locale, "skillsDictionary.progressionSearchPlaceholder")}
+      hasActiveFilters={hasProgressionFilter}
+      onReset={resetProgressionFilter}
+      resetLabel={t(locale, "filter.reset")}
+      expandLabel={t(locale, "filter.expand")}
+    >
+      <FilterSection title={t(locale, "progressionRef.calcSource")}>
+        <div className="flex flex-wrap gap-2">
+          {EXP_SOURCES.map((src) => (
+            <FilterButton key={src} active={expSource === src} onClick={() => setExpSource(src)}>
+              {t(locale, `progressionRef.expTabs.${src}`)}
+            </FilterButton>
+          ))}
+        </div>
+      </FilterSection>
+      <FilterToggle
+        checked={milestonesOnly}
+        onChange={setMilestonesOnly}
+        label={t(locale, "progressionRef.milestonesOnly")}
+      />
+    </BaseFilters>
+  );
+
+  useQuickFilter(
+    t(locale, "skillsDictionary.progressionFilterTitle"),
+    tab === "progression" ? progressionQuickFilter : null,
+    [tab, progressionQuery, expSource, milestonesOnly, hasProgressionFilter, locale],
+  );
 
   return (
     <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
@@ -158,7 +207,15 @@ export default function HelpExplorer({
           </ul>
         )
       ) : tab === "progression" ? (
-        <ProgressionReferenceView locale={locale} data={serverProgression} />
+        <ProgressionReferenceView
+          locale={locale}
+          data={serverProgression}
+          query={progressionQuery}
+          expSource={expSource}
+          onExpSourceChange={setExpSource}
+          milestonesOnly={milestonesOnly}
+          onMilestonesOnlyChange={setMilestonesOnly}
+        />
       ) : faq.length === 0 ? <Empty text={t(locale, "help.empty")} /> : (
         <div className="space-y-2">
           {faq.map((entry) => (

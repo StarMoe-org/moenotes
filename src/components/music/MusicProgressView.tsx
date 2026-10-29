@@ -36,21 +36,36 @@ interface Props {
   locale: AppLocale;
   server: GameServer;
   songs: readonly MusicViewModel[];
+  focusDifficulty?: MusicDifficulty;
+  progressFilter: SongProgressFilter;
+  onProgressFilterChange: (next: SongProgressFilter) => void;
   titleOf: (song: MusicViewModel) => string;
   assetUrl: (url: string) => string;
   onOpen: () => void;
 }
 
-const FILTERS: readonly SongProgressFilter[] = ["all", "notCleared", "unfc", "unap", "fcPlus", "ap"];
+export const PROGRESS_FILTERS: readonly SongProgressFilter[] = ["all", "notCleared", "unfc", "unap", "fcPlus", "ap"];
 const STATUSES: readonly SongProgressStatus[] = [0, 1, 2, 3];
 
-export default function MusicProgressView({ locale, server, songs, titleOf, assetUrl, onOpen }: Props) {
-  const [difficulty, setDifficulty] = useState<MusicDifficulty>("expert");
-  const [filter, setFilter] = useState<SongProgressFilter>("all");
+export default function MusicProgressView({
+  locale,
+  server,
+  songs,
+  focusDifficulty = "expert",
+  progressFilter,
+  titleOf,
+  assetUrl,
+  onOpen,
+}: Props) {
+  const [difficulty, setDifficulty] = useState<MusicDifficulty>(focusDifficulty);
   const [localEntries, setLocalEntries] = useState<SongProgressMap>({});
   const [saveEntries, setSaveEntries] = useState<SongProgressMap>({});
   const [saveLinked, setSaveLinked] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setDifficulty(focusDifficulty);
+  }, [focusDifficulty]);
 
   useEffect(() => {
     setLocalEntries(readLocalSongProgress(server));
@@ -111,8 +126,8 @@ export default function MusicProgressView({ locale, server, songs, titleOf, asse
   const levelBuckets = useMemo(() => computeLevelBreakdown(chartsOnly, statusOf), [chartsOnly, statusOf]);
 
   const visibleRows = useMemo(
-    () => chartRows.filter((row) => matchesProgressFilter(statusOf(row.chart.key), filter)),
-    [chartRows, statusOf, filter],
+    () => chartRows.filter((row) => matchesProgressFilter(statusOf(row.chart.key), progressFilter)),
+    [chartRows, statusOf, progressFilter],
   );
 
   const percentFmt = useMemo(
@@ -219,22 +234,22 @@ export default function MusicProgressView({ locale, server, songs, titleOf, asse
           </div>
         </div>
 
-        {/* Difficulty Switcher */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="md3-segmented w-fit" role="group" aria-label={t(locale, "songProgress.difficultyLabel")}>
+        {/* Standard MD3 PrimaryTabs for Difficulty Switching */}
+        <div className="space-y-2">
+          <div className="md3-tabs" role="tablist" aria-label={t(locale, "songProgress.difficultyLabel")}>
             {MUSIC_DIFFICULTIES.map((diff) => (
               <button
                 key={diff}
                 type="button"
-                aria-pressed={difficulty === diff}
+                role="tab"
+                aria-selected={difficulty === diff}
                 onClick={() => setDifficulty(diff)}
-                className="md3-segment md3-state uppercase"
+                className="md3-tab md3-state uppercase"
               >
                 {DIFFICULTY_SHORT_LABELS[diff]} · {diff}
               </button>
             ))}
           </div>
-
           <p className="text-body-small text-on-surface-variant">{t(locale, "songProgress.cycleHint")}</p>
         </div>
 
@@ -286,21 +301,6 @@ export default function MusicProgressView({ locale, server, songs, titleOf, asse
               )}
             </div>
           )}
-        </div>
-
-        {/* Status Filter Chips */}
-        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={t(locale, "songProgress.filterLabel")}>
-          {FILTERS.map((item) => (
-            <button
-              key={item}
-              type="button"
-              aria-pressed={filter === item}
-              onClick={() => setFilter(item)}
-              className="md3-filter-chip md3-state"
-            >
-              {t(locale, `songProgress.filters.${item}`)}
-            </button>
-          ))}
         </div>
 
         {/* Collapsible Level-Constant Tier Matrix */}

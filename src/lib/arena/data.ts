@@ -223,7 +223,8 @@ export function normalizeArenaCatalog(input: NormalizeArenaCatalogInput): ArenaC
               startAt: song.startAt,
               expertLevel: expert?.displayLevel ?? null,
             };
-          });
+          })
+          .sort((a, b) => (parseMasterDate(b.startAt) ?? -Infinity) - (parseMasterDate(a.startAt) ?? -Infinity) || b.id - a.id);
 
         const leaguePromos = promotionRewards.filter((entry) => entry.leagueId === 0 || entry.leagueId === leagueId);
         const leagueDaily = dailyRewards.filter((entry) => entry.leagueId === 0 || entry.leagueId === leagueId);

@@ -99,7 +99,7 @@ export default function SupportCardsExplorer({ locale, servers, initialSupportCa
     locale,
   ]);
 
-  const skillsHref = `${localizePath(getRoutePathById("cards"), locale)}?tab=skills&family=support`;
+  const skillsHref = `${localizePath(getRoutePathById("skills"), locale)}?family=support`;
 
   return (
     <ServerScope

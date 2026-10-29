@@ -24,7 +24,7 @@ import {
 } from "@/lib/music/song-progress";
 import { calculateExpGap, normalizeProgressionReference } from "@/lib/progression/data";
 import { normalizeSkillDictionary } from "@/lib/skills/dictionary";
-import { parseMasterDate } from "@/lib/schedule";
+import { compareByReleaseDesc, parseMasterDate } from "@/lib/schedule";
 
 describe("Gekiso Arena overview normalization & schedule helpers", () => {
   test("normalizes seasons, band leagues, weekly regulations, ranks, and rewards", () => {
@@ -252,9 +252,19 @@ describe("Skills dictionary & Progression reference normalization", () => {
     });
 
     expect(dict.entries.map((e) => e.key)).toEqual(["live:2", "leader:1", "support:3"]);
+    expect(dict.entries[0]!.startAt).toBe("2026-01-01 12:00:00");
+    expect(dict.entries[0]!.bandIds).toEqual([1]);
     expect(dict.entries[0]!.memberIds).toEqual([1001]);
     expect(dict.entries[0]!.upgradeGroupIds).toEqual([1]);
     expect(dict.upgradeGroups[1]).toHaveLength(2);
+
+    const releaseSorted = [
+      { id: 1001, rarity: 4, startAt: "2026-01-01 12:00:00" },
+      { id: 1005, rarity: 3, startAt: "2026-05-10 12:00:00" },
+      { id: 1006, rarity: 4, startAt: "2026-05-10 12:00:00" },
+      { id: 999, rarity: 4, startAt: "" },
+    ].sort(compareByReleaseDesc);
+    expect(releaseSorted.map((c) => c.id)).toEqual([1006, 1005, 1001, 999]);
   });
 
   test("normalizes progression EXP, ratings, and calculates EXP gaps accurately", () => {

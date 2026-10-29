@@ -16,6 +16,7 @@ import {
 } from "@/lib/filter/card-filter";
 import { sortEntries } from "@/lib/filter/list-sort";
 import { useListSort, type NumericSortField } from "@/lib/filter/use-list-sort";
+import { compareByReleaseDesc } from "@/lib/schedule";
 
 export type CardFilterKind = "member" | "support";
 
@@ -63,14 +64,21 @@ export function useCardFilters<T>(
     [entries, filters, match],
   );
   const filtered = useMemo(() => filteredEntries.map((entry) => entry.item), [filteredEntries]);
-  const sorted = useMemo(() => sortEntries(
-    // Unknown dates and rarities (0) stay unset, so they sort after real values.
-    filteredEntries.map(({ subject, item }) => ({ id: subject.id, title: subject.title, item,
-      ...(subject.startAt ? { startAt: subject.startAt } : {}), ...(subject.rarity ? { rarity: subject.rarity } : {}) })),
-    sort.value,
-    locale,
-    numericReaders ? { numeric: numericReaders } : {},
-  ).map((row) => row.item), [filteredEntries, sort.value, locale, numericReaders]);
+  const sorted = useMemo(() => {
+    if (sort.value === "default") {
+      return [...filteredEntries]
+        .sort((a, b) => compareByReleaseDesc(a.subject, b.subject))
+        .map((row) => row.item);
+    }
+    return sortEntries(
+      // Unknown dates and rarities (0) stay unset, so they sort after real values.
+      filteredEntries.map(({ subject, item }) => ({ id: subject.id, title: subject.title, item,
+        ...(subject.startAt ? { startAt: subject.startAt } : {}), ...(subject.rarity ? { rarity: subject.rarity } : {}) })),
+      sort.value,
+      locale,
+      numericReaders ? { numeric: numericReaders } : {},
+    ).map((row) => row.item);
+  }, [filteredEntries, sort.value, locale, numericReaders]);
   const hasActiveFilters = sort.value !== "default" || hasCardFilters(filters) || extraActive;
 
   /** Choosing bands keeps only the chosen characters that belong to them. */

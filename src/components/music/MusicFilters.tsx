@@ -3,7 +3,7 @@
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import { Md3Provider } from "@/components/md3/Md3Provider";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
 import BaseFilters, { AttributeFilter, BandFilter, FilterButton, FilterSection, RangeFilter, toggleArrayItem } from "@/components/shared/BaseFilters";
@@ -124,12 +124,16 @@ interface MusicFiltersProps {
   locale: AppLocale;
   controller: MusicFiltersController;
   variant?: "card" | "plain";
+  /** Extra filter state outside the base music filters, counted in `hasActiveFilters`. */
+  extraActive?: boolean;
   /** Replaces the controller's reset, e.g. to also forget remembered state. */
   onReset?: () => void;
+  /** Further sections rendered inside the universal filter panel. */
+  children?: ReactNode;
 }
 
 
-export default function MusicFilters({ locale, controller, variant = "plain", onReset }: MusicFiltersProps) {
+export default function MusicFilters({ locale, controller, variant = "plain", extraActive = false, onReset, children }: MusicFiltersProps) {
   const { songs, filters, setFilters, sort, bands, hasOtherBand, levelBounds, categories, credits, filtered, hasActiveFilters, reset } = controller;
   const panelSort = useMemo(() => ({ ...sort, options: sort.options.filter((option) => {
     const key = /^field:(.+):(?:asc|desc)$/.exec(option.value)?.[1];
@@ -147,11 +151,12 @@ export default function MusicFilters({ locale, controller, variant = "plain", on
       searchPlaceholder={t(locale, "music.searchPlaceholder")}
       resultCount={filtered.length}
       totalCount={songs.length}
-      hasActiveFilters={hasActiveFilters}
+      hasActiveFilters={hasActiveFilters || extraActive}
       onReset={onReset ?? reset}
       resetLabel={t(locale, "filter.reset")}
       expandLabel={t(locale, "filter.expand")}
     >
+      {children}
       <AttributeFilter
         title={t(locale, "cards.attribute")}
         attributes={MUSIC_TYPES}

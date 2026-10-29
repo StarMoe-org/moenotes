@@ -15,6 +15,7 @@ import { imageFileName } from "@/lib/collectibles/image-client";
 import { localizePath } from "@/i18n/routing";
 import { parsePositiveIntParam, useQueryOverlay } from "@/lib/overlay/use-query-overlay";
 import { entityLinkPath } from "@/lib/route/entity-link";
+import { compareByStartDesc } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
 import { sortEntries } from "@/lib/filter/list-sort";
 import { useListSort } from "@/lib/filter/use-list-sort";
@@ -37,7 +38,7 @@ export default function TitlesExplorer({ locale, servers, initialTitles, bands, 
   const { server, pickServer, items: serverItems } = useServerList(locale, servers, initialTitles);
   const titles = useServerFiles(serverItems, server, TITLE_FILES);
   const [query, setQuery] = useState("");
-  const sort = useListSort("titles", locale);
+  const sort = useListSort("titles", locale, "date");
   const [selectedTypes, setSelectedTypes] = useState<number[]>([]);
   const [selectedBands, setSelectedBands] = useState<number[]>([]);
   const [selectedCharacters, setSelectedCharacters] = useState<number[]>([]);
@@ -109,7 +110,10 @@ export default function TitlesExplorer({ locale, servers, initialTitles, bands, 
     });
   }, [titles, query, selectedTypes, selectedBands, selectedCharacters, availability, unlockOnly, now]);
 
-  const sortedTitles = useMemo(() => sortEntries(filteredTitles, sort.value, locale), [filteredTitles, sort.value, locale]);
+  const sortedTitles = useMemo(
+    () => (sort.value === "default" ? [...filteredTitles].sort(compareByStartDesc) : sortEntries(filteredTitles, sort.value, locale)),
+    [filteredTitles, sort.value, locale],
+  );
   const hasActiveFilters = sort.value !== "default" || Boolean(query) || selectedTypes.length > 0 || selectedBands.length > 0 || selectedCharacters.length > 0 || availability !== "all" || unlockOnly;
   const toImage = useCallback((title: DegreeViewModel) => ({ src: title.imageUrl, alt: title.name, caption: title.name, downloadName: imageFileName(title.imageUrl, `title_${title.id}.webp`) }), []);
 
