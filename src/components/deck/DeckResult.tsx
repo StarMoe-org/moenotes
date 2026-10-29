@@ -21,6 +21,7 @@ import NativeFormationGroup from "@/components/chart-data/NativeFormationGroup";
 import { MemberSquareArtwork, SupportSquareArtwork } from "@/components/shared/CardSquareArtwork";
 import { termRate, type RewardTerm } from "@/lib/deck/reward-mix";
 import { RewardBreakdown, RewardOrder, RewardTies } from "./DeckRewardMix";
+import DeckShareImageButton from "./DeckShareImageButton";
 
 /** The challenge live a run rated challenge points by. */
 export interface DeckRateBasis { song: string; difficulty: string; cost: number }
@@ -204,6 +205,39 @@ function TeamCard(props: DeckResultProps & { team: DeckTeam; best: DeckTeam; met
         <Icon name="chevronDown" className="dr-chevron h-5 w-5" />
       </summary>
       <div className="dr-team-body">
+        <div className="flex justify-end">
+          <DeckShareImageButton
+            locale={locale}
+            team={team}
+            box={box}
+            catalog={catalog}
+            goalLabel={t(locale, `deckWorkspace.goals.${props.goal}`)}
+            songSummary={
+              team.song
+                ? `${props.songNames?.[team.song.musicId] ?? `#${team.song.musicId}`} · ${team.song.difficulty.toUpperCase()}`
+                : ""
+            }
+            proofBadge={
+              props.final
+                ? tr(
+                    (props.job.status === "done" ? props.job.answer.result?.optimality.proven : false)
+                      ? "proven"
+                      : "unproven",
+                  )
+                : ""
+            }
+            metricLabel={
+              value.terms && value.mixed
+                ? t(locale, `deckWorkspace.rewardMix.${props.deterministic ? "totalDeterministic" : "total"}`, {
+                    unit: t(locale, `deckWorkspace.rewardMix.rewards.${value.terms[0]!.kind}`),
+                  })
+                : tr(value.label)
+            }
+            metricValue={valueText}
+            powerValue={metric !== "power" ? formatValue(team.power, "power", locale) : ""}
+            {...(props.songNames ? { songNames: props.songNames } : {})}
+          />
+        </div>
         {value.terms && value.mixed && team.levels && <RewardBreakdown locale={locale} terms={value.terms} values={team.levels[0]!.terms} />}
         {props.levels && props.levels.length > 1 && team.levels && <RewardTies locale={locale} levels={props.levels.slice(1)} values={team.levels.slice(1).map(level => level.value)} />}
         <div className="dr-formation"><div className="dc-stage"><NativeFormationGroup locale={locale} slots={formationSlots(team, box, catalog)} label={tr("formation")} /></div></div>

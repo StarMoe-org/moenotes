@@ -146,7 +146,31 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
   }, [rawRecognitionSource, catalog]);
   const [goalInput, setGoalInput] = useState<DeckGoalInput>(() => defaultDeckGoalInput());
   const updateGoal = (patch: Partial<DeckGoalInput>) => setGoalInput(previous => ({ ...previous, ...patch }));
-  useEffect(() => { updateGoal({ goal: readStoredGoal() }); }, []);
+  useEffect(() => {
+    const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    if (params?.get("goal") === "arena") {
+      updateGoal({ goal: "arena", venue: "arenaLive" });
+      const league = Number(params.get("league"));
+      if (Number.isInteger(league) && league > 0) setArenaLeagueId(league);
+      if (params.get("source") === "custom") {
+        setUserArenaSource("custom");
+        const band = Number(params.get("band"));
+        const attr = Number(params.get("attr"));
+        const m1 = Number(params.get("m1"));
+        const m2 = Number(params.get("m2"));
+        const m3 = Number(params.get("m3"));
+        if (Number.isInteger(band) && band >= 1 && band <= 5) setArenaCustomBandId(band);
+        if (Number.isInteger(attr) && ((attr >= 0 && attr <= 5) || attr === 99)) setArenaCustomMusicType(attr);
+        if ([m1, m2, m3].every((m) => Number.isInteger(m) && m >= 0 && m <= 3)) {
+          setArenaCustomMissions([m1, m2, m3]);
+        }
+      } else {
+        setUserArenaSource("auto");
+      }
+      return;
+    }
+    updateGoal({ goal: readStoredGoal() });
+  }, []);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 60_000); return () => clearInterval(timer); }, []);
   const event = useMemo(() => heldEvent(props.deckEvents?.find(value => value.server === server)?.events ?? [], now, parseMasterDate), [props.deckEvents, server, now]);

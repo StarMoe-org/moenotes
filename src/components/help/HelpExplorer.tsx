@@ -7,13 +7,15 @@ import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import ServerScope from "@/components/shared/ServerScope";
 import { HelpCarousels, HelpRichText } from "@/components/help/HelpParts";
+import ProgressionReferenceView from "@/components/help/ProgressionReferenceView";
 import type { HelpCategoryViewModel, HelpEntryViewModel, HelpTopicViewModel } from "@/lib/help/data";
 import { helpTopicPath } from "@/lib/help/paths";
+import type { ProgressionReferenceViewModel } from "@/lib/progression/data";
 import { readQueryParam, replaceQueryParam } from "@/lib/route/url-state";
 import type { ServerFaceted } from "@/lib/servers/facets";
 import { useServerList } from "@/lib/servers/use-content-server";
 
-const TABS = ["manual", "tips", "faq"] as const;
+const TABS = ["manual", "tips", "faq", "progression"] as const;
 type HelpTab = typeof TABS[number];
 
 interface Props {
@@ -23,6 +25,7 @@ interface Props {
   topics: ServerFaceted<HelpTopicViewModel>[];
   tips: ServerFaceted<HelpEntryViewModel>[];
   faq: ServerFaceted<HelpEntryViewModel>[];
+  progressionByServer?: Partial<Record<GameServer, ProgressionReferenceViewModel>>;
 }
 
 const isTab = (value: string | null): value is HelpTab => value !== null && (TABS as readonly string[]).includes(value);
@@ -32,7 +35,15 @@ const isTab = (value: string | null): value is HelpTab => value !== null && (TAB
  * its own page), the loading-screen tips, and the FAQ (expandable). The tab and the manual's category live in the URL
  * (`?tab=`, `?category=`). Content follows the page's server.
  */
-export default function HelpExplorer({ locale, servers, categories: allCategories, topics: allTopics, tips: allTips, faq: allFaq }: Props) {
+export default function HelpExplorer({
+  locale,
+  servers,
+  categories: allCategories,
+  topics: allTopics,
+  tips: allTips,
+  faq: allFaq,
+  progressionByServer,
+}: Props) {
   const { server, pickServer, items: categories } = useServerList(locale, servers, allCategories);
   const topics = useServerList(locale, servers, allTopics).items;
   const tips = useServerList(locale, servers, allTips).items;
@@ -62,7 +73,19 @@ export default function HelpExplorer({ locale, servers, categories: allCategorie
   const topicMap = useMemo(() => new Map(topics.map((topic) => [topic.id, topic])), [topics]);
   const needle = query.trim().toLocaleLowerCase();
   const searchHits = useMemo(() => (needle ? topics.filter((topic) => topic.searchText.includes(needle)) : []), [topics, needle]);
-  const tabCount: Record<HelpTab, number> = { manual: topics.length, tips: tips.length, faq: faq.length };
+  const serverProgression = progressionByServer?.[server];
+  const progressionCount =
+    (serverProgression?.playerRanks.length ? 1 : 0)
+    + (serverProgression?.characterRanks.length ? 1 : 0)
+    + (serverProgression?.friendshipRanks.length ? 1 : 0)
+    + (serverProgression?.bandRatings.length ? 1 : 0)
+    + (serverProgression?.highScoreRatings.length ? 1 : 0);
+  const tabCount: Record<HelpTab, number> = {
+    manual: topics.length,
+    tips: tips.length,
+    faq: faq.length,
+    progression: progressionCount,
+  };
 
   return (
     <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
@@ -134,6 +157,8 @@ export default function HelpExplorer({ locale, servers, categories: allCategorie
             ))}
           </ul>
         )
+      ) : tab === "progression" ? (
+        <ProgressionReferenceView locale={locale} data={serverProgression} />
       ) : faq.length === 0 ? <Empty text={t(locale, "help.empty")} /> : (
         <div className="space-y-2">
           {faq.map((entry) => (

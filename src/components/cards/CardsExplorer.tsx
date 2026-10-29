@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useCallback, useMemo } from "react";
+import { useEffect, useCallback, useMemo, useState } from "react";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import { t } from "@/i18n";
 import CardFilters, { useCardFilters } from "@/components/shared/CardFilters";
 import CardViewSwitch from "@/components/shared/CardViewSwitch";
+import SkillsDictionaryView from "@/components/cards/SkillsDictionaryView";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import MemberCardItem, { MemberCardTile } from "@/components/cards/MemberCardItem";
 import ServerScope from "@/components/shared/ServerScope";
@@ -13,6 +14,7 @@ import CardTable from "@/components/shared/CardTable";
 import { CARD_SORT_FIELDS, cardSortReaders } from "@/lib/cards/list-sort";
 import type { CardSkillNames } from "@/lib/masterdata/build-card-skill-names";
 import { cardTableRow } from "@/lib/cards/table-rows";
+import { readQueryParam, replaceQueryParam } from "@/lib/route/url-state";
 import type { ServerFaceted } from "@/lib/servers/facets";
 import { serverOnlyLabel, useServerList } from "@/lib/servers/use-content-server";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
@@ -21,6 +23,7 @@ import { memberCardSubject, parseCardFilterState } from "@/lib/filter/card-filte
 import type { CardViewModel } from "@/lib/cards/data";
 import { useNow } from "@/lib/schedule/use-now";
 import { isSpoiler, useSpoiler } from "@/lib/settings/spoiler";
+import type { SkillDictionaryViewModel } from "@/lib/skills/dictionary";
 
 interface Props {
   locale: AppLocale;
@@ -28,13 +31,30 @@ interface Props {
   servers: GameServer[];
   /** Skill names by id (table view and skill sort). */
   skillNames: CardSkillNames;
+  skillDictionaries?: Partial<Record<GameServer, SkillDictionaryViewModel>>;
 }
 
-export default function CardsExplorer({ locale, initialCards, servers, skillNames }: Props) {
+type CardsExplorerTab = "cards" | "skills";
+
+export default function CardsExplorer({ locale, initialCards, servers, skillNames, skillDictionaries }: Props) {
   const memory = useListPageMemory("cards");
   const now = useNow();
   const { showSpoiler } = useSpoiler();
   const { server, pickServer, items: cards } = useServerList(locale, servers, initialCards);
+  const [tab, setTab] = useState<CardsExplorerTab>("cards");
+
+  useEffect(() => {
+    const rawTab = readQueryParam("tab");
+    if (rawTab === "skills" || rawTab === "cards") {
+      setTab(rawTab);
+    }
+  }, []);
+
+  const pickTab = (next: CardsExplorerTab) => {
+    setTab(next);
+    replaceQueryParam("tab", next === "cards" ? null : next);
+    if (next === "cards") replaceQueryParam("family", null);
+  };
   const visibleCards = useMemo(() => {
     if (showSpoiler) return cards;
     return cards.filter((card) => !isSpoiler(card.startAt, now));
@@ -86,21 +106,60 @@ export default function CardsExplorer({ locale, initialCards, servers, skillName
     memory.clearState();
   };
 
-  useQuickFilter(t(locale, "cards.filterTitle"), <CardFilters locale={locale} controller={controller} kind="member" skillFilters onReset={resetFilters} />, [
-    controller.sort.value,
-    filters,
-    bands,
-    characters,
-    hasActiveFilters,
-    filtered.length,
-    cards.length,
-    locale,
-  ]);
+  const serverDictionary = skillDictionaries?.[server];
+  const skillCount = serverDictionary?.entries.length ?? 0;
+
+  useQuickFilter(
+    t(locale, "cards.filterTitle"),
+    tab === "cards" ? <CardFilters locale={locale} controller={controller} kind="member" skillFilters onReset={resetFilters} /> : null,
+    [
+      tab,
+      controller.sort.value,
+      filters,
+      bands,
+      characters,
+      hasActiveFilters,
+      filtered.length,
+      cards.length,
+      locale,
+    ],
+  );
 
   return (
-    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer} actions={<CardViewSwitch locale={locale} value={view} onChange={setView} />}>
+    <ServerScope
+      locale={locale}
+      servers={servers}
+      server={server}
+      onChange={pickServer}
+      actions={tab === "cards" ? <CardViewSwitch locale={locale} value={view} onChange={setView} /> : undefined}
+    >
+      <div className="md3-tabs mb-4" role="tablist" aria-label={t(locale, "skillsDictionary.tabsLabel")}>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "cards"}
+          onClick={() => pickTab("cards")}
+          className="md3-tab md3-state"
+        >
+          {t(locale, "skillsDictionary.tabCards")}
+          <span className="ml-1.5 text-label-small tabular-nums opacity-70">{visibleCards.length}</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "skills"}
+          onClick={() => pickTab("skills")}
+          className="md3-tab md3-state"
+        >
+          {t(locale, "skillsDictionary.tabSkills")}
+          {skillCount > 0 && <span className="ml-1.5 text-label-small tabular-nums opacity-70">{skillCount}</span>}
+        </button>
+      </div>
+
       <section className="min-w-0" aria-live="polite">
-        {filtered.length === 0 ? (
+        {tab === "skills" ? (
+          <SkillsDictionaryView locale={locale} dictionary={serverDictionary} memberCards={cards} />
+        ) : filtered.length === 0 ? (
           <EmptyState locale={locale} onReset={resetFilters} />
         ) : view === "table" ? (
           <CardTable locale={locale} rows={sorted.map((card) => cardTableRow(card, skillOf(card)))} routeId="cards" servers={servers} sort={controller.sort.value} onSortChange={controller.sort.onChange} onOpen={saveCurrentState} />

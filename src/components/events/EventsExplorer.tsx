@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AppLocale } from "@/config/locales";
 import { orderServers, type GameServer } from "@/config/servers";
 import EventBanner from "@/components/events/EventBanner";
+import ArenaOverviewPanel from "@/components/events/ArenaOverviewPanel";
 import ServerScope from "@/components/shared/ServerScope";
 import ServerFlag from "@/components/shared/ServerFlag";
 import BaseFilters, { BandFilter, FilterButton, FilterSection, toggleArrayItem } from "@/components/shared/BaseFilters";
@@ -11,12 +12,14 @@ import ScheduleBadge from "@/components/shared/ScheduleBadge";
 import ScheduleCountdown from "@/components/shared/ScheduleCountdown";
 import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
+import type { ArenaCatalogViewModel } from "@/lib/arena/data";
 import { getCharacterFaceIconUrl } from "@/lib/cards/assets";
 import type { EventCharacter, EventViewModel } from "@/lib/events/data";
 import { sortEntries } from "@/lib/filter/list-sort";
 import { useListSort } from "@/lib/filter/use-list-sort";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import { eventPath } from "@/lib/events/links";
+import { readQueryParam, replaceQueryParam } from "@/lib/route/url-state";
 import { formatScheduleRange, scheduleStatus, type ScheduleStatus } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
 import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
@@ -31,20 +34,36 @@ interface Props {
   initialEvents: ServerFaceted<EventViewModel>[];
   servers: GameServer[];
   bands: Array<[number, string]>;
+  arenaCatalogs?: Partial<Record<GameServer, ArenaCatalogViewModel>>;
 }
 
 const ALL_STATUSES: ScheduleStatus[] = ["ongoing", "upcoming", "ended"];
+const EVENT_TABS = ["events", "arena"] as const;
+type EventExplorerTab = (typeof EVENT_TABS)[number];
 
-export default function EventsExplorer({ locale, servers, initialEvents, bands }: Props) {
+export default function EventsExplorer({ locale, servers, initialEvents, bands, arenaCatalogs }: Props) {
   const memory = useListPageMemory("event-list");
   const now = useNow();
   const { showSpoiler } = useSpoiler();
   const timeZone = useDisplayTimeZone();
   const { server, pickServer, items: events } = useServerList(locale, servers, initialEvents);
+  const [tab, setTab] = useState<EventExplorerTab>("events");
   const [query, setQuery] = useState("");
   const sort = useListSort("event-list", locale, "date,endingSoon");
   const [selectedStatuses, setSelectedStatuses] = useState<ScheduleStatus[]>([]);
   const [selectedBands, setSelectedBands] = useState<number[]>([]);
+
+  useEffect(() => {
+    const rawTab = readQueryParam("tab");
+    if (rawTab === "arena" || rawTab === "events") {
+      setTab(rawTab);
+    }
+  }, []);
+
+  const pickTab = (next: EventExplorerTab) => {
+    setTab(next);
+    replaceQueryParam("tab", next === "events" ? null : next);
+  };
 
   const statuses: ScheduleStatus[] = useMemo(() => (showSpoiler ? ALL_STATUSES : ["ongoing", "ended"]), [showSpoiler]);
 
@@ -150,7 +169,11 @@ export default function EventsExplorer({ locale, servers, initialEvents, bands }
     </BaseFilters>
   );
 
-  useQuickFilter(t(locale, "events.filterTitle"), quickFilterContent, [
+  const serverArenaCatalog = arenaCatalogs?.[server];
+  const arenaSeasonCount = serverArenaCatalog?.seasons.length ?? 0;
+
+  useQuickFilter(t(locale, "events.filterTitle"), tab === "events" ? quickFilterContent : null, [
+    tab,
     sort.value,
     query,
     selectedStatuses,
@@ -164,8 +187,35 @@ export default function EventsExplorer({ locale, servers, initialEvents, bands }
 
   return (
     <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
+      <div className="md3-tabs mb-4" role="tablist" aria-label={t(locale, "arenaOverview.tabsLabel")}>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "events"}
+          onClick={() => pickTab("events")}
+          className="md3-tab md3-state"
+        >
+          {t(locale, "arenaOverview.tabEvents")}
+          <span className="ml-1.5 text-label-small tabular-nums opacity-70">{events.length}</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "arena"}
+          onClick={() => pickTab("arena")}
+          className="md3-tab md3-state"
+        >
+          {t(locale, "arenaOverview.tabArena")}
+          {arenaSeasonCount > 0 && (
+            <span className="ml-1.5 text-label-small tabular-nums opacity-70">{arenaSeasonCount}</span>
+          )}
+        </button>
+      </div>
+
       <section className="min-w-0" aria-live="polite">
-        {events.length === 0 ? (
+        {tab === "arena" ? (
+          <ArenaOverviewPanel locale={locale} catalog={serverArenaCatalog} />
+        ) : events.length === 0 ? (
           <NoEventsOnServer locale={locale} server={server} eventServers={eventServers} onPick={pickServer} />
         ) : filteredEvents.length === 0 ? (
           <EmptyState locale={locale} onReset={resetFilters} />

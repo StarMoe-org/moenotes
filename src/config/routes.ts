@@ -93,7 +93,7 @@ export const routeRegistry = [
         },
         nav: { order: 15, icon: "sparkles" },
         searchable: true,
-        keywords: ["cards", "illustration", "gacha"],
+        keywords: ["cards", "illustration", "gacha", "skills", "skills dictionary", "leader skill", "live skill", "gekisou skill", "support skill"],
         children: [
           {
             id: "card-detail",
@@ -276,7 +276,7 @@ export const routeRegistry = [
         },
         nav: { order: 90, icon: "info" },
         searchable: true,
-        keywords: ["help", "guide", "manual", "faq", "tips"],
+        keywords: ["help", "guide", "manual", "faq", "tips", "player rank", "character rank", "friendship rank", "band rating", "high score rating", "exp"],
         children: [
           {
             id: "help-detail",
@@ -326,7 +326,7 @@ export const routeRegistry = [
         },
         nav: { order: 10, icon: "music", shortcut: "g m" },
         searchable: true,
-        keywords: ["music", "songs", "live"],
+        keywords: ["music", "songs", "live", "song progress", "full combo", "all perfect", "fc", "ap"],
         children: [
           {
             id: "song-detail",
@@ -441,7 +441,7 @@ export const routeRegistry = [
         },
         nav: { order: 10, icon: "calendar" },
         searchable: true,
-        keywords: ["events", "event", "bonus", "event points", "event story"],
+        keywords: ["events", "event", "bonus", "event points", "event story", "arena", "gekiso arena", "arena season"],
         children: [
           {
             id: "event-detail",

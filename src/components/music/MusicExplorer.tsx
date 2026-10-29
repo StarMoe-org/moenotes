@@ -22,6 +22,7 @@ import { useSongTitle } from "@/lib/music/title-preference";
 import { songQueue, songTrack } from "@/lib/music/tracks";
 import { useChartMetrics } from "@/lib/music/use-chart-metrics";
 import MusicFilters, { chartMetricsOf, useMusicFilters, type MusicFiltersController } from "@/components/music/MusicFilters";
+import MusicProgressView from "@/components/music/MusicProgressView";
 import MusicTable, { songHref } from "@/components/music/MusicTable";
 import SongCard from "@/components/music/SongCard";
 import { useNow } from "@/lib/schedule/use-now";
@@ -35,7 +36,7 @@ interface Props {
   categories?: Array<[number, string]>;
 }
 
-const VIEWS = ["grid", "list", "table"] as const;
+const VIEWS = ["grid", "list", "table", "progress"] as const;
 
 export default function MusicExplorer({ locale, servers, initialSongs, categories = [] }: Props) {
   const memory = useListPageMemory("music");
@@ -127,6 +128,15 @@ export default function MusicExplorer({ locale, servers, initialSongs, categorie
       <section className="min-w-0" aria-live="polite">
         {music.filtered.length === 0 ? (
           <EmptyState locale={locale} onReset={resetFilters} />
+        ) : view === "progress" ? (
+          <MusicProgressView
+            locale={locale}
+            server={server}
+            songs={music.sorted}
+            titleOf={titleOf}
+            assetUrl={assetUrl}
+            onOpen={saveCurrentState}
+          />
         ) : view === "table" ? (
           <MusicTable
             locale={locale}
