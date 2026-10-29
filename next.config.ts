@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import type { NextConfig } from "next";
+import { buildPublicEnv } from "./src/config/public-env";
 
 /** Packages bundled on both server and client (material-color-utilities uses extensionless relative ESM imports). */
 const SERVER_BUNDLED = [
@@ -31,30 +32,7 @@ function buildInfo(): { version: string; revision: string } {
 
 const info = buildInfo();
 
-const publicEnv: Record<string, string> = {
-  PUBLIC_ASSET_API: process.env.PUBLIC_ASSET_API ?? "",
-  PUBLIC_RECOGNITION_SITE: process.env.PUBLIC_RECOGNITION_SITE ?? "",
-  PUBLIC_GAME_UI_LIBRARY_TW: process.env.PUBLIC_GAME_UI_LIBRARY_TW ?? "",
-  PUBLIC_GAME_UI_LIBRARY_JP: process.env.PUBLIC_GAME_UI_LIBRARY_JP ?? "",
-  PUBLIC_GAME_UI_LIBRARY_KR: process.env.PUBLIC_GAME_UI_LIBRARY_KR ?? "",
-  PUBLIC_GAME_UI_LIBRARY_EN: process.env.PUBLIC_GAME_UI_LIBRARY_EN ?? "",
-  PUBLIC_CHART_SITE: process.env.PUBLIC_CHART_SITE ?? "",
-  PUBLIC_STORY_SITE: process.env.PUBLIC_STORY_SITE ?? "",
-  PUBLIC_STORY_SITE_JP: process.env.PUBLIC_STORY_SITE_JP ?? "",
-  PUBLIC_MUSIC_DATA_SITE: process.env.PUBLIC_MUSIC_DATA_SITE ?? "",
-  PUBLIC_MUSIC_DATA_SITE_JP: process.env.PUBLIC_MUSIC_DATA_SITE_JP ?? "",
-  PUBLIC_MUSIC_PLAYER_SITE: process.env.PUBLIC_MUSIC_PLAYER_SITE ?? "",
-  PUBLIC_CUBISM_CORE: process.env.PUBLIC_CUBISM_CORE ?? "",
-  PUBLIC_CUBISM_MOTIONSYNC_CORE: process.env.PUBLIC_CUBISM_MOTIONSYNC_CORE ?? "",
-  PUBLIC_SPINE_RUNTIME: process.env.PUBLIC_SPINE_RUNTIME ?? "",
-  PUBLIC_GAME_API: process.env.PUBLIC_GAME_API ?? "",
-  PUBLIC_MOENOTES_VERSION: info.version,
-  PUBLIC_MOENOTES_REVISION: info.revision,
-};
-
-if (process.env.PUBLIC_DECK_RECOMMEND_ENGINE !== undefined) {
-  publicEnv.PUBLIC_DECK_RECOMMEND_ENGINE = process.env.PUBLIC_DECK_RECOMMEND_ENGINE;
-}
+const publicEnv = buildPublicEnv(process.env, info);
 
 const BROWSER_EMPTY_SHIM = "./src/lib/build/browser-empty-shim.ts";
 
