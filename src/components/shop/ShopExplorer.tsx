@@ -18,7 +18,7 @@ import { localizePath } from "@/i18n/routing";
 import { sortEntries } from "@/lib/filter/list-sort";
 import { useListSort } from "@/lib/filter/use-list-sort";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
-import { scheduleStatus, type ScheduleStatus } from "@/lib/schedule";
+import { compareByStartDesc, scheduleStatus, type ScheduleStatus } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
 import type { ServerFaceted } from "@/lib/servers/facets";
 import { useServerList } from "@/lib/servers/use-content-server";
@@ -42,7 +42,7 @@ export default function ShopExplorer({ locale, servers, initialShops }: Props) {
   const { server, pickServer, items: shops } = useServerList(locale, servers, initialShops);
   const [view, setView] = useCollectionView("shop", views, "grid");
   const [query, setQuery] = useState("");
-  const sort = useListSort("shop", locale, "endingSoon", { numeric: [{ key: "sortPrice", labelKey: "shop.sortPrice", initialDirection: "asc" }] });
+  const sort = useListSort("shop", locale, "date,endingSoon", { numeric: [{ key: "sortPrice", labelKey: "shop.sortPrice", initialDirection: "asc" }] });
   const [selectedPayments, setSelectedPayments] = useState<ShopPaymentKind[]>([]);
   const [selectedLimits, setSelectedLimits] = useState<ShopLimitKind[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<ScheduleStatus[]>([]);
@@ -66,7 +66,10 @@ export default function ShopExplorer({ locale, servers, initialShops }: Props) {
     });
   }, [visibleShops, query, selectedPayments, selectedLimits, selectedStatuses, now]);
 
-  const sorted = useMemo(() => sortEntries(filtered, sort.value, locale, now === null ? {} : { now }), [filtered, sort.value, locale, now]);
+  const sorted = useMemo(
+    () => (sort.value === "default" ? [...filtered].sort(compareByStartDesc) : sortEntries(filtered, sort.value, locale, now === null ? {} : { now })),
+    [filtered, sort.value, locale, now],
+  );
   const hasActiveFilters = sort.value !== "default" || Boolean(query) || selectedPayments.length > 0 || selectedLimits.length > 0 || selectedStatuses.length > 0;
 
   const resetFilters = () => {

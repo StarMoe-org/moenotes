@@ -65,7 +65,28 @@ export function compareByStartDesc(a: { startAt?: string | null; id: number | st
   } else if (timeA !== null || timeB !== null) {
     return timeA !== null ? -1 : 1;
   }
-  return typeof a.id === "number" && typeof b.id === "number" ? b.id - a.id : String(b.id).localeCompare(String(a.id));
+  return typeof a.id === "number" && typeof b.id === "number" ? b.id - a.id : String(b.id).localeCompare(String(a.id), undefined, { numeric: true });
+}
+
+/** Newest release date first (dated before undated), then higher rarity if present, then higher id. */
+export function compareByReleaseDesc(
+  a: { startAt?: string | null; rarity?: number; id: number | string },
+  b: { startAt?: string | null; rarity?: number; id: number | string },
+): number {
+  const timeA = parseMasterDate(a.startAt);
+  const timeB = parseMasterDate(b.startAt);
+  if (timeA !== null && timeB !== null) {
+    const diff = timeB - timeA;
+    if (diff) return diff;
+  } else if (timeA !== null || timeB !== null) {
+    return timeA !== null ? -1 : 1;
+  }
+  if (typeof a.rarity === "number" && typeof b.rarity === "number" && b.rarity !== a.rarity) {
+    return b.rarity - a.rarity;
+  }
+  return typeof a.id === "number" && typeof b.id === "number"
+    ? b.id - a.id
+    : String(b.id).localeCompare(String(a.id), undefined, { numeric: true });
 }
 
 /**

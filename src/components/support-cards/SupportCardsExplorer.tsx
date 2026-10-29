@@ -4,8 +4,10 @@ import { useEffect, useCallback, useMemo } from "react";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import { t } from "@/i18n";
+import { localizePath } from "@/i18n/routing";
 import CardFilters, { useCardFilters } from "@/components/shared/CardFilters";
 import CardViewSwitch from "@/components/shared/CardViewSwitch";
+import { getRoutePathById } from "@/lib/route/registry";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import SupportCardItem, { SupportCardTile } from "@/components/support-cards/SupportCardItem";
 import ServerScope from "@/components/shared/ServerScope";
@@ -97,8 +99,23 @@ export default function SupportCardsExplorer({ locale, servers, initialSupportCa
     locale,
   ]);
 
+  const skillsHref = `${localizePath(getRoutePathById("skills"), locale)}?family=support`;
+
   return (
-    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer} actions={<CardViewSwitch locale={locale} value={view} onChange={setView} />}>
+    <ServerScope
+      locale={locale}
+      servers={servers}
+      server={server}
+      onChange={pickServer}
+      actions={
+        <div className="flex flex-wrap items-center gap-2">
+          <a href={skillsHref} className="md3-button md3-button--outlined md3-button--small">
+            {t(locale, "skillsDictionary.shortcutFromSupport")}
+          </a>
+          <CardViewSwitch locale={locale} value={view} onChange={setView} />
+        </div>
+      }
+    >
       <section className="min-w-0" aria-live="polite">
         {filtered.length === 0 ? (
           <EmptyState locale={locale} onReset={resetFilters} />

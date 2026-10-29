@@ -52,6 +52,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html
       lang={HTML_LANG[locale]}
       data-locale={locale}
+      data-scroll-behavior="smooth"
       data-spoiler-now={SPOILER_REFERENCE_NOW}
       data-masterdata-version={manifest?.dataVersion || undefined}
       data-masterdata-regions={serializedRegions}
@@ -65,7 +66,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <script data-cfasync="false" dangerouslySetInnerHTML={{ __html: themeScript }} />
         <script data-cfasync="false" dangerouslySetInnerHTML={{ __html: navGroupScript }} />
         <script data-cfasync="false" dangerouslySetInnerHTML={{ __html: accountScript }} />
-        {filterScript && <script data-cfasync="false" dangerouslySetInnerHTML={{ __html: filterScript }} />}
+        <script data-cfasync="false" dangerouslySetInnerHTML={{ __html: filterScript }} />
         <meta name="theme-color" content="#FBF8FD" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="icon" type="image/png" href="/favicon.png" />

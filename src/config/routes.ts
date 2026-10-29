@@ -148,6 +148,22 @@ export const routeRegistry = [
         ],
       },
       {
+        id: "skills",
+        path: "/skills",
+        labelKey: "nav.items.skills",
+        component: "skills",
+        filterTitleKey: "skillsDictionary.filterTitle",
+        seo: {
+          titleKey: "seo.skills.title",
+          descriptionKey: "seo.skills.description",
+          keywords: ["BanG Dream! Our Notes skills", "live skills", "leader skills", "Gekisou skills", "support skills", "skill upgrade materials"],
+          sitemap: { priority: 0.8, changefreq: "daily" },
+        },
+        nav: { order: 19, icon: "sparkles" },
+        searchable: true,
+        keywords: ["skills", "skills dictionary", "leader skill", "live skill", "gekisou skill", "support skill", "snap skill"],
+      },
+      {
         id: "stamps",
         path: "/stamps",
         labelKey: "nav.items.stamps",
@@ -268,6 +284,7 @@ export const routeRegistry = [
         path: "/help",
         labelKey: "nav.items.help",
         component: "help",
+        filterTitleKey: "skillsDictionary.progressionFilterTitle",
         seo: {
           titleKey: "seo.help.title",
           descriptionKey: "seo.help.description",
@@ -276,7 +293,7 @@ export const routeRegistry = [
         },
         nav: { order: 90, icon: "info" },
         searchable: true,
-        keywords: ["help", "guide", "manual", "faq", "tips"],
+        keywords: ["help", "guide", "manual", "faq", "tips", "player rank", "character rank", "friendship rank", "band rating", "high score rating", "exp"],
         children: [
           {
             id: "help-detail",
@@ -326,7 +343,7 @@ export const routeRegistry = [
         },
         nav: { order: 10, icon: "music", shortcut: "g m" },
         searchable: true,
-        keywords: ["music", "songs", "live"],
+        keywords: ["music", "songs", "live", "song progress", "full combo", "all perfect", "fc", "ap"],
         children: [
           {
             id: "song-detail",
@@ -441,7 +458,7 @@ export const routeRegistry = [
         },
         nav: { order: 10, icon: "calendar" },
         searchable: true,
-        keywords: ["events", "event", "bonus", "event points", "event story"],
+        keywords: ["events", "event", "bonus", "event points", "event story", "arena", "gekiso arena", "arena season"],
         children: [
           {
             id: "event-detail",

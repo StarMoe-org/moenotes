@@ -23,6 +23,7 @@ import {
   RealLivesServerPage,
   RewardsServerPage,
   ShopServerPage,
+  SkillsServerPage,
   StampsServerPage,
   StoryServerPage,
   SupportCardsServerPage,
@@ -111,6 +112,13 @@ export default async function RouteDispatcher({
       );
     case "support-card-detail":
       return <SupportCardDetailServerPage locale={locale} pathname={pathname} paramId={paramId} semantic={semantic} />;
+    case "skills":
+      return (
+        <>
+          <BreadcrumbSync locale={locale} pathname={pathname} />
+          <SkillsServerPage locale={locale} />
+        </>
+      );
     case "characters":
       return (
         <>

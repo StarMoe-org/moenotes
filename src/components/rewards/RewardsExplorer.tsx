@@ -17,7 +17,7 @@ import { useListSort } from "@/lib/filter/use-list-sort";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import type { RewardEntryKind, RewardEntrySummary } from "@/lib/rewards/data";
 import { getRoutePathById } from "@/lib/route/registry";
-import { formatScheduleRange, scheduleStatus, type ScheduleStatus } from "@/lib/schedule";
+import { compareByStartDesc, formatScheduleRange, scheduleStatus, type ScheduleStatus } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
 import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
@@ -93,7 +93,10 @@ export default function RewardsExplorer({ locale, servers, initialEntries }: Pro
     });
   }, [visibleEntries, query, selectedKinds, selectedStatuses, now]);
 
-  const sortedEntries = useMemo(() => sortEntries(filteredEntries, sort.value, locale), [filteredEntries, sort.value, locale]);
+  const sortedEntries = useMemo(
+    () => (sort.value === "default" ? [...filteredEntries].sort(compareByStartDesc) : sortEntries(filteredEntries, sort.value, locale)),
+    [filteredEntries, sort.value, locale],
+  );
 
   const hasActiveFilters = sort.value !== "default" || Boolean(query) || selectedKinds.length > 0 || selectedStatuses.length > 0;
 

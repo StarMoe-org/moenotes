@@ -25,7 +25,7 @@ interface AppShellClientProps {
   initialLocale: AppLocale;
   initialPathname: string;
   initialBreadcrumbDetail?: BreadcrumbDetail | undefined;
-  sidebarScrollScript: string;
+  sidebarScrollSlot: ReactNode;
   themeBandsByLocale: Partial<Record<AppLocale, readonly ThemeBandColor[]>>;
   defaultThemeBands: readonly ThemeBandColor[];
   children: ReactNode;
@@ -37,7 +37,7 @@ export default function AppShellClient({
   initialLocale,
   initialPathname,
   initialBreadcrumbDetail,
-  sidebarScrollScript,
+  sidebarScrollSlot,
   themeBandsByLocale,
   defaultThemeBands,
   children,
@@ -69,7 +69,7 @@ export default function AppShellClient({
       <PageUpdateNotice locale={locale} />
       <TopAppBar locale={locale} homeHref={localizePath("/", locale)} crumbs={crumbs} />
       <Sidebar locale={locale} pathname={pathname} activePath={activePath} />
-      <script data-cfasync="false" dangerouslySetInnerHTML={{ __html: sidebarScrollScript }} />
+      {sidebarScrollSlot}
       <FilterDrawerHost locale={locale} pathname={pathname} />
       <main
         id="content"

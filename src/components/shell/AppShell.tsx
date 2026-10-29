@@ -30,7 +30,9 @@ export default async function AppShell({ locale, pathname, breadcrumbDetail, chi
         initialLocale={locale}
         initialPathname={pathname}
         initialBreadcrumbDetail={breadcrumbDetail}
-        sidebarScrollScript={sidebarScrollScript}
+        sidebarScrollSlot={
+          <script data-cfasync="false" dangerouslySetInnerHTML={{ __html: sidebarScrollScript }} />
+        }
         themeBandsByLocale={themeBandsByLocale}
         defaultThemeBands={defaultThemeBands}
       >

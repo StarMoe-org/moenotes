@@ -10,7 +10,7 @@ import ServerScope from "@/components/shared/ServerScope";
 import TimesNote from "@/components/shared/TimesNote";
 import { t } from "@/i18n";
 import { realLiveStatus, type RealLiveStatus, type RealLiveViewModel } from "@/lib/real-lives/data";
-import { formatMasterDate } from "@/lib/schedule";
+import { compareByStartDesc, formatMasterDate } from "@/lib/schedule";
 import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import type { ServerFaceted } from "@/lib/servers/facets";
 import { useServerList } from "@/lib/servers/use-content-server";
@@ -36,8 +36,8 @@ export default function RealLivesView({ locale, servers, lives: initialLives }: 
   const { showSpoiler, now } = useSpoilerSetting();
   const timeZone = useDisplayTimeZone();
   const visibleLives = useMemo(() => {
-    if (showSpoiler) return lives;
-    return lives.filter((live) => !isSpoiler(live.startAt, now));
+    const list = showSpoiler ? lives : lives.filter((live) => !isSpoiler(live.startAt, now));
+    return [...list].sort(compareByStartDesc);
   }, [lives, showSpoiler, now]);
   return (
     <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>

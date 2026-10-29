@@ -3,7 +3,7 @@ import { safeGetLocalStorage, safeGetSessionStorage, safeSetLocalStorage, safeSe
 import { readQueryParam, replaceQueryParam } from "@/lib/route/url-state";
 
 /** Every display a collection page can offer; a page picks the ones it supports. */
-export const collectionViews = ["grid", "list", "table", "card", "square"] as const;
+export const collectionViews = ["grid", "list", "table", "card", "square", "progress"] as const;
 export type CollectionView = typeof collectionViews[number];
 
 export interface CollectionViewOptions {

@@ -12,7 +12,7 @@ import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import type { ExchangeCategoryViewModel, ExchangeSummaryViewModel } from "@/lib/exchange/data";
 import { exchangePath } from "@/lib/exchange/links";
-import { formatScheduleRange } from "@/lib/schedule";
+import { compareByStartDesc, formatScheduleRange } from "@/lib/schedule";
 import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { useNow } from "@/lib/schedule/use-now";
 import { isSpoiler, useSpoiler } from "@/lib/settings/spoiler";
@@ -33,11 +33,12 @@ export default function ExchangeExplorer({ locale, servers, initialCategories }:
   const [activeId, setActiveId] = useState<number | null>(null);
 
   const visibleCategories = useMemo(() => {
-    if (showSpoiler) return categories;
     return categories
       .map((category) => ({
         ...category,
-        exchanges: category.exchanges.filter((exchange) => !isSpoiler(exchange.startAt, now)),
+        exchanges: [...category.exchanges]
+          .filter((exchange) => showSpoiler || !isSpoiler(exchange.startAt, now))
+          .sort(compareByStartDesc),
       }))
       .filter((category) => category.exchanges.length > 0);
   }, [categories, showSpoiler, now]);

@@ -14,7 +14,7 @@ import BaseFilters, { CharacterFilter, FilterButton, FilterSection } from "@/com
 import CharacterAvatarStack from "@/components/shared/CharacterAvatarStack";
 import CollectionViewSwitch, { useCollectionView } from "@/components/shared/CollectionViewSwitch";
 import DataTable, { type DataTableColumn } from "@/components/shared/DataTable";
-import { formatMasterDate } from "@/lib/schedule";
+import { compareByStartDesc, formatMasterDate } from "@/lib/schedule";
 import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { storyPath } from "@/lib/story/paths";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
@@ -89,7 +89,10 @@ export default function StoryExplorer({ locale, servers, initialCategory, initia
       return !needle || story.searchText.includes(needle);
     });
   }, [sectionStories, initialCategory, otherCategories, lead, partner, levels, query]);
-  const sortedStories = useMemo(() => sortEntries(filtered, sort.value, locale), [filtered, sort.value, locale]);
+  const sortedStories = useMemo(
+    () => (sort.value === "default" && initialCategory !== "main" ? [...filtered].sort(compareByStartDesc) : sortEntries(filtered, sort.value, locale)),
+    [filtered, sort.value, locale, initialCategory],
+  );
   const reset = () => { sort.onChange("default"); setQuery(""); setOtherCategories([]); setLead(null); setPartner(null); setLevels([]); };
   const categoryTotal = sectionStories.length;
   const hasActive = sort.value !== "default" || Boolean(query || otherCategories.length || lead !== null || partner !== null || levels.length);

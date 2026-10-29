@@ -14,6 +14,7 @@ import {
   parseMarkdownTarget,
   prefersMarkdownAccept,
 } from "@/lib/markdown/negotiate";
+import { getBuildSkillDictionaries } from "@/lib/masterdata/build-skill-dictionary";
 import {
   getBuildBackgrounds,
   getBuildBandItems,
@@ -301,6 +302,25 @@ async function renderComponentMarkdown(
             c.totalPower,
           ]),
         ),
+      ].join("\n");
+    }
+
+    case "skills": {
+      const dicts = await getBuildSkillDictionaries(locale);
+      const dict = Object.values(dicts)[0];
+      const rows = (dict?.entries ?? []).map((entry) => [
+        entry.id,
+        t(locale, `skillsDictionary.families.${entry.family}`),
+        entry.name,
+        entry.levels[0]?.description ?? "",
+        entry.levels.at(-1)?.description ?? "",
+      ]);
+      return [
+        `# ${defaultTitle}`,
+        "",
+        defaultDescription,
+        "",
+        mdTable(["ID", t(locale, "skillsDictionary.familyLabel"), "Name", "Lv.1", "Max"], rows),
       ].join("\n");
     }
 

@@ -23,6 +23,7 @@ const routePaths: Record<string, ReactNode> = {
   // Database
   cards: <><rect x="5" y="3" width="14" height="18" rx="2.5"/><circle cx="12" cy="9" r="2.5"/><path d="M8.5 17c.7-2.3 1.9-3.5 3.5-3.5s2.8 1.2 3.5 3.5"/></>,
   "support-cards": <><rect x="7" y="3" width="12" height="16" rx="2"/><path d="M7 6H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2"/><path d="m13 7 .9 2.1L16 10l-2.1.9L13 13l-.9-2.1L10 10l2.1-.9z"/></>,
+  skills: <><path d="M12 2.5 21.5 12 12 21.5 2.5 12z"/><path d="M13 7.5 9.2 12.5h3.2L11 16.5l3.8-5h-3.2z"/></>,
   stamps: <><path d="M8 4h8l1 7 3 3v3H4v-3l3-3z"/><path d="M7 21h10M8 17h8"/></>,
   titles: <><circle cx="12" cy="9" r="5.5"/><path d="m8.5 13.5-1.5 7 5-2.5 5 2.5-1.5-7"/><path d="m12 6.5.8 1.7 1.8.3-1.3 1.2.3 1.8-1.6-.9-1.6.9.3-1.8-1.3-1.2 1.8-.3z"/></>,
   backgrounds: <><rect x="3" y="4.5" width="18" height="15" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m3.5 17 5-5 4 4 3-3 5 5"/></>,

@@ -16,6 +16,7 @@ import RewardsExplorer from "@/components/rewards/RewardsExplorer";
 import RouteGlyph from "@/components/shared/RouteGlyph";
 import PageHeader from "@/components/shell/PageHeader";
 import ShopExplorer from "@/components/shop/ShopExplorer";
+import SkillsExplorer from "@/components/skills/SkillsExplorer";
 import StampsExplorer from "@/components/stamps/StampsExplorer";
 import StoryExplorer from "@/components/story/StoryExplorer";
 import { inStorySection, type StorySection } from "@/lib/story/sections";
@@ -29,6 +30,7 @@ import { getLegalTexts } from "@/i18n/legal";
 import { localizePath } from "@/i18n/routing";
 import { calendarDayAt, monthKey, monthOf } from "@/lib/calendar/model";
 import { HANEOKA_COMMIT } from "@/lib/deck/haneoka/request";
+import { getBuildArenaCatalogs } from "@/lib/masterdata/build-arena";
 import { getBuildCalendar } from "@/lib/masterdata/build-calendar";
 import { getBuildCardSkillNames } from "@/lib/masterdata/build-card-skill-names";
 import { getBuildCatalogCounts, getBuildCatalogCovers } from "@/lib/masterdata/build-catalog";
@@ -54,9 +56,11 @@ import {
 import { getBuildHelp } from "@/lib/masterdata/build-help";
 import { getBuildLimitedMissionGroups, getBuildRegularMissions } from "@/lib/masterdata/build-missions";
 import { getBuildMusicCategories } from "@/lib/masterdata/build-music";
+import { getBuildProgressionReferences } from "@/lib/masterdata/build-progression";
 import { getBuildRealLives } from "@/lib/masterdata/build-real-lives";
 import { getBuildServers } from "@/lib/masterdata/build-servers";
 import { getBuildShops } from "@/lib/masterdata/build-shop";
+import { getBuildSkillDictionaries } from "@/lib/masterdata/build-skill-dictionary";
 import { getBuildTgwCard } from "@/lib/masterdata/build-vip";
 import { getNavChildren } from "@/lib/route/registry";
 import { MASTER_TIME_ZONE } from "@/lib/schedule";
@@ -70,7 +74,32 @@ export async function CardsServerPage({ locale }: { locale: AppLocale }) {
   ]);
   return (
     <PageHeader locale={locale} titleKey="seo.cards.title" descriptionKey="seo.cards.description">
-      <CardsExplorer locale={locale} initialCards={cards} servers={servers} skillNames={skillNames} />
+      <CardsExplorer
+        locale={locale}
+        initialCards={cards}
+        servers={servers}
+        skillNames={skillNames}
+      />
+    </PageHeader>
+  );
+}
+
+export async function SkillsServerPage({ locale }: { locale: AppLocale }) {
+  const [cards, bandNames, servers, skillDictionaries] = await Promise.all([
+    getBuildCards(locale),
+    getBuildBandNames(locale),
+    getBuildServers(),
+    getBuildSkillDictionaries(locale),
+  ]);
+  return (
+    <PageHeader locale={locale} titleKey="seo.skills.title" descriptionKey="seo.skills.description">
+      <SkillsExplorer
+        locale={locale}
+        servers={servers}
+        initialCards={cards}
+        bands={bandNames}
+        skillDictionaries={skillDictionaries}
+      />
     </PageHeader>
   );
 }
@@ -112,15 +141,22 @@ export async function CharactersServerPage({ locale }: { locale: AppLocale }) {
 }
 
 export async function EventsServerPage({ locale }: { locale: AppLocale }) {
-  const [events, { bands }, servers] = await Promise.all([
+  const [events, { bands }, servers, arenaCatalogs] = await Promise.all([
     getBuildEvents(locale),
     getBuildCharacters(locale),
     getBuildServers(),
+    getBuildArenaCatalogs(locale),
   ]);
   const bandOptions: Array<[number, string]> = bands.map((band) => [band.id, band.name]);
   return (
     <PageHeader locale={locale} titleKey="seo.eventList.title" descriptionKey="seo.eventList.description">
-      <EventsExplorer servers={servers} locale={locale} initialEvents={events} bands={bandOptions} />
+      <EventsExplorer
+        servers={servers}
+        locale={locale}
+        initialEvents={events}
+        bands={bandOptions}
+        arenaCatalogs={arenaCatalogs}
+      />
     </PageHeader>
   );
 }
@@ -325,7 +361,11 @@ export async function RealLivesServerPage({ locale }: { locale: AppLocale }) {
 }
 
 export async function HelpServerPage({ locale }: { locale: AppLocale }) {
-  const [help, servers] = await Promise.all([getBuildHelp(locale), getBuildServers()]);
+  const [help, servers, progressionByServer] = await Promise.all([
+    getBuildHelp(locale),
+    getBuildServers(),
+    getBuildProgressionReferences(),
+  ]);
   return (
     <PageHeader locale={locale} titleKey="seo.help.title" descriptionKey="seo.help.description">
       <HelpExplorer
@@ -335,6 +375,7 @@ export async function HelpServerPage({ locale }: { locale: AppLocale }) {
         topics={help.topics}
         tips={help.tips}
         faq={help.faq}
+        progressionByServer={progressionByServer}
       />
     </PageHeader>
   );

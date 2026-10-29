@@ -10,6 +10,7 @@ import { describeMission, scoreRankLabel, type MissionDescribeContext } from "@/
 import type { RawResource, RewardResolver, RewardViewModel } from "@/lib/rewards/resources";
 import type { StoryEpisodeKind, StoryViewModel } from "@/lib/story/data";
 import { getSupportCardThumbnailUrl } from "@/lib/support-cards/assets";
+import { compareByStartDesc } from "@/lib/schedule";
 import type { SupportCardViewModel } from "@/lib/support-cards/data";
 
 export interface RawEvent {
@@ -633,7 +634,7 @@ export function normalizeEvents(data: EventMasterData, sources: EventSources, re
         relatedGachas: sources.gachas ? relatedGachas({ pickUpCards: pickUps, effects }, sources.gachas) : [],
       };
     })
-    .sort((a, b) => b.id - a.id);
+    .sort(compareByStartDesc);
 }
 
 /** A gacha that features one of an event's cards, for the event page's "related gacha" links. */

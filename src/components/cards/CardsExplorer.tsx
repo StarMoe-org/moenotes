@@ -4,6 +4,7 @@ import { useEffect, useCallback, useMemo } from "react";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import { t } from "@/i18n";
+import { localizePath } from "@/i18n/routing";
 import CardFilters, { useCardFilters } from "@/components/shared/CardFilters";
 import CardViewSwitch from "@/components/shared/CardViewSwitch";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
@@ -13,6 +14,8 @@ import CardTable from "@/components/shared/CardTable";
 import { CARD_SORT_FIELDS, cardSortReaders } from "@/lib/cards/list-sort";
 import type { CardSkillNames } from "@/lib/masterdata/build-card-skill-names";
 import { cardTableRow } from "@/lib/cards/table-rows";
+import { getRoutePathById } from "@/lib/route/registry";
+import { readQueryParam } from "@/lib/route/url-state";
 import type { ServerFaceted } from "@/lib/servers/facets";
 import { serverOnlyLabel, useServerList } from "@/lib/servers/use-content-server";
 import { useListPageMemory } from "@/lib/scroll/use-list-page-memory";
@@ -35,6 +38,14 @@ export default function CardsExplorer({ locale, initialCards, servers, skillName
   const now = useNow();
   const { showSpoiler } = useSpoiler();
   const { server, pickServer, items: cards } = useServerList(locale, servers, initialCards);
+
+  useEffect(() => {
+    if (readQueryParam("tab") === "skills") {
+      const family = readQueryParam("family");
+      const target = localizePath(getRoutePathById("skills"), locale);
+      window.location.replace(family ? `${target}?family=${encodeURIComponent(family)}` : target);
+    }
+  }, [locale]);
   const visibleCards = useMemo(() => {
     if (showSpoiler) return cards;
     return cards.filter((card) => !isSpoiler(card.startAt, now));
@@ -86,19 +97,29 @@ export default function CardsExplorer({ locale, initialCards, servers, skillName
     memory.clearState();
   };
 
-  useQuickFilter(t(locale, "cards.filterTitle"), <CardFilters locale={locale} controller={controller} kind="member" skillFilters onReset={resetFilters} />, [
-    controller.sort.value,
-    filters,
-    bands,
-    characters,
-    hasActiveFilters,
-    filtered.length,
-    cards.length,
-    locale,
-  ]);
+  useQuickFilter(
+    t(locale, "cards.filterTitle"),
+    <CardFilters locale={locale} controller={controller} kind="member" skillFilters onReset={resetFilters} />,
+    [
+      controller.sort.value,
+      filters,
+      bands,
+      characters,
+      hasActiveFilters,
+      filtered.length,
+      cards.length,
+      locale,
+    ],
+  );
 
   return (
-    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer} actions={<CardViewSwitch locale={locale} value={view} onChange={setView} />}>
+    <ServerScope
+      locale={locale}
+      servers={servers}
+      server={server}
+      onChange={pickServer}
+      actions={<CardViewSwitch locale={locale} value={view} onChange={setView} />}
+    >
       <section className="min-w-0" aria-live="polite">
         {filtered.length === 0 ? (
           <EmptyState locale={locale} onReset={resetFilters} />
