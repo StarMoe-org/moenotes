@@ -71,6 +71,7 @@ func (s *Supervisor) Run(ctx context.Context) {
 	serverJS := filepath.Join(s.StandaloneDir, "server.js")
 	healthURL := "http://127.0.0.1:" + port + "/internal-healthz"
 	go s.ProbeExternal(ctx, healthURL)
+	disableCoreDumps()
 
 	for {
 		if ctx.Err() != nil {

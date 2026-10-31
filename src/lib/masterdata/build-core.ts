@@ -1,3 +1,5 @@
+import { buildEnv } from "@/config/build-env";
+import { cacheConfig } from "@/config/cache";
 import { PRIMARY_SERVER, GAME_SERVER_PROFILES, type GameServer } from "@/config/servers";
 import type { AppLocale } from "@/config/locales";
 import {
@@ -90,21 +92,48 @@ export function tagMasterDates(loaded: MasterTable<unknown>, offset: string): Ma
   };
 }
 
+function maxCachedSelectors(): number {
+  const raw = buildEnv("MOENOTES_MASTERDATA_MAX_SELECTORS");
+  if (!raw) return cacheConfig.masterdata.maxSelectors;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed >= 1 ? Math.floor(parsed) : cacheConfig.masterdata.maxSelectors;
+}
+
+function renewedSelector(key: string): Promise<unknown> | undefined {
+  const request = state.selectors.get(key);
+  if (request) {
+    state.selectors.delete(key);
+    state.selectors.set(key, request);
+  }
+  return request;
+}
+
+/**
+ * A derived selector, loaded once per epoch while it stays among the most recently used. An in-flight selector can be
+ * evicted too: its callers keep the promise and a later caller loads it anew, so a failure only drops its own entry.
+ */
 export function memo<T>(key: string, load: () => Promise<T>): Promise<T> {
   if (isMasterDataManifestFresh()) {
     syncEpoch();
-    const cached = state.selectors.get(key);
+    const cached = renewedSelector(key);
     if (cached) return cached as Promise<T>;
   }
   return (async () => {
     await ensureEpochFresh();
-    let request = state.selectors.get(key);
+    let request = renewedSelector(key);
     if (!request) {
-      request = load().catch((error) => {
-        state.selectors.delete(key);
+      const loading: Promise<unknown> = load().catch((error) => {
+        if (state.selectors.get(key) === loading) state.selectors.delete(key);
         throw error;
       });
+      request = loading;
       state.selectors.set(key, request);
+      const limit = maxCachedSelectors();
+      while (state.selectors.size > limit) {
+        const oldest = state.selectors.keys().next().value;
+        if (oldest === undefined) break;
+        state.selectors.delete(oldest);
+      }
     }
     return request as Promise<T>;
   })();
