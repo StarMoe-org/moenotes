@@ -7,6 +7,8 @@ export const cacheConfig = {
   masterdata: {
     versionTtlMs: 30 * 1000,
     maxTables: 512,
+    /** Derived `memo()` selectors kept per epoch; counts entries, not bytes (`src/lib/masterdata/build-core.ts`). */
+    maxSelectors: 1500,
     versionParam: "v",
     bustParam: "_t",
   },
