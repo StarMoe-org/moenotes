@@ -28,23 +28,50 @@ func (s *Supervisor) Ready() bool {
 	return s.ready.Load()
 }
 
+// probeTiming is how a health probe is paced.
+type probeTiming struct {
+	timeout  time.Duration
+	interval time.Duration
+	retry    time.Duration
+}
+
+// maxProbeTimeouts is how many probes in a row may time out before the server counts as down. Next.js answers probes on
+// the thread that renders, so a slow render looks like a timeout; every request would get a 503 from a server that is
+// only busy. A refused connection or a bad status is not this case and counts at once.
+const maxProbeTimeouts = 5
+
+var defaultProbeTiming = probeTiming{timeout: 2 * time.Second, interval: 5 * time.Second, retry: 500 * time.Millisecond}
+
 // ProbeExternal polls an externally managed Next.js upstream at healthURL until ctx is cancelled.
 func (s *Supervisor) ProbeExternal(ctx context.Context, healthURL string) {
-	client := &http.Client{Timeout: 2 * time.Second}
+	s.probe(ctx, healthURL, defaultProbeTiming)
+}
+
+func (s *Supervisor) probe(ctx context.Context, healthURL string, timing probeTiming) {
+	client := &http.Client{Timeout: timing.timeout}
+	timeouts := 0
 	for {
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, healthURL, nil)
 		if err == nil {
 			resp, doErr := client.Do(req)
-			if doErr == nil {
+			switch {
+			case doErr == nil:
 				_ = resp.Body.Close()
+				timeouts = 0
 				s.ready.Store(resp.StatusCode == http.StatusOK)
-			} else {
+			case os.IsTimeout(doErr):
+				timeouts++
+				if timeouts == maxProbeTimeouts && s.ready.Swap(false) {
+					logx.Printf("Next.js health probe timed out %d times in a row; marking it not ready", timeouts)
+				}
+			default:
+				timeouts = 0
 				s.ready.Store(false)
 			}
 		}
-		delay := 5 * time.Second
-		if !s.ready.Load() {
-			delay = 500 * time.Millisecond
+		delay := timing.interval
+		if !s.ready.Load() || timeouts > 0 {
+			delay = timing.retry
 		}
 		select {
 		case <-ctx.Done():
