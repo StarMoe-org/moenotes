@@ -171,9 +171,13 @@ async function readLocalJson(dir: string, path: string): Promise<unknown> {
   return JSON.parse(await readFile(`${dir.replace(/[\\/]+$/, "")}/${path.replace(/^\/+/, "")}`, "utf8")) as unknown;
 }
 
+async function sha256HexFromText(text: string): Promise<string> {
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)));
+  return [...digest].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
 async function versionedDiskEntryPath(cacheDir: string, cacheKey: string): Promise<string> {
-  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(cacheKey)));
-  const hex = [...digest].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  const hex = await sha256HexFromText(cacheKey);
   return `${cacheDir.replace(/[\\/]+$/, "")}/${hex.slice(0, 2)}/${hex}.json`;
 }
 
@@ -416,6 +420,45 @@ export async function getBuildTableKey(server: GameServer, path: string, options
   if (sha256) return `v:${manifest.dataVersion}:sha256:${sha256}`;
   const version = manifest.regions?.[GAME_SERVER_PROFILES[server].masterdataRegion]?.version || manifest.dataVersion;
   return `${server}:${name}@${version}`;
+}
+
+/**
+ * Cryptographic table identity (`sha256:<64hex>`) for provenance stamps (such as `RecognitionSourceStamp`):
+ * - Uses the exact file SHA-256 from `index.json` when available (without version-cache prefixes).
+ * - Falls back to SHA-256 of the local file bytes (`MOENOTES_MASTERDATA_DIR`) or loaded table JSON
+ *   when `index.json` is unavailable or omits the table entry.
+ */
+export async function getBuildTableDigest(
+  server: GameServer,
+  path: string,
+  options?: MasterDataReadOptions,
+): Promise<string> {
+  const name = path.replace(/^\/+/, "");
+  const manifest = await getBuildManifest(options);
+  const profile = GAME_SERVER_PROFILES[server];
+  const index = await getBuildIndex(manifest.dataVersion, Boolean(options?.forceBypass));
+  const rawSha = index?.regions?.[profile.masterdataRegion]?.files?.[name];
+  const normalizedSha = typeof rawSha === "string" ? rawSha.trim().replace(/^sha256:/i, "").toLowerCase() : "";
+  if (/^[a-f0-9]{64}$/.test(normalizedSha)) {
+    return `sha256:${normalizedSha}`;
+  }
+
+  const localDir = localSourceDir();
+  if (localDir) {
+    const { readFile } = await nodeFs();
+    const base = localDir.replace(/[\\/]+$/, "");
+    try {
+      const content = await readFile(`${base}/${profile.masterdataRegion}/${name}`, "utf8");
+      return `sha256:${await sha256HexFromText(content)}`;
+    } catch (error) {
+      if (server !== PRIMARY_SERVER) throw error;
+      const content = await readFile(`${base}/${masterdataConfig.masterPath.replace(/^\/+/, "")}/${name}`, "utf8");
+      return `sha256:${await sha256HexFromText(content)}`;
+    }
+  }
+
+  const loaded = await getBuildMasterData(name, (raw) => raw, server, options);
+  return `sha256:${await sha256HexFromText(JSON.stringify(loaded))}`;
 }
 
 export async function getBuildMasterData<T>(

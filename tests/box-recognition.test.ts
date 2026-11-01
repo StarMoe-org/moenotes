@@ -1,5 +1,11 @@
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { expect, test } from "bun:test";
 import { answerField, createBox, parseBox } from "../src/lib/box/model";
+import { setBuildFetchTransportForTests } from "../src/lib/build/fetch";
+import { getBuildTableKey, resetMasterDataSnapshotForTests } from "../src/lib/masterdata/build-snapshot";
+import { getBuildRecognitionSource } from "../src/lib/masterdata/recognition-source";
 import { correctRecognizedIdentity, correctRecognizedValue, mergeRecognizedBox, observedScreenshotBox, unidentifiedCardKey, validateRecognitionResult, type RecognitionResult, type UnidentifiedCard } from "../src/lib/recognition/protocol";
 import { RecognitionWorkerClient, type RecognitionJob, type WorkerLike } from "../src/lib/recognition/worker-client";
 import { bindRecognitionSource, type RecognitionManifest } from "../src/lib/recognition/client";
@@ -159,4 +165,112 @@ test("one selected actual catalogue supplies immutable recognition facts and the
   expect(() => createRecognitionContext(stamp, { members: [{ ...member, id: 9007199254740992 }], snaps: [] })).toThrow("unsafe");
   expect(() => createRecognitionContext(stamp, { members: [], snaps: [{ ...snap, characterIds: undefined } as unknown as SupportCardViewModel] })).toThrow("character IDs");
   expect(() => createRecognitionContext({ ...stamp, sourceId: "ui-master-observation:jp:synthetic/1:jp:MasterMemberCard.json:jp:MasterSupportCard.json" }, catalogue)).toThrow("table identities");
+});
+
+test("getBuildRecognitionSource binds SHA-256 table digests cleanly into createRecognitionContext across index, fallback, and local dir", async () => {
+  const savedMasterdataDir = process.env.MOENOTES_MASTERDATA_DIR;
+  const savedCacheDir = process.env.MOENOTES_MASTERDATA_CACHE_DIR;
+  delete process.env.MOENOTES_MASTERDATA_DIR;
+  delete process.env.MOENOTES_MASTERDATA_CACHE_DIR;
+
+  const memberSha = "a".repeat(64);
+  const snapSha = "b".repeat(64);
+  const jpVersion = "1.1.0.100/9cb2cd74f02a7b69ba4069f064f177fe";
+  const member = { id: 1, assetId: 1, characterId: 1, rarity: 2, cardType: 5 } as CardViewModel;
+  const snap = { id: 51, assetId: 51, characterIds: [1, 2], rarity: 4, cardType: 1 } as SupportCardViewModel;
+  const catalogue = { members: [member], snaps: [snap] };
+
+  let includeIndexDigests = true;
+  setBuildFetchTransportForTests(async (input) => {
+    const parsed = new URL(String(input));
+    if (parsed.pathname === "/current_version.json") {
+      return new Response(
+        JSON.stringify({
+          regions: {
+            "hk-tw-mo": { version: "0.0.1.78/tw" },
+            jp: { version: jpVersion },
+          },
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    }
+    if (parsed.pathname === "/index.json") {
+      return new Response(
+        JSON.stringify(
+          includeIndexDigests
+            ? {
+                regions: {
+                  jp: {
+                    path: "jp",
+                    files: {
+                      "MasterMemberCard.json": memberSha,
+                      "MasterSupportCard.json": snapSha,
+                    },
+                  },
+                },
+              }
+            : { regions: {} },
+        ),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    }
+    if (parsed.pathname.endsWith("/MasterMemberCard.json")) {
+      return new Response(JSON.stringify({ _allData: [{ id: 1 }] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    }
+    if (parsed.pathname.endsWith("/MasterSupportCard.json")) {
+      return new Response(JSON.stringify({ _allData: [{ id: 51 }] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    }
+    return new Response("Not Found", { status: 404 });
+  });
+
+  const tempLocalDir = mkdtempSync(join(tmpdir(), "moenotes-rec-src-"));
+  try {
+    // 1. Remote index.json with SHA-256 digests while getBuildTableKey remains version-scoped (`v:...`)
+    resetMasterDataSnapshotForTests();
+    const tableCacheKey = await getBuildTableKey("jp", "MasterMemberCard.json");
+    expect(tableCacheKey.startsWith("v:")).toBe(true);
+    const stampFromIndex = await getBuildRecognitionSource("jp");
+    expect(stampFromIndex).not.toBeNull();
+    expect(stampFromIndex!.sourceId).toBe(
+      `ui-master-observation:jp:${jpVersion}:sha256:${memberSha}:sha256:${snapSha}`,
+    );
+    const ctxFromIndex = createRecognitionContext(stampFromIndex!, catalogue);
+    expect(ctxFromIndex.source.sourceId).toBe(stampFromIndex!.sourceId);
+
+    // 2. Remote fallback when index.json omits file hashes
+    includeIndexDigests = false;
+    resetMasterDataSnapshotForTests();
+    const stampFallback = await getBuildRecognitionSource("jp");
+    expect(stampFallback).not.toBeNull();
+    expect(() => createRecognitionContext(stampFallback!, catalogue)).not.toThrow();
+
+    // 3. Local MOENOTES_MASTERDATA_DIR checkout without index.json
+    mkdirSync(join(tempLocalDir, "jp"), { recursive: true });
+    writeFileSync(
+      join(tempLocalDir, "current_version.json"),
+      JSON.stringify({ regions: { jp: { version: "1.1.0.100-local" } } }),
+    );
+    writeFileSync(join(tempLocalDir, "jp", "MasterMemberCard.json"), JSON.stringify({ _allData: [{ id: 1 }] }));
+    writeFileSync(join(tempLocalDir, "jp", "MasterSupportCard.json"), JSON.stringify({ _allData: [{ id: 51 }] }));
+    process.env.MOENOTES_MASTERDATA_DIR = tempLocalDir;
+    resetMasterDataSnapshotForTests();
+    const stampLocal = await getBuildRecognitionSource("jp");
+    expect(stampLocal).not.toBeNull();
+    expect(stampLocal!.masterVersion).toBe("1.1.0.100-local");
+    expect(() => createRecognitionContext(stampLocal!, catalogue)).not.toThrow();
+  } finally {
+    setBuildFetchTransportForTests(null);
+    if (savedMasterdataDir === undefined) delete process.env.MOENOTES_MASTERDATA_DIR;
+    else process.env.MOENOTES_MASTERDATA_DIR = savedMasterdataDir;
+    if (savedCacheDir === undefined) delete process.env.MOENOTES_MASTERDATA_CACHE_DIR;
+    else process.env.MOENOTES_MASTERDATA_CACHE_DIR = savedCacheDir;
+    resetMasterDataSnapshotForTests();
+    rmSync(tempLocalDir, { recursive: true, force: true });
+  }
 });
