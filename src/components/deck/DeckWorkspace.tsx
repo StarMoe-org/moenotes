@@ -25,6 +25,10 @@ import { CHALLENGE_POINT_COSTS, DEFAULT_DECK_GOAL, EVENT_GOALS, EVERYDAY_GOALS, 
   playsGekisou, readsAccuracy, effectiveAggregation, usesEventItemRewards, rewardLayoutOf, isChallengeInput, isNetworkInput, challengeRateRequest, recommendationRequest, solverGoalKind, supportsCrossSongMean, goalVenues, isEventPayoffGoal, type ChallengePointCost, type DeckEvent, type DeckGoal, type DeckGoalInput, type DeckVenue, type DeckArenaMusic } from "@/lib/deck/goals";
 import { arenaPeriod, arenaSongMatchesBand, resolveArenaRule, type DeckArenaCatalog, type DeckArenaMode, type DeckArenaRuleSource } from "@/lib/deck/arena";
 import DeckArenaControls, { type DeckArenaSongEntry } from "./DeckArenaControls";
+import DeckManualEventDialog, { DeckEventSourceControls, type DeckEventSourceMode, type NamedEntityOption } from "./DeckManualEventDialog";
+import { buildManualEventEffects, extractManualEventTemplate, type ManualEventDraft } from "@/lib/deck/manual-event";
+import { buildTheoreticalMaxBox } from "@/lib/deck/theoretical-box";
+import { isVideoImportFile } from "@/lib/recognition/video";
 import { displayUtcLabel, formatMasterDate, parseMasterDate } from "@/lib/schedule";
 import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { safeGetLocalStorage, safeRemoveLocalStorage, safeSetLocalStorage } from "@/lib/storage/safe-storage";
@@ -173,9 +177,76 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
   }, []);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 60_000); return () => clearInterval(timer); }, []);
-  const event = useMemo(() => heldEvent(props.deckEvents?.find(value => value.server === server)?.events ?? [], now, parseMasterDate), [props.deckEvents, server, now]);
+  const serverEvents = useMemo(
+    () => props.deckEvents?.find(value => value.server === server)?.events ?? [],
+    [props.deckEvents, server],
+  );
+  const liveHeldEvent = useMemo(
+    () => heldEvent(serverEvents, now, parseMasterDate),
+    [serverEvents, now],
+  );
+  const customEventTemplates = useMemo(
+    () =>
+      [...serverEvents]
+        .sort((a, b) => b.id - a.id)
+        .flatMap((item) => {
+          const template = extractManualEventTemplate(item);
+          return template ? [{ event: item, template }] : [];
+        }),
+    [serverEvents],
+  );
+  const [eventSourceMode, setEventSourceMode] = useState<DeckEventSourceMode>("auto");
+  const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
+  const [customEventDraft, setCustomEventDraft] = useState<ManualEventDraft | null>(null);
+  const [customEventModalOpen, setCustomEventModalOpen] = useState(false);
+  const [theoreticalMode, setTheoreticalMode] = useState(false);
+
+  const activeCustomTemplate = useMemo(
+    () =>
+      customEventTemplates.find(
+        (entry) => entry.event.id === (customEventDraft?.templateEventId ?? selectedEventId ?? liveHeldEvent?.id),
+      ) ??
+      customEventTemplates[0] ??
+      null,
+    [customEventTemplates, customEventDraft?.templateEventId, selectedEventId, liveHeldEvent?.id],
+  );
+
+  const effectiveCustomDraft = useMemo<ManualEventDraft | null>(() => {
+    if (!activeCustomTemplate) return null;
+    if (customEventDraft && customEventDraft.templateEventId === activeCustomTemplate.event.id) {
+      return customEventDraft;
+    }
+    return activeCustomTemplate.template.defaultDraft;
+  }, [activeCustomTemplate, customEventDraft]);
+
+  const event = useMemo(() => {
+    if (eventSourceMode === "auto") return liveHeldEvent;
+    if (eventSourceMode === "custom") return activeCustomTemplate?.event ?? null;
+    const sorted = [...serverEvents].sort((a, b) => b.id - a.id);
+    return sorted.find((item) => item.id === selectedEventId) ?? liveHeldEvent ?? sorted[0] ?? null;
+  }, [eventSourceMode, liveHeldEvent, activeCustomTemplate, serverEvents, selectedEventId]);
+
   const solver = useDeckSolver(server, page === "deck");
   const capabilities = solver.engine.status === "ready" ? solver.engine.capabilities : null;
+  const canCustomEvent = !capabilities || capabilities.manualEventBonuses === true;
+
+  const customEventEffects = useMemo(
+    () =>
+      eventSourceMode === "custom" && canCustomEvent && activeCustomTemplate && effectiveCustomDraft
+        ? buildManualEventEffects(activeCustomTemplate.template, effectiveCustomDraft)
+        : undefined,
+    [eventSourceMode, canCustomEvent, activeCustomTemplate, effectiveCustomDraft],
+  );
+  const isManualEventActive =
+    (eventSourceMode === "template" && event !== null && event.id !== liveHeldEvent?.id) ||
+    (eventSourceMode === "custom" && customEventEffects !== undefined);
+
+  const theoreticalBox = useMemo(() => {
+    if (!theoreticalMode) return null;
+    return buildTheoreticalMaxBox(box, server, catalog, saveTables);
+  }, [theoreticalMode, box, server, catalog, saveTables]);
+
+  const activeBox = theoreticalBox ?? box;
   const [excluded, setExcluded] = useState<string[]>([]);
   const [required, setRequired] = useState<string[]>([]);
   const [leaderKey, setLeaderKey] = useState<string | null>(null);
@@ -208,8 +279,8 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
   /** The challenge live that rated challenge points for the shown run. */
   const [rateBasis, setRateBasis] = useState<DeckRateBasis | null>(null);
   const teamPanel = useRef<HTMLDivElement>(null);
-  const ownedMembers = box?.cards.filter(card => card.kind === "member") ?? [];
-  const ownedSnaps = box?.cards.filter(card => card.kind === "snap") ?? [];
+  const ownedMembers = activeBox?.cards.filter(card => card.kind === "member") ?? [];
+  const ownedSnaps = activeBox?.cards.filter(card => card.kind === "snap") ?? [];
   // Keep the stored objective preference while using the selected scene's effective objective.
   const goal = goalInput.goal;
   const serverArenaData = props.deckArenas?.find(row => row.server === server);
@@ -244,6 +315,19 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
     for (const song of songs) if (song.bandId && song.bandName && !map.has(song.bandId)) map.set(song.bandId, song.bandName);
     return map;
   }, [members, songs]);
+  const eventBandOptions = useMemo<NamedEntityOption[]>(
+    () => [...bandNames.entries()].sort((a, b) => a[0] - b[0]).map(([id, name]) => ({ id, name })),
+    [bandNames],
+  );
+  const eventCharacterOptions = useMemo<NamedEntityOption[]>(() => {
+    const map = new Map<number, string>();
+    for (const card of members) {
+      if (card.characterId && card.characterName && !map.has(card.characterId)) {
+        map.set(card.characterId, card.characterName);
+      }
+    }
+    return [...map.entries()].sort((a, b) => a[0] - b[0]).map(([id, name]) => ({ id, name }));
+  }, [members]);
   const arenaEligibleSongs = useMemo(
     () => (activeArenaBandId === null ? [] : songs.filter(song => arenaSongMatchesBand(song, activeArenaBandId, now))),
     [songs, activeArenaBandId, now],
@@ -287,7 +371,7 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
   const supported = capabilities ? computes(capabilities, effectiveInput) : !usesEventItemRewards(effectiveInput) && !rewardLayoutOf(effectiveInput) && effectiveInput.aggregation === "expected";
   const memberBandById = useMemo(() => new Map(members.map(card => [String(card.id), card.bandId])), [members]);
   const idsOf = (keys: readonly string[], kind: CardKind, filterArenaBand = false) => keys.flatMap(key => {
-    const card = box?.cards.find(item => item.key === key && item.kind === kind);
+    const card = activeBox?.cards.find(item => item.key === key && item.kind === kind);
     if (!card?.identity.value) return [];
     if (filterArenaBand && activeArenaBandId !== null && memberBandById.get(card.identity.value) !== activeArenaBandId) return [];
     return [card.identity.value];
@@ -305,7 +389,7 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
   const constraintEntries = useMemo<ConstraintEntry[]>(() => {
     const memberById = new Map(members.map(card => [String(card.id), card]));
     const snapById = new Map(snaps.map(card => [String(card.id), card]));
-    return (box?.cards ?? []).filter(card => card.kind === shownConstraintKind).map(card => {
+    return (activeBox?.cards ?? []).filter(card => card.kind === shownConstraintKind).map(card => {
       const id = card.identity.value ?? "";
       const member = card.kind === "member" ? memberById.get(id) : undefined;
       const snap = card.kind === "snap" ? snapById.get(id) : undefined;
@@ -314,7 +398,7 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
       const subject = known ?? { id: 0, title: cardTitle(card, catalog), rarity: 0, cardType: 0, bandId: 0, bandName: "", characters: [], searchText: "" };
       return { card, subject: { ...subject, searchText: `${subject.searchText} ${cardTitle(card, catalog)} ${cardSubtitle(card, catalog)} ${id}` } };
     });
-  }, [box, members, snaps, catalog, shownConstraintKind]);
+  }, [activeBox, members, snaps, catalog, shownConstraintKind]);
   // The all / required / excluded tab narrows the list without changing the filter options it offers.
   const matchConstraintScope = useCallback((entry: ConstraintEntry) => constraintFilter === "all"
     || (constraintFilter === "required" ? required.includes(entry.card.key) || leaderKey === entry.card.key : excluded.includes(entry.card.key)), [constraintFilter, required, leaderKey, excluded]);
@@ -366,6 +450,7 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
     return () => window.removeEventListener("popstate", back);
   }, [locale]);
   useEffect(() => { setExcluded([]); setRequired([]); setLeaderKey(null); setNoSnaps(false); setUserArenaSource(null); setArenaLeagueId(1); setArenaCustomBandId(1); setArenaCustomMusicType(0); setArenaCustomMissions([0, 0, 0]); setArenaPool([]); setArenaPickerOpen(false);
+    setEventSourceMode("auto"); setSelectedEventId(null); setCustomEventDraft(null); setCustomEventModalOpen(false);
     updateGoal({ musicId: null, challengeMusicId: null, arenaMusicId: null }); setRunError(""); setManagement(false); setSetup(false); setDeleting(false); setImporting(false);
     setConstraintsOpen(false); setEditingCardKey(null); setPlayerSettings(false); setGuideOpen(false); setBackupError(false); setSongPicker(false); setConstraintFilter("all");
     setConstraintKind("member"); setConstraintCardFilters(EMPTY_CARD_FILTERS); setPendingScreenshots([]); setDraggingScreenshots(false); setSavePicker(false); }, [server]);
@@ -384,9 +469,9 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
       if (target instanceof Element && target.closest('input,textarea,[contenteditable]:not([contenteditable="false"])')) return;
       const data = event.clipboardData;
       if (!data) return;
-      const files = [...data.files].filter(file => file.type.startsWith("image/"));
+      const files = [...data.files].filter(file => file.type.startsWith("image/") || isVideoImportFile(file));
       if (!files.length) for (const item of [...data.items]) {
-        if (item.kind !== "file" || !item.type.startsWith("image/")) continue;
+        if (item.kind !== "file" || (!item.type.startsWith("image/") && !item.type.startsWith("video/"))) continue;
         const file = item.getAsFile();
         if (file) files.push(file);
       }
@@ -548,7 +633,7 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
     return time ? `${time} ${displayUtcLabel(endAt, timeZone)}` : endAt;
   };
   const engine = solver.engine;
-  const saveReady = !linked || linkedSave.state.status === "ready";
+  const saveReady = theoreticalMode || !linked || linkedSave.state.status === "ready";
   const canRun = engine.status === "ready" && supported && !gap && !dataGap && saveReady;
   const blocker = engine.status === "loading" ? tr("solver.loading") : engine.status === "unavailable" ? tr(`solver.unavailable.${engine.reason}`)
     : engine.status === "failed" ? "" : !supported ? tr(rewardLayoutOf(effectiveInput) ? effectiveInput.aggregation === "expected" ? "rewardMix.unavailable" : "rewardMix.expectedOnly" : goal === "eventItems" ? "solver.eventItemsUnsupported" : "comingSoon") : gap ? tr(`solver.gap.${gap}`) : !saveReady ? tr("solver.saveNotReady") : "";
@@ -624,7 +709,7 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
       if (busy || ![...event.dataTransfer.types].includes("Files")) return;
       event.preventDefault(); event.dataTransfer.dropEffect = "copy"; setDraggingScreenshots(true);
     }} onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDraggingScreenshots(false); }} onDrop={event => {
-      const files = [...event.dataTransfer.files].filter(file => file.type.startsWith("image/"));
+      const files = [...event.dataTransfer.files].filter(file => file.type.startsWith("image/") || isVideoImportFile(file));
       setDraggingScreenshots(false); if (!files.length) return;
       event.preventDefault(); importImages(files);
     }}>
@@ -645,7 +730,7 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
         labels={{ setup: composer("setupTitle"), collection: composer("collectionTitle"), goal: composer("goalTitle"), conditions: composer("conditionsTitle"), results: composer("resultsTitle") }}
         goalGroups={[
           { id: "event", title: event ? tr("goalGroups.event", { name: event.name, end: formatEnd(event.endAt) }) : tr("goalGroups.eventNone"),
-            goals: event ? [...EVENT_GOALS.filter(value => !isEventPayoffGoal(value)).map(value => goalCard(value)), rewardsCard()] : [] },
+            goals: event ? [...EVENT_GOALS.filter(value => !isEventPayoffGoal(value) && (!customEventEffects || (value !== "challenge" && value !== "challengeSkip"))).map(value => goalCard(value)), rewardsCard()] : [] },
           { id: "everyday", title: tr("goalGroups.everyday"), goals: EVERYDAY_GOALS.map(value => goalCard(value)) },
         ]}
         selectedGoal={isEventPayoffGoal(goal) ? REWARDS_CARD : goal} onGoalChange={selectGoal}
@@ -654,13 +739,17 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
             <span className="dc-pool-stat"><strong>{ownedMembers.length}</strong><span>{tr("member")}</span></span>
             <span className="dc-pool-stat"><strong>{ownedSnaps.length}</strong><span>{tr("snap")}</span></span>
           </div>
-          <p className="dc-pool-source" data-source={linked ? "game-save" : "box"}>
-            <CollectionIcon name={linked ? "game" : "image"} />
-            <span>{[tr(linked ? "gameSave.sourceSave" : "gameSave.sourceBox"),
-              ...(stored?.save ? [linkedSave.state.status === "ready" ? tr("gameSave.uploadedAt", { date: new Date(stored.save.uploadedAt).toLocaleDateString(locale) })
-                : tr(linkedSave.state.status === "loading" ? "gameSave.loadingShort" : "gameSave.unavailableShort")] : []), tr(mode)].join(" · ")}</span>
+          <p className="dc-pool-source" data-source={theoreticalMode ? "box" : linked ? "game-save" : "box"}>
+            <CollectionIcon name={linked && !theoreticalMode ? "game" : "image"} />
+            <span>{theoreticalMode
+              ? tr("theoretical.shortBadge")
+              : [tr(linked ? "gameSave.sourceSave" : "gameSave.sourceBox"),
+                  ...(stored?.save ? [linkedSave.state.status === "ready" ? tr("gameSave.uploadedAt", { date: new Date(stored.save.uploadedAt).toLocaleDateString(locale) })
+                    : tr(linkedSave.state.status === "loading" ? "gameSave.loadingShort" : "gameSave.unavailableShort")] : []), tr(mode)].join(" · ")}</span>
           </p>
-          <Button className="dc-pool-manage" variant="tonal" size="small" disabled={busy} onClick={() => setManagement(true)}>{tr("manage")}</Button>
+          {!theoreticalMode && (
+            <Button className="dc-pool-manage" variant="tonal" size="small" disabled={busy} onClick={() => setManagement(true)}>{tr("manage")}</Button>
+          )}
         </div> : <div className="dc-pool" data-empty="true">
           <p className="dc-pool-empty">{linked ? tr(linkedSave.state.status === "loading" ? "gameSave.loading" : "solver.saveNotReady") : tr("solver.emptyBox")}</p>
           <div className="dc-pool-actions">{linked ? <Button variant="tonal" size="small" disabled={busy} onClick={() => setManagement(true)}>{tr("manage")}</Button> : <>
@@ -668,9 +757,61 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
             <Button variant="tonal" size="small" disabled={busy} onClick={openScreenshotImport} startIcon={<CollectionIcon name="image" />}>{tr("screenshotImport")}</Button>
             <Button variant="text" size="small" disabled={busy} onClick={() => box ? setManagement(true) : setSetup(true)}>{box ? tr("manage") : composer("manualShort")}</Button></>}</div>
         </div>}
+          <DeckSwitchRow
+            label={tr("theoretical.toggle")}
+            description={tr("theoretical.hint")}
+            checked={theoreticalMode}
+            onChange={(checked) => {
+              setTheoreticalMode(checked);
+              setLeaderKey(null);
+              setRequired([]);
+              setExcluded([]);
+            }}
+          />
           <HaneokaExport locale={locale} box={box} disabled={busy || !box?.cards.length || linked && linkedSave.state.status !== "ready"} />
         </>}
         conditions={<>
+          {serverEvents.length > 0 && ((EVENT_GOALS as readonly string[]).includes(goal) || goal === "power" || !liveHeldEvent || eventSourceMode !== "auto") && (
+            <DeckEventSourceControls
+              locale={locale}
+              mode={eventSourceMode}
+              heldEvent={liveHeldEvent}
+              events={serverEvents}
+              selectedEventId={event?.id ?? selectedEventId}
+              customTemplates={customEventTemplates}
+              customDraft={effectiveCustomDraft}
+              canCustom={canCustomEvent}
+              onModeChange={(nextMode) => {
+                setEventSourceMode(nextMode);
+                if (nextMode === "custom") {
+                  const firstTpl = customEventTemplates.find(t => t.event.id === (selectedEventId ?? liveHeldEvent?.id)) ?? customEventTemplates[0];
+                  if (firstTpl) {
+                    setSelectedEventId(firstTpl.event.id);
+                    if (!customEventDraft || customEventDraft.templateEventId !== firstTpl.event.id) {
+                      setCustomEventDraft(firstTpl.template.defaultDraft);
+                    }
+                  }
+                  if (goal === "challenge" || goal === "challengeSkip") {
+                    updateGoal({ goal: "eventPoints", venue: "freeLive" });
+                  } else if (goalInput.venue === "challengeLive" || goalInput.venue === "challengeSkip") {
+                    updateGoal({ venue: "freeLive" });
+                  }
+                } else if (nextMode === "template" && selectedEventId === null) {
+                  const firstEv = liveHeldEvent ?? [...serverEvents].sort((a, b) => b.id - a.id)[0] ?? null;
+                  if (firstEv) setSelectedEventId(firstEv.id);
+                }
+              }}
+              onSelectedEventChange={(nextEventId) => {
+                setSelectedEventId(nextEventId);
+                if (eventSourceMode === "custom") {
+                  const tpl = customEventTemplates.find((entry) => entry.event.id === nextEventId);
+                  if (tpl) setCustomEventDraft(tpl.template.defaultDraft);
+                }
+                updateGoal({ challengeMusicId: null });
+              }}
+              onOpenCustomModal={() => setCustomEventModalOpen(true)}
+            />
+          )}
           {canAllSongs && (
             <DeckSwitchRow
               label={tr("solver.allSongs")}
@@ -698,7 +839,9 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
               options={goalVenues(goal).map((value) => ({
                 value: value as DeckVenue,
                 label: tr(`venues.${value}`),
-                disabled: !!capabilities && !computes(capabilities, { goal, venue: value }),
+                disabled:
+                  (Boolean(customEventEffects) && (value === "challengeLive" || value === "challengeSkip")) ||
+                  (!!capabilities && !computes(capabilities, { goal, venue: value })),
               }))}
             />
           ) : null}
@@ -887,7 +1030,7 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
             <Button
               variant={activeConstraintCount > 0 ? "tonal" : "outlined"}
               size="small"
-              disabled={!box || busy}
+              disabled={!activeBox || busy}
               onClick={openConstraints}
               startIcon={<Icon name="filter" className="h-[18px] w-[18px]" />}
             >
@@ -937,7 +1080,8 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
           {job.status !== "running" && (runBlocker || blocker) && <small className="dc-blocker">{runBlocker || blocker}</small>}
         </>}
         results={<div ref={teamPanel} className="dc-team-body">
-          {job.status !== "idle" ? <DeckResult locale={locale} job={job} goal={goal} rateBasis={rateBasis} stale={stale} timeLimit={goalInput.timeLimit} box={box} catalog={catalog} linked={linked} busy={busy}
+          {job.status !== "idle" ? <DeckResult locale={locale} job={job} goal={goal} rateBasis={rateBasis} stale={stale} timeLimit={goalInput.timeLimit} box={activeBox} catalog={catalog} linked={linked && !theoreticalMode} busy={busy}
+            theoreticalMode={theoreticalMode} growthByTeam={solver.growthByTeam} onEvaluateGrowth={solver.evaluateGrowth}
             onStop={solver.stop} onRerun={runSolver} songNames={Object.fromEntries([...songs.map(song => [song.id, song.title] as const), ...arenas.map(arena => [-arena.id, songs.find(song => song.id === arena.musicId)?.title ?? String(arena.musicId)] as const)])} onEditCard={setEditingCardKey} onPlayer={() => setPlayerSettings(true)} onAnswerAll={(keys, name, value) => void answerAll(keys, name, value)} />
           : <div className="dc-empty-team"><div className="dc-empty-slots" aria-hidden="true">{Array.from({ length: 5 }, (_, index) => <span key={index} className={index === 2 ? "is-leader" : ""} />)}</div>
             <h3>{composer(ownedMembers.length ? "readyTitle" : "emptyTitle")}</h3><p>{composer(ownedMembers.length ? "readyDescription" : "emptyDescription")}</p></div>}
@@ -1051,7 +1195,7 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
             const isLeader = leaderKey === card.key;
             const isRequired = required.includes(card.key);
             const isExcluded = excluded.includes(card.key);
-            const memberRequiredCount = required.filter((key) => box?.cards.find((other) => other.key === key)?.kind === card.kind).length;
+            const memberRequiredCount = required.filter((key) => activeBox?.cards.find((other) => other.key === key)?.kind === card.kind).length;
             return (
               <div key={card.key} className="dc-constraint-card">
                 <BoxArtwork card={card} catalog={catalog} locale={locale} square />
@@ -1136,6 +1280,20 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
         </div>
       </div>
     </Modal>
+    {activeCustomTemplate && effectiveCustomDraft && (
+      <DeckManualEventDialog
+        locale={locale}
+        isOpen={customEventModalOpen}
+        onClose={() => setCustomEventModalOpen(false)}
+        template={activeCustomTemplate.template}
+        draft={effectiveCustomDraft}
+        onChange={setCustomEventDraft}
+        onReset={() => setCustomEventDraft(activeCustomTemplate.template.defaultDraft)}
+        bands={eventBandOptions}
+        characters={eventCharacterOptions}
+        catalog={catalog}
+      />
+    )}
   </div></ContentServerProvider>;
 }
 export default withMd3(DeckWorkspace);

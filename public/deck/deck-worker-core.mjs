@@ -108,6 +108,12 @@ function invalidRun(message) {
   return null;
 }
 
+function invalidGrowth(message) {
+  if (typeof message.jobId !== 'string' || !message.jobId || !Number.isSafeInteger(message.inputRevision)) return 'Invalid job binding';
+  if (typeof message.accountJson !== 'string' || typeof message.requestJson !== 'string' || typeof message.teamJson !== 'string') return 'Growth input must be JSON text';
+  return null;
+}
+
 /**
  * @param {{
  *   post: (message: object) => void,
@@ -278,10 +284,46 @@ export function createDeckWorkerCore({
     post({ type: 'result', jobId, inputRevision, resultJson });
   }
 
+  function growth(message) {
+    const problem = invalidGrowth(message);
+    const binding = typeof message.jobId === 'string' && message.jobId ? { jobId: message.jobId, ...(Number.isSafeInteger(message.inputRevision) ? { inputRevision: message.inputRevision } : {}) } : {};
+    if (problem) { post({ type: 'failed', ...binding, code: 'protocol', message: problem }); return; }
+    const { jobId, inputRevision } = message;
+    if (crashed) { post({ type: 'failed', ...binding, code: 'runtime', message: 'The solver stopped after an earlier crash' }); return; }
+    if (!solver) {
+      post({ type: 'failed', ...binding, code: failure ? failure.code : 'protocol', message: failure ? 'Initialization failed: ' + failure.message : 'The Worker is not initialized' });
+      return;
+    }
+    if (typeof solver.evaluateGrowth !== 'function') {
+      post({
+        type: 'growthResult',
+        jobId,
+        inputRevision,
+        growthJson: JSON.stringify({ format: 'moenotes.deck-growth/1', status: 'invalid', metricKind: 'power', baseline: null, scenarios: [], cards: [], elapsedMs: 0, message: 'growth-unsupported-runtime' }),
+      });
+      return;
+    }
+    let growthJson;
+    try {
+      growthJson = solver.evaluateGrowth(message.accountJson, message.requestJson, message.teamJson);
+    } catch (error) {
+      crashed = true;
+      post({ type: 'failed', ...binding, code: 'runtime', message: describe(error) });
+      return;
+    }
+    if (typeof growthJson !== 'string') {
+      crashed = true;
+      post({ type: 'failed', ...binding, code: 'runtime', message: 'DeckSolver.evaluateGrowth returned no result text' });
+      return;
+    }
+    post({ type: 'growthResult', jobId, inputRevision, growthJson });
+  }
+
   async function dispatch(message) {
     if (!record(message)) { post({ type: 'failed', code: 'protocol', message: 'Not a message object' }); return; }
     if (message.type === 'init') return initialize(message);
     if (message.type === 'run') return run(message);
+    if (message.type === 'growth') return growth(message);
     post({ type: 'failed', code: 'protocol', message: 'Unknown message type ' + String(message.type) });
   }
 

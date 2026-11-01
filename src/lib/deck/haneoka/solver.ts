@@ -1,6 +1,7 @@
 import { parseRequest } from "./clock";
 import { adaptData, optionalTable, table, type DeckData } from "./data";
 import { adaptAccount, type AccountInput } from "./account";
+import { evaluateTeamGrowth } from "./growth";
 import { adaptRequest, CAPABILITIES, HANEOKA_COMMIT, HANEOKA_PATCH_SHA, type RecommendationRequest } from "./request";
 import { HaneokaWasm } from "./wasm";
 let engine: HaneokaWasm | null = null;
@@ -258,6 +259,19 @@ export class DeckSolver {
       return JSON.stringify({ format: "ournotes-deck.account-recommendation/1", final: true, status: "invalid", missing: [],
         errors: [{ path: "request", code: "unsupported_request", message: error.message }], result: null });
     } finally { engine!.onProgress = null; }
+  }
+  evaluateGrowth(accountJson: string, requestJson: string, teamJson: string): string {
+    return evaluateTeamGrowth(
+      this.data,
+      this.datasetId,
+      {
+        run: (charts, request) =>
+          engine!.invoke<EngineResponse>({ op: "run", handle: this.handle, charts, request }),
+      },
+      accountJson,
+      requestJson,
+      teamJson,
+    );
   }
   free() { engine!.invoke({ op: "dispose", handle: this.handle }); }
 }

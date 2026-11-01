@@ -11,13 +11,15 @@ import { bindRecognitionSource, decodeScreenshot, loadRecognitionBundle } from "
 import { RecognitionError } from "@/lib/recognition/errors";
 import { RecognitionBatch, type RecognitionFileSnapshot } from "@/lib/recognition/batch";
 import { correctRecognizedBoxIdentity, correctRecognizedValue, mergeRecognizedBox, unidentifiedCardKey, type RecognitionBinding, type RecognitionBox, type RecognitionConfiguration, type RecognitionSource } from "@/lib/recognition/protocol";
+import { consolidateVideoRecognitionResults, extractVideoFrames, isVideoImportFile, sha256BlobHex, type VideoFrameRecognitionEntry } from "@/lib/recognition/video";
 import { RecognitionWorkerClient } from "@/lib/recognition/worker-client";
+import { DeckSelect } from "@/components/deck/DeckControls";
 import Modal from "@/components/shared/Modal";
 import CardIdentitySelection from "./CardIdentitySelection";
 import { ObservedLevelControl, StepControl } from "@/components/shared/CardGrowthControls";
 import { BoxArtwork, cardTitle, cardSubtitle, cardRarityLabel, type BoxCatalog } from "./BoxManager";
 
-interface ImageInput { key: string; name: string; file: File; url: string }
+interface ImageInput { key: string; name: string; file: File; url: string; isVideo: boolean }
 interface TileCrop { url: string; bbox: RecognitionBox; width: number; height: number }
 const pending = (row: RecognitionFileSnapshot) => ["queued", "preparing", "running"].includes(row.status);
 
@@ -48,8 +50,9 @@ export default function ScreenshotImport({ locale, server, source, sourceIssue, 
   const images = useRef(new Map<string, ImageInput>()), bootstrap = useRef<RecognitionFileSnapshot[]>([]);
   const batch = useRef<RecognitionBatch | null>(null), bound = useRef<{ source: RecognitionSource; configuration: RecognitionConfiguration } | null>(null);
   const failures = useRef(new Map<string, RecognitionError>());
+  const videoProgress = useRef(new Map<string, { done: number; total: number }>());
   const generation = useRef(0), pumping = useRef(false), origin = useRef<string | null>(null), savingRef = useRef(false);
-  const active = useRef<{ key: string; jobId: string; controller: AbortController } | null>(null);
+  const active = useRef<{ key: string; jobId: string; startedAt: number; controller: AbortController } | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null), elapsedTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const pumpRef = useRef<() => Promise<void>>(async () => {});
   const enqueueRef = useRef<(files: readonly File[]) => boolean>(() => false);
@@ -59,8 +62,16 @@ export default function ScreenshotImport({ locale, server, source, sourceIssue, 
   // One gallery serves every server; each batch pins the bundle it first loaded.
   const config = assetConfig.recognition;
   const supported = !!source && !!config.workerUrl && !!config.pointerUrl;
-  const readRows = () => batch.current?.snapshot().files ?? bootstrap.current.map(row => ({ ...row,
-    elapsedMs: pending(row) && row.startedAt !== undefined ? performance.now() - row.startedAt : row.elapsedMs }));
+  const readRows = () => (batch.current?.snapshot().files ?? bootstrap.current).map(row => {
+    const runningVideo = active.current?.key === row.key && images.current.get(row.key)?.isVideo && row.status === "queued";
+    const status = runningVideo ? ("running" as const) : row.status;
+    const started = row.startedAt ?? (runningVideo ? active.current?.startedAt : undefined);
+    return {
+      ...row,
+      status,
+      elapsedMs: (pending({ ...row, status }) && started !== undefined) ? performance.now() - started : row.elapsedMs,
+    };
+  });
   const publish = () => setRows(readRows());
   const patchBootstrap = (key: string, change: Partial<RecognitionFileSnapshot>) => {
     bootstrap.current = bootstrap.current.map(row => row.key === key ? { ...row, ...change } : row);
@@ -75,8 +86,8 @@ export default function ScreenshotImport({ locale, server, source, sourceIssue, 
   }
   function clearBatch(update = true) {
     generation.current++; stopActive();
-    for (const image of images.current.values()) URL.revokeObjectURL(image.url);
-    images.current.clear(); bootstrap.current = []; batch.current = null; bound.current = null; failures.current.clear(); origin.current = null;
+    for (const image of images.current.values()) if (image.url) URL.revokeObjectURL(image.url);
+    images.current.clear(); bootstrap.current = []; batch.current = null; bound.current = null; failures.current.clear(); videoProgress.current.clear(); origin.current = null;
     revealReview.current = true;
     if (update) { setRows([]); setDraft(null); setExcluded([]); setSelectedImage(null); setEditingKey(null); setChoosingIdentity(false); setStale(false); setSaveError(false); }
   }
@@ -113,7 +124,10 @@ export default function ScreenshotImport({ locale, server, source, sourceIssue, 
     if (!files.length || !supported || stale || savingRef.current) return false;
     if (origin.current && origin.current !== currentRef.current) return false;
     if (!origin.current) origin.current = currentRef.current;
-    const added = files.map(file => ({ key: crypto.randomUUID(), name: file.name, file, url: URL.createObjectURL(file) }));
+    const added = files.map(file => {
+      const isVideo = isVideoImportFile(file);
+      return { key: crypto.randomUUID(), name: file.name, file, url: isVideo ? "" : URL.createObjectURL(file), isVideo };
+    });
     for (const image of added) images.current.set(image.key, image);
     if (batch.current) batch.current.addFiles(added); else bootstrap.current.push(...added.map(({ key, name }) => ({ key, name, status: "queued" as const, elapsedMs: 0 })));
     setSelectedImage(previous => previous ?? added[0]!.key); setSaveError(false); publish(); void pumpRef.current();
@@ -135,9 +149,9 @@ export default function ScreenshotImport({ locale, server, source, sourceIssue, 
       if (event.target instanceof Element && event.target.closest('input, textarea, [contenteditable]:not([contenteditable="false"])')) return;
       const data = event.clipboardData;
       if (!data) return;
-      const files = Array.from(data.files).filter(file => file.type.startsWith("image/"));
+      const files = Array.from(data.files).filter(file => file.type.startsWith("image/") || isVideoImportFile(file));
       if (!files.length) for (const item of Array.from(data.items)) {
-        if (item.kind !== "file" || !item.type.startsWith("image/")) continue;
+        if (item.kind !== "file" || (!item.type.startsWith("image/") && !item.type.startsWith("video/"))) continue;
         const file = item.getAsFile();
         if (file) files.push(file);
       }
@@ -157,16 +171,21 @@ export default function ScreenshotImport({ locale, server, source, sourceIssue, 
         const row = readRows().find(item => item.status === "queued");
         if (!row) break;
         const image = images.current.get(row.key)!;
-        const jobId = crypto.randomUUID(), startedAt = performance.now(), deadline = startedAt + 90000;
-        const controller = new AbortController(); active.current = { key: row.key, jobId, controller };
+        const timeoutMs = image.isVideo ? 600_000 : 90_000;
+        const jobId = crypto.randomUUID(), startedAt = performance.now(), deadline = startedAt + timeoutMs;
+        const controller = new AbortController(); active.current = { key: row.key, jobId, startedAt, controller };
         let binding: RecognitionBinding | undefined;
         const attemptCurrent = () => scopeAlive() && active.current?.jobId === jobId
-          && (!batch.current || readRows().find(item => item.key === row.key)?.binding?.jobId === jobId);
+          && (!batch.current || !binding || readRows().find(item => item.key === row.key)?.binding?.jobId === jobId);
         const alive = () => attemptCurrent()
           && (batch.current && binding ? batch.current.isCurrent(row.key, binding) : readRows().some(item => item.key === row.key && pending(item)));
         try {
-          if (batch.current) binding = batch.current.prepare(row.key, { jobId, startedAt, deadline });
-          else patchBootstrap(row.key, { status: "preparing", startedAt, deadline });
+          if (!image.isVideo) {
+            if (batch.current) binding = batch.current.prepare(row.key, { jobId, startedAt, deadline });
+            else patchBootstrap(row.key, { status: "preparing", startedAt, deadline });
+          } else if (!batch.current) {
+            patchBootstrap(row.key, { status: "preparing", startedAt, deadline });
+          }
           publish();
           elapsedTimer.current = setInterval(() => { if (alive()) publish(); }, 250);
           timer.current = setTimeout(() => {
@@ -174,7 +193,112 @@ export default function ScreenshotImport({ locale, server, source, sourceIssue, 
             failures.current.set(row.key, new RecognitionError("timeLimit"));
             if (batch.current) batch.current.fail(row.key, "timeLimit", binding); else patchBootstrap(row.key, { status: "timeLimit", elapsedMs: performance.now() - startedAt });
             stopActive(); publish();
-          }, 90000);
+          }, timeoutMs);
+
+          if (image.isVideo) {
+            const runtime = bound.current
+              ? bound.current
+              : await loadRecognitionBundle(config, controller.signal).then(loaded => ({
+                  source: bindRecognitionSource(loaded.manifest, source),
+                  configuration: loaded.configuration,
+                }));
+            if (!alive()) continue;
+            bound.current = runtime;
+            const verifiedSource = runtime.source;
+            if (!batch.current) {
+              batch.current = new RecognitionBatch({
+                batchId: crypto.randomUUID(),
+                inputRevision: String(box?.revision ?? 0),
+                source: verifiedSource,
+                manifestSha256: runtime.configuration.gallerySha256,
+                at: Date.now(),
+                files: [...images.current.values()],
+              });
+              for (const previous of bootstrap.current) {
+                if (previous.status === "cancelled") batch.current.cancelFile(previous.key);
+                else if (["failed", "timeLimit"].includes(previous.status)) batch.current.fail(previous.key, previous.error ?? (previous.status === "timeLimit" ? "timeLimit" : "failed"));
+              }
+            }
+
+            const videoSourceId = await sha256BlobHex(image.file);
+            if (!alive()) continue;
+            const frameEntries: VideoFrameRecognitionEntry[] = [];
+            let totalExtractedFrames = 0;
+            const inputRev = String(box?.revision ?? 0);
+            const galleryId = verifiedSource.gallery?.galleryId ?? "";
+
+            for await (const vf of extractVideoFrames(image.file, controller.signal)) {
+              if (!alive()) break;
+              totalExtractedFrames = vf.total;
+              videoProgress.current.set(row.key, { done: vf.index, total: vf.total });
+              if (!image.url) {
+                image.url = URL.createObjectURL(vf.frame);
+              }
+              publish();
+
+              const frameFile = new File([vf.frame], `frame-${vf.index}.jpg`, { type: "image/jpeg" });
+              const pixels = await decodeScreenshot(frameFile);
+              if (!alive()) break;
+              const frameBinding: RecognitionBinding = {
+                jobId: `${jobId}:f${vf.index}`,
+                inputRevision: inputRev,
+                datasetId: verifiedSource.sourceId,
+                galleryId,
+              };
+              const frameResult = await client.current.run({
+                source: verifiedSource,
+                configuration: runtime.configuration,
+                image: pixels,
+                timeLimitMs: Math.min(60_000, Math.max(5_000, deadline - performance.now())),
+                binding: frameBinding,
+                isCurrent: alive,
+                onProgress: () => {},
+              });
+              if (!alive()) break;
+              frameEntries.push({
+                result: frameResult,
+                frame: vf.frame,
+                width: pixels.width,
+                height: pixels.height,
+              });
+            }
+
+            if (!alive()) continue;
+            const commitAt = performance.now();
+            const commitDeadline = commitAt + 60_000;
+            binding = batch.current.prepare(row.key, { jobId, startedAt: commitAt, deadline: commitDeadline });
+            const width = frameEntries[0]?.width ?? 1;
+            const height = frameEntries[0]?.height ?? 1;
+            binding = batch.current.begin(row.key, {
+              jobId,
+              sourceId: videoSourceId,
+              width,
+              height,
+              startedAt: commitAt,
+              deadline: commitDeadline,
+            });
+            const consolidated = consolidateVideoRecognitionResults(
+              frameEntries,
+              binding,
+              videoSourceId,
+              totalExtractedFrames,
+            );
+            if (consolidated.previewFrame) {
+              if (image.url) URL.revokeObjectURL(image.url);
+              image.url = URL.createObjectURL(consolidated.previewFrame);
+            }
+            const complete = batch.current.finish(row.key, consolidated.result);
+            if (complete) {
+              const observation = batch.current.draft();
+              setDraft(previous => previous ? mergeRecognizedBox(previous, observation) : observation);
+            } else {
+              const stopped = readRows().find(item => item.key === row.key)!;
+              failures.current.set(row.key, new RecognitionError(stopped.status === "timeLimit" ? "timeLimit" : "worker", stopped.error ?? consolidated.result.error ?? ""));
+            }
+            publish();
+            continue;
+          }
+
           const [pixels, runtime] = await Promise.all([decodeScreenshot(image.file), bound.current
             ? Promise.resolve(bound.current)
             : loadRecognitionBundle(config, controller.signal).then(loaded => ({ source: bindRecognitionSource(loaded.manifest, source), configuration: loaded.configuration }))]);
@@ -208,7 +332,14 @@ export default function ScreenshotImport({ locale, server, source, sourceIssue, 
           // prepare/begin may mark this exact job timeLimit before throwing.
           // Publish its terminal state, while still excluding an older retry's catch.
           if (attemptCurrent()) {
-            const failure = error instanceof RecognitionError ? error : new RecognitionError("worker", error instanceof Error ? error.message : "");
+            const rawDetail = error instanceof Error ? error.message : "";
+            const localizedDetail =
+              rawDetail === "video-too-long"
+                ? tr("videoImport.videoTooLong")
+                : rawDetail === "video-decode"
+                  ? tr("videoImport.videoDecodeFailed")
+                  : rawDetail;
+            const failure = error instanceof RecognitionError ? error : new RecognitionError("worker", localizedDetail);
             failures.current.set(row.key, failure);
             if (batch.current) batch.current.fail(row.key, failure.code === "timeLimit" ? "timeLimit" : failure.code, binding);
             else patchBootstrap(row.key, { status: failure.code === "timeLimit" ? "timeLimit" : "failed", error: failure.code, elapsedMs: performance.now() - startedAt });
@@ -264,23 +395,33 @@ export default function ScreenshotImport({ locale, server, source, sourceIssue, 
         {!supported && <p className="dw-alert" role="alert">{tr(source ? "recognitionUnavailable" : "recognitionError.catalogBinding")}{sourceIssue && <span className="dw-recognition-error-detail">{sourceIssue}</span>}</p>}
         <div className={`dw-screenshot-upload ${dragging ? " is-dragging" : ""}`} onDragOver={event => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)}
           onDrop={event => { event.preventDefault(); setDragging(false); enqueue(Array.from(event.dataTransfer.files)); }}>
-          <input className="dw-hidden" ref={input} type="file" multiple accept="image/png,image/jpeg,image/webp" aria-label={tr("chooseScreenshots")}
+          <input className="dw-hidden" ref={input} type="file" multiple accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,video/quicktime" aria-label={tr("videoImport.chooseMedia")}
             disabled={!supported || stale || saving} onChange={event => { enqueue(Array.from(event.target.files ?? [])); event.target.value = ""; }} />
-          <button type="button" className="dw-primary" disabled={!supported || stale || saving} onClick={() => input.current?.click()}>{tr(rows.length ? "appendScreenshots" : "chooseScreenshots")}</button>
-          <div><strong>{tr("dropScreenshots")}</strong><span>{tr("pasteScreenshots")}<br />{tr("screenshotTypes")}</span></div>
+          <button type="button" className="dw-primary" disabled={!supported || stale || saving} onClick={() => input.current?.click()}>{tr(rows.length ? "videoImport.appendMedia" : "videoImport.chooseMedia")}</button>
+          <div><strong>{tr("videoImport.dropMedia")}</strong><span>{tr("pasteScreenshots")}<br />{tr("videoImport.mediaTypes")}</span></div>
         </div>
         {stale && <div className="dw-alert" role="alert"><p>{tr("recognitionStale")}</p><button type="button" onClick={() => clearBatch()}>{tr("startNewImport")}</button></div>}
         {rows.length > 0 && <section className="dw-screenshot-queue" aria-label={tr("screenshotQueue")}>
           <div className="dw-toolbar"><strong>{tr("batchProgress", { done: completed, total: rows.length })}</strong>{running && <button type="button" onClick={cancelRemaining}>{tr("cancelRemaining")}</button>}</div>
           <div className="dw-screenshot-queue-list">{rows.map((row, index) => {
-            const image = images.current.get(row.key)!, failure = failures.current.get(row.key);
+            const image = images.current.get(row.key)!, failure = failures.current.get(row.key), vProg = videoProgress.current.get(row.key);
             return <article className={`dw-screenshot-queue-item ${row.key === selectedImage ? " is-selected" : ""}`} key={row.key} data-image-key={row.key} data-status={row.status}>
               <button type="button" className="dw-screenshot-queue-select" aria-pressed={row.key === selectedImage} onClick={() => setSelectedImage(row.key)}>
-                <img src={image.url} alt="" /><span>{index + 1} · {row.name}</span>
+                {image.url ? <img src={image.url} alt="" /> : <span className="dw-card-art dw-card-unknown" aria-hidden="true">MP4</span>}<span>{index + 1} · {row.name}</span>
               </button>
-              <strong className="dw-small" role="status">{tr(`batchStatus.${row.status}`)}</strong>
+              <strong className="dw-small" role="status">
+                {image.isVideo && pending(row) && vProg
+                  ? tr("videoImport.frameProgress", vProg)
+                  : tr(`batchStatus.${row.status}`)}
+              </strong>
               {(row.status === "preparing" || row.status === "running") && <small>{tr("recognitionElapsed", { seconds: Math.floor(row.elapsedMs / 1000) })}</small>}
-              {row.status === "complete" && <small>{tr("imageCardCount", { count: row.result?.cards.length ?? 0 })}</small>}
+              {row.status === "complete" && (
+                <small>
+                  {image.isVideo && vProg
+                    ? tr("videoImport.videoSummary", { frames: vProg.total, count: row.result?.cards.length ?? 0 })
+                    : tr("imageCardCount", { count: row.result?.cards.length ?? 0 })}
+                </small>
+              )}
               {row.status === "complete" && !!row.result?.unidentified.length && <small>{tr("imageUnidentifiedCount", { count: row.result.unidentified.length })}</small>}
               {row.duplicateOf && <small>{tr("duplicateScreenshot")}</small>}
               {failure && <details className="dw-queue-error"><summary>{tr("failureDetails")}</summary><p>{tr(failure.code === "timeLimit" ? "recognitionTimeLimit" : `recognitionError.${failure.code}`)}</p>{failure.detail && <p className="dw-recognition-error-detail">{failure.detail.slice(0, 240)}</p>}</details>}
@@ -289,7 +430,7 @@ export default function ScreenshotImport({ locale, server, source, sourceIssue, 
             </article>;
           })}</div>
         </section>}
-        {selectedInput && <details className="dw-original-screenshot" key={selectedInput.key}>
+        {selectedInput && selectedInput.url && <details className="dw-original-screenshot" key={selectedInput.key}>
           <summary>{tr("viewOriginal", { name: selectedInput.name })}</summary>
           <div className="dw-screenshot-preview" style={selectedRow?.width && selectedRow.height ? { aspectRatio: `${selectedRow.width} / ${selectedRow.height}` } : undefined}>
             <img src={selectedInput.url} alt={tr("screenshotPreview")} />
@@ -322,8 +463,20 @@ export default function ScreenshotImport({ locale, server, source, sourceIssue, 
         {saveError && <p className="dw-alert" role="alert">{tr("recognitionSaveFailed")}</p>}
         {draft && <div className="dw-recognition-save">
           <div><strong>{tr("batchSelected", { count: selectedCount })}</strong><p className="dw-small dw-muted">{tr(running ? "batchSaveWait" : "recognitionCoverage")}</p></div>
-          {!box && <label>{tr("storageChoice")}<select aria-label={tr("storageChoice")} value={destination} disabled={saving || stale} onChange={event => setDestination(event.target.value as BoxMode)}><option value="local">{tr("local")}</option><option value="temporary">{tr("temporary")}</option></select></label>}
-          <button type="button" disabled={saving || stale} onClick={() => input.current?.click()}>{tr("appendScreenshots")}</button>
+          {!box && (
+            <DeckSelect
+              compact
+              ariaLabel={tr("storageChoice")}
+              value={destination}
+              disabled={saving || stale}
+              options={[
+                { value: "local", label: tr("local") },
+                { value: "temporary", label: tr("temporary") },
+              ]}
+              onChange={setDestination}
+            />
+          )}
+          <button type="button" disabled={saving || stale} onClick={() => input.current?.click()}>{tr("videoImport.appendMedia")}</button>
           <button type="button" className="dw-primary" disabled={running || saving || stale || !selectedCount} onClick={() => void save()}>{tr(saving ? "recognitionSaving" : "saveBatch", { count: selectedCount })}</button>
         </div>}
         <p className="dw-small dw-muted">{tr("recognitionSharedCoverage")}</p>
