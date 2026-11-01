@@ -18,6 +18,9 @@ function orders(): number[][] {
 }
 const ORDERS = orders();
 function id(key: string): number { return Number(key.slice(1)); }
+interface EngineTimingStep { step: number; timeMs: number; notes: number; gain: number }
+interface EngineTimingWindow { event: number; startMs: number; endMs: number; unit: number; notes: number[]; steps: EngineTimingStep[] }
+interface EngineOrderTiming { score: number; best: number; advanceMs: number; windows: EngineTimingWindow[]; orderIndex?: number }
 interface EngineAggregateSong {
   song: { songId: number; difficulty: number; baseSongId?: number };
   power: number;
@@ -25,7 +28,7 @@ interface EngineAggregateSong {
 }
 interface EngineHit { song?: { songId: number; difficulty: number; baseSongId?: number; arenaMusicId?: number } | null; aggregate?: { kind: "mean"; songs: EngineAggregateSong[] }; lexVector?: string[]; members: string[]; snaps: (string | null)[]; power: number; key: number; skipScore?: number; score?: { orders: number[]; mean?: number } | null; event?: { mean: number; rewardSum: number | string; orders: number; selectedOrder?: number; sampled?: boolean; lower?: number; upper?: number }; levels?: { sum: string; terms: string[]; lower?: number; upper?: number; termBounds?: { lower: number; upper: number }[] }[] }
 interface EngineResponse { results: { proven: boolean; bound: number | null; sampled?: boolean; hits?: EngineHit[] }[]; overall: EngineHit[]; elapsedMs: number | null }
-function answer(response: EngineResponse, request: RecommendationRequest, coversAllOwnedCards: boolean, final: boolean, coverage?: number, seeds?: Pick<EngineHit, "members" | "snaps" | "song">[]) {
+function answer(response: EngineResponse, request: RecommendationRequest, coversAllOwnedCards: boolean, final: boolean, coverage?: number, seeds?: Pick<EngineHit, "members" | "snaps" | "song">[], timings?: ReadonlyMap<EngineHit, EngineOrderTiming & { orderIndex: number }>) {
   const rows = response.results ?? [];
   const sampled = (response.overall ?? []).some(hit => hit.event?.sampled === true) || rows.some(row => row.sampled === true);
   const proven = final && !sampled && rows.length > 0 && rows.every(row => row.proven === true);
@@ -53,6 +56,8 @@ function answer(response: EngineResponse, request: RecommendationRequest, covers
     if (maximumReward && (!Number.isInteger(selected) || selected! < 0 || selected! >= 120 || scores.length !== 120 || !sampledReward && settlement!.orders !== 1))
       throw new Error("haneoka-reward-order-certificate");
     const bestOrder = maximumReward ? { score: scores[selected!]!, payoff: Number(settlement!.rewardSum) / settlement!.orders, order: ORDERS[selected!]!.map(slot => members[slot]) } : values?.max ?? null;
+    const rawTiming = timings?.get(hit);
+    const timingOrder = rawTiming ? ORDERS[rawTiming.orderIndex] : undefined;
     const pair = (i: number) => ({ member: members[i], snap: snaps[i] });
     return {
       rank: index + 1, rankCertified: proven, leader: pair(0), others: [1, 2, 3, 4].map(pair),
@@ -60,6 +65,23 @@ function answer(response: EngineResponse, request: RecommendationRequest, covers
         payoff: reward ? payoff(settlement!.rewardSum) : null }, orders: maximumReward || sampledReward ? null : values,
       ...(combined ? { levels: hit.levels!.map(level => ({ value: payoff(level.sum, level.lower, level.upper), terms: level.terms.map((sum, i) => payoff(sum, level.termBounds?.[i]?.lower, level.termBounds?.[i]?.upper)) })) } : {}),
       bestOrder: sampledReward && !maximumReward ? null : bestOrder,
+      ...(rawTiming && timingOrder ? {
+        timing: {
+          order: timingOrder.map(slot => members[slot]!),
+          score: rawTiming.score,
+          best: rawTiming.best,
+          advanceMs: rawTiming.advanceMs,
+          windows: rawTiming.windows.map(win => ({
+            event: win.event,
+            member: members[timingOrder[win.event] ?? 0]!,
+            startMs: win.startMs,
+            endMs: win.endMs,
+            unit: win.unit,
+            notes: win.notes,
+            steps: win.steps,
+          })),
+        },
+      } : {}),
       ...(hit.song && typeof hit.song.songId === "number" ? { song: { musicId: hit.song.baseSongId ?? hit.song.songId, difficulty: ["easy", "normal", "hard", "expert"][hit.song.difficulty] } } : {}),
       ...(hit.aggregate?.kind === "mean" && Array.isArray(hit.aggregate.songs) ? {
         aggregate: {
@@ -252,8 +274,63 @@ export class DeckSolver {
         request: prepared }, true);
       response.overall = mergeWarm(response.overall);
       for (const row of response.results) remember(row.hits ?? []);
+      const timings = new Map<EngineHit, EngineOrderTiming & { orderIndex: number }>();
+      if ((converted.goal.kind === "score" || (converted.goal.kind === "event" && !("gekiso" in converted.goal))) && response.overall.length) {
+        const maximumReward = ["eventPoints", "eventItems", "challengePoints", "combined"].includes(request.metric?.kind ?? "")
+          && request.aggregation === "maximum" && request.goal.kind !== "skip";
+        for (const hit of response.overall) {
+          if (hit.aggregate) continue;
+          const scores = hit.score?.orders ?? [];
+          let orderIndex: number | undefined;
+          if (maximumReward) {
+            if (typeof hit.event?.selectedOrder === "number" && hit.event.selectedOrder >= 0 && hit.event.selectedOrder < 120) {
+              orderIndex = hit.event.selectedOrder;
+            }
+          } else if (scores.length === 120 && hit.event?.sampled !== true) {
+            const rankedIndices = scores.map((score, i) => ({ score, i })).sort((a, b) => a.score - b.score);
+            orderIndex = rankedIndices[119]!.i;
+          }
+          if (orderIndex === undefined) continue;
+          const chartEntry = hit.song
+            ? converted.charts.find(c => c.song.songId === hit.song!.songId && c.song.difficulty === hit.song!.difficulty)
+            : converted.charts.length === 1 ? converted.charts[0] : undefined;
+          if (!chartEntry) continue;
+          try {
+            const timeline = engine!.invoke<{ timing?: EngineOrderTiming | null }>({
+              op: "timeline",
+              handle: this.handle,
+              charts: [chartEntry],
+              request: {
+                ...(converted.songRules ? { songRules: converted.songRules } : {}),
+                song: chartEntry.song,
+                members: box.members,
+                snaps: box.snaps,
+                unknownPolicy: "min",
+                memberKeys: hit.members,
+                snapKeys: hit.snaps,
+                order: ORDERS[orderIndex]!,
+                play: converted.goal.play,
+                timing: {
+                  player: box.player,
+                  play: converted.goal.play,
+                  challengeEventId: converted.goal.kind === "score"
+                    ? converted.goal.challengeEventId
+                    : converted.goal.route === "challenge"
+                      ? converted.goal.eventId
+                      : null,
+                },
+              },
+            });
+            if (timeline?.timing && typeof timeline.timing === "object" && Array.isArray(timeline.timing.windows)) {
+              timings.set(hit, { ...timeline.timing, orderIndex });
+            }
+          } catch {
+            // Optional timing enrichment never invalidates a verified recommendation.
+          }
+        }
+      }
       response.elapsedMs = performance.now() - started;
-      return answer(response, request, box.coversAllOwnedCards, true, undefined, [...candidates.values()]);
+      return answer(response, request, box.coversAllOwnedCards, true, undefined, [...candidates.values()], timings);
     } catch (error) {
       if (!(error instanceof Error) || !error.message.startsWith("moenotes-") && error.message !== "haneoka-continuation" && !["combined-reward-levels", "combined-reward-range", "combined-item-lottery", "skip-score-nonmonotone"].includes(error.message)) throw error;
       return JSON.stringify({ format: "ournotes-deck.account-recommendation/1", final: true, status: "invalid", missing: [],

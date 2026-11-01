@@ -11,7 +11,7 @@ import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import { getRoutePathById } from "@/lib/route/registry";
 import type { BoxCard, CardBox, CardFieldName } from "@/lib/box/model";
-import type { DeckAnswer, DeckIssueGroups, DeckOrderStat, DeckTeam } from "@/lib/deck/answer";
+import type { DeckAnswer, DeckIssueGroups, DeckOrderStat, DeckOrderTiming, DeckTeam } from "@/lib/deck/answer";
 import type { DeckTeamGrowthReport } from "@/lib/deck/haneoka/growth";
 import { formatDeckInterval } from "@/lib/deck/interval";
 import { groupIssues, isOutOfMemory } from "@/lib/deck/answer";
@@ -354,10 +354,12 @@ function AggregateSongs(props: DeckResultProps & { team: DeckTeam }) {
 function SkillOrders(props: DeckResultProps & { team: DeckTeam; aggregation: DeckAggregation; final: boolean }) {
   const { locale, team, catalog } = props;
   const tr = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.solver.${key}`, values);
+  const activeTiming = props.final && team.timing && team.timing.best > team.timing.score ? team.timing : null;
   if (props.aggregation === "maximum") return team.bestOrder ? <section className="dr-orders" aria-label={tr("bestOrder")}>
     <h4>{tr("bestOrder")}</h4>
     <OrderSequence locale={locale} order={team.bestOrder.order} catalog={catalog} />
     <p className="dr-muted">{tr("bestOrderNote")}</p>
+    {activeTiming && <OrderTimingPanel locale={locale} timing={activeTiming} catalog={catalog} />}
   </section> : null;
   const orders = team.orders;
   if (!props.final || !orders) return null;
@@ -371,7 +373,88 @@ function SkillOrders(props: DeckResultProps & { team: DeckTeam; aggregation: Dec
       <dd>{stat.order.length ? <OrderSequence locale={locale} order={stat.order} catalog={catalog} /> : <span>—</span>}<strong>{formatValue(stat.score, "score", locale)}</strong></dd>
     </div>)}</dl>
     <p className="dr-muted">{tr("ordersNote")}</p>
+    {activeTiming && <OrderTimingPanel locale={locale} timing={activeTiming} catalog={catalog} />}
   </section>;
+}
+
+function chartClock(ms: number): string {
+  const seconds = Math.max(0, ms) / 1000;
+  return `${Math.floor(seconds / 60)}:${(seconds % 60).toFixed(2).padStart(5, "0")}`;
+}
+
+/** Cumulative-Snap 1-frame early-hit score ceiling and per-window step schedule for the team's best skill order. */
+function OrderTimingPanel({ locale, timing, catalog }: { locale: AppLocale; timing: DeckOrderTiming; catalog: BoxCatalog }) {
+  const tr = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.solver.${key}`, values);
+  const windows = timing.windows.filter(win => win.steps.length > 0);
+  const gain = timing.best - timing.score;
+  const memberName = (id: number) => catalog.members.find(card => card.id === id)?.title ?? String(id);
+  return <div className="dr-timing">
+    <div className="dr-timing-summary">
+      <div className="dr-timing-ceiling">
+        <span>{tr("timingBest")}</span>
+        <strong>{formatValue(timing.best, "score", locale)}</strong>
+        <em className="dr-timing-delta">+{formatValue(gain, "score", locale)}</em>
+      </div>
+      <span className="dr-timing-advance">
+        <Icon name="fastRewind" className="h-4 w-4" />
+        {tr("timingAdvance", { ms: timing.advanceMs })}
+      </span>
+    </div>
+    {windows.length > 0 && <>
+      <div className="dr-timing-subhead">{tr("timingNotes")}</div>
+      <ol className="dr-timing-windows">
+        {windows.map((win, idx) => {
+          const span = Math.max(1, win.endMs - win.startMs);
+          const at = (ms: number) => `${Math.min(100, Math.max(0, ((ms - win.startMs) / span) * 100)).toFixed(2)}%`;
+          const marked = new Set(win.steps.map(step => step.timeMs));
+          const uniqueNotes = [...new Set(win.notes)];
+          return (
+            <li key={`${win.event}:${idx}`} className="dr-timing-window">
+              <div className="dr-timing-head">
+                <span className="dr-timing-member">
+                  <CardFace id={win.member} catalog={catalog} locale={locale} />
+                  <strong>{memberName(win.member)}</strong>
+                </span>
+                <span className="dr-timing-clock">{chartClock(win.startMs)} – {chartClock(win.endMs)}</span>
+              </div>
+              <div
+                className="dr-timing-strip"
+                role="img"
+                aria-label={win.steps.map(step => `${tr("timingStep", { step: step.step })} ${chartClock(step.timeMs)}`).join(", ")}
+              >
+                {uniqueNotes.map(ms => marked.has(ms) ? null : (
+                  <span key={`n:${ms}`} className="dr-timing-note" style={{ insetInlineStart: at(ms) }} />
+                ))}
+                {win.steps.map(step => (
+                  <span key={`s:${step.step}:${step.timeMs}`} className="dr-timing-step" data-row={step.step % 2} style={{ insetInlineStart: at(step.timeMs) }}>
+                    <b>{step.step}</b>
+                  </span>
+                ))}
+              </div>
+              <table className="dr-timing-steps">
+                <tbody>
+                  {win.steps.map(step => (
+                    <tr key={`${step.step}:${step.timeMs}`}>
+                      <th scope="row">
+                        <span className="dr-timing-badge">{step.step}</span>
+                        {tr("timingStep", { step: step.step })}
+                      </th>
+                      <td className="dr-timing-time">{chartClock(step.timeMs)}</td>
+                      <td>
+                        {step.notes > 1 ? <span className="dr-timing-chord">{tr("timingChord", { count: step.notes })}</span> : null}
+                      </td>
+                      <td className="dr-timing-gain">+{formatValue(step.gain, "score", locale)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </li>
+          );
+        })}
+      </ol>
+      <p className="dr-muted">{tr("timingFirstNotes")}</p>
+    </>}
+  </div>;
 }
 
 /** Where the lowest, median and highest order scores and their average lie on one scale. */

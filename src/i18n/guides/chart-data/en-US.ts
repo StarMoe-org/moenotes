@@ -177,6 +177,32 @@ export const enUS: ChartDataGuide = {
       ]
     },
     {
+      "id": "frame-timing",
+      "title": "Frame-boundary timing: cumulative Snap early hits and Gekiso COMBO edges",
+      "body": [
+        "Beyond deck selection and skill order, the game delivers judgements on a discrete 60 Hz frame clock while scoring each note at its nominal chart timestamp. That separation creates two deterministic timing optimizations inside legal PERFECT windows, both surfaced directly in the Deck Builder and Song Detail pages.",
+        "In ordinary lives, cumulative support Snaps (skills that step up their bonus every U qualifying judgements during a skill window) count judgements in the delivery frame and raise each step from that frame onward, whereas notes evaluate active buffs at their nominal chart time. Hitting strictly at 0 ms offset leaves the note or chord that completes a step without that newly unlocked step. Hitting only the step-completing notes about one 60 Hz frame early (17 ms, well inside the ±50 ms PERFECT window) crosses the preceding frame boundary at every frame phase so those notes receive the upgraded step themselves.",
+        "Always hit the first notes right after skill activation as usual: moving opening notes early can push their delivery before the activation frame and drop them out of the counting window, delaying every subsequent step. Whenever a recommended team's optimal order gains points from cumulative Snap early hits, the Deck Builder displays the Best timing ceiling, the counting-window strip and a per-step table with exact timestamps, chord counts and score gains.",
+        "In Gekiso Live COMBO sections, two legal PERFECT boundary windows can add extra combo inside the active mission range. First, Late start (opening): when the first judged notes in [start, end] form a simultaneous Tap/Flick chord (at least 2 notes) whose next 60 Hz frame nextTimeMs = floor((ceil(t × 60 / 1000) + 1) × 1000 / 60) stays before end and within each note's late PERFECT window (afterMs), delaying the chord by lateMs = nextTimeMs − t lands its delivery inside the opened COMBO range. Second, Early end (ending): when Tap/Flick notes sit at timeMs = end with a positive early PERFECT window (beforeMs > 0), hitting them up to earlyMs = min(end − start, beforeMs) early delivers them before the COMBO range closes. Song Detail pages annotate eligible COMBO mission cards with Late start and Early end note counts and millisecond margins.",
+        "Gekiso Arena (Arena Live) stages can override a song's allowed band, attribute and three Gekiso mission types via MasterArenaMusic, changing which sections are COMBO, JUST or LUCK on the exact same chart. The Deck Builder supports automatic Arena schedule rules, manual per-song attribute/mission overrides and a steady-state JUST window lower bound (±ms) filter."
+      ],
+      "math": [
+        "Cumulative Snap advance Δt ≈ 17 ms (one 60 Hz frame, inside the ±50 ms PERFECT window)",
+        "COMBO late start: nextTimeMs = floor((ceil(t × 60 / 1000) + 1) × 1000 / 60), with nextTimeMs − t ≤ afterMs",
+        "COMBO early end: 0 < earlyMs ≤ min(end − start, beforeMs) for Tap / Flick notes at timeMs = end"
+      ],
+      "defs": [
+        [
+          "Best timing ceiling",
+          "The highest score reachable across all 60 Hz frame phases for a fixed team and optimal skill order when only the cumulative-Snap step-completing notes are hit ~17 ms early."
+        ],
+        [
+          "Late start / Early end",
+          "Legal PERFECT input offsets at the start and end of a Gekiso COMBO range that deliver boundary Tap/Flick notes inside the active mission window."
+        ]
+      ]
+    },
+    {
       "title": "Validation against native client code",
       "body": [],
       "table": {

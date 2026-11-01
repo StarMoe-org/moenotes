@@ -33,7 +33,7 @@ export interface RecommendationRequest {
   k: number;
   limits?: { timeLimitMs: number | null };
 }
-export const HANEOKA_COMMIT = "3e027dba124e5c407dd312e9670750558ccfb768";
+export const HANEOKA_COMMIT = "9d36aeda2ea958ab4dfef50710b8861ab9b2d53b";
 export const HANEOKA_PATCH_SHA = "1b0634019d439fa4b204452f290810baa4ff25810097b2c3d98d6ac609e0fcf8";
 export const CAPABILITIES = {
   goals: ["power", "freeLive", "challengeLive", "battleLive", "missionLive", "arenaLive", "skip"],
@@ -45,7 +45,7 @@ export const CAPABILITIES = {
   combinedMetric: { goals: ["freeLive", "challengeLive", "battleLive", "missionLive", "arenaLive", "skip"], kind: "combined", objective: "lexicographicWeightedExpectedSums", weights: "integer", maxLevels: 3, maxTerms: 9, maxWeight: 1_000_000_000 },
   eventItemRewards: { selection: "exactResultGrade", eventGroupField: "eventGroup", rowsPerGrade: 1, probabilityMarker: 10000 },
   crossSong: true, crossSongMean: true, songRules: true, resume: true, arenaRules: true, gekisouRank: true,
-  manualEventBonuses: true, teamGrowth: true,
+  manualEventBonuses: true, teamGrowth: true, orderTiming: true,
   accuracy: { great: true, just: true }, patternPlay: true, luckMissions: true, luckGreatConversions: true,
 };
 

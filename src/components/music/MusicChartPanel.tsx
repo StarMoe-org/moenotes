@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
+import { Icon } from "@/components/shared/icons";
 import LevelSwitch from "@/components/shared/LevelSwitch";
 import RewardChip from "@/components/shared/RewardChip";
 import { difficultyStyles } from "@/components/music/difficulty-styles";
@@ -10,6 +11,7 @@ import { getMusicRankingHref } from "@/lib/game-api/links";
 import { getChartPreviewHref } from "@/lib/music/chart-preview";
 import type { MusicViewModel, SongDifficultyModel } from "@/lib/music/data";
 import { MUSIC_DIFFICULTIES, type MusicDifficulty } from "@/lib/music/difficulty";
+import type { GekisoTimingSegment, PerfectTimingEntry } from "@/lib/music/gekiso-timing";
 import type { MusicComboTiersModel, MusicExpRewardsModel } from "@/lib/music/live-rewards";
 import {
   GEKISOU_MISSION_KEYS,
@@ -23,6 +25,7 @@ import {
   type ChartMetricsIndex,
 } from "@/lib/music/metrics";
 import type { ChartMetricsStatus } from "@/lib/music/use-chart-metrics";
+import { useGekisoTiming } from "@/lib/music/use-gekiso-timing";
 
 interface ChartPanelProps {
   locale: AppLocale;
@@ -30,26 +33,37 @@ interface ChartPanelProps {
   metrics: ChartMetricsIndex;
   status: ChartMetricsStatus;
   comboTiers: readonly MusicComboTiersModel[];
+  perfectTimings?: readonly PerfectTimingEntry[];
 }
 
 const sectionHeader = "border-b border-outline-variant px-6 py-4 sm:px-8";
 const subHeading = "text-label-medium text-on-surface-variant";
 const linkButton = "md3-button md3-button--outlined md3-button--small";
 
+const EMPTY_PERFECT_TIMINGS: readonly PerfectTimingEntry[] = [];
+
 /** One difficulty at a time: its figures (music-data.json), the Gekisou missions, the combo tier rewards and tool links. */
-export default function MusicChartPanel({ locale, song, metrics, status, comboTiers }: ChartPanelProps) {
+export default function MusicChartPanel({ locale, song, metrics, status, comboTiers, perfectTimings = EMPTY_PERFECT_TIMINGS }: ChartPanelProps) {
   const available = MUSIC_DIFFICULTIES.filter((difficulty) => song.difficulties.some((entry) => entry.difficulty === difficulty));
   const [picked, setPicked] = useState<MusicDifficulty>(available.includes("expert") ? "expert" : available.at(-1) ?? "expert");
   const difficulty = available.includes(picked) ? picked : available.at(-1);
-  if (!difficulty) return null;
-  const chart = song.difficulties.find((entry) => entry.difficulty === difficulty)!;
-  const figures = lookupMetrics(metrics, song.id, difficulty, chart.scoreId);
+  const activeChart = difficulty ? song.difficulties.find((entry) => entry.difficulty === difficulty) ?? null : null;
+  const figures = difficulty && activeChart ? lookupMetrics(metrics, song.id, difficulty, activeChart.scoreId) : undefined;
+  const missions = (song.gekisouMissions?.length ? song.gekisouMissions : figures?.missions ?? []).filter(isGekisouMission);
+  const hasComboMission = missions.includes(1);
+  const gekisoSegments = useGekisoTiming(activeChart?.chartKey, perfectTimings, hasComboMission);
+  if (!difficulty || !activeChart) return null;
+  const chart = activeChart;
   const loading = status === "loading";
   const value = (text: string) => (loading ? "…" : text);
-  const missions = (song.gekisouMissions?.length ? song.gekisouMissions : figures?.missions ?? []).filter(isGekisouMission);
   const tiers = comboTiers.find((entry) => entry.difficulty === difficulty)?.tiers ?? [];
   const difficultyLabel = (entry: MusicDifficulty) => t(locale, `music.difficultyLevels.${entry}`);
   const optionIndex = (entry: MusicDifficulty) => MUSIC_DIFFICULTIES.indexOf(entry);
+  const hasAnyComboTiming = missions.some((mission, idx) => {
+    if (mission !== 1) return false;
+    const seg = gekisoSegments?.[idx];
+    return Boolean(seg?.opening || seg?.ending);
+  });
 
   const cells: Array<[string, ReactNode]> = [
     [t(locale, "music.chart.level"), chart.displayLevel],
@@ -94,13 +108,24 @@ export default function MusicChartPanel({ locale, song, metrics, status, comboTi
           <section>
             <h4 className={subHeading}>{t(locale, "music.gekisou.title")}</h4>
             <ol className="mt-2 grid grid-cols-3 gap-2">
-              {missions.map((mission, index) => (
-                <li key={index} className="rounded-shape-md border border-outline-variant bg-surface-container px-3 py-2 text-center">
-                  <span className="block text-label-small text-on-surface-variant">{t(locale, "music.gekisou.range", { index: index + 1 })}</span>
-                  <span className="mt-0.5 block text-label-large text-primary">{t(locale, `music.gekisou.missions.${GEKISOU_MISSION_KEYS[mission]}`)}</span>
-                </li>
-              ))}
+              {missions.map((mission, index) => {
+                const seg = mission === 1 ? gekisoSegments?.[index] : undefined;
+                return (
+                  <li key={index} className="rounded-shape-md border border-outline-variant bg-surface-container px-3 py-2 text-center">
+                    <span className="block text-label-small text-on-surface-variant">{t(locale, "music.gekisou.range", { index: index + 1 })}</span>
+                    <span className="mt-0.5 block text-label-large text-primary">{t(locale, `music.gekisou.missions.${GEKISOU_MISSION_KEYS[mission]}`)}</span>
+                    {seg && (seg.opening || seg.ending) && (
+                      <GekisoTimingBadges locale={locale} segment={seg} />
+                    )}
+                  </li>
+                );
+              })}
             </ol>
+            {hasAnyComboTiming && (
+              <p className="mt-2 text-label-small leading-5 text-on-surface-variant">
+                {t(locale, "music.gekisou.timingHint")}
+              </p>
+            )}
           </section>
         )}
 
@@ -138,6 +163,39 @@ export default function MusicChartPanel({ locale, song, metrics, status, comboTi
           </a>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Boundary timing badges ("Late start" / "Early end") for a COMBO Gekisou mission segment. */
+export function GekisoTimingBadges({ locale, segment }: { locale: AppLocale; segment: GekisoTimingSegment }) {
+  const edges = (["opening", "ending"] as const).flatMap((edge) => {
+    const item = segment[edge];
+    if (!item) return [];
+    const msValue = edge === "opening" ? segment.opening!.lateMs : segment.ending!.earlyMs;
+    const msText = msValue.toLocaleString(locale, { maximumFractionDigits: 2 });
+    const countText = item.notes.toLocaleString(locale);
+    const label = t(locale, edge === "opening" ? "music.gekisou.timingOpening" : "music.gekisou.timingEnding");
+    const notesLabel = t(locale, "music.gekisou.timingNotes", { count: countText });
+    const summary = `${label} · ${notesLabel} · ${msText} ms`;
+    return [{ edge, label, countText, msText, summary }];
+  });
+  if (edges.length === 0) return null;
+  return (
+    <div className="mt-1.5 flex flex-wrap items-center justify-center gap-1">
+      {edges.map(({ edge, label, countText, msText, summary }) => (
+        <span
+          key={edge}
+          title={summary}
+          className="inline-flex items-center gap-1 rounded-full bg-secondary-container px-2 py-0.5 font-mono text-[11px] font-semibold text-on-secondary-container"
+        >
+          <Icon name={edge === "opening" ? "arrowForward" : "arrowBack"} className="h-3 w-3 shrink-0" />
+          <span aria-hidden="true">{label}</span>
+          <span aria-hidden="true">×{countText}</span>
+          <span aria-hidden="true">{msText}ms</span>
+          <span className="sr-only">{summary}</span>
+        </span>
+      ))}
     </div>
   );
 }

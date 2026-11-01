@@ -5,7 +5,7 @@ export const enUS: ChartDataGuide = {
   "lead": "The deck page finds the 5 teams in your collection with the highest goal value. This guide explains what it optimizes, what “proven optimal” means exactly, and how the search proves it without trying every team.",
   "reminder": {
     "title": "Disclaimer",
-    "text": "The scoring model comes from analyzing the game client. We reproduce it as closely as we can but do not guarantee it matches the game exactly. Where it differs from the game or other sources, trust those. “Proven optimal” is an algorithmic proof relative to this model and to the collection, progress and conditions you entered, not a guarantee about results in the game. The scoring model and the search are public in ournotes-deck."
+    "text": "The scoring model comes from analyzing the game client. We reproduce it as closely as we can but do not guarantee it matches the game exactly. Where it differs from the game or other sources, trust those. “Proven optimal” is an algorithmic proof relative to this model and to the collection, progress and conditions you entered, not a guarantee about results in the game. The solver engine sources are public in haneoka-gakuen/ournotes-team-builder and empty-sekai/ournotes-deck."
   },
   "contentsLabel": "Contents",
   "sections": [
@@ -15,10 +15,12 @@ export const enUS: ChartDataGuide = {
       "body": [
         "The CP goal defaults to CP only. Its optional secondary priorities compare expected CP first, then expected PT and badges in the chosen order. This option uses Average performance and applies to ordinary Live modes and ordinary Skip. Challenge Live and Challenge Skip spend CP. Badge resource and reward-data availability are required. The engine supports this combined objective in its lottery-free skill domain and reports unsupported skill conditions explicitly.",
         "Event badges use the current event’s badge item. For each possible live result, the engine selects the single reward row for that exact result grade, then calculates the badge amount for the chosen consumption. Average performance averages these amounts; Theoretical maximum takes the highest reachable amount. Normal and challenge scenes each use their own event reward group. Each grade must contain exactly one reward row with probability marker 10000; other reward shapes are unsupported.",
-        "Each goal is a number the search makes as large as possible: for Gekisou Live and Free Live, the score on the chosen song and difficulty; for event points, the event points per live; for highest power, the team's power. Free and Challenge Live, including their event payoff goals, offer Average performance or Theoretical maximum. Gekisou modes use Average performance. Power and skipped lives have a single value, so this choice is not shown.",
+        "Alongside live events, Simulated Event Bonuses let you define custom attribute, character, band or card-specific member PT and Snap badge bonus rules before official event data is published, so you can plan formations and resource budgets ahead of time.",
+        "Each goal is a number the search makes as large as possible: for Gekisou Live, Gekisou Arena (Arena Live) and Free Live, the score on the chosen song and difficulty; for event points, the event points per live; for highest power, the team's power. Free and Challenge Live, including their event payoff goals, offer Average performance or Theoretical maximum. Gekisou modes use Average performance and let you specify section placements (1st–5th). Power and skipped lives have a single value, so this choice is not shown.",
+        "Multi-song optimization and rule overrides: Gekisou Arena loads active schedule rules (allowed band, song attribute and three Gekiso missions) automatically and supports switching between One shared formation (proving the single formation with the highest expected mean score across the selected song pool) and Per-song optimal. All-song searches in Free and Mission Live likewise offer per-song optimal or shared-formation mean optimization, plus optional manual overrides for song attribute and the three Gekiso mission types.",
         "Average performance (default): at the start of each live the members' skill order is shuffled. We treat the 120 orders of the five members as equally likely, simulate a whole live for each order (skills, Snap effects and, in Gekisou Live, the gekisou sections and rank bonuses) and average them. Where a skill or mission draws a lottery, the draw is averaged with the game's probabilities.",
         "Theoretical maximum ranks Free and Challenge Live teams by the highest goal value reachable across skill orders and random skill outcomes with nonzero probability. Switching keeps your collection, song, difficulty and declared play conditions. Only a complete search proves the maximum. Reaching the value requires the corresponding random outcomes and is not guaranteed every live; the option is enabled only when the engine supports the current conditions.",
-        "Play: by default the play is the theoretical best, all Perfect, with every Just-eligible note in Gekisou Live hit Just. When you change the Great or Just rate under “Play assumptions”, that share of Greats and non-Just judgements is spread evenly over the whole chart and the live is computed again. It describes a declared play, not a prediction of how you will play.",
+        "Play: by default the play is the theoretical best, all Perfect, with every Just-eligible note in Gekisou Live hit Just. Under “Play assumptions” you can set Great %, Just % or a periodic Miss interval (every N notes), and in Gekisou modes specify a steady-state JUST window lower bound (±ms) to filter out formations that rely on ultra-tight windows. It describes a declared play, not a prediction of how you will play.",
         "A team is a leader, 4 other members and the Snap paired with each. Swapping the positions of the 4 members does not change the score, so the positions in a result are only for display."
       ]
     },
@@ -26,8 +28,8 @@ export const enUS: ChartDataGuide = {
       "id": "domain",
       "title": "Candidates",
       "body": [
-        "The candidates D are every legal team in your collection: those allowed by the game's formation rules and by the required and excluded cards under “Card restrictions”. Each choice of leader, members and Snap pairing is a separate candidate.",
-        "The computation uses the card progress you entered (level, training, rank, skill levels) and your player bonuses. Missing values are listed for you to fill in first; when a result does not cover every card you own, the page says so."
+        "The candidates D are every legal team in the active Box mode: those allowed by the game's formation rules (including Arena band regulations) and by your leader lock, required/excluded members or Snaps, No-Snaps toggle and explicit member–Snap bindings under “Card restrictions”. Each choice of leader, members and Snap pairing is a separate candidate.",
+        "You can switch with one click between My Card Box (supporting manual entry, account sync and screen-recording video recognition import) and Full-Catalog Max-Practice Theoretical Mode (evaluating every catalog card at max level, trained, Rank 5 and Skill Lv.5 to inspect theoretical ceilings and gacha targets). Missing values in My Card Box are listed for you to fill in first; when a result does not cover every card you own, the page says so."
       ]
     },
     {
@@ -72,16 +74,18 @@ export const enUS: ChartDataGuide = {
       "title": "Reading a result",
       "body": [
         "A CP result with secondary priorities retains the sorting order used for that calculation and shows expected CP, PT and badges with their exact fractions. Changing the current input marks it as a previous result until recalculation.",
-        "Each result shows the goal value, the power, the formation in the game's own style, and for each position the member card, its progress and the paired Snap.",
+        "Each result shows the goal value, the power, the formation in the game's own style, and for each position the member card, its progress and the paired Snap. Shared-formation runs additionally list each pooled song's power, mean score and min–max order span.",
         "A goal value is sometimes shown as an interval that contains the exact value, for example while a skill with a lottery has not been refined yet.",
-        "When an Average performance calculation finishes, each team lists the orders with the lowest, median and highest score among the 120. A Theoretical maximum result shows a skill order for the highest selected goal value; the corresponding random skill outcomes are still required. The objective label belongs to that calculation. Changing the objective marks it as a previous result until you recalculate."
+        "When an Average performance calculation finishes, each team lists the orders with the lowest, median and highest score among the 120. A Theoretical maximum result shows a skill order for the highest selected goal value; the corresponding random skill outcomes are still required. The objective label belongs to that calculation. Changing the objective marks it as a previous result until you recalculate.",
+        "Best timing ceiling and early-hit notes: when an ordinary Live's optimal skill order gains points from hitting cumulative-Snap step-completing notes one 60 Hz frame (~17 ms, still PERFECT) early, the skill-order card shows the Best timing ceiling, a visual counting-window strip and a per-step breakdown of timestamps, chord counts and score gains; hit the first notes right after activation as usual.",
+        "Single-card upgrade impact ranking: in My Card Box mode, open a team's upgrade evaluation to simulate exact goal gains for each unmaxed member and Snap under Max Level, Skill Lv.5, and Full Max (Rank 5 + Skill Lv.5), ranked from highest to lowest return."
       ]
     },
     {
       "id": "sources",
       "title": "Source code",
       "body": [
-        "The scoring model (crates/ournotes-sim) and the search (crates/ournotes-search) are public in the empty-sekai/ournotes-deck repository on GitHub; the deck page links to both at the top."
+        "The Deck Builder runs on the Haneoka branch-and-bound WASM engine (public in haneoka-gakuen/ournotes-team-builder on GitHub, paired with MoeNotes' exact event-reward patch), with earlier reference components also public in empty-sekai/ournotes-deck."
       ]
     }
   ]

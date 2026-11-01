@@ -6,6 +6,11 @@ import { localizeMasterText } from "@/lib/masterdata/localize-text";
 import type { MasterTable } from "@/lib/cards/data";
 import type { RawLiveMusicCategory, RawMusic } from "@/lib/music/data";
 import {
+  extractPerfectTimings,
+  type PerfectTimingEntry,
+  type RawLiveJudgementTiming,
+} from "@/lib/music/gekiso-timing";
+import {
   buildComboTiers,
   buildExpRewards,
   type MusicComboTiersModel,
@@ -28,18 +33,20 @@ async function optionalTable<T>(path: string, server: GameServer): Promise<Maste
   }
 }
 
-/** Per song: the combo tier rewards of its reward group and the exp reward ladder every song shares. */
+/** Per song: the combo tier rewards of its reward group, the exp reward ladder, and base Perfect timing windows. */
 export interface MusicLiveExtras {
   comboTiers: MusicComboTiersModel[];
   expRewards: MusicExpRewardsModel;
+  perfectTimings?: PerfectTimingEntry[];
 }
 
 export function musicLiveExtrasOn(server: GameServer, locale: AppLocale, songId: number): Promise<MusicLiveExtras | null> {
   return memo(`music-extras:${server}:${locale}:${songId}`, async () => {
-    const [rawMusic, comboRows, expRows, resolve] = await Promise.all([
+    const [rawMusic, comboRows, expRows, timingRows, resolve] = await Promise.all([
       table<RawMusic>("MasterLiveMusic.json", server),
       optionalTable<RawLiveMusicComboReward>("MasterLiveMusicComboReward.json", server),
       optionalTable<RawLiveMusicExpReward>("MasterLiveMusicExpReward.json", server),
+      optionalTable<RawLiveJudgementTiming>("MasterLiveJudgementTiming.json", server),
       rewardResolverOn(server, locale),
     ]);
     const raw = rawMusic._allData.find((entry) => entry.id === songId);
@@ -47,6 +54,7 @@ export function musicLiveExtrasOn(server: GameServer, locale: AppLocale, songId:
     return {
       comboTiers: buildComboTiers(comboRows._allData, raw.comboRewardGroup, resolve),
       expRewards: buildExpRewards(expRows._allData),
+      perfectTimings: extractPerfectTimings(timingRows._allData),
     };
   });
 }
