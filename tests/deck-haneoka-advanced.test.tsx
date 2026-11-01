@@ -463,6 +463,7 @@ describe("Box Screen Recording Video Import consolidation", () => {
       manifestSha256: hex64("d"),
       at: 1_760_000_000_000,
       files: [{ key: "v1", name: "box-scroll.mp4" }],
+      clock: () => 150,
     });
 
     const prepared = batch.prepare("v1", { jobId: "video-job-1", startedAt: 100, deadline: 60_100 });
