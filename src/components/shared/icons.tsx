@@ -17,6 +17,8 @@ const paths = {
   chevronLeft: <path d="m15 6-6 6 6 6" />,
   arrowUp: <><path d="M12 19V5" /><path d="m5 12 7-7 7 7" /></>,
   arrowForward: <><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></>,
+  arrowBack: <><path d="M19 12H5" /><path d="m11 6-6 6 6 6" /></>,
+  fastRewind: <><path d="m11 17-5-5 5-5" /><path d="m18 17-5-5 5-5" /></>,
   refresh: <><path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 3v6h-6" /></>,
   check: <path d="m5 12 5 5 9-10" />,
   user: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>,

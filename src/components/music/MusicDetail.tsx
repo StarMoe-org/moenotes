@@ -196,7 +196,14 @@ function MusicDetailView({ locale, song, liveDetail, extras, serverSwitch }: { l
             </div>
           </div>
 
-          <MusicChartPanel locale={locale} song={song} metrics={metrics} status={metricsStatus} comboTiers={extras?.comboTiers ?? []} />
+          <MusicChartPanel
+            locale={locale}
+            song={song}
+            metrics={metrics}
+            status={metricsStatus}
+            comboTiers={extras?.comboTiers ?? []}
+            perfectTimings={extras?.perfectTimings ?? []}
+          />
 
           {liveDetail && <LiveSystemSections locale={locale} detail={liveDetail} />}
 

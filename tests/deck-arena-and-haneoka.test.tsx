@@ -370,7 +370,7 @@ describe("Haneoka patch identity and 1.1.0.100 Arena + cumulative Snap adaptatio
     const patchBytes = readFileSync(join(process.cwd(), "patches/haneoka-rewards.patch"));
     const actualSha = createHash("sha256").update(patchBytes).digest("hex");
     expect(actualSha).toBe(HANEOKA_PATCH_SHA);
-    expect(HANEOKA_COMMIT).toBe("3e027dba124e5c407dd312e9670750558ccfb768");
+    expect(HANEOKA_COMMIT).toBe("9d36aeda2ea958ab4dfef50710b8861ab9b2d53b");
 
     const { data, datasetId } = loadReal110Slice();
     const engineData = adaptData(data, datasetId);
@@ -528,6 +528,7 @@ describe("Haneoka patch identity and 1.1.0.100 Arena + cumulative Snap adaptatio
         gekisouRank: true,
         songRules: true,
         crossSongMean: true,
+        orderTiming: true,
       });
 
       const accountJson = JSON.stringify(e2eAccount);
@@ -541,6 +542,11 @@ describe("Haneoka patch identity and 1.1.0.100 Arena + cumulative Snap adaptatio
       }), () => {}));
       expect(freeAnswer.status).toBe("ok");
       expect(freeAnswer.result?.teams).toHaveLength(1);
+      if (freeAnswer.result?.teams[0]?.timing) {
+        expect(freeAnswer.result.teams[0].timing.advanceMs).toBe(17);
+        expect(freeAnswer.result.teams[0].timing.best).toBeGreaterThanOrEqual(freeAnswer.result.teams[0].timing.score);
+        expect(freeAnswer.result.teams[0].timing.order).toHaveLength(5);
+      }
 
       // 2) Gekiso Arena Season 1 Regulation 1 ([2, 2, 2] triple-LUCK, shared 2-song pool, Band 1, Rank 2)
       const sharedArenaAnswer = parseDeckAnswer(solver.recommend(accountJson, JSON.stringify({

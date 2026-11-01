@@ -1198,6 +1198,215 @@
   .dc-constraint-actions { grid-column: 2; justify-content: flex-start; }
   .dc-constraint-card .dw-card-art { grid-row: 1 / span 2; align-self: start; }
 }
+/* Cumulative-Snap 1-frame early-hit timing breakdown */
+.dr-timing {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  margin-top: 2px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--md-sys-color-outline-variant);
+}
+.dr-timing-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+.dr-timing-ceiling {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 8px;
+}
+.dr-timing-ceiling > span {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-sys-typescale-label-medium-size);
+  font-weight: 600;
+}
+.dr-timing-ceiling > strong {
+  color: var(--md-sys-color-primary);
+  font-size: var(--md-sys-typescale-title-medium-size);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.dr-timing-delta {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  font-style: normal;
+  font-size: var(--md-sys-typescale-label-small-size);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.dr-timing-advance {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  font-size: var(--md-sys-typescale-label-small-size);
+  font-weight: 600;
+}
+.dr-timing-subhead {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-sys-typescale-label-medium-size);
+  font-weight: 600;
+}
+.dr-timing-windows {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dr-timing-window {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface-container-low);
+}
+.dr-timing-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+}
+.dr-timing-member {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.dr-timing-member .dw-card-art {
+  width: 28px;
+  flex-shrink: 0;
+}
+.dr-timing-member > strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--md-sys-typescale-body-small-size);
+  font-weight: 600;
+}
+.dr-timing-clock {
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
+  font-size: var(--md-sys-typescale-label-small-size);
+  font-variant-numeric: tabular-nums;
+}
+.dr-timing-strip {
+  position: relative;
+  height: 44px;
+  margin: 2px 10px;
+}
+.dr-timing-strip::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--md-sys-color-outline-variant);
+  transform: translateY(-50%);
+}
+.dr-timing-note {
+  position: absolute;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--md-sys-color-on-surface-variant);
+  opacity: 0.45;
+  transform: translate(-50%, -50%);
+}
+.dr-timing-step {
+  position: absolute;
+  top: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font-size: 10px;
+  font-weight: 700;
+  transform: translateX(-50%);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.18);
+}
+.dr-timing-step[data-row="0"] {
+  top: auto;
+  bottom: 4px;
+}
+.dr-timing-steps {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--md-sys-typescale-body-small-size);
+}
+.dr-timing-steps tr + tr {
+  border-top: 1px dashed color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, transparent);
+}
+.dr-timing-steps th,
+.dr-timing-steps td {
+  padding: 5px 4px;
+  vertical-align: middle;
+}
+.dr-timing-steps th {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+.dr-timing-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.dr-timing-time {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
+  font-variant-numeric: tabular-nums;
+  color: var(--md-sys-color-on-surface-variant);
+}
+.dr-timing-chord {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+  font-size: var(--md-sys-typescale-label-small-size);
+  font-weight: 600;
+}
+.dr-timing-gain {
+  text-align: right;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--md-sys-color-primary);
+}
+
 @media (max-width: 700px) {
   body:has(.dc-composer) [data-scroll-to-top] { display: none; }
 }

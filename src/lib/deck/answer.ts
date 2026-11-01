@@ -12,6 +12,28 @@ export interface DeckValue extends DeckPayoffValue { payoff: DeckPayoffValue | n
 /** A team's value on one level: the expected weighted sum, and each term's own expectation in the order of the level's terms. */
 export interface DeckTeamLevel { value: number; terms: number[] }
 export interface DeckOrderStat { score: number; order: number[] }
+export interface DeckTimingStep {
+  step: number;
+  timeMs: number;
+  notes: number;
+  gain: number;
+}
+export interface DeckTimingWindow {
+  event: number;
+  member: number;
+  startMs: number;
+  endMs: number;
+  unit: number;
+  notes: number[];
+  steps: DeckTimingStep[];
+}
+export interface DeckOrderTiming {
+  order: number[];
+  score: number;
+  best: number;
+  advanceMs: number;
+  windows: DeckTimingWindow[];
+}
 export interface DeckTeamSongScore {
   song: { musicId: number; difficulty: string };
   power: number;
@@ -34,6 +56,8 @@ export interface DeckTeam {
   levels?: DeckTeamLevel[];
   orders: { count: number; min: DeckOrderStat; median: DeckOrderStat; max: DeckOrderStat } | null;
   bestOrder: DeckOrderStat | null;
+  /** Cumulative-Snap 1-frame early-hit ceiling and per-window step schedule for the optimal order. */
+  timing?: DeckOrderTiming;
   /** Slots 0..4 of the formation screen; the leader sits in slot 2. */
   layout: { members: number[]; snaps: (number | null)[] };
 }
@@ -79,6 +103,34 @@ function value(raw: unknown): DeckValue | null {
 function stat(raw: unknown): DeckOrderStat {
   if (!record(raw) || num(raw.score) === null || !Array.isArray(raw.order)) throw new Error("Invalid order statistic");
   return { score: raw.score as number, order: raw.order.map(int) };
+}
+function orderTiming(raw: unknown): DeckOrderTiming | undefined {
+  if (!record(raw)) return undefined;
+  const score = num(raw.score), best = num(raw.best), advanceMs = num(raw.advanceMs);
+  if (score === null || best === null || advanceMs === null || !Array.isArray(raw.order) || !Array.isArray(raw.windows)) return undefined;
+  return {
+    order: raw.order.map(int),
+    score,
+    best,
+    advanceMs: Math.trunc(advanceMs),
+    windows: raw.windows.filter(record).flatMap((win) => {
+      const event = num(win.event), member = num(win.member), startMs = num(win.startMs), endMs = num(win.endMs), unit = num(win.unit);
+      if (event === null || member === null || startMs === null || endMs === null || unit === null || !Array.isArray(win.notes) || !Array.isArray(win.steps)) return [];
+      return [{
+        event: Math.trunc(event),
+        member: Math.trunc(member),
+        startMs: Math.trunc(startMs),
+        endMs: Math.trunc(endMs),
+        unit: Math.trunc(unit),
+        notes: win.notes.filter((ms): ms is number => typeof ms === "number" && Number.isFinite(ms)).map(ms => Math.trunc(ms)),
+        steps: win.steps.filter(record).flatMap((step) => {
+          const s = num(step.step), timeMs = num(step.timeMs), notes = num(step.notes), gain = num(step.gain);
+          if (s === null || timeMs === null || notes === null || gain === null) return [];
+          return [{ step: Math.trunc(s), timeMs: Math.trunc(timeMs), notes: Math.trunc(notes), gain }];
+        }),
+      }];
+    }),
+  };
 }
 function planLevels(raw: unknown): RewardTerm[][] {
   if (!Array.isArray(raw) || !raw.length) throw new Error("Invalid reward plan result");
@@ -127,11 +179,13 @@ function team(raw: unknown, index: number, inheritedRankProof: boolean, levels: 
           }),
       }
     : undefined;
+  const parsedTiming = orderTiming(raw.timing);
   return { rank: num(raw.rank) ?? index + 1, rankCertified: raw.rankCertified === undefined ? inheritedRankProof : raw.rankCertified === true, leader: pair(raw.leader), others: [0, 1, 2, 3].length ? raw.others.map(pair) : [], power: num(raw.power) ?? 0, value: teamValue, orders,
     ...(levels ? { levels: teamLevels(raw.levels, levels) } : {}),
     ...(record(raw.song) && Number.isInteger(raw.song.musicId) && typeof raw.song.difficulty === "string" ? { song: { musicId: raw.song.musicId as number, difficulty: raw.song.difficulty } } : {}),
     ...(aggregate && aggregate.songs.length > 0 ? { aggregate } : {}),
     bestOrder: record(raw.bestOrder) ? stat(raw.bestOrder) : null,
+    ...(parsedTiming ? { timing: parsedTiming } : {}),
     layout: { members: layout.members.map(int), snaps: layout.snaps.map(item => item === null ? null : int(item)) } };
 }
 function issues(raw: unknown): DeckIssue[] {
