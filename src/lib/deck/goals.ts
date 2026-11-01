@@ -1,5 +1,6 @@
 import type { MusicDifficulty } from "@/lib/music/difficulty";
 import { activeSongRules, type DeckArenaRule, type DeckSongRules } from "./arena";
+import type { DeckEventEffect } from "./manual-event";
 import { EVENT_REWARDS, MAX_TERM_WEIGHT, defaultRewardPlan, rewardLayout, rewardLevels, statedTerms,
   type ChallengeWorth, type EventReward, type RewardLayout, type RewardPlan, type RewardTerm } from "./reward-mix";
 
@@ -48,6 +49,8 @@ export interface DeckEvent {
   /** The event item an event live yields, or null. */
   itemId: number | null;
   challengeMusics: readonly DeckChallengeMusic[];
+  /** Optional raw event effect rows used as a template for simulated/manual event bonus planning. */
+  effects?: readonly DeckEventEffect[];
 }
 
 /** The event held at `now` (ms since the epoch); with several, the one ending first. */
@@ -185,6 +188,10 @@ export interface DeckSolverCapabilities {
   arenaRules?: boolean;
   /** Gekisou range placements 1..5. */
   gekisouRank?: boolean;
+  /** Manual / simulated event bonus overrides (`eventEffects`) for future or custom event planning. */
+  manualEventBonuses?: boolean;
+  /** Fast single-card upgrade impact ranking (`evaluateGrowth`) on solved teams. */
+  teamGrowth?: boolean;
 }
 
 export function parseCapabilities(json: string | null): DeckSolverCapabilities | null {
@@ -222,6 +229,7 @@ export function parseCapabilities(json: string | null): DeckSolverCapabilities |
     crossSong: raw.crossSong === true, crossSongMean: raw.crossSongMean === true, songRules: raw.songRules === true,
     resume: raw.resume === true, luckMissions: raw.luckMissions === true, luckGreatConversions: raw.luckGreatConversions === true,
     arenaRules: raw.arenaRules === true, gekisouRank: raw.gekisouRank === true,
+    manualEventBonuses: raw.manualEventBonuses === true, teamGrowth: raw.teamGrowth === true,
     patternPlay: raw.patternPlay === true || !!raw.patternPlay && typeof raw.patternPlay === "object", accuracy: { great: accuracy.great === true, just: accuracy.just === true } };
 }
 
@@ -326,11 +334,21 @@ export function requestLevels(input: DeckGoalInput, worth: ChallengeWorth | null
   return levels;
 }
 
+export interface DeckRecommendationContext {
+  event: DeckEvent | null;
+  now: number;
+  constraints: DeckRunConstraints;
+  /** True when the user explicitly selected a template/historical event or simulated bonuses outside live window. */
+  manualEvent?: boolean;
+  /** Custom simulated event bonus rows overriding the template event's `MasterEventEffect` table. */
+  eventEffects?: readonly DeckEventEffect[];
+}
+
 /**
  * The request that rates challenge points, or null for a goal input that does not read their worth: the best team
  * of the challenge live on the chosen challenge song, for the goal's reward and the rewards converted at stated rates.
  */
-export function challengeRateRequest(input: DeckGoalInput, context: { event: DeckEvent | null; now: number; constraints: DeckRunConstraints }): string | null {
+export function challengeRateRequest(input: DeckGoalInput, context: DeckRecommendationContext): string | null {
   return usesChallengeRate(input) ? recommendationRequest(challengeRateInput(input), context, { teams: 1 }) : null;
 }
 
@@ -339,7 +357,7 @@ export function challengeRateRequest(input: DeckGoalInput, context: { event: Dec
  * objectives and power with event bonuses enabled. A goal input that rates challenge points by a challenge live
  * takes its `worth` from the answer to `challengeRateRequest`.
  */
-export function recommendationRequest(input: DeckGoalInput, context: { event: DeckEvent | null; now: number; constraints: DeckRunConstraints },
+export function recommendationRequest(input: DeckGoalInput, context: DeckRecommendationContext,
   options: { worth?: ChallengeWorth | null; teams?: number; songScope?: { field: "musicIds" | "challengeMusicIds" | "arenaMusicIds"; ids: readonly number[] } } = {}): string {
   if (input.goal === "challengePoints" && ["challengeLive", "challengeSkip"].includes(input.venue)) throw new Error("Challenge Live spends challenge points; choose an ordinary venue to earn them");
   const gap = goalGap(input, context.event);
@@ -401,6 +419,12 @@ export function recommendationRequest(input: DeckGoalInput, context: { event: De
   } else if (kind !== "power") parts.push(`"metric":{"kind":"score"}`);
   const { includeMembers, excludeMembers, excludeSnaps, leader, noSnaps } = context.constraints;
   const leaderJson = leader == null || leader === "" ? "null" : ids([leader])[0]!;
+  if (event && usesEventData(input) && (context.manualEvent || (context.eventEffects && context.eventEffects.length > 0))) {
+    parts.push('"manualEvent":true');
+    if (context.eventEffects && context.eventEffects.length > 0) {
+      parts.push(`"eventEffects":${JSON.stringify(context.eventEffects)}`);
+    }
+  }
   parts.push(`"eventIds":[${event && usesEventData(input) ? event.id : ""}]`,
     `"constraints":{"leader":${leaderJson},"includeMembers":[${ids(includeMembers).join(",")}],"excludeMembers":[${ids(excludeMembers).join(",")}],"excludeSnaps":[${ids(excludeSnaps).join(",")}],"noSnaps":${noSnaps === true ? "true" : "false"}}`,
     `"k":${options.teams ?? RECOMMENDATION_COUNT}`, `"limits":{"timeLimitMs":${input.timeLimit === null ? "null" : input.timeLimit * 1000}}`);

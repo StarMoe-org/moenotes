@@ -29,7 +29,15 @@ export interface DeckWorkerRun {
   progressIntervalMs: number;
   seedJson?: string;
 }
-export type DeckWorkerCommand = DeckWorkerInit | DeckWorkerRun;
+export interface DeckWorkerGrowth {
+  type: "growth";
+  jobId: string;
+  inputRevision: number;
+  accountJson: string;
+  requestJson: string;
+  teamJson: string;
+}
+export type DeckWorkerCommand = DeckWorkerInit | DeckWorkerRun | DeckWorkerGrowth;
 
 /** Master IDs and playable difficulties present in the verified solver dataset. */
 export interface DeckDataCatalog {
@@ -55,6 +63,7 @@ export interface DeckWorkerReady {
 /** Worker -> page: a complete intermediate result, shaped like the final one. */
 export interface DeckWorkerProgress { type: "progress"; jobId: string; inputRevision: number; resultJson: string }
 export interface DeckWorkerResult { type: "result"; jobId: string; inputRevision: number; resultJson: string }
+export interface DeckWorkerGrowthResult { type: "growthResult"; jobId: string; inputRevision: number; growthJson: string }
 
 /**
  * `network`: a download failed. `integrity`: a file's size or SHA-256 differs from the init message, or the solver
@@ -66,7 +75,7 @@ export const DECK_WORKER_FAILURE_CODES = ["network", "integrity", "identity", "i
 export type DeckWorkerFailureCode = typeof DECK_WORKER_FAILURE_CODES[number];
 /** Worker -> page. Without `jobId` the failure concerns initialization or the Worker itself. */
 export interface DeckWorkerFailed { type: "failed"; jobId?: string; inputRevision?: number; code: DeckWorkerFailureCode; message: string }
-export type DeckWorkerEvent = DeckWorkerReady | DeckWorkerProgress | DeckWorkerResult | DeckWorkerFailed;
+export type DeckWorkerEvent = DeckWorkerReady | DeckWorkerProgress | DeckWorkerResult | DeckWorkerGrowthResult | DeckWorkerFailed;
 
 export interface DeckJobBinding { jobId: string; inputRevision: number }
 
@@ -115,6 +124,8 @@ export function parseDeckWorkerEvent(value: unknown): DeckWorkerEvent | null {
     case "progress":
     case "result":
       return job && typeof value.resultJson === "string" ? value as unknown as DeckWorkerProgress | DeckWorkerResult : null;
+    case "growthResult":
+      return job && typeof value.growthJson === "string" ? value as unknown as DeckWorkerGrowthResult : null;
     case "failed":
       return (DECK_WORKER_FAILURE_CODES as readonly unknown[]).includes(value.code) && typeof value.message === "string"
         && (value.jobId === undefined || typeof value.jobId === "string") && (value.inputRevision === undefined || Number.isSafeInteger(value.inputRevision))
@@ -126,7 +137,7 @@ export function parseDeckWorkerEvent(value: unknown): DeckWorkerEvent | null {
 
 /** A job's reply carries its `jobId` and `inputRevision`; any other reply is stale and is dropped. */
 export function isCurrentDeckWorkerReply(job: DeckJobBinding, event: DeckWorkerEvent): boolean {
-  if (event.type === "progress" || event.type === "result") return event.jobId === job.jobId && event.inputRevision === job.inputRevision;
+  if (event.type === "progress" || event.type === "result" || event.type === "growthResult") return event.jobId === job.jobId && event.inputRevision === job.inputRevision;
   if (event.type === "failed") return event.jobId === job.jobId && (event.inputRevision === undefined || event.inputRevision === job.inputRevision);
   return false;
 }

@@ -1,6 +1,6 @@
 import { assetConfig } from "@/config/assets";
 import type { DeckSolverRuntime } from "./runtime-source";
-import { deckWorkerInit, isCurrentDeckWorkerReply, parseDeckWorkerEvent, type DeckDataCatalog, type DeckWorkerFailureCode, type DeckWorkerInit, type DeckWorkerRun } from "./worker-protocol";
+import { deckWorkerInit, isCurrentDeckWorkerReply, parseDeckWorkerEvent, type DeckDataCatalog, type DeckWorkerFailureCode, type DeckWorkerGrowth, type DeckWorkerInit, type DeckWorkerRun } from "./worker-protocol";
 
 /** The part of `Worker` the client uses. */
 export interface DeckWorkerPort {
@@ -41,6 +41,18 @@ export type DeckRecommendOutcome =
   | (OutcomeBinding & { status: "stopped" | "superseded"; resultJson: string | null })
   | (OutcomeBinding & { status: "failed"; code: DeckWorkerFailureCode; message: string; resultJson: string | null });
 
+export type DeckGrowthOutcome =
+  | { status: "complete"; growthJson: string }
+  | { status: "stopped" }
+  | { status: "failed"; code: DeckWorkerFailureCode; message: string };
+
+interface ActiveGrowth {
+  jobId: string;
+  inputRevision: number;
+  slot: Slot | null;
+  resolve: (outcome: DeckGrowthOutcome) => void;
+}
+
 interface Slot {
   worker: DeckWorkerPort;
   key: string;
@@ -77,6 +89,7 @@ function invalidJob(job: DeckRecommendJob): string | null {
 export class DeckWorkerClient {
   private slot: Slot | null = null;
   private active: ActiveJob | null = null;
+  private activeGrowth: ActiveGrowth | null = null;
 
   constructor(
     private readonly factory: (url: string) => DeckWorkerPort = (url) => new globalThis.Worker(url),
@@ -118,12 +131,62 @@ export class DeckWorkerClient {
     });
   }
 
+  /** Evaluate single-card upgrade impacts for one solved team without disturbing the solver's warm Worker. */
+  evaluateGrowth(params: {
+    runtime: DeckSolverRuntime;
+    jobId: string;
+    inputRevision: number;
+    accountJson: string;
+    requestJson: string;
+    teamJson: string;
+  }): Promise<DeckGrowthOutcome> {
+    if (this.activeGrowth) {
+      const prev = this.activeGrowth;
+      this.activeGrowth = null;
+      prev.resolve({ status: "stopped" });
+    }
+    return new Promise((resolve) => {
+      const activeGrowth: ActiveGrowth = {
+        jobId: params.jobId,
+        inputRevision: params.inputRevision,
+        slot: null,
+        resolve,
+      };
+      this.activeGrowth = activeGrowth;
+      const slot = this.slotFor(deckWorkerInit(params.runtime));
+      activeGrowth.slot = slot;
+      void slot.ready.then((ready) => {
+        if (this.activeGrowth !== activeGrowth) return;
+        if (ready.status !== "ready") {
+          this.activeGrowth = null;
+          resolve(ready.status === "failed" ? { status: "failed", code: ready.code, message: ready.message } : { status: "stopped" });
+          return;
+        }
+        const msg: DeckWorkerGrowth = {
+          type: "growth",
+          jobId: params.jobId,
+          inputRevision: params.inputRevision,
+          accountJson: params.accountJson,
+          requestJson: params.requestJson,
+          teamJson: params.teamJson,
+        };
+        try { slot.worker.postMessage(msg); }
+        catch (error) { this.fail(slot, "protocol", describe(error)); }
+      });
+    });
+  }
+
   /** End the current job as `stopped`, with its last intermediate result. */
   stop(): void { this.end("stopped"); }
 
   /** Stop the current job and terminate the Worker. */
   dispose(): void {
     this.end("stopped");
+    if (this.activeGrowth) {
+      const prev = this.activeGrowth;
+      this.activeGrowth = null;
+      prev.resolve({ status: "stopped" });
+    }
     if (this.slot) this.discard(this.slot);
   }
 
@@ -193,7 +256,22 @@ export class DeckWorkerClient {
         if (!active || !isCurrentDeckWorkerReply(active.job, event)) return;
         this.finish(active, { status: "complete", ...this.binding(active), datasetId: active.datasetId!, resultJson: event.resultJson });
         return;
+      case "growthResult":
+        if (!this.activeGrowth || this.activeGrowth.slot !== slot || !isCurrentDeckWorkerReply(this.activeGrowth, event)) return;
+        {
+          const done = this.activeGrowth;
+          this.activeGrowth = null;
+          done.resolve({ status: "complete", growthJson: event.growthJson });
+        }
+        return;
       case "failed":
+        if (this.activeGrowth && this.activeGrowth.slot === slot && event.jobId === this.activeGrowth.jobId && (event.inputRevision === undefined || event.inputRevision === this.activeGrowth.inputRevision)) {
+          const failedGrowth = this.activeGrowth;
+          this.activeGrowth = null;
+          failedGrowth.resolve({ status: "failed", code: event.code, message: event.message });
+          this.fail(slot, event.code, event.message);
+          return;
+        }
         if (event.jobId !== undefined && (!active || !isCurrentDeckWorkerReply(active.job, event))) return;
         this.fail(slot, event.code, event.message);
     }
@@ -202,9 +280,14 @@ export class DeckWorkerClient {
   /** A failed Worker is terminated; its job, if any, fails with the same code. */
   private fail(slot: Slot, code: DeckWorkerFailureCode, message: string): void {
     const active = this.active && this.active.slot === slot ? this.active : null;
+    const growth = this.activeGrowth && this.activeGrowth.slot === slot ? this.activeGrowth : null;
     slot.settle({ status: "failed", code, message });
     this.discard(slot);
     if (active) this.finish(active, { status: "failed", code, message, ...this.binding(active), resultJson: active.lastProgress });
+    if (growth) {
+      this.activeGrowth = null;
+      growth.resolve({ status: "failed", code, message });
+    }
   }
 
   private discard(slot: Slot): void {

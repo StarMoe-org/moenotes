@@ -4,7 +4,8 @@ import { buildDeckMasterOverlayUrl, resolveDeckRuntime, type DeckRuntimeFailureC
 import { DeckWorkerClient } from "@/lib/deck/worker-client";
 import type { DeckDataCatalog, DeckWorkerFailureCode } from "@/lib/deck/worker-protocol";
 import { parseCapabilities, type DeckSolverCapabilities } from "@/lib/deck/goals";
-import { parseDeckAnswer, type DeckAnswer } from "@/lib/deck/answer";
+import { parseDeckAnswer, type DeckAnswer, type DeckTeam } from "@/lib/deck/answer";
+import type { DeckGrowthTeamInput, DeckTeamGrowthReport } from "@/lib/deck/haneoka/growth";
 import { getLocalServerMasterDataVersion } from "@/lib/masterdata/client-version";
 
 /** Progress reports arrive at most this often. */
@@ -45,9 +46,11 @@ function readAnswer(json: string | null): DeckAnswer | null {
 export function useDeckSolver(server: GameServer, active: boolean) {
   const [engine, setEngine] = useState<DeckEngineState>({ status: "loading" });
   const [job, setJob] = useState<DeckJobState>({ status: "idle" });
+  const [growthByTeam, setGrowthByTeam] = useState<Record<string, { loading: boolean; report: DeckTeamGrowthReport | null }>>({});
   const [attempt, setAttempt] = useState(0);
   const client = useRef<DeckWorkerClient | null>(null);
   const revision = useRef(0);
+  const growthRevision = useRef(0);
   const previous = useRef<{ key: string; accountJson: string; plan: DeckRunPlan; seedJson?: string; rate?: DeckAnswer | null; requestJson?: string } | null>(null);
 
   useEffect(() => {
@@ -55,7 +58,7 @@ export function useDeckSolver(server: GameServer, active: boolean) {
     revision.current++; previous.current = null;
     const worker = client.current ??= new DeckWorkerClient();
     const abort = new AbortController();
-    setEngine({ status: "loading" }); setJob({ status: "idle" });
+    setEngine({ status: "loading" }); setJob({ status: "idle" }); setGrowthByTeam({});
     void (async () => {
       const resolved = await resolveDeckRuntime(server, { signal: abort.signal }).catch(error => {
         if (abort.signal.aborted) return null;
@@ -93,6 +96,7 @@ export function useDeckSolver(server: GameServer, active: boolean) {
       } });
     const retained = (plan.rate === null || cachedRate !== undefined) && seedJson ? readAnswer(seedJson) : null;
     const progress = retained?.result ? { ...retained, final: false, result: { ...retained.result, elapsedMs: 0 } } : null;
+    if (!seedJson || prior?.key !== key) setGrowthByTeam({});
     setJob({ status: "running", key, startedAt: performance.now(), stage: plan.rate === null || cachedRate !== undefined ? "goal" : "rate", rate: cachedRate ?? null, progress });
     void (async () => {
       let rate: DeckAnswer | null = cachedRate ?? null;
@@ -122,11 +126,89 @@ export function useDeckSolver(server: GameServer, active: boolean) {
   }, [engine, server]);
 
   const stop = useCallback(() => client.current?.stop(), []);
-  const reset = useCallback(() => { revision.current++; client.current?.stop(); setJob({ status: "idle" }); }, []);
+  const reset = useCallback(() => { revision.current++; client.current?.stop(); setJob({ status: "idle" }); setGrowthByTeam({}); }, []);
   const retry = useCallback(() => setAttempt(value => value + 1), []);
   const resume = useCallback(() => {
     const last = previous.current;
     if (last) run(last.key, last.accountJson, last.plan, last.seedJson, last.rate ?? null);
   }, [run]);
-  return { engine, job, run, stop, reset, retry, resume };
+
+  const evaluateGrowth = useCallback((teamKey: string, team: DeckTeam) => {
+    const worker = client.current;
+    const ctx = previous.current;
+    if (!worker || engine.status !== "ready" || !ctx?.requestJson) return;
+    const inputRevision = ++growthRevision.current;
+    setGrowthByTeam(prev => ({
+      ...prev,
+      [teamKey]: { loading: true, report: prev[teamKey]?.report ?? null },
+    }));
+    const payload: DeckGrowthTeamInput = {
+      members: [team.leader.member, ...team.others.map(item => item.member)],
+      snaps: [team.leader.snap, ...team.others.map(item => item.snap)],
+      ...(team.song ? { song: team.song } : {}),
+      ...(team.aggregate?.songs.length ? { aggregateSongs: team.aggregate.songs.map(item => item.song) } : {}),
+    };
+    void (async () => {
+      const outcome = await worker.evaluateGrowth({
+        runtime: engine.runtime,
+        jobId: `${server}:growth:${inputRevision}`,
+        inputRevision,
+        accountJson: ctx.accountJson,
+        requestJson: ctx.requestJson!,
+        teamJson: JSON.stringify(payload),
+      });
+      if (outcome.status === "stopped") {
+        setGrowthByTeam(prev => {
+          const entry = prev[teamKey];
+          if (!entry?.loading) return prev;
+          return { ...prev, [teamKey]: { loading: false, report: entry.report } };
+        });
+        return;
+      }
+      if (outcome.status === "failed") {
+        setGrowthByTeam(prev => ({
+          ...prev,
+          [teamKey]: {
+            loading: false,
+            report: {
+              format: "moenotes.deck-growth/1",
+              status: "invalid",
+              metricKind: "power",
+              baseline: null,
+              scenarios: [],
+              cards: [],
+              elapsedMs: 0,
+              message: outcome.message,
+            },
+          },
+        }));
+        return;
+      }
+      let parsed: DeckTeamGrowthReport | null = null;
+      try {
+        const raw = JSON.parse(outcome.growthJson) as DeckTeamGrowthReport;
+        if (raw && raw.format === "moenotes.deck-growth/1") parsed = raw;
+      } catch {
+        parsed = null;
+      }
+      setGrowthByTeam(prev => ({
+        ...prev,
+        [teamKey]: {
+          loading: false,
+          report: parsed ?? {
+            format: "moenotes.deck-growth/1",
+            status: "invalid",
+            metricKind: "power",
+            baseline: null,
+            scenarios: [],
+            cards: [],
+            elapsedMs: 0,
+            message: "Invalid growth payload",
+          },
+        },
+      }));
+    })();
+  }, [engine, server]);
+
+  return { engine, job, growthByTeam, run, stop, reset, retry, resume, evaluateGrowth };
 }

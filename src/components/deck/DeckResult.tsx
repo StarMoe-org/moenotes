@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import LinearProgress from "@mui/material/LinearProgress";
@@ -11,6 +12,7 @@ import { localizePath } from "@/i18n/routing";
 import { getRoutePathById } from "@/lib/route/registry";
 import type { BoxCard, CardBox, CardFieldName } from "@/lib/box/model";
 import type { DeckAnswer, DeckIssueGroups, DeckOrderStat, DeckTeam } from "@/lib/deck/answer";
+import type { DeckTeamGrowthReport } from "@/lib/deck/haneoka/growth";
 import { formatDeckInterval } from "@/lib/deck/interval";
 import { groupIssues, isOutOfMemory } from "@/lib/deck/answer";
 import type { DeckAggregation, DeckGoal } from "@/lib/deck/goals";
@@ -22,6 +24,7 @@ import { MemberSquareArtwork, SupportSquareArtwork } from "@/components/shared/C
 import { termRate, type RewardTerm } from "@/lib/deck/reward-mix";
 import { RewardBreakdown, RewardOrder, RewardTies } from "./DeckRewardMix";
 import DeckShareImageButton from "./DeckShareImageButton";
+import DeckTeamGrowthPanel from "./DeckTeamGrowthPanel";
 
 /** The challenge live a run rated challenge points by. */
 export interface DeckRateBasis { song: string; difficulty: string; cost: number }
@@ -42,6 +45,9 @@ export interface DeckResultProps {
   /** A linked save answers for its cards; missing card values are fixed by uploading a newer save. */
   linked: boolean;
   busy: boolean;
+  theoreticalMode?: boolean | undefined;
+  growthByTeam?: Readonly<Record<string, { loading: boolean; report: DeckTeamGrowthReport | null }>> | undefined;
+  onEvaluateGrowth?: ((teamKey: string, team: DeckTeam) => void) | undefined;
   onStop: () => void;
   onRerun: () => void;
   onEditCard: (key: string) => void;
@@ -55,6 +61,14 @@ const LEADER_SLOT = 2;
 
 export default function DeckResult(props: DeckResultProps) {
   const { locale, job } = props;
+  const memberById = useMemo(
+    () => new Map(props.catalog.members.map((card) => [card.id, card])),
+    [props.catalog.members],
+  );
+  const snapById = useMemo(
+    () => new Map(props.catalog.snaps.map((card) => [card.id, card])),
+    [props.catalog.snaps],
+  );
   const tr = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.solver.${key}`, values);
   if (job.status === "failed") {
     const memory = job.code === "runtime" && isOutOfMemory(job.message);
@@ -82,6 +96,11 @@ export default function DeckResult(props: DeckResultProps) {
   const teams = result?.teams ?? [];
   return <div className="dr-result" data-state={running ? "running" : "done"} aria-busy={running}>
     {answer?.engine?.name === "Haneoka" && <small className="dr-muted">{tr("haneokaAttribution")} — <a href={haneokaUrl}>{haneokaUrl}</a></small>}
+    {props.theoreticalMode && (
+      <div className="dr-stale" role="status">
+        <strong>{t(locale, "deckWorkspace.theoretical.resultNotice")}</strong>
+      </div>
+    )}
     {props.stale && !running && <div className="dr-stale" role="status"><strong>{tr("stale")}</strong><Button variant="text" size="small" onClick={props.onRerun}>{tr("rerun")}</Button></div>}
     <div className="dr-status" data-proof={running ? "running" : optimality?.proven && rateProven ? "proven" : "unproven"}>
       {running ? <>
@@ -115,7 +134,7 @@ export default function DeckResult(props: DeckResultProps) {
       {levels && rate && <RateBasis {...props} rate={rate} levels={levels} proven={rateProven} />}
       {result && usesItems && <p className="dr-note">{t(locale, "deckWorkspace.conditions.eventItemsNote")}</p>}
       {result?.play && <p className="dr-note">{tr("playSummary", { notes: result.play.judged, misses: result.play.misses })}</p>}
-      {teams.length > 0 ? <ol className="dr-teams">{teams.map((team, index) => <TeamCard key={index} {...props} team={team} best={teams[0]!} metric={metric} aggregation={aggregation} levels={levels} deterministic={deterministic} first={index === 0} final={!running} />)}</ol>
+      {teams.length > 0 ? <ol className="dr-teams">{teams.map((team, index) => <TeamCard key={index} {...props} team={team} teamKey={`${job.key}:${index}:${team.layout.members.join("-")}:${team.layout.snaps.join("-")}`} memberById={memberById} snapById={snapById} best={teams[0]!} metric={metric} aggregation={aggregation} levels={levels} deterministic={deterministic} first={index === 0} final={!running} />)}</ol>
         : <p className="dr-muted">{tr(running ? "searching" : "noTeam")}</p>}
     </>}
   </div>;
@@ -181,7 +200,7 @@ function teamValue(team: DeckTeam, metric: string, aggregation: DeckAggregation,
   return { main, interval, payoff, shown, mixed, terms, label };
 }
 
-function TeamCard(props: DeckResultProps & { team: DeckTeam; best: DeckTeam; metric: string; aggregation: DeckAggregation; levels: readonly RewardTerm[][] | null; deterministic: boolean; first: boolean; final: boolean }) {
+function TeamCard(props: DeckResultProps & { team: DeckTeam; teamKey: string; memberById: ReadonlyMap<number, BoxCatalog["members"][number]>; snapById: ReadonlyMap<number, BoxCatalog["snaps"][number]>; best: DeckTeam; metric: string; aggregation: DeckAggregation; levels: readonly RewardTerm[][] | null; deterministic: boolean; first: boolean; final: boolean }) {
   const { locale, team, metric, aggregation, box, catalog } = props;
   const tr = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.solver.${key}`, values);
   const value = teamValue(team, metric, aggregation, props.levels, props.deterministic);
@@ -242,6 +261,16 @@ function TeamCard(props: DeckResultProps & { team: DeckTeam; best: DeckTeam; met
         {props.levels && props.levels.length > 1 && team.levels && <RewardTies locale={locale} levels={props.levels.slice(1)} values={team.levels.slice(1).map(level => level.value)} />}
         <div className="dr-formation"><div className="dc-stage"><NativeFormationGroup locale={locale} slots={formationSlots(team, box, catalog)} label={tr("formation")} /></div></div>
         <Slots locale={locale} team={team} box={box} catalog={catalog} />
+        {props.final && !props.theoreticalMode && props.onEvaluateGrowth && (
+          <DeckTeamGrowthPanel
+            locale={locale}
+            report={props.growthByTeam?.[props.teamKey]?.report ?? null}
+            loading={Boolean(props.growthByTeam?.[props.teamKey]?.loading)}
+            onEvaluate={() => props.onEvaluateGrowth?.(props.teamKey, team)}
+            memberById={props.memberById}
+            snapById={props.snapById}
+          />
+        )}
         {team.aggregate && <AggregateSongs {...props} team={team} />}
         <SkillOrders {...props} />
       </div>

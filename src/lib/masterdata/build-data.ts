@@ -767,16 +767,45 @@ export function getBuildEvents(locale: AppLocale): Promise<ServerFaceted<EventVi
   return mergedList(`events:${locale}`, (server) => eventsOn(server, locale), (event) => event.id);
 }
 
-/** Per server, the events the deck page offers event goals for, with their challenge songs. */
+/** Per server, the events the deck page offers event goals for, with their challenge songs and effect templates. */
 export function getBuildDeckEvents(locale: AppLocale): Promise<{ server: GameServer; events: DeckEvent[] }[]> {
   return memo(`deck-events:${locale}`, async () => (await eachServer(async (server) => {
-    const [events, challengeMusics, summaries] = await Promise.all([
-      table<RawEvent>("MasterEvent.json", server), table<RawChallengeMusic>("MasterChallengeMusic.json", server), eventsOn(server, locale)]);
-    return events._allData.map((event): DeckEvent => ({
-      id: event.id, name: summaries.find((summary) => summary.id === event.id)?.name ?? String(event.id), startAt: event.startAt, endAt: event.endAt,
-      itemId: event.eventItemId || null,
-      challengeMusics: challengeMusics._allData.filter((row) => row.eventId === event.id).map((row) => ({ id: row.id, musicId: row.liveMusicId })),
-    }));
+    const [events, challengeMusics, rawEffects, summaries] = await Promise.all([
+      table<RawEvent>("MasterEvent.json", server),
+      table<RawChallengeMusic>("MasterChallengeMusic.json", server),
+      table<RawEventEffect>("MasterEventEffect.json", server).catch(() => ({ _allData: [] as RawEventEffect[] })),
+      eventsOn(server, locale),
+    ]);
+    return events._allData.map((event): DeckEvent => {
+      const effects = rawEffects._allData
+        .filter((row) => row.eventId === event.id && (row.resourceTypeConstraint === 2 || row.resourceTypeConstraint === 3) && (row.eventBonusType === 0 || row.eventBonusType === 1 || row.eventBonusType === 2) && row.tagId === 0)
+        .map((row) => ({
+          resourceType: row.resourceTypeConstraint as 2 | 3,
+          characterId: row.characterId,
+          bandId: row.bandId,
+          cardType: row.cardType,
+          tagId: 0 as const,
+          memberCardId: row.memberCardId,
+          supportCardId: row.supportCardId,
+          bonusType: row.eventBonusType as 0 | 1 | 2,
+          perRank: [
+            row.rank1EffectValue,
+            row.rank2EffectValue,
+            row.rank3EffectValue,
+            row.rank4EffectValue,
+            row.rank5EffectValue,
+          ] as const,
+        }));
+      return {
+        id: event.id,
+        name: summaries.find((summary) => summary.id === event.id)?.name ?? String(event.id),
+        startAt: event.startAt,
+        endAt: event.endAt,
+        itemId: event.eventItemId || null,
+        challengeMusics: challengeMusics._allData.filter((row) => row.eventId === event.id).map((row) => ({ id: row.id, musicId: row.liveMusicId })),
+        ...(effects.length > 0 ? { effects } : {}),
+      };
+    });
   })).map(([server, events]) => ({ server, events })));
 }
 
