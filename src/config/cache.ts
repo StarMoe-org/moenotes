@@ -12,6 +12,10 @@ export const cacheConfig = {
     versionParam: "v",
     bustParam: "_t",
   },
+  story: {
+    /** Script tables kept in memory, about 100 KB each; a miss downloads the table again (`src/lib/story/parser.ts`). */
+    maxTables: 1000,
+  },
   assets: {
     ttlMs: 7 * 24 * 60 * 60 * 1000,
     staleFallbackTtlMs: 30 * 24 * 60 * 60 * 1000,

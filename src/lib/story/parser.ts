@@ -9,6 +9,8 @@ import {
   getStoryVoiceUrl,
   type StoryScriptTable,
 } from "@/lib/story/assets";
+import { buildEnv } from "@/config/build-env";
+import { cacheConfig } from "@/config/cache";
 import { fetchReleaseJson } from "@/lib/assets/release";
 import { parseRichText, plainRichText, type StoryTextRun } from "@/lib/story/rich-text";
 import { localizeMasterText } from "@/lib/masterdata/localize-text";
@@ -114,7 +116,7 @@ interface StoryTableCacheState {
 
 const storyTableCacheKey = Symbol.for("moenotes.story.build-tables");
 const storyTableGlobal = globalThis as typeof globalThis & { [storyTableCacheKey]?: StoryTableCacheState };
-const storyTableCache = storyTableGlobal[storyTableCacheKey] ??= { tables: new Map() };
+export const storyTableCache = storyTableGlobal[storyTableCacheKey] ??= { tables: new Map() };
 
 interface EpisodeRow {
   index?: number;
@@ -454,13 +456,36 @@ export function normalizeStoryTable<T>(value: unknown): NormalizedTable<T> {
   };
 }
 
+function maxCachedStoryTables(): number {
+  const raw = buildEnv("MOENOTES_STORY_MAX_TABLES");
+  if (!raw) return cacheConfig.story.maxTables;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed >= 1 ? Math.floor(parsed) : cacheConfig.story.maxTables;
+}
+
+/** A published script table, shared until it is among the least recently used or its load fails. */
 async function fetchStoryTable<T>(scriptName: string, table: StoryScriptTable, locale: StoryLocale, fetcher: typeof fetch): Promise<NormalizedTable<T>> {
   const url = getStoryScriptTableUrl(scriptName, table, locale);
   if (!url) throw new Error(`Story table is not in the release export: ${scriptName}-${table}`);
   let request = storyTableCache.tables.get(url);
-  if (!request) {
-    request = fetchReleaseJson<unknown>(url, fetcher).then((value) => normalizeStoryTable<unknown>(value));
+  if (request) {
+    storyTableCache.tables.delete(url);
     storyTableCache.tables.set(url, request);
+  } else {
+    const loading: Promise<NormalizedTable<unknown>> = fetchReleaseJson<unknown>(url, fetcher)
+      .then((value) => normalizeStoryTable<unknown>(value))
+      .catch((error) => {
+        if (storyTableCache.tables.get(url) === loading) storyTableCache.tables.delete(url);
+        throw error;
+      });
+    request = loading;
+    storyTableCache.tables.set(url, request);
+    const limit = maxCachedStoryTables();
+    while (storyTableCache.tables.size > limit) {
+      const oldest = storyTableCache.tables.keys().next().value;
+      if (oldest === undefined) break;
+      storyTableCache.tables.delete(oldest);
+    }
   }
   return request as Promise<NormalizedTable<T>>;
 }
