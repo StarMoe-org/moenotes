@@ -680,7 +680,7 @@ index 8bfc101..583ee4a 100644
 +    SEARCH_DEADLINE.with(|value|value.get().is_finite() && milliseconds()>=value.get())
 +}
 diff --git a/src/event.rs b/src/event.rs
-index d5ff20e..73b9fa9 100644
+index d5ff20e..c4e11a5 100644
 --- a/src/event.rs
 +++ b/src/event.rs
 @@ -1,3 +1,6 @@
@@ -1307,21 +1307,20 @@ index d5ff20e..73b9fa9 100644
      }
      fn value(&self, score: f64) -> f64 {
          *self
-@@ -2427,8 +2625,12 @@ impl ChallengePoints {
+@@ -2427,8 +2625,11 @@ impl ChallengePoints {
      }
  }
  impl Objective for ChallengePoints {
 +    fn power_ties(&self) -> bool { self.maximum }
 +    fn score_ties(&self) -> bool { self.maximum }
 +    fn tie_rank(&self, hit:&crate::search::Hit) -> [f64;2] { [if self.maximum {hit.power} else {crate::master::number(&hit.detail["scores"]["mean"],f64::NEG_INFINITY)},0.0] }
-+    fn preserve_snap_options(&self) -> bool { self.maximum && !self.maximum_monotone }
      fn exchange_snap_equivalent(&mut self, member: usize, a: i32, b: i32) -> bool {
 -        self.mean.exchange_snap_equivalent(member, a, b)
 +        (!self.maximum || self.maximum_monotone) && self.mean.exchange_snap_equivalent(member, a, b)
      }
      fn needs_power_cap(&self) -> bool {
          self.mean.needs_power_cap()
-@@ -2437,10 +2639,10 @@ impl Objective for ChallengePoints {
+@@ -2437,20 +2638,20 @@ impl Objective for ChallengePoints {
          self.mean.prepare_dominance(power);
      }
      fn numeric_snap_dominance(&mut self, m: usize, a: i32, b: i32, power: f64) -> bool {
@@ -1334,8 +1333,11 @@ index d5ff20e..73b9fa9 100644
      }
      fn snap_dominance(&mut self, m: usize, s: i32) -> Vec<f64> {
          self.mean.snap_dominance(m, s)
-@@ -2450,7 +2652,7 @@ impl Objective for ChallengePoints {
-         self.mean.preserve_snap_options()
+     }
+ 
+     fn preserve_snap_options(&self) -> bool {
+-        self.mean.preserve_snap_options()
++        (self.maximum && !self.maximum_monotone) || self.mean.preserve_snap_options()
      }
      fn conditional_snap_dominance(&self) -> bool {
 -        self.mean.conditional_snap_dominance()
@@ -1343,7 +1345,7 @@ index d5ff20e..73b9fa9 100644
      }
      fn canonical_leader(&self) -> bool {
          self.mean.canonical_leader()
-@@ -2459,20 +2661,22 @@ impl Objective for ChallengePoints {
+@@ -2459,20 +2660,22 @@ impl Objective for ChallengePoints {
          self.mean.skill(m, s)
      }
      fn bound(&mut self, t: Totals) -> f64 {
@@ -1369,7 +1371,7 @@ index d5ff20e..73b9fa9 100644
          )
      }
      fn exact(&mut self, team: &Team, power: f64, slots: &[f64]) -> Result<Exact, String> {
-@@ -2482,10 +2686,357 @@ impl Objective for ChallengePoints {
+@@ -2482,10 +2685,357 @@ impl Objective for ChallengePoints {
              .into_iter()
              .map(|s| self.value(crate::master::number(s, 0.0)))
              .collect();
