@@ -24,6 +24,8 @@ export interface PerfectTimingEntry extends PerfectTiming {
 }
 
 export interface GekisoTimingSegment {
+  notes?: number;
+  maxJust?: number;
   opening?: { timeMs: number; notes: number; lateMs: number };
   ending?: { timeMs: number; notes: number; earlyMs: number };
 }
@@ -60,6 +62,21 @@ export function extractPerfectTimings(rows: readonly RawLiveJudgementTiming[]): 
       beforeMs: row.beforeMs,
       afterMs: row.afterMs,
     }));
+}
+
+/** Extract sorted `noteJudgementType` IDs that award Just (`noteSimulateJudgement === 6`). */
+export function extractJustTypes(rows: readonly RawLiveJudgementTiming[]): number[] {
+  return [...new Set(
+    rows
+      .filter((row) => row.noteSimulateJudgement === 6)
+      .map((row) => row.noteJudgementType),
+  )].sort((a, b) => a - b);
+}
+
+/** 25 Hz Gekiso simulation frame matching `ournotes-team-builder` `full::core::frame` (`ceil_i32(ms as f32 / 40.0)`). */
+export function gekisoFrame(ms: number): number {
+  if (ms < 0) return 0;
+  return Math.ceil(f(f(ms) / f(40)));
 }
 
 export function perfectTimingsMap(rows: readonly (RawLiveJudgementTiming | PerfectTimingEntry)[]): ReadonlyMap<number, PerfectTiming> {
@@ -110,18 +127,38 @@ export function comboOpening(
   return { first, after, frame, nextTimeMs };
 }
 
-/** Compute per-Gekiso-segment `opening` (late start) and `ending` (early end) timing windows. */
+const DEFAULT_JUST_TYPES = [10, 11, 13] as const;
+
+/** Compute per-Gekiso-segment `notes`, `maxJust`, and `opening` (late start) / `ending` (early end) timing windows. */
 export function gekisoTiming(
   source: RuntimeChartTimingSource,
   windows: ReadonlyMap<number, PerfectTiming>,
+  justTypes: readonly number[] = DEFAULT_JUST_TYPES,
 ): GekisoTimingSegment[] {
-  const notes = source.enumeration
-    .filter((note) => isJudgementNote(note.op))
+  const judgedEnumeration = source.enumeration.filter((note) => isJudgementNote(note.op));
+  const notes = judgedEnumeration
     .map((note) => ({ op: note.op, timeMs: note.timeMs, judgementType: note.judgementType }))
     .sort((a, b) => a.timeMs - b.timeMs);
+  const justSet = new Set(justTypes.length > 0 ? justTypes : DEFAULT_JUST_TYPES);
+  const rangeFrames = source.feverMs.map(([start, end]) => [gekisoFrame(start), gekisoFrame(end)] as const);
+  const segNotes = source.feverMs.map(() => 0);
+  const segMaxJust = source.feverMs.map(() => 0);
+  for (const note of judgedEnumeration) {
+    const noteFrame = gekisoFrame(note.timeMs);
+    const rangeIdx = rangeFrames.findIndex(([startF, endF]) => startF < noteFrame && noteFrame <= endF);
+    if (rangeIdx >= 0) {
+      segNotes[rangeIdx]! += 1;
+      if (justSet.has(note.judgementType)) {
+        segMaxJust[rangeIdx]! += 1;
+      }
+    }
+  }
   const afterMs = new Map([...windows].map(([type, window]) => [type, window.afterMs]));
-  return source.feverMs.map(([start, end]) => {
-    const result: GekisoTimingSegment = {};
+  return source.feverMs.map(([start, end], idx) => {
+    const result: GekisoTimingSegment = {
+      notes: segNotes[idx]!,
+      maxJust: segMaxJust[idx]!,
+    };
     const opening = comboOpening(notes, start, end, afterMs);
     if (opening) {
       result.opening = {
@@ -778,7 +815,8 @@ export async function runtimeChartFromBytes(bytes: Uint8Array): Promise<RuntimeC
 export async function gekisoTimingFromBytes(
   bytes: Uint8Array,
   timings: readonly (RawLiveJudgementTiming | PerfectTimingEntry)[],
+  justTypes?: readonly number[],
 ): Promise<GekisoTimingSegment[]> {
   const source = await runtimeChartFromBytes(bytes);
-  return gekisoTiming(source, perfectTimingsMap(timings));
+  return gekisoTiming(source, perfectTimingsMap(timings), justTypes);
 }

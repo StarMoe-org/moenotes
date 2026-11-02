@@ -22,7 +22,7 @@ import { mergeBoxBackup, parseBox, type BoxCard, type BoxSaveLink, type CardBox,
 import { answerDeckFields } from "@/lib/box/deck-answers";
 import { boxAccountJson, gameSaveAccountJson } from "@/lib/deck/account-envelope";
 import { CHALLENGE_POINT_COSTS, DEFAULT_DECK_GOAL, EVENT_GOALS, EVERYDAY_GOALS, MAX_BOOST, computes, computesGoal, defaultDeckGoalInput, goalGap, heldEvent,
-  playsGekisou, readsAccuracy, effectiveAggregation, usesEventItemRewards, rewardLayoutOf, isChallengeInput, isNetworkInput, challengeRateRequest, recommendationRequest, solverGoalKind, supportsCrossSongMean, goalVenues, isEventPayoffGoal, type ChallengePointCost, type DeckEvent, type DeckGoal, type DeckGoalInput, type DeckVenue, type DeckArenaMusic } from "@/lib/deck/goals";
+  playsGekisou, readsAccuracy, effectiveAggregation, usesEventData, usesEventItemRewards, rewardLayoutOf, isChallengeInput, isNetworkInput, challengeRateRequest, recommendationRequest, solverGoalKind, supportsCrossSongMean, goalVenues, isEventPayoffGoal, type ChallengePointCost, type DeckEvent, type DeckGoal, type DeckGoalInput, type DeckVenue, type DeckArenaMusic } from "@/lib/deck/goals";
 import { arenaPeriod, arenaSongMatchesBand, resolveArenaRule, type DeckArenaCatalog, type DeckArenaMode, type DeckArenaRuleSource } from "@/lib/deck/arena";
 import DeckArenaControls, { type DeckArenaSongEntry } from "./DeckArenaControls";
 import DeckManualEventDialog, { DeckEventSourceControls, type DeckEventSourceMode, type NamedEntityOption } from "./DeckManualEventDialog";
@@ -219,7 +219,7 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
     return activeCustomTemplate.template.defaultDraft;
   }, [activeCustomTemplate, customEventDraft]);
 
-  const event = useMemo(() => {
+  const rawEvent = useMemo(() => {
     if (eventSourceMode === "auto") return liveHeldEvent;
     if (eventSourceMode === "custom") return activeCustomTemplate?.event ?? null;
     const sorted = [...serverEvents].sort((a, b) => b.id - a.id);
@@ -237,9 +237,11 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
         : undefined,
     [eventSourceMode, canCustomEvent, activeCustomTemplate, effectiveCustomDraft],
   );
-  const isManualEventActive =
-    (eventSourceMode === "template" && event !== null && event.id !== liveHeldEvent?.id) ||
-    (eventSourceMode === "custom" && customEventEffects !== undefined);
+  const event = useMemo(
+    () => (rawEvent && customEventEffects !== undefined ? { ...rawEvent, challengeMusics: [] } : rawEvent),
+    [rawEvent, customEventEffects],
+  );
+  const isManualEventActive = eventSourceMode !== "auto" && event !== null;
 
   const theoreticalBox = useMemo(() => {
     if (!theoreticalMode) return null;
@@ -380,6 +382,7 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
   const constraints = {
     leader: resolvedLeaderId,
     includeMembers: idsOf(required, "member", useModernArena),
+    includeSnaps: noSnaps ? [] : idsOf(required, "snap"),
     excludeMembers: idsOf(excluded, "member"),
     excludeSnaps: idsOf(excluded, "snap"),
     noSnaps,
@@ -407,23 +410,63 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
   // Rarity scales and bands differ between members and Snaps: whenever the shown kind changes (picked, or the box lost
   // the other kind), start from no filters but keep the search, so no filter stays on without its chip.
   useEffect(() => { setConstraintCardFilters(current => ({ ...EMPTY_CARD_FILTERS, query: current.query })); }, [shownConstraintKind, setConstraintCardFilters]);
-  const runKey = JSON.stringify([server, box?.id, box?.revision, stored?.save?.sha256 ?? null, solver.engine.status === "ready" ? solver.engine.datasetId : null, effectiveInput, constraints, event?.id ?? null]);
+  const runKey = JSON.stringify([
+    server,
+    activeBox?.id,
+    activeBox?.revision,
+    theoreticalMode,
+    stored?.save?.sha256 ?? null,
+    solver.engine.status === "ready" ? solver.engine.datasetId : null,
+    effectiveInput,
+    constraints,
+    event?.id ?? null,
+    isManualEventActive,
+    customEventEffects ?? null,
+  ]);
   const job = solver.job;
   const stale = job.status !== "idle" && job.status !== "running" && job.key !== runKey;
+  function switchToEventGoal(forCustom = false) {
+    if (goal === "power") {
+      updateGoal({ eventParameter: true });
+      return;
+    }
+    const nextVenue = goal === "battle"
+      ? "battleLive"
+      : goal === "mission"
+        ? "missionLive"
+        : goal === "arena"
+          ? "arenaLive"
+          : goal === "skip"
+            ? "skip"
+            : !forCustom && goal === "challenge"
+              ? "challengeLive"
+              : !forCustom && goal === "challengeSkip"
+                ? "challengeSkip"
+                : "freeLive";
+    updateGoal({ goal: "eventPoints", venue: nextVenue });
+    safeSetLocalStorage(GOAL_STORAGE_KEY, "eventPoints");
+  }
   function runSolver() {
     setRunError("");
-    if (solver.engine.status !== "ready" || !box || gap || dataGap || !supported) return;
+    if (solver.engine.status !== "ready" || !activeBox || gap || dataGap || !supported) return;
     try {
       const target = { datasetId: solver.engine.datasetId, server: gameSaveServer(server) };
       let accountJson: string;
-      if (stored?.save) {
+      if (!theoreticalMode && stored?.save) {
         if (linkedSave.state.status !== "ready") throw new Error(tr("solver.saveNotReady"));
         accountJson = gameSaveAccountJson(target, stored, linkedSave.state.save);
       } else {
         if (!saveTables) throw new Error(tr("solver.tablesUnavailable"));
-        accountJson = boxAccountJson(target, box, saveTables, { fallbackBandItems: true });
+        accountJson = boxAccountJson(target, activeBox, saveTables, { fallbackBandItems: true });
       }
-      const context = { event, now: Date.now(), constraints }, cost = effectiveInput.challengePoints;
+      const context = {
+        event,
+        now: Date.now(),
+        constraints,
+        manualEvent: isManualEventActive,
+        ...(customEventEffects !== undefined ? { eventEffects: customEventEffects } : {}),
+      };
+      const cost = effectiveInput.challengePoints;
       const rate = challengeRateRequest(effectiveInput, context);
       setRateBasis(rate === null ? null : { song: songs.find(item => item.id === event?.challengeMusics.find(row => row.id === effectiveInput.challengeMusicId)?.musicId)?.title ?? String(effectiveInput.challengeMusicId),
         difficulty: effectiveInput.rateDifficulty, cost });
@@ -771,7 +814,7 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
           <HaneokaExport locale={locale} box={box} disabled={busy || !box?.cards.length || linked && linkedSave.state.status !== "ready"} />
         </>}
         conditions={<>
-          {serverEvents.length > 0 && ((EVENT_GOALS as readonly string[]).includes(goal) || goal === "power" || !liveHeldEvent || eventSourceMode !== "auto") && (
+          {serverEvents.length > 0 && (
             <DeckEventSourceControls
               locale={locale}
               mode={eventSourceMode}
@@ -781,6 +824,7 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
               customTemplates={customEventTemplates}
               customDraft={effectiveCustomDraft}
               canCustom={canCustomEvent}
+              usesEventBonus={usesEventData(effectiveInput)}
               onModeChange={(nextMode) => {
                 setEventSourceMode(nextMode);
                 if (nextMode === "custom") {
@@ -791,14 +835,21 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
                       setCustomEventDraft(firstTpl.template.defaultDraft);
                     }
                   }
-                  if (goal === "challenge" || goal === "challengeSkip") {
+                  if (!usesEventData(goalInput)) {
+                    switchToEventGoal(true);
+                  } else if (goal === "challenge" || goal === "challengeSkip") {
                     updateGoal({ goal: "eventPoints", venue: "freeLive" });
                   } else if (goalInput.venue === "challengeLive" || goalInput.venue === "challengeSkip") {
                     updateGoal({ venue: "freeLive" });
                   }
-                } else if (nextMode === "template" && selectedEventId === null) {
-                  const firstEv = liveHeldEvent ?? [...serverEvents].sort((a, b) => b.id - a.id)[0] ?? null;
-                  if (firstEv) setSelectedEventId(firstEv.id);
+                } else if (nextMode === "template") {
+                  if (selectedEventId === null) {
+                    const firstEv = liveHeldEvent ?? [...serverEvents].sort((a, b) => b.id - a.id)[0] ?? null;
+                    if (firstEv) setSelectedEventId(firstEv.id);
+                  }
+                  if (!usesEventData(goalInput)) {
+                    switchToEventGoal(false);
+                  }
                 }
               }}
               onSelectedEventChange={(nextEventId) => {
@@ -810,6 +861,7 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
                 updateGoal({ challengeMusicId: null });
               }}
               onOpenCustomModal={() => setCustomEventModalOpen(true)}
+              onSwitchToEventGoal={() => switchToEventGoal(eventSourceMode === "custom")}
             />
           )}
           {canAllSongs && (
@@ -939,9 +991,9 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
               />
             ))}
           </div>}
-          <DeckRewardMix locale={locale} input={effectiveInput} capabilities={capabilities} challengeSongs={challengeSongs}
+          <DeckRewardMix locale={locale} input={effectiveInput} capabilities={capabilities} challengeSongs={customEventEffects !== undefined ? [] : challengeSongs}
             onChange={patch => { updateGoal(patch); if (patch.goal) safeSetLocalStorage(GOAL_STORAGE_KEY, patch.goal); }} />
-          {!(useModernArena && effectiveArenaMode === "shared") && <DeckObjective locale={locale} input={effectiveInput} capabilities={capabilities} onChange={aggregation => updateGoal({ aggregation })} />}
+          {!(useModernArena && effectiveArenaMode === "shared") && <DeckObjective locale={locale} input={effectiveInput} capabilities={capabilities} onChange={aggregation => updateGoal({ aggregation })} onTimingChange={cumulativeTiming => updateGoal({ cumulativeTiming })} />}
           <DeckGoalConditions locale={locale} input={effectiveInput} capabilities={capabilities} onChange={updateGoal} />
           {goal === "power" && (
             <div className="dc-switch-group">
@@ -1216,7 +1268,7 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
                       <span>{composer("leaderShort")}</span>
                     </button>
                   )}
-                  {card.kind === "member" && (
+                  {(card.kind === "member" || !noSnaps) && (
                     <button
                       type="button"
                       className="md3-filter-chip md3-state dc-constraint-chip"

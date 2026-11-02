@@ -6,6 +6,7 @@ import { localizeMasterText } from "@/lib/masterdata/localize-text";
 import type { MasterTable } from "@/lib/cards/data";
 import type { RawLiveMusicCategory, RawMusic } from "@/lib/music/data";
 import {
+  extractJustTypes,
   extractPerfectTimings,
   type PerfectTimingEntry,
   type RawLiveJudgementTiming,
@@ -33,11 +34,12 @@ async function optionalTable<T>(path: string, server: GameServer): Promise<Maste
   }
 }
 
-/** Per song: the combo tier rewards of its reward group, the exp reward ladder, and base Perfect timing windows. */
+/** Per song: the combo tier rewards of its reward group, the exp reward ladder, base Perfect timing windows, and Just judgement types. */
 export interface MusicLiveExtras {
   comboTiers: MusicComboTiersModel[];
   expRewards: MusicExpRewardsModel;
   perfectTimings?: PerfectTimingEntry[];
+  justJudgementTypes?: number[];
 }
 
 export function musicLiveExtrasOn(server: GameServer, locale: AppLocale, songId: number): Promise<MusicLiveExtras | null> {
@@ -55,6 +57,7 @@ export function musicLiveExtrasOn(server: GameServer, locale: AppLocale, songId:
       comboTiers: buildComboTiers(comboRows._allData, raw.comboRewardGroup, resolve),
       expRewards: buildExpRewards(expRows._allData),
       perfectTimings: extractPerfectTimings(timingRows._allData),
+      justJudgementTypes: extractJustTypes(timingRows._allData),
     };
   });
 }

@@ -18,7 +18,7 @@ export interface RecommendationRequest {
     arena?: { bandId?: number; musicType?: number; missions?: number[]; mode?: string };
     songRules?: { musicType?: number; missions?: number[] };
     songs?: { musicId?: number; difficulty?: string }[];
-    play?: { kind?: string; greatFraction?: number; justFraction?: number; missEvery?: number };
+    play?: { kind?: string; greatFraction?: number; justFraction?: number; missEvery?: number; cumulativeTiming?: "best" | "worst" };
     accuracy?: { greatFraction?: number; justFraction?: number } };
   metric?: { kind: string; eventId?: number; consumption?: number; resourceType?: number; resourceId?: number; secondaryPriority?: string; levels?: RewardTermInput[][] };
   eventContext?: { rewardProjection?: boolean; resultClock?: { kind?: string; liveStartJstTicks?: number | null; serverNowJstTicks?: number | string } };
@@ -33,7 +33,7 @@ export interface RecommendationRequest {
   k: number;
   limits?: { timeLimitMs: number | null };
 }
-export const HANEOKA_COMMIT = "9d36aeda2ea958ab4dfef50710b8861ab9b2d53b";
+export const HANEOKA_COMMIT = "4ed6e0061f519240f19750a3a09024dd27304bd8";
 export const HANEOKA_PATCH_SHA = "1b0634019d439fa4b204452f290810baa4ff25810097b2c3d98d6ac609e0fcf8";
 export const CAPABILITIES = {
   goals: ["power", "freeLive", "challengeLive", "battleLive", "missionLive", "arenaLive", "skip"],
@@ -45,7 +45,7 @@ export const CAPABILITIES = {
   combinedMetric: { goals: ["freeLive", "challengeLive", "battleLive", "missionLive", "arenaLive", "skip"], kind: "combined", objective: "lexicographicWeightedExpectedSums", weights: "integer", maxLevels: 3, maxTerms: 9, maxWeight: 1_000_000_000 },
   eventItemRewards: { selection: "exactResultGrade", eventGroupField: "eventGroup", rowsPerGrade: 1, probabilityMarker: 10000 },
   crossSong: true, crossSongMean: true, songRules: true, resume: true, arenaRules: true, gekisouRank: true,
-  manualEventBonuses: true, teamGrowth: true, orderTiming: true,
+  manualEventBonuses: true, teamGrowth: true, orderTiming: true, cumulativeTiming: true,
   accuracy: { great: true, just: true }, patternPlay: true, luckMissions: true, luckGreatConversions: true,
 };
 
@@ -176,12 +176,17 @@ function adaptSingleRequest(data: DeckData, request: RecommendationRequest) {
       songs = [song];
     }
   }
-  const play: { greatFraction?: number; justFraction?: number; missEvery?: number } = request.goal.play ?? request.goal.accuracy ?? {};
+  const play: { greatFraction?: number; justFraction?: number; missEvery?: number; cumulativeTiming?: "best" | "worst" } = request.goal.play ?? request.goal.accuracy ?? {};
   const great = play.greatFraction ?? 0;
   const just = play.justFraction ?? 1;
   if (![great, just].every(value => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1)
     || gekiso && great + just > 1) throw new Error("haneoka-accuracy");
   const criterion = request.aggregation === "maximum" ? "max" : "mean";
+  const cumulativeTiming = play.cumulativeTiming;
+  if (cumulativeTiming !== undefined && (
+    (cumulativeTiming !== "best" && cumulativeTiming !== "worst")
+    || rewards || skip || gekiso || kind === "power" || criterion !== "max"
+  )) throw new Error("haneoka-cumulative-timing");
   const scoreGoal = kind === "power" || skip && !rewards ? { kind: skip ? "skip-score" as const : "power" as const, song, challengeEventId,
     ...(parameterEvents.length ? { parameterEventId: parameterEvents[0], ...(eventEffects ? { eventEffects } : {}) }
       : skip && challengeEventId !== null && request.eventIds?.includes(challengeEventId) ? { parameterEventId: challengeEventId } : {}) }
@@ -190,6 +195,7 @@ function adaptSingleRequest(data: DeckData, request: RecommendationRequest) {
     } }
       : { kind: "score" as const, songs, criterion, challengeEventId, play: {
         kind: "custom", great, good: 0, bad: 0, miss: 0, missEvery: play.missEvery ?? 0,
+        ...(cumulativeTiming ? { cumulativeTiming } : {}),
       } };
   const key = (id: unknown, prefix: string) => prefix + integer(typeof id === "string" ? Number(id) : id, "constraint");
   const c = request.constraints ?? {};

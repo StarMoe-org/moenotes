@@ -1214,6 +1214,74 @@
   justify-content: space-between;
   gap: 8px 12px;
 }
+.dr-timing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+.dr-timing-grid > div {
+  display: grid;
+  gap: 3px;
+  padding: 8px 10px;
+  border-radius: var(--md-sys-shape-corner-small);
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+.dr-timing-grid dt {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-sys-typescale-label-small-size);
+}
+.dr-timing-grid dd {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: var(--md-sys-color-on-surface);
+  font-size: var(--md-sys-typescale-title-small-size);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.dr-timing-guide {
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-color-surface-container-lowest);
+  overflow: hidden;
+}
+.dr-timing-guide-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  list-style: none;
+  font-size: var(--md-sys-typescale-label-large-size);
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+.dr-timing-guide-summary::-webkit-details-marker {
+  display: none;
+}
+.dr-timing-guide-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.dr-timing-guide-chevron {
+  transition: transform var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+  color: var(--md-sys-color-on-surface-variant);
+}
+.dr-timing-guide[open] .dr-timing-guide-chevron {
+  transform: rotate(180deg);
+}
+.dr-timing-guide-body {
+  display: grid;
+  gap: 10px;
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
 .dr-timing-ceiling {
   display: inline-flex;
   flex-wrap: wrap;

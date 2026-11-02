@@ -1,5 +1,5 @@
 # MoeNotes deploy image: Go semi-SSR gateway + Next.js 16 standalone server + Haneoka WASM deck engine
-# (pinned to ournotes-team-builder 9d36aeda2ea9 with patches/haneoka-rewards.patch; also backward-compatible
+# (pinned to ournotes-team-builder 4ed6e0061f51 with patches/haneoka-rewards.patch; also backward-compatible
 # with CI release artifact mode when MOENOTES_BUILD_MODE is unset).
 # Set MOENOTES_BUILD_MODE=ssr in production to serve live semi-SSR HTML + persistent disk cache + Markdown routing.
 
