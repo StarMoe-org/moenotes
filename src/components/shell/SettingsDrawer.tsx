@@ -232,7 +232,7 @@ function AppearanceSettings({ locale, pathname, bands = [] }: SettingsDrawerProp
 }
 
 /** What the site shows: the default game server, song titles, and spoilers. */
-function ContentSettings({ locale }: { locale: AppLocale }) {
+export function ContentSettings({ locale }: { locale: AppLocale }) {
   const { settings, updateSettings } = useSettings();
   const serverFlag = (value: AppSettings["gameServer"]) => flag(serverFlagIconSrc(value === "auto" ? defaultGameServer(locale) : value));
   const serverLabel = (value: AppSettings["gameServer"]) =>
@@ -268,7 +268,14 @@ function ContentSettings({ locale }: { locale: AppLocale }) {
         <JapaneseTitlesToggle locale={locale} />
       </Section>
 
-      <Section title={t(locale, "settings.spoiler.title")}>
+      <Section
+        title={t(locale, "settings.spoiler.title")}
+        aside={
+          <span className="inline-flex shrink-0 items-center rounded-shape-full bg-tertiary-container px-2 py-0.5 text-label-small font-medium text-on-tertiary-container">
+            {t(locale, "settings.spoiler.devOptionBadge")}
+          </span>
+        }
+      >
         <SpoilerToggle locale={locale} />
       </Section>
     </div>
@@ -627,34 +634,24 @@ function JapaneseTitlesToggle({ locale }: { locale: AppLocale }) {
 }
 
 /**
- * Filter unreleased / datamined content under Bilibili EULA, unlockable via backdoor ?Spoiler=allow. Locked, a lock
- * stands where the switch would be.
+ * Developer option controlling whether unreleased / upcoming game data is shown across the site.
  */
 function SpoilerToggle({ locale }: { locale: AppLocale }) {
-  const { isUnlocked, showSpoiler, setShowSpoiler } = useSpoiler();
+  const { showSpoiler, setShowSpoiler } = useSpoiler();
 
   return (
     <div className="space-y-3">
       <SettingRow
         label={t(locale, "settings.spoiler.showLabel")}
-        description={t(locale, "settings.spoiler.eulaNotice")}
+        description={t(locale, "settings.spoiler.description")}
         control={
-          isUnlocked ? (
-            <Switch checked={showSpoiler} className="-my-3 -mr-3 shrink-0" onChange={(event) => setShowSpoiler(event.target.checked)} />
-          ) : (
-            <span role="img" aria-label={t(locale, "settings.spoiler.restrictedTitle")} title={t(locale, "settings.spoiler.restrictedTitle")} className="grid h-8 w-[52px] shrink-0 place-items-center text-on-surface-variant">
-              <Icon name="lock" className="h-5 w-5" />
-            </span>
-          )
+          <Switch checked={showSpoiler} className="-my-3 -mr-3 shrink-0" onChange={(event) => setShowSpoiler(event.target.checked)} />
         }
-        interactive={isUnlocked}
       />
-      {isUnlocked && (
-        <div className="inline-flex items-center gap-1.5 rounded-shape-sm bg-surface-container-high px-2 py-1 text-label-small text-on-surface-variant">
-          <Icon name="info" className="h-3.5 w-3.5 shrink-0 text-primary" />
-          <span>{t(locale, "settings.spoiler.devOnly")}</span>
-        </div>
-      )}
+      <div className="inline-flex items-center gap-1.5 rounded-shape-sm bg-surface-container-high px-2 py-1 text-label-small text-on-surface-variant">
+        <Icon name="info" className="h-3.5 w-3.5 shrink-0 text-primary" />
+        <span>{t(locale, "settings.spoiler.devOnly")}</span>
+      </div>
     </div>
   );
 }

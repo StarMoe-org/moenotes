@@ -1142,7 +1142,9 @@ export const enUS = {
     spoiler: {
       title: "Spoiler content filter",
       showLabel: "Show spoiler content",
+      description: "Display upcoming events, cards, songs, stories, and other data not yet officially released on the selected server.",
       eulaNotice: "According to bilibili.inc user terms EULA Chapter 8 requirements, this site currently does not provide viewing of unreleased content.",
+      devOptionBadge: "Developer option",
       devOnly: "This feature is for developer testing only",
       restrictedTitle: "Unreleased content restricted",
       devTestingBadge: "Developer testing",

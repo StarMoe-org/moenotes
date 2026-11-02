@@ -1177,7 +1177,9 @@ export const jaJP = {
     spoiler: {
       title: "ネタバレフィルター",
       showLabel: "ネタバレコンテンツの表示",
+      description: "対象サーバーでまだ正式公開されていないイベント・カード・楽曲・ストーリーなどのデータを表示します。",
       eulaNotice: "bilibili.incの利用規約EULA第8章の要件に基づき、当サイトでは未公開コンテンツの閲覧を提供しておりません。",
+      devOptionBadge: "開発者向けオプション",
       devOnly: "この機能は開発者テスト専用です",
       restrictedTitle: "未公開コンテンツの閲覧制限",
       devTestingBadge: "開発者テスト",
