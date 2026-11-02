@@ -34,6 +34,7 @@ interface ChartPanelProps {
   status: ChartMetricsStatus;
   comboTiers: readonly MusicComboTiersModel[];
   perfectTimings?: readonly PerfectTimingEntry[];
+  justJudgementTypes?: readonly number[];
 }
 
 const sectionHeader = "border-b border-outline-variant px-6 py-4 sm:px-8";
@@ -43,15 +44,14 @@ const linkButton = "md3-button md3-button--outlined md3-button--small";
 const EMPTY_PERFECT_TIMINGS: readonly PerfectTimingEntry[] = [];
 
 /** One difficulty at a time: its figures (music-data.json), the Gekisou missions, the combo tier rewards and tool links. */
-export default function MusicChartPanel({ locale, song, metrics, status, comboTiers, perfectTimings = EMPTY_PERFECT_TIMINGS }: ChartPanelProps) {
+export default function MusicChartPanel({ locale, song, metrics, status, comboTiers, perfectTimings = EMPTY_PERFECT_TIMINGS, justJudgementTypes }: ChartPanelProps) {
   const available = MUSIC_DIFFICULTIES.filter((difficulty) => song.difficulties.some((entry) => entry.difficulty === difficulty));
   const [picked, setPicked] = useState<MusicDifficulty>(available.includes("expert") ? "expert" : available.at(-1) ?? "expert");
   const difficulty = available.includes(picked) ? picked : available.at(-1);
   const activeChart = difficulty ? song.difficulties.find((entry) => entry.difficulty === difficulty) ?? null : null;
   const figures = difficulty && activeChart ? lookupMetrics(metrics, song.id, difficulty, activeChart.scoreId) : undefined;
   const missions = (song.gekisouMissions?.length ? song.gekisouMissions : figures?.missions ?? []).filter(isGekisouMission);
-  const hasComboMission = missions.includes(1);
-  const gekisoSegments = useGekisoTiming(activeChart?.chartKey, perfectTimings, hasComboMission);
+  const gekisoSegments = useGekisoTiming(activeChart?.chartKey, perfectTimings, missions.length > 0, justJudgementTypes);
   if (!difficulty || !activeChart) return null;
   const chart = activeChart;
   const loading = status === "loading";
@@ -107,15 +107,32 @@ export default function MusicChartPanel({ locale, song, metrics, status, comboTi
         {missions.length > 0 && (
           <section>
             <h4 className={subHeading}>{t(locale, "music.gekisou.title")}</h4>
-            <ol className="mt-2 grid grid-cols-3 gap-2">
+            <ol className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
               {missions.map((mission, index) => {
-                const seg = mission === 1 ? gekisoSegments?.[index] : undefined;
+                const seg = gekisoSegments?.[index];
+                const comboSeg = mission === 1 ? seg : undefined;
                 return (
                   <li key={index} className="rounded-shape-md border border-outline-variant bg-surface-container px-3 py-2 text-center">
                     <span className="block text-label-small text-on-surface-variant">{t(locale, "music.gekisou.range", { index: index + 1 })}</span>
                     <span className="mt-0.5 block text-label-large text-primary">{t(locale, `music.gekisou.missions.${GEKISOU_MISSION_KEYS[mission]}`)}</span>
-                    {seg && (seg.opening || seg.ending) && (
-                      <GekisoTimingBadges locale={locale} segment={seg} />
+                    {seg && seg.notes !== undefined && seg.maxJust !== undefined && (
+                      <div className="mt-1 flex flex-wrap items-center justify-center gap-1 font-mono text-[11px] tabular-nums">
+                        <span className="inline-flex items-center rounded-full bg-surface-container-highest px-2 py-0.5 font-medium text-on-surface-variant">
+                          {t(locale, "music.gekisou.sectionNotes", { count: seg.notes.toLocaleString(locale) })}
+                        </span>
+                        <span
+                          className={
+                            mission === 3
+                              ? "inline-flex items-center rounded-full bg-primary-container px-2 py-0.5 font-semibold text-on-primary-container"
+                              : "inline-flex items-center rounded-full bg-surface-container-highest px-2 py-0.5 font-medium text-on-surface-variant"
+                          }
+                        >
+                          {t(locale, "music.gekisou.maxJust", { count: seg.maxJust.toLocaleString(locale) })}
+                        </span>
+                      </div>
+                    )}
+                    {comboSeg && (comboSeg.opening || comboSeg.ending) && (
+                      <GekisoTimingBadges locale={locale} segment={comboSeg} />
                     )}
                   </li>
                 );

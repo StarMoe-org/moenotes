@@ -370,7 +370,7 @@ describe("Haneoka patch identity and 1.1.0.100 Arena + cumulative Snap adaptatio
     const patchBytes = readFileSync(join(process.cwd(), "patches/haneoka-rewards.patch"));
     const actualSha = createHash("sha256").update(patchBytes).digest("hex");
     expect(actualSha).toBe(HANEOKA_PATCH_SHA);
-    expect(HANEOKA_COMMIT).toBe("9d36aeda2ea958ab4dfef50710b8861ab9b2d53b");
+    expect(HANEOKA_COMMIT).toBe("4ed6e0061f519240f19750a3a09024dd27304bd8");
 
     const { data, datasetId } = loadReal110Slice();
     const engineData = adaptData(data, datasetId);

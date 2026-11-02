@@ -18,9 +18,9 @@ function orders(): number[][] {
 }
 const ORDERS = orders();
 function id(key: string): number { return Number(key.slice(1)); }
-interface EngineTimingStep { step: number; timeMs: number; notes: number; gain: number }
+interface EngineTimingStep { step: number; timeMs: number; notes: number; noteIndices?: number[]; gain: number }
 interface EngineTimingWindow { event: number; startMs: number; endMs: number; unit: number; notes: number[]; steps: EngineTimingStep[] }
-interface EngineOrderTiming { score: number; best: number; advanceMs: number; windows: EngineTimingWindow[]; orderIndex?: number }
+interface EngineOrderTiming { score: number; best: number; worst?: number; optimal?: number; advanceMs: number; windows: EngineTimingWindow[]; orderIndex?: number }
 interface EngineAggregateSong {
   song: { songId: number; difficulty: number; baseSongId?: number };
   power: number;
@@ -70,6 +70,8 @@ function answer(response: EngineResponse, request: RecommendationRequest, covers
           order: timingOrder.map(slot => members[slot]!),
           score: rawTiming.score,
           best: rawTiming.best,
+          ...(typeof rawTiming.worst === "number" && Number.isFinite(rawTiming.worst) ? { worst: rawTiming.worst } : {}),
+          ...(typeof rawTiming.optimal === "number" && Number.isFinite(rawTiming.optimal) ? { optimal: rawTiming.optimal } : {}),
           advanceMs: rawTiming.advanceMs,
           windows: rawTiming.windows.map(win => ({
             event: win.event,
@@ -78,7 +80,13 @@ function answer(response: EngineResponse, request: RecommendationRequest, covers
             endMs: win.endMs,
             unit: win.unit,
             notes: win.notes,
-            steps: win.steps,
+            steps: win.steps.map(step => ({
+              step: step.step,
+              timeMs: step.timeMs,
+              notes: step.notes,
+              ...(Array.isArray(step.noteIndices) ? { noteIndices: step.noteIndices } : {}),
+              gain: step.gain,
+            })),
           })),
         },
       } : {}),

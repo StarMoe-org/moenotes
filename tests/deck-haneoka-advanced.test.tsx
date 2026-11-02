@@ -221,14 +221,86 @@ describe("Manual Event Bonuses (3e027db)", () => {
           customTemplates={[{ event: SAMPLE_EVENT, template: template! }]}
           customDraft={template!.defaultDraft}
           canCustom
+          usesEventBonus={false}
           onModeChange={() => {}}
           onSelectedEventChange={() => {}}
           onOpenCustomModal={() => {}}
+          onSwitchToEventGoal={() => {}}
         />
       </Md3Provider>,
     );
     expect(controlsHtml).toContain("自定义模拟");
     expect(controlsHtml).toContain("配置模拟加成");
+    expect(controlsHtml).toContain("1 乐队");
+    expect(controlsHtml).toContain("切换为活动奖励计算");
+
+    // Regression: empty custom bonus (`eventEffects: []`) still emits `manualEvent: true` and `eventEffects: []`
+    // rather than falling back to the template event's default bonus effects!
+    const zeroBonusEffects = buildManualEventEffects(template!, {
+      templateEventId: 50,
+      attributes: [],
+      targetKind: "none",
+      targets: [],
+      featuredMembers: [],
+      featuredSnaps: [],
+    });
+    expect(zeroBonusEffects).toEqual([]);
+    const zeroReqJson = recommendationRequest(ptInput, {
+      event: SAMPLE_EVENT,
+      now: endedNow,
+      constraints: { includeMembers: [], excludeMembers: [], excludeSnaps: [] },
+      manualEvent: true,
+      eventEffects: zeroBonusEffects,
+    });
+    const parsedZeroReq = JSON.parse(zeroReqJson);
+    expect(parsedZeroReq.manualEvent).toBe(true);
+    expect(parsedZeroReq.eventEffects).toEqual([]);
+    const adaptedZero = adaptRequest(data, parsedZeroReq);
+    expect((adaptedZero.goal as { rewardActive?: boolean; eventEffects?: unknown[] }).rewardActive).toBe(true);
+    expect((adaptedZero.goal as { eventEffects?: unknown[] }).eventEffects).toEqual([]);
+
+    // Regression: historical/past template event (`manualEvent: true`, no `eventEffects`) after `endAt`
+    // activates `rewardActive: true` instead of returning 0 event points!
+    const pastTemplateJson = recommendationRequest(ptInput, {
+      event: SAMPLE_EVENT,
+      now: endedNow,
+      constraints: { includeMembers: [], excludeMembers: [], excludeSnaps: [] },
+      manualEvent: true,
+    });
+    const adaptedPastTemplate = adaptRequest(data, JSON.parse(pastTemplateJson));
+    expect((adaptedPastTemplate.goal as { rewardActive?: boolean; eventEffects?: unknown[] }).rewardActive).toBe(true);
+    expect((adaptedPastTemplate.goal as { eventEffects?: unknown[] }).eventEffects).toBeUndefined();
+
+    // Sync: adaptRequest forwards `play.cumulativeTiming` on maximum score goals + `constraints.includeSnaps`,
+    // and rejects `cumulativeTiming` on expected or reward goals.
+    const maxTimingReqJson = recommendationRequest(
+      {
+        ...defaultDeckGoalInput("free"),
+        musicId: 100001,
+        difficulty: "expert",
+        aggregation: "maximum",
+        cumulativeTiming: "best",
+      },
+      {
+        event: null,
+        now: endedNow,
+        constraints: { includeMembers: ["51"], includeSnaps: ["76"], excludeMembers: [], excludeSnaps: [] },
+      },
+    );
+    const adaptedMaxTiming = adaptRequest(data, JSON.parse(maxTimingReqJson));
+    expect(adaptedMaxTiming.goal).toMatchObject({
+      kind: "score",
+      criterion: "max",
+      play: { kind: "custom", cumulativeTiming: "best" },
+    });
+    expect(adaptedMaxTiming.constraints.requiredMembers).toEqual(["m51"]);
+    expect(adaptedMaxTiming.constraints.requiredSnaps).toEqual(["s76"]);
+    expect(() =>
+      adaptRequest(data, {
+        ...JSON.parse(maxTimingReqJson),
+        aggregation: "expected",
+      }),
+    ).toThrow("haneoka-cumulative-timing");
   });
 });
 

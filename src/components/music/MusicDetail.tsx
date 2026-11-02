@@ -203,6 +203,7 @@ function MusicDetailView({ locale, song, liveDetail, extras, serverSwitch }: { l
             status={metricsStatus}
             comboTiers={extras?.comboTiers ?? []}
             perfectTimings={extras?.perfectTimings ?? []}
+            justJudgementTypes={extras?.justJudgementTypes ?? []}
           />
 
           {liveDetail && <LiveSystemSections locale={locale} detail={liveDetail} />}

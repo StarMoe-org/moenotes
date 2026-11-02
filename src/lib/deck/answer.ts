@@ -16,6 +16,7 @@ export interface DeckTimingStep {
   step: number;
   timeMs: number;
   notes: number;
+  noteIndices?: number[];
   gain: number;
 }
 export interface DeckTimingWindow {
@@ -31,6 +32,8 @@ export interface DeckOrderTiming {
   order: number[];
   score: number;
   best: number;
+  worst?: number;
+  optimal?: number;
   advanceMs: number;
   windows: DeckTimingWindow[];
 }
@@ -107,11 +110,14 @@ function stat(raw: unknown): DeckOrderStat {
 function orderTiming(raw: unknown): DeckOrderTiming | undefined {
   if (!record(raw)) return undefined;
   const score = num(raw.score), best = num(raw.best), advanceMs = num(raw.advanceMs);
+  const worst = num(raw.worst), optimal = num(raw.optimal);
   if (score === null || best === null || advanceMs === null || !Array.isArray(raw.order) || !Array.isArray(raw.windows)) return undefined;
   return {
     order: raw.order.map(int),
     score,
     best,
+    ...(worst !== null ? { worst } : {}),
+    ...(optimal !== null ? { optimal } : {}),
     advanceMs: Math.trunc(advanceMs),
     windows: raw.windows.filter(record).flatMap((win) => {
       const event = num(win.event), member = num(win.member), startMs = num(win.startMs), endMs = num(win.endMs), unit = num(win.unit);
@@ -126,7 +132,16 @@ function orderTiming(raw: unknown): DeckOrderTiming | undefined {
         steps: win.steps.filter(record).flatMap((step) => {
           const s = num(step.step), timeMs = num(step.timeMs), notes = num(step.notes), gain = num(step.gain);
           if (s === null || timeMs === null || notes === null || gain === null) return [];
-          return [{ step: Math.trunc(s), timeMs: Math.trunc(timeMs), notes: Math.trunc(notes), gain }];
+          const noteIndices = Array.isArray(step.noteIndices)
+            ? step.noteIndices.filter((idx): idx is number => typeof idx === "number" && Number.isSafeInteger(idx) && idx >= 0)
+            : null;
+          return [{
+            step: Math.trunc(s),
+            timeMs: Math.trunc(timeMs),
+            notes: Math.trunc(notes),
+            ...(noteIndices ? { noteIndices } : {}),
+            gain,
+          }];
         }),
       }];
     }),

@@ -3,23 +3,36 @@
 import { useId } from "react";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
-import { computes, effectiveAggregation, readsAccuracy, type DeckAggregation, type DeckGoalInput, type DeckSolverCapabilities } from "@/lib/deck/goals";
+import {
+  computes,
+  effectiveAggregation,
+  effectiveCumulativeTiming,
+  readsAccuracy,
+  supportsCumulativeTiming,
+  type DeckAggregation,
+  type DeckCumulativeTiming,
+  type DeckGoalInput,
+  type DeckSolverCapabilities,
+} from "@/lib/deck/goals";
 import { DeckSegmented } from "./DeckControls";
 
-/** Choose how to rank random outcomes without changing the live or its play conditions. */
-export default function DeckObjective({ locale, input, capabilities, onChange }: {
+/** Choose how to rank random outcomes and cumulative-Snap delivery timing without changing the live or play conditions. */
+export default function DeckObjective({ locale, input, capabilities, onChange, onTimingChange }: {
   locale: AppLocale;
   input: DeckGoalInput;
   capabilities: DeckSolverCapabilities | null;
   onChange: (aggregation: DeckAggregation) => void;
+  onTimingChange?: (timing: DeckCumulativeTiming) => void;
 }) {
   const id = useId();
   if (!readsAccuracy(input)) return null;
   const tr = (key: string) => t(locale, `deckWorkspace.objective.${key}`);
   const selected = effectiveAggregation(input);
-  const maximum = !!capabilities && computes(capabilities, { ...input, aggregation: "maximum" });
+  const maximum = !!capabilities && computes(capabilities, { ...input, aggregation: "maximum", cumulativeTiming: "nominal" });
   // Tagged only once the loaded engine has answered; while it loads, the availability note says so instead.
   const unsupported = !!capabilities && !maximum;
+  const showCumulativeTiming = Boolean(onTimingChange) && supportsCumulativeTiming(input) && (!capabilities || capabilities.cumulativeTiming === true);
+  const selectedTiming = effectiveCumulativeTiming(input);
   return (
     <div className="dc-objective" aria-describedby={`${id}-note${maximum ? "" : ` ${id}-availability`}`}>
       <DeckSegmented
@@ -35,6 +48,21 @@ export default function DeckObjective({ locale, input, capabilities, onChange }:
       />
       <p id={`${id}-note`} className="dc-field-hint">{tr(`${selected}Note`)}</p>
       {!maximum && <p id={`${id}-availability`} className="dc-field-hint">{tr(capabilities ? "unavailable" : "loading")}</p>}
+      {showCumulativeTiming && onTimingChange && (
+        <div className="dc-sub-stack">
+          <DeckSegmented
+            label={tr("cumulativeTiming.label")}
+            size="small"
+            value={selectedTiming}
+            onChange={onTimingChange}
+            options={(["nominal", "best", "worst"] as const).map((mode) => ({
+              value: mode,
+              label: tr(`cumulativeTiming.${mode}`),
+            }))}
+          />
+          <p className="dc-field-hint">{tr(`cumulativeTiming.${selectedTiming}Note`)}</p>
+        </div>
+      )}
     </div>
   );
 }

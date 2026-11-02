@@ -13,29 +13,31 @@ import { useAssetUrl } from "@/lib/servers/use-content-server";
 const segmentCache = new Map<string, Promise<GekisoTimingSegment[]>>();
 
 /**
- * Resolve Gekiso COMBO boundary timing hints (`opening` / `ending`) for the currently selected song chart.
- * Only fetches the chart file when the song has at least one COMBO Gekiso segment (`enabled === true`).
+ * Resolve Gekiso segment note counts, maximum Just counts, and COMBO boundary timing hints (`opening` / `ending`)
+ * for the currently selected song chart.
  */
 export function useGekisoTiming(
   chartKey: string | null | undefined,
   perfectTimings: readonly PerfectTimingEntry[],
   enabled: boolean,
+  justTypes?: readonly number[],
 ): readonly GekisoTimingSegment[] | null {
   const assetUrl = useAssetUrl();
   const [segments, setSegments] = useState<readonly GekisoTimingSegment[] | null>(null);
 
   useEffect(() => {
-    if (!enabled || !chartKey || perfectTimings.length === 0) {
+    if (!enabled || !chartKey) {
       setSegments(null);
       return;
     }
     const url = assetUrl(getChartFileUrl(chartKey));
-    const cacheKey = `${url}|${perfectTimings.map((row) => `${row.noteJudgementType}:${row.beforeMs}:${row.afterMs}`).join(",")}`;
+    const justKey = justTypes?.join(",") ?? "";
+    const cacheKey = `${url}|${perfectTimings.map((row) => `${row.noteJudgementType}:${row.beforeMs}:${row.afterMs}`).join(",")}|${justKey}`;
     let active = true;
     let pending = segmentCache.get(cacheKey);
     if (!pending) {
       pending = fetchReleaseBytes(url, fetch)
-        .then((bytes) => gekisoTimingFromBytes(bytes, perfectTimings))
+        .then((bytes) => gekisoTimingFromBytes(bytes, perfectTimings, justTypes))
         .catch((error) => {
           segmentCache.delete(cacheKey);
           throw error;
@@ -52,7 +54,7 @@ export function useGekisoTiming(
     return () => {
       active = false;
     };
-  }, [assetUrl, chartKey, enabled, perfectTimings]);
+  }, [assetUrl, chartKey, enabled, perfectTimings, justTypes]);
 
   return segments;
 }

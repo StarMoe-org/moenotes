@@ -40,9 +40,11 @@ export interface DeckEventSourceControlsProps {
   customTemplates: readonly { event: DeckEvent; template: ManualEventTemplate }[];
   customDraft: ManualEventDraft | null;
   canCustom: boolean;
+  usesEventBonus?: boolean;
   onModeChange: (mode: DeckEventSourceMode) => void;
   onSelectedEventChange: (eventId: number) => void;
   onOpenCustomModal: () => void;
+  onSwitchToEventGoal?: () => void;
 }
 
 export function DeckEventSourceControls(props: DeckEventSourceControlsProps) {
@@ -130,9 +132,15 @@ export function DeckEventSourceControls(props: DeckEventSourceControlsProps) {
           <div className="dc-arena-summary" role="status">
             <div className="dc-arena-summary-head">
               <strong>
-                {tr("summaryCustom", {
+                {tr("summaryCustomTarget", {
                   event: activeTemplateEvent.name,
                   attrs: customDraft.attributes.length,
+                  target:
+                    customDraft.targetKind === "band"
+                      ? tr("summaryTargetBand", { n: customDraft.targets.length })
+                      : customDraft.targetKind === "character"
+                        ? tr("summaryTargetCharacter", { n: customDraft.targets.length })
+                        : tr("targetNone"),
                   pickup: customDraft.featuredMembers.length + customDraft.featuredSnaps.length,
                 })}
               </strong>
@@ -147,6 +155,17 @@ export function DeckEventSourceControls(props: DeckEventSourceControlsProps) {
             </div>
             <p>{tr("challengeDisabled")}</p>
           </div>
+        </div>
+      )}
+
+      {mode !== "auto" && props.usesEventBonus === false && (
+        <div className="dc-arena-summary is-inactive" role="status">
+          <p>{tr("scoreGoalNotice")}</p>
+          {props.onSwitchToEventGoal && (
+            <Button variant="tonal" size="small" onClick={props.onSwitchToEventGoal}>
+              {tr("switchToEventGoal")}
+            </Button>
+          )}
         </div>
       )}
     </div>

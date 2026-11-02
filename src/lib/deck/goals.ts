@@ -15,6 +15,8 @@ export type DeckGoal = typeof DECK_GOALS[number];
 export const DEFAULT_DECK_GOAL: DeckGoal = "battle";
 /** Aggregate the reachable random outcomes while keeping the declared play fixed. */
 export type DeckAggregation = "expected" | "maximum";
+/** Cumulative-counter delivery timing within legal base-judgement windows for ordinary maximum-score searches. */
+export type DeckCumulativeTiming = "nominal" | "best" | "worst";
 export const isEventGoal = (goal: DeckGoal): boolean => (EVENT_GOALS as readonly string[]).includes(goal);
 export const isEventPayoffGoal = (goal: DeckGoal): boolean => goal === "challengePoints" || goal === "eventPoints" || goal === "eventItems";
 
@@ -68,6 +70,8 @@ export function heldEvent(events: readonly DeckEvent[], now: number, parse: (dat
 export interface DeckGoalInput {
   goal: DeckGoal;
   aggregation: DeckAggregation;
+  /** Ordinary maximum-score goal only: optimize or lower-bound cumulative-Snap delivery timing (`best` / `worst`), or keep `nominal`. */
+  cumulativeTiming?: DeckCumulativeTiming;
   allSongs?: boolean;
   /** Multi-song search mode when `allSongs` is enabled on score goals: per-song top teams (`individual`) or one shared formation maximizing average score (`mean`). */
   multiSongMode?: "individual" | "mean";
@@ -146,6 +150,20 @@ export const effectiveAggregation = (input: Pick<DeckGoalInput, "goal" | "venue"
   && !(input.allSongs && input.multiSongMode === "mean" && supportsCrossSongMean(input))
     ? input.aggregation ?? "expected"
     : "expected";
+/** Whether a goal supports best/worst cumulative-counter delivery timing (`freeLive` / `challengeLive` maximum score). */
+export const supportsCumulativeTiming = (
+  input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "aggregation" | "arenaRule" | "allSongs" | "multiSongMode">>,
+): boolean =>
+  !isEventPayoffGoal(input.goal)
+  && ["freeLive", "challengeLive"].includes(solverGoalKind(input))
+  && effectiveAggregation(input) === "maximum";
+/** Active cumulative-delivery timing mode for the given goal input. */
+export const effectiveCumulativeTiming = (
+  input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "aggregation" | "cumulativeTiming" | "arenaRule" | "allSongs" | "multiSongMode">>,
+): DeckCumulativeTiming =>
+  supportsCumulativeTiming(input) && (input.cumulativeTiming === "best" || input.cumulativeTiming === "worst")
+    ? input.cumulativeTiming
+    : "nominal";
 
 type RewardInput = Pick<DeckGoalInput, "goal"> & Partial<Pick<DeckGoalInput, "venue" | "rewards">>;
 /** The rewards a goal input can count beside its own. A challenge live spends challenge points and earns none. */
@@ -192,6 +210,8 @@ export interface DeckSolverCapabilities {
   manualEventBonuses?: boolean;
   /** Fast single-card upgrade impact ranking (`evaluateGrowth`) on solved teams. */
   teamGrowth?: boolean;
+  /** Best/worst cumulative-counter delivery timing optimization (`cumulativeTiming: "best" | "worst"`). */
+  cumulativeTiming?: boolean;
 }
 
 export function parseCapabilities(json: string | null): DeckSolverCapabilities | null {
@@ -230,11 +250,12 @@ export function parseCapabilities(json: string | null): DeckSolverCapabilities |
     resume: raw.resume === true, luckMissions: raw.luckMissions === true, luckGreatConversions: raw.luckGreatConversions === true,
     arenaRules: raw.arenaRules === true, gekisouRank: raw.gekisouRank === true,
     manualEventBonuses: raw.manualEventBonuses === true, teamGrowth: raw.teamGrowth === true,
+    cumulativeTiming: raw.cumulativeTiming === true,
     patternPlay: raw.patternPlay === true || !!raw.patternPlay && typeof raw.patternPlay === "object", accuracy: { great: accuracy.great === true, just: accuracy.just === true } };
 }
 
 /** Whether the engine computes a goal input's goal kind and metric. */
-export function computes(capabilities: DeckSolverCapabilities, input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "playMode" | "greatPercent" | "justPercent" | "aggregation" | "rewards" | "arenaRule" | "gekisouRank" | "allSongs" | "multiSongMode" | "songRules">>): boolean {
+export function computes(capabilities: DeckSolverCapabilities, input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "playMode" | "greatPercent" | "justPercent" | "aggregation" | "cumulativeTiming" | "rewards" | "arenaRule" | "gekisouRank" | "allSongs" | "multiSongMode" | "songRules">>): boolean {
   const layout = rewardLayoutOf(input);
   if (layout) {
     const combined = capabilities.combinedMetric;
@@ -262,6 +283,7 @@ export function computes(capabilities: DeckSolverCapabilities, input: Pick<DeckG
     if (!capabilities.crossSongMean || !supportsCrossSongMean(input) || effectiveAggregation(input) !== "expected") return false;
   }
   if (playsGekisou(input) && input.gekisouRank !== undefined && input.gekisouRank !== 1 && !capabilities.gekisouRank) return false;
+  if (effectiveCumulativeTiming(input) !== "nominal" && !capabilities.cumulativeTiming) return false;
   if (input.playMode === "pattern" && readsAccuracy(input) && !capabilities.patternPlay) return false;
   if (readsAccuracy(input) && input.playMode !== "pattern") {
     if ((input.greatPercent ?? 0) !== 0 && !capabilities.accuracy.great) return false;
@@ -307,6 +329,7 @@ export function goalGap(input: DeckGoalInput, event: DeckEvent | null): DeckGoal
 /** Card choices for this run only; excluded cards still count as owned. Member card and snap master IDs. */
 export interface DeckRunConstraints {
   includeMembers: readonly string[];
+  includeSnaps?: readonly string[];
   excludeMembers: readonly string[];
   excludeSnaps: readonly string[];
   leader?: string | null;
@@ -364,8 +387,13 @@ export function recommendationRequest(input: DeckGoalInput, context: DeckRecomme
   if (gap) throw new Error(`The goal still needs: ${gap}`);
   const kind = solverGoalKind(input), event = context.event;
   const great = fraction(input.greatPercent);
+  const timing = effectiveCumulativeTiming(input);
   const accuracy = playsGekisou(input) ? `{"greatFraction":${great},"justFraction":${fraction(Math.min(input.justPercent, 100 - input.greatPercent))}}` : `{"greatFraction":${great}}`;
-  const play = input.playMode === "pattern" ? `"play":{"kind":"pattern","greatFraction":${great},"justFraction":${playsGekisou(input) ? fraction(Math.min(input.justPercent, 100 - input.greatPercent)) : 0},"missEvery":${input.missEvery}}` : `"accuracy":${accuracy}`;
+  const play = input.playMode === "pattern"
+    ? `"play":{"kind":"pattern","greatFraction":${great},"justFraction":${playsGekisou(input) ? fraction(Math.min(input.justPercent, 100 - input.greatPercent)) : 0},"missEvery":${input.missEvery}${timing !== "nominal" ? `,"cumulativeTiming":${JSON.stringify(timing)}` : ""}}`
+    : timing !== "nominal"
+      ? `"play":{"greatFraction":${great},"cumulativeTiming":${JSON.stringify(timing)}}`
+      : `"accuracy":${accuracy}`;
   const song = `"musicId":${input.musicId},"difficulty":${JSON.stringify(input.difficulty)}`;
   const rank = Math.min(5, Math.max(1, Math.trunc(input.gekisouRank ?? 1)));
   let goal: string;
@@ -417,16 +445,17 @@ export function recommendationRequest(input: DeckGoalInput, context: DeckRecomme
     parts.push(`"metric":${metric}`, `"eventContext":{"resultClock":${clock},"rewardProjection":true}`);
     if (isNetworkInput(input)) parts.push(`"room":{"players":5,"othersAverageScore":${input.othersAverageScore === null ? "null" : Math.max(0, Math.trunc(input.othersAverageScore))}}`);
   } else if (kind !== "power") parts.push(`"metric":{"kind":"score"}`);
-  const { includeMembers, excludeMembers, excludeSnaps, leader, noSnaps } = context.constraints;
+  const { includeMembers, includeSnaps, excludeMembers, excludeSnaps, leader, noSnaps } = context.constraints;
   const leaderJson = leader == null || leader === "" ? "null" : ids([leader])[0]!;
-  if (event && usesEventData(input) && (context.manualEvent || (context.eventEffects && context.eventEffects.length > 0))) {
+  if (event && usesEventData(input) && (context.manualEvent || context.eventEffects !== undefined)) {
     parts.push('"manualEvent":true');
-    if (context.eventEffects && context.eventEffects.length > 0) {
+    if (context.eventEffects !== undefined) {
       parts.push(`"eventEffects":${JSON.stringify(context.eventEffects)}`);
     }
   }
+  const requiredSnapsPart = !noSnaps && includeSnaps && includeSnaps.length > 0 ? `,"includeSnaps":[${ids(includeSnaps).join(",")}]` : "";
   parts.push(`"eventIds":[${event && usesEventData(input) ? event.id : ""}]`,
-    `"constraints":{"leader":${leaderJson},"includeMembers":[${ids(includeMembers).join(",")}],"excludeMembers":[${ids(excludeMembers).join(",")}],"excludeSnaps":[${ids(excludeSnaps).join(",")}],"noSnaps":${noSnaps === true ? "true" : "false"}}`,
+    `"constraints":{"leader":${leaderJson},"includeMembers":[${ids(includeMembers).join(",")}]${requiredSnapsPart},"excludeMembers":[${ids(excludeMembers).join(",")}],"excludeSnaps":[${ids(excludeSnaps).join(",")}],"noSnaps":${noSnaps === true ? "true" : "false"}}`,
     `"k":${options.teams ?? RECOMMENDATION_COUNT}`, `"limits":{"timeLimitMs":${input.timeLimit === null ? "null" : input.timeLimit * 1000}}`);
   return `{${parts.join(",")}}`;
 }
