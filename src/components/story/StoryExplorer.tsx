@@ -10,7 +10,7 @@ import ServerScope from "@/components/shared/ServerScope";
 import { serverReleaseFetcher } from "@/lib/assets/release";
 import type { ServerFaceted } from "@/lib/servers/facets";
 import { useAssetUrl, useContentServerScope, useServerList } from "@/lib/servers/use-content-server";
-import BaseFilters, { BandFilter, CharacterFilter, FilterButton, FilterSection } from "@/components/shared/BaseFilters";
+import BaseFilters, { BandFilter, CharacterFilter, FilterButton, FilterSection, toggleArrayItem } from "@/components/shared/BaseFilters";
 import CharacterAvatarStack from "@/components/shared/CharacterAvatarStack";
 import CollectionViewSwitch, { useCollectionView } from "@/components/shared/CollectionViewSwitch";
 import DataTable, { type DataTableColumn } from "@/components/shared/DataTable";
@@ -23,6 +23,7 @@ import ChapterCard from "@/components/story/ChapterCard";
 import StoryScriptReader from "@/components/story/StoryScriptReader";
 import StoryPlayerLink from "@/components/story/StoryPlayerLink";
 import { getAssetUrl } from "@/lib/assets/url";
+import { getBandSmallIconUrl, getCharacterFaceIconUrl } from "@/lib/cards/assets";
 import { fetchAndParseStory, type ParsedStoryScript } from "@/lib/story/parser";
 import { groupStoryChapters, type StoryChapterSummary } from "@/lib/story/chapters";
 import type { RawStoryCharacter, StoryCategory, StoryViewModel } from "@/lib/story/data";
@@ -48,8 +49,9 @@ export default function StoryExplorer({ locale, servers, bands, initialCategory,
   const [otherCategories, setOtherCategories] = useState<StoryCategory[]>([]);
   // Event stories filter by their band; a chapter without one (a mixed event) takes the "mixed" option, id 0.
   const [eventBandsFilter, setEventBandsFilter] = useState<number[]>([]);
-  // And by the characters the event features.
+  // And by the characters the event features; a band chip picks whose faces the character row shows.
   const [eventCharactersFilter, setEventCharactersFilter] = useState<number[]>([]);
+  const [eventCharacterUnit, setEventCharacterUnit] = useState<number | null>(null);
   // Bond stories: the pair's lead and partner (either order) and the bond level that unlocks the episode.
   const [lead, setLead] = useState<number | null>(null);
   const [partner, setPartner] = useState<number | null>(null);
@@ -111,11 +113,22 @@ export default function StoryExplorer({ locale, servers, bands, initialCategory,
         if (!names.has(id)) names.set(id, chapter.characterNames[index] ?? "");
       });
     }
+    const bandOf = new Map(initialCharacters.map((character) => [character.id, character.bandID]));
     const order = new Map(initialCharacters.map((character) => [character.id, character.displayOrder]));
     return [...names]
-      .map(([id, name]) => ({ id, name }))
+      .map(([id, name]) => ({ id, name, bandId: bandOf.get(id) ?? 0 }))
       .sort((a, b) => (order.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (order.get(b.id) ?? Number.MAX_SAFE_INTEGER) || a.id - b.id);
   }, [chapters, initialCharacters]);
+  // The band chips list every band of the build; no band picked means no character row yet.
+  const shownCharacters = useMemo(
+    () => (eventCharacterUnit === null ? [] : eventCharacters.filter((character) => character.bandId === eventCharacterUnit)),
+    [eventCharacters, eventCharacterUnit],
+  );
+  const pickCharacterUnit = (bandId: number | null) => {
+    setEventCharacterUnit(bandId);
+    // A character of another band leaves the selection when its band is picked.
+    if (bandId !== null) setEventCharactersFilter((ids) => ids.filter((id) => eventCharacters.some((character) => character.id === id && character.bandId === bandId)));
+  };
   const filteredChapters = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase();
     return chapters.filter((chapter) => {
@@ -129,7 +142,7 @@ export default function StoryExplorer({ locale, servers, bands, initialCategory,
     const entries = filteredChapters.map((chapter) => ({ ...chapter, id: chapter.chapterId }));
     return sort.value === "default" && initialCategory !== "main" ? [...entries].sort(compareByStartDesc) : sortEntries(entries, sort.value, locale);
   }, [filteredChapters, sort.value, locale, initialCategory]);
-  const reset = () => { sort.onChange("default"); setQuery(""); setOtherCategories([]); setEventBandsFilter([]); setEventCharactersFilter([]); setLead(null); setPartner(null); setLevels([]); };
+  const reset = () => { sort.onChange("default"); setQuery(""); setOtherCategories([]); setEventBandsFilter([]); setEventCharactersFilter([]); setEventCharacterUnit(null); setLead(null); setPartner(null); setLevels([]); };
   const resultCount = initialCategory === "event" ? filteredChapters.length : filtered.length;
   const categoryTotal = initialCategory === "event" ? chapters.length : sectionStories.length;
   const hasActive = sort.value !== "default" || Boolean(query || otherCategories.length || eventBandsFilter.length || eventCharactersFilter.length || lead !== null || partner !== null || levels.length);
@@ -213,10 +226,13 @@ export default function StoryExplorer({ locale, servers, bands, initialCategory,
               extraOption={hasMixedEvents ? { id: 0, label: t(locale, "story.ui.mixedBand") } : undefined}
             />
           )}
-          <CharacterFilter
-            title={t(locale, "story.ui.characters")}
-            characters={eventCharacters}
-            selectedCharacters={eventCharactersFilter}
+          <EventCharacterFilter
+            locale={locale}
+            units={bands}
+            characters={shownCharacters}
+            unit={eventCharacterUnit}
+            onPickUnit={pickCharacterUnit}
+            selected={eventCharactersFilter}
             onChange={setEventCharactersFilter}
           />
         </>
@@ -229,7 +245,7 @@ export default function StoryExplorer({ locale, servers, bands, initialCategory,
   useQuickFilter(
     t(locale, storyCategoryKey(initialCategory)),
     quickFilterContent,
-    [initialCategory, query, otherCategories, eventBandsFilter, bands, hasMixedEvents, eventCharactersFilter, eventCharacters, lead, partner, levels, pairCharacters, partners, friendshipLevels, resultCount, categoryTotal, locale, sort.value],
+    [initialCategory, query, otherCategories, eventBandsFilter, bands, hasMixedEvents, eventCharactersFilter, eventCharacterUnit, shownCharacters, lead, partner, levels, pairCharacters, partners, friendshipLevels, resultCount, categoryTotal, locale, sort.value],
   );
 
   if (initialCategory === "main") {
@@ -292,6 +308,48 @@ function ChapterGrid({ chapters, locale, section }: { chapters: StoryChapterSumm
     <div className={`grid ${layout}`}>
       {chapters.map((chapter) => <ChapterCard key={chapter.chapterId} chapter={chapter} locale={locale} section={section} />)}
     </div>
+  );
+}
+
+/**
+ * The event filter's characters, split by band as the reference site's filter is: the band chip row picks whose faces
+ * show below it, and ALL clears the character selection.
+ */
+function EventCharacterFilter({ locale, units, characters, unit, onPickUnit, selected, onChange }: {
+  locale: AppLocale;
+  units: Array<[number, string]>;
+  characters: Array<{ id: number; name: string }>;
+  unit: number | null;
+  onPickUnit: (bandId: number | null) => void;
+  selected: number[];
+  onChange: (characterIds: number[]) => void;
+}) {
+  return (
+    <FilterSection title={t(locale, "story.ui.characters")}>
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap gap-2">
+          {units.map(([bandId, name]) => (
+            <FilterButton key={bandId} active={unit === bandId} onClick={() => onPickUnit(unit === bandId ? null : bandId)}>
+              <span className="flex items-center" title={name} aria-label={name}>
+                <img className="h-5 w-auto object-contain" src={getBandSmallIconUrl(bandId)} alt={name} loading="lazy" />
+              </span>
+            </FilterButton>
+          ))}
+        </div>
+        {characters.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            <FilterButton active={selected.length === 0} onClick={() => onChange([])}>ALL</FilterButton>
+            {characters.map((character) => (
+              <FilterButton key={character.id} active={selected.includes(character.id)} onClick={() => onChange(toggleArrayItem(selected, character.id))}>
+                <span className="flex items-center" title={character.name} aria-label={character.name}>
+                  <img className="h-6 w-6 rounded-full bg-surface-container-highest object-cover" src={getCharacterFaceIconUrl(character.id)} alt={character.name} loading="lazy" />
+                </span>
+              </FilterButton>
+            ))}
+          </div>
+        )}
+      </div>
+    </FilterSection>
   );
 }
 
