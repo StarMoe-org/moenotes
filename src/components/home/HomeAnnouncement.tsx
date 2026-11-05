@@ -65,6 +65,10 @@ export default function HomeAnnouncement({ locale }: HomeAnnouncementProps) {
           <Icon name="search" className="h-3.5 w-3.5 shrink-0" />
           {t(locale, "home.announcement.seoHighlight")}
         </span>
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-outline-variant bg-surface-container-high px-3 py-1 text-label-medium font-medium text-on-surface">
+          <span className="h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
+          {t(locale, "home.announcement.validityBadge")}
+        </span>
       </div>
 
       <h2
@@ -92,6 +96,11 @@ export default function HomeAnnouncement({ locale }: HomeAnnouncementProps) {
           </li>
         ))}
       </ul>
+
+      <div className="mt-3.5 rounded-shape-md border border-primary/20 bg-primary-container/35 px-3.5 py-2.5 text-body-medium leading-relaxed text-on-surface">
+        <p className="font-medium">{t(locale, "home.announcement.openToAll")}</p>
+        <p className="mt-0.5 text-body-small text-on-surface-variant">{t(locale, "home.announcement.validityNote")}</p>
+      </div>
 
       <div className="mt-4 flex flex-col gap-3 border-t border-outline-variant/60 pt-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-body-medium text-on-surface">
