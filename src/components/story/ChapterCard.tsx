@@ -53,16 +53,17 @@ export default function ChapterCard({ chapter, locale, section }: { chapter: Sto
         )}
       </div>
       <div className="flex flex-1 flex-col p-5">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           {chapter.eventId !== null && (
-            <span className="rounded-full bg-surface-container px-2.5 py-1 text-label-medium tabular-nums text-on-surface-variant">#{chapter.eventId}</span>
+            <span className="shrink-0 rounded-full bg-surface-container px-2.5 py-1 text-label-medium tabular-nums text-on-surface-variant">#{chapter.eventId}</span>
           )}
           {bandIcon ? (
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface-container" title={bandLabel}>
-              <img src={bandIcon} alt={bandLabel} className="h-5 w-auto object-contain" loading="lazy" />
+            <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-surface-container py-1 pl-1.5 pr-3" title={bandLabel}>
+              <img src={bandIcon} alt="" className="h-5 w-auto shrink-0 object-contain" loading="lazy" />
+              <span className="min-w-0 truncate text-label-medium text-on-surface-variant">{bandLabel}</span>
             </span>
           ) : bandLabel ? (
-            <span className="rounded-full bg-surface-container px-2.5 py-1 text-label-medium text-on-surface-variant">{bandLabel}</span>
+            <span className="min-w-0 truncate rounded-full bg-surface-container px-2.5 py-1 text-label-medium text-on-surface-variant">{bandLabel}</span>
           ) : null}
           <span className="ml-auto shrink-0 text-label-small tabular-nums text-on-surface-variant">
             {t(locale, "story.ui.episodeCount", { count: chapter.episodeCount })}

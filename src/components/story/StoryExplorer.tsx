@@ -259,11 +259,13 @@ export default function StoryExplorer({ locale, servers, bands, initialCategory,
   );
 }
 
-/** The chapter cards of the main or event story list. */
+/** The chapter cards of the main or event story list; the grid follows the content column, not the window (the filter sheet narrows it). */
 function ChapterGrid({ chapters, locale, section }: { chapters: StoryChapterSummary[]; locale: AppLocale; section: StoryChapterSection }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
-      {chapters.map((chapter) => <ChapterCard key={chapter.chapterId} chapter={chapter} locale={locale} section={section} />)}
+    <div className="@container">
+      <div className="grid gap-4 @[34rem]:grid-cols-2 @[50rem]:grid-cols-3 @[70rem]:grid-cols-4">
+        {chapters.map((chapter) => <ChapterCard key={chapter.chapterId} chapter={chapter} locale={locale} section={section} />)}
+      </div>
     </div>
   );
 }
