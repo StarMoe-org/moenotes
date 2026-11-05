@@ -2197,6 +2197,9 @@ export const jaJP = {
       birthdayDate: "誕生日 {month}月{day}日",
       columnTitle: "タイトル",
       columnChapter: "チャプター",
+      episodeCount: "全 {count} 話",
+      mixedBand: "混成",
+      band: "バンド",
       unlockTitle: "解放条件",
       rewardsTitle: "クリア報酬",
     },
@@ -3294,6 +3297,10 @@ export const jaJP = {
     storyDetail: {
       title: "ストーリー詳細",
       description: "真心を込めて綴られた時の絵巻を静かに味わって。胸を打つ声と響き合う調べに導かれ、ステージと日常が交わるかけがえのない記憶をもう一度心に抱きしめます。",
+    },
+    storyChapter: {
+      title: "ストーリーチャプター",
+      description: "物語の一章を、エピソードを追って読み進めましょう。登場人物、公開時期、そしてメイン・アナザー・エクストラの各エピソードがここに集まり、少女たちの声が場面を彩ります。",
     },
     liveResultStory: {
       title: "ライブ終了会話",

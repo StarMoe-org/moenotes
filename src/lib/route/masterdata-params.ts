@@ -1,6 +1,8 @@
 import { getBuildMasterData } from "@/lib/masterdata/build-snapshot";
 import { getBuildServers } from "@/lib/masterdata/build-servers";
 import { validateMasterTable } from "@/lib/cards/data";
+import { groupStoryChapters } from "@/lib/story/chapters";
+import { isChapterSection } from "@/lib/story/sections";
 import type { RouteStaticParamConfig } from "@/types/route";
 import { DEFAULT_LOCALE } from "@/config/locales";
 
@@ -53,6 +55,18 @@ export async function getMasterdataStoryParams(): Promise<RouteStaticParamConfig
     .filter((id) => Number.isSafeInteger(id) && id > 0)
     .sort((a, b) => a - b)
     .map((id) => ({ params: { id: String(id) }, breadcrumbDetail: { label: `ADV ${id}` } }));
+}
+
+/** Chapters of the main and event story: `/story/:category/:id` pages, one per chapter. */
+export async function getMasterdataStoryChapterParams(): Promise<RouteStaticParamConfig[]> {
+  const { getBuildStories } = await import("@/lib/masterdata/build-data");
+  const chapters = groupStoryChapters(await getBuildStories(DEFAULT_LOCALE)).filter((chapter) => isChapterSection(chapter.category));
+  return chapters
+    .sort((a, b) => a.chapterId - b.chapterId)
+    .map((chapter) => ({
+      params: { category: chapter.category, id: String(chapter.chapterId) },
+      breadcrumbDetail: { label: chapter.name || `Chapter ${chapter.chapterId}` },
+    }));
 }
 
 /**

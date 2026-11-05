@@ -2206,6 +2206,9 @@ export const zhTW = {
       birthdayDate: "生日 {month}月{day}日",
       columnTitle: "標題",
       columnChapter: "章節",
+      episodeCount: "共 {count} 話",
+      mixedBand: "混",
+      band: "樂隊",
       unlockTitle: "解鎖條件",
       rewardsTitle: "通關獎勵",
     },
@@ -3303,6 +3306,10 @@ export const zhTW = {
     storyDetail: {
       title: "劇情詳情",
       description: "靜靜品讀這段寫滿心意的時光篇章。伴隨著動人原聲與心弦的共鳴，在字裡行間重溫那些舞台與日常交織的珍貴感動。",
+    },
+    storyChapter: {
+      title: "劇情章節",
+      description: "翻開劇情中的這一章，按順序讀遍每一話。登場角色、開放時間與主線、Another、Extra 各段劇集都聚在這裡，陪伴少女們的聲音也一同等候。",
     },
     liveResultStory: {
       title: "演出結束會話",

@@ -208,19 +208,23 @@ export async function StoryServerPage({
   titleKey: string;
   descriptionKey: string;
 }) {
-  const [allStories, readerLookup, servers] = await Promise.all([
+  const [allStories, readerLookup, servers, characterData] = await Promise.all([
     getBuildStories(locale),
     category === "main" || category === "event"
       ? getBuildStoryReaderLookup()
       : Promise.resolve({ characters: [], texts: [] }),
     getBuildServers(),
+    // The event filter lists every band of the build, not only those an event chapter happens to use.
+    category === "event" ? getBuildCharacters(locale) : Promise.resolve(null),
   ]);
   const stories = allStories.filter((story) => inStorySection(category, story));
+  const bands: Array<[number, string]> = characterData ? characterData.bands.map((band) => [band.id, band.name]) : [];
   return (
     <PageHeader locale={locale} titleKey={titleKey} descriptionKey={descriptionKey}>
       <StoryExplorer
         locale={locale}
         servers={servers}
+        bands={bands}
         initialCategory={category}
         initialStories={stories}
         initialCharacters={readerLookup.characters}

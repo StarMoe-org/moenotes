@@ -29,6 +29,7 @@ const ENTITY_DETAIL_COMPONENTS = new Set([
   "event-detail",
   "gacha-detail",
   "character-detail",
+  "story-chapter",
   "story-detail",
   "item-detail",
   "exchange-detail",

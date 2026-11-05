@@ -54,6 +54,9 @@ import { buildDynamicPath, findRouteById, findRouteMatch, getNavChildren, getNav
 import { resolveEntitySeo } from "@/lib/seo/entity-seo";
 import { absolutePageUrl, absoluteUrl, buildPageMetadata } from "@/lib/seo/metadata";
 import { valueForServer, type ServerFacetedValue } from "@/lib/servers/facets";
+import { findStoryChapter } from "@/lib/story/chapters";
+import { storyEpisodeLabel } from "@/lib/story/labels";
+import { parseStoryChapterPath } from "@/lib/story/paths";
 import { inStorySection, type StorySection } from "@/lib/story/sections";
 
 export {
@@ -670,6 +673,40 @@ async function renderComponentMarkdown(
             detailMdLink("story-detail", s.advId, locale, s.title || `ADV ${s.advId}`),
             s.characterNames.join(", "),
             s.startAt,
+          ]),
+        ),
+      ].join("\n");
+    }
+
+    case "story-chapter": {
+      const chapterId = Number(paramId);
+      if (!Number.isSafeInteger(chapterId) || chapterId <= 0) return null;
+      const parsed = parseStoryChapterPath(pathname);
+      if (!parsed) return null;
+      const chapter = findStoryChapter(await getBuildStories(locale), chapterId);
+      if (!chapter || chapter.category !== parsed.section) return null;
+      return [
+        `# ${chapter.name || `Chapter ${chapterId}`}`,
+        "",
+        ...(chapter.description ? [chapter.description, ""] : []),
+        mdTable(
+          ["Field", "Value"],
+          [
+            ["Chapter ID", chapterId],
+            ["Category", parsed.section],
+            ...(chapter.bandName ? [["Group", chapter.bandName]] : []),
+            ...(chapter.characterNames.length > 0 ? [["Characters", chapter.characterNames.join(", ")]] : []),
+            ["Episodes", chapter.episodeCount],
+            ...(chapter.startAt ? [["Release", chapter.startAt]] : []),
+          ],
+        ),
+        "",
+        mdTable(
+          ["Episode", "Title", "ADV"],
+          chapter.episodes.map((episode) => [
+            storyEpisodeLabel(locale, episode),
+            detailMdLink("story-detail", episode.advId, locale, episode.title || `ADV ${episode.advId}`),
+            episode.advId,
           ]),
         ),
       ].join("\n");

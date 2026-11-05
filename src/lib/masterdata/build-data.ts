@@ -950,7 +950,7 @@ export function storiesOn(server: GameServer, locale: AppLocale): Promise<StoryV
       playTimes: playTimes._allData,
       storyRewards: storyRewards._allData,
       resolveReward,
-      eventChapters: events._allData.map((event) => ({ chapterId: event.storyChapterId, eventId: event.id, startAt: event.startAt })).filter((entry) => entry.chapterId > 0),
+      eventChapters: events._allData.map((event) => ({ chapterId: event.storyChapterId, eventId: event.id, startAt: event.startAt, endAt: event.endAt })).filter((entry) => entry.chapterId > 0),
       chapters: chapters._allData,
       episodes: episodes._allData,
       friendshipEpisodes: friendshipEpisodes._allData,

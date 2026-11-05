@@ -186,10 +186,10 @@ export interface StoryMasterData {
   bands: RawBand[];
   texts: RawText[];
   /**
-   * Event story chapters (MasterEvent._storyChapterId), the event they belong to and its start; other chapters are main
-   * story. An event chapter opens with its event, before its own (permanent) start.
+   * Event story chapters (MasterEvent._storyChapterId), the event they belong to, its start and end; other chapters
+   * are main story. An event chapter opens with its event, before its own (permanent) start.
    */
-  eventChapters?: Array<{ chapterId: number; eventId: number; startAt: string }>;
+  eventChapters?: Array<{ chapterId: number; eventId: number; startAt: string; endAt?: string }>;
   /** Login landings; the `Birthday/` ones mark birthday chapters (with isSpecialStory chapters). */
   loginLandings?: RawStoryLoginLanding[];
   playTimes?: RawAdvPlayTime[];
@@ -287,6 +287,7 @@ export function normalizeStories(data: StoryMasterData, locale: AppLocale): Stor
   const bandName = (id: number) => resolveText(bandMap.get(id)?.nameTextID ?? "");
   const eventChapterMap = new Map((data.eventChapters ?? []).map((entry) => [entry.chapterId, entry.eventId]));
   const eventStartMap = new Map((data.eventChapters ?? []).map((entry) => [entry.chapterId, entry.startAt]));
+  const eventEndMap = new Map((data.eventChapters ?? []).filter((entry) => entry.endAt).map((entry) => [entry.chapterId, entry.endAt!]));
   const birthdayChapters = birthdayChapterCharacters(data.chapters, data.loginLandings ?? []);
   const birthdayEpisodes = birthdayEpisodeCharacters(data.loginLandings ?? []);
   const playTimeMap = new Map((data.playTimes ?? []).filter((entry) => entry.playTime > 0).map((entry) => [entry.id, entry.playTime]));
@@ -349,7 +350,8 @@ export function normalizeStories(data: StoryMasterData, locale: AppLocale): Stor
         releaseEpisodeId: 0,
       },
       startAt: earliestStart(episode.startAt || chapter?.startAt || "", eventStartMap.get(episode.chapterId) ?? ""),
-      endAt: chapter?.endAt ?? "",
+      // An event chapter closes with its event; a chapter without one (the main story) stays open.
+      endAt: eventEndMap.get(episode.chapterId) || chapter?.endAt || "",
       banner: episode.banner,
       image: episode.image,
       thumbnail: episode.thumbnail,

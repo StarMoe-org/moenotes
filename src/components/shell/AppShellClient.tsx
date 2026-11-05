@@ -75,7 +75,8 @@ export default function AppShellClient({
         id="content"
         className="mn-shell-offset mx-auto min-h-screen max-w-[var(--mn-layout-max-width,120rem)] px-4 pb-16 pt-[calc(var(--md-app-bar-height,64px)+1rem)] transition-[padding] duration-300 ease-[var(--md-sys-motion-easing-emphasized)] md:pl-[calc(var(--mn-sidebar-offset,17rem)+var(--mn-filter-offset,0rem)+1.5rem)] md:pr-6 md:pt-[calc(var(--md-app-bar-height,64px)+1.5rem)]"
       >
-        {children}
+        {/* The page column keeps the reference site's max-w-7xl, centred beside the navigation drawer. */}
+        <div className="mx-auto w-full max-w-7xl">{children}</div>
       </main>
       <Footer locale={locale} />
       <CommandPalette locale={locale} />

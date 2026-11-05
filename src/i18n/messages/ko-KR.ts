@@ -2151,6 +2151,9 @@ export const koKR = {
       birthdayDate: "생일 {month}월 {day}일",
       columnTitle: "제목",
       columnChapter: "챕터",
+      episodeCount: "총 {count}화",
+      mixedBand: "믹스",
+      band: "밴드",
       unlockTitle: "해금 조건",
       rewardsTitle: "클리어 보상",
     },
@@ -3248,6 +3251,10 @@ export const koKR = {
     storyDetail: {
       title: "스토리 상세",
       description: "진심을 다해 써 내려간 시간의 두루마리를 음미해 봅니다. 가슴을 울리는 목소리와 공명하는 선율에 이끌려, 무대와 일상이 맞닿은 귀한 추억을 가슴에 품어보세요.",
+    },
+    storyChapter: {
+      title: "스토리 챕터",
+      description: "이야기의 한 챕터를 에피소드 순서대로 읽어 보세요. 등장인물, 공개 시기, 메인·어나더·엑스트라 에피소드가 모두 모여 있고 소녀들의 목소리가 장면을 채웁니다.",
     },
     liveResultStory: {
       title: "라이브 종료 대화",

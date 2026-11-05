@@ -28,7 +28,7 @@ export default function Footer({ locale }: { locale: AppLocale }) {
 
   return (
     <footer className="mn-site-footer mn-shell-offset mx-auto max-w-[var(--mn-layout-max-width,120rem)] px-4 pb-20 text-on-surface transition-[padding] duration-300 ease-[var(--md-sys-motion-easing-emphasized)] md:pb-6 md:pl-[calc(var(--mn-sidebar-offset,17rem)+var(--mn-filter-offset,0rem)+1.5rem)] md:pr-6">
-      <div className="md3-surface rounded-shape-xl px-6 py-10 sm:px-8">
+      <div className="md3-surface mx-auto w-full max-w-7xl rounded-shape-xl px-6 py-10 sm:px-8">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 xl:grid-cols-4 [&>*]:min-w-0">
           <div className="flex flex-col gap-4">
             <a
