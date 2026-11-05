@@ -42,7 +42,7 @@ const LIST_VIEWS = ["grid", "table"] as const;
 type ListView = typeof LIST_VIEWS[number];
 const PLAY_TIME_SORT = [{ key: "playTime", labelKey: "story.ui.playTime", initialDirection: "desc" as const }];
 
-export default function StoryExplorer({ locale, servers, bands, initialCategory, initialStories, initialCharacters, initialTexts }: { locale: AppLocale; servers: GameServer[]; bands: Array<[number, string]>; initialCategory: StorySection; initialStories: ServerFaceted<StoryViewModel>[]; initialCharacters: RawStoryCharacter[]; initialTexts: RawText[] }) {
+export default function StoryExplorer({ locale, servers, bands, characters, initialCategory, initialStories, initialCharacters, initialTexts }: { locale: AppLocale; servers: GameServer[]; bands: Array<[number, string]>; characters: Array<{ id: number; name: string; bandId: number }>; initialCategory: StorySection; initialStories: ServerFaceted<StoryViewModel>[]; initialCharacters: RawStoryCharacter[]; initialTexts: RawText[] }) {
   const sort = useListSort(`story-${initialCategory}`, locale, "date", { numeric: PLAY_TIME_SORT });
   const { server, pickServer, items: stories } = useServerList(locale, servers, initialStories);
   const [query, setQuery] = useState("");
@@ -61,7 +61,7 @@ export default function StoryExplorer({ locale, servers, bands, initialCategory,
   const error = false;
   const [, setReload] = useState(0);
   const [active, setActive] = useState<StoryViewModel | null>(null);
-  const characters = initialCharacters;
+  const rawCharacters = initialCharacters;
   const texts = initialTexts;
 
   const now = useNow();
@@ -105,29 +105,15 @@ export default function StoryExplorer({ locale, servers, bands, initialCategory,
   const chapters = useMemo(() => groupStoryChapters(sectionStories), [sectionStories]);
   // The event filter lists every band of the build; a chapter without one belongs to a mixed event.
   const hasMixedEvents = useMemo(() => chapters.some((chapter) => chapter.bandId === 0), [chapters]);
-  // The characters the event chapters feature, in the story table's own order, for the face filter.
-  const eventCharacters = useMemo(() => {
-    const names = new Map<number, string>();
-    for (const chapter of chapters) {
-      chapter.characterIds.forEach((id, index) => {
-        if (!names.has(id)) names.set(id, chapter.characterNames[index] ?? "");
-      });
-    }
-    const bandOf = new Map(initialCharacters.map((character) => [character.id, character.bandID]));
-    const order = new Map(initialCharacters.map((character) => [character.id, character.displayOrder]));
-    return [...names]
-      .map(([id, name]) => ({ id, name, bandId: bandOf.get(id) ?? 0 }))
-      .sort((a, b) => (order.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (order.get(b.id) ?? Number.MAX_SAFE_INTEGER) || a.id - b.id);
-  }, [chapters, initialCharacters]);
-  // The band chips list every band of the build; no band picked means no character row yet.
+  // The band chips list every band of the build; picking one shows its characters (none until then).
   const shownCharacters = useMemo(
-    () => (eventCharacterUnit === null ? [] : eventCharacters.filter((character) => character.bandId === eventCharacterUnit)),
-    [eventCharacters, eventCharacterUnit],
+    () => (eventCharacterUnit === null ? [] : characters.filter((character) => character.bandId === eventCharacterUnit)),
+    [characters, eventCharacterUnit],
   );
   const pickCharacterUnit = (bandId: number | null) => {
     setEventCharacterUnit(bandId);
     // A character of another band leaves the selection when its band is picked.
-    if (bandId !== null) setEventCharactersFilter((ids) => ids.filter((id) => eventCharacters.some((character) => character.id === id && character.bandId === bandId)));
+    if (bandId !== null) setEventCharactersFilter((ids) => ids.filter((id) => characters.some((character) => character.id === id && character.bandId === bandId)));
   };
   const filteredChapters = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase();
@@ -294,7 +280,7 @@ export default function StoryExplorer({ locale, servers, bands, initialCategory,
           </div>
         )}
       </section>
-      <StoryReader story={active} locale={locale} characters={characters} texts={texts} onClose={() => setActive(null)} />
+      <StoryReader story={active} locale={locale} characters={rawCharacters} texts={texts} onClose={() => setActive(null)} />
     </ServerScope>
   );
 }
