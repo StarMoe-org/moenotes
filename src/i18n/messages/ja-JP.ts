@@ -2200,6 +2200,7 @@ export const jaJP = {
       episodeCount: "全 {count} 話",
       mixedBand: "混成",
       band: "バンド",
+      characters: "キャラクター",
       unlockTitle: "解放条件",
       rewardsTitle: "クリア報酬",
     },

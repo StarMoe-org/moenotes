@@ -48,6 +48,8 @@ export default function StoryExplorer({ locale, servers, bands, initialCategory,
   const [otherCategories, setOtherCategories] = useState<StoryCategory[]>([]);
   // Event stories filter by their band; a chapter without one (a mixed event) takes the "mixed" option, id 0.
   const [eventBandsFilter, setEventBandsFilter] = useState<number[]>([]);
+  // And by the characters the event features.
+  const [eventCharactersFilter, setEventCharactersFilter] = useState<number[]>([]);
   // Bond stories: the pair's lead and partner (either order) and the bond level that unlocks the episode.
   const [lead, setLead] = useState<number | null>(null);
   const [partner, setPartner] = useState<number | null>(null);
@@ -101,22 +103,36 @@ export default function StoryExplorer({ locale, servers, bands, initialCategory,
   const chapters = useMemo(() => groupStoryChapters(sectionStories), [sectionStories]);
   // The event filter lists every band of the build; a chapter without one belongs to a mixed event.
   const hasMixedEvents = useMemo(() => chapters.some((chapter) => chapter.bandId === 0), [chapters]);
+  // The characters the event chapters feature, in the story table's own order, for the face filter.
+  const eventCharacters = useMemo(() => {
+    const names = new Map<number, string>();
+    for (const chapter of chapters) {
+      chapter.characterIds.forEach((id, index) => {
+        if (!names.has(id)) names.set(id, chapter.characterNames[index] ?? "");
+      });
+    }
+    const order = new Map(initialCharacters.map((character) => [character.id, character.displayOrder]));
+    return [...names]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => (order.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (order.get(b.id) ?? Number.MAX_SAFE_INTEGER) || a.id - b.id);
+  }, [chapters, initialCharacters]);
   const filteredChapters = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase();
     return chapters.filter((chapter) => {
       if (needle && !chapter.searchText.includes(needle)) return false;
       if (eventBandsFilter.length > 0 && !eventBandsFilter.includes(chapter.bandId)) return false;
+      if (eventCharactersFilter.length > 0 && !chapter.characterIds.some((id) => eventCharactersFilter.includes(id))) return false;
       return true;
     });
-  }, [chapters, query, eventBandsFilter]);
+  }, [chapters, query, eventBandsFilter, eventCharactersFilter]);
   const sortedChapters = useMemo(() => {
     const entries = filteredChapters.map((chapter) => ({ ...chapter, id: chapter.chapterId }));
     return sort.value === "default" && initialCategory !== "main" ? [...entries].sort(compareByStartDesc) : sortEntries(entries, sort.value, locale);
   }, [filteredChapters, sort.value, locale, initialCategory]);
-  const reset = () => { sort.onChange("default"); setQuery(""); setOtherCategories([]); setEventBandsFilter([]); setLead(null); setPartner(null); setLevels([]); };
+  const reset = () => { sort.onChange("default"); setQuery(""); setOtherCategories([]); setEventBandsFilter([]); setEventCharactersFilter([]); setLead(null); setPartner(null); setLevels([]); };
   const resultCount = initialCategory === "event" ? filteredChapters.length : filtered.length;
   const categoryTotal = initialCategory === "event" ? chapters.length : sectionStories.length;
-  const hasActive = sort.value !== "default" || Boolean(query || otherCategories.length || eventBandsFilter.length || lead !== null || partner !== null || levels.length);
+  const hasActive = sort.value !== "default" || Boolean(query || otherCategories.length || eventBandsFilter.length || eventCharactersFilter.length || lead !== null || partner !== null || levels.length);
   const quickFilterContent = hasFilters ? (
     <BaseFilters
       locale={locale}
@@ -187,15 +203,23 @@ export default function StoryExplorer({ locale, servers, bands, initialCategory,
           )}
         </>
       ) : initialCategory === "event" ? (
-        bands.length > 0 && (
-          <BandFilter
-            title={t(locale, "story.ui.band")}
-            bands={bands}
-            selectedBands={eventBandsFilter}
-            onChange={setEventBandsFilter}
-            extraOption={hasMixedEvents ? { id: 0, label: t(locale, "story.ui.mixedBand") } : undefined}
+        <>
+          {bands.length > 0 && (
+            <BandFilter
+              title={t(locale, "story.ui.band")}
+              bands={bands}
+              selectedBands={eventBandsFilter}
+              onChange={setEventBandsFilter}
+              extraOption={hasMixedEvents ? { id: 0, label: t(locale, "story.ui.mixedBand") } : undefined}
+            />
+          )}
+          <CharacterFilter
+            title={t(locale, "story.ui.characters")}
+            characters={eventCharacters}
+            selectedCharacters={eventCharactersFilter}
+            onChange={setEventCharactersFilter}
           />
-        )
+        </>
       ) : (
         <div />
       )}
@@ -205,7 +229,7 @@ export default function StoryExplorer({ locale, servers, bands, initialCategory,
   useQuickFilter(
     t(locale, storyCategoryKey(initialCategory)),
     quickFilterContent,
-    [initialCategory, query, otherCategories, eventBandsFilter, bands, hasMixedEvents, lead, partner, levels, pairCharacters, partners, friendshipLevels, resultCount, categoryTotal, locale, sort.value],
+    [initialCategory, query, otherCategories, eventBandsFilter, bands, hasMixedEvents, eventCharactersFilter, eventCharacters, lead, partner, levels, pairCharacters, partners, friendshipLevels, resultCount, categoryTotal, locale, sort.value],
   );
 
   if (initialCategory === "main") {
@@ -259,10 +283,10 @@ export default function StoryExplorer({ locale, servers, bands, initialCategory,
   );
 }
 
-/** The chapter cards of the main or event story list; the event list is denser (four columns, like the reference site). */
+/** The chapter cards of the main or event story list; the event list shows three per row. */
 function ChapterGrid({ chapters, locale, section }: { chapters: StoryChapterSummary[]; locale: AppLocale; section: StoryChapterSection }) {
   const layout = section === "event"
-    ? "grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 xl:grid-cols-4"
+    ? "grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3"
     : "gap-4 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4";
   return (
     <div className={`grid ${layout}`}>

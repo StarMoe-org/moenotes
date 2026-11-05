@@ -2154,6 +2154,7 @@ export const koKR = {
       episodeCount: "총 {count}화",
       mixedBand: "믹스",
       band: "밴드",
+      characters: "캐릭터",
       unlockTitle: "해금 조건",
       rewardsTitle: "클리어 보상",
     },
