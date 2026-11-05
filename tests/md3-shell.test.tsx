@@ -93,9 +93,11 @@ describe("material 3 shell", () => {
     expect(cards).toContain("Filter cards");
     // Already in place in the server markup: the first client commit must not replay the zoom-in (Zoom appear=false).
     expect(cards).toContain("transform:none");
-    // Pages without a filter sheet never show it, not even for a frame.
+    // Pages without a filter sheet never show it, not even for a frame. The main story lists chapter
+    // groups without filters; the other story categories keep their sheet.
     expect(renderToString(<FilterDrawerHost locale="en-US" pathname="/" />)).not.toContain("mn-filter-fab");
-    expect(renderToString(<FilterDrawerHost locale="en-US" pathname="/story/main" />)).toContain("Main story");
+    expect(renderToString(<FilterDrawerHost locale="en-US" pathname="/story/main" />)).not.toContain("mn-filter-fab");
+    expect(renderToString(<FilterDrawerHost locale="en-US" pathname="/story/event" />)).toContain("Event Story");
   });
 
   test("every route's filter title resolves in the core locales", () => {
