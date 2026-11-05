@@ -2198,6 +2198,8 @@ export const jaJP = {
       columnTitle: "タイトル",
       columnChapter: "チャプター",
       episodeCount: "全 {count} 話",
+      mixedBand: "混成",
+      band: "バンド",
       unlockTitle: "解放条件",
       rewardsTitle: "クリア報酬",
     },

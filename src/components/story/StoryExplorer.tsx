@@ -10,7 +10,7 @@ import ServerScope from "@/components/shared/ServerScope";
 import { serverReleaseFetcher } from "@/lib/assets/release";
 import type { ServerFaceted } from "@/lib/servers/facets";
 import { useAssetUrl, useContentServerScope, useServerList } from "@/lib/servers/use-content-server";
-import BaseFilters, { CharacterFilter, FilterButton, FilterSection } from "@/components/shared/BaseFilters";
+import BaseFilters, { BandFilter, CharacterFilter, FilterButton, FilterSection } from "@/components/shared/BaseFilters";
 import CharacterAvatarStack from "@/components/shared/CharacterAvatarStack";
 import CollectionViewSwitch, { useCollectionView } from "@/components/shared/CollectionViewSwitch";
 import DataTable, { type DataTableColumn } from "@/components/shared/DataTable";
@@ -46,6 +46,8 @@ export default function StoryExplorer({ locale, servers, initialCategory, initia
   const { server, pickServer, items: stories } = useServerList(locale, servers, initialStories);
   const [query, setQuery] = useState("");
   const [otherCategories, setOtherCategories] = useState<StoryCategory[]>([]);
+  // Event stories filter by their band; a chapter without one (a mixed event) takes the "mixed" option, id 0.
+  const [eventBandsFilter, setEventBandsFilter] = useState<number[]>([]);
   // Bond stories: the pair's lead and partner (either order) and the bond level that unlocks the episode.
   const [lead, setLead] = useState<number | null>(null);
   const [partner, setPartner] = useState<number | null>(null);
@@ -97,18 +99,29 @@ export default function StoryExplorer({ locale, servers, initialCategory, initia
   );
   // Main and event stories are browsed by chapter: the list shows one card per chapter, the chapter's own page its episodes.
   const chapters = useMemo(() => groupStoryChapters(sectionStories), [sectionStories]);
+  // The bands the event chapters feature, for the filter; a chapter without a band belongs to a mixed event.
+  const eventBands = useMemo(() => {
+    const names = new Map<number, string>();
+    for (const chapter of chapters) if (chapter.bandId > 0 && chapter.bandName) names.set(chapter.bandId, chapter.bandName);
+    return [...names].sort(([a], [b]) => a - b);
+  }, [chapters]);
+  const hasMixedEvents = useMemo(() => chapters.some((chapter) => chapter.bandId === 0), [chapters]);
   const filteredChapters = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase();
-    return needle ? chapters.filter((chapter) => chapter.searchText.includes(needle)) : chapters;
-  }, [chapters, query]);
+    return chapters.filter((chapter) => {
+      if (needle && !chapter.searchText.includes(needle)) return false;
+      if (eventBandsFilter.length > 0 && !eventBandsFilter.includes(chapter.bandId)) return false;
+      return true;
+    });
+  }, [chapters, query, eventBandsFilter]);
   const sortedChapters = useMemo(() => {
     const entries = filteredChapters.map((chapter) => ({ ...chapter, id: chapter.chapterId }));
     return sort.value === "default" && initialCategory !== "main" ? [...entries].sort(compareByStartDesc) : sortEntries(entries, sort.value, locale);
   }, [filteredChapters, sort.value, locale, initialCategory]);
-  const reset = () => { sort.onChange("default"); setQuery(""); setOtherCategories([]); setLead(null); setPartner(null); setLevels([]); };
+  const reset = () => { sort.onChange("default"); setQuery(""); setOtherCategories([]); setEventBandsFilter([]); setLead(null); setPartner(null); setLevels([]); };
   const resultCount = initialCategory === "event" ? filteredChapters.length : filtered.length;
   const categoryTotal = initialCategory === "event" ? chapters.length : sectionStories.length;
-  const hasActive = sort.value !== "default" || Boolean(query || otherCategories.length || lead !== null || partner !== null || levels.length);
+  const hasActive = sort.value !== "default" || Boolean(query || otherCategories.length || eventBandsFilter.length || lead !== null || partner !== null || levels.length);
   const quickFilterContent = hasFilters ? (
     <BaseFilters
       locale={locale}
@@ -178,6 +191,16 @@ export default function StoryExplorer({ locale, servers, initialCategory, initia
             </FilterSection>
           )}
         </>
+      ) : initialCategory === "event" ? (
+        eventBands.length > 0 && (
+          <BandFilter
+            title={t(locale, "story.ui.band")}
+            bands={eventBands}
+            selectedBands={eventBandsFilter}
+            onChange={setEventBandsFilter}
+            extraOption={hasMixedEvents ? { id: 0, label: t(locale, "story.ui.mixedBand") } : undefined}
+          />
+        )
       ) : (
         <div />
       )}
@@ -187,7 +210,7 @@ export default function StoryExplorer({ locale, servers, initialCategory, initia
   useQuickFilter(
     t(locale, storyCategoryKey(initialCategory)),
     quickFilterContent,
-    [initialCategory, query, otherCategories, lead, partner, levels, pairCharacters, partners, friendshipLevels, resultCount, categoryTotal, locale, sort.value],
+    [initialCategory, query, otherCategories, eventBandsFilter, eventBands, hasMixedEvents, lead, partner, levels, pairCharacters, partners, friendshipLevels, resultCount, categoryTotal, locale, sort.value],
   );
 
   if (initialCategory === "main") {

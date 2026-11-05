@@ -24,6 +24,8 @@ export default function ChapterCard({ chapter, locale, section }: { chapter: Sto
     ? getAssetUrl({ path: `Story/${chapter.banner ? "Banner" : "Image"}/Chapter/${chapter.banner || chapter.image}.png`, type: "raw", locale })
     : "";
   const dates = section === "event" ? formatScheduleDayRange(chapter.startAt, chapter.endAt, locale, timeZone) : "";
+  // A mixed event has no band of its own; the list labels it with the filter's "mixed" option.
+  const bandLabel = chapter.bandName || (section === "event" && chapter.bandId === 0 ? t(locale, "story.ui.mixedBand") : "");
 
   return (
     <a
@@ -47,7 +49,7 @@ export default function ChapterCard({ chapter, locale, section }: { chapter: Sto
       <div className="flex flex-1 flex-col gap-2 p-4">
         <div className="flex min-w-0 items-center gap-2 text-label-small tabular-nums text-on-surface-variant">
           {chapter.eventId !== null && <span className="shrink-0">#{chapter.eventId}</span>}
-          {chapter.bandName && <span className="truncate">{chapter.bandName}</span>}
+          {bandLabel && <span className="truncate">{bandLabel}</span>}
           <span className="ml-auto shrink-0">{t(locale, "story.ui.episodeCount", { count: chapter.episodeCount })}</span>
         </div>
         <h2 className="line-clamp-2 text-label-large leading-5 text-on-surface transition-colors group-hover:text-primary">{chapter.name}</h2>

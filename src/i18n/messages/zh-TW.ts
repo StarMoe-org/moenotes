@@ -2207,6 +2207,8 @@ export const zhTW = {
       columnTitle: "標題",
       columnChapter: "章節",
       episodeCount: "共 {count} 話",
+      mixedBand: "混",
+      band: "樂隊",
       unlockTitle: "解鎖條件",
       rewardsTitle: "通關獎勵",
     },

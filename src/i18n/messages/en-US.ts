@@ -2163,6 +2163,8 @@ export const enUS = {
       columnTitle: "Title",
       columnChapter: "Chapter",
       episodeCount: "{count} episodes",
+      mixedBand: "Mixed",
+      band: "Band",
       unlockTitle: "Unlock conditions",
       rewardsTitle: "Clear rewards",
     },

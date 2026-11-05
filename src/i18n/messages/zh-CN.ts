@@ -2208,6 +2208,8 @@ export const zhCN = {
       columnTitle: "标题",
       columnChapter: "章节",
       episodeCount: "共 {count} 话",
+      mixedBand: "混",
+      band: "乐队",
       unlockTitle: "解锁条件",
       rewardsTitle: "通关奖励",
     },
