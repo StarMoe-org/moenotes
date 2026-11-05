@@ -23,8 +23,9 @@ export function parseStoryChapterPath(pathname: string): { section: StoryChapter
 
   const params: Record<string, string> = {};
   for (const [index, part] of pattern.entries()) {
+    // The pathname arrives decoded; decoding a segment again throws on a stray "%" (a 500 where a 404 belongs).
     const segment = segments[index]!;
-    if (part.startsWith(":")) params[part.slice(1)] = decodeURIComponent(segment);
+    if (part.startsWith(":")) params[part.slice(1)] = segment;
     else if (part !== segment) return null;
   }
 

@@ -73,6 +73,9 @@ describe("story chapter paths", () => {
     expect(parseStoryChapterPath("/story/friendship/184")).toBeNull();
     expect(parseStoryChapterPath("/story/main/0")).toBeNull();
     expect(parseStoryChapterPath("/story/184")).toBeNull();
+    // A stray percent is not a chapter (and must not throw while decoding).
+    expect(() => parseStoryChapterPath("/story/event/100%25")).not.toThrow();
+    expect(parseStoryChapterPath("/story/event/100%25")).toBeNull();
   });
 
   test("the chapter route matches beside the story list and detail routes", () => {
