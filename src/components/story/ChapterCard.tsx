@@ -9,7 +9,7 @@ import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { useNow } from "@/lib/schedule/use-now";
 import type { StoryChapterSummary } from "@/lib/story/chapters";
 import { storyChapterPath } from "@/lib/story/paths";
-import { storyCategoryKey, type StoryChapterSection } from "@/lib/story/sections";
+import type { StoryChapterSection } from "@/lib/story/sections";
 import BannerImage from "@/components/shared/BannerImage";
 import ScheduleBadge from "@/components/shared/ScheduleBadge";
 
@@ -35,11 +35,6 @@ export default function ChapterCard({ chapter, locale, section }: { chapter: Sto
     >
       <div className="relative border-b border-outline-variant">
         <BannerImage src={art} alt="" fallback={chapter.name} />
-        <div className="pointer-events-none absolute left-2 top-2 flex max-w-[calc(100%-1rem)] flex-wrap gap-1.5">
-          <span className="inline-flex h-6 items-center rounded-shape-sm bg-surface-container-highest/95 px-2 text-label-medium text-on-surface">
-            {t(locale, storyCategoryKey(chapter.category))}
-          </span>
-        </div>
         {section === "event" && (
           <div className="pointer-events-none absolute right-2 top-2">
             <ScheduleBadge locale={locale} startAt={chapter.startAt} endAt={chapter.endAt} now={now} countdown={false} />
