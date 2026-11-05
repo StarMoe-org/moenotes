@@ -219,7 +219,7 @@ export async function StoryServerPage({
   ]);
   const stories = allStories.filter((story) => inStorySection(category, story));
   const bands: Array<[number, string]> = characterData ? characterData.bands.map((band) => [band.id, band.name]) : [];
-  return (
+  const content = (
     <PageHeader locale={locale} titleKey={titleKey} descriptionKey={descriptionKey}>
       <StoryExplorer
         locale={locale}
@@ -232,6 +232,8 @@ export async function StoryServerPage({
       />
     </PageHeader>
   );
+  // The event list follows the reference site's column: four cards, capped at 1280px.
+  return category === "event" ? <div className="mx-auto w-full max-w-7xl">{content}</div> : content;
 }
 
 export async function ItemsServerPage({ locale }: { locale: AppLocale }) {

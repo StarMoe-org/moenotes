@@ -52,28 +52,25 @@ export default function ChapterCard({ chapter, locale, section }: { chapter: Sto
           </div>
         )}
       </div>
-      <div className="flex flex-1 flex-col p-5">
-        <div className="flex min-w-0 items-center gap-2">
+      <div className="flex flex-1 flex-col p-3 sm:p-4">
+        <div className="mb-2 flex min-w-0 items-center gap-2">
           {chapter.eventId !== null && (
-            <span className="shrink-0 rounded-full bg-surface-container px-2.5 py-1 text-label-medium tabular-nums text-on-surface-variant">#{chapter.eventId}</span>
+            <span className="shrink-0 rounded-full bg-surface-container px-2 py-0.5 text-label-small tabular-nums text-on-surface-variant">#{chapter.eventId}</span>
           )}
           {bandIcon ? (
-            <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-surface-container py-1 pl-1.5 pr-3" title={bandLabel}>
+            <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-surface-container py-1 pl-1.5 pr-2.5" title={bandLabel}>
               <img src={bandIcon} alt="" className="h-5 w-auto shrink-0 object-contain" loading="lazy" />
               <span className="min-w-0 truncate text-label-medium text-on-surface-variant">{bandLabel}</span>
             </span>
           ) : bandLabel ? (
             <span className="min-w-0 truncate rounded-full bg-surface-container px-2.5 py-1 text-label-medium text-on-surface-variant">{bandLabel}</span>
           ) : null}
-          <span className="ml-auto shrink-0 text-label-small tabular-nums text-on-surface-variant">
-            {t(locale, "story.ui.episodeCount", { count: chapter.episodeCount })}
-          </span>
         </div>
-        <h2 className="mt-3 line-clamp-2 text-title-medium leading-6 text-on-surface transition-colors group-hover:text-primary">{chapter.name}</h2>
-        {chapter.description && <p className="mt-1 line-clamp-1 text-body-medium text-on-surface-variant">{chapter.description}</p>}
+        <h2 className="line-clamp-2 text-title-small text-on-surface transition-colors group-hover:text-primary sm:text-title-medium">{chapter.name}</h2>
+        {chapter.description && <p className="mt-1 line-clamp-1 text-body-small text-on-surface-variant">{chapter.description}</p>}
         {dates && (
-          <p className="mt-3 flex items-center gap-1.5 text-body-small tabular-nums text-on-surface-variant">
-            <Icon name="calendar" className="h-4 w-4 shrink-0" />
+          <p className="mt-2 flex items-center gap-1.5 text-label-medium tabular-nums text-on-surface-variant">
+            <Icon name="calendar" className="h-3.5 w-3.5 shrink-0" />
             {dates}
           </p>
         )}

@@ -259,10 +259,13 @@ export default function StoryExplorer({ locale, servers, bands, initialCategory,
   );
 }
 
-/** The chapter cards of the main or event story list. */
+/** The chapter cards of the main or event story list; the event list is denser (four columns, like the reference site). */
 function ChapterGrid({ chapters, locale, section }: { chapters: StoryChapterSummary[]; locale: AppLocale; section: StoryChapterSection }) {
+  const layout = section === "event"
+    ? "grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 xl:grid-cols-4"
+    : "gap-4 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4";
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
+    <div className={`grid ${layout}`}>
       {chapters.map((chapter) => <ChapterCard key={chapter.chapterId} chapter={chapter} locale={locale} section={section} />)}
     </div>
   );
