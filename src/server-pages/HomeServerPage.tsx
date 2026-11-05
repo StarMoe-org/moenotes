@@ -1,3 +1,4 @@
+import HomeAnnouncement from "@/components/home/HomeAnnouncement";
 import HomeCarousel from "@/components/home/HomeCarousel";
 import HomeHighlights from "@/components/home/HomeHighlights";
 import HomeLayoutEditor from "@/components/home/HomeLayoutEditor";
@@ -45,6 +46,7 @@ export default async function HomeServerPage({ locale }: { locale: AppLocale }) 
   return (
     <div className="pb-4">
       <h1 className="sr-only">{t(locale, "home.heading")}</h1>
+      <HomeAnnouncement locale={locale} />
       <div className="mb-2 flex justify-end">
         <HomeLayoutEditor locale={locale} />
       </div>
