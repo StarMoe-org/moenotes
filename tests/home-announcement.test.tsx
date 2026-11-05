@@ -24,6 +24,8 @@ describe("HomeAnnouncement maintainer recruitment banner", () => {
     expect(zhHtml).toContain("自动化数据与构建工作流");
     expect(zhHtml).toContain("现有域名（bdon.moe）");
     expect(zhHtml).toContain("交接期必要的技术与架构指导");
+    expect(zhHtml).toContain("哪怕你只会使用 AI 工具");
+    expect(zhHtml).toContain("长期有效（在招到之前）");
     expect(zhHtml).toContain("mail@exmeaning.com");
   });
 });

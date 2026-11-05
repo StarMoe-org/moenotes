@@ -1208,6 +1208,7 @@ export const koKR = {
     announcement: {
       badge: "공지사항 · 차기 운영자 모집",
       seoHighlight: "Google 검색 ournotes viewer / database 1위",
+      validityBadge: "충원 시까지 상시 유효",
       title: "{author}에서 {site}를 이끌어 갈 새 운영자·메인테이너를 찾습니다",
       reason:
         "솔직히 말씀드리면 현재 {author} 팀원 중 본작을 플레이하는 사람이 한 명도 없어(게임 클라이언트조차 설치되어 있지 않은 상태입니다), 실제 플레이 경험 없이 일상적인 업데이트와 운영을 이어가기가 매우 버거운 상황입니다. 커뮤니티를 위해 사이트가 계속 건강하게 유지될 수 있도록 『BanG Dream! Our Notes』에 애정이 있고 책임감 있게 {site}를 맡아주실 분을 모십니다.",
@@ -1219,6 +1220,8 @@ export const koKR = {
         domain: "기존 도메인 ({domain})",
         guidance: "인수인계 및 필수 기술 가이드",
       },
+      openToAll: "기술 장벽은 걱정하지 마세요—설령 AI 도구만 다룰 줄 아시더라도, 사이트를 맡아보겠다는 의지만 있다면 절대 거절하지 않습니다.",
+      validityNote: "본 공지는 새 운영자를 모시기 전까지 상시 유효합니다.",
       contactPrompt: "운영 인수에 관심이 있으시다면 간단한 자기소개(게임 이해도, 개발·운영 경험, 운영 계획 등)를 다음 주소로 보내주세요: ",
       emailCta: "자기소개 보내기",
       emailSubject: "Moenotes 운영 인수 지원",

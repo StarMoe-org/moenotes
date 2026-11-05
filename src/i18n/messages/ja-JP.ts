@@ -1254,6 +1254,7 @@ export const jaJP = {
     announcement: {
       badge: "お知らせ · 次期運営者募集",
       seoHighlight: "Google 検索「ournotes viewer / database」1位",
+      validityBadge: "後任決定まで常時有効",
       title: "{author} より {site} 次期管理人・メンテナー募集のお知らせ",
       reason:
         "率直に申し上げると、現在 {author} チームのメンバーは誰も本作をプレイしておらず（ゲームクライアントすら未導入の状態です）、実プレイの感覚がないまま日々の更新や運営を続けることが大きな負担となっています。コミュニティへより良い形でサイトを残すため、『BanG Dream! Our Notes』を愛し、意欲を持って {site} の運営・保守を引き継いでくださる方を募集いたします。",
@@ -1265,6 +1266,8 @@ export const jaJP = {
         domain: "既存ドメイン（{domain}）",
         guidance: "引き継ぎに必要な技術サポート",
       },
+      openToAll: "技術面のハードルはご心配なく——たとえ AI ツールを使うことしかできなくても、意欲を持って引き継いでくださる方であれば決してお断りしません。",
+      validityNote: "※ 本告知は後任の方が決まるまで無期限で有効です。",
       contactPrompt: "引き継ぎにご興味のある方は、簡単な自己紹介（プレイ状況、開発・運営経験、今後の方針など）を添えてこちらまでご連絡ください：",
       emailCta: "自己紹介を送る",
       emailSubject: "Moenotes 運営引き継ぎについて",

@@ -1263,6 +1263,7 @@ export const zhTW = {
     announcement: {
       badge: "站點公告 · 站長招募",
       seoHighlight: "Google 搜尋 ournotes viewer / database 排名 #1",
+      validityBadge: "長期有效（在招到之前）",
       title: "{author} 誠招 {site} 新任站長與維護者",
       reason:
         "坦誠地說，目前 {author} 團隊成員均未在遊玩本作（甚至沒有安裝遊戲客戶端），在缺乏實際遊玩體驗的情況下維持日常跟進與站點營運實在力不從心。為了讓站點能繼續好好服務玩家社群，我們誠邀真正熱愛《BanG Dream! Our Notes》、有熱情與責任心的有志之士接手 {site} 的日常營運與維護。",
@@ -1274,6 +1275,8 @@ export const zhTW = {
         domain: "現有網域（{domain}）",
         guidance: "交接期必要的技術與架構指導",
       },
+      openToAll: "無需顧慮技術門檻——哪怕你只會使用 AI 工具，只要你真心願意接手維護，我們也絕不會拒絕你。",
+      validityNote: "此公告長期有效（在招到合適人選之前持續開放）。",
       contactPrompt: "如有意接手，請傳送個人介紹（如遊戲了解程度、技術或營運經歷、維護想法等）至 ",
       emailCta: "傳送個人介紹",
       emailSubject: "Moenotes 站長接手申請",
