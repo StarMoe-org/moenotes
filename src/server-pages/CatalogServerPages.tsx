@@ -219,18 +219,12 @@ export async function StoryServerPage({
   ]);
   const stories = allStories.filter((story) => inStorySection(category, story));
   const bands: Array<[number, string]> = characterData ? characterData.bands.map((band) => [band.id, band.name]) : [];
-  const characters = characterData
-    ? [...characterData.characters]
-        .sort((a, b) => a.displayOrder - b.displayOrder)
-        .map((character) => ({ id: character.id, name: character.name, bandId: character.bandId }))
-    : [];
   return (
     <PageHeader locale={locale} titleKey={titleKey} descriptionKey={descriptionKey}>
       <StoryExplorer
         locale={locale}
         servers={servers}
         bands={bands}
-        characters={characters}
         initialCategory={category}
         initialStories={stories}
         initialCharacters={readerLookup.characters}

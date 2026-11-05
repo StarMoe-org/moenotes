@@ -2165,7 +2165,6 @@ export const enUS = {
       episodeCount: "{count} episodes",
       mixedBand: "Mixed",
       band: "Band",
-      characters: "Characters",
       unlockTitle: "Unlock conditions",
       rewardsTitle: "Clear rewards",
     },

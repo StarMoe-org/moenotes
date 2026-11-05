@@ -2210,7 +2210,6 @@ export const zhCN = {
       episodeCount: "共 {count} 话",
       mixedBand: "混",
       band: "乐队",
-      characters: "角色",
       unlockTitle: "解锁条件",
       rewardsTitle: "通关奖励",
     },

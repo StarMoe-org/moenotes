@@ -10,7 +10,7 @@ import ServerScope from "@/components/shared/ServerScope";
 import { serverReleaseFetcher } from "@/lib/assets/release";
 import type { ServerFaceted } from "@/lib/servers/facets";
 import { useAssetUrl, useContentServerScope, useServerList } from "@/lib/servers/use-content-server";
-import BaseFilters, { BandFilter, CharacterFilter, FilterButton, FilterSection, toggleArrayItem } from "@/components/shared/BaseFilters";
+import BaseFilters, { BandFilter, CharacterFilter, FilterButton, FilterSection } from "@/components/shared/BaseFilters";
 import CharacterAvatarStack from "@/components/shared/CharacterAvatarStack";
 import CollectionViewSwitch, { useCollectionView } from "@/components/shared/CollectionViewSwitch";
 import DataTable, { type DataTableColumn } from "@/components/shared/DataTable";
@@ -23,7 +23,6 @@ import ChapterCard from "@/components/story/ChapterCard";
 import StoryScriptReader from "@/components/story/StoryScriptReader";
 import StoryPlayerLink from "@/components/story/StoryPlayerLink";
 import { getAssetUrl } from "@/lib/assets/url";
-import { getBandSmallIconUrl, getCharacterFaceIconUrl } from "@/lib/cards/assets";
 import { fetchAndParseStory, type ParsedStoryScript } from "@/lib/story/parser";
 import { groupStoryChapters, type StoryChapterSummary } from "@/lib/story/chapters";
 import type { RawStoryCharacter, StoryCategory, StoryViewModel } from "@/lib/story/data";
@@ -42,16 +41,13 @@ const LIST_VIEWS = ["grid", "table"] as const;
 type ListView = typeof LIST_VIEWS[number];
 const PLAY_TIME_SORT = [{ key: "playTime", labelKey: "story.ui.playTime", initialDirection: "desc" as const }];
 
-export default function StoryExplorer({ locale, servers, bands, characters, initialCategory, initialStories, initialCharacters, initialTexts }: { locale: AppLocale; servers: GameServer[]; bands: Array<[number, string]>; characters: Array<{ id: number; name: string; bandId: number }>; initialCategory: StorySection; initialStories: ServerFaceted<StoryViewModel>[]; initialCharacters: RawStoryCharacter[]; initialTexts: RawText[] }) {
+export default function StoryExplorer({ locale, servers, bands, initialCategory, initialStories, initialCharacters, initialTexts }: { locale: AppLocale; servers: GameServer[]; bands: Array<[number, string]>; initialCategory: StorySection; initialStories: ServerFaceted<StoryViewModel>[]; initialCharacters: RawStoryCharacter[]; initialTexts: RawText[] }) {
   const sort = useListSort(`story-${initialCategory}`, locale, "date", { numeric: PLAY_TIME_SORT });
   const { server, pickServer, items: stories } = useServerList(locale, servers, initialStories);
   const [query, setQuery] = useState("");
   const [otherCategories, setOtherCategories] = useState<StoryCategory[]>([]);
   // Event stories filter by their band; a chapter without one (a mixed event) takes the "mixed" option, id 0.
   const [eventBandsFilter, setEventBandsFilter] = useState<number[]>([]);
-  // And by the characters the event features; a band chip picks whose faces the character row shows.
-  const [eventCharactersFilter, setEventCharactersFilter] = useState<number[]>([]);
-  const [eventCharacterUnit, setEventCharacterUnit] = useState<number | null>(null);
   // Bond stories: the pair's lead and partner (either order) and the bond level that unlocks the episode.
   const [lead, setLead] = useState<number | null>(null);
   const [partner, setPartner] = useState<number | null>(null);
@@ -105,33 +101,22 @@ export default function StoryExplorer({ locale, servers, bands, characters, init
   const chapters = useMemo(() => groupStoryChapters(sectionStories), [sectionStories]);
   // The event filter lists every band of the build; a chapter without one belongs to a mixed event.
   const hasMixedEvents = useMemo(() => chapters.some((chapter) => chapter.bandId === 0), [chapters]);
-  // The band chips list every band of the build; picking one shows its characters (none until then).
-  const shownCharacters = useMemo(
-    () => (eventCharacterUnit === null ? [] : characters.filter((character) => character.bandId === eventCharacterUnit)),
-    [characters, eventCharacterUnit],
-  );
-  const pickCharacterUnit = (bandId: number | null) => {
-    setEventCharacterUnit(bandId);
-    // A character of another band leaves the selection when its band is picked.
-    if (bandId !== null) setEventCharactersFilter((ids) => ids.filter((id) => characters.some((character) => character.id === id && character.bandId === bandId)));
-  };
   const filteredChapters = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase();
     return chapters.filter((chapter) => {
       if (needle && !chapter.searchText.includes(needle)) return false;
       if (eventBandsFilter.length > 0 && !eventBandsFilter.includes(chapter.bandId)) return false;
-      if (eventCharactersFilter.length > 0 && !chapter.characterIds.some((id) => eventCharactersFilter.includes(id))) return false;
       return true;
     });
-  }, [chapters, query, eventBandsFilter, eventCharactersFilter]);
+  }, [chapters, query, eventBandsFilter]);
   const sortedChapters = useMemo(() => {
     const entries = filteredChapters.map((chapter) => ({ ...chapter, id: chapter.chapterId }));
     return sort.value === "default" && initialCategory !== "main" ? [...entries].sort(compareByStartDesc) : sortEntries(entries, sort.value, locale);
   }, [filteredChapters, sort.value, locale, initialCategory]);
-  const reset = () => { sort.onChange("default"); setQuery(""); setOtherCategories([]); setEventBandsFilter([]); setEventCharactersFilter([]); setEventCharacterUnit(null); setLead(null); setPartner(null); setLevels([]); };
+  const reset = () => { sort.onChange("default"); setQuery(""); setOtherCategories([]); setEventBandsFilter([]); setLead(null); setPartner(null); setLevels([]); };
   const resultCount = initialCategory === "event" ? filteredChapters.length : filtered.length;
   const categoryTotal = initialCategory === "event" ? chapters.length : sectionStories.length;
-  const hasActive = sort.value !== "default" || Boolean(query || otherCategories.length || eventBandsFilter.length || eventCharactersFilter.length || lead !== null || partner !== null || levels.length);
+  const hasActive = sort.value !== "default" || Boolean(query || otherCategories.length || eventBandsFilter.length || lead !== null || partner !== null || levels.length);
   const quickFilterContent = hasFilters ? (
     <BaseFilters
       locale={locale}
@@ -202,26 +187,15 @@ export default function StoryExplorer({ locale, servers, bands, characters, init
           )}
         </>
       ) : initialCategory === "event" ? (
-        <>
-          {bands.length > 0 && (
-            <BandFilter
-              title={t(locale, "story.ui.band")}
-              bands={bands}
-              selectedBands={eventBandsFilter}
-              onChange={setEventBandsFilter}
-              extraOption={hasMixedEvents ? { id: 0, label: t(locale, "story.ui.mixedBand") } : undefined}
-            />
-          )}
-          <EventCharacterFilter
-            locale={locale}
-            units={bands}
-            characters={shownCharacters}
-            unit={eventCharacterUnit}
-            onPickUnit={pickCharacterUnit}
-            selected={eventCharactersFilter}
-            onChange={setEventCharactersFilter}
+        bands.length > 0 && (
+          <BandFilter
+            title={t(locale, "story.ui.band")}
+            bands={bands}
+            selectedBands={eventBandsFilter}
+            onChange={setEventBandsFilter}
+            extraOption={hasMixedEvents ? { id: 0, label: t(locale, "story.ui.mixedBand") } : undefined}
           />
-        </>
+        )
       ) : (
         <div />
       )}
@@ -231,7 +205,7 @@ export default function StoryExplorer({ locale, servers, bands, characters, init
   useQuickFilter(
     t(locale, storyCategoryKey(initialCategory)),
     quickFilterContent,
-    [initialCategory, query, otherCategories, eventBandsFilter, bands, hasMixedEvents, eventCharactersFilter, eventCharacterUnit, shownCharacters, lead, partner, levels, pairCharacters, partners, friendshipLevels, resultCount, categoryTotal, locale, sort.value],
+    [initialCategory, query, otherCategories, eventBandsFilter, bands, hasMixedEvents, lead, partner, levels, pairCharacters, partners, friendshipLevels, resultCount, categoryTotal, locale, sort.value],
   );
 
   if (initialCategory === "main") {
@@ -294,48 +268,6 @@ function ChapterGrid({ chapters, locale, section }: { chapters: StoryChapterSumm
     <div className={`grid ${layout}`}>
       {chapters.map((chapter) => <ChapterCard key={chapter.chapterId} chapter={chapter} locale={locale} section={section} />)}
     </div>
-  );
-}
-
-/**
- * The event filter's characters, split by band as the reference site's filter is: the band chip row picks whose faces
- * show below it, and ALL clears the character selection.
- */
-function EventCharacterFilter({ locale, units, characters, unit, onPickUnit, selected, onChange }: {
-  locale: AppLocale;
-  units: Array<[number, string]>;
-  characters: Array<{ id: number; name: string }>;
-  unit: number | null;
-  onPickUnit: (bandId: number | null) => void;
-  selected: number[];
-  onChange: (characterIds: number[]) => void;
-}) {
-  return (
-    <FilterSection title={t(locale, "story.ui.characters")}>
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-wrap gap-2">
-          {units.map(([bandId, name]) => (
-            <FilterButton key={bandId} active={unit === bandId} onClick={() => onPickUnit(unit === bandId ? null : bandId)}>
-              <span className="flex items-center" title={name} aria-label={name}>
-                <img className="h-5 w-auto object-contain" src={getBandSmallIconUrl(bandId)} alt={name} loading="lazy" />
-              </span>
-            </FilterButton>
-          ))}
-        </div>
-        {characters.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            <FilterButton active={selected.length === 0} onClick={() => onChange([])}>ALL</FilterButton>
-            {characters.map((character) => (
-              <FilterButton key={character.id} active={selected.includes(character.id)} onClick={() => onChange(toggleArrayItem(selected, character.id))}>
-                <span className="flex items-center" title={character.name} aria-label={character.name}>
-                  <img className="h-6 w-6 rounded-full bg-surface-container-highest object-cover" src={getCharacterFaceIconUrl(character.id)} alt={character.name} loading="lazy" />
-                </span>
-              </FilterButton>
-            ))}
-          </div>
-        )}
-      </div>
-    </FilterSection>
   );
 }
 
