@@ -161,13 +161,3 @@ export function formatScheduleRange(startAt: string, endAt: string, locale: AppL
   if (end) return t(locale, "schedule.until", { end });
   return "";
 }
-
-/** A day-only schedule range, for a card that has no room for the time of day. */
-export function formatScheduleDayRange(startAt: string, endAt: string, locale: AppLocale, timeZone?: string | null): string {
-  const start = formatMasterDate(startAt, locale, false, timeZone);
-  const end = formatMasterDate(endAt, locale, false, timeZone);
-  if (start && end) return t(locale, "schedule.range", { start, end });
-  if (start) return t(locale, "schedule.from", { start });
-  if (end) return t(locale, "schedule.until", { end });
-  return "";
-}
