@@ -127,8 +127,10 @@ function syncDocumentFilterState() {
 }
 
 export function registerFilters(title: string, content: ReactNode) {
-  currentFilterTitle = title;
-  currentFilterContent = content;
+  // A page can register no sheet (the main story has chapters, not filters). Its title must not linger in the store:
+  // the next page's button would show it until that page registers its own.
+  currentFilterContent = content ?? null;
+  currentFilterTitle = content == null ? "" : title;
   updateSnapshot();
   syncDocumentFilterState();
   emitChange();

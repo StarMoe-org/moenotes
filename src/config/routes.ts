@@ -750,7 +750,6 @@ export const routeRegistry = [
         path: "/story/main",
         labelKey: "nav.items.mainStory",
         component: "story-main",
-        filterTitleKey: "story.categories.main",
         seo: {
           titleKey: "seo.mainStory.title",
           descriptionKey: "seo.mainStory.description",
