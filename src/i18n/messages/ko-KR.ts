@@ -1205,6 +1205,26 @@ export const koKR = {
   actions: { close: "닫기", back: "돌아가기", clearCache: "캐시 지우기", refresh: "새로고침", open: "열기", viewGroup: "그룹 보기" },
   home: {
     heading: "BanG Dream! Our Notes 데이터베이스",
+    announcement: {
+      badge: "공지사항 · 차기 운영자 모집",
+      seoHighlight: "Google 검색 ournotes viewer / database 1위",
+      title: "{author}에서 {site}를 이끌어 갈 새 운영자·메인테이너를 찾습니다",
+      reason:
+        "솔직히 말씀드리면 현재 {author} 팀원 중 본작을 플레이하는 사람이 한 명도 없어(게임 클라이언트조차 설치되어 있지 않은 상태입니다), 실제 플레이 경험 없이 일상적인 업데이트와 운영을 이어가기가 매우 버거운 상황입니다. 커뮤니티를 위해 사이트가 계속 건강하게 유지될 수 있도록 『BanG Dream! Our Notes』에 애정이 있고 책임감 있게 {site}를 맡아주실 분을 모십니다.",
+      supportIntro:
+        "현재 {site}는 Google에서 \"ournotes viewer\" 및 \"ournotes database\" 검색 1위를 기록하고 있으며, 다국어 데이터베이스·스토리/채보 뷰어·덱 편성 도구가 완비되어 있습니다. 인프라 부담 없이 인수하실 수 있도록 {author}에서 다음 항목을 계속 지원합니다:",
+      perks: {
+        server: "서버 및 호스팅 인프라",
+        workflow: "자동화된 데이터·빌드 워크플로",
+        domain: "기존 도메인 ({domain})",
+        guidance: "인수인계 및 필수 기술 가이드",
+      },
+      contactPrompt: "운영 인수에 관심이 있으시다면 간단한 자기소개(게임 이해도, 개발·운영 경험, 운영 계획 등)를 다음 주소로 보내주세요: ",
+      emailCta: "자기소개 보내기",
+      emailSubject: "Moenotes 운영 인수 지원",
+      copyEmail: "이메일 복사",
+      copiedEmail: "복사됨",
+    },
     now: "진행 중",
     carousel: "진행 중인 이벤트와 뽑기",
     slidePosition: "{index} / {total}",
