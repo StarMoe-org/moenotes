@@ -41,7 +41,7 @@ const LIST_VIEWS = ["grid", "table"] as const;
 type ListView = typeof LIST_VIEWS[number];
 const PLAY_TIME_SORT = [{ key: "playTime", labelKey: "story.ui.playTime", initialDirection: "desc" as const }];
 
-export default function StoryExplorer({ locale, servers, initialCategory, initialStories, initialCharacters, initialTexts }: { locale: AppLocale; servers: GameServer[]; initialCategory: StorySection; initialStories: ServerFaceted<StoryViewModel>[]; initialCharacters: RawStoryCharacter[]; initialTexts: RawText[] }) {
+export default function StoryExplorer({ locale, servers, bands, initialCategory, initialStories, initialCharacters, initialTexts }: { locale: AppLocale; servers: GameServer[]; bands: Array<[number, string]>; initialCategory: StorySection; initialStories: ServerFaceted<StoryViewModel>[]; initialCharacters: RawStoryCharacter[]; initialTexts: RawText[] }) {
   const sort = useListSort(`story-${initialCategory}`, locale, "date", { numeric: PLAY_TIME_SORT });
   const { server, pickServer, items: stories } = useServerList(locale, servers, initialStories);
   const [query, setQuery] = useState("");
@@ -99,12 +99,7 @@ export default function StoryExplorer({ locale, servers, initialCategory, initia
   );
   // Main and event stories are browsed by chapter: the list shows one card per chapter, the chapter's own page its episodes.
   const chapters = useMemo(() => groupStoryChapters(sectionStories), [sectionStories]);
-  // The bands the event chapters feature, for the filter; a chapter without a band belongs to a mixed event.
-  const eventBands = useMemo(() => {
-    const names = new Map<number, string>();
-    for (const chapter of chapters) if (chapter.bandId > 0 && chapter.bandName) names.set(chapter.bandId, chapter.bandName);
-    return [...names].sort(([a], [b]) => a - b);
-  }, [chapters]);
+  // The event filter lists every band of the build; a chapter without one belongs to a mixed event.
   const hasMixedEvents = useMemo(() => chapters.some((chapter) => chapter.bandId === 0), [chapters]);
   const filteredChapters = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase();
@@ -192,10 +187,10 @@ export default function StoryExplorer({ locale, servers, initialCategory, initia
           )}
         </>
       ) : initialCategory === "event" ? (
-        eventBands.length > 0 && (
+        bands.length > 0 && (
           <BandFilter
             title={t(locale, "story.ui.band")}
-            bands={eventBands}
+            bands={bands}
             selectedBands={eventBandsFilter}
             onChange={setEventBandsFilter}
             extraOption={hasMixedEvents ? { id: 0, label: t(locale, "story.ui.mixedBand") } : undefined}
@@ -210,7 +205,7 @@ export default function StoryExplorer({ locale, servers, initialCategory, initia
   useQuickFilter(
     t(locale, storyCategoryKey(initialCategory)),
     quickFilterContent,
-    [initialCategory, query, otherCategories, eventBandsFilter, eventBands, hasMixedEvents, lead, partner, levels, pairCharacters, partners, friendshipLevels, resultCount, categoryTotal, locale, sort.value],
+    [initialCategory, query, otherCategories, eventBandsFilter, bands, hasMixedEvents, lead, partner, levels, pairCharacters, partners, friendshipLevels, resultCount, categoryTotal, locale, sort.value],
   );
 
   if (initialCategory === "main") {
