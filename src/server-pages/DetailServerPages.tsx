@@ -11,8 +11,10 @@ import DetailSemanticSeoShell from "@/components/seo/DetailSemanticSeoShell";
 import BreadcrumbSync from "@/components/shell/BreadcrumbSync";
 import ShopDetail from "@/components/shop/ShopDetail";
 import StoryDetail from "@/components/story/StoryDetail";
+import StoryChapterPage from "@/components/story/StoryChapterPage";
 import SupportCardDetail from "@/components/support-cards/SupportCardDetail";
 import type { AppLocale } from "@/config/locales";
+import { notFound } from "next/navigation";
 import { getBuildMemberCardMaterials, getBuildSupportCardMaterials } from "@/lib/masterdata/build-card-materials";
 import { getBuildCharacterExtras } from "@/lib/masterdata/build-character-extras";
 import {
@@ -25,6 +27,7 @@ import {
   getBuildMusicDetail,
   getBuildMusicDetailData,
   getBuildRewardEntryDetail,
+  getBuildStories,
   getBuildStoryDetail,
   getBuildSupportCardDetail,
 } from "@/lib/masterdata/build-data";
@@ -35,6 +38,7 @@ import { getBuildServers } from "@/lib/masterdata/build-servers";
 import { getBuildShopDetail, getBuildShopNeighbors } from "@/lib/masterdata/build-shop";
 import { getDetailBreadcrumb } from "@/lib/route/static-paths";
 import type { DetailSemanticSeoData } from "@/lib/seo/entity-seo";
+import { inStorySection, type StoryChapterSection } from "@/lib/story/sections";
 
 interface DetailPageContext {
   locale: AppLocale;
@@ -264,6 +268,24 @@ export async function StoryDetailServerPage({ locale, pathname, paramId, semanti
         previous={detail.previous}
         next={detail.next}
       />
+    </>
+  );
+}
+
+export async function StoryChapterServerPage({ locale, pathname, paramId, section, semantic }: DetailPageContext & { section: StoryChapterSection }) {
+  const chapterId = Number(paramId);
+  const [allStories, servers, breadcrumb] = await Promise.all([
+    getBuildStories(locale),
+    getBuildServers(),
+    getDetailBreadcrumb("story-chapter", paramId, locale),
+  ]);
+  const stories = allStories.filter((story) => story.chapterId === chapterId && inStorySection(section, story));
+  if (stories.length === 0) notFound();
+  return (
+    <>
+      <BreadcrumbSync locale={locale} pathname={pathname} detail={breadcrumb} />
+      {semantic && <DetailSemanticSeoShell data={semantic} />}
+      <StoryChapterPage locale={locale} servers={servers} initialStories={stories} chapterId={chapterId} />
     </>
   );
 }

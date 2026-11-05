@@ -826,6 +826,25 @@ export const routeRegistry = [
         keywords: ["post live", "home story", "tutorial story", "other story"],
       },
       {
+        // A chapter of the main or event story: the list page's cards open their episodes here.
+        id: "story-chapter",
+        kind: "dynamic",
+        path: "/story/:category/:id",
+        pattern: "/story/:category/:id",
+        parentId: "story",
+        labelKey: "nav.groups.story",
+        component: "story-chapter",
+        seo: {
+          titleKey: "seo.storyChapter.title",
+          descriptionKey: "seo.storyChapter.description",
+          keywords: ["story chapter", "chapter episodes", "Our Notes chapter", "story transcript", "character voices"],
+          sitemap: { priority: 0.5, changefreq: "weekly" },
+        },
+        nav: false,
+        searchable: false,
+        staticParams: async () => (await import("@/lib/route/masterdata-params")).getMasterdataStoryChapterParams(),
+      },
+      {
         id: "story-detail",
         kind: "dynamic",
         path: "/story/:id",

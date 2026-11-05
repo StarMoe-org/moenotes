@@ -47,4 +47,13 @@ describe("story list", () => {
     // A main-story chapter keeps its own start.
     expect(normalizeStories({ ...data, chapters: [chapter] }, "en-US").find((story) => story.advId === 1)?.startAt).toBe("2026/10/26 15:00:00");
   });
+
+  test("an event chapter closes with its event, and a chapter without one stays open", () => {
+    const withEvent = normalizeStories(
+      { ...data, eventChapters: [{ chapterId: 5, eventId: 3, startAt: "2026/10/18 15:00:00", endAt: "2026/10/26 15:00:00" }] },
+      "en-US",
+    );
+    expect(withEvent.find((story) => story.advId === 1)?.endAt).toBe("2026/10/26 15:00:00");
+    expect(normalizeStories(data, "en-US").find((story) => story.advId === 1)?.endAt).toBe("");
+  });
 });

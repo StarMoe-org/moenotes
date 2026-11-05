@@ -1,7 +1,9 @@
 import BreadcrumbSync from "@/components/shell/BreadcrumbSync";
 import type { AppLocale } from "@/config/locales";
+import { notFound } from "next/navigation";
 import { localizePath } from "@/i18n/routing";
 import type { DetailSemanticSeoData } from "@/lib/seo/entity-seo";
+import { isChapterSection } from "@/lib/story/sections";
 import AboutServerPage from "@/server-pages/AboutServerPage";
 import { AccountServerPage, OpenPlatformDocsServerPage, OpenPlatformServerPage, PlayerServerPage } from "@/server-pages/AccountServerPages";
 import {
@@ -41,6 +43,7 @@ import {
   MusicDetailServerPage,
   RewardDetailServerPage,
   ShopDetailServerPage,
+  StoryChapterServerPage,
   StoryDetailServerPage,
   SupportCardDetailServerPage,
 } from "@/server-pages/DetailServerPages";
@@ -197,6 +200,10 @@ export default async function RouteDispatcher({
           <StoryServerPage locale={locale} category="other" titleKey={match.item.seo.titleKey} descriptionKey={match.item.seo.descriptionKey} />
         </>
       );
+    case "story-chapter":
+      return isChapterSection(match.params.category)
+        ? <StoryChapterServerPage locale={locale} pathname={pathname} paramId={paramId} section={match.params.category} semantic={semantic} />
+        : notFound();
     case "story-detail":
       return <StoryDetailServerPage locale={locale} pathname={pathname} paramId={paramId} semantic={semantic} />;
     case "items":

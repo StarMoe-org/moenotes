@@ -2,7 +2,7 @@
 
 import SiriusLoader from "@/components/shared/SiriusLoader";
 import { useListSort } from "@/lib/filter/use-list-sort";
-import { sortEntries, type ListSort } from "@/lib/filter/list-sort";
+import { sortEntries } from "@/lib/filter/list-sort";
 import { useEffect, useMemo, useState } from "react";
 import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
@@ -19,10 +19,12 @@ import { useDisplayTimeZone } from "@/lib/schedule/use-display-time-zone";
 import { storyPath } from "@/lib/story/paths";
 import { useQuickFilter } from "@/lib/filter/use-quick-filter";
 import Modal from "@/components/shared/Modal";
+import ChapterCard from "@/components/story/ChapterCard";
 import StoryScriptReader from "@/components/story/StoryScriptReader";
 import StoryPlayerLink from "@/components/story/StoryPlayerLink";
 import { getAssetUrl } from "@/lib/assets/url";
 import { fetchAndParseStory, type ParsedStoryScript } from "@/lib/story/parser";
+import { groupStoryChapters, type StoryChapterSummary } from "@/lib/story/chapters";
 import type { RawStoryCharacter, StoryCategory, StoryViewModel } from "@/lib/story/data";
 import type { RawText } from "@/lib/cards/data";
 import { t } from "@/i18n";
@@ -31,7 +33,7 @@ import { formatPlayTime, storyEpisodeLabel } from "@/lib/story/labels";
 import { useNow } from "@/lib/schedule/use-now";
 import { isSpoiler, useSpoiler } from "@/lib/settings/spoiler";
 
-import { inStorySection, OTHER_CATEGORIES, storyCategoryKey, type StorySection } from "@/lib/story/sections";
+import { inStorySection, OTHER_CATEGORIES, storyCategoryKey, type StoryChapterSection, type StorySection } from "@/lib/story/sections";
 
 export { inStorySection, storyCategoryKey, type StorySection };
 
@@ -93,8 +95,19 @@ export default function StoryExplorer({ locale, servers, initialCategory, initia
     () => (sort.value === "default" && initialCategory !== "main" ? [...filtered].sort(compareByStartDesc) : sortEntries(filtered, sort.value, locale)),
     [filtered, sort.value, locale, initialCategory],
   );
+  // Main and event stories are browsed by chapter: the list shows one card per chapter, the chapter's own page its episodes.
+  const chapters = useMemo(() => groupStoryChapters(sectionStories), [sectionStories]);
+  const filteredChapters = useMemo(() => {
+    const needle = query.trim().toLocaleLowerCase();
+    return needle ? chapters.filter((chapter) => chapter.searchText.includes(needle)) : chapters;
+  }, [chapters, query]);
+  const sortedChapters = useMemo(() => {
+    const entries = filteredChapters.map((chapter) => ({ ...chapter, id: chapter.chapterId }));
+    return sort.value === "default" && initialCategory !== "main" ? [...entries].sort(compareByStartDesc) : sortEntries(entries, sort.value, locale);
+  }, [filteredChapters, sort.value, locale, initialCategory]);
   const reset = () => { sort.onChange("default"); setQuery(""); setOtherCategories([]); setLead(null); setPartner(null); setLevels([]); };
-  const categoryTotal = sectionStories.length;
+  const resultCount = initialCategory === "event" ? filteredChapters.length : filtered.length;
+  const categoryTotal = initialCategory === "event" ? chapters.length : sectionStories.length;
   const hasActive = sort.value !== "default" || Boolean(query || otherCategories.length || lead !== null || partner !== null || levels.length);
   const quickFilterContent = hasFilters ? (
     <BaseFilters
@@ -106,7 +119,7 @@ export default function StoryExplorer({ locale, servers, initialCategory, initia
       onSearchChange={setQuery}
       searchLabel={t(locale, "filter.search")}
       searchPlaceholder={t(locale, "story.ui.searchPlaceholder")}
-      resultCount={filtered.length}
+      resultCount={resultCount}
       totalCount={categoryTotal}
       hasActiveFilters={hasActive}
       onReset={reset}
@@ -174,7 +187,7 @@ export default function StoryExplorer({ locale, servers, initialCategory, initia
   useQuickFilter(
     t(locale, storyCategoryKey(initialCategory)),
     quickFilterContent,
-    [initialCategory, query, otherCategories, lead, partner, levels, pairCharacters, partners, friendshipLevels, filtered.length, categoryTotal, locale, sort.value],
+    [initialCategory, query, otherCategories, lead, partner, levels, pairCharacters, partners, friendshipLevels, resultCount, categoryTotal, locale, sort.value],
   );
 
   if (initialCategory === "main") {
@@ -182,19 +195,19 @@ export default function StoryExplorer({ locale, servers, initialCategory, initia
     if (error) return <State text={t(locale, "story.ui.loadMainError")} action={() => setReload((v) => v + 1)} />;
     return (
       <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
-        <ChapterGroups stories={sectionStories} locale={locale} sort="default" />
+        <ChapterGrid chapters={sortedChapters} locale={locale} section="main" />
       </ServerScope>
     );
   }
 
-  // Event stories are chapters too: listed by chapter, the filters and sort applying to the chapters.
+  // Event stories are chapters too: one card per event, the filters and sort applying to the chapters.
   if (initialCategory === "event") {
     return (
       <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
         <section className="min-w-0" aria-live="polite">
-          {filtered.length === 0
+          {filteredChapters.length === 0
             ? <State text={t(locale, "story.ui.empty")} action={reset} />
-            : <ChapterGroups stories={filtered} locale={locale} sort={sort.value} />}
+            : <ChapterGrid chapters={sortedChapters} locale={locale} section="event" />}
         </section>
       </ServerScope>
     );
@@ -228,55 +241,13 @@ export default function StoryExplorer({ locale, servers, initialCategory, initia
   );
 }
 
-/** Episodes grouped by chapter; `sort` orders the chapters, episodes keep their in-game order. */
-function ChapterGroups({ stories, locale, sort }: { stories: StoryViewModel[]; locale: AppLocale; sort: ListSort }) {
-  const assetUrl = useAssetUrl();
-  const chapters = [...new Map(stories.map((story) => [story.chapterId, story])).values()]
-    .sort((a, b) => (a.chapterId ?? 0) - (b.chapterId ?? 0));
-
-  return <div className="space-y-8">{sortEntries(chapters.map((chapter) => ({ ...chapter, id: chapter.chapterId ?? 0, title: chapter.chapterName })), sort, locale).map((chapter) => {
-    // Main, another and extra episodes each number from 1, so they are listed as separate runs.
-    const episodes = stories.filter((story) => story.chapterId === chapter.chapterId).sort((a, b) => a.sortOrder - b.sortOrder);
-    const runs = (["main", "another", "extra"] as const)
-      .map((kind) => ({ kind, episodes: episodes.filter((episode) => (episode.episodeKind ?? "main") === kind) }))
-      .filter((run) => run.episodes.length > 0);
-    const chapterAsset = chapter.chapterBanner || chapter.chapterImage;
-const chapterImageUrl = chapterAsset ? assetUrl(getAssetUrl({ path: `Story/${chapter.chapterBanner ? "Banner" : "Image"}/Chapter/${chapterAsset}.png`, type: "raw", locale })) : "";
-return <section key={chapter.chapterId} className="mn-list-group overflow-hidden rounded-shape-lg border border-outline-variant bg-surface-container-low shadow-elevation-1">
-  <div className="flex flex-col">
-    {chapterImageUrl && (
-      <div className="w-full bg-surface-container-highest border-b border-outline-variant overflow-hidden">
-        <img src={chapterImageUrl} alt="" className="block h-auto w-full" />
-          </div>
-        )}
-        <div className="flex flex-col justify-center p-6 sm:p-8">
-          <p className="text-label-medium text-primary">{chapter.bandName}</p>
-          <h2 className="mt-2 text-headline-small text-on-surface">{chapter.chapterName}</h2>
-          <p className="mt-4 whitespace-pre-line leading-7 text-on-surface-variant">{chapter.chapterDescription}</p>
-          <p className="mt-4 text-body-small text-on-surface-variant">{chapter.characterNames.join(" · ")}</p>
-        </div>
-      </div>
-      <div className="space-y-5 border-t-[1.5px] border-outline-variant bg-surface-container p-4 sm:p-6">
-        {runs.map((run) => <div key={run.kind}>
-          {run.kind !== "main" && <h3 className="mb-3 text-label-medium text-on-surface-variant">{t(locale, run.kind === "another" ? "story.ui.anotherStories" : "story.ui.extraStories")}</h3>}
-          {/* Columns as wide as a banner and a title need, however narrow the content column is. */}
-          <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,17rem),1fr))]">
-            {run.episodes.map((episode) => <a key={episode.id} href={localizePath(storyPath(episode.advId), locale)} className="mn-list-card mn-list-card-row group flex min-w-0 items-center gap-4 rounded-shape-lg border border-outline-variant bg-surface-container-low p-3 transition hover:shadow-elevation-1">
-              <img src={assetUrl(getAssetUrl({ path: `Story/Banner/Episode/${episode.assets.banner}.png`, type: "raw", locale }))} alt="" className="h-16 w-28 shrink-0 rounded-shape-md object-cover" loading="lazy" />
-              <div className="min-w-0">
-                <p className="text-label-small text-primary">
-                  {storyEpisodeLabel(locale, episode)}
-                  {episode.episodeKind === "another" && episode.characterNames[0] && <span className="ml-1.5 font-bold text-on-surface-variant">{episode.characterNames[0]}</span>}
-                </p>
-                <h4 className="mt-1 line-clamp-2 text-label-large text-on-surface">{episode.title}</h4>
-                {episode.playTime ? <p className="mt-1 text-label-small tabular-nums text-on-surface-variant">{formatPlayTime(episode.playTime)}</p> : null}
-              </div>
-            </a>)}
-          </div>
-        </div>)}
-      </div>
-    </section>;
-  })}</div>;
+/** The chapter cards of the main or event story list. */
+function ChapterGrid({ chapters, locale, section }: { chapters: StoryChapterSummary[]; locale: AppLocale; section: StoryChapterSection }) {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 3xl:grid-cols-4">
+      {chapters.map((chapter) => <ChapterCard key={chapter.chapterId} chapter={chapter} locale={locale} section={section} />)}
+    </div>
+  );
 }
 
 function StoryCard({ story, locale, onOpen }: { story: StoryViewModel; locale: AppLocale; onOpen: () => void }) {

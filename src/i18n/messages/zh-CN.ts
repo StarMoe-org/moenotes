@@ -2207,6 +2207,7 @@ export const zhCN = {
       birthdayDate: "生日 {month}月{day}日",
       columnTitle: "标题",
       columnChapter: "章节",
+      episodeCount: "共 {count} 话",
       unlockTitle: "解锁条件",
       rewardsTitle: "通关奖励",
     },
@@ -3304,6 +3305,10 @@ export const zhCN = {
     storyDetail: {
       title: "剧情详情",
       description: "静静品读这段写满心意的时光篇章。伴随着动人原声与心弦的共鸣，在字里行间重温那些舞台与日常交织的珍贵感动。",
+    },
+    storyChapter: {
+      title: "剧情章节",
+      description: "翻开剧情中的这一章，按顺序读遍每一话。登场角色、开放时间与主线、Another、Extra 各段剧集都聚在这里，陪伴少女们的声音也一同等候。",
     },
     liveResultStory: {
       title: "演出结束会话",

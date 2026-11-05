@@ -20,6 +20,8 @@ import {
 } from "@/lib/masterdata/build-data";
 import { getBuildHelpTopics } from "@/lib/masterdata/build-help";
 import { getBuildShops } from "@/lib/masterdata/build-shop";
+import { groupStoryChapters } from "@/lib/story/chapters";
+import { isChapterSection } from "@/lib/story/sections";
 
 export interface StaticLocalizedPathProps {
   locale: AppLocale;
@@ -84,6 +86,15 @@ const detailLabelLoaders: Record<string, (locale: AppLocale) => Promise<Map<stri
   "item-detail": async (locale) => byId(await getBuildItems(locale), (item) => item.id, (item) => label(item.name)),
   "shop-detail": async (locale) => byId(await getBuildShops(locale), (shop) => shop.id, (shop) => label(shop.name)),
   "help-detail": async (locale) => byId(await getBuildHelpTopics(locale), (topic) => topic.id, (topic) => label(topic.title)),
+  "story-chapter": async (locale) => {
+    const storyRoute = plainRoute(findRouteById("story"));
+    // Only main and event stories have chapter pages; birthday chapters are listed as episodes.
+    const chapters = groupStoryChapters(await getBuildStories(locale)).filter((chapter) => isChapterSection(chapter.category));
+    return byId(chapters, (chapter) => chapter.chapterId, (chapter) => ({
+      label: chapter.name || `Chapter ${chapter.chapterId}`,
+      ancestors: [storyRoute, plainRoute(findRouteById(chapter.category === "main" ? "main-story" : "event-story"))].filter((r): r is AppRoute => r !== null),
+    }));
+  },
   "story-detail": async (locale) => {
     const storyRoute = plainRoute(findRouteById("story"));
     // An ADV in several lists takes its first one's title and category.

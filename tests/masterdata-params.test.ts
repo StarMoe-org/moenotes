@@ -5,8 +5,8 @@ import { normalizeCards, validateMasterTable } from "../src/lib/cards/data";
 
 test("all dynamic routes derive their params instead of using fixed inventories", () => {
   const routes = getAllRoutes().filter(isDynamicRoute);
-  // 9 existing detail routes + item-detail, shop-detail and help-detail (haneoka feature parity).
-  expect(routes).toHaveLength(12);
+  // 9 existing detail routes + item-detail, shop-detail, help-detail (haneoka feature parity) and story-chapter.
+  expect(routes).toHaveLength(13);
   for (const route of routes) expect(typeof route.staticParams).toBe("function");
 });
 

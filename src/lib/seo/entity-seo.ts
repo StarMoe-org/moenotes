@@ -13,6 +13,7 @@ import {
   getBuildGachaDetail,
   getBuildMusicDetail,
   getBuildRewardEntryDetail,
+  getBuildStories,
   getBuildStoryDetail,
   getBuildSupportCardDetail,
 } from "@/lib/masterdata/build-data";
@@ -22,6 +23,10 @@ import { getBuildShopDetail } from "@/lib/masterdata/build-shop";
 import { buildDynamicPath, findRouteById, getRoutePathById } from "@/lib/route/registry";
 import { absolutePageUrl, type PageMetadata } from "@/lib/seo/metadata";
 import { valueForServer, type ServerFacetedValue } from "@/lib/servers/facets";
+import { findStoryChapter } from "@/lib/story/chapters";
+import { storyEpisodeLabel } from "@/lib/story/labels";
+import { parseStoryChapterPath } from "@/lib/story/paths";
+import { storyCategoryKey } from "@/lib/story/sections";
 
 export const CARD_RARITY_LABELS: Record<CardRarity, string> = {
   2: "R",
@@ -413,6 +418,55 @@ export async function resolveEntitySeo(
             description: summary,
             url: canonicalUrl,
           },
+        },
+      };
+    }
+
+    case "story-chapter": {
+      const chapterId = Number(paramId);
+      if (!Number.isSafeInteger(chapterId) || chapterId <= 0) return null;
+      const parsed = parseStoryChapterPath(pathname);
+      if (!parsed) return null;
+      const chapter = findStoryChapter(await getBuildStories(locale), chapterId);
+      // One chapter has one section: an event chapter under /story/main/... is not a second page for it.
+      if (!chapter || chapter.category !== parsed.section) return null;
+
+      const heading = chapter.name || `Chapter ${chapterId}`;
+      const artwork = chapter.banner || chapter.image
+        ? getAssetUrl({ path: `Story/${chapter.banner ? "Banner" : "Image"}/Chapter/${chapter.banner || chapter.image}.png`, type: "raw", locale })
+        : "";
+      const summary = truncateText(
+        [heading, chapter.bandName, chapter.description, `${chapter.episodeCount} episodes`].filter(Boolean).join(" · "),
+      );
+      const categoryPath = localizePath(getRoutePathById(chapter.category === "main" ? "main-story" : "event-story"), locale);
+
+      return {
+        meta: { title: heading, description: summary || heading, ...(artwork ? { image: artwork } : {}) },
+        semantic: {
+          heading,
+          summary: summary || heading,
+          ...(artwork ? { image: artwork } : {}),
+          facts: [
+            { label: "Chapter ID", value: String(chapterId) },
+            { label: "Category", value: t(locale, storyCategoryKey(chapter.category)) },
+            ...(chapter.bandName ? [{ label: t(locale, "cards.band"), value: chapter.bandName }] : []),
+            ...(chapter.characterNames.length > 0 ? [{ label: "Characters", value: chapter.characterNames.join(", ") }] : []),
+            { label: "Episodes", value: String(chapter.episodeCount) },
+            ...(chapter.startAt ? [{ label: "Release", value: chapter.startAt }] : []),
+          ],
+          sections: [
+            {
+              title: "Episodes",
+              items: chapter.episodes.map((episode) => `${storyEpisodeLabel(locale, episode)} · ${episode.title}`),
+            },
+          ],
+          links: [
+            { label: t(locale, storyCategoryKey(chapter.category)), href: categoryPath },
+            ...chapter.episodes.map((episode) => ({
+              label: episode.title,
+              href: detailHref("story-detail", episode.advId, locale),
+            })),
+          ],
         },
       };
     }

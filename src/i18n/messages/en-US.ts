@@ -2162,6 +2162,7 @@ export const enUS = {
       birthdayDate: "Birthday {month}/{day}",
       columnTitle: "Title",
       columnChapter: "Chapter",
+      episodeCount: "{count} episodes",
       unlockTitle: "Unlock conditions",
       rewardsTitle: "Clear rewards",
     },
@@ -3259,6 +3260,10 @@ export const enUS = {
     storyDetail: {
       title: "Story Detail",
       description: "Quietly savor this story scroll written with sincere devotion. Guided by expressive character voices and resonant chords, relive touching memories woven between the stage and daily life.",
+    },
+    storyChapter: {
+      title: "Story Chapter",
+      description: "Step through one chapter of the story, episode by episode. Its cast, release window and every main, another and extra episode wait here, with the voices that bring each scene to life.",
     },
     liveResultStory: {
       title: "Post-Live Talks",
