@@ -23,9 +23,23 @@ describe("settings", () => {
   });
 });
 
-describe("material 3 schemes from band colors", () => {
-  // MasterBand.mainColorCode of the five bands (TW, 2026-10), the default seed, plus a very light and a very dark color.
-  const seeds = [MD3_DEFAULT_SEED, "#3388BB", "#881144", "#FF7788", "#AA22EE", "#FFAA33", "#FFFF00", "#101010"];
+describe("material 3 schemes from band and character colors", () => {
+  // MasterBand.mainColorCode of the five bands and MasterCharacter.mainColorCode of all 25 playable characters
+  // (TW/JP/EN/KR 2026-11), the default seed, plus a very light and a very dark color.
+  const bandSeeds = ["#3388BB", "#881144", "#FF7788", "#AA22EE", "#FFAA33"];
+  const characterSeeds = [
+    // MyGO!!!!!
+    "#77BBDD", "#FF8899", "#77DD77", "#FFDD88", "#7777AA",
+    // Ave Mujica
+    "#BB9955", "#779977", "#335566", "#AA4477", "#7799CC",
+    // Mugendai Mewtype
+    "#FFEE55", "#FFBBCC", "#4477CC", "#9977CC", "#EE5577",
+    // millsage
+    "#99FF99", "#FF4444", "#5555FF", "#77FFFF", "#EE99EE",
+    // Ikka Dumb Rock!
+    "#FF7700", "#22CCFF", "#448888", "#FF55AA", "#9999FF",
+  ];
+  const seeds = [MD3_DEFAULT_SEED, ...bandSeeds, ...characterSeeds, "#FFFF00", "#101010"];
   // Content / container pairs that carry text: M3 guarantees 4.5:1 for each at standard contrast.
   const textPairs = [
     ["onPrimary", "primary"],
