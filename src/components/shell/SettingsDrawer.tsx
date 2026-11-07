@@ -46,7 +46,6 @@ import { useOverlayLayer } from "@/lib/overlay/use-overlay-layer";
 import { useAssetUrl } from "@/lib/servers/use-content-server";
 import { DENSITIES, GAME_SERVER_SETTINGS } from "@/lib/settings/schema";
 import { useSettings } from "@/lib/settings/use-settings";
-import { useSpoiler } from "@/lib/settings/spoiler";
 import type { AppSettings } from "@/types/settings";
 
 interface SettingsDrawerProps {
@@ -270,17 +269,6 @@ export function ContentSettings({ locale }: { locale: AppLocale }) {
 
       <Section title={t(locale, "settings.songTitles.title")}>
         <JapaneseTitlesToggle locale={locale} />
-      </Section>
-
-      <Section
-        title={t(locale, "settings.spoiler.title")}
-        aside={
-          <span className="inline-flex shrink-0 items-center rounded-shape-full bg-tertiary-container px-2 py-0.5 text-label-small font-medium text-on-tertiary-container">
-            {t(locale, "settings.spoiler.devOptionBadge")}
-          </span>
-        }
-      >
-        <SpoilerToggle locale={locale} />
       </Section>
     </div>
   );
@@ -572,29 +560,6 @@ function JapaneseTitlesToggle({ locale }: { locale: AppLocale }) {
         />
       }
     />
-  );
-}
-
-/**
- * Developer option controlling whether unreleased / upcoming game data is shown across the site.
- */
-function SpoilerToggle({ locale }: { locale: AppLocale }) {
-  const { showSpoiler, setShowSpoiler } = useSpoiler();
-
-  return (
-    <div className="space-y-3">
-      <SettingRow
-        label={t(locale, "settings.spoiler.showLabel")}
-        description={t(locale, "settings.spoiler.description")}
-        control={
-          <Switch checked={showSpoiler} className="-my-3 -mr-3 shrink-0" onChange={(event) => setShowSpoiler(event.target.checked)} />
-        }
-      />
-      <div className="inline-flex items-center gap-1.5 rounded-shape-sm bg-surface-container-high px-2 py-1 text-label-small text-on-surface-variant">
-        <Icon name="info" className="h-3.5 w-3.5 shrink-0 text-primary" />
-        <span>{t(locale, "settings.spoiler.devOnly")}</span>
-      </div>
-    </div>
   );
 }
 
