@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import Alert from "@mui/material/Alert";
 import Autocomplete from "@mui/material/Autocomplete";
 import Badge from "@mui/material/Badge";
@@ -35,13 +35,13 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import AccentColorPicker, { buildAccentCatalogue, findSelectedAccentChoice } from "@/components/shared/AccentColorPicker";
 import BrandLogo from "@/components/shared/BrandLogo";
 import { withMd3 } from "@/components/md3/Md3Provider";
 import type { AppLocale } from "@/config/locales";
-import { DEFAULT_ACCENT } from "@/config/settings";
 import { t } from "@/i18n";
-import { MD3_DEFAULT_SEED } from "@/lib/md3/scheme";
 import type { ThemeBandColor } from "@/lib/masterdata/build-settings";
+import { useAssetUrl } from "@/lib/servers/use-content-server";
 import { useSettings } from "@/lib/settings/use-settings";
 import FoundationSection from "./FoundationSection";
 
@@ -114,28 +114,33 @@ function ColorGroup({ locale, group }: { locale: AppLocale; group: string }) {
 
 function ThemeControls({ locale, bands }: Props) {
   const { settings, updateSettings } = useSettings();
-  const seeds = [{ key: DEFAULT_ACCENT, label: t(locale, k("seedDefault")), color: MD3_DEFAULT_SEED }, ...bands.map((band) => ({ key: band.color, label: band.name, color: band.color }))];
+  const assetUrl = useAssetUrl();
+  const defaultLabel = t(locale, k("seedDefault"));
+  const catalogue = useMemo(
+    () => buildAccentCatalogue({ defaultLabel, bands, resolveAssetUrl: assetUrl }),
+    [defaultLabel, bands, assetUrl],
+  );
+  const activeChoice = findSelectedAccentChoice(catalogue, settings.accentColor);
   const resolvedTheme = settings.colorScheme === "dark" ? "dark" : settings.colorScheme === "light" ? "light" : null;
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
       <div className="min-w-0 space-y-2">
-        <div className="text-label-large text-on-surface">{t(locale, k("seed"))}</div>
-        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t(locale, k("seed"))}>
-          {seeds.map((seed) => {
-            const selected = settings.accentColor === seed.key;
-            return (
-              <Chip
-                key={seed.key}
-                variant="filter"
-                role="radio"
-                aria-checked={selected}
-                onClick={() => updateSettings({ accentColor: seed.key })}
-                icon={<span className="block h-[18px] w-[18px] rounded-full border border-outline-variant" style={{ background: seed.color }} />}
-                label={seed.label}
-              />
-            );
-          })}
+        <div className="flex min-w-0 items-center justify-between gap-3">
+          <div className="text-label-large text-on-surface">{t(locale, k("seed"))}</div>
+          {activeChoice && (
+            <span aria-hidden="true" className="flex min-w-0 items-center gap-1.5 text-body-small text-on-surface-variant">
+              <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-outline-variant/60" style={{ background: activeChoice.color }} />
+              <span className="truncate">{activeChoice.displayLabel}</span>
+            </span>
+          )}
         </div>
+        <AccentColorPicker
+          label={t(locale, k("seed"))}
+          catalogue={catalogue}
+          value={settings.accentColor}
+          ringOffsetClass="ring-offset-surface-card"
+          onChange={(accentColor) => updateSettings({ accentColor })}
+        />
         <p className="text-body-small text-on-surface-variant">{t(locale, k("seedHint"))}</p>
       </div>
       <div className="min-w-0 space-y-2">

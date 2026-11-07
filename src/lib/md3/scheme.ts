@@ -1,6 +1,7 @@
 /**
- * Material 3 schemes from one seed color (the default brand blue, or a band's MasterBand.mainColorCode chosen in the
- * settings), on the recipe MoeSekai uses: a neutral stage and the seed's own color for accents.
+ * Material 3 schemes from one seed color (the default brand blue, a band's MasterBand.mainColorCode, or a character's
+ * MasterCharacter.mainColorCode chosen in the settings), on the recipe MoeSekai uses: a neutral stage and the seed's
+ * own color for accents.
  *
  * - Page, cards and outlines are a set of cool neutral greys that do not depend on the seed (NEUTRAL_SURFACES):
  *   surfaces derived from the seed lay a cast over the whole page, and pale seeds turn it grey and dull.

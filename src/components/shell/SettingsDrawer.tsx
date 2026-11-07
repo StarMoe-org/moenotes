@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useState, type KeyboardEvent, type ReactNode, type SyntheticEvent } from "react";
+import { useCallback, useEffect, useId, useMemo, useState, type ReactNode, type SyntheticEvent } from "react";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
@@ -11,13 +11,13 @@ import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import useMediaQuery from "@mui/material/useMediaQuery";
+import AccentColorPicker, { buildAccentCatalogue, findSelectedAccentChoice } from "@/components/shared/AccentColorPicker";
 import { Icon, type IconName } from "@/components/shared/icons";
-import PrimaryTabs, { rovingStep } from "@/components/shared/PrimaryTabs";
+import PrimaryTabs from "@/components/shared/PrimaryTabs";
 import { withMd3 } from "@/components/md3/Md3Provider";
 import type { AppLocale } from "@/config/locales";
 import { LOCALE_LABELS, SUPPORTED_LOCALES, flagIconSrc } from "@/config/locales";
 import { GAME_SERVER_PROFILES, GAME_SERVERS, flagIconSrc as serverFlagIconSrc } from "@/config/servers";
-import { DEFAULT_ACCENT } from "@/config/settings";
 import { switchLocalePath } from "@/i18n/routing";
 import { t } from "@/i18n";
 import {
@@ -29,7 +29,6 @@ import {
   type CacheCategory,
   type CacheOverview,
 } from "@/lib/cache/usage";
-import { getBandSmallIconWhiteUrl } from "@/lib/cards/assets";
 import { formatBytes } from "@/lib/format/bytes";
 import { defaultGameServer } from "@/lib/game-api/server";
 import type { ThemeBandColor } from "@/lib/masterdata/build-settings";
@@ -41,7 +40,6 @@ import {
   getLocalServerMasterDataVersion,
   type LiveMasterDataVersionPayload,
 } from "@/lib/masterdata/client-version";
-import { MD3_DEFAULT_SEED } from "@/lib/md3/scheme";
 import { getForceJapaneseTitles, setForceJapaneseTitles, SONG_TITLE_PREFERENCE_EVENT } from "@/lib/music/title-preference";
 import { useOverlay } from "@/lib/overlay/use-overlay";
 import { useOverlayLayer } from "@/lib/overlay/use-overlay-layer";
@@ -54,7 +52,7 @@ import type { AppSettings } from "@/types/settings";
 interface SettingsDrawerProps {
   locale: AppLocale;
   pathname: string;
-  /** Band colors the theme color choice offers (build time, src/lib/masterdata/build-settings.ts). */
+  /** Band and character colors the theme color choice offers (build time, src/lib/masterdata/build-settings.ts). */
   bands?: ThemeBandColor[];
 }
 
@@ -157,15 +155,16 @@ function SettingsDrawer({ locale, pathname, bands = [] }: SettingsDrawerProps) {
 const flag = (src: string) => <img src={src} alt="" aria-hidden="true" loading="lazy" decoding="async" className="h-5 w-5 shrink-0 rounded-full" />;
 
 /** How the site looks: color scheme, theme color, density, and the interface language. */
-function AppearanceSettings({ locale, pathname, bands = [] }: SettingsDrawerProps) {
+export function AppearanceSettings({ locale, pathname, bands = [] }: SettingsDrawerProps) {
   const { settings, updateSettings } = useSettings();
   const update = (patch: Partial<AppSettings>) => updateSettings(patch);
   const assetUrl = useAssetUrl();
-  const accents: AccentOption[] = [
-    { key: DEFAULT_ACCENT, label: t(locale, "settings.accent.default"), color: MD3_DEFAULT_SEED },
-    ...bands.map((band) => ({ key: band.color, label: band.name, color: band.color, icon: assetUrl(getBandSmallIconWhiteUrl(band.bandId)) })),
-  ];
-  const accent = accents.find((option) => option.key.toUpperCase() === settings.accentColor.toUpperCase());
+  const defaultLabel = t(locale, "settings.accent.default");
+  const catalogue = useMemo(
+    () => buildAccentCatalogue({ defaultLabel, bands, resolveAssetUrl: assetUrl }),
+    [defaultLabel, bands, assetUrl],
+  );
+  const accent = findSelectedAccentChoice(catalogue, settings.accentColor);
 
   return (
     <div className="space-y-6">
@@ -183,13 +182,18 @@ function AppearanceSettings({ locale, pathname, bands = [] }: SettingsDrawerProp
       <Section
         title={t(locale, "settings.accent.title")}
         aside={accent && (
-          <span aria-hidden="true" className="flex min-w-0 items-center gap-2 text-body-medium text-on-surface-variant">
-            <span className="h-4 w-4 shrink-0 rounded-full" style={{ background: accent.color }} />
-            <span className="truncate">{accent.label}</span>
+          <span aria-hidden="true" className="flex min-w-0 max-w-[70%] items-center gap-2 text-body-medium text-on-surface-variant">
+            <span className="h-4 w-4 shrink-0 rounded-full border border-outline-variant/60" style={{ background: accent.color }} />
+            <span className="truncate">{accent.displayLabel}</span>
           </span>
         )}
       >
-        <AccentPicker label={t(locale, "settings.accent.title")} options={accents} value={accent?.key} onChange={(accentColor) => update({ accentColor })} />
+        <AccentColorPicker
+          label={t(locale, "settings.accent.title")}
+          catalogue={catalogue}
+          value={settings.accentColor}
+          onChange={(accentColor) => update({ accentColor })}
+        />
       </Section>
 
       <Section title={t(locale, "settings.density.title")}>
@@ -538,68 +542,6 @@ function CacheBreakdown({ locale, overview, active, onActive }: {
       })}
     </div>
   );
-}
-
-interface AccentOption {
-  key: string;
-  label: string;
-  color: string;
-  /** The band's emblem in white, drawn on its color as MoeSekai draws a character's face on theirs. */
-  icon?: string;
-}
-
-/**
- * Theme color: the site's default blue or a band's color, as MoeSekai's swatches: round, the chosen one a rounded
- * square ringed in the primary color. The section heading names the chosen one.
- */
-function AccentPicker({ label, options, value, onChange }: {
-  label: string;
-  options: AccentOption[];
-  value: string | undefined;
-  onChange: (value: string) => void;
-}) {
-  const selectedIndex = options.findIndex((option) => option.key === value);
-  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    const next = rovingStep(event.key, selectedIndex, options.length);
-    if (next === null) return;
-    event.preventDefault();
-    onChange(options[next]!.key);
-    event.currentTarget.querySelectorAll<HTMLElement>('[role="radio"]')[next]?.focus();
-  };
-  return (
-    // 10px apart: seven swatches still fit one row of a phone's sheet, the ring and its offset clear of the neighbors.
-    <div role="radiogroup" aria-label={label} onKeyDown={onKeyDown} className="flex flex-wrap gap-2.5 py-1 sm:gap-3">
-      {options.map((option, index) => {
-        const selected = index === selectedIndex;
-        return (
-          <button
-            key={option.key}
-            type="button"
-            role="radio"
-            aria-checked={selected}
-            aria-label={option.label}
-            title={option.label}
-            tabIndex={selected || (selectedIndex < 0 && index === 0) ? 0 : -1}
-            onClick={() => onChange(option.key)}
-            // 50%, not a full radius: a radius far past what shows cannot be interpolated into the selected corners.
-            className={`grid h-10 w-10 shrink-0 cursor-pointer place-items-center transition-[border-radius] duration-300 ease-standard sm:h-11 sm:w-11 ${
-              selected ? "rounded-shape-lg ring-[3px] ring-primary ring-offset-2 ring-offset-surface-container-low" : "rounded-[50%] hover:rounded-shape-lg"
-            }`}
-            style={{ backgroundColor: option.color }}
-          >
-            {option.icon && <SwatchIcon src={option.icon} />}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-/** A band emblem on its swatch; a band without one keeps the plain color. */
-function SwatchIcon({ src }: { src: string }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) return null;
-  return <img src={src} alt="" aria-hidden="true" loading="lazy" decoding="async" onError={() => setFailed(true)} className="h-[70%] w-[70%] object-contain" />;
 }
 
 /** Always show songs under their Japanese titles (shared with the music pages' preference). */

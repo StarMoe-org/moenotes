@@ -7,6 +7,7 @@ export interface RawCharacter {
   id: number;
   bandID: number;
   displayOrder: number;
+  isNonPlayable?: boolean | undefined;
   nameTextID: string;
   enDisplayNameTextId: string;
   shortNameTextID: string;
@@ -32,6 +33,7 @@ export interface CharacterViewModel {
   id: number;
   bandId: number;
   displayOrder: number;
+  isNonPlayable?: boolean | undefined;
   name: string;
   enName: string;
   shortName: string;
@@ -90,6 +92,7 @@ export function normalizeCharacters(
       id: char.id,
       bandId: char.bandID,
       displayOrder: char.displayOrder,
+      isNonPlayable: Boolean(char.isNonPlayable),
       name,
       enName,
       shortName,
