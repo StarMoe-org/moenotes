@@ -78,6 +78,14 @@ export const assetConfig = {
   /** Shared song-page modules; published at the storage site's root, beside the music-data directory. */
   musicPlayerSite: (process.env.PUBLIC_MUSIC_PLAYER_SITE || process.env.PUBLIC_STORY_SITE || "https://storage.bdon.moe/moenotes").replace(/\/+$/, ""),
   /**
+   * Offline solution repository and index for the song sliding puzzle minigame.
+   * Defaults to this site's own `/slidepuzzle` (or GitHub raw upstream fallback).
+   */
+  slidePuzzle: {
+    site: (process.env.PUBLIC_SLIDE_PUZZLE_SITE || "/slidepuzzle").replace(/\/+$/, ""),
+    fallbackSite: "https://raw.githubusercontent.com/luoxiadesu/moenotes_slidepuzzle/master/dist",
+  },
+  /**
    * The JP story site, built separately (JP Live2D model ids overlap the international ones): `jp/` of the same bucket.
    * The story player lists both; an episode both have plays from `storySite`. Set `PUBLIC_STORY_SITE_JP` to the
    * `storySite` root to list one site only.

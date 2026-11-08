@@ -62,6 +62,7 @@ import {
   NewsDetailServerPage,
   NewsServerPage,
   SearchServerPage,
+  SongPuzzleServerPage,
   StoryPlayerServerPage,
 } from "@/server-pages/ToolServerPages";
 import type { findRouteMatch } from "@/lib/route/registry";
@@ -355,6 +356,13 @@ export default async function RouteDispatcher({
         <>
           <BreadcrumbSync locale={locale} pathname={pathname} />
           <StoryPlayerServerPage locale={locale} />
+        </>
+      );
+    case "song-puzzle":
+      return (
+        <>
+          <BreadcrumbSync locale={locale} pathname={pathname} />
+          <SongPuzzleServerPage locale={locale} />
         </>
       );
     case "guess-music":
