@@ -2725,6 +2725,7 @@ export const enUS = {
     changeSong: "Change Song",
     emptySelection: "Select a song to view sliding puzzle solution",
     loading: "Loading solution...",
+    retry: "Retry",
     gridSize: "Grid Size",
     optimalSteps: "Optimal Steps",
     stepsUnit: "steps",

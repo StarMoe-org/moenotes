@@ -9,33 +9,52 @@ import type {
 let indexCache: Promise<SlidePuzzleIndexItem[]> | null = null;
 const solutionCache = new Map<string, Promise<SlidePuzzleSolution | null>>();
 
-async function fetchJsonLines(url: string, fallbackUrl?: string): Promise<string> {
-  try {
-    const res = await fetch(url);
-    if (res.ok) {
-      return await res.text();
-    }
-  } catch {
-    // try fallback
+function getCandidateUrls(path: string): string[] {
+  const candidates: string[] = [];
+  const cleanPath = path.replace(/^\/+/, "");
+
+  // In development, prefer local static files first to avoid unnecessary remote fetches
+  if (typeof window !== "undefined" && process.env.NODE_ENV === "development" && assetConfig.slidePuzzle.localSite) {
+    candidates.push(`${assetConfig.slidePuzzle.localSite}/${cleanPath}`);
   }
 
-  if (fallbackUrl && fallbackUrl !== url) {
-    const fallbackRes = await fetch(fallbackUrl);
-    if (fallbackRes.ok) {
-      return await fallbackRes.text();
+  // Primary production source: R2 storage
+  if (assetConfig.slidePuzzle.site) {
+    candidates.push(`${assetConfig.slidePuzzle.site}/${cleanPath}`);
+  }
+
+  // Upstream GitHub fallback
+  if (assetConfig.slidePuzzle.fallbackSite) {
+    candidates.push(`${assetConfig.slidePuzzle.fallbackSite}/${cleanPath}`);
+  }
+
+  return [...new Set(candidates)];
+}
+
+async function fetchFromCandidates(path: string): Promise<string> {
+  const urls = getCandidateUrls(path);
+  let lastError: unknown = null;
+
+  for (const url of urls) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) {
+        return await res.text();
+      }
+    } catch (err) {
+      lastError = err;
     }
   }
 
-  throw new Error(`Failed to fetch JSONL from ${url} or fallback ${fallbackUrl ?? "none"}`);
+  throw new Error(`Failed to load ${path} from all sources: ${urls.join(", ")}`, {
+    cause: lastError,
+  });
 }
 
 export function fetchPuzzleIndex(): Promise<SlidePuzzleIndexItem[]> {
   if (indexCache) return indexCache;
 
-  const url = `${assetConfig.slidePuzzle.site}/index.jsonl`;
-  const fallbackUrl = `${assetConfig.slidePuzzle.fallbackSite}/index.jsonl`;
-
-  indexCache = fetchJsonLines(url, fallbackUrl)
+  indexCache = fetchFromCandidates("index.jsonl")
     .then((text) => {
       const lines = text.trim().split("\n");
       const items: SlidePuzzleIndexItem[] = [];
@@ -67,10 +86,7 @@ export function fetchPuzzleSolution(musicId: number, grid: number): Promise<Slid
   if (existing) return existing;
 
   const fileName = `${musicId}_${grid}.jsonl`;
-  const url = `${assetConfig.slidePuzzle.site}/${fileName}`;
-  const fallbackUrl = `${assetConfig.slidePuzzle.fallbackSite}/${fileName}`;
-
-  const promise = fetchJsonLines(url, fallbackUrl)
+  const promise = fetchFromCandidates(fileName)
     .then((text) => {
       const lines = text.trim().split("\n");
       if (lines.length === 0) return null;
@@ -94,7 +110,7 @@ export function fetchPuzzleSolution(musicId: number, grid: number): Promise<Slid
     })
     .catch((err) => {
       solutionCache.delete(cacheKey);
-      return null;
+      throw err;
     });
 
   solutionCache.set(cacheKey, promise);

@@ -79,10 +79,11 @@ export const assetConfig = {
   musicPlayerSite: (process.env.PUBLIC_MUSIC_PLAYER_SITE || process.env.PUBLIC_STORY_SITE || "https://storage.bdon.moe/moenotes").replace(/\/+$/, ""),
   /**
    * Offline solution repository and index for the song sliding puzzle minigame.
-   * Defaults to this site's own `/slidepuzzle` (or GitHub raw upstream fallback).
+   * Hosted on R2 storage (matching musicDataSite / storySite) with local and upstream GitHub fallbacks.
    */
   slidePuzzle: {
-    site: (process.env.PUBLIC_SLIDE_PUZZLE_SITE || "/slidepuzzle").replace(/\/+$/, ""),
+    site: (process.env.PUBLIC_SLIDE_PUZZLE_SITE || "https://storage.bdon.moe/moenotes/slidepuzzle").replace(/\/+$/, ""),
+    localSite: "/slidepuzzle",
     fallbackSite: "https://raw.githubusercontent.com/luoxiadesu/moenotes_slidepuzzle/master/dist",
   },
   /**

@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import {
   findBlankPosition,
   getTileBackgroundPosition,
-  getTileImageCoords,
+  getTileDisplayNumber,
   getTilePositionsMap,
 } from "@/lib/song-puzzle/math";
 import type { SlidePuzzleStep } from "@/lib/song-puzzle/types";
@@ -37,11 +37,10 @@ export default function PuzzleStage({
   const positionsMap = useMemo(() => getTilePositionsMap(board), [board]);
   const blankPos = useMemo(() => findBlankPosition(board), [board]);
 
-  // Total tiles minus the empty slot: values 0 to grid*grid - 1 except -1
+  // Total tiles minus the empty slot: values present in goal
   const allTileValues = useMemo(() => {
     const list: number[] = [];
     const total = grid * grid;
-    // Collect all unique non-negative tile values present in goal
     for (let r = 0; r < goal.length; r += 1) {
       for (let c = 0; c < (goal[r]?.length ?? 0); c += 1) {
         const v = goal[r]?.[c];
@@ -63,6 +62,7 @@ export default function PuzzleStage({
     return goalBlankPos;
   }, [goalBlankPos, grid]);
 
+  // In goal state, blank's missing tile index would correspond to its row/col
   const missingTileBgPos = useMemo(() => {
     if (grid <= 1) return "0% 0%";
     const xPercent = (missingTileCoords.col / (grid - 1)) * 100;
@@ -77,9 +77,16 @@ export default function PuzzleStage({
 
   return (
     <div className="relative mx-auto w-full max-w-[500px] select-none">
+      <style>{`
+        @keyframes puzzle-shimmer {
+          0% { transform: translateX(-150%) skewX(-20deg); }
+          100% { transform: translateX(250%) skewX(-20deg); }
+        }
+      `}</style>
+
       {/* Outer frame */}
       <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-outline-variant bg-surface-container-highest shadow-md md:rounded-3xl">
-        {/* Slot grid background */}
+        {/* Slot grid background with subtle target numbers */}
         <div
           className="absolute inset-0 grid"
           style={{
@@ -91,15 +98,24 @@ export default function PuzzleStage({
             const r = Math.floor(i / grid);
             const c = i % grid;
             const isBlank = blankPos && blankPos.row === r && blankPos.col === c;
+            const slotTargetNum = r * grid + c + 1;
+            const isGoalBlank = goalBlankPos && goalBlankPos.row === r && goalBlankPos.col === c;
+
             return (
               <div
                 key={`slot-${r}-${c}`}
-                className={`border border-outline-variant/30 transition-colors duration-200 ${
+                className={`relative flex items-center justify-center border border-outline-variant/30 transition-colors duration-200 ${
                   isBlank
                     ? "bg-surface-container-lowest/80 shadow-inner"
                     : "bg-surface-container/40"
                 }`}
-              />
+              >
+                {!isGoalBlank && (
+                  <span className="font-mono text-label-small font-bold text-on-surface-variant/20 select-none">
+                    {slotTargetNum}
+                  </span>
+                )}
+              </div>
             );
           })}
         </div>
@@ -117,13 +133,13 @@ export default function PuzzleStage({
             const goalRow = goal[currentPos.row];
             const isHome = goalRow ? goalRow[currentPos.col] === val : false;
 
-            // Visual number to display: 1-indexed for readability
-            const displayNumber = val + 1;
+            // Intuitive 1-indexed screen reading order number
+            const displayNumber = getTileDisplayNumber(val, grid);
 
             return (
               <div
                 key={`tile-${val}`}
-                className={`absolute p-0.5 transition-all will-change-transform ${
+                className={`absolute p-0.5 transition-all motion-reduce:transition-none will-change-transform ${
                   isMovingTile ? "z-20 scale-[1.02]" : "z-10"
                 }`}
                 style={{
@@ -136,25 +152,25 @@ export default function PuzzleStage({
                 }}
               >
                 <div
-                  className={`relative h-full w-full overflow-hidden rounded-md md:rounded-lg border shadow-sm transition-all duration-300 ${
+                  className={`relative h-full w-full overflow-hidden rounded-md md:rounded-lg border shadow-xs transition-all duration-300 ${
                     isHome
-                      ? "border-emerald-500/40 shadow-emerald-500/10"
+                      ? "border-primary/60 shadow-primary/20"
                       : "border-outline-variant/40"
-                  } ${isMovingTile ? "shadow-lg ring-2 ring-primary/60" : ""}`}
+                  } ${isMovingTile ? "shadow-lg ring-2 ring-primary" : ""}`}
                   style={{
                     backgroundColor: "var(--md-sys-color-surface-container)",
-                    backgroundImage: overlayMode !== "numbersOnly" ? `url(${jacketUrl})` : "none",
+                    backgroundImage: overlayMode !== "numbersOnly" ? `url("${jacketUrl}")` : "none",
                     backgroundSize: `${grid * 100}% ${grid * 100}%`,
                     backgroundPosition: bg.css,
                     backgroundRepeat: "no-repeat",
                   }}
                 >
-                  {/* Numbers layer */}
+                  {/* Numbers badge overlay */}
                   {overlayMode !== "picture" && (
                     <div
                       className={`absolute bottom-1 right-1 flex items-center justify-center rounded px-1.5 py-0.5 text-label-small font-bold transition-colors ${
                         isHome
-                          ? "bg-emerald-600/90 text-white shadow"
+                          ? "bg-primary text-on-primary shadow-xs"
                           : "bg-surface-container-lowest/80 text-on-surface backdrop-blur-xs"
                       }`}
                     >
@@ -164,7 +180,11 @@ export default function PuzzleStage({
 
                   {/* Pure number mode central label */}
                   {overlayMode === "numbersOnly" && (
-                    <div className="flex h-full w-full items-center justify-center text-title-medium font-bold text-on-surface">
+                    <div
+                      className={`flex h-full w-full items-center justify-center text-title-medium font-bold transition-colors ${
+                        isHome ? "text-primary" : "text-on-surface"
+                      }`}
+                    >
                       {displayNumber}
                     </div>
                   )}
@@ -176,7 +196,7 @@ export default function PuzzleStage({
           {/* Missing tile in solved state (Reveals upon puzzle completion) */}
           {isSolved && (
             <div
-              className="absolute p-0.5 transition-all duration-500 animate-in fade-in zoom-in-95"
+              className="absolute p-0.5 transition-opacity duration-500 ease-out"
               style={{
                 width: `${tileSizePercent}%`,
                 height: `${tileSizePercent}%`,
@@ -186,10 +206,10 @@ export default function PuzzleStage({
               }}
             >
               <div
-                className="relative h-full w-full overflow-hidden rounded-md md:rounded-lg border border-emerald-400 shadow-md"
+                className="relative h-full w-full overflow-hidden rounded-md md:rounded-lg border border-primary shadow-md"
                 style={{
                   backgroundColor: "var(--md-sys-color-surface-container)",
-                  backgroundImage: `url(${jacketUrl})`,
+                  backgroundImage: `url("${jacketUrl}")`,
                   backgroundSize: `${grid * 100}% ${grid * 100}%`,
                   backgroundPosition: missingTileBgPos,
                   backgroundRepeat: "no-repeat",
@@ -202,7 +222,12 @@ export default function PuzzleStage({
         {/* Victory completion light sweep effect */}
         {isSolved && (
           <div className="pointer-events-none absolute inset-0 z-30 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/25 to-transparent -translate-x-full animate-[shimmer_1.2s_ease-out_forwards]" />
+            <div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/35 to-transparent w-full h-full"
+              style={{
+                animation: "puzzle-shimmer 1.2s ease-out forwards",
+              }}
+            />
           </div>
         )}
       </div>

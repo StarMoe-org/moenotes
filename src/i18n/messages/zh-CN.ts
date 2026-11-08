@@ -2770,6 +2770,7 @@ export const zhCN = {
     changeSong: "换一首歌",
     emptySelection: "请选择一首歌曲以查看华容道解法",
     loading: "正在加载解法...",
+    retry: "重试",
     gridSize: "棋盘规格",
     optimalSteps: "最佳步数",
     stepsUnit: "步",

@@ -2714,6 +2714,7 @@ export const koKR = {
     changeSong: "곡 변경",
     emptySelection: "곡을 선택하여 슬라이드 퍼즐 해법을 확인하세요",
     loading: "해법 데이터를 불러오는 중...",
+    retry: "다시 시도",
     gridSize: "퍼즐 규격",
     optimalSteps: "최적 이동 수",
     stepsUnit: "수",

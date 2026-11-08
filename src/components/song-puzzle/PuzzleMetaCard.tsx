@@ -25,25 +25,25 @@ export default function PuzzleMetaCard({
   const solver = meta?.solver ?? indexItem?.solver ?? "";
   const steps = meta?.solutionLength ?? indexItem?.solutionLength ?? 0;
 
-  let qualityClass = "bg-surface-container text-on-surface-variant border-outline-variant";
+  let qualityClass = "bg-surface-container-high text-on-surface-variant border-outline-variant";
   let qualityKey = "songPuzzle.qualityHeuristic";
 
   if (quality === "optimal") {
-    qualityClass = "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800";
+    qualityClass = "bg-primary-container text-on-primary-container border-primary/30";
     qualityKey = "songPuzzle.qualityOptimal";
   } else if (quality === "near-optimal") {
-    qualityClass = "bg-cyan-100 text-cyan-800 border-cyan-300 dark:bg-cyan-950/60 dark:text-cyan-300 dark:border-cyan-800";
+    qualityClass = "bg-tertiary-container text-on-tertiary-container border-tertiary/30";
     qualityKey = "songPuzzle.qualityNearOptimal";
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-outline-variant/60 bg-surface-container-low p-4 shadow-sm md:p-5">
+    <div className="md3-surface flex flex-col gap-3 rounded-2xl border border-outline-variant/60 p-4 shadow-sm md:p-5">
       {/* Grid size selection row */}
       <div className="flex flex-col gap-2">
         <span className="text-label-medium font-medium text-on-surface-variant">
           {t(locale, "songPuzzle.gridSize")}:
         </span>
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5" role="group">
           {SLIDE_PUZZLE_GRIDS.map((g) => {
             const isAvailable = availableGrids.includes(g);
             const isSelected = g === currentGrid;
@@ -52,6 +52,7 @@ export default function PuzzleMetaCard({
                 key={`grid-${g}`}
                 type="button"
                 disabled={!isAvailable}
+                aria-pressed={isSelected}
                 onClick={() => onGridChange(g)}
                 className={`rounded-xl px-3 py-1.5 text-label-large font-bold transition-all ${
                   isSelected

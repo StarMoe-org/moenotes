@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Button from "@mui/material/Button";
 import type { AppLocale } from "@/config/locales";
 import { PRIMARY_SERVER } from "@/config/servers";
@@ -10,6 +10,7 @@ import { moveReleaseUrls } from "@/lib/assets/release";
 import { replaceUrl } from "@/lib/browser/history";
 import { getBandSmallIconUrl } from "@/lib/cards/assets";
 import type { MusicViewModel } from "@/lib/music/data";
+import { useSongTitle } from "@/lib/music/title-preference";
 import { getRoutePathById } from "@/lib/route/registry";
 import { entityServer, type ServerFaceted } from "@/lib/servers/facets";
 import { isSpoiler, useSpoilerSetting } from "@/lib/settings/spoiler";
@@ -43,10 +44,13 @@ export default function SongPuzzleTool({ locale, songs: allSongs }: Props) {
 
   const [puzzleIndex, setPuzzleIndex] = useState<SlidePuzzleIndexItem[]>([]);
   const [indexLoaded, setIndexLoaded] = useState(false);
+  const [indexError, setIndexError] = useState<string | null>(null);
+
   const [selectedMusicId, setSelectedMusicId] = useState<number | null>(null);
   const [selectedGrid, setSelectedGrid] = useState<number>(3);
   const [solution, setSolution] = useState<SlidePuzzleSolution | null>(null);
   const [loadingSolution, setLoadingSolution] = useState<boolean>(false);
+  const [solutionError, setSolutionError] = useState<string | null>(null);
 
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -60,23 +64,23 @@ export default function SongPuzzleTool({ locale, songs: allSongs }: Props) {
   const { showSpoiler, now } = useSpoilerSetting();
   const playTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load index.jsonl on mount
-  useEffect(() => {
-    let active = true;
+  const loadIndex = useCallback(() => {
+    setIndexError(null);
     fetchPuzzleIndex()
       .then((items) => {
-        if (!active) return;
         setPuzzleIndex(items);
         setIndexLoaded(true);
       })
-      .catch(() => {
-        if (!active) return;
+      .catch((err) => {
+        setIndexError(err instanceof Error ? err.message : String(err));
         setIndexLoaded(true);
       });
-    return () => {
-      active = false;
-    };
   }, []);
+
+  // Load index.jsonl on mount
+  useEffect(() => {
+    loadIndex();
+  }, [loadIndex]);
 
   // Available music IDs from puzzle index
   const availableMusicIds = useMemo(() => new Set(puzzleIndex.map((item) => item.musicId)), [puzzleIndex]);
@@ -101,7 +105,9 @@ export default function SongPuzzleTool({ locale, songs: allSongs }: Props) {
       if (availableMusicIds.has(parsed)) initialMusicId = parsed;
     }
     if (initialMusicId === null && availableSongs.length > 0) {
-      initialMusicId = availableSongs[0]?.id ?? null;
+      // Pick first non-spoiler song by default to prevent landing on a locked spoiler page
+      const nonSpoiler = availableSongs.find((s) => showSpoiler || !isSpoiler(s.startAt, now));
+      initialMusicId = nonSpoiler?.id ?? availableSongs[0]?.id ?? null;
     }
 
     let initialGrid = 3;
@@ -120,7 +126,7 @@ export default function SongPuzzleTool({ locale, songs: allSongs }: Props) {
     setSelectedGrid(initialGrid);
     setCurrentStep(initialStep);
     setRestoredFromUrl(true);
-  }, [indexLoaded, availableMusicIds, availableSongs, restoredFromUrl]);
+  }, [indexLoaded, availableMusicIds, availableSongs, restoredFromUrl, showSpoiler, now]);
 
   // Available grids for current musicId
   const availableGridsForSelected = useMemo(() => {
@@ -131,31 +137,50 @@ export default function SongPuzzleTool({ locale, songs: allSongs }: Props) {
       .sort((a, b) => a - b);
   }, [puzzleIndex, selectedMusicId]);
 
+  // Fallback to valid available grid when switching songs if current grid is missing
+  useEffect(() => {
+    if (
+      availableGridsForSelected.length > 0 &&
+      !availableGridsForSelected.includes(selectedGrid)
+    ) {
+      setSelectedGrid(availableGridsForSelected[0] ?? 3);
+      setCurrentStep(0);
+      setIsPlaying(false);
+    }
+  }, [availableGridsForSelected, selectedGrid]);
+
   // Fetch solution when (musicId, grid) changes
   useEffect(() => {
     if (!selectedMusicId || !selectedGrid) return;
     let active = true;
     setLoadingSolution(true);
+    setSolutionError(null);
     setIsPlaying(false);
 
-    fetchPuzzleSolution(selectedMusicId, selectedGrid).then((sol) => {
-      if (!active) return;
-      setSolution(sol);
-      setLoadingSolution(false);
-      setCurrentStep((prev) => {
-        if (!sol) return 0;
-        return Math.min(prev, sol.steps.length);
+    fetchPuzzleSolution(selectedMusicId, selectedGrid)
+      .then((sol) => {
+        if (!active) return;
+        setSolution(sol);
+        setLoadingSolution(false);
+        setCurrentStep((prev) => {
+          if (!sol) return 0;
+          return Math.min(prev, sol.steps.length);
+        });
+      })
+      .catch((err) => {
+        if (!active) return;
+        setSolutionError(err instanceof Error ? err.message : String(err));
+        setLoadingSolution(false);
       });
-    });
 
     return () => {
       active = false;
     };
   }, [selectedMusicId, selectedGrid]);
 
-  // Sync state to URL
+  // Sync state to URL - skip during active autoplay to prevent exceeding browser replaceState rate limit
   useEffect(() => {
-    if (!restoredFromUrl || !selectedMusicId) return;
+    if (!restoredFromUrl || !selectedMusicId || isPlaying) return;
     const url = new URL(window.location.href);
     url.searchParams.set("music", String(selectedMusicId));
     url.searchParams.set("grid", String(selectedGrid));
@@ -165,7 +190,7 @@ export default function SongPuzzleTool({ locale, songs: allSongs }: Props) {
       url.searchParams.delete("step");
     }
     replaceUrl(`${url.pathname}${url.search}`);
-  }, [restoredFromUrl, selectedMusicId, selectedGrid, currentStep]);
+  }, [restoredFromUrl, selectedMusicId, selectedGrid, currentStep, isPlaying]);
 
   // Autoplay ticker
   useEffect(() => {
@@ -194,6 +219,9 @@ export default function SongPuzzleTool({ locale, songs: allSongs }: Props) {
     () => songs.find((s) => s.id === selectedMusicId) ?? null,
     [songs, selectedMusicId],
   );
+
+  const getSongTitle = useSongTitle();
+  const songTitle = selectedSong ? getSongTitle(selectedSong) : "";
 
   const currentIndexItem = useMemo(() => {
     return (
@@ -224,7 +252,6 @@ export default function SongPuzzleTool({ locale, songs: allSongs }: Props) {
   // Controls callbacks
   const handlePlayPause = useCallback(() => {
     if (currentStep >= totalSteps) {
-      // Loop from start
       setCurrentStep(0);
       setIsPlaying(true);
     } else {
@@ -268,10 +295,14 @@ export default function SongPuzzleTool({ locale, songs: allSongs }: Props) {
 
   const isUnreleased = Boolean(selectedSong?.startAt && isSpoiler(selectedSong.startAt, now));
 
-  if (!showSpoiler && isUnreleased) {
+  // Network error state for index
+  if (indexError) {
     return (
-      <div className="space-y-5">
-        <SpoilerNotice locale={locale} />
+      <div className="md3-surface flex flex-col items-center justify-center gap-4 rounded-2xl border border-outline-variant p-8 text-center sm:p-12">
+        <p className="text-body-large text-on-surface-variant">{indexError}</p>
+        <Button variant="contained" onClick={loadIndex}>
+          {t(locale, "songPuzzle.retry")}
+        </Button>
       </div>
     );
   }
@@ -290,9 +321,9 @@ export default function SongPuzzleTool({ locale, songs: allSongs }: Props) {
             <div className="min-w-0">
               <a
                 href={localizePath(`${getRoutePathById("music")}/${selectedSong.id}`, locale)}
-                className="block truncate font-bold text-title-large text-on-surface hover:text-primary transition-colors sm:text-headline-small"
+                className="block truncate font-[var(--md-ref-typeface-brand)] text-title-large font-bold text-on-surface hover:text-primary transition-colors sm:text-headline-small"
               >
-                {selectedSong.title}
+                {songTitle}
               </a>
               <div className="mt-1 flex min-w-0 items-center gap-1.5 text-label-medium text-on-surface-variant">
                 <img
@@ -321,71 +352,103 @@ export default function SongPuzzleTool({ locale, songs: allSongs }: Props) {
         </div>
       )}
 
-      {/* Main Interactive Stage Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left column: Puzzle Board Canvas */}
-        <div className="lg:col-span-7 flex flex-col items-center">
-          {selectedSong && solution && currentBoard.length > 0 ? (
-            <PuzzleStage
-              jacketUrl={selectedSong.jacketUrl}
-              grid={selectedGrid}
-              board={currentBoard}
-              goal={solution.meta.goal}
-              isSolved={isSolved}
-              overlayMode={overlayMode}
-              stepTransitionDurationMs={SPEED_TO_DURATION[speed] ?? 320}
-              skipTransition={skipTransition}
-              lastStep={lastStep}
-            />
-          ) : (
-            <div className="flex aspect-square w-full max-w-[500px] items-center justify-center rounded-2xl border border-dashed border-outline-variant bg-surface-container-lowest text-on-surface-variant">
-              {loadingSolution ? t(locale, "songPuzzle.loading") : t(locale, "songPuzzle.emptySelection")}
-            </div>
-          )}
+      {/* When current song is unreleased and spoilers are disabled, show SpoilerNotice in content area while retaining song banner */}
+      {!showSpoiler && isUnreleased ? (
+        <div className="space-y-5">
+          <SpoilerNotice locale={locale} />
         </div>
+      ) : (
+        /* Main Interactive Stage Grid */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left column: Puzzle Board Canvas */}
+          <div className="lg:col-span-7 flex flex-col items-center">
+            {selectedSong && solution && currentBoard.length > 0 ? (
+              <PuzzleStage
+                jacketUrl={selectedSong.jacketUrl}
+                grid={selectedGrid}
+                board={currentBoard}
+                goal={solution.meta.goal}
+                isSolved={isSolved}
+                overlayMode={overlayMode}
+                stepTransitionDurationMs={SPEED_TO_DURATION[speed] ?? 320}
+                skipTransition={skipTransition}
+                lastStep={lastStep}
+              />
+            ) : (
+              <div className="flex aspect-square w-full max-w-[500px] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-outline-variant bg-surface-container-lowest text-on-surface-variant p-6 text-center">
+                {loadingSolution ? (
+                  <span>{t(locale, "songPuzzle.loading")}</span>
+                ) : solutionError ? (
+                  <>
+                    <span className="text-error">{solutionError}</span>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => {
+                        if (selectedMusicId) {
+                          setLoadingSolution(true);
+                          fetchPuzzleSolution(selectedMusicId, selectedGrid)
+                            .then(setSolution)
+                            .catch(() => {})
+                            .finally(() => setLoadingSolution(false));
+                        }
+                      }}
+                    >
+                      {t(locale, "songPuzzle.retry")}
+                    </Button>
+                  </>
+                ) : (
+                  <span>{t(locale, "songPuzzle.emptySelection")}</span>
+                )}
+              </div>
+            )}
+          </div>
 
-        {/* Right column: Info & Controls */}
-        <div className="lg:col-span-5 flex flex-col gap-4">
-          <PuzzleMetaCard
-            locale={locale}
-            currentGrid={selectedGrid}
-            availableGrids={availableGridsForSelected}
-            meta={solution?.meta ?? null}
-            indexItem={currentIndexItem}
-            onGridChange={(g) => {
-              setSelectedGrid(g);
-              setCurrentStep(0);
-              setIsPlaying(false);
-            }}
-          />
-
-          <PuzzleControls
-            locale={locale}
-            currentStep={currentStep}
-            totalSteps={totalSteps}
-            isPlaying={isPlaying}
-            speed={speed}
-            overlayMode={overlayMode}
-            onPlayPause={handlePlayPause}
-            onReset={handleReset}
-            onPrevStep={handlePrevStep}
-            onNextStep={handleNextStep}
-            onJumpToGoal={handleJumpToGoal}
-            onSeek={handleSeek}
-            onSpeedChange={setSpeed}
-            onOverlayModeChange={setOverlayMode}
-          />
-
-          {solution && solution.steps.length > 0 && (
-            <PuzzleStepList
+          {/* Right column: Info & Controls */}
+          <div className="lg:col-span-5 flex flex-col gap-4">
+            <PuzzleMetaCard
               locale={locale}
-              steps={solution.steps}
-              currentStep={currentStep}
-              onSelectStep={handleSeek}
+              currentGrid={selectedGrid}
+              availableGrids={availableGridsForSelected}
+              meta={solution?.meta ?? null}
+              indexItem={currentIndexItem}
+              onGridChange={(g) => {
+                setSelectedGrid(g);
+                setCurrentStep(0);
+                setIsPlaying(false);
+              }}
             />
-          )}
+
+            <PuzzleControls
+              locale={locale}
+              currentStep={currentStep}
+              totalSteps={totalSteps}
+              isPlaying={isPlaying}
+              speed={speed}
+              overlayMode={overlayMode}
+              onPlayPause={handlePlayPause}
+              onReset={handleReset}
+              onPrevStep={handlePrevStep}
+              onNextStep={handleNextStep}
+              onJumpToGoal={handleJumpToGoal}
+              onSeek={handleSeek}
+              onSpeedChange={setSpeed}
+              onOverlayModeChange={setOverlayMode}
+            />
+
+            {solution && solution.steps.length > 0 && (
+              <PuzzleStepList
+                locale={locale}
+                grid={selectedGrid}
+                steps={solution.steps}
+                currentStep={currentStep}
+                isPlaying={isPlaying}
+                onSelectStep={handleSeek}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Song selection dialog */}
       <MusicSelectDialog

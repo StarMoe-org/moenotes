@@ -46,7 +46,7 @@ export default function PuzzleControls({
   const isAtEnd = currentStep >= totalSteps;
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-outline-variant/60 bg-surface-container-low p-4 shadow-sm md:p-5">
+    <div className="md3-surface flex flex-col gap-4 rounded-2xl border border-outline-variant/60 p-4 shadow-sm md:p-5">
       {/* Step scrubber slider */}
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between text-body-medium">
@@ -177,11 +177,12 @@ export default function PuzzleControls({
         </div>
 
         {/* Speed selectors */}
-        <div className="flex items-center gap-1 rounded-full border border-outline-variant/60 bg-surface-container p-1">
+        <div className="flex items-center gap-1 rounded-full border border-outline-variant/60 bg-surface-container p-1" role="group">
           {SPEEDS.map((s) => (
             <button
               key={`speed-${s}`}
               type="button"
+              aria-pressed={speed === s}
               onClick={() => onSpeedChange(s)}
               className={`rounded-full px-2 py-0.5 text-label-small font-medium transition-colors ${
                 speed === s
@@ -200,13 +201,14 @@ export default function PuzzleControls({
         <span className="text-on-surface-variant font-medium">
           {t(locale, "songPuzzle.displayMode")}:
         </span>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1" role="group">
           <button
             type="button"
+            aria-pressed={overlayMode === "picture"}
             onClick={() => onOverlayModeChange("picture")}
             className={`rounded-lg px-2.5 py-1 text-label-small font-medium transition-colors ${
               overlayMode === "picture"
-                ? "bg-secondary-container text-on-secondary-container"
+                ? "bg-secondary-container text-on-secondary-container font-bold"
                 : "text-on-surface-variant hover:bg-surface-container"
             }`}
           >
@@ -214,10 +216,11 @@ export default function PuzzleControls({
           </button>
           <button
             type="button"
+            aria-pressed={overlayMode === "numbered"}
             onClick={() => onOverlayModeChange("numbered")}
             className={`rounded-lg px-2.5 py-1 text-label-small font-medium transition-colors ${
               overlayMode === "numbered"
-                ? "bg-secondary-container text-on-secondary-container"
+                ? "bg-secondary-container text-on-secondary-container font-bold"
                 : "text-on-surface-variant hover:bg-surface-container"
             }`}
           >
@@ -225,10 +228,11 @@ export default function PuzzleControls({
           </button>
           <button
             type="button"
+            aria-pressed={overlayMode === "numbersOnly"}
             onClick={() => onOverlayModeChange("numbersOnly")}
             className={`rounded-lg px-2.5 py-1 text-label-small font-medium transition-colors ${
               overlayMode === "numbersOnly"
-                ? "bg-secondary-container text-on-secondary-container"
+                ? "bg-secondary-container text-on-secondary-container font-bold"
                 : "text-on-surface-variant hover:bg-surface-container"
             }`}
           >

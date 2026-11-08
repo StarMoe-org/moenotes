@@ -25,6 +25,17 @@ export function getTileImageCoords(tileValue: number, grid: number): TileCoordin
 }
 
 /**
+ * Calculates human-intuitive 1-indexed screen reading number for a tile
+ * (Left-to-right, top-to-bottom: top-left is 1, bottom-right is N*N).
+ */
+export function getTileDisplayNumber(tileValue: number, grid: number): number {
+  if (tileValue < 0) return 0;
+  const { row, col } = getTileImageCoords(tileValue, grid);
+  if (row < 0 || col < 0) return 0;
+  return row * grid + col + 1;
+}
+
+/**
  * Calculates CSS background-position percentage for a tile cut from the cover.
  */
 export function getTileBackgroundPosition(tileValue: number, grid: number): {
@@ -43,6 +54,25 @@ export function getTileBackgroundPosition(tileValue: number, grid: number): {
     yPercent,
     css: `${xPercent.toFixed(4)}% ${yPercent.toFixed(4)}%`,
   };
+}
+
+export interface TileMoveDirection {
+  arrow: string;
+  dirKey: string;
+  dir: "up" | "down" | "left" | "right";
+}
+
+/**
+ * Calculates physical movement direction from tile `from` to `to` in screen space.
+ */
+export function getTileDirection(step: SlidePuzzleStep): TileMoveDirection {
+  const dr = step.to[0] - step.from[0];
+  const dc = step.to[1] - step.from[1];
+
+  if (dr < 0) return { arrow: "↑", dirKey: "songPuzzle.dirUp", dir: "up" };
+  if (dr > 0) return { arrow: "↓", dirKey: "songPuzzle.dirDown", dir: "down" };
+  if (dc < 0) return { arrow: "←", dirKey: "songPuzzle.dirLeft", dir: "left" };
+  return { arrow: "→", dirKey: "songPuzzle.dirRight", dir: "right" };
 }
 
 /**

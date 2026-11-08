@@ -1,58 +1,78 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import IconButton from "@mui/material/IconButton";
 import type { AppLocale } from "@/config/locales";
 import { t } from "@/i18n";
+import { getTileDirection, getTileDisplayNumber } from "@/lib/song-puzzle/math";
 import type { SlidePuzzleStep } from "@/lib/song-puzzle/types";
 
 interface PuzzleStepListProps {
   locale: AppLocale;
+  grid: number;
   steps: readonly SlidePuzzleStep[];
   currentStep: number;
+  isPlaying: boolean;
   onSelectStep: (step: number) => void;
-}
-
-function getTileDirection(step: SlidePuzzleStep): { arrow: string; dirKey: string } {
-  const dr = step.to[0] - step.from[0];
-  const dc = step.to[1] - step.from[1];
-
-  if (dr < 0) return { arrow: "↑", dirKey: "songPuzzle.dirUp" };
-  if (dr > 0) return { arrow: "↓", dirKey: "songPuzzle.dirDown" };
-  if (dc < 0) return { arrow: "←", dirKey: "songPuzzle.dirLeft" };
-  return { arrow: "→", dirKey: "songPuzzle.dirRight" };
 }
 
 export default function PuzzleStepList({
   locale,
+  grid,
   steps,
   currentStep,
+  isPlaying,
   onSelectStep,
 }: PuzzleStepListProps) {
   const [copied, setCopied] = useState(false);
+  const copyTimerRef = useRef<NodeJS.Timeout | null>(null);
   const activeItemRef = useRef<HTMLButtonElement | null>(null);
   const listContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // Auto-scroll the active step into view when currentStep changes
+  // Auto-scroll strictly within listContainerRef without scrolling the parent window
   useEffect(() => {
-    if (activeItemRef.current) {
-      activeItemRef.current.scrollIntoView({
-        block: "nearest",
-        behavior: "smooth",
+    const container = listContainerRef.current;
+    const item = activeItemRef.current;
+    if (!container || !item) return;
+
+    const itemTop = item.offsetTop;
+    const itemBottom = itemTop + item.offsetHeight;
+    const containerTop = container.scrollTop;
+    const containerBottom = containerTop + container.clientHeight;
+
+    if (itemTop < containerTop) {
+      container.scrollTo({ top: itemTop, behavior: isPlaying ? "auto" : "smooth" });
+    } else if (itemBottom > containerBottom) {
+      container.scrollTo({
+        top: itemBottom - container.clientHeight,
+        behavior: isPlaying ? "auto" : "smooth",
       });
     }
-  }, [currentStep]);
+  }, [currentStep, isPlaying]);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
+  }, []);
 
   const handleCopy = () => {
     if (steps.length === 0) return;
     const textLines = steps.map((s) => {
       const { arrow } = getTileDirection(s);
-      return `${s.index}. #${s.tile + 1} ${arrow}`;
+      const displayNum = getTileDisplayNumber(s.tile, grid);
+      return `${s.index}. #${displayNum} ${arrow}`;
     });
-    navigator.clipboard.writeText(textLines.join(" ")).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard
+        .writeText(textLines.join(" "))
+        .then(() => {
+          setCopied(true);
+          if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+          copyTimerRef.current = setTimeout(() => setCopied(false), 2000);
+        })
+        .catch(() => {});
+    }
   };
 
   if (steps.length === 0) return null;
@@ -107,7 +127,7 @@ export default function PuzzleStepList({
         {steps.map((step) => {
           const isActive = currentStep === step.index;
           const { arrow, dirKey } = getTileDirection(step);
-          const tileNumber = step.tile + 1;
+          const displayNumber = getTileDisplayNumber(step.tile, grid);
 
           return (
             <button
@@ -127,7 +147,7 @@ export default function PuzzleStepList({
                 </span>
                 <span className="font-medium">
                   {t(locale, "songPuzzle.stepAction", {
-                    tile: tileNumber,
+                    tile: displayNumber,
                     dir: `${arrow} ${t(locale, dirKey)}`,
                   })}
                 </span>
