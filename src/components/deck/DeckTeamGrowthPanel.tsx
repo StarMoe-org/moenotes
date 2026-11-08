@@ -28,6 +28,29 @@ function formatDelta(locale: AppLocale, value: number, fractionDigits = 1): stri
   }).format(value);
 }
 
+type GrowthCategoryFilter = "all" | "level" | "awake" | "rank" | "skill";
+
+function scenarioCategory(action: DeckGrowthScenario["action"]): Exclude<GrowthCategoryFilter, "all"> | "full" {
+  switch (action) {
+    case "level":
+    case "levelCap":
+      return "level";
+    case "awake":
+    case "awakeCap":
+      return "awake";
+    case "rank":
+    case "rankCap":
+      return "rank";
+    case "liveSkillLevel":
+    case "liveSkillCap":
+    case "gekisouSkillLevel":
+    case "gekisouSkillCap":
+      return "skill";
+    case "full":
+      return "full";
+  }
+}
+
 function actionLabel(
   tr: (key: string, values?: Record<string, string | number>) => string,
   scenario: DeckGrowthScenario,
@@ -40,12 +63,20 @@ function actionLabel(
       return tr("actionLevelCap", values);
     case "awake":
       return tr("actionAwake", values);
+    case "awakeCap":
+      return tr("actionAwakeCap", values);
     case "rank":
       return tr("actionRank", values);
+    case "rankCap":
+      return tr("actionRankCap", values);
     case "liveSkillLevel":
       return tr("actionLiveSkill", values);
+    case "liveSkillCap":
+      return tr("actionLiveSkillCap", values);
     case "gekisouSkillLevel":
       return tr("actionGekisouSkill", values);
+    case "gekisouSkillCap":
+      return tr("actionGekisouSkillCap", values);
     case "full":
       return tr("actionFull");
   }
@@ -63,7 +94,8 @@ export default function DeckTeamGrowthPanel({
 }: DeckTeamGrowthPanelProps) {
   const tr = (key: string, values?: Record<string, string | number>) =>
     t(locale, `deckWorkspace.growth.${key}`, values);
-  const [scope, setScope] = useState<"step" | "all">("step");
+  const [scope, setScope] = useState<"step" | "cap" | "all">("step");
+  const [category, setCategory] = useState<GrowthCategoryFilter>("all");
 
   const counts = useMemo(() => {
     if (!report) return null;
@@ -81,10 +113,16 @@ export default function DeckTeamGrowthPanel({
   const visibleScenarios = useMemo(() => {
     if (!report) return [];
     return report.scenarios.filter((scenario) => {
-      if (scope === "step" && scenario.action === "full") return false;
+      const resolvedTarget = scenario.target ?? (scenario.action === "full" ? "full" : scenario.action.endsWith("Cap") ? "cap" : "step");
+      if (scope === "step" && resolvedTarget !== "step" && scenario.action !== "levelCap") return false;
+      if (scope === "cap" && resolvedTarget !== "cap") return false;
+      if (category !== "all") {
+        const cat = scenarioCategory(scenario.action);
+        if (cat !== category) return false;
+      }
       return scenario.primaryGain > 1e-6 || scenario.scoreGain > 1e-6 || scenario.powerGain > 0;
     });
-  }, [report, scope]);
+  }, [report, scope, category]);
 
   return (
     <section className="mt-4 rounded-2xl border border-outline-variant/60 bg-surface-container-low p-3.5">
@@ -108,6 +146,7 @@ export default function DeckTeamGrowthPanel({
               onChange={setScope}
               options={[
                 { value: "step", label: tr("scopeStep") },
+                { value: "cap", label: tr("scopeCap") },
                 { value: "all", label: tr("scopeAll") },
               ]}
             />
@@ -123,6 +162,22 @@ export default function DeckTeamGrowthPanel({
           </Button>
         </div>
       </div>
+
+      {report?.status === "ok" && report.scenarios.length > 0 && (
+        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+          {(["all", "level", "awake", "rank", "skill"] as const).map((cat) => (
+            <Chip
+              key={cat}
+              size="small"
+              clickable
+              color={category === cat ? "primary" : "default"}
+              variant={category === cat ? "filled" : "outlined"}
+              label={tr(`category${cat[0]!.toUpperCase()}${cat.slice(1)}`)}
+              onClick={() => setCategory(cat)}
+            />
+          ))}
+        </div>
+      )}
 
       {report && report.status !== "ok" && (
         <p className="mt-2.5 mb-0 text-xs text-error">

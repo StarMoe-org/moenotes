@@ -21,8 +21,10 @@ import { EMPTY_CARD_FILTERS, memberCardSubject, supportCardSubject, type CardFil
 import { mergeBoxBackup, parseBox, type BoxCard, type BoxSaveLink, type CardBox, type CardFieldName, type CardKind } from "@/lib/box/model";
 import { answerDeckFields } from "@/lib/box/deck-answers";
 import { boxAccountJson, gameSaveAccountJson } from "@/lib/deck/account-envelope";
-import { CHALLENGE_POINT_COSTS, DEFAULT_DECK_GOAL, EVENT_GOALS, EVERYDAY_GOALS, MAX_BOOST, computes, computesGoal, defaultDeckGoalInput, goalGap, heldEvent,
-  playsGekisou, readsAccuracy, effectiveAggregation, usesEventData, usesEventItemRewards, rewardLayoutOf, isChallengeInput, isNetworkInput, challengeRateRequest, recommendationRequest, solverGoalKind, supportsCrossSongMean, goalVenues, isEventPayoffGoal, type ChallengePointCost, type DeckEvent, type DeckGoal, type DeckGoalInput, type DeckVenue, type DeckArenaMusic } from "@/lib/deck/goals";
+import { CHALLENGE_POINT_COSTS, DECK_FRAME_RATES, DEFAULT_DECK_GOAL, EVENT_GOALS, EVERYDAY_GOALS, MAX_BOOST, MAX_GEKISO_INPUT_COUNT, computes, computesGoal, defaultDeckGoalInput, effectiveFrameRate, effectiveMinJustWindowMs, goalGap, heldEvent,
+  playsGekisou, readsAccuracy, effectiveAggregation, supportsFrameRate, usesEventData, usesEventItemRewards, rewardLayoutOf, isChallengeInput, isNetworkInput, challengeRateRequest, recommendationRequest, solverGoalKind, supportsCrossSongMean, goalVenues, isEventPayoffGoal, type ChallengePointCost, type DeckEvent, type DeckFrameRate, type DeckGoal, type DeckGoalInput, type DeckVenue, type DeckArenaMusic } from "@/lib/deck/goals";
+import { reconcileCardSelections } from "@/lib/deck/card-selection";
+import { checkGekisoConstraintFeasibility } from "@/lib/deck/feasibility";
 import { arenaPeriod, arenaSongMatchesBand, resolveArenaRule, type DeckArenaCatalog, type DeckArenaMode, type DeckArenaRuleSource } from "@/lib/deck/arena";
 import DeckArenaControls, { type DeckArenaSongEntry } from "./DeckArenaControls";
 import DeckManualEventDialog, { DeckEventSourceControls, type DeckEventSourceMode, type NamedEntityOption } from "./DeckManualEventDialog";
@@ -253,6 +255,31 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
   const [required, setRequired] = useState<string[]>([]);
   const [leaderKey, setLeaderKey] = useState<string | null>(null);
   const [noSnaps, setNoSnaps] = useState(false);
+  const [minMissionMembers, setMinMissionMembers] = useState<[number, number, number]>([0, 0, 0]);
+  const prevActiveBoxCardsRef = useRef<readonly BoxCard[]>([]);
+  useEffect(() => {
+    const prevCards = prevActiveBoxCardsRef.current;
+    const nextCards = activeBox?.cards ?? [];
+    prevActiveBoxCardsRef.current = nextCards;
+    if (!prevCards.length) return;
+    if (!required.length && !excluded.length && !leaderKey) return;
+    const reconciled = reconcileCardSelections(prevCards, activeBox, {
+      required: new Set(required),
+      excluded: new Set(excluded),
+      leaderKey,
+    });
+    const nextReq = [...reconciled.required];
+    const nextExc = [...reconciled.excluded];
+    if (nextReq.length !== required.length || nextReq.some((k, i) => k !== required[i])) {
+      setRequired(nextReq);
+    }
+    if (nextExc.length !== excluded.length || nextExc.some((k, i) => k !== excluded[i])) {
+      setExcluded(nextExc);
+    }
+    if (reconciled.leaderKey !== leaderKey) {
+      setLeaderKey(reconciled.leaderKey);
+    }
+  }, [activeBox, required, excluded, leaderKey]);
   const [userArenaSource, setUserArenaSource] = useState<DeckArenaRuleSource | null>(null);
   const [arenaLeagueId, setArenaLeagueId] = useState<number>(1);
   const [arenaCustomBandId, setArenaCustomBandId] = useState<number>(1);
@@ -379,6 +406,7 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
     return [card.identity.value];
   });
   const resolvedLeaderId = leaderKey ? idsOf([leaderKey], "member", useModernArena)[0] ?? null : null;
+  const isGekisouInput = playsGekisou(effectiveInput);
   const constraints = {
     leader: resolvedLeaderId,
     includeMembers: idsOf(required, "member", useModernArena),
@@ -386,7 +414,38 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
     excludeMembers: idsOf(excluded, "member"),
     excludeSnaps: idsOf(excluded, "snap"),
     noSnaps,
+    ...(isGekisouInput && minMissionMembers.some(v => v > 0) ? { minMissionMembers } : {}),
   };
+  const feasibilityMemberCatalog = useMemo(
+    () => new Map(members.map(card => [
+      card.id,
+      {
+        id: card.id,
+        characterId: card.characterId,
+        ...(typeof card.gekisouMissionType === "number" ? { gekisouMissionType: card.gekisouMissionType } : {}),
+      },
+    ])),
+    [members],
+  );
+  const feasibilityIssue = useMemo(() => {
+    if (!isGekisouInput) return null;
+    const minCombo = effectiveInput.minComboBonus;
+    const minJust = effectiveMinJustWindowMs(effectiveInput);
+    const manualLuck = effectiveInput.luckSamplingMode === "manual" ? effectiveInput.luckSamples : undefined;
+    return checkGekisoConstraintFeasibility({
+      box: activeBox,
+      memberCatalog: feasibilityMemberCatalog,
+      constraints: {
+        includeMembers: constraints.includeMembers,
+        excludeMembers: constraints.excludeMembers,
+        leader: constraints.leader,
+        minMissionMembers,
+      },
+      ...(minCombo !== undefined ? { minComboBonus: minCombo } : {}),
+      ...(manualLuck !== undefined ? { luckSamples: manualLuck } : {}),
+      ...(minJust > 0 ? { minJustWindowMs: minJust } : {}),
+    });
+  }, [isGekisouInput, effectiveInput, activeBox, feasibilityMemberCatalog, constraints.includeMembers, constraints.excludeMembers, constraints.leader, minMissionMembers]);
   /** The kind the restriction list shows: one at a time, since members and Snaps rate on different rarity scales. */
   const shownConstraintKind: CardKind = ownedMembers.length && ownedSnaps.length ? constraintKind : ownedMembers.length ? "member" : "snap";
   const constraintEntries = useMemo<ConstraintEntry[]>(() => {
@@ -492,7 +551,7 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
     window.addEventListener("popstate", back);
     return () => window.removeEventListener("popstate", back);
   }, [locale]);
-  useEffect(() => { setExcluded([]); setRequired([]); setLeaderKey(null); setNoSnaps(false); setUserArenaSource(null); setArenaLeagueId(1); setArenaCustomBandId(1); setArenaCustomMusicType(0); setArenaCustomMissions([0, 0, 0]); setArenaPool([]); setArenaPickerOpen(false);
+  useEffect(() => { setExcluded([]); setRequired([]); setLeaderKey(null); setNoSnaps(false); setMinMissionMembers([0, 0, 0]); setUserArenaSource(null); setArenaLeagueId(1); setArenaCustomBandId(1); setArenaCustomMusicType(0); setArenaCustomMissions([0, 0, 0]); setArenaPool([]); setArenaPickerOpen(false);
     setEventSourceMode("auto"); setSelectedEventId(null); setCustomEventDraft(null); setCustomEventModalOpen(false);
     updateGoal({ musicId: null, challengeMusicId: null, arenaMusicId: null }); setRunError(""); setManagement(false); setSetup(false); setDeleting(false); setImporting(false);
     setConstraintsOpen(false); setEditingCardKey(null); setPlayerSettings(false); setGuideOpen(false); setBackupError(false); setSongPicker(false); setConstraintFilter("all");
@@ -677,11 +736,21 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
   };
   const engine = solver.engine;
   const saveReady = theoreticalMode || !linked || linkedSave.state.status === "ready";
-  const canRun = engine.status === "ready" && supported && !gap && !dataGap && saveReady;
+  const feasibilityMessage = feasibilityIssue
+    ? feasibilityIssue.code === "mission_members_unreachable"
+      ? tr("feasibilityMissionShortage", { required: feasibilityIssue.required, available: feasibilityIssue.available })
+      : feasibilityIssue.code === "invalid_mission_member_sum"
+        ? tr("feasibilityMissionSum")
+        : feasibilityIssue.code === "invalid_gekiso_count"
+          ? tr("feasibilityInvalidCount")
+          : ""
+    : "";
+  const canRun = engine.status === "ready" && supported && !gap && !dataGap && saveReady && !feasibilityMessage;
   const blocker = engine.status === "loading" ? tr("solver.loading") : engine.status === "unavailable" ? tr(`solver.unavailable.${engine.reason}`)
-    : engine.status === "failed" ? "" : !supported ? tr(rewardLayoutOf(effectiveInput) ? effectiveInput.aggregation === "expected" ? "rewardMix.unavailable" : "rewardMix.expectedOnly" : goal === "eventItems" ? "solver.eventItemsUnsupported" : "comingSoon") : gap ? tr(`solver.gap.${gap}`) : !saveReady ? tr("solver.saveNotReady") : "";
+    : engine.status === "failed" ? "" : feasibilityMessage ? feasibilityMessage : !supported ? tr(rewardLayoutOf(effectiveInput) ? effectiveInput.aggregation === "expected" ? "rewardMix.unavailable" : "rewardMix.expectedOnly" : goal === "eventItems" ? "solver.eventItemsUnsupported" : "comingSoon") : gap ? tr(`solver.gap.${gap}`) : !saveReady ? tr("solver.saveNotReady") : "";
   const runBlocker = ownedMembers.length ? "" : tr(linked && !saveReady ? "solver.saveNotReady" : "solver.emptyBox");
-  const activeConstraintCount = required.length + excluded.length + (leaderKey ? 1 : 0) + (noSnaps ? 1 : 0);
+  const missionConstraintCount = isGekisouInput ? minMissionMembers.filter(v => v > 0).length : 0;
+  const activeConstraintCount = required.length + excluded.length + (leaderKey ? 1 : 0) + (noSnaps ? 1 : 0) + missionConstraintCount;
   const requiredConstraintCount = new Set([...required, ...(leaderKey ? [leaderKey] : [])]).size;
   function engineNotice() {
     if (engine.status === "failed") {
@@ -805,10 +874,18 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
             description={tr("theoretical.hint")}
             checked={theoreticalMode}
             onChange={(checked) => {
+              const currentCards = activeBox?.cards ?? [];
+              const nextTargetBox = checked ? buildTheoreticalMaxBox(box, server, catalog, saveTables) : box;
+              const reconciled = reconcileCardSelections(currentCards, nextTargetBox, {
+                required: new Set(required),
+                excluded: new Set(excluded),
+                leaderKey,
+              });
+              prevActiveBoxCardsRef.current = nextTargetBox?.cards ?? [];
               setTheoreticalMode(checked);
-              setLeaderKey(null);
-              setRequired([]);
-              setExcluded([]);
+              setLeaderKey(reconciled.leaderKey);
+              setRequired([...reconciled.required]);
+              setExcluded([...reconciled.excluded]);
             }}
           />
           <HaneokaExport locale={locale} box={box} disabled={busy || !box?.cards.length || linked && linkedSave.state.status !== "ready"} />
@@ -1012,15 +1089,55 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
             </div>
           )}
           {isNetworkInput(effectiveInput) && (!capabilities || capabilities.gekisouRank ? (
-            <DeckSelect
-              label={tr("gekisouRankLabel")}
-              value={goalInput.gekisouRank ?? 1}
-              onChange={(gekisouRank) => updateGoal({ gekisouRank })}
-              options={[1, 2, 3, 4, 5].map((place) => ({
-                value: place,
-                label: tr("gekisouRankOption", { n: place }),
-              }))}
-            />
+            <div className="dc-sub-stack">
+              {goalInput.gekisouRanks === undefined ? (
+                <DeckSelect
+                  label={tr("gekisouRankLabel")}
+                  value={goalInput.gekisouRank ?? 1}
+                  onChange={(gekisouRank) => updateGoal({ gekisouRank })}
+                  options={[1, 2, 3, 4, 5].map((place) => ({
+                    value: place,
+                    label: tr("gekisouRankOption", { n: place }),
+                  }))}
+                />
+              ) : (
+                <div className="dc-arena-missions">
+                  {([0, 1, 2] as const).map((idx) => (
+                    <DeckSelect
+                      key={idx}
+                      label={tr("gekisouRangeRankLabel", { range: idx + 1 })}
+                      value={goalInput.gekisouRanks![idx]}
+                      onChange={(place) => {
+                        const base = goalInput.gekisouRanks ?? [1, 1, 1];
+                        const next: [number, number, number] = [base[0], base[1], base[2]];
+                        next[idx] = place;
+                        updateGoal({ gekisouRanks: next });
+                      }}
+                      options={[1, 2, 3, 4, 5].map((place) => ({
+                        value: place,
+                        label: tr("gekisouRankOption", { n: place }),
+                      }))}
+                    />
+                  ))}
+                </div>
+              )}
+              {(!capabilities || capabilities.gekisouRangeRanks) && (
+                <DeckSwitchRow
+                  label={tr("gekisouPerRangeToggle")}
+                  checked={goalInput.gekisouRanks !== undefined}
+                  onChange={(perRange) => {
+                    if (perRange) {
+                      const fallback = goalInput.gekisouRank ?? 1;
+                      updateGoal({ gekisouRanks: [fallback, fallback, fallback] });
+                    } else {
+                      const first = goalInput.gekisouRanks?.[0] ?? goalInput.gekisouRank ?? 1;
+                      const { gekisouRanks: _unused, ...rest } = goalInput;
+                      setGoalInput({ ...rest, gekisouRank: first });
+                    }
+                  }}
+                />
+              )}
+            </div>
           ) : <p className="dc-field-hint">{tr("rankFixed")}</p>)}
           {readsAccuracy(effectiveInput) && (
             <details className="dc-play-style">
@@ -1032,6 +1149,18 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
                 <Icon name="chevronDown" className="dc-play-style-chevron h-[18px] w-[18px]" />
               </summary>
               <div className="dc-play-style-body">
+                {supportsFrameRate(effectiveInput) && (!capabilities || (capabilities.frameRates?.length ?? 0) > 0) && (
+                  <DeckSegmented
+                    label={tr("frameRateLabel")}
+                    size="small"
+                    value={String(effectiveFrameRate(effectiveInput))}
+                    onChange={(raw: string) => updateGoal({ frameRate: Number(raw) as DeckFrameRate })}
+                    options={DECK_FRAME_RATES.map((hz) => ({
+                      value: String(hz),
+                      label: tr("frameRateOption", { hz }),
+                    }))}
+                  />
+                )}
                 <div className="dc-slider-field">
                   <div className="dc-slider-head">
                     <span>{tr("greatRate", { n: effectiveInput.greatPercent })}</span>
@@ -1040,12 +1169,43 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
                   <Slider
                     size="small"
                     min={0}
-                    max={playsGekisou(effectiveInput) ? 100 - effectiveInput.justPercent : 100}
+                    max={playsGekisou(effectiveInput) ? 100 - effectiveInput.justPercent : Math.max(0, 100 - (effectiveInput.goodPercent ?? 0) - (effectiveInput.badPercent ?? 0) - (effectiveInput.missPercent ?? 0))}
                     value={effectiveInput.greatPercent}
                     aria-label={tr("greatRate", { n: effectiveInput.greatPercent })}
                     onChange={(_, next) => updateGoal({ greatPercent: Array.isArray(next) ? next[0] ?? 0 : next })}
                   />
                 </div>
+                {!playsGekisou(effectiveInput) && effectiveInput.playMode !== "pattern" && (!capabilities || capabilities.accuracy.good) && (
+                  <div className="dc-field-pair">
+                    <DeckNumberField
+                      label={`${tr("goodRate")} (%)`}
+                      min={0}
+                      max={Math.max(0, 100 - effectiveInput.greatPercent - (effectiveInput.badPercent ?? 0) - (effectiveInput.missPercent ?? 0))}
+                      step={1}
+                      inputMode="numeric"
+                      value={effectiveInput.goodPercent ?? 0}
+                      onChange={(val) => updateGoal({ goodPercent: val === null ? 0 : Math.min(100, Math.max(0, Math.trunc(val))) })}
+                    />
+                    <DeckNumberField
+                      label={`${tr("badRate")} (%)`}
+                      min={0}
+                      max={Math.max(0, 100 - effectiveInput.greatPercent - (effectiveInput.goodPercent ?? 0) - (effectiveInput.missPercent ?? 0))}
+                      step={1}
+                      inputMode="numeric"
+                      value={effectiveInput.badPercent ?? 0}
+                      onChange={(val) => updateGoal({ badPercent: val === null ? 0 : Math.min(100, Math.max(0, Math.trunc(val))) })}
+                    />
+                    <DeckNumberField
+                      label={`${tr("missRate")} (%)`}
+                      min={0}
+                      max={Math.max(0, 100 - effectiveInput.greatPercent - (effectiveInput.goodPercent ?? 0) - (effectiveInput.badPercent ?? 0))}
+                      step={1}
+                      inputMode="numeric"
+                      value={effectiveInput.missPercent ?? 0}
+                      onChange={(val) => updateGoal({ missPercent: val === null ? 0 : Math.min(100, Math.max(0, Math.trunc(val))) })}
+                    />
+                  </div>
+                )}
                 {playsGekisou(effectiveInput) && (
                   <div className="dc-slider-field">
                     <div className="dc-slider-head">
@@ -1065,15 +1225,117 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
                 {capabilities && (!capabilities.accuracy.great || playsGekisou(effectiveInput) && !capabilities.accuracy.just)
                   ? <p className="dc-field-hint">{tr("accuracyComing")}</p>
                   : <p className="dc-field-hint">{tr(playsGekisou(effectiveInput) ? "accuracyNoteGekisou" : "accuracyNote")}</p>}
-                {isEventPayoffGoal(goal) && isNetworkInput(effectiveInput) && (
-                  <DeckNumberField
-                    label={tr("othersAverage")}
-                    min={0}
-                    inputMode="numeric"
-                    placeholder={tr("othersAverageSame")}
-                    value={goalInput.othersAverageScore}
-                    onChange={(othersAverageScore) => updateGoal({ othersAverageScore })}
-                  />
+                {playsGekisou(effectiveInput) && (
+                  <div className="dc-sub-stack">
+                    {(!capabilities || capabilities.minComboBonus) && (
+                      <DeckNumberField
+                        label={tr("minComboBonusLabel")}
+                        min={1}
+                        max={MAX_GEKISO_INPUT_COUNT}
+                        step={1}
+                        inputMode="numeric"
+                        value={goalInput.minComboBonus ?? 1}
+                        onChange={(val) => updateGoal({ minComboBonus: val === null ? 1 : Math.trunc(val) })}
+                      />
+                    )}
+                    {(!capabilities || capabilities.minJustWindow) && (
+                      <div className="dc-field-pair">
+                        <DeckSegmented
+                          label={tr("justWindowLabel")}
+                          size="small"
+                          value={goalInput.justWindowUnit ?? "percent"}
+                          onChange={(justWindowUnit: "percent" | "ms") => updateGoal({ justWindowUnit })}
+                          options={[
+                            { value: "percent" as const, label: tr("justWindowUnitPercent") },
+                            { value: "ms" as const, label: tr("justWindowUnitMs") },
+                          ]}
+                        />
+                        {(goalInput.justWindowUnit ?? "percent") === "percent" ? (
+                          <DeckNumberField
+                            label={tr("justWindowUnitPercent")}
+                            min={0}
+                            max={1000}
+                            step={1}
+                            inputMode="decimal"
+                            value={goalInput.justWindowPercent ?? 0}
+                            onChange={(val) => updateGoal({ justWindowPercent: val === null ? 0 : Math.max(0, val) })}
+                          />
+                        ) : (
+                          <DeckNumberField
+                            label={tr("justWindowUnitMs")}
+                            min={0}
+                            max={1000}
+                            step={1}
+                            inputMode="decimal"
+                            value={goalInput.justWindowMs ?? 0}
+                            onChange={(val) => updateGoal({ justWindowMs: val === null ? 0 : Math.max(0, val) })}
+                          />
+                        )}
+                      </div>
+                    )}
+                    {(!capabilities || capabilities.luckSampling) && (
+                      <div className="dc-sub-stack">
+                        <DeckSegmented
+                          label={tr("luckSamplingLabel")}
+                          size="small"
+                          value={goalInput.luckSamplingMode ?? "auto"}
+                          onChange={(luckSamplingMode: "auto" | "manual") => updateGoal({ luckSamplingMode })}
+                          options={[
+                            { value: "auto" as const, label: tr("luckSamplingAuto") },
+                            { value: "manual" as const, label: tr("luckSamplingManual") },
+                          ]}
+                        />
+                        {(goalInput.luckSamplingMode ?? "auto") === "manual" && (
+                          <DeckNumberField
+                            label={tr("luckSamplesCountLabel")}
+                            min={0}
+                            max={256}
+                            step={1}
+                            inputMode="numeric"
+                            value={goalInput.luckSamples ?? 0}
+                            onChange={(val) => updateGoal({ luckSamples: val === null ? 0 : Math.trunc(val) })}
+                          />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {isEventPayoffGoal(goal) && (isNetworkInput(effectiveInput) || solverGoalKind(effectiveInput) === "freeLive") && (
+                  <div className="dc-sub-stack">
+                    {(!capabilities || (capabilities.rewardRoomModes?.length ?? 0) > 0) && (
+                      <DeckSegmented
+                        label={tr("rewardRoomModeLabel")}
+                        size="small"
+                        value={goalInput.rewardRoomMode ?? (isNetworkInput(effectiveInput) ? "battle" : "solo")}
+                        onChange={(rewardRoomMode: "battle" | "solo") => updateGoal({ rewardRoomMode })}
+                        options={[
+                          { value: "battle" as const, label: tr("rewardRoomBattle") },
+                          { value: "solo" as const, label: tr("rewardRoomSolo") },
+                        ]}
+                      />
+                    )}
+                    {(goalInput.rewardRoomMode ?? (isNetworkInput(effectiveInput) ? "battle" : "solo")) === "battle" && (
+                      <div className="dc-field-pair">
+                        <DeckSelect
+                          label={tr("rewardPlayersLabel")}
+                          value={goalInput.rewardPlayers ?? 5}
+                          onChange={(rewardPlayers) => updateGoal({ rewardPlayers })}
+                          options={[1, 2, 3, 4, 5].map((count) => ({
+                            value: count,
+                            label: tr("rewardPlayersOption", { n: count }),
+                          }))}
+                        />
+                        <DeckNumberField
+                          label={tr("othersAverage")}
+                          min={0}
+                          inputMode="numeric"
+                          placeholder={tr("othersAverageSame")}
+                          value={goalInput.othersAverageScore}
+                          onChange={(othersAverageScore) => updateGoal({ othersAverageScore })}
+                        />
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </details>
@@ -1210,6 +1472,33 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
           checked={noSnaps}
           onChange={setNoSnaps}
         />
+        {isGekisouInput && (!capabilities || capabilities.minMissionMembers) && (
+          <div className="dc-sub-stack">
+            <span className="text-xs font-medium text-on-surface-variant">{tr("minMissionMembersTitle")}</span>
+            <div className="dc-arena-missions">
+              {(["minMissionCombo", "minMissionLuck", "minMissionJust"] as const).map((labelKey, idx) => {
+                const otherSum = minMissionMembers[0] + minMissionMembers[1] + minMissionMembers[2] - minMissionMembers[idx]!;
+                return (
+                  <DeckSelect
+                    key={labelKey}
+                    label={tr(labelKey)}
+                    value={minMissionMembers[idx]!}
+                    onChange={(count) => setMinMissionMembers((prev) => {
+                      const next: [number, number, number] = [prev[0], prev[1], prev[2]];
+                      next[idx] = count;
+                      return next;
+                    })}
+                    options={[0, 1, 2, 3, 4, 5].map((count) => ({
+                      value: count,
+                      label: String(count),
+                      disabled: count + otherSum > 5,
+                    }))}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
         <div className="dc-constraint-toolbar">
           {ownedMembers.length > 0 && ownedSnaps.length > 0 && (
             <DeckSegmented
@@ -1305,6 +1594,7 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
                 setRequired([]);
                 setExcluded([]);
                 setNoSnaps(false);
+                setMinMissionMembers([0, 0, 0]);
               }}
             >
               {t(locale, "filters.reset")}

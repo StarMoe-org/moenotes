@@ -20,17 +20,30 @@ const ORDERS = orders();
 function id(key: string): number { return Number(key.slice(1)); }
 interface EngineTimingStep { step: number; timeMs: number; notes: number; noteIndices?: number[]; gain: number }
 interface EngineTimingWindow { event: number; startMs: number; endMs: number; unit: number; notes: number[]; steps: EngineTimingStep[] }
-interface EngineOrderTiming { score: number; best: number; worst?: number; optimal?: number; advanceMs: number; windows: EngineTimingWindow[]; orderIndex?: number }
+interface EngineOrderTiming { score: number; best: number; worst?: number; optimal?: number; guideAvailable?: boolean; advanceMs: number; windows: EngineTimingWindow[]; orderIndex?: number }
 interface EngineAggregateSong {
   song: { songId: number; difficulty: number; baseSongId?: number };
   power: number;
   score: { mean: number; min: number; median: number; max: number };
 }
-interface EngineHit { song?: { songId: number; difficulty: number; baseSongId?: number; arenaMusicId?: number } | null; aggregate?: { kind: "mean"; songs: EngineAggregateSong[] }; lexVector?: string[]; members: string[]; snaps: (string | null)[]; power: number; key: number; skipScore?: number; score?: { orders: number[]; mean?: number } | null; event?: { mean: number; rewardSum: number | string; orders: number; selectedOrder?: number; sampled?: boolean; lower?: number; upper?: number }; levels?: { sum: string; terms: string[]; lower?: number; upper?: number; termBounds?: { lower: number; upper: number }[] }[] }
+interface EngineHit { song?: { songId: number; difficulty: number; baseSongId?: number; arenaMusicId?: number } | null; aggregate?: { kind: "mean"; songs: EngineAggregateSong[] }; lexVector?: string[]; leader?: string; members: string[]; snaps: (string | null)[]; power: number; key: number; comboBonus?: number; justWindow?: { ms?: number; baseMs?: number; percent?: number } | null; skipScore?: number; score?: { orders: number[]; mean?: number } | null; gekiso?: { luckSamples?: number; sampled?: boolean }; event?: { mean: number; rewardSum: number | string; orders: number; selectedOrder?: number; sampled?: boolean; luckSamples?: number; lower?: number; upper?: number }; levels?: { sum: string; terms: string[]; lower?: number; upper?: number; termBounds?: { lower: number; upper: number }[] }[] }
 interface EngineResponse { results: { proven: boolean; bound: number | null; sampled?: boolean; hits?: EngineHit[] }[]; overall: EngineHit[]; elapsedMs: number | null }
-function answer(response: EngineResponse, request: RecommendationRequest, coversAllOwnedCards: boolean, final: boolean, coverage?: number, seeds?: Pick<EngineHit, "members" | "snaps" | "song">[], timings?: ReadonlyMap<EngineHit, EngineOrderTiming & { orderIndex: number }>) {
+function normalizeLeaderFirst(hit: Pick<EngineHit, "members" | "snaps" | "leader">): { members: string[]; snaps: (string | null)[] } {
+  const leaderKey = hit.leader ?? hit.members[0];
+  const leaderIdx = leaderKey ? hit.members.indexOf(leaderKey) : 0;
+  if (leaderIdx <= 0) return { members: hit.members, snaps: hit.snaps };
+  const order = [leaderIdx, ...[0, 1, 2, 3, 4].filter(i => i !== leaderIdx)];
+  return {
+    members: order.map(i => hit.members[i]!),
+    snaps: order.map(i => hit.snaps[i] ?? null),
+  };
+}
+function answer(response: EngineResponse, request: RecommendationRequest, coversAllOwnedCards: boolean, final: boolean, coverage?: number, seeds?: Pick<EngineHit, "members" | "snaps" | "song">[], timings?: ReadonlyMap<EngineHit, EngineOrderTiming & { orderIndex: number }>, sampledScoreSeeds = 0) {
   const rows = response.results ?? [];
-  const sampled = (response.overall ?? []).some(hit => hit.event?.sampled === true) || rows.some(row => row.sampled === true);
+  const sampled = sampledScoreSeeds > 0 || (response.overall ?? []).some(hit => hit.event?.sampled === true || hit.gekiso?.sampled === true) || rows.some(row => row.sampled === true);
+  const sampleCount = sampledScoreSeeds > 0
+    ? sampledScoreSeeds
+    : (response.overall ?? [])[0]?.event?.luckSamples ?? (response.overall ?? [])[0]?.gekiso?.luckSamples ?? (request.goal.luckSamples && request.goal.luckSamples > 0 ? request.goal.luckSamples : 4);
   const proven = final && !sampled && rows.length > 0 && rows.every(row => row.proven === true);
   const teams = (response.overall ?? []).map((hit, index) => {
     const members: number[] = hit.members.map(id), snaps: (number | null)[] = hit.snaps.map((key: string | null) => key === null ? null : id(key));
@@ -72,6 +85,7 @@ function answer(response: EngineResponse, request: RecommendationRequest, covers
           best: rawTiming.best,
           ...(typeof rawTiming.worst === "number" && Number.isFinite(rawTiming.worst) ? { worst: rawTiming.worst } : {}),
           ...(typeof rawTiming.optimal === "number" && Number.isFinite(rawTiming.optimal) ? { optimal: rawTiming.optimal } : {}),
+          ...(typeof rawTiming.guideAvailable === "boolean" ? { guideAvailable: rawTiming.guideAvailable } : {}),
           advanceMs: rawTiming.advanceMs,
           windows: rawTiming.windows.map(win => ({
             event: win.event,
@@ -123,7 +137,7 @@ function answer(response: EngineResponse, request: RecommendationRequest, covers
         coverage: { total: coverageTotal,
           covered: coverage ?? rows.filter(row => row.hits?.length).length, proven: rows.filter(row => row.proven).length } } : {}),
       goal: request.goal, metric: request.metric ?? { kind: "power" }, aggregation: request.aggregation ?? "expected",
-      ...(sampled ? { rewardSampling: { kind: "fixedRoots", rootSeeds: [0, 1, 2, 3] } } : {}),
+      ...(sampled ? { rewardSampling: { kind: "fixedRoots", rootSeeds: Array.from({ length: Math.min(256, Math.max(1, sampleCount)) }, (_, i) => i) } } : {}),
       exitReason: final && sampled ? "sampled" : final && !proven ? "timeLimit" : proven ? "complete" : null },
   });
 }
@@ -214,7 +228,8 @@ export class DeckSolver {
       if (retainRewards) warm.splice(0, warm.length, ...hits);
       if (!progress || now - last < intervalMs) return;
       last = now;
-      progress(answer({ overall: hits, results: [], elapsedMs: performance.now() - started }, request, box.coversAllOwnedCards, false, covered.size, [...candidates.values()]));
+      const sampledScoreSeeds = converted.goal.kind === "gekiso" && luck && converted.goal.seeds > 0 ? converted.goal.seeds : 0;
+      progress(answer({ overall: hits, results: [], elapsedMs: performance.now() - started }, request, box.coversAllOwnedCards, false, covered.size, [...candidates.values()], undefined, sampledScoreSeeds));
     };
     try {
       const prepared: ReturnType<typeof adaptRequest> & { members: typeof box.members; snaps: typeof box.snaps; player: typeof box.player;
@@ -262,7 +277,14 @@ export class DeckSolver {
               op: "evaluateAll", handle: this.handle, charts: [converted.charts[0]!], request: { ...prepared,
                 ...(converted.songRules ? { songRules: converted.songRules } : {}),
                 team: { members: team.members, snaps: team.snaps, leader: team.members[0] }, songs: [song],
-                gekiso: { accuracy: converted.goal.accuracy, rank: converted.goal.rank, seeds: 0, ...(arena ? { arena } : {}) }, event: null } }).evaluations[0]!;
+                gekiso: {
+                  accuracy: converted.goal.accuracy,
+                  rank: converted.goal.rank,
+                  ...("ranks" in converted.goal && converted.goal.ranks ? { ranks: converted.goal.ranks } : {}),
+                  seeds: converted.goal.seeds,
+                  ...(arena ? { arena } : {}),
+                },
+                event: null } }).evaluations[0]!;
           } catch (error) {
             if (error instanceof Error && error.message === "search-deadline") break;
             throw error;
@@ -273,7 +295,8 @@ export class DeckSolver {
           for (const hit of warm) if (hit.song) covered.add(JSON.stringify(hit.song));
           if (progress && warm.length && performance.now() - last >= intervalMs) {
             last = performance.now();
-            progress(answer({ results: [], overall: mergeWarm([]), elapsedMs: performance.now() - started }, request, box.coversAllOwnedCards, false, covered.size, [...candidates.values()]));
+            const sampledScoreSeeds = converted.goal.seeds > 0 ? converted.goal.seeds : 0;
+            progress(answer({ results: [], overall: mergeWarm([]), elapsedMs: performance.now() - started }, request, box.coversAllOwnedCards, false, covered.size, [...candidates.values()], undefined, sampledScoreSeeds));
           }
         }
         prepared.seeds = [...(prepared.seeds ?? []), ...warm];
@@ -304,6 +327,7 @@ export class DeckSolver {
             : converted.charts.length === 1 ? converted.charts[0] : undefined;
           if (!chartEntry) continue;
           try {
+            const normalized = normalizeLeaderFirst(hit);
             const timeline = engine!.invoke<{ timing?: EngineOrderTiming | null }>({
               op: "timeline",
               handle: this.handle,
@@ -314,8 +338,8 @@ export class DeckSolver {
                 members: box.members,
                 snaps: box.snaps,
                 unknownPolicy: "min",
-                memberKeys: hit.members,
-                snapKeys: hit.snaps,
+                memberKeys: normalized.members,
+                snapKeys: normalized.snaps,
                 order: ORDERS[orderIndex]!,
                 play: converted.goal.play,
                 timing: {
@@ -338,7 +362,8 @@ export class DeckSolver {
         }
       }
       response.elapsedMs = performance.now() - started;
-      return answer(response, request, box.coversAllOwnedCards, true, undefined, [...candidates.values()], timings);
+      const sampledScoreSeeds = converted.goal.kind === "gekiso" && luck && converted.goal.seeds > 0 ? converted.goal.seeds : 0;
+      return answer(response, request, box.coversAllOwnedCards, true, undefined, [...candidates.values()], timings, sampledScoreSeeds);
     } catch (error) {
       if (!(error instanceof Error) || !error.message.startsWith("moenotes-") && error.message !== "haneoka-continuation" && !["combined-reward-levels", "combined-reward-range", "combined-item-lottery", "skip-score-nonmonotone"].includes(error.message)) throw error;
       return JSON.stringify({ format: "ournotes-deck.account-recommendation/1", final: true, status: "invalid", missing: [],

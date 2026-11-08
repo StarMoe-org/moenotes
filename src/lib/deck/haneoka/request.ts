@@ -12,29 +12,35 @@ export interface ManualEventEffectInput {
   bonusType: number;
   perRank: readonly [number, number, number, number, number];
 }
+export const MAX_GEKISO_COUNT = 2_147_483_647;
+export const FRAME_RATES = [30, 60, 90, 120] as const;
+export type DeckFrameRate = (typeof FRAME_RATES)[number];
+
 export interface RecommendationRequest {
   format: string;
-  goal: { kind: string; rank?: number; arenaMusicId?: number; musicIds?: number[]; challengeMusicIds?: number[]; arenaMusicIds?: number[]; multiSong?: "individual" | "mean"; eventParameter?: boolean; musicId?: number; difficulty?: string; challengeMusicId?: number;
+  goal: { kind: string; rank?: number; ranks?: readonly [number, number, number]; minComboBonus?: number; minJustWindowMs?: number; luckSamples?: number;
+    arenaMusicId?: number; musicIds?: number[]; challengeMusicIds?: number[]; arenaMusicIds?: number[]; multiSong?: "individual" | "mean"; eventParameter?: boolean; musicId?: number; difficulty?: string; challengeMusicId?: number;
     arena?: { bandId?: number; musicType?: number; missions?: number[]; mode?: string };
     songRules?: { musicType?: number; missions?: number[] };
     songs?: { musicId?: number; difficulty?: string }[];
-    play?: { kind?: string; greatFraction?: number; justFraction?: number; missEvery?: number; cumulativeTiming?: "best" | "worst" };
-    accuracy?: { greatFraction?: number; justFraction?: number } };
+    play?: { kind?: string; greatFraction?: number; goodFraction?: number; badFraction?: number; missFraction?: number; justFraction?: number; missEvery?: number; cumulativeTiming?: "best" | "worst"; frameRate?: DeckFrameRate };
+    accuracy?: { greatFraction?: number; goodFraction?: number; badFraction?: number; missFraction?: number; justFraction?: number } };
   metric?: { kind: string; eventId?: number; consumption?: number; resourceType?: number; resourceId?: number; secondaryPriority?: string; levels?: RewardTermInput[][] };
   eventContext?: { rewardProjection?: boolean; resultClock?: { kind?: string; liveStartJstTicks?: number | null; serverNowJstTicks?: number | string } };
-  room?: { players: number; othersAverageScore: number | null };
+  room?: { mode?: "battle" | "solo"; players: number; othersAverageScore: number | null };
   aggregation?: "expected" | "maximum";
   eventIds?: number[];
   manualEvent?: boolean;
   eventEffects?: readonly ManualEventEffectInput[];
   constraints?: { leader?: number | null; includeMembers?: (number | string)[]; excludeMembers?: (number | string)[];
     includeSnaps?: (number | string)[]; excludeSnaps?: (number | string)[]; noSnaps?: boolean;
-    bindings?: readonly (readonly [number | string, number | string | null])[] };
+    bindings?: readonly (readonly [number | string, number | string | null])[];
+    minMissionMembers?: readonly [number, number, number] };
   k: number;
   limits?: { timeLimitMs: number | null };
 }
-export const HANEOKA_COMMIT = "4ed6e0061f519240f19750a3a09024dd27304bd8";
-export const HANEOKA_PATCH_SHA = "1b0634019d439fa4b204452f290810baa4ff25810097b2c3d98d6ac609e0fcf8";
+export const HANEOKA_COMMIT = "7c167c95e8589bc84a9ab726b5b58adbc0ef4b05";
+export const HANEOKA_PATCH_SHA = "611518f7999da734ea2fca1b67fa93263e0af9e969e7edbe7341c5e87ca01f42";
 export const CAPABILITIES = {
   goals: ["power", "freeLive", "challengeLive", "battleLive", "missionLive", "arenaLive", "skip"],
   metrics: { freeLive: ["score", "eventPoints", "eventItems", "challengePoints"], challengeLive: ["score", "eventPoints", "eventItems"], battleLive: ["score", "eventPoints", "eventItems", "challengePoints"], missionLive: ["score", "eventPoints", "eventItems", "challengePoints"], arenaLive: ["score", "eventPoints", "eventItems", "challengePoints"], skip: ["score", "eventPoints", "eventItems", "challengePoints"] },
@@ -44,9 +50,11 @@ export const CAPABILITIES = {
   },
   combinedMetric: { goals: ["freeLive", "challengeLive", "battleLive", "missionLive", "arenaLive", "skip"], kind: "combined", objective: "lexicographicWeightedExpectedSums", weights: "integer", maxLevels: 3, maxTerms: 9, maxWeight: 1_000_000_000 },
   eventItemRewards: { selection: "exactResultGrade", eventGroupField: "eventGroup", rowsPerGrade: 1, probabilityMarker: 10000 },
-  crossSong: true, crossSongMean: true, songRules: true, resume: true, arenaRules: true, gekisouRank: true,
+  crossSong: true, crossSongMean: true, songRules: true, resume: true, arenaRules: true, gekisouRank: true, gekisouRangeRanks: true,
   manualEventBonuses: true, teamGrowth: true, orderTiming: true, cumulativeTiming: true,
-  accuracy: { great: true, just: true }, patternPlay: true, luckMissions: true, luckGreatConversions: true,
+  frameRates: FRAME_RATES, minMissionMembers: true, minComboBonus: true, minJustWindow: true, luckSampling: true,
+  rewardRoomModes: ["battle", "solo"] as const,
+  accuracy: { great: true, good: true, bad: true, miss: true, just: true }, patternPlay: true, luckMissions: true, luckGreatConversions: true,
 };
 
 function validateEventEffects(data: DeckData, raw: readonly ManualEventEffectInput[] | undefined): ManualEventEffectInput[] | null {
@@ -90,13 +98,60 @@ function adaptSingleRequest(data: DeckData, request: RecommendationRequest) {
     || gekiso && request.aggregation === "maximum" && request.metric?.kind === "combined"
     || request.aggregation === "maximum" && !skip && !["eventPoints", "eventItems", "challengePoints"].includes(request.metric!.kind)))
     throw new Error("haneoka-unsupported-reward-scene");
-  if (rewards && ["battleLive", "arenaLive"].includes(kind) && (!request.room || !Number.isInteger(request.room.players) || request.room.players < 1 || request.room.players > 5
-    || request.room.othersAverageScore !== null && (!Number.isInteger(request.room.othersAverageScore) || request.room.othersAverageScore < 0 || request.room.othersAverageScore > 2147483647)))
-    throw new Error("haneoka-room");
-  if (rewards && kind === "missionLive" && request.room !== undefined) throw new Error("haneoka-room");
-  if (rewards && kind === "missionLive" && request.goal.rank !== undefined) throw new Error("haneoka-unsupported-rank");
+  if (rewards && ["battleLive", "arenaLive"].includes(kind)) {
+    if (!request.room
+      || (request.room.mode !== undefined && request.room.mode !== "battle" && request.room.mode !== "solo")
+      || !Number.isInteger(request.room.players) || request.room.players < 1 || request.room.players > 5
+      || request.room.othersAverageScore !== null && (!Number.isInteger(request.room.othersAverageScore) || request.room.othersAverageScore < 0 || request.room.othersAverageScore > MAX_GEKISO_COUNT)) {
+      throw new Error("haneoka-room");
+    }
+  }
+  if (rewards && kind === "freeLive" && request.room !== undefined) {
+    if ((request.room.mode !== undefined && request.room.mode !== "battle" && request.room.mode !== "solo")
+      || !Number.isInteger(request.room.players) || request.room.players < 1 || request.room.players > 5
+      || request.room.othersAverageScore !== null && (!Number.isInteger(request.room.othersAverageScore) || request.room.othersAverageScore < 0 || request.room.othersAverageScore > MAX_GEKISO_COUNT)) {
+      throw new Error("haneoka-room");
+    }
+  }
+  if (rewards && !["battleLive", "arenaLive", "freeLive"].includes(kind) && request.room !== undefined) throw new Error("haneoka-room");
+  if (rewards && kind === "missionLive" && (request.goal.rank !== undefined || request.goal.ranks !== undefined)) throw new Error("haneoka-unsupported-rank");
   if (gekiso && request.goal.rank !== undefined && (!Number.isInteger(request.goal.rank) || request.goal.rank < 1 || request.goal.rank > 5)) throw new Error("haneoka-unsupported-rank");
+  const ranks = (() => {
+    const raw = request.goal.ranks;
+    if (raw === undefined) return null;
+    if (!gekiso || !Array.isArray(raw) || raw.length !== 3 || raw.some(v => !Number.isInteger(v) || v < 1 || v > 5)) {
+      throw new Error("haneoka-unsupported-rank");
+    }
+    if (kind === "missionLive" && raw.some(v => v !== 1)) {
+      throw new Error("haneoka-unsupported-rank");
+    }
+    return [raw[0]!, raw[1]!, raw[2]!] as [number, number, number];
+  })();
   const rank = gekiso ? (request.goal.rank ?? 1) : 1;
+  const minComboBonus = (() => {
+    const raw = request.goal.minComboBonus;
+    if (raw === undefined) return null;
+    if (!gekiso || !Number.isSafeInteger(raw) || raw < 1 || raw > MAX_GEKISO_COUNT) {
+      throw new Error("haneoka-min-combo-bonus");
+    }
+    return raw > 1 ? raw : null;
+  })();
+  const minJustWindowMs = (() => {
+    const raw = request.goal.minJustWindowMs;
+    if (raw === undefined) return null;
+    if (!gekiso || typeof raw !== "number" || !Number.isFinite(raw) || raw < 0 || raw > MAX_GEKISO_COUNT) {
+      throw new Error("haneoka-min-just-window");
+    }
+    return raw > 0 ? raw : null;
+  })();
+  const luckSamples = (() => {
+    const raw = request.goal.luckSamples;
+    if (raw === undefined) return 0;
+    if (!gekiso || !Number.isSafeInteger(raw) || raw < 0 || raw > MAX_GEKISO_COUNT) {
+      throw new Error("haneoka-luck-samples");
+    }
+    return raw;
+  })();
   const parameterEvents = kind === "power" && request.goal.eventParameter ? request.eventIds ?? [] : [];
   if (parameterEvents.length > 1 || parameterEvents.some(id => !table(data, "MasterEvent").some(event => event.id === id)))
     throw new Error("haneoka-power-event");
@@ -176,33 +231,94 @@ function adaptSingleRequest(data: DeckData, request: RecommendationRequest) {
       songs = [song];
     }
   }
-  const play: { greatFraction?: number; justFraction?: number; missEvery?: number; cumulativeTiming?: "best" | "worst" } = request.goal.play ?? request.goal.accuracy ?? {};
+  const play: {
+    greatFraction?: number;
+    goodFraction?: number;
+    badFraction?: number;
+    missFraction?: number;
+    justFraction?: number;
+    missEvery?: number;
+    cumulativeTiming?: "best" | "worst";
+    frameRate?: DeckFrameRate;
+  } = request.goal.play ?? request.goal.accuracy ?? {};
   const great = play.greatFraction ?? 0;
+  const good = play.goodFraction ?? 0;
+  const bad = play.badFraction ?? 0;
+  const miss = play.missFraction ?? 0;
   const just = play.justFraction ?? 1;
-  if (![great, just].every(value => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1)
-    || gekiso && great + just > 1) throw new Error("haneoka-accuracy");
+  if (![great, good, bad, miss, just].every(value => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1)
+    || gekiso && (good > 0 || bad > 0 || miss > 0 || great + just > 1 + 1e-9)
+    || !gekiso && great + good + bad + miss > 1 + 1e-9) throw new Error("haneoka-accuracy");
   const criterion = request.aggregation === "maximum" ? "max" : "mean";
   const cumulativeTiming = play.cumulativeTiming;
   if (cumulativeTiming !== undefined && (
     (cumulativeTiming !== "best" && cumulativeTiming !== "worst")
     || rewards || skip || gekiso || kind === "power" || criterion !== "max"
   )) throw new Error("haneoka-cumulative-timing");
+  const frameRate = play.frameRate;
+  if (frameRate !== undefined && (
+    !(FRAME_RATES as readonly number[]).includes(frameRate)
+    || skip || gekiso || kind === "power"
+  )) throw new Error("haneoka-frame-rate");
   const scoreGoal = kind === "power" || skip && !rewards ? { kind: skip ? "skip-score" as const : "power" as const, song, challengeEventId,
     ...(parameterEvents.length ? { parameterEventId: parameterEvents[0], ...(eventEffects ? { eventEffects } : {}) }
       : skip && challengeEventId !== null && request.eventIds?.includes(challengeEventId) ? { parameterEventId: challengeEventId } : {}) }
-    : gekiso ? { kind: "gekiso" as const, songs, criterion, rank, seeds: 0, ...(arenaRule ? { arena: arenaRule } : {}), accuracy: {
-      great, just: great === 1 ? 0 : just / (1 - great), missEvery: play.missEvery ?? 0,
-    } }
+    : gekiso ? {
+        kind: "gekiso" as const,
+        songs,
+        criterion,
+        rank,
+        ...(ranks ? { ranks } : {}),
+        ...(minComboBonus ? { minComboBonus } : {}),
+        ...(minJustWindowMs ? { minJustWindowMs } : {}),
+        seeds: luckSamples,
+        ...(arenaRule ? { arena: arenaRule } : {}),
+        accuracy: {
+          great, just: great >= 1 ? 0 : Math.min(1, just / (1 - great)), missEvery: play.missEvery ?? 0,
+        },
+      }
       : { kind: "score" as const, songs, criterion, challengeEventId, play: {
-        kind: "custom", great, good: 0, bad: 0, miss: 0, missEvery: play.missEvery ?? 0,
+        kind: "custom", great, good, bad, miss, missEvery: play.missEvery ?? 0,
         ...(cumulativeTiming ? { cumulativeTiming } : {}),
+        ...(frameRate !== undefined && frameRate !== 60 ? { frameRate } : {}),
       } };
   const key = (id: unknown, prefix: string) => prefix + integer(typeof id === "string" ? Number(id) : id, "constraint");
   const c = request.constraints ?? {};
+  const minMissionMembers = (() => {
+    const raw = c.minMissionMembers;
+    if (raw === undefined) return null;
+    if (!Array.isArray(raw) || raw.length !== 3 || raw.some(v => !Number.isInteger(v) || v < 0 || v > 5) || raw[0]! + raw[1]! + raw[2]! > 5) {
+      throw new Error("haneoka-min-mission-members");
+    }
+    const tuple: [number, number, number] = [raw[0]!, raw[1]!, raw[2]!];
+    if (tuple.some(v => v > 0) && !gekiso) throw new Error("haneoka-min-mission-members");
+    return tuple.some(v => v > 0) ? tuple : null;
+  })();
+  const normalRewardRoom = rewards && kind === "freeLive" && request.room
+    ? {
+        mode: request.room.mode ?? "solo",
+        players: request.room.players,
+        ...(request.room.othersAverageScore !== null ? { otherAverageScore: request.room.othersAverageScore } : {}),
+      }
+    : undefined;
   return {
-    goal: rewards ? { ...eventGoal(data, request, song!, challengeEventId, "play" in scoreGoal ? scoreGoal.play : null, eventEffects),
+    goal: rewards ? {
+      ...eventGoal(data, request, song!, challengeEventId, "play" in scoreGoal ? scoreGoal.play : null, eventEffects),
+      ...(normalRewardRoom ? { rewardRoom: normalRewardRoom } : {}),
       ...(arenaRule ? { arena: arenaRule } : {}),
-      ...(scoreGoal.kind === "gekiso" ? { gekiso: { scene: kind, rank, accuracy: scoreGoal.accuracy }, room: request.room } : {}) } : scoreGoal, charts,
+      ...(scoreGoal.kind === "gekiso" ? {
+        gekiso: {
+          scene: kind,
+          rank,
+          ...(ranks ? { ranks } : {}),
+          ...(minComboBonus ? { minComboBonus } : {}),
+          ...(minJustWindowMs ? { minJustWindowMs } : {}),
+          ...(luckSamples > 0 ? { seeds: luckSamples } : {}),
+          accuracy: scoreGoal.accuracy,
+        },
+        room: request.room,
+      } : {}),
+    } : scoreGoal, charts,
     constraints: {
       requiredMembers: (c.includeMembers ?? []).map((id: unknown) => key(id, "m")),
       excludedMembers: (c.excludeMembers ?? []).map((id: unknown) => key(id, "m")),
@@ -211,6 +327,7 @@ function adaptSingleRequest(data: DeckData, request: RecommendationRequest) {
       leader: c.leader == null ? null : key(c.leader, "m"),
       noSnaps: c.noSnaps === true,
       bindings: (c.bindings ?? []).map(([m, s]) => [key(m, "m"), s == null ? null : key(s, "s")] as [string, string | null]),
+      ...(minMissionMembers ? { minMissionMembers } : {}),
       minBonusPercent: null,
     },
     ...(songRules ? { songRules } : {}),

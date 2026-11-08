@@ -117,7 +117,7 @@ export default function DeckResult(props: DeckResultProps) {
       </> : optimality?.proven && rateProven ? <div className="dr-proven"><Icon name="check" className="h-[18px] w-[18px] shrink-0" />
         <ProofLink locale={locale} anchor="proven" label={tr("proven")} />{elapsed !== null && <small>{tr("elapsed", { n: (elapsed / 1000).toFixed(1) })}</small>}</div>
         : <div className="dr-unproven"><Icon name="info" className="h-[18px] w-[18px] shrink-0" />
-          <ProofLink locale={locale} anchor="unproven" label={tr(job.status === "done" && job.stopped ? "stoppedUnproven" : result?.exitReason === "timeLimit" ? "timedOutUnproven" : "unproven")} />
+          <ProofLink locale={locale} anchor="unproven" label={tr(job.status === "done" && job.stopped ? "stoppedUnproven" : result?.exitReason === "timeLimit" ? "timedOutUnproven" : result?.exitReason === "sampled" ? "sampledUnproven" : "unproven")} />
           {elapsed !== null && <small>{tr("elapsed", { n: (elapsed / 1000).toFixed(1) })}</small>}</div>}
       {!rating && optimality && !optimality.proven && optimality.upperBound !== null && optimality.lowerBound !== null && <p className="dr-bounds">
         {tr("bounds", { best: formatValue(optimality.lowerBound / unit, metric, locale), limit: formatValue(optimality.upperBound / unit, metric, locale) })}
@@ -356,6 +356,7 @@ function SkillOrders(props: DeckResultProps & { team: DeckTeam; aggregation: Dec
   const tr = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.solver.${key}`, values);
   const hasTimingExtrema = team.timing !== undefined && (
     team.timing.best > team.timing.score
+    || team.timing.guideAvailable === false
     || (team.timing.optimal !== undefined && team.timing.worst !== undefined && team.timing.optimal > team.timing.worst)
   );
   const activeTiming = props.final && hasTimingExtrema ? team.timing! : null;
@@ -391,8 +392,9 @@ function OrderTimingPanel({ locale, timing, catalog }: { locale: AppLocale; timi
   const tr = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.solver.${key}`, values);
   const windows = timing.windows.filter(win => win.steps.length > 0);
   const hasFullExtrema = timing.worst !== undefined && timing.optimal !== undefined;
-  const planDelta = hasFullExtrema ? timing.best - timing.worst! : timing.best - timing.score;
-  const canGuide = timing.best > timing.score && windows.length > 0;
+  const planDelta = timing.best - timing.score;
+  const guideBlocked = timing.guideAvailable === false;
+  const canGuide = !guideBlocked && timing.best > timing.score && windows.length > 0;
   const memberName = (id: number) => catalog.members.find(card => card.id === id)?.title ?? String(id);
   return <div className="dr-timing">
     {hasFullExtrema ? (
@@ -410,7 +412,7 @@ function OrderTimingPanel({ locale, timing, catalog }: { locale: AppLocale; timi
           <dd>{formatValue(timing.optimal!, "score", locale)}</dd>
         </div>
         <div>
-          <dt>{tr("timingFramePlanScore")}</dt>
+          <dt>{tr("timingFramePlanScore", { ms: timing.advanceMs })}</dt>
           <dd>
             <span>{formatValue(timing.best, "score", locale)}</span>
             {planDelta !== 0 && (
@@ -424,13 +426,18 @@ function OrderTimingPanel({ locale, timing, catalog }: { locale: AppLocale; timi
         <div className="dr-timing-ceiling">
           <span>{tr("timingBest")}</span>
           <strong>{formatValue(timing.best, "score", locale)}</strong>
-          <em className="dr-timing-delta">+{formatValue(planDelta, "score", locale)}</em>
+          {planDelta !== 0 && (
+            <em className="dr-timing-delta">{planDelta > 0 ? "+" : ""}{formatValue(planDelta, "score", locale)}</em>
+          )}
         </div>
         <span className="dr-timing-advance">
           <Icon name="fastRewind" className="h-4 w-4" />
           {tr("timingAdvance", { ms: timing.advanceMs })}
         </span>
       </div>
+    )}
+    {guideBlocked && (
+      <p className="dr-muted mt-2 mb-0 text-xs">{tr("timingGuideUnavailable")}</p>
     )}
     {canGuide && (
       <details className="dr-timing-guide">

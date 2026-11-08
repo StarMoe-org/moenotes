@@ -17,6 +17,11 @@ export const DEFAULT_DECK_GOAL: DeckGoal = "battle";
 export type DeckAggregation = "expected" | "maximum";
 /** Cumulative-counter delivery timing within legal base-judgement windows for ordinary maximum-score searches. */
 export type DeckCumulativeTiming = "nominal" | "best" | "worst";
+/** Native simulation frame rates (Hz) supported for normal played lives (`7f80fa3`, `6e20f08`). */
+export const DECK_FRAME_RATES = [30, 60, 90, 120] as const;
+export type DeckFrameRate = (typeof DECK_FRAME_RATES)[number];
+export const DEFAULT_JUST_WINDOW_BASE_MS = 25;
+export const MAX_GEKISO_INPUT_COUNT = 2_147_483_647;
 export const isEventGoal = (goal: DeckGoal): boolean => (EVENT_GOALS as readonly string[]).includes(goal);
 export const isEventPayoffGoal = (goal: DeckGoal): boolean => goal === "challengePoints" || goal === "eventPoints" || goal === "eventItems";
 
@@ -72,6 +77,8 @@ export interface DeckGoalInput {
   aggregation: DeckAggregation;
   /** Ordinary maximum-score goal only: optimize or lower-bound cumulative-Snap delivery timing (`best` / `worst`), or keep `nominal`. */
   cumulativeTiming?: DeckCumulativeTiming;
+  /** Ordinary played live frame rate (`30` / `60` / `90` / `120` Hz, default `60`). */
+  frameRate?: DeckFrameRate;
   allSongs?: boolean;
   /** Multi-song search mode when `allSongs` is enabled on score goals: per-song top teams (`individual`) or one shared formation maximizing average score (`mean`). */
   multiSongMode?: "individual" | "mean";
@@ -93,6 +100,19 @@ export interface DeckGoalInput {
   arenaSongEntries?: readonly { musicId: number; difficulty: MusicDifficulty }[];
   /** Gekisou range placement (1..5, default 1). */
   gekisouRank?: number;
+  /** Per-range Gekisou placements (Ranges 1..3, each 1..5). */
+  gekisouRanks?: readonly [number, number, number];
+  /** Gekisou minimum opening COMBO BONUS (`1..=2147483647`, default `1`). */
+  minComboBonus?: number;
+  /** Gekisou steady JUST tap window target unit (`+%` over base tap window or `±ms` half-window). */
+  justWindowUnit?: "percent" | "ms";
+  justWindowPercent?: number;
+  justWindowMs?: number;
+  /** Base JUST tap half-window in ms from `MasterLiveJudgementTiming` (`25` ms default). */
+  baseJustWindowMs?: number;
+  /** Gekisou LUCK sampling mode (`auto` nominal/4-root vs `manual` seed count `0..n`). */
+  luckSamplingMode?: "auto" | "manual";
+  luckSamples?: number;
   playMode: "accuracy" | "pattern";
   missEvery: number;
   boosts: number;
@@ -101,11 +121,17 @@ export interface DeckGoalInput {
   challengePoints: ChallengePointCost;
   /** Whole percents. */
   greatPercent: number;
+  goodPercent?: number;
+  badPercent?: number;
+  missPercent?: number;
   justPercent: number;
   /** Power: count the chosen song's attribute and tag bonuses. */
   powerSong: boolean;
   /** Power: count the held event's parameter bonus. */
   eventParameter: boolean;
+  /** Event room grading mode (`battle` vs `solo`) and room player count (`1..5`). */
+  rewardRoomMode?: "battle" | "solo";
+  rewardPlayers?: number;
   /** Battle event points: the other players' average score, or null for "the same as mine". */
   othersAverageScore: number | null;
 }
@@ -165,6 +191,34 @@ export const effectiveCumulativeTiming = (
     ? input.cumulativeTiming
     : "nominal";
 
+/** Whether a goal supports selectable native frame rate (`30` / `60` / `90` / `120` Hz). */
+export const supportsFrameRate = (input: Pick<DeckGoalInput, "goal" | "venue">): boolean =>
+  readsAccuracy(input) && !playsGekisou(input);
+
+export const effectiveFrameRate = (
+  input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "frameRate">>,
+): DeckFrameRate =>
+  supportsFrameRate(input) && input.frameRate && (DECK_FRAME_RATES as readonly number[]).includes(input.frameRate)
+    ? input.frameRate
+    : 60;
+
+/** Resolved minimum steady JUST tap half-window in ms (`0` when unset). */
+export function effectiveMinJustWindowMs(
+  input: Partial<Pick<DeckGoalInput, "justWindowUnit" | "justWindowPercent" | "justWindowMs" | "baseJustWindowMs">>,
+): number {
+  const unit = input.justWindowUnit ?? "percent";
+  if (unit === "ms") {
+    const ms = input.justWindowMs ?? 0;
+    return typeof ms === "number" && Number.isFinite(ms) && ms > 0 ? ms : 0;
+  }
+  const pct = input.justWindowPercent ?? 0;
+  if (typeof pct !== "number" || !Number.isFinite(pct) || pct <= 0) return 0;
+  const base = typeof input.baseJustWindowMs === "number" && Number.isFinite(input.baseJustWindowMs) && input.baseJustWindowMs > 0
+    ? input.baseJustWindowMs
+    : DEFAULT_JUST_WINDOW_BASE_MS;
+  return Number((base * (1 + pct / 100)).toFixed(4));
+}
+
 type RewardInput = Pick<DeckGoalInput, "goal"> & Partial<Pick<DeckGoalInput, "venue" | "rewards">>;
 /** The rewards a goal input can count beside its own. A challenge live spends challenge points and earns none. */
 export const mixableRewards = (input: Pick<DeckGoalInput, "goal"> & Partial<Pick<DeckGoalInput, "venue">>): readonly EventReward[] =>
@@ -189,7 +243,7 @@ export interface DeckSolverCapabilities {
   goals: readonly string[];
   metrics: Readonly<Record<string, readonly string[]>>;
   aggregations?: Partial<Record<DeckAggregation, Readonly<Record<string, readonly string[]>>>>;
-  accuracy: { great: boolean; just: boolean };
+  accuracy: { great: boolean; good?: boolean; bad?: boolean; miss?: boolean; just: boolean };
   patternPlay?: boolean;
   crossSong?: boolean;
   crossSongMean?: boolean;
@@ -206,12 +260,26 @@ export interface DeckSolverCapabilities {
   arenaRules?: boolean;
   /** Gekisou range placements 1..5. */
   gekisouRank?: boolean;
+  /** Per-range Gekisou placements `[r1, r2, r3]` (1..5). */
+  gekisouRangeRanks?: boolean;
   /** Manual / simulated event bonus overrides (`eventEffects`) for future or custom event planning. */
   manualEventBonuses?: boolean;
   /** Fast single-card upgrade impact ranking (`evaluateGrowth`) on solved teams. */
   teamGrowth?: boolean;
   /** Best/worst cumulative-counter delivery timing optimization (`cumulativeTiming: "best" | "worst"`). */
   cumulativeTiming?: boolean;
+  /** Supported frame rates (Hz) for ordinary played lives. */
+  frameRates?: readonly number[];
+  /** Bounded Gekisou mission member counts (`[COMBO, LUCK, JUST]`, sum <= 5). */
+  minMissionMembers?: boolean;
+  /** Gekisou minimum opening COMBO BONUS (`minComboBonus`). */
+  minComboBonus?: boolean;
+  /** Gekisou steady JUST tap window floor (`minJustWindowMs`). */
+  minJustWindow?: boolean;
+  /** Configurable LUCK simulation seed counts (`luckSamples`). */
+  luckSampling?: boolean;
+  /** Supported event reward room grading modes (`battle` / `solo`). */
+  rewardRoomModes?: readonly string[];
 }
 
 export function parseCapabilities(json: string | null): DeckSolverCapabilities | null {
@@ -221,6 +289,7 @@ export function parseCapabilities(json: string | null): DeckSolverCapabilities |
   if (!value || typeof value !== "object") return null;
   const raw = value as Record<string, unknown>;
   const strings = (list: unknown) => Array.isArray(list) ? list.filter((item): item is string => typeof item === "string") : [];
+  const numbers = (list: unknown) => Array.isArray(list) ? list.filter((item): item is number => typeof item === "number" && Number.isFinite(item)) : [];
   const metricMap = (value: unknown): Record<string, string[]> => {
     const map: Record<string, string[]> = {};
     if (value && typeof value === "object" && !Array.isArray(value)) for (const [kind, list] of Object.entries(value)) map[kind] = strings(list);
@@ -245,17 +314,39 @@ export function parseCapabilities(json: string | null): DeckSolverCapabilities |
     && (combined.goals === undefined || Array.isArray(combined.goals) && combined.goals.every(kind => typeof kind === "string"))
     ? { maxLevels: combined.maxLevels as number, maxTerms: combined.maxTerms as number, maxWeight: combined.maxWeight as number,
       ...(combined.goals === undefined ? {} : { goals: strings(combined.goals) }) } : undefined;
+  const frameRates = numbers(raw.frameRates);
+  const rewardRoomModes = strings(raw.rewardRoomModes);
   return { goals: strings(raw.goals), metrics, aggregations, ...(eventItemRewards ? { eventItemRewards } : {}), ...(combinedMetric ? { combinedMetric } : {}),
     crossSong: raw.crossSong === true, crossSongMean: raw.crossSongMean === true, songRules: raw.songRules === true,
     resume: raw.resume === true, luckMissions: raw.luckMissions === true, luckGreatConversions: raw.luckGreatConversions === true,
-    arenaRules: raw.arenaRules === true, gekisouRank: raw.gekisouRank === true,
+    arenaRules: raw.arenaRules === true, gekisouRank: raw.gekisouRank === true, gekisouRangeRanks: raw.gekisouRangeRanks === true,
     manualEventBonuses: raw.manualEventBonuses === true, teamGrowth: raw.teamGrowth === true,
     cumulativeTiming: raw.cumulativeTiming === true,
-    patternPlay: raw.patternPlay === true || !!raw.patternPlay && typeof raw.patternPlay === "object", accuracy: { great: accuracy.great === true, just: accuracy.just === true } };
+    ...(frameRates.length ? { frameRates } : {}),
+    minMissionMembers: raw.minMissionMembers === true,
+    minComboBonus: raw.minComboBonus === true,
+    minJustWindow: raw.minJustWindow === true,
+    luckSampling: raw.luckSampling === true,
+    ...(rewardRoomModes.length ? { rewardRoomModes } : {}),
+    patternPlay: raw.patternPlay === true || !!raw.patternPlay && typeof raw.patternPlay === "object",
+    accuracy: {
+      great: accuracy.great === true,
+      ...(accuracy.good === true ? { good: true } : {}),
+      ...(accuracy.bad === true ? { bad: true } : {}),
+      ...(accuracy.miss === true ? { miss: true } : {}),
+      just: accuracy.just === true,
+    } };
 }
 
 /** Whether the engine computes a goal input's goal kind and metric. */
-export function computes(capabilities: DeckSolverCapabilities, input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "playMode" | "greatPercent" | "justPercent" | "aggregation" | "cumulativeTiming" | "rewards" | "arenaRule" | "gekisouRank" | "allSongs" | "multiSongMode" | "songRules">>): boolean {
+export function computes(
+  capabilities: DeckSolverCapabilities,
+  input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput,
+    "playMode" | "greatPercent" | "goodPercent" | "badPercent" | "missPercent" | "justPercent"
+    | "aggregation" | "cumulativeTiming" | "frameRate" | "rewards" | "arenaRule" | "gekisouRank" | "gekisouRanks"
+    | "minComboBonus" | "justWindowUnit" | "justWindowPercent" | "justWindowMs" | "baseJustWindowMs"
+    | "luckSamplingMode" | "luckSamples" | "allSongs" | "multiSongMode" | "songRules">>,
+): boolean {
   const layout = rewardLayoutOf(input);
   if (layout) {
     const combined = capabilities.combinedMetric;
@@ -282,11 +373,24 @@ export function computes(capabilities: DeckSolverCapabilities, input: Pick<DeckG
   if (input.allSongs && input.multiSongMode === "mean") {
     if (!capabilities.crossSongMean || !supportsCrossSongMean(input) || effectiveAggregation(input) !== "expected") return false;
   }
-  if (playsGekisou(input) && input.gekisouRank !== undefined && input.gekisouRank !== 1 && !capabilities.gekisouRank) return false;
+  if (playsGekisou(input)) {
+    if (input.gekisouRank !== undefined && input.gekisouRank !== 1 && !capabilities.gekisouRank) return false;
+    if (input.gekisouRanks && input.gekisouRanks.some(r => r !== (input.gekisouRank ?? 1)) && !capabilities.gekisouRangeRanks) return false;
+    if ((input.minComboBonus ?? 1) > 1 && !capabilities.minComboBonus) return false;
+    if (effectiveMinJustWindowMs(input) > 0 && !capabilities.minJustWindow) return false;
+    if (input.luckSamplingMode === "manual" && (input.luckSamples ?? 0) > 0 && !capabilities.luckSampling) return false;
+  }
   if (effectiveCumulativeTiming(input) !== "nominal" && !capabilities.cumulativeTiming) return false;
+  const frameRate = effectiveFrameRate(input);
+  if (frameRate !== 60 && !(capabilities.frameRates ?? []).includes(frameRate)) return false;
   if (input.playMode === "pattern" && readsAccuracy(input) && !capabilities.patternPlay) return false;
   if (readsAccuracy(input) && input.playMode !== "pattern") {
     if ((input.greatPercent ?? 0) !== 0 && !capabilities.accuracy.great) return false;
+    if (!playsGekisou(input)) {
+      if ((input.goodPercent ?? 0) !== 0 && !capabilities.accuracy.good) return false;
+      if ((input.badPercent ?? 0) !== 0 && !capabilities.accuracy.bad) return false;
+      if ((input.missPercent ?? 0) !== 0 && !capabilities.accuracy.miss) return false;
+    }
     if (playsGekisou(input) && (input.justPercent ?? 100) !== 100 && !capabilities.accuracy.just) return false;
   }
   if (!capabilities.goals.includes(kind)) return false;
@@ -334,6 +438,8 @@ export interface DeckRunConstraints {
   excludeSnaps: readonly string[];
   leader?: string | null;
   noSnaps?: boolean;
+  /** Minimum COMBO, LUCK, and JUST Gekisou member counts (`0..=5`, sum `<= 5`). */
+  minMissionMembers?: readonly [number, number, number];
 }
 
 /** JST DateTime ticks (100 ns since 0001-01-01, wall clock in UTC+9) of an epoch time in ms. */
@@ -386,19 +492,42 @@ export function recommendationRequest(input: DeckGoalInput, context: DeckRecomme
   const gap = goalGap(input, context.event);
   if (gap) throw new Error(`The goal still needs: ${gap}`);
   const kind = solverGoalKind(input), event = context.event;
+  const isGekisou = playsGekisou(input);
   const great = fraction(input.greatPercent);
+  const good = isGekisou ? 0 : fraction(Math.min(input.goodPercent ?? 0, Math.max(0, 100 - input.greatPercent)));
+  const bad = isGekisou ? 0 : fraction(Math.min(input.badPercent ?? 0, Math.max(0, 100 - input.greatPercent - (input.goodPercent ?? 0))));
+  const miss = isGekisou ? 0 : fraction(Math.min(input.missPercent ?? 0, Math.max(0, 100 - input.greatPercent - (input.goodPercent ?? 0) - (input.badPercent ?? 0))));
+  const hasLowerJudgements = good > 0 || bad > 0 || miss > 0;
   const timing = effectiveCumulativeTiming(input);
-  const accuracy = playsGekisou(input) ? `{"greatFraction":${great},"justFraction":${fraction(Math.min(input.justPercent, 100 - input.greatPercent))}}` : `{"greatFraction":${great}}`;
+  const frameRate = effectiveFrameRate(input);
+  const extraAccuracyFields = `${good > 0 ? `,"goodFraction":${good}` : ""}${bad > 0 ? `,"badFraction":${bad}` : ""}${miss > 0 ? `,"missFraction":${miss}` : ""}`;
+  const playTail = `${extraAccuracyFields}${timing !== "nominal" ? `,"cumulativeTiming":${JSON.stringify(timing)}` : ""}${frameRate !== 60 ? `,"frameRate":${frameRate}` : ""}`;
+  const accuracy = isGekisou
+    ? `{"greatFraction":${great},"justFraction":${fraction(Math.min(input.justPercent, 100 - input.greatPercent))}}`
+    : `{"greatFraction":${great}${extraAccuracyFields}}`;
   const play = input.playMode === "pattern"
-    ? `"play":{"kind":"pattern","greatFraction":${great},"justFraction":${playsGekisou(input) ? fraction(Math.min(input.justPercent, 100 - input.greatPercent)) : 0},"missEvery":${input.missEvery}${timing !== "nominal" ? `,"cumulativeTiming":${JSON.stringify(timing)}` : ""}}`
-    : timing !== "nominal"
-      ? `"play":{"greatFraction":${great},"cumulativeTiming":${JSON.stringify(timing)}}`
+    ? `"play":{"kind":"pattern","greatFraction":${great},"justFraction":${isGekisou ? fraction(Math.min(input.justPercent, 100 - input.greatPercent)) : 0},"missEvery":${input.missEvery}${playTail}}`
+    : (timing !== "nominal" || frameRate !== 60 || hasLowerJudgements)
+      ? `"play":{"greatFraction":${great}${playTail}}`
       : `"accuracy":${accuracy}`;
   const song = `"musicId":${input.musicId},"difficulty":${JSON.stringify(input.difficulty)}`;
   const rank = Math.min(5, Math.max(1, Math.trunc(input.gekisouRank ?? 1)));
+  const clampRank = (value: number) => Math.min(5, Math.max(1, Math.trunc(value)));
+  const rawRanks = isGekisou && kind !== "missionLive" && input.gekisouRanks
+    ? [clampRank(input.gekisouRanks[0]), clampRank(input.gekisouRanks[1]), clampRank(input.gekisouRanks[2])] as const
+    : null;
+  const ranksJson = rawRanks && rawRanks.some(r => r !== rank) ? `,"ranks":${JSON.stringify(rawRanks)}` : "";
+  const minComboBonus = isGekisou && Number.isSafeInteger(input.minComboBonus) && (input.minComboBonus ?? 1) > 1
+    ? Math.min(MAX_GEKISO_INPUT_COUNT, input.minComboBonus!)
+    : null;
+  const minJustWindowMs = isGekisou ? effectiveMinJustWindowMs(input) : 0;
+  const luckSamples = isGekisou && input.luckSamplingMode === "manual" && Number.isSafeInteger(input.luckSamples) && (input.luckSamples ?? 0) > 0
+    ? Math.min(MAX_GEKISO_INPUT_COUNT, input.luckSamples!)
+    : null;
+  const gekisouExtras = `${ranksJson}${minComboBonus !== null ? `,"minComboBonus":${minComboBonus}` : ""}${minJustWindowMs > 0 ? `,"minJustWindowMs":${minJustWindowMs}` : ""}${luckSamples !== null ? `,"luckSamples":${luckSamples}` : ""}`;
   let goal: string;
   switch (kind) {
-    case "battleLive": case "missionLive": goal = `{"kind":"${kind}",${song}${kind === "battleLive" ? `,"rank":${rank}` : ""},${play}}`; break;
+    case "battleLive": case "missionLive": goal = `{"kind":"${kind}",${song}${kind === "battleLive" ? `,"rank":${rank}` : ""}${gekisouExtras},${play}}`; break;
     case "arenaLive": {
       if (input.arenaRule) {
         const arenaJson = JSON.stringify({
@@ -411,10 +540,10 @@ export function recommendationRequest(input: DeckGoalInput, context: DeckRecomme
           ? input.arenaSongEntries.map(entry => ({ musicId: entry.musicId, difficulty: entry.difficulty }))
           : null;
         goal = entries
-          ? `{"kind":"arenaLive","arena":${arenaJson},"songs":${JSON.stringify(entries)},"rank":${rank},${play}}`
-          : `{"kind":"arenaLive","arena":${arenaJson},${song},"rank":${rank},${play}}`;
+          ? `{"kind":"arenaLive","arena":${arenaJson},"songs":${JSON.stringify(entries)},"rank":${rank}${gekisouExtras},${play}}`
+          : `{"kind":"arenaLive","arena":${arenaJson},${song},"rank":${rank}${gekisouExtras},${play}}`;
       } else {
-        goal = `{"kind":"arenaLive","arenaMusicId":${input.arenaMusicId},"difficulty":${JSON.stringify(input.difficulty)},"rank":${rank},${play}}`;
+        goal = `{"kind":"arenaLive","arenaMusicId":${input.arenaMusicId},"difficulty":${JSON.stringify(input.difficulty)},"rank":${rank}${gekisouExtras},${play}}`;
       }
       break;
     }
@@ -429,7 +558,7 @@ export function recommendationRequest(input: DeckGoalInput, context: DeckRecomme
     goal = goal.replace("{", `{${multiSongPrefix}${JSON.stringify(options.songScope.field)}:${JSON.stringify(options.songScope.ids)},`);
   }
   if (kind !== "power" && kind !== "arenaLive") {
-    const rule = activeSongRules(input.songRules, playsGekisou(input));
+    const rule = activeSongRules(input.songRules, isGekisou);
     if (rule) goal = goal.replace("{", `{"songRules":${JSON.stringify(rule)},`);
   }
   const parts = [`"format":${JSON.stringify(REQUEST_FORMAT)}`, `"goal":${goal}`];
@@ -443,9 +572,19 @@ export function recommendationRequest(input: DeckGoalInput, context: DeckRecomme
     const clock = kind === "skip" ? `{"kind":"skip","serverNowJstTicks":${jstTicks(context.now)}}`
       : `{"kind":"played","liveStartJstTicks":null,"serverNowJstTicks":${jstTicks(context.now)}}`;
     parts.push(`"metric":${metric}`, `"eventContext":{"resultClock":${clock},"rewardProjection":true}`);
-    if (isNetworkInput(input)) parts.push(`"room":{"players":5,"othersAverageScore":${input.othersAverageScore === null ? "null" : Math.max(0, Math.trunc(input.othersAverageScore))}}`);
+    const players = Math.min(5, Math.max(1, Math.trunc(input.rewardPlayers ?? 5)));
+    const othersJson = input.othersAverageScore === null ? "null" : String(Math.max(0, Math.trunc(input.othersAverageScore)));
+    if (isNetworkInput(input)) {
+      if (input.rewardRoomMode === "solo") {
+        parts.push(`"room":{"mode":"solo","players":1,"othersAverageScore":null}`);
+      } else {
+        parts.push(`"room":{"players":${players},"othersAverageScore":${othersJson}}`);
+      }
+    } else if (kind === "freeLive" && input.rewardRoomMode === "battle") {
+      parts.push(`"room":{"mode":"battle","players":${players},"othersAverageScore":${othersJson}}`);
+    }
   } else if (kind !== "power") parts.push(`"metric":{"kind":"score"}`);
-  const { includeMembers, includeSnaps, excludeMembers, excludeSnaps, leader, noSnaps } = context.constraints;
+  const { includeMembers, includeSnaps, excludeMembers, excludeSnaps, leader, noSnaps, minMissionMembers } = context.constraints;
   const leaderJson = leader == null || leader === "" ? "null" : ids([leader])[0]!;
   if (event && usesEventData(input) && (context.manualEvent || context.eventEffects !== undefined)) {
     parts.push('"manualEvent":true');
@@ -454,8 +593,11 @@ export function recommendationRequest(input: DeckGoalInput, context: DeckRecomme
     }
   }
   const requiredSnapsPart = !noSnaps && includeSnaps && includeSnaps.length > 0 ? `,"includeSnaps":[${ids(includeSnaps).join(",")}]` : "";
+  const missionPart = isGekisou && minMissionMembers && minMissionMembers.some(v => v > 0)
+    ? `,"minMissionMembers":${JSON.stringify([minMissionMembers[0], minMissionMembers[1], minMissionMembers[2]])}`
+    : "";
   parts.push(`"eventIds":[${event && usesEventData(input) ? event.id : ""}]`,
-    `"constraints":{"leader":${leaderJson},"includeMembers":[${ids(includeMembers).join(",")}]${requiredSnapsPart},"excludeMembers":[${ids(excludeMembers).join(",")}],"excludeSnaps":[${ids(excludeSnaps).join(",")}],"noSnaps":${noSnaps === true ? "true" : "false"}}`,
+    `"constraints":{"leader":${leaderJson},"includeMembers":[${ids(includeMembers).join(",")}]${requiredSnapsPart},"excludeMembers":[${ids(excludeMembers).join(",")}],"excludeSnaps":[${ids(excludeSnaps).join(",")}],"noSnaps":${noSnaps === true ? "true" : "false"}${missionPart}}`,
     `"k":${options.teams ?? RECOMMENDATION_COUNT}`, `"limits":{"timeLimitMs":${input.timeLimit === null ? "null" : input.timeLimit * 1000}}`);
   return `{${parts.join(",")}}`;
 }

@@ -143,7 +143,10 @@ export function adaptData(data: DeckData, datasetId: string) {
       skills("gekisoSupport", "MasterGekisouSupportSkill", "MasterGekisouSupportSkillEffect", "gekisouSupportSkillID"),
     ]),
     skillReference: Object.fromEntries(Object.entries(reference).map(([key, name]) => [key, rows(name)])),
-    liveTools: Object.fromEntries(Object.entries(tools).map(([key, name]) => [key, rows(name)])),
+    liveTools: {
+      ...Object.fromEntries(Object.entries(tools).map(([key, name]) => [key, rows(name)])),
+      judgementAreaOffsets: optionalTable(data, "MasterLiveJudgementAreaOffset"),
+    },
     runtimeRules: { tables: Object.fromEntries(Object.entries(runtime).map(([key, name]) => [key, { rows: rows(name) }])) },
     bandItems: keyed(rows("MasterBandItem").map(row => ({ ...row, bandItemId: row.id, effects: itemEffects.filter(effect => effect.bandItemId === row.id) }))),
     challengeMusicTable: { rows: rows("MasterChallengeMusic") }, challengePointTable: { rows: rows("MasterLiveChallengePoint") },

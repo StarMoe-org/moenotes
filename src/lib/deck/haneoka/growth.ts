@@ -7,10 +7,16 @@ export type DeckGrowthAction =
   | "level"
   | "levelCap"
   | "awake"
+  | "awakeCap"
   | "rank"
+  | "rankCap"
   | "liveSkillLevel"
+  | "liveSkillCap"
   | "gekisouSkillLevel"
+  | "gekisouSkillCap"
   | "full";
+
+export type DeckGrowthTarget = "step" | "cap" | "full";
 
 export interface DeckGrowthTeamInput {
   readonly members: readonly number[];
@@ -32,6 +38,7 @@ export interface DeckGrowthScenario {
   readonly kind: "member" | "snap";
   readonly cardId: number;
   readonly action: DeckGrowthAction;
+  readonly target?: DeckGrowthTarget;
   readonly from: number | null;
   readonly to: number | null;
   readonly after: DeckGrowthMetricSnapshot;
@@ -340,6 +347,7 @@ export function evaluateTeamGrowth(
     kind: "member" | "snap",
     cardId: number,
     action: DeckGrowthAction,
+    target: DeckGrowthTarget,
     from: number | null,
     to: number | null,
     nextMembers: typeof baseMembers,
@@ -354,6 +362,7 @@ export function evaluateTeamGrowth(
       kind,
       cardId,
       action,
+      target,
       from,
       to,
       after,
@@ -402,33 +411,53 @@ export function evaluateTeamGrowth(
         if (member.level < currentCap) {
           const plusOne = structuredClone(baseMembers);
           plusOne[slot] = { ...plusOne[slot]!, level: member.level + 1 };
-          evalCandidate(slot, "member", member.cardId, "level", member.level, member.level + 1, plusOne, baseSnaps);
+          evalCandidate(slot, "member", member.cardId, "level", "step", member.level, member.level + 1, plusOne, baseSnaps);
           if (member.level + 1 < currentCap) {
             const toCap = structuredClone(baseMembers);
             toCap[slot] = { ...toCap[slot]!, level: currentCap };
-            evalCandidate(slot, "member", member.cardId, "levelCap", member.level, currentCap, toCap, baseSnaps);
+            evalCandidate(slot, "member", member.cardId, "levelCap", "cap", member.level, currentCap, toCap, baseSnaps);
           }
         }
       }
       if (member.awake !== null && member.awake < maxAwake) {
         const nextMembers = structuredClone(baseMembers);
         nextMembers[slot] = { ...nextMembers[slot]!, awake: member.awake + 1 };
-        evalCandidate(slot, "member", member.cardId, "awake", member.awake, member.awake + 1, nextMembers, baseSnaps);
+        evalCandidate(slot, "member", member.cardId, "awake", "step", member.awake, member.awake + 1, nextMembers, baseSnaps);
+        if (member.awake + 1 < maxAwake) {
+          const capMembers = structuredClone(baseMembers);
+          capMembers[slot] = { ...capMembers[slot]!, awake: maxAwake };
+          evalCandidate(slot, "member", member.cardId, "awakeCap", "cap", member.awake, maxAwake, capMembers, baseSnaps);
+        }
       }
       if (member.rank !== null && member.rank < maxRank) {
         const nextMembers = structuredClone(baseMembers);
         nextMembers[slot] = { ...nextMembers[slot]!, rank: member.rank + 1 };
-        evalCandidate(slot, "member", member.cardId, "rank", member.rank, member.rank + 1, nextMembers, baseSnaps);
+        evalCandidate(slot, "member", member.cardId, "rank", "step", member.rank, member.rank + 1, nextMembers, baseSnaps);
+        if (member.rank + 1 < maxRank) {
+          const capMembers = structuredClone(baseMembers);
+          capMembers[slot] = { ...capMembers[slot]!, rank: maxRank };
+          evalCandidate(slot, "member", member.cardId, "rankCap", "cap", member.rank, maxRank, capMembers, baseSnaps);
+        }
       }
       if (!powerOrSkip && !gekisoGoal && member.liveSkillLevel !== null && member.liveSkillLevel < maxLiveSkill) {
         const nextMembers = structuredClone(baseMembers);
         nextMembers[slot] = { ...nextMembers[slot]!, liveSkillLevel: member.liveSkillLevel + 1 };
-        evalCandidate(slot, "member", member.cardId, "liveSkillLevel", member.liveSkillLevel, member.liveSkillLevel + 1, nextMembers, baseSnaps);
+        evalCandidate(slot, "member", member.cardId, "liveSkillLevel", "step", member.liveSkillLevel, member.liveSkillLevel + 1, nextMembers, baseSnaps);
+        if (member.liveSkillLevel + 1 < maxLiveSkill) {
+          const capMembers = structuredClone(baseMembers);
+          capMembers[slot] = { ...capMembers[slot]!, liveSkillLevel: maxLiveSkill };
+          evalCandidate(slot, "member", member.cardId, "liveSkillCap", "cap", member.liveSkillLevel, maxLiveSkill, capMembers, baseSnaps);
+        }
       }
       if (!powerOrSkip && gekisoGoal && member.gekisoSkillLevel !== null && member.gekisoSkillLevel < maxGekisoSkill) {
         const nextMembers = structuredClone(baseMembers);
         nextMembers[slot] = { ...nextMembers[slot]!, gekisoSkillLevel: member.gekisoSkillLevel + 1 };
-        evalCandidate(slot, "member", member.cardId, "gekisouSkillLevel", member.gekisoSkillLevel, member.gekisoSkillLevel + 1, nextMembers, baseSnaps);
+        evalCandidate(slot, "member", member.cardId, "gekisouSkillLevel", "step", member.gekisoSkillLevel, member.gekisoSkillLevel + 1, nextMembers, baseSnaps);
+        if (member.gekisoSkillLevel + 1 < maxGekisoSkill) {
+          const capMembers = structuredClone(baseMembers);
+          capMembers[slot] = { ...capMembers[slot]!, gekisoSkillLevel: maxGekisoSkill };
+          evalCandidate(slot, "member", member.cardId, "gekisouSkillCap", "cap", member.gekisoSkillLevel, maxGekisoSkill, capMembers, baseSnaps);
+        }
       }
 
       const alreadyFull =
@@ -447,7 +476,7 @@ export function evaluateTeamGrowth(
           liveSkillLevel: powerOrSkip || gekisoGoal ? null : maxLiveSkill,
           gekisoSkillLevel: powerOrSkip || !gekisoGoal ? null : maxGekisoSkill,
         };
-        evalCandidate(slot, "member", member.cardId, "full", null, null, fullMembers, baseSnaps);
+        evalCandidate(slot, "member", member.cardId, "full", "full", null, null, fullMembers, baseSnaps);
       }
 
       cards.push({
@@ -479,25 +508,30 @@ export function evaluateTeamGrowth(
           if (snap.level < currentCap) {
             const plusOne = structuredClone(baseSnaps);
             plusOne[snapIdx] = { ...plusOne[snapIdx]!, level: snap.level + 1 };
-            evalCandidate(slot, "snap", snap.cardId, "level", snap.level, snap.level + 1, baseMembers, plusOne);
+            evalCandidate(slot, "snap", snap.cardId, "level", "step", snap.level, snap.level + 1, baseMembers, plusOne);
             if (snap.level + 1 < currentCap) {
               const toCap = structuredClone(baseSnaps);
               toCap[snapIdx] = { ...toCap[snapIdx]!, level: currentCap };
-              evalCandidate(slot, "snap", snap.cardId, "levelCap", snap.level, currentCap, baseMembers, toCap);
+              evalCandidate(slot, "snap", snap.cardId, "levelCap", "cap", snap.level, currentCap, baseMembers, toCap);
             }
           }
         }
         if (snap.rank !== null && snap.rank < maxRank) {
           const nextSnaps = structuredClone(baseSnaps);
           nextSnaps[snapIdx] = { ...nextSnaps[snapIdx]!, rank: snap.rank + 1 };
-          evalCandidate(slot, "snap", snap.cardId, "rank", snap.rank, snap.rank + 1, baseMembers, nextSnaps);
+          evalCandidate(slot, "snap", snap.cardId, "rank", "step", snap.rank, snap.rank + 1, baseMembers, nextSnaps);
+          if (snap.rank + 1 < maxRank) {
+            const capSnaps = structuredClone(baseSnaps);
+            capSnaps[snapIdx] = { ...capSnaps[snapIdx]!, rank: maxRank };
+            evalCandidate(slot, "snap", snap.cardId, "rankCap", "cap", snap.rank, maxRank, baseMembers, capSnaps);
+          }
         }
 
         const alreadyFull = snap.rank === maxRank && snap.level === maxLevel;
         if (!alreadyFull) {
           const fullSnaps = structuredClone(baseSnaps);
           fullSnaps[snapIdx] = { ...fullSnaps[snapIdx]!, rank: maxRank, level: maxLevel };
-          evalCandidate(slot, "snap", snap.cardId, "full", null, null, baseMembers, fullSnaps);
+          evalCandidate(slot, "snap", snap.cardId, "full", "full", null, null, baseMembers, fullSnaps);
         }
 
         cards.push({

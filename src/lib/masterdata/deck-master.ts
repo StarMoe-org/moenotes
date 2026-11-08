@@ -200,6 +200,10 @@ export const DECK_MASTER_TABLE_SPECS: Readonly<Record<string, DeckTableSpec>> = 
       "_noteSimulateJudgement", "_beforeMs", "_afterMs",
     ],
   },
+  MasterLiveJudgementAreaOffset: {
+    columns: ["_id", "_offsetType", "_assistLevel", "_x"],
+    optionalTable: true,
+  },
   MasterLiveComboScoreBonus: {
     columns: ["_id", "_comboBonusType", "_requiredComboCount", "_bonusFactor"],
   },
