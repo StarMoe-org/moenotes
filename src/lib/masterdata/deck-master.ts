@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { assetConfig } from "@/config/assets";
 import { GAME_SERVER_PROFILES, PRIMARY_SERVER, type GameServer } from "@/config/servers";
 import {
   currentMasterDataEpochSync,
@@ -23,6 +24,7 @@ export interface DeckMasterOverlayPayload {
   dataVersion: string;
   regionVersion: string | null;
   sha256: string;
+  chartsOverlayUrl?: string;
   master: Record<string, DeckMasterColumnarTable>;
 }
 
@@ -397,5 +399,11 @@ export async function getDeckMasterOverlay(
     cacheState.byRegion.set(region, pending);
   }
   const base = await pending;
-  return { server, ...base };
+  const chartParams = new URLSearchParams({ server });
+  if (base.regionVersion) chartParams.set("v", base.regionVersion);
+  return {
+    server,
+    ...base,
+    chartsOverlayUrl: `${assetConfig.deck.chartsOverlayUrl}?${chartParams.toString()}`,
+  };
 }

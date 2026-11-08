@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { GameServer } from "@/config/servers";
-import { buildDeckMasterOverlayUrl, resolveDeckRuntime, type DeckRuntimeFailureCode, type DeckRuntimeUnavailableReason, type DeckSolverRuntime } from "@/lib/deck/runtime-source";
+import {
+  buildDeckChartsOverlayUrl,
+  buildDeckMasterOverlayUrl,
+  resolveDeckRuntime,
+  resolveLiveDeckRuntimeFallback,
+  type DeckRuntimeFailureCode,
+  type DeckRuntimeUnavailableReason,
+  type DeckSolverRuntime,
+} from "@/lib/deck/runtime-source";
 import { DeckWorkerClient } from "@/lib/deck/worker-client";
 import type { DeckDataCatalog, DeckWorkerFailureCode } from "@/lib/deck/worker-protocol";
 import { parseCapabilities, type DeckSolverCapabilities } from "@/lib/deck/goals";
@@ -60,16 +68,23 @@ export function useDeckSolver(server: GameServer, active: boolean) {
     const abort = new AbortController();
     setEngine({ status: "loading" }); setJob({ status: "idle" }); setGrowthByTeam({});
     void (async () => {
-      const resolved = await resolveDeckRuntime(server, { signal: abort.signal }).catch(error => {
+      let resolved = await resolveDeckRuntime(server, { signal: abort.signal }).catch(error => {
         if (abort.signal.aborted) return null;
         return { status: "failed" as const, code: "network" as const, message: error instanceof Error ? error.message : String(error) };
       });
       if (!resolved || abort.signal.aborted) return;
+      if (resolved.status !== "available") {
+        const fallback = await resolveLiveDeckRuntimeFallback(server, { signal: abort.signal }).catch(() => null);
+        if (abort.signal.aborted) return;
+        if (fallback) resolved = { status: "available", runtime: fallback };
+      }
       if (resolved.status === "unavailable") { setEngine({ status: "unavailable", reason: resolved.reason }); return; }
       if (resolved.status === "failed") { setEngine({ status: "failed", code: resolved.code, message: resolved.message }); return; }
+      const localVersion = getLocalServerMasterDataVersion(server);
       const runtime: DeckSolverRuntime = {
         ...resolved.runtime,
-        masterOverlayUrl: buildDeckMasterOverlayUrl(server, getLocalServerMasterDataVersion(server)),
+        masterOverlayUrl: buildDeckMasterOverlayUrl(server, localVersion, undefined, attempt),
+        chartsOverlayUrl: buildDeckChartsOverlayUrl(server, localVersion, undefined, attempt),
       };
       const ready = await worker.prepare(runtime);
       if (abort.signal.aborted) return;

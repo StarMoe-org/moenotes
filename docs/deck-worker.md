@@ -86,9 +86,12 @@ against the message before using it. Then it:
 2. imports the glue, a wasm-bindgen `--target web` ES module, from a `blob:` URL of its verified bytes, and calls its
    default export with `{ module_or_path: wasmBytes }`, so the WASM is never fetched again unverified;
 3. when `masterOverlayUrl` (`/api/v1/meta/deck-master?server=…&v=…`) is present on `init`, merges the live Next.js
-   columnar `master` tables (`moenotes.deck-master-overlay/1`) onto the verified `deck-data.json` snapshot, recomputes
-   the merged dataset SHA-256, and constructs `new DeckSolver(mergedBytes, { datasetId: mergedSha256 })` (falling back
-   cleanly to the baseline `deckDataBytes` if the overlay endpoint is unreachable or rejected);
+   columnar `master` tables (`moenotes.deck-master-overlay/1`) onto the verified `deck-data.json` snapshot, hydrates any
+   `MasterLiveMusic` chart difficulties not yet present in `deck-data.json` via `chartsOverlayUrl`
+   (`/api/v1/meta/deck-charts?server=…&v=…&ids=…`, `moenotes.deck-chart-overlay/1`, converted in binary32 precision from
+   `moenotes-assets` `Live/MusicScore/<chartKey>/<score>.json`), recomputes the merged dataset SHA-256, and constructs
+   `new DeckSolver(mergedBytes, { datasetId: mergedSha256 })` (falling back cleanly to master-only or the baseline
+   `deckDataBytes` if an overlay endpoint is unreachable or rejected);
 4. checks that `solver.datasetId`, the lowercase hex SHA-256 of the active deck data bytes, matches the expected hash;
 5. reads `solver.capabilities()` as JSON text, when the solver has it, and returns the dataset catalogue in `ready`.
 

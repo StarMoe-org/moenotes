@@ -1,9 +1,21 @@
 /** Moenotes' verified nnnotes snapshot -> the pinned Haneoka engine document. No scoring formulas live here. */
 export type Row = Record<string, unknown>;
 export interface ColumnarTable { columns: string[]; rows: unknown[][] }
+export interface DeckNoteInput {
+  judgementAreaOffsetType: number;
+  lane: number;
+  width: number;
+  direction: number;
+  ease: number;
+  easeRight: number;
+  lines: number[];
+}
 export interface DeckChart {
   scoreId: number;
+  durationMs?: number;
   notes: { id: number[]; op: number[]; judgementType: number[]; timeMs: number[] };
+  inputs?: DeckNoteInput[];
+  enumeration?: { op: number[]; judgementType: number[]; timeMs: number[] };
   skillEvents: { timeMs: number[] };
   fevers: { startMs: number[]; endMs: number[] };
 }
@@ -157,16 +169,21 @@ export function chartSource(data: DeckData, scoreId: number) {
   if (!chart) throw new Error("haneoka-chart:" + scoreId);
   const { notes, skillEvents, fevers } = chart;
   if (![notes.id, notes.op, notes.judgementType].every(values => values.length === notes.timeMs.length)
-    || fevers.startMs.length !== fevers.endMs.length) throw new Error("haneoka-chart-shape:" + scoreId);
-  const durationMs = data.provenance.replay.musicLengthsMs[String(scoreId)];
+    || fevers.startMs.length !== fevers.endMs.length
+    || (chart.inputs !== undefined && (!Array.isArray(chart.inputs) || chart.inputs.length !== notes.timeMs.length))
+    || (chart.enumeration !== undefined && (!Array.isArray(chart.enumeration.timeMs) || ![chart.enumeration.op, chart.enumeration.judgementType].every(values => Array.isArray(values) && values.length === chart.enumeration!.timeMs.length))))
+    throw new Error("haneoka-chart-shape:" + scoreId);
+  const durationMs = data.provenance?.replay?.musicLengthsMs?.[String(scoreId)] ?? chart.durationMs;
   if (!Number.isSafeInteger(durationMs) || durationMs! <= 0) throw new Error("haneoka-chart-duration:" + scoreId);
+  const enumSrc = chart.enumeration ?? notes;
   return {
     durationMs,
     notes: notes.timeMs.map((timeMs, i) => ({
       timeMs, operateType: notes.op[i], judgementType: notes.judgementType[i],
       judged: ![0, 80, 82, 100, 103, 121, 122, 123].includes(notes.op[i]!),
+      ...(chart.inputs?.[i] ? { input: chart.inputs[i] } : {}),
     })),
-    enumeration: notes.timeMs.map((timeMs, i) => ({ timeMs, op: notes.op[i], judgementType: notes.judgementType[i] })),
+    enumeration: enumSrc.timeMs.map((timeMs, i) => ({ timeMs, op: enumSrc.op[i], judgementType: enumSrc.judgementType[i] })),
     skillTimesMs: skillEvents.timeMs, feverMs: fevers.startMs.map((start, i) => [start, fevers.endMs[i]]),
   };
 }

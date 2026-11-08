@@ -55,6 +55,7 @@ export const assetConfig = {
   deck: {
     workerUrl: "/deck/deck-worker.js",
     masterOverlayUrl: "/api/v1/meta/deck-master",
+    chartsOverlayUrl: "/api/v1/meta/deck-charts",
     recommendEngine: process.env.NODE_ENV === "development" && process.env.PUBLIC_DECK_RECOMMEND_ENGINE !== undefined
       ? (String(process.env.PUBLIC_DECK_RECOMMEND_ENGINE) || null)
       : "/haneoka-team-engine/runtime.json",
