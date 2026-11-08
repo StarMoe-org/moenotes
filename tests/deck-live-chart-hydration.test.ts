@@ -95,7 +95,7 @@ function writeMasterFixtureDir(): { root: string; eventId: number; oldMusicId: n
   const oldMusicId = (baseData.master.MasterLiveMusic?.rows?.[0]?.[musicIdCol] as number | undefined) ?? 100001;
 
   writeFileSync(
-    join(root, "manifest.json"),
+    join(root, "current_version.json"),
     JSON.stringify({
       schemaVersion: 1,
       fetchedAt: "2026-10-27T00:00:00Z",
@@ -336,7 +336,8 @@ describe("End-to-end Worker missing-chart hydration & empty-baseline fallback", 
     });
 
     const masterOverlay = await getDeckMasterOverlay("tw");
-    expect(masterOverlay.chartsOverlayUrl).toContain("/api/v1/meta/deck-charts?server=tw");
+    expect(masterOverlay.regionVersion).toBe("1.2.0.10/tw-hash");
+    expect(masterOverlay.chartsOverlayUrl).toBe("/api/v1/meta/deck-charts?server=tw&v=1.2.0.10%2Ftw-hash");
 
     const { rawBytes: baseBytes } = loadSlice();
     const baseHashBuf = await crypto.subtle.digest("SHA-256", baseBytes);
