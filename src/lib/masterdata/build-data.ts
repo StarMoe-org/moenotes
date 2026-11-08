@@ -251,13 +251,16 @@ export interface StoryReaderLookup {
 
 export function cardsOn(server: GameServer, locale: AppLocale): Promise<CardViewModel[]> {
   return memo(`cards:${server}:${locale}`, async () => {
-    const [cards, characters, bands, textTable] = await Promise.all([
+    const [cards, characters, bands, textTable, gekisouSkills] = await Promise.all([
       table<RawMemberCard>("MasterMemberCard.json", server),
       table<RawCharacter>("MasterCharacter.json", server),
       table<RawBand>("MasterBand.json", server),
       texts(server),
+      table<{ id: number; gekisouMissionType: number }>("MasterGekisouSkill.json", server).catch(() => ({
+        _allData: [] as Array<{ id: number; gekisouMissionType: number }>,
+      })),
     ]);
-    return normalizeCards(cards._allData, characters._allData, bands._allData, textTable._allData, locale);
+    return normalizeCards(cards._allData, characters._allData, bands._allData, textTable._allData, locale, gekisouSkills._allData);
   });
 }
 

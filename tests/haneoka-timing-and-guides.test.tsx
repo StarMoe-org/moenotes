@@ -21,8 +21,8 @@ import { getDeckGuide } from "../src/i18n/guides/deck";
 const CORE_LOCALES = ["zh-CN", "zh-TW", "ja-JP", "en-US", "ko-KR"] as const;
 
 describe("Haneoka 4ed6e00 cumulative-Snap OrderTiming, cumulativeTiming goals and DeckResult rendering", () => {
-  test("pins Haneoka commit 4ed6e00 and exposes orderTiming + cumulativeTiming capabilities", () => {
-    expect(HANEOKA_COMMIT).toBe("4ed6e0061f519240f19750a3a09024dd27304bd8");
+  test("pins Haneoka commit 7c167c95 and exposes orderTiming + cumulativeTiming capabilities", () => {
+    expect(HANEOKA_COMMIT).toBe("7c167c95e8589bc84a9ab726b5b58adbc0ef4b05");
     expect(CAPABILITIES.orderTiming).toBe(true);
     expect(CAPABILITIES.cumulativeTiming).toBe(true);
   });
@@ -193,7 +193,7 @@ describe("Haneoka 4ed6e00 cumulative-Snap OrderTiming, cumulativeTiming goals an
     expect(zhHtml).toContain("名义时序分数");
     expect(zhHtml).toContain("最佳时序分数");
     expect(zhHtml).toContain("提前 17 ms 方案");
-    expect(zhHtml).toContain("+8,220");
+    expect(zhHtml).toContain("+6,420");
     expect(zhHtml).toContain("凹分教程");
     expect(zhHtml).toContain('<details class="dr-timing-guide">');
     expect(zhHtml).toContain("提前约 17 ms");

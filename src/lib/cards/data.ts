@@ -66,6 +66,8 @@ export interface CardViewModel {
   liveSkillId: number;
   leaderSkillId: number;
   gekisouSkillId: number;
+  /** `MasterGekisouSkill._gekisouMissionType`: 1 = COMBO, 2 = LUCK, 3 = JUST, 4 = ALL. */
+  gekisouMissionType?: number;
   searchText: string;
   /** The game's exact Addressables key; explicit absence cannot inherit another server's background. */
   formationBackgroundKey?: string | null;
@@ -89,10 +91,12 @@ export function normalizeCards(
   bands: RawBand[],
   texts: RawText[],
   locale: AppLocale,
+  gekisouSkills?: readonly { id: number; gekisouMissionType: number }[],
 ): CardViewModel[] {
   const textMap = new Map(texts.map((entry) => [entry.id, entry]));
   const characterMap = new Map(characters.map((entry) => [entry.id, entry]));
   const bandMap = new Map(bands.map((entry) => [entry.id, entry]));
+  const gekisouMap = new Map((gekisouSkills ?? []).map((entry) => [entry.id, entry.gekisouMissionType]));
   const resolveText = (id: string) => localizeMasterText(textMap.get(id), locale) || id;
 
   return cards
@@ -107,6 +111,7 @@ export function normalizeCards(
       const bandName = band ? resolveText(band.nameTextID) : "";
       const formationBackgroundKey = card.rarity === 2 ? band?.memberRarityRBackgroundAssetPath
         : `MemberCard/${card.assetID}/member_background[formation]`;
+      const gekisouMissionType = gekisouMap.get(card.gekisouSkillID);
 
       return {
         id: card.id,
@@ -128,6 +133,7 @@ export function normalizeCards(
         liveSkillId: card.liveSkillID,
         leaderSkillId: card.leaderSkillID,
         gekisouSkillId: card.gekisouSkillID,
+        ...(typeof gekisouMissionType === "number" ? { gekisouMissionType } : {}),
         searchText: [title, characterName, bandName, card.id].join(" ").toLocaleLowerCase(),
         formationBackgroundKey: formationBackgroundKey || null,
       };

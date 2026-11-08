@@ -34,6 +34,7 @@ export interface DeckOrderTiming {
   best: number;
   worst?: number;
   optimal?: number;
+  guideAvailable?: boolean;
   advanceMs: number;
   windows: DeckTimingWindow[];
 }
@@ -111,6 +112,7 @@ function orderTiming(raw: unknown): DeckOrderTiming | undefined {
   if (!record(raw)) return undefined;
   const score = num(raw.score), best = num(raw.best), advanceMs = num(raw.advanceMs);
   const worst = num(raw.worst), optimal = num(raw.optimal);
+  const guideAvailable = typeof raw.guideAvailable === "boolean" ? raw.guideAvailable : undefined;
   if (score === null || best === null || advanceMs === null || !Array.isArray(raw.order) || !Array.isArray(raw.windows)) return undefined;
   return {
     order: raw.order.map(int),
@@ -118,6 +120,7 @@ function orderTiming(raw: unknown): DeckOrderTiming | undefined {
     best,
     ...(worst !== null ? { worst } : {}),
     ...(optimal !== null ? { optimal } : {}),
+    ...(guideAvailable !== undefined ? { guideAvailable } : {}),
     advanceMs: Math.trunc(advanceMs),
     windows: raw.windows.filter(record).flatMap((win) => {
       const event = num(win.event), member = num(win.member), startMs = num(win.startMs), endMs = num(win.endMs), unit = num(win.unit);
