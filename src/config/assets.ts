@@ -82,7 +82,7 @@ export const assetConfig = {
    * Hosted on R2 storage (matching musicDataSite / storySite) with local and upstream GitHub fallbacks.
    */
   slidePuzzle: {
-    site: (process.env.PUBLIC_SLIDE_PUZZLE_SITE || "https://storage.bdon.moe/moenotes/slidepuzzle").replace(/\/+$/, ""),
+    site: (process.env.PUBLIC_SLIDE_PUZZLE_SITE || "https://storage.bdon.moe/moenotes/slidepuzzle/dist").replace(/\/+$/, ""),
     localSite: "/slidepuzzle",
     fallbackSite: "https://raw.githubusercontent.com/luoxiadesu/moenotes_slidepuzzle/master/dist",
   },
