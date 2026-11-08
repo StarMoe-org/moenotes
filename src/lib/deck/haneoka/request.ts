@@ -40,7 +40,7 @@ export interface RecommendationRequest {
   limits?: { timeLimitMs: number | null };
 }
 export const HANEOKA_COMMIT = "7c167c95e8589bc84a9ab726b5b58adbc0ef4b05";
-export const HANEOKA_PATCH_SHA = "611518f7999da734ea2fca1b67fa93263e0af9e969e7edbe7341c5e87ca01f42";
+export const HANEOKA_PATCH_SHA = "f8f5cf1470b0c1cdf9509c947aa92f7f907992ef464ee36ee0c48316196a37ad";
 export const CAPABILITIES = {
   goals: ["power", "freeLive", "challengeLive", "battleLive", "missionLive", "arenaLive", "skip"],
   metrics: { freeLive: ["score", "eventPoints", "eventItems", "challengePoints"], challengeLive: ["score", "eventPoints", "eventItems"], battleLive: ["score", "eventPoints", "eventItems", "challengePoints"], missionLive: ["score", "eventPoints", "eventItems", "challengePoints"], arenaLive: ["score", "eventPoints", "eventItems", "challengePoints"], skip: ["score", "eventPoints", "eventItems", "challengePoints"] },

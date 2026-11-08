@@ -1,5 +1,5 @@
 diff --git a/src/api.rs b/src/api.rs
-index 2aa61a7..2711133 100644
+index 2aa61a7..df815d5 100644
 --- a/src/api.rs
 +++ b/src/api.rs
 @@ -1,3 +1,6 @@
@@ -494,7 +494,7 @@ index 2aa61a7..2711133 100644
 +        let k=master::int(&request["k"]).max(1) as usize;let generation=crate::cancellation_generation();
 +        let mut power_request=request.clone();power_request["goal"]=json!({"kind":"power","song":song});
 +        power_request["deadline"]=json!(deadline.min(now()+50.0));
-+        let has_special_filter = constraints.member_floor.is_some() || objective.has_just_window();
++        let has_special_filter = constraints.member_floor.is_some() || !constraints.member_floors.is_empty() || objective.has_just_window();
 +        let seeded=!seed_teams(request,song,&cards.members,&cards.snaps).is_empty();
 +        let power=if seeded || has_special_filter {json!({"overall":[],"results":[{"proven":false,"stats":null}]})}
 +            else {crate::progress::with_callback(None,||self.search_power(&power_request,started,now))?};
@@ -1850,6 +1850,18 @@ index 69b8a39..eda0076 100644
 +            "bonus":bonuses[self.selected],"challengePoints":sums[2] as f64/self.observations as f64,"directMin":per_order.iter().copied().reduce(f64::min),"directMax":per_order.iter().copied().reduce(f64::max)})})
 +    }
  }
+diff --git a/src/event_growth.rs b/src/event_growth.rs
+index b182bcf..f95a316 100644
+--- a/src/event_growth.rs
++++ b/src/event_growth.rs
+@@ -155,6 +155,7 @@ struct Problem {
+ }
+ fn empty_player() -> Player {
+     Player {
++        memory: serde_json::Value::Null,
+         character_ranks: BTreeMap::new(),
+         total_rank: 0,
+         band_items: BTreeMap::new(),
 diff --git a/src/gekiso.rs b/src/gekiso.rs
 index afefec4..1616603 100644
 --- a/src/gekiso.rs
