@@ -88,6 +88,50 @@ export async function loadDeckSolverModule({ glue, wasm }) {
 
 const FILES = [['deckData', 'deck data'], ['wasm', 'engine WASM'], ['glue', 'engine glue']];
 const DECK_MASTER_OVERLAY_FORMAT = 'moenotes.deck-master-overlay/1';
+const DECK_CHART_OVERLAY_FORMAT = 'moenotes.deck-chart-overlay/1';
+const CHART_OVERLAY_BATCH_SIZE = 80;
+
+function findMissingChartScoreIds(master, existingCharts) {
+  if (!record(master)) return [];
+  const scoreTable = master.MasterLiveMusicScore;
+  const musicTable = master.MasterLiveMusic;
+  if (!record(scoreTable) || !Array.isArray(scoreTable.columns) || !Array.isArray(scoreTable.rows)) return [];
+  if (!record(musicTable) || !Array.isArray(musicTable.columns) || !Array.isArray(musicTable.rows)) return [];
+  const scoreIdCol = scoreTable.columns.indexOf('_id');
+  const fileNameCol = scoreTable.columns.indexOf('_musicScoreTextFileName');
+  if (scoreIdCol < 0 || fileNameCol < 0) return [];
+
+  const exportableScoreIds = new Set();
+  for (const row of scoreTable.rows) {
+    if (!Array.isArray(row) || row.length !== scoreTable.columns.length) continue;
+    const id = row[scoreIdCol];
+    const fileName = row[fileNameCol];
+    if (positiveId(id) && typeof fileName === 'string' && fileName.trim().length > 0) {
+      exportableScoreIds.add(id);
+    }
+  }
+  if (exportableScoreIds.size === 0) return [];
+
+  const existingScoreIds = new Set(
+    Array.isArray(existingCharts)
+      ? existingCharts.filter(chart => record(chart) && positiveId(chart.scoreId)).map(chart => chart.scoreId)
+      : [],
+  );
+  const diffCols = DIFFICULTIES.map(([, col]) => musicTable.columns.indexOf(col)).filter(idx => idx >= 0);
+  if (diffCols.length === 0) return [];
+
+  const missing = new Set();
+  for (const row of musicTable.rows) {
+    if (!Array.isArray(row) || row.length !== musicTable.columns.length) continue;
+    for (const colIdx of diffCols) {
+      const scoreId = row[colIdx];
+      if (positiveId(scoreId) && exportableScoreIds.has(scoreId) && !existingScoreIds.has(scoreId)) {
+        missing.add(scoreId);
+      }
+    }
+  }
+  return [...missing].sort((a, b) => a - b);
+}
 
 function invalidInit(message) {
   if (message.protocol !== DECK_WORKER_PROTOCOL) return 'Unsupported protocol ' + String(message.protocol);
@@ -97,6 +141,7 @@ function invalidInit(message) {
   }
   if (message.modelCommit !== null && (typeof message.modelCommit !== 'string' || !message.modelCommit)) return 'Invalid modelCommit';
   if (message.masterOverlayUrl !== undefined && (typeof message.masterOverlayUrl !== 'string' || !message.masterOverlayUrl)) return 'Invalid masterOverlayUrl';
+  if (message.chartsOverlayUrl !== undefined && (typeof message.chartsOverlayUrl !== 'string' || !message.chartsOverlayUrl)) return 'Invalid chartsOverlayUrl';
   return null;
 }
 
@@ -167,11 +212,22 @@ export function createDeckWorkerCore({
     return value === undefined ? null : JSON.stringify(value);
   }
 
-  async function downloadOverlay(rawUrl) {
+  function resolveEndpointUrl(rawUrl, anchorUrl) {
     if (typeof rawUrl !== 'string' || !rawUrl) return null;
-    const url = rawUrl.startsWith('/') && typeof globalThis.location?.origin === 'string' && globalThis.location.origin !== 'null'
-      ? new URL(rawUrl, globalThis.location.origin).href
-      : rawUrl;
+    if (rawUrl.startsWith('/')) {
+      if (typeof anchorUrl === 'string' && /^https?:\/\//i.test(anchorUrl)) {
+        return new URL(rawUrl, anchorUrl).href;
+      }
+      if (typeof globalThis.location?.origin === 'string' && globalThis.location.origin !== 'null') {
+        return new URL(rawUrl, globalThis.location.origin).href;
+      }
+    }
+    return rawUrl;
+  }
+
+  async function downloadOverlay(rawUrl) {
+    const url = resolveEndpointUrl(rawUrl, null);
+    if (!url) return null;
     try {
       const response = await fetch(url);
       if (!response.ok) return null;
@@ -183,11 +239,60 @@ export function createDeckWorkerCore({
     }
   }
 
+  async function downloadMissingCharts(rawBaseUrl, anchorUrl, missingScoreIds) {
+    const baseUrl = resolveEndpointUrl(rawBaseUrl, anchorUrl);
+    if (!baseUrl || !Array.isArray(missingScoreIds) || missingScoreIds.length === 0) {
+      return { charts: [], musicLengthsMs: {} };
+    }
+    const charts = [];
+    const musicLengthsMs = {};
+    const seen = new Set();
+    for (let offset = 0; offset < missingScoreIds.length; offset += CHART_OVERLAY_BATCH_SIZE) {
+      const chunk = missingScoreIds.slice(offset, offset + CHART_OVERLAY_BATCH_SIZE);
+      const separator = baseUrl.includes('?') ? '&' : '?';
+      const url = baseUrl + separator + 'ids=' + chunk.join(',');
+      try {
+        const response = await fetch(url);
+        if (!response.ok) continue;
+        const parsed = await response.json();
+        if (!record(parsed) || parsed.format !== DECK_CHART_OVERLAY_FORMAT || !Array.isArray(parsed.charts)) continue;
+        const lengths = record(parsed.musicLengthsMs) ? parsed.musicLengthsMs : {};
+        for (const chart of parsed.charts) {
+          if (!record(chart) || !positiveId(chart.scoreId) || seen.has(chart.scoreId)) continue;
+          seen.add(chart.scoreId);
+          charts.push(chart);
+          const lengthVal = lengths[String(chart.scoreId)] ?? chart.durationMs;
+          if (Number.isSafeInteger(lengthVal) && lengthVal > 0) {
+            musicLengthsMs[String(chart.scoreId)] = lengthVal;
+          }
+        }
+      } catch {
+        // Ignore chart overlay batch transport failures; unavailable songs stay filtered out of catalog.musics.
+      }
+    }
+    return { charts, musicLengthsMs };
+  }
+
+  async function tryCreateCandidateSolver(DeckSolver, candidateData) {
+    try {
+      const mergedBytes = new TextEncoder().encode(JSON.stringify(candidateData));
+      const mergedSha256 = hex(await digest(mergedBytes.buffer));
+      const candidate = new DeckSolver(mergedBytes, { datasetId: mergedSha256 });
+      if (candidate && typeof candidate.datasetId === 'string' && candidate.datasetId === mergedSha256) {
+        return { solver: candidate, datasetId: mergedSha256, data: candidateData };
+      }
+      candidate?.free?.();
+    } catch {
+      // Fall back cleanly if the engine rejects overlaid tables or hydrated charts.
+    }
+    return null;
+  }
+
   async function initialize(message) {
     const problem = invalidInit(message);
     if (problem) { post({ type: 'failed', code: 'protocol', message: problem }); return; }
     const key = JSON.stringify([message.deckDataUrl, message.deckDataSha256, message.deckDataBytes, message.wasmUrl, message.wasmSha256,
-      message.wasmBytes, message.glueUrl, message.glueSha256, message.glueBytes, message.modelCommit, message.masterOverlayUrl ?? null]);
+      message.wasmBytes, message.glueUrl, message.glueSha256, message.glueBytes, message.modelCommit, message.masterOverlayUrl ?? null, message.chartsOverlayUrl ?? null]);
     if (initKey !== null) {
       if (key !== initKey) post({ type: 'failed', code: 'protocol', message: 'This Worker is bound to another runtime' });
       else post(ready ?? failure);
@@ -206,24 +311,51 @@ export function createDeckWorkerCore({
       try { DeckSolver = await loadSolver({ glue, wasm }); }
       catch (error) { throw new Failure('init', 'Engine: ' + describe(error)); }
 
+      const baseMaster = record(data.master) ? data.master : {};
+      const mergedMaster = overlay ? { ...baseMaster, ...overlay.master } : baseMaster;
+      const baseCharts = Array.isArray(data.charts) ? data.charts : [];
+      const chartsOverlayUrl = message.chartsOverlayUrl ?? (record(overlay) && typeof overlay.chartsOverlayUrl === 'string' ? overlay.chartsOverlayUrl : undefined);
+      const missingScoreIds = chartsOverlayUrl ? findMissingChartScoreIds(mergedMaster, baseCharts) : [];
+      const hydrated = missingScoreIds.length > 0
+        ? await downloadMissingCharts(chartsOverlayUrl, message.masterOverlayUrl, missingScoreIds)
+        : { charts: [], musicLengthsMs: {} };
+
       let created = null;
       let expectedDatasetId = message.deckDataSha256;
       let activeData = data;
-      if (overlay) {
-        try {
-          const mergedData = { ...data, master: { ...(record(data.master) ? data.master : {}), ...overlay.master } };
-          const mergedBytes = new TextEncoder().encode(JSON.stringify(mergedData));
-          const mergedSha256 = hex(await digest(mergedBytes.buffer));
-          const candidate = new DeckSolver(mergedBytes, { datasetId: mergedSha256 });
-          if (candidate && typeof candidate.datasetId === 'string' && candidate.datasetId === mergedSha256) {
-            created = candidate;
-            expectedDatasetId = mergedSha256;
-            activeData = mergedData;
-          } else {
-            candidate?.free?.();
-          }
-        } catch {
-          // Fall back cleanly to the verified baseline deck-data.json if the engine rejects overlaid tables.
+
+      if (hydrated.charts.length > 0) {
+        const baseProvenance = record(data.provenance) ? data.provenance : {};
+        const baseReplay = record(baseProvenance.replay) ? baseProvenance.replay : {};
+        const baseLengths = record(baseReplay.musicLengthsMs) ? baseReplay.musicLengthsMs : {};
+        const withCharts = await tryCreateCandidateSolver(DeckSolver, {
+          ...data,
+          provenance: {
+            ...baseProvenance,
+            replay: {
+              ...baseReplay,
+              musicLengthsMs: { ...baseLengths, ...hydrated.musicLengthsMs },
+            },
+          },
+          master: mergedMaster,
+          charts: [...baseCharts, ...hydrated.charts],
+        });
+        if (withCharts) {
+          created = withCharts.solver;
+          expectedDatasetId = withCharts.datasetId;
+          activeData = withCharts.data;
+        }
+      }
+
+      if (!created && overlay) {
+        const withMasterOnly = await tryCreateCandidateSolver(DeckSolver, {
+          ...data,
+          master: mergedMaster,
+        });
+        if (withMasterOnly) {
+          created = withMasterOnly.solver;
+          expectedDatasetId = withMasterOnly.datasetId;
+          activeData = withMasterOnly.data;
         }
       }
 

@@ -43,6 +43,8 @@ export interface DeckSolverRuntime {
   override: boolean;
   /** Optional Next.js live MasterData overlay endpoint merged over `deckData.master` in the Worker. */
   masterOverlayUrl?: string;
+  /** Optional Next.js live chart overlay endpoint hydrating missing `deckData.charts` in the Worker. */
+  chartsOverlayUrl?: string;
 }
 
 /** Build the version-scoped Next.js live MasterData overlay URL for a game server. */
@@ -50,10 +52,26 @@ export function buildDeckMasterOverlayUrl(
   server: GameServer,
   version?: string | null,
   basePath: string = assetConfig.deck.masterOverlayUrl,
+  retryAttempt = 0,
 ): string {
   const params = new URLSearchParams({ server });
   const trimmedVersion = version?.trim();
   if (trimmedVersion) params.set("v", trimmedVersion);
+  if (retryAttempt > 0) params.set("retry", String(retryAttempt));
+  return `${basePath}?${params.toString()}`;
+}
+
+/** Build the version-scoped Next.js live chart overlay URL for missing `MasterLiveMusicScore` entries. */
+export function buildDeckChartsOverlayUrl(
+  server: GameServer,
+  version?: string | null,
+  basePath: string = assetConfig.deck.chartsOverlayUrl,
+  retryAttempt = 0,
+): string {
+  const params = new URLSearchParams({ server });
+  const trimmedVersion = version?.trim();
+  if (trimmedVersion) params.set("v", trimmedVersion);
+  if (retryAttempt > 0) params.set("retry", String(retryAttempt));
   return `${basePath}?${params.toString()}`;
 }
 
@@ -252,3 +270,42 @@ export async function resolveDeckRuntime(server: GameServer, options: DeckRuntim
     throw error;
   }
 }
+
+/**
+ * Synthesize a self-contained runtime backed by the site's pinned Haneoka WASM engine and an empty baseline
+ * `nnnotes.deck-data/1` snapshot when the external `music-data` bucket has no published replay manifest or is
+ * unreachable. The Worker then hydrates all MasterData tables and exported charts from the live Next.js overlays.
+ */
+export async function resolveLiveDeckRuntimeFallback(
+  server: GameServer,
+  options: DeckRuntimeSourceOptions = {},
+): Promise<DeckSolverRuntime | null> {
+  const deckServer = DECK_SERVER_OF[server];
+  const override = options.engineOverride === undefined ? assetConfig.deck.recommendEngine || null : options.engineOverride;
+  if (!override) return null;
+  const transport: Transport = { fetch: options.fetch ?? ((url, init) => getNativeFetch()(url, init)), signal: options.signal };
+  const engine = await overrideEngine(override, transport);
+  const region = deckServer === "jp" ? "jp" : "tw";
+  const syntheticDeckBytes = new TextEncoder().encode(JSON.stringify({
+    format: DECK_DATA_FORMAT,
+    provenance: { region, deck: { commit: "moenotes-live-overlay" }, replay: { musicLengthsMs: {} } },
+    master: {},
+    charts: [],
+  }));
+  const deckSha256 = await sha256Hex(syntheticDeckBytes.slice().buffer);
+  let binary = "";
+  for (let i = 0; i < syntheticDeckBytes.length; i++) {
+    binary += String.fromCharCode(syntheticDeckBytes[i]!);
+  }
+  const dataUrl = `data:application/json;base64,${btoa(binary)}`;
+  return {
+    server: deckServer,
+    pointer: { kind: "build", url: dataUrl },
+    manifest: { url: dataUrl, sha256: deckSha256 },
+    deckData: { url: dataUrl, sha256: deckSha256, bytes: syntheticDeckBytes.byteLength },
+    engine,
+    modelCommit: null,
+    override: true,
+  };
+}
+

@@ -18,6 +18,8 @@ export interface DeckWorkerInit {
   modelCommit: string | null;
   /** Optional live MasterData overlay endpoint merged over `deckData.master` before solver initialization. */
   masterOverlayUrl?: string;
+  /** Optional live chart overlay endpoint hydrating missing `MasterLiveMusicScore` entries before initialization. */
+  chartsOverlayUrl?: string;
 }
 /** Page -> Worker: one recommendation. The Worker runs one at a time. */
 export interface DeckWorkerRun {
@@ -106,6 +108,7 @@ export function deckWorkerInit(runtime: DeckSolverRuntime): DeckWorkerInit {
     glueUrl: runtime.engine.js.url, glueSha256: runtime.engine.js.sha256, glueBytes: runtime.engine.js.bytes,
     modelCommit: runtime.modelCommit,
     ...(runtime.masterOverlayUrl ? { masterOverlayUrl: runtime.masterOverlayUrl } : {}),
+    ...(runtime.chartsOverlayUrl ? { chartsOverlayUrl: runtime.chartsOverlayUrl } : {}),
   };
 }
 
