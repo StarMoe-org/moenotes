@@ -15,6 +15,7 @@ const iconPaths: Record<RouteIcon, ReactNode> = {
   palette: <><path d="M12 3a9 9 0 1 0 0 18h1.5a2 2 0 0 0 0-4H12a2 2 0 0 1 0-4h3a6 6 0 0 0 0-12z"/><path d="M7 10h.01M9 6h.01"/></>,
   archive: <><path d="M4 7h16v14H4zM3 3h18v4H3z"/><path d="M9 11h6"/></>,
   "folder-open": <path d="M3 6h7l2 2h9l-2 11H5z"/>,
+  puzzle: <><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><path d="m15.5 17.5 2-2 2 2M17.5 15.5v5"/></>,
 };
 
 // Route-specific glyphs take precedence over the generic nav icon. Every navigation destination draws its own glyph
@@ -76,6 +77,7 @@ const routePaths: Record<string, ReactNode> = {
   "story-player": <><rect x="2.5" y="5" width="19" height="12" rx="2.5"/><path d="m10 8.5 4.5 2.5-4.5 2.5z"/><path d="M6 20.5h12"/></>,
   // A formation of five card slots: the deck builder.
   deck: <><rect x="2.5" y="3.5" width="5.5" height="7.5" rx="1.2"/><rect x="9.25" y="3.5" width="5.5" height="7.5" rx="1.2"/><rect x="16" y="3.5" width="5.5" height="7.5" rx="1.2"/><rect x="5.75" y="13" width="5.5" height="7.5" rx="1.2"/><rect x="12.75" y="13" width="5.5" height="7.5" rx="1.2"/></>,
+  "song-puzzle": <><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><path d="m15.5 17.5 2-2 2 2M17.5 15.5v5"/></>,
   // A doorway with a magnifier: looking into a room by its code.
 };
 
