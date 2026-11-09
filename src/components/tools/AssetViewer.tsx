@@ -951,15 +951,6 @@ function ContentDetails({
               <div className="space-y-3">
                 <video controls preload="metadata" playsInline src={preview.url} className="mx-auto max-h-80 w-full rounded-shape-sm bg-black" />
                 <div className="flex items-center justify-center gap-1">
-                  <button
-                    type="button"
-                    disabled={downloading}
-                    className="md3-button md3-button--text md3-button--small"
-                    onClick={() => handleDownload(preview.url, previewFileName || "video.mp4")}
-                  >
-                    <Icon name="download" fit />
-                    <span>{t(locale, downloading ? "assetBrowser.downloading" : "assetBrowser.download")}</span>
-                  </button>
                   <a
                     href={preview.url}
                     target="_blank"
