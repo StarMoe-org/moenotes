@@ -999,6 +999,7 @@ export const zhCN = {
     noFilesHere: "当前目录下无直接文件。",
     preview: "预览",
     openImage: "查看原图",
+    openVideo: "查看原视频",
     download: "下载",
     downloading: "正在下载…",
   },

@@ -996,6 +996,7 @@ export const jaJP = {
     noFilesHere: "このフォルダーには直接のファイルがありません。",
     preview: "プレビュー",
     openImage: "画像を開く",
+    openVideo: "動画を開く",
     download: "ダウンロード",
     downloading: "ダウンロード中…",
   },
