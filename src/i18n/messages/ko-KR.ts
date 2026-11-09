@@ -997,6 +997,7 @@ export const koKR = {
     noFilesHere: "이 폴더에는 직접 파일이 없습니다.",
     preview: "미리보기",
     openImage: "원본 이미지 열기",
+    openVideo: "원본 영상 열기",
     download: "다운로드",
     downloading: "다운로드 중…",
   },

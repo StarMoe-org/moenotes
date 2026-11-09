@@ -998,6 +998,7 @@ export const zhTW = {
     noFilesHere: "目前目錄下無直接檔案。",
     preview: "預覽",
     openImage: "檢視原圖",
+    openVideo: "檢視原影片",
     download: "下載",
     downloading: "正在下載…",
   },

@@ -1007,6 +1007,7 @@ export const enUS = {
     noFilesHere: "No files directly in this folder.",
     preview: "Preview",
     openImage: "Open original image",
+    openVideo: "Open original video",
     download: "Download",
     downloading: "Downloading…",
   },
