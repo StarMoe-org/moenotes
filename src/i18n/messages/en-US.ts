@@ -1255,29 +1255,6 @@ export const enUS = {
   actions: { close: "Close", back: "Back", clearCache: "Clear cache", refresh: "Refresh", open: "Open", viewGroup: "View group" },
   home: {
     heading: "BanG Dream! Our Notes Database",
-    announcement: {
-      badge: "Announcement · Maintainer Wanted",
-      seoHighlight: "Ranked #1 on Google for ournotes viewer / database",
-      validityBadge: "Open Until Filled",
-      title: "{author} Is Looking for a New Lead Maintainer for {site}",
-      reason:
-        "Candidly, nobody on the {author} team actively plays BanG Dream! Our Notes anymore (none of us even have the game client installed), making day-to-day updates and operations unsustainable. Rather than letting the site stagnate, we are looking for passionate players or contributors to take over {site}'s ongoing stewardship.",
-      supportIntro:
-        "{site} currently ranks #1 on Google for \"ournotes viewer\" and \"ournotes database\", backed by a complete multilingual database, story/chart viewers, and deck-building suite. You won't have to worry about infrastructure costs—{author} is happy to continue providing:",
-      perks: {
-        server: "Servers & hosting infrastructure",
-        workflow: "Automated data & CI/CD workflows",
-        domain: "Existing domain ({domain})",
-        guidance: "Technical onboarding & guidance",
-      },
-      openToAll: "Don't worry about technical barriers—even if you only know how to use AI tools, as long as you're willing to step up and care for the site, we won't turn you away.",
-      validityNote: "This announcement remains valid indefinitely until a new maintainer is found.",
-      contactPrompt: "Interested in taking the helm? Please send a brief self-introduction (your familiarity with the game, dev/ops background, or ideas) to ",
-      emailCta: "Send Introduction",
-      emailSubject: "Moenotes Maintainer Application",
-      copyEmail: "Copy Email",
-      copiedEmail: "Email Copied",
-    },
     now: "Happening now",
     carousel: "Current events and gacha",
     slidePosition: "{index} / {total}",

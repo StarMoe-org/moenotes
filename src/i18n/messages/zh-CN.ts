@@ -1300,29 +1300,6 @@ export const zhCN = {
   },
   home: {
     heading: "BanG Dream! Our Notes 资料站",
-    announcement: {
-      badge: "站点公告 · 站长招募",
-      seoHighlight: "Google 搜索 ournotes viewer / database 排名 #1",
-      validityBadge: "长期有效（在招到之前）",
-      title: "{author} 诚招 {site} 新任站长与维护者",
-      reason:
-        "坦诚地说，目前 {author} 团队成员均未在游玩本作（甚至没有安装游戏客户端），在缺乏实际游玩体验的情况下维持日常跟进与站点运营实在力不从心。为了让站点能继续好好服务玩家社区，我们诚邀真正热爱《BanG Dream! Our Notes》、有热情与责任心的有志之士接手 {site} 的日常运营与维护。",
-      supportIntro:
-        "本站目前在 Google 搜索「ournotes viewer」「ournotes database」等关键词稳居第 1，具备成熟的多语言资料库、剧情与谱面预览及组卡工具生态。接手无需承担底层基建压力，{author} 可继续提供：",
-      perks: {
-        server: "服务器与托管资源",
-        workflow: "自动化数据与构建工作流",
-        domain: "现有域名（{domain}）",
-        guidance: "交接期必要的技术与架构指导",
-      },
-      openToAll: "无需顾虑技术门槛——哪怕你只会使用 AI 工具，只要你真心愿意接手维护，我们也绝不会拒绝你。",
-      validityNote: "此公告长期有效（在招到合适人选之前持续开放）。",
-      contactPrompt: "如有意接手，请发送个人介绍（如游戏了解程度、技术或运营经历、维护想法等）至 ",
-      emailCta: "发送个人介绍",
-      emailSubject: "Moenotes 站长接手申请",
-      copyEmail: "复制邮箱",
-      copiedEmail: "已复制邮箱",
-    },
     now: "正在进行",
     carousel: "正在上演的聚光灯与相遇",
     slidePosition: "{index} / {total}",
