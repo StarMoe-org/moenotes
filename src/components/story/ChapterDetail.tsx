@@ -5,10 +5,13 @@ import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import { getAssetUrl } from "@/lib/assets/url";
 import { useAssetUrl } from "@/lib/servers/use-content-server";
+import { useNow } from "@/lib/schedule/use-now";
+import { isSpoiler } from "@/lib/settings/spoiler";
 import type { StoryChapterSummary } from "@/lib/story/chapters";
 import { formatPlayTime, storyEpisodeLabel } from "@/lib/story/labels";
 import { storyPath } from "@/lib/story/paths";
 import BannerImage from "@/components/shared/BannerImage";
+import SpoilerNotice from "@/components/shared/SpoilerNotice";
 
 /**
  * One chapter as its own page: the banner, the chapter's copy and its main/another/extra episode runs. This is the
@@ -16,9 +19,14 @@ import BannerImage from "@/components/shared/BannerImage";
  */
 export default function ChapterDetail({ chapter, locale }: { chapter: StoryChapterSummary; locale: AppLocale }) {
   const assetUrl = useAssetUrl();
+  const now = useNow();
+  const startAt = chapter.startAt || chapter.episodes.find((episode) => episode.startAt)?.startAt || "";
+  const isUnreleased = Boolean(startAt && isSpoiler(startAt, now));
   const chapterArt = chapter.banner || chapter.image
     ? getAssetUrl({ path: `Story/${chapter.banner ? "Banner" : "Image"}/Chapter/${chapter.banner || chapter.image}.png`, type: "raw", locale })
     : "";
+
+  if (isUnreleased) return <SpoilerNotice locale={locale} />;
 
   return (
     <article className="mn-list-group overflow-hidden rounded-shape-lg border border-outline-variant bg-surface-container-low shadow-elevation-1">
