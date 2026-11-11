@@ -8,7 +8,7 @@ import { assetLanguageOrder, serverAssetUrl } from "@/lib/assets/release";
 import { getImageAssetUrl } from "@/lib/assets/url";
 import type { StoryCategory, StoryEpisodeKind } from "@/lib/story/data";
 import { SPOILER_REFERENCE_NOW } from "@/lib/settings/spoiler-reference";
-import { isStoryReleasedAt } from "@/lib/story/release";
+import { isStoryReleasedAt, isUntimedStoryCategory } from "@/lib/story/release";
 
 /** The story player's data: the story site's index entries and the episodes the page knows from the build. */
 
@@ -120,8 +120,9 @@ export function buildStoryPlayerEntries(
     const site = siteEntries.find((entry) => entry.advId === story.advId && story.servers.includes(entry.server));
     if (!site) continue;
     const startAt = story.releaseDates[site.server];
-    // Missing region data is not proof of a release, even if a public storage index has the episode.
-    if (startAt === undefined) continue;
+    // Missing region data is not proof of a release, even if a public storage index has the episode; friendship,
+    // after-live and tutorial episodes are untimed and have no date to require.
+    if (startAt === undefined && !isUntimedStoryCategory(story.category)) continue;
     listed.add(story.advId);
     const title = story.title || `ADV ${story.advId}`;
     const assetServer = site.server === "jp" ? "jp" : story.assetServer;
@@ -129,7 +130,7 @@ export function buildStoryPlayerEntries(
       ...story,
       assetServer,
       site,
-      startAt,
+      startAt: startAt ?? "",
       title,
       section: storySection(story.category),
       searchText: `${story.searchText} ${title} ${story.advId}`.toLocaleLowerCase(),
@@ -138,9 +139,10 @@ export function buildStoryPlayerEntries(
   return result;
 }
 
-/** A cloud-backed episode is playable only when every known regional version is officially released. */
+/** A cloud-backed episode is playable when every known regional version is released; untimed categories have no date. */
 export function isStoryPlayerEntryReleased(entry: StoryPlayerEntry, now?: number | null): boolean {
   if (entry.servers.length === 0 || !entry.servers.includes(entry.site.server)) return false;
+  if (isUntimedStoryCategory(entry.category)) return true;
   return entry.servers.every((server) => {
     const startAt = entry.releaseDates[server];
     return isStoryReleasedAt(startAt, now ?? SPOILER_REFERENCE_NOW);

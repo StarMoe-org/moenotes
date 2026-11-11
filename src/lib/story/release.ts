@@ -89,13 +89,33 @@ export function filterReleasedFacetsByServer<T extends { startAt: string }>(
   });
 }
 
-/** Story-specific name for the shared, regional MasterData release gate. */
-export function isStoryReleasedAcrossServers(story: StoryReleaseFaceted, now: number): boolean {
+/** A story view model: the release facet plus the category whose MasterData table decides whether it has a date. */
+export interface StoryReleaseGated extends StoryReleaseFaceted {
+  category?: string;
+}
+
+/**
+ * Story categories whose MasterData rows carry no in-game start time. Friendship episodes unlock with the pair's bond
+ * level, after-live talks with their live, and the tutorial is always available; none of them is scheduled. A date
+ * gate cannot judge them and must not hide them, or those lists become empty. Every other category is scheduled and
+ * still fails closed when its date is missing or malformed.
+ */
+const UNTIMED_STORY_CATEGORIES: ReadonlySet<string> = new Set(["friendship", "live-result", "tutorial"]);
+
+export function isUntimedStoryCategory(category: string | undefined): boolean {
+  return category !== undefined && UNTIMED_STORY_CATEGORIES.has(category);
+}
+
+/** Story-specific name for the shared, regional MasterData release gate (untimed categories are always public). */
+export function isStoryReleasedAcrossServers(story: StoryReleaseGated, now: number): boolean {
+  if (story.servers.length === 0 || !Number.isFinite(now)) return false;
+  if (isUntimedStoryCategory(story.category)) return true;
   return isReleaseFacetReleasedAcrossServers(story, now);
 }
 
-/** Whether the authoritative MasterData for one specific server says the story is already in game. */
-export function isStoryReleasedForServer(story: StoryReleaseFaceted, server: GameServer, now: number): boolean {
-  if (!story.servers.includes(server)) return false;
+/** Whether the authoritative MasterData for one specific server says the story is in game (untimed categories too). */
+export function isStoryReleasedForServer(story: StoryReleaseGated, server: GameServer, now: number): boolean {
+  if (!story.servers.includes(server) || !Number.isFinite(now)) return false;
+  if (isUntimedStoryCategory(story.category)) return true;
   return isStoryReleasedAt(storyReleaseDates(story)[server], now);
 }

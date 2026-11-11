@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { ServerFaceted } from "../src/lib/servers/facets";
-import { isStoryReleasedAcrossServers, isStoryReleasedAt, isStoryReleasedForServer, parseStoryReleaseTime, storyReleaseDates } from "../src/lib/story/release";
+import { isStoryReleasedAcrossServers, isStoryReleasedAt, isStoryReleasedForServer, parseStoryReleaseTime, storyReleaseDates, type StoryReleaseGated } from "../src/lib/story/release";
 
 describe("regional story release gate", () => {
   const now = Date.UTC(2026, 9, 27, 12);
@@ -23,6 +23,21 @@ describe("regional story release gate", () => {
   test("opens only after every region containing the story has officially released it", () => {
     const released = { ...story, serverVariants: { jp: { startAt: "2026/10/20 12:00:00" } } };
     expect(isStoryReleasedAcrossServers(released, now)).toBe(true);
+  });
+
+  test("untimed categories pass the date gate while dated categories still fail closed", () => {
+    for (const category of ["friendship", "live-result", "tutorial"]) {
+      const untimed: StoryReleaseGated = { startAt: "", servers: ["tw", "jp"], category };
+      expect(isStoryReleasedAcrossServers(untimed, now)).toBe(true);
+      expect(isStoryReleasedForServer(untimed, "tw", now)).toBe(true);
+      expect(isStoryReleasedAcrossServers({ ...untimed, servers: [] }, now)).toBe(false);
+      expect(isStoryReleasedAcrossServers(untimed, Number.NaN)).toBe(false);
+    }
+    // A region whose MasterData does not list the story still fails closed.
+    expect(isStoryReleasedForServer({ startAt: "", servers: ["tw"], category: "friendship" }, "jp", now)).toBe(false);
+    // Scheduled categories keep failing closed on a missing date.
+    expect(isStoryReleasedAcrossServers({ startAt: "", servers: ["tw"], category: "main" }, now)).toBe(false);
+    expect(isStoryReleasedAcrossServers({ startAt: "", servers: ["tw"], category: "home" }, now)).toBe(false);
   });
 
   test("fails closed when no region has the story or a regional date is missing", () => {
