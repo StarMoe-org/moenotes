@@ -4,6 +4,7 @@ import { Md3Provider } from "../src/components/md3/Md3Provider";
 import { ContentSettings } from "../src/components/shell/SettingsDrawer";
 import SpoilerNotice from "../src/components/shared/SpoilerNotice";
 import { t } from "../src/i18n";
+import { buildThemeBootstrapScript } from "../src/lib/settings/apply-theme";
 import { getShowSpoiler, isSpoilerUnlocked, setShowSpoiler } from "../src/lib/settings/spoiler";
 
 const CORE_LOCALES = ["zh-CN", "zh-TW", "ja-JP", "en-US", "ko-KR"] as const;
@@ -45,6 +46,12 @@ describe("public spoiler controls", () => {
     setShowSpoiler(true);
     expect(getShowSpoiler()).toBe(false);
     expect(store.get(SHOW_SPOILER_KEY)).toBe("1");
+  });
+
+  test("the early theme bootstrap no longer recognizes a spoiler-override URL", () => {
+    const script = buildThemeBootstrapScript().toLowerCase();
+    expect(script).not.toContain("spoiler=allow");
+    expect(script).not.toContain("moenotes:show-spoiler");
   });
 
   test("does not render a spoiler switch in ContentSettings across the five core locales", () => {

@@ -1,45 +1,77 @@
 import type { AssetStore } from "ournotes-player/live2d";
-import { assetConfig } from "@/config/assets";
+import { GAME_SERVERS, type GameServer } from "@/config/servers";
+import { getLive2DIndexApiPath, getLive2DProxyApiRoot } from "@/config/routes";
 import { createPlayerFileFetch } from "@/lib/cache/player-files";
-import { getLive2DModelsIndexUrl, mergeLive2DModelIndexes, type Live2DModel, type Live2DModelEntry } from "@/lib/live2d/models";
+import type { Live2DModel } from "@/lib/live2d/models";
 
-/** Network side of the Live2D viewer: the published model indexes, a model's files and Live2D Cubism Core. */
+/** Network side of the Live2D viewer: a release-gated regional index, model files and Live2D Cubism Core. */
 
 /** A model's files come from the browser's player file cache once downloaded (they are content-addressed). */
 const modelFileFetch = createPlayerFileFetch("live2d");
 
-/**
- * The viewer's models: the model site's `models.json` and the story site's, merged by mergeLive2DModelIndexes. A site
- * that cannot be read only takes its models out; the model site's failure is thrown when neither can.
- */
-export async function fetchLive2DModels(signal: AbortSignal): Promise<Live2DModel[]> {
-  const [modelSite, storySite] = await Promise.allSettled([
-    fetchModelIndex(assetConfig.chartSite, signal),
-    fetchModelIndex(assetConfig.storySite, signal),
-  ]);
-  if (modelSite.status === "rejected" && storySite.status === "rejected") throw modelSite.reason;
-  return mergeLive2DModelIndexes(
-    modelSite.status === "fulfilled" ? modelSite.value : [],
-    storySite.status === "fulfilled" ? storySite.value : [],
+/** Models are listed only by the same-origin endpoint after it checks the selected region's costume MasterData. */
+export async function fetchLive2DModels(signal: AbortSignal, server: GameServer): Promise<Live2DModel[]> {
+  const response = await fetch(`${getLive2DIndexApiPath()}?server=${encodeURIComponent(server)}`, {
+    signal,
+    credentials: "same-origin",
+    cache: "no-store",
+    headers: { Accept: "application/json" },
+  });
+  if (!response.ok) throw new Error(`Live2D model index: HTTP ${response.status}`);
+  const payload = (await response.json()) as { models?: unknown };
+  if (!Array.isArray(payload.models)) return [];
+  const manifestPrefixes = (["chart", "story"] as const)
+    .map((source) => `${getLive2DProxyApiRoot(server, source)}/models/`);
+  return payload.models.filter((model): model is Live2DModel =>
+    typeof model === "object" && model !== null
+    && typeof (model as Live2DModel).id === "string"
+    && /^[a-z0-9_]+$/.test((model as Live2DModel).id)
+    && typeof (model as Live2DModel).manifestUrl === "string"
+    && manifestPrefixes.some((prefix) => (model as Live2DModel).manifestUrl.startsWith(prefix))
+    && typeof (model as Live2DModel).kind === "string"
+    && ["story", "live", "side"].includes((model as Live2DModel).kind),
   );
+}
+
+/**
+ * The release-gated root for one model's files. ournotes-player 0.1.8's AssetStore defaults to `../` from
+ * `models/<id>.json` and ignores a manifest `root`, which would request the unscoped `/assets/<hash>` route. Give it
+ * the model directory explicitly so its requests stay at `models/<id>/assets/<hash>` and the proxy can recheck that
+ * exact model's release and manifest allowlist.
+ */
+export function getLive2DModelAssetBase(manifestUrl: string, pageUrl = currentPageUrl()): string {
+  const page = new URL(pageUrl);
+  const manifest = new URL(manifestUrl, page);
+  if (manifest.origin !== page.origin || manifest.search || manifest.hash) {
+    throw new Error("Live2D model manifest must be a same-origin proxy URL without a query or fragment");
+  }
+  const modelId = live2DModelIdFromProxyManifest(manifest.pathname);
+  if (!modelId) throw new Error("Live2D model manifest is not a release-gated model route");
+  return new URL(`./${modelId}/`, manifest).href;
+}
+
+function live2DModelIdFromProxyManifest(pathname: string): string | null {
+  for (const server of GAME_SERVERS) {
+    for (const source of ["chart", "story"] as const) {
+      const prefix = `${getLive2DProxyApiRoot(server, source)}/models/`;
+      if (!pathname.startsWith(prefix)) continue;
+      const match = /^([a-z0-9_]+)\.json$/.exec(pathname.slice(prefix.length));
+      if (match) return match[1]!;
+    }
+  }
+  return null;
+}
+
+function currentPageUrl(): string {
+  if (typeof window === "undefined") throw new Error("Live2D asset URLs can only be resolved in a browser page");
+  return window.location.href;
 }
 
 /** One model's files (its manifest and every asset it lists), with byte progress. */
 export async function loadLive2DModelAssets(manifestUrl: string, signal: AbortSignal, onProgress: (loaded: number, total: number) => void): Promise<AssetStore> {
   const { AssetStore } = await import("ournotes-player/live2d");
-  return AssetStore.fromManifest(manifestUrl, { signal, onProgress, fetch: modelFileFetch });
-}
-
-/** `models.json` of a player site; no models when the site has none yet (404). */
-async function fetchModelIndex(site: string, signal: AbortSignal): Promise<Live2DModelEntry[]> {
-  const url = getLive2DModelsIndexUrl(site);
-  const response = await fetch(url, { signal, credentials: "omit", headers: { Accept: "application/json" } });
-  if (response.status === 404) return [];
-  if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
-  const index = (await response.json()) as { models?: unknown };
-  return Array.isArray(index.models)
-    ? index.models.filter((entry): entry is Live2DModelEntry => typeof entry === "object" && entry !== null && typeof (entry as Live2DModelEntry).id === "string")
-    : [];
+  const base = getLive2DModelAssetBase(manifestUrl);
+  return AssetStore.fromManifest(manifestUrl, { signal, onProgress, fetch: modelFileFetch, base });
 }
 
 let core: Promise<void> | null = null;

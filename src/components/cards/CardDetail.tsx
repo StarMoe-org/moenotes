@@ -18,7 +18,7 @@ import { localizePath } from "@/i18n/routing";
 import { getRoutePathById } from "@/lib/route/registry";
 import { useNow } from "@/lib/schedule/use-now";
 import { isSpoiler, useSpoiler } from "@/lib/settings/spoiler";
-import { SpoilerNotice, DeveloperTestingBanner } from "@/components/shared/SpoilerNotice";
+import SpoilerNotice from "@/components/shared/SpoilerNotice";
 import {
   getCardBackgroundUrl,
   getCardCharacterUrl,
@@ -137,7 +137,6 @@ function CardDetailView({ locale, data, materials, serverSwitch }: { locale: App
 
   return (
     <div className="w-full space-y-8">
-      {isUnreleased && <DeveloperTestingBanner locale={locale} />}
       <DetailHero
         title={card.title}
         subtitle={<a href={localizePath(`/characters/${card.characterId}`, locale)} className="hover:text-primary hover:underline">{card.characterName}</a>}

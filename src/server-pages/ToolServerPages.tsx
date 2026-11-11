@@ -34,6 +34,8 @@ import {
   getBuildSupportCards,
 } from "@/lib/masterdata/build-data";
 import { getBuildGuessSongs } from "@/lib/masterdata/build-guess-music";
+import { filterReleasedCharacterFacets, getBuildReleasedCharacterServers } from "@/lib/characters/release";
+import { restrictFacetServers } from "@/lib/servers/facets";
 import { getBuildServers } from "@/lib/masterdata/build-servers";
 import { getBuildThemeBands } from "@/lib/masterdata/build-settings";
 import { getBuildPlayerCatalogue } from "@/lib/masterdata/player-fields";
@@ -41,6 +43,7 @@ import { getBuildRecognitionSource } from "@/lib/masterdata/recognition-source";
 import { getBuildGameSaveTables } from "@/lib/masterdata/save-tables";
 import { getRoutePathById } from "@/lib/route/registry";
 import { storyEpisodeLabel } from "@/lib/story/labels";
+import { isStoryReleasedAcrossServers, storyReleaseDates } from "@/lib/story/release";
 import type { StoryPickerStory } from "@/lib/story/player-data";
 
 export async function DeckWorkspaceServerPage({
@@ -130,25 +133,45 @@ export async function ChartPreview3DServerPage({ locale }: { locale: AppLocale }
 }
 
 export async function Live2DViewerServerPage({ locale }: { locale: AppLocale }) {
-  const { characters, bands } = await getBuildCharacters(locale);
+  const [data, servers, releasedCharacterServers] = await Promise.all([
+    getBuildCharacters(locale),
+    getBuildServers(),
+    getBuildReleasedCharacterServers(locale),
+  ]);
+  const characters = await filterReleasedCharacterFacets(data.characters, releasedCharacterServers);
+  const bandServers = new Map<number, Set<(typeof servers)[number]>>();
+  for (const character of characters) {
+    const set = bandServers.get(character.bandId) ?? new Set<(typeof servers)[number]>();
+    character.servers.forEach((server) => set.add(server));
+    bandServers.set(character.bandId, set);
+  }
   const pickerCharacters = characters.map((character) => ({
     id: character.id,
     name: character.name,
     bandId: character.bandId,
+    servers: character.servers,
   }));
-  const pickerBands = [...bands].sort((a, b) => a.id - b.id).map((band) => ({ id: band.id, name: band.name }));
+  const pickerBands = data.bands.flatMap((band) => {
+    const safe = restrictFacetServers(band, [...(bandServers.get(band.id) ?? [])]);
+    return safe ? [{ id: safe.id, name: safe.name, servers: safe.servers }] : [];
+  }).sort((a, b) => a.id - b.id);
   return (
     <PageHeader locale={locale} titleKey="seo.live2dViewer.title" descriptionKey="seo.live2dViewer.description">
-      <Live2DViewer locale={locale} characters={pickerCharacters} bands={pickerBands} />
+      <Live2DViewer locale={locale} servers={servers} characters={pickerCharacters} bands={pickerBands} />
     </PageHeader>
   );
 }
 
 export async function StoryPlayerServerPage({ locale }: { locale: AppLocale }) {
-  const stories: StoryPickerStory[] = (await getBuildStories(locale)).map((story) => ({
+  const now = Date.now();
+  const stories: StoryPickerStory[] = (await getBuildStories(locale))
+    .filter((story) => isStoryReleasedAcrossServers(story, now))
+    .map((story) => ({
     advId: story.advId,
     assetServer: story.servers[0] ?? PRIMARY_SERVER,
     category: story.category,
+    servers: story.servers,
+    releaseDates: storyReleaseDates(story),
     title: story.title,
     groupId: story.groupId,
     groupTitle: story.groupTitle || story.bandName,
@@ -166,7 +189,6 @@ export async function StoryPlayerServerPage({ locale }: { locale: AppLocale }) {
         ? `Story/Banner/${story.assets.banner ? "Episode" : "Chapter"}/${story.assets.banner || story.assets.image}`
         : "",
     searchText: story.searchText,
-    startAt: story.startAt,
   }));
 
   return (

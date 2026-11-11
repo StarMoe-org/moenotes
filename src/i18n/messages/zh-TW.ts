@@ -1248,7 +1248,7 @@ export const zhTW = {
       title: "劇透內容過濾",
       showLabel: "劇透內容顯示",
       description: "顯示尚未在對應區服正式發布的活動、卡面、樂曲與劇情等資料。",
-      eulaNotice: "此內容尚未在遊戲內公開，將於公開後顯示。",
+      eulaNotice: "僅在對應地區版本的遊戲內正式公開後顯示。線上已可取得不代表遊戲內已正式公開。",
       devOptionBadge: "開發者選項",
       devOnly: "該功能僅供開發者測試",
       restrictedTitle: "內容尚未公開",

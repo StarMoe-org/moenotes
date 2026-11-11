@@ -20,9 +20,10 @@ export function setShowSpoiler(_on: boolean): void {
 }
 
 export interface SpoilerState {
-  isUnlocked: boolean;
-  showSpoiler: boolean;
-  setShowSpoiler: (on: boolean) => void;
+  isUnlocked: false;
+  /** Always false; retained only so existing filters share one locked public state. */
+  showSpoiler: false;
+  setShowSpoiler: typeof setShowSpoiler;
   now: number | null;
 }
 

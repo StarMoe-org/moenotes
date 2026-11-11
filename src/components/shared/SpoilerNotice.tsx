@@ -41,16 +41,4 @@ export function SpoilerNotice({ locale, onBack }: SpoilerNoticeProps) {
   );
 }
 
-export function DeveloperTestingBanner({ locale }: { locale: AppLocale }) {
-  return (
-    <div className="mb-6 flex items-center gap-2.5 rounded-shape-md border border-outline-variant bg-surface-container-high px-4 py-3 text-body-medium text-on-surface-variant">
-      <Icon name="info" className="h-5 w-5 shrink-0 text-primary" />
-      <div className="min-w-0 flex-1">
-        <span className="font-semibold text-on-surface">{t(locale, "settings.spoiler.devTestingBadge")}: </span>
-        <span>{t(locale, "settings.spoiler.devOnly")}</span>
-      </div>
-    </div>
-  );
-}
-
 export default SpoilerNotice;

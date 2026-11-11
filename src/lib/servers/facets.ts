@@ -105,6 +105,27 @@ export function valueForServer<T>(faceted: ServerFacetedValue<T>, server: GameSe
   return variant ? { ...faceted.value, ...variant } : faceted.value;
 }
 
+/** Restrict a merged entity to approved regions, promoting the first approved region to the serialized base value. */
+export function restrictFacetServers<T>(entity: ServerFaceted<T>, allowed: readonly GameServer[]): ServerFaceted<T> | null {
+  const servers = entity.servers.filter((server) => allowed.includes(server));
+  const firstServer = servers[0];
+  if (!firstServer) return null;
+  const first = forServer(entity, firstServer) as T & { servers?: GameServer[]; serverVariants?: ServerVariants<T> };
+  const { servers: _servers, serverVariants: _variants, ...base } = first;
+  const serverVariants: ServerVariants<T> = {};
+  for (const server of servers.slice(1)) {
+    const resolved = forServer(entity, server) as T & { servers?: GameServer[]; serverVariants?: ServerVariants<T> };
+    const { servers: _serverList, serverVariants: _serverVariants, ...other } = resolved;
+    const changed = changedFields(base as T, other as T);
+    if (changed) serverVariants[server] = changed;
+  }
+  return {
+    ...(base as T),
+    servers,
+    ...(Object.keys(serverVariants).length > 0 ? { serverVariants } : {}),
+  };
+}
+
 /** Some fields of a value as their own faceted value, so that one page can hand parts of it to several islands. */
 export function pickFacet<T extends object, K extends keyof T>(faceted: ServerFacetedValue<T>, keys: readonly K[]): ServerFacetedValue<Pick<T, K>> {
   const pick = (value: Partial<T>): Partial<Pick<T, K>> => Object.fromEntries(keys.filter((key) => key in value).map((key) => [key, value[key]])) as Partial<Pick<T, K>>;

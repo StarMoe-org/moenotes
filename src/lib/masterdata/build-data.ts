@@ -16,7 +16,7 @@ import {
   toSearchTextRecord,
 } from "@/lib/masterdata/build-core";
 import type { ContentSearchEntry } from "@/lib/search/content-entry";
-import { mergeServerLists, type ServerFaceted, type ServerFacetedValue } from "@/lib/servers/facets";
+import { mergeServerLists, mergeServerValues, type ServerFaceted, type ServerFacetedValue } from "@/lib/servers/facets";
 import {
   normalizeCards,
   type CardViewModel,
@@ -51,6 +51,7 @@ import { buildSupportCardGrowth, type RawSupportCardRank, type SupportCardGrowth
 import { getRoutePathById } from "@/lib/route/registry";
 import {
   costumeCharacterId,
+  isCostumeReleased,
   normalizeCharacterCostumes,
   normalizeCharacters,
   normalizeRankRewards,
@@ -316,12 +317,18 @@ export function characterProgressionOn(server: GameServer, locale: AppLocale): P
   });
 }
 
-export async function getBuildCharacterProgression(locale: AppLocale, characterId: number): Promise<CharacterProgressionData | null> {
-  const merged = await mergedValue(`character-progression:${locale}:${characterId}`, async (server) => {
+export async function getBuildCharacterProgression(
+  locale: AppLocale,
+  characterId: number,
+): Promise<ServerFacetedValue<CharacterProgressionData> | null> {
+  const now = Date.now();
+  const perServer = await eachServer(async (server) => {
     const map = await characterProgressionOn(server, locale);
-    return map.get(characterId) ?? null;
+    const progression = map.get(characterId);
+    if (!progression) return null;
+    return { ...progression, costumes: progression.costumes.filter((costume) => isCostumeReleased(costume, now)) };
   });
-  return merged?.value ?? null;
+  return mergeServerValues(perServer);
 }
 
 export function supportCardsOn(server: GameServer, locale: AppLocale): Promise<SupportCardViewModel[]> {

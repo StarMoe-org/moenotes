@@ -7,7 +7,7 @@ import { hasSiteStory } from "@/lib/story/player-client";
 import { getStoryPlayerHref } from "@/lib/story/player-data";
 
 /**
- * The story player's link for an episode, shown once the story site is known to have it (a HEAD of its manifest).
+ * The story player's link for an episode, shown once a regional release-filtered index lists it.
  * `button` on a story page's header; `compact` among a dialog's header actions.
  */
 export default function StoryPlayerLink({ locale, advId, variant = "button" }: { locale: AppLocale; advId: number; variant?: "button" | "compact" }) {

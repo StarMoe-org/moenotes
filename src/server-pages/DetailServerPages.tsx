@@ -12,11 +12,13 @@ import BreadcrumbSync from "@/components/shell/BreadcrumbSync";
 import ShopDetail from "@/components/shop/ShopDetail";
 import StoryDetail from "@/components/story/StoryDetail";
 import StoryChapterPage from "@/components/story/StoryChapterPage";
+import SpoilerNotice from "@/components/shared/SpoilerNotice";
 import SupportCardDetail from "@/components/support-cards/SupportCardDetail";
 import type { AppLocale } from "@/config/locales";
 import { notFound } from "next/navigation";
 import { getBuildMemberCardMaterials, getBuildSupportCardMaterials } from "@/lib/masterdata/build-card-materials";
 import { getBuildCharacterExtras } from "@/lib/masterdata/build-character-extras";
+import { getBuildReleasedCharacterIds } from "@/lib/characters/release";
 import {
   getBuildCardDetail,
   getBuildCharacterDetail,
@@ -38,6 +40,7 @@ import { getBuildServers } from "@/lib/masterdata/build-servers";
 import { getBuildShopDetail, getBuildShopNeighbors } from "@/lib/masterdata/build-shop";
 import { getDetailBreadcrumb } from "@/lib/route/static-paths";
 import type { DetailSemanticSeoData } from "@/lib/seo/entity-seo";
+import { isStoryReleasedAcrossServers } from "@/lib/story/release";
 import { inStorySection, type StoryChapterSection } from "@/lib/story/sections";
 
 interface DetailPageContext {
@@ -83,6 +86,7 @@ export async function SupportCardDetailServerPage({ locale, pathname, paramId, s
 
 export async function CharacterDetailServerPage({ locale, pathname, paramId, semantic }: DetailPageContext) {
   const characterId = Number(paramId);
+  if (!Number.isSafeInteger(characterId) || !(await getBuildReleasedCharacterIds(locale)).has(characterId)) notFound();
   const [initialData, progressionData, extrasData, servers, breadcrumb] = await Promise.all([
     getBuildCharacterDetail(locale, characterId),
     getBuildCharacterProgression(locale, characterId),
@@ -246,8 +250,16 @@ export async function HelpDetailServerPage({ locale, pathname, paramId, semantic
 
 export async function StoryDetailServerPage({ locale, pathname, paramId, semantic }: DetailPageContext) {
   const advId = Number(paramId);
-  const [detail, servers, breadcrumb] = await Promise.all([
-    getBuildStoryDetail(locale, advId),
+  const detail = await getBuildStoryDetail(locale, advId);
+  if (!detail.story || !isStoryReleasedAcrossServers(detail.story, Date.now())) {
+    return (
+      <>
+        <BreadcrumbSync locale={locale} pathname={pathname} />
+        <SpoilerNotice locale={locale} />
+      </>
+    );
+  }
+  const [servers, breadcrumb] = await Promise.all([
     getBuildServers(),
     getDetailBreadcrumb("story-detail", paramId, locale),
   ]);
@@ -274,13 +286,23 @@ export async function StoryDetailServerPage({ locale, pathname, paramId, semanti
 
 export async function StoryChapterServerPage({ locale, pathname, paramId, section, semantic }: DetailPageContext & { section: StoryChapterSection }) {
   const chapterId = Number(paramId);
-  const [allStories, servers, breadcrumb] = await Promise.all([
-    getBuildStories(locale),
+  const allStories = await getBuildStories(locale);
+  const chapterStories = allStories.filter((story) => story.chapterId === chapterId && inStorySection(section, story));
+  if (chapterStories.length === 0) notFound();
+  const now = Date.now();
+  const stories = chapterStories.filter((story) => isStoryReleasedAcrossServers(story, now));
+  if (stories.length === 0) {
+    return (
+      <>
+        <BreadcrumbSync locale={locale} pathname={pathname} />
+        <SpoilerNotice locale={locale} />
+      </>
+    );
+  }
+  const [servers, breadcrumb] = await Promise.all([
     getBuildServers(),
     getDetailBreadcrumb("story-chapter", paramId, locale),
   ]);
-  const stories = allStories.filter((story) => story.chapterId === chapterId && inStorySection(section, story));
-  if (stories.length === 0) notFound();
   return (
     <>
       <BreadcrumbSync locale={locale} pathname={pathname} detail={breadcrumb} />

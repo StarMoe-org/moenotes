@@ -8,6 +8,7 @@ import { getSupportCardFullUrl } from "@/lib/support-cards/assets";
 import {
   getBuildCardDetail,
   getBuildCharacterDetail,
+  getBuildCards,
   getBuildEventDetail,
   getBuildExchangeDetail,
   getBuildGachaDetail,
@@ -17,6 +18,7 @@ import {
   getBuildStoryDetail,
   getBuildSupportCardDetail,
 } from "@/lib/masterdata/build-data";
+import { getBuildReleasedCharacterIds } from "@/lib/characters/release";
 import { getBuildHelpTopicDetail } from "@/lib/masterdata/build-help";
 import { getBuildItemDetail } from "@/lib/masterdata/build-item-sources";
 import { getBuildShopDetail } from "@/lib/masterdata/build-shop";
@@ -24,6 +26,7 @@ import { buildDynamicPath, findRouteById, getRoutePathById } from "@/lib/route/r
 import { absolutePageUrl, type PageMetadata } from "@/lib/seo/metadata";
 import { valueForServer, type ServerFacetedValue } from "@/lib/servers/facets";
 import { findStoryChapter } from "@/lib/story/chapters";
+import { isReleaseFacetReleasedAcrossServers, isStoryReleasedAcrossServers } from "@/lib/story/release";
 import { storyEpisodeLabel } from "@/lib/story/labels";
 import { parseStoryChapterPath } from "@/lib/story/paths";
 import { storyCategoryKey } from "@/lib/story/sections";
@@ -375,12 +378,16 @@ export async function resolveEntitySeo(
 
     case "character-detail": {
       const charId = Number(paramId);
-      if (!Number.isFinite(charId)) return null;
+      if (!Number.isFinite(charId) || !(await getBuildReleasedCharacterIds(locale)).has(charId)) return null;
       const faceted = await getBuildCharacterDetail(locale, charId);
       const picked = pickValue(faceted);
       const char = picked?.value.character ?? null;
       if (!char) return null;
-      const cards = picked?.value.cards ?? [];
+      const now = Date.now();
+      const publicCardIds = new Set((await getBuildCards(locale))
+        .filter((card) => isReleaseFacetReleasedAcrossServers(card, now))
+        .map((card) => card.id));
+      const cards = (picked?.value.cards ?? []).filter((card) => publicCardIds.has(card.id));
       const summary = truncateText(
         [char.name, char.bandName, char.voiceActor ? `CV: ${char.voiceActor}` : "", char.catchCopy, char.description]
           .filter(Boolean)
@@ -427,7 +434,9 @@ export async function resolveEntitySeo(
       if (!Number.isSafeInteger(chapterId) || chapterId <= 0) return null;
       const parsed = parseStoryChapterPath(pathname);
       if (!parsed) return null;
-      const chapter = findStoryChapter(await getBuildStories(locale), chapterId);
+      const now = Date.now();
+      const publicStories = (await getBuildStories(locale)).filter((story) => isStoryReleasedAcrossServers(story, now));
+      const chapter = findStoryChapter(publicStories, chapterId);
       // One chapter has one section: an event chapter under /story/main/... is not a second page for it.
       if (!chapter || chapter.category !== parsed.section) return null;
 
@@ -475,6 +484,7 @@ export async function resolveEntitySeo(
       const advId = Number(paramId);
       if (!Number.isFinite(advId)) return null;
       const detail = await getBuildStoryDetail(locale, advId);
+      if (!detail.story || !isStoryReleasedAcrossServers(detail.story, Date.now())) return null;
       const heading = detail.title || `ADV ${advId}`;
       const dialoguePreview = (detail.script?.lines ?? [])
         .filter((l) => l.text.trim())

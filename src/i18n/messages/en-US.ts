@@ -1211,7 +1211,7 @@ export const enUS = {
       title: "Spoiler content filter",
       showLabel: "Show spoiler content",
       description: "Display upcoming events, cards, songs, stories, and other data not yet officially released on the selected server.",
-      eulaNotice: "This content is not available before its in-game release.",
+      eulaNotice: "Only content officially released in the relevant region is shown. Online availability alone does not count as an in-game release.",
       devOptionBadge: "Developer option",
       devOnly: "This feature is for developer testing only",
       restrictedTitle: "Content not yet public",
