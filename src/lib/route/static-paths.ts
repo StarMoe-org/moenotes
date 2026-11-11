@@ -21,6 +21,7 @@ import {
 import { getBuildHelpTopics } from "@/lib/masterdata/build-help";
 import { getBuildShops } from "@/lib/masterdata/build-shop";
 import { groupStoryChapters } from "@/lib/story/chapters";
+import { isStoryReleasedAcrossServers } from "@/lib/story/release";
 import { isChapterSection } from "@/lib/story/sections";
 
 export interface StaticLocalizedPathProps {
@@ -89,7 +90,9 @@ const detailLabelLoaders: Record<string, (locale: AppLocale) => Promise<Map<stri
   "story-chapter": async (locale) => {
     const storyRoute = plainRoute(findRouteById("story"));
     // Only main and event stories have chapter pages; birthday chapters are listed as episodes.
-    const chapters = groupStoryChapters(await getBuildStories(locale)).filter((chapter) => isChapterSection(chapter.category));
+    const now = Date.now();
+    const publicStories = (await getBuildStories(locale)).filter((story) => isStoryReleasedAcrossServers(story, now));
+    const chapters = groupStoryChapters(publicStories).filter((chapter) => isChapterSection(chapter.category));
     return byId(chapters, (chapter) => chapter.chapterId, (chapter) => ({
       label: chapter.name || `Chapter ${chapter.chapterId}`,
       ancestors: [storyRoute, plainRoute(findRouteById(chapter.category === "main" ? "main-story" : "event-story"))].filter((r): r is AppRoute => r !== null),
@@ -98,7 +101,9 @@ const detailLabelLoaders: Record<string, (locale: AppLocale) => Promise<Map<stri
   "story-detail": async (locale) => {
     const storyRoute = plainRoute(findRouteById("story"));
     // An ADV in several lists takes its first one's title and category.
-    const stories = (await getBuildStories(locale)).filter((story, index, all) => all.findIndex((other) => other.advId === story.advId) === index);
+    const now = Date.now();
+    const publicStories = (await getBuildStories(locale)).filter((story) => isStoryReleasedAcrossServers(story, now));
+    const stories = publicStories.filter((story, index, all) => all.findIndex((other) => other.advId === story.advId) === index);
     return byId(stories, (story) => story.advId, (story) => ({
       label: story.title || `ADV ${story.advId}`,
       ancestors: [storyRoute, plainRoute(findRouteById(storyCategoryRoutes[story.category] ?? "other-story"))].filter((r): r is AppRoute => r !== null),

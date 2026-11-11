@@ -84,6 +84,12 @@ export function parseLive2DViewerSearch(search: string): string | null {
   return /^[a-z0-9_]+$/.test(id) ? id : null;
 }
 
+/** A direct `?model=` request selects only a model already present in the release-filtered regional list. */
+export function findRequestedLive2DModel(search: string, releasedModels: readonly Live2DModel[]): Live2DModel | null {
+  const id = parseLive2DViewerSearch(search);
+  return id ? releasedModels.find((model) => model.id === id) ?? null : null;
+}
+
 /**
  * A models.json entry as the picker shows it. Ids are `[adv_]live2d_<name>_<NNN>_<costume>` for the 25 characters (NNN
  * is the MasterCharacter id, as is the group `<NNN>_adv` / `<NNN>_live`) and `adv_live2d_sub_<name>_<costume>` for side

@@ -1,17 +1,21 @@
 import { assetConfig } from "@/config/assets";
+import { getStorySiteProxyApiRoot } from "@/config/routes";
 import type { AppLocale } from "@/config/locales";
-import { PRIMARY_SERVER, type GameServer } from "@/config/servers";
+import type { GameServer } from "@/config/servers";
 import { getRoutePathById } from "@/lib/route/registry";
 import { localizePath } from "@/i18n/routing";
 import { assetLanguageOrder, serverAssetUrl } from "@/lib/assets/release";
 import { getImageAssetUrl } from "@/lib/assets/url";
 import type { StoryCategory, StoryEpisodeKind } from "@/lib/story/data";
+import { SPOILER_REFERENCE_NOW } from "@/lib/settings/spoiler-reference";
+import { isStoryReleasedAt } from "@/lib/story/release";
 
 /** The story player's data: the story site's index entries and the episodes the page knows from the build. */
 
 /** The story languages of ournotes-player (the site's language codes, as the asset server's). */
 export const STORY_LANGUAGES = ["ja", "en", "zh-Hant", "zh-Hans", "ko"] as const;
 export type StoryLanguage = typeof STORY_LANGUAGES[number];
+export type StorySiteRegion = Extract<GameServer, "tw" | "jp">;
 
 /**
  * The story sites' roots, in precedence order: the international site (TW/HK/MO, every text language), then JP (its own
@@ -21,11 +25,26 @@ export function getStorySiteRoots(): string[] {
   return [...new Set([assetConfig.storySite, assetConfig.storySiteJp].filter(Boolean))];
 }
 
+/** The configured roots with the game region whose release schedule governs each root. */
+export function getStorySites(): Array<{ root: string; server: StorySiteRegion }> {
+  return getStorySiteRoots().map((root) => ({
+    root,
+    server: root === assetConfig.storySiteJp && root !== assetConfig.storySite ? "jp" : "tw",
+  }));
+}
+
+/** Browser-facing root: every manifest and resource goes through the same-origin release-gated proxy. */
+export function getStorySiteProxyRoot(server: StorySiteRegion): string {
+  return getStorySiteProxyApiRoot(server);
+}
+
 /** A `stories.json` entry (ournotes.stories/1) as the player page reads it. */
 export interface StorySiteEntry {
   id: string;
   advId: number;
-  /** The story site the entry comes from (a root of getStorySiteRoots); its manifest and files are under it. */
+  /** Region whose in-game release controls access to this story site. */
+  server: StorySiteRegion;
+  /** Same-origin proxy root for the regional story site; manifests and every listed resource go through its gate. */
   root: string;
   /** The manifest path under the site root (`stories/<advId>.json`). */
   manifest: string;
@@ -55,6 +74,10 @@ export interface StoryPickerStory {
   assetServer: GameServer;
   category: StoryCategory;
   title: string;
+  /** The regional MasterData catalogs that contain this story. */
+  servers: GameServer[];
+  /** Each region's own official in-game release date; cloud availability is never used as a release signal. */
+  releaseDates: Partial<Record<GameServer, string>>;
   /** The group the episode belongs to (a chapter, a character's bond, a spot) and its name. */
   groupId: string;
   groupTitle: string;
@@ -70,49 +93,64 @@ export interface StoryPickerStory {
   /** The episode's banner (asset path without extension, text-bearing: per locale); empty when it has none. */
   image: string;
   searchText: string;
-  startAt?: string;
 }
 
-/** An episode the story site has, with what the picker, the search and the header show. */
+/** A locally verified episode the cloud story site has, with what the picker, search and header show. */
 export interface StoryPlayerEntry extends Omit<StoryPickerStory, "category"> {
   site: StorySiteEntry;
-  /** "other": an episode the build does not know (published after it), listed by the site's own titles. */
+  /** "other" is retained in the type for old consumers, but unknown cloud-only rows are never constructed. */
   category: StoryCategory | "other";
+  /** The release date for the selected cloud site's region. */
+  startAt: string;
   section: StorySection;
 }
 
 /**
- * The site's episodes in the story pages' order (the build's episodes it has), then the ones the build does not know
- * yet in advId order, grouped under `otherGroupTitle`.
+ * Only joins cloud entries to the locally maintained, region-faceted game catalog. A story which exists only in the
+ * cloud has no trusted in-game release date, so it is omitted rather than treated as public.
  */
 export function buildStoryPlayerEntries(
   stories: readonly StoryPickerStory[],
   siteEntries: readonly StorySiteEntry[],
-  locale: AppLocale,
-  otherGroupTitle: string,
 ): StoryPlayerEntry[] {
-  const byAdv = new Map(siteEntries.map((entry) => [entry.advId, entry]));
   const listed = new Set<number>();
-  const known: StoryPlayerEntry[] = [];
+  const result: StoryPlayerEntry[] = [];
   for (const story of stories) {
-    const site = byAdv.get(story.advId);
-    if (!site || listed.has(story.advId)) continue;
+    if (listed.has(story.advId)) continue;
+    const site = siteEntries.find((entry) => entry.advId === story.advId && story.servers.includes(entry.server));
+    if (!site) continue;
+    const startAt = story.releaseDates[site.server];
+    // Missing region data is not proof of a release, even if a public storage index has the episode.
+    if (startAt === undefined) continue;
     listed.add(story.advId);
-    const title = story.title || storySiteTitle(site, locale);
-    const assetServer = site.root === assetConfig.storySiteJp && site.root !== assetConfig.storySite ? "jp" : story.assetServer;
-    known.push({ ...story, assetServer, site, title, section: storySection(story.category), searchText: `${story.searchText} ${title} ${story.advId}`.toLocaleLowerCase() });
-  }
-  const unknown = siteEntries
-    .filter((entry) => !listed.has(entry.advId))
-    .sort((a, b) => a.advId - b.advId)
-    .map((site): StoryPlayerEntry => {
-      const title = storySiteTitle(site, locale);
-      return {
-        advId: site.advId, assetServer: PRIMARY_SERVER, site, category: "other", section: "other", title, groupId: "site", groupTitle: otherGroupTitle, groupSubtitle: "",
-        groupImage: "", episodeLabel: "", episodeKind: null, episodeNote: "", image: "", searchText: `${title} ${site.advId}`.toLocaleLowerCase(),
-      };
+    const title = story.title || `ADV ${story.advId}`;
+    const assetServer = site.server === "jp" ? "jp" : story.assetServer;
+    result.push({
+      ...story,
+      assetServer,
+      site,
+      startAt,
+      title,
+      section: storySection(story.category),
+      searchText: `${story.searchText} ${title} ${story.advId}`.toLocaleLowerCase(),
     });
-  return [...known, ...unknown];
+  }
+  return result;
+}
+
+/** A cloud-backed episode is playable only when every known regional version is officially released. */
+export function isStoryPlayerEntryReleased(entry: StoryPlayerEntry, now?: number | null): boolean {
+  if (entry.servers.length === 0 || !entry.servers.includes(entry.site.server)) return false;
+  return entry.servers.every((server) => {
+    const startAt = entry.releaseDates[server];
+    return isStoryReleasedAt(startAt, now ?? SPOILER_REFERENCE_NOW);
+  });
+}
+
+/** A query-string id is playable only if it resolves to a locally verified, regionally released index entry. */
+export function isStoryPlayerRequestReleased(advId: number, entries: readonly StoryPlayerEntry[], now?: number | null): boolean {
+  const entry = entries.find((candidate) => candidate.advId === advId);
+  return Boolean(entry && isStoryPlayerEntryReleased(entry, now));
 }
 
 export function getStoryPlayerArtworkUrl(path: string, locale: AppLocale, server: GameServer): string {

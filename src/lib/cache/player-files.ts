@@ -113,7 +113,11 @@ export function getPlayerFileKey(url: string, base = pageBase()): string | null 
   if (parsed.search) return null;
   const href = `${parsed.origin}${parsed.pathname}`;
   const root = siteAssetRoots(base).find((prefix) => href.startsWith(prefix));
-  return root && CONTENT_ADDRESSED_NAME.test(href.slice(root.length)) ? href : null;
+  if (root && CONTENT_ADDRESSED_NAME.test(href.slice(root.length))) return href;
+  // Story playback uses a same-origin, release-gated resource proxy; its files stay story-scoped in the URL.
+  const storyProxyAsset = parsed.pathname.match(/^\/api\/v1\/story-site\/(?:tw|jp)\/stories\/\d+\/assets\/([^/]+)$/)?.[1];
+  const live2DProxyAsset = parsed.pathname.match(/^\/api\/v1\/live2d\/(?:tw|jp|kr|en)\/(?:chart|story)\/models\/[a-z0-9_]+\/assets\/([^/]+)$/)?.[1];
+  return [storyProxyAsset, live2DProxyAsset].some((name) => Boolean(name && CONTENT_ADDRESSED_NAME.test(name))) ? href : null;
 }
 
 /**

@@ -19,11 +19,15 @@ import ShopExplorer from "@/components/shop/ShopExplorer";
 import SkillsExplorer from "@/components/skills/SkillsExplorer";
 import StampsExplorer from "@/components/stamps/StampsExplorer";
 import StoryExplorer from "@/components/story/StoryExplorer";
+import { isReleaseFacetReleasedAcrossServers, isStoryReleasedAcrossServers, isStoryReleasedAt } from "@/lib/story/release";
+import { getBuildReleasedCharacterIds } from "@/lib/characters/release";
+import { valueForServer, type ServerFaceted, type ServerFacetedValue } from "@/lib/servers/facets";
 import { inStorySection, type StorySection } from "@/lib/story/sections";
 import SupportCardsExplorer from "@/components/support-cards/SupportCardsExplorer";
 import TgwCardView from "@/components/tgw-card/TgwCardView";
 import TitlesExplorer from "@/components/titles/TitlesExplorer";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
 import { haneokaEngineDocument, haneokaUrl, siteConfig } from "@/config/site";
 import { t } from "@/i18n";
 import { getLegalTexts } from "@/i18n/legal";
@@ -66,12 +70,41 @@ import { getNavChildren } from "@/lib/route/registry";
 import { MASTER_TIME_ZONE } from "@/lib/schedule";
 import type { AppRoute } from "@/types/route";
 
+function releasedFacets<T extends { startAt: string }>(entries: ServerFaceted<T>[], now: number): ServerFaceted<T>[] {
+  return entries.filter((entry) => isReleaseFacetReleasedAcrossServers(entry, now));
+}
+
+function releasedCalendar<T extends { entries: Array<{ id: string; startAt: string }> }>(data: ServerFacetedValue<T>, now: number): ServerFacetedValue<T> {
+  const datesByEntry = new Map<string, Map<GameServer, string>>();
+  for (const server of data.servers) {
+    for (const entry of valueForServer(data, server).entries) {
+      const dates = datesByEntry.get(entry.id) ?? new Map<GameServer, string>();
+      dates.set(server, entry.startAt);
+      datesByEntry.set(entry.id, dates);
+    }
+  }
+  const publicIds = new Set([...datesByEntry].flatMap(([id, dates]) =>
+    dates.size > 0 && [...dates.values()].every((date) => isStoryReleasedAt(date, now)) ? [id] : [],
+  ));
+  const filter = (value: Partial<T>): Partial<T> => {
+    const entries = value.entries;
+    return Array.isArray(entries) ? { ...value, entries: entries.filter((entry) => publicIds.has(entry.id)) } as Partial<T> : value;
+  };
+  const serverVariants = Object.fromEntries(Object.entries(data.serverVariants ?? {}).map(([server, value]) => [server, filter(value)])) as ServerFacetedValue<T>["serverVariants"];
+  return {
+    value: filter(data.value) as T,
+    servers: data.servers,
+    ...(serverVariants && Object.keys(serverVariants).length > 0 ? { serverVariants } : {}),
+  };
+}
+
 export async function CardsServerPage({ locale }: { locale: AppLocale }) {
-  const [cards, servers, skillNames] = await Promise.all([
+  const [allCards, servers, skillNames] = await Promise.all([
     getBuildCards(locale),
     getBuildServers(),
     getBuildCardSkillNames(locale),
   ]);
+  const cards = releasedFacets(allCards, Date.now());
   return (
     <PageHeader locale={locale} titleKey="seo.cards.title" descriptionKey="seo.cards.description">
       <CardsExplorer
@@ -85,12 +118,13 @@ export async function CardsServerPage({ locale }: { locale: AppLocale }) {
 }
 
 export async function SkillsServerPage({ locale }: { locale: AppLocale }) {
-  const [cards, bandNames, servers, skillDictionaries] = await Promise.all([
+  const [allCards, bandNames, servers, skillDictionaries] = await Promise.all([
     getBuildCards(locale),
     getBuildBandNames(locale),
     getBuildServers(),
     getBuildSkillDictionaries(locale),
   ]);
+  const cards = releasedFacets(allCards, Date.now());
   return (
     <PageHeader locale={locale} titleKey="seo.skills.title" descriptionKey="seo.skills.description">
       <SkillsExplorer
@@ -105,11 +139,12 @@ export async function SkillsServerPage({ locale }: { locale: AppLocale }) {
 }
 
 export async function SupportCardsServerPage({ locale }: { locale: AppLocale }) {
-  const [cards, servers, skillNames] = await Promise.all([
+  const [allCards, servers, skillNames] = await Promise.all([
     getBuildSupportCards(locale),
     getBuildServers(),
     getBuildCardSkillNames(locale),
   ]);
+  const cards = releasedFacets(allCards, Date.now());
   return (
     <PageHeader locale={locale} titleKey="seo.supportCards.title" descriptionKey="seo.supportCards.description">
       <SupportCardsExplorer servers={servers} locale={locale} initialSupportCards={cards} skillNames={skillNames} />
@@ -118,11 +153,12 @@ export async function SupportCardsServerPage({ locale }: { locale: AppLocale }) 
 }
 
 export async function MusicServerPage({ locale }: { locale: AppLocale }) {
-  const [songs, categories, servers] = await Promise.all([
+  const [allSongs, categories, servers] = await Promise.all([
     getBuildMusic(locale),
     getBuildMusicCategories(locale),
     getBuildServers(),
   ]);
+  const songs = releasedFacets(allSongs, Date.now());
   const categoryNames: Array<[number, string]> = categories.map((category) => [category.id, category.name]);
   return (
     <PageHeader locale={locale} titleKey="seo.music.title" descriptionKey="seo.music.description">
@@ -132,7 +168,14 @@ export async function MusicServerPage({ locale }: { locale: AppLocale }) {
 }
 
 export async function CharactersServerPage({ locale }: { locale: AppLocale }) {
-  const [characters, servers] = await Promise.all([getBuildCharacters(locale), getBuildServers()]);
+  const [allCharacters, servers] = await Promise.all([getBuildCharacters(locale), getBuildServers()]);
+  const releasedCharacterIds = await getBuildReleasedCharacterIds(locale);
+  const characters = {
+    ...allCharacters,
+    characters: allCharacters.characters.filter((character) => releasedCharacterIds.has(character.id)),
+  };
+  const releasedBandIds = new Set(characters.characters.map((character) => character.bandId));
+  characters.bands = characters.bands.filter((band) => releasedBandIds.has(band.id));
   return (
     <PageHeader locale={locale} titleKey="seo.characters.title" descriptionKey="seo.characters.description">
       <CharactersExplorer servers={servers} locale={locale} initialCharacters={characters} />
@@ -141,13 +184,16 @@ export async function CharactersServerPage({ locale }: { locale: AppLocale }) {
 }
 
 export async function EventsServerPage({ locale }: { locale: AppLocale }) {
-  const [events, { bands }, servers, arenaCatalogs] = await Promise.all([
+  const [allEvents, { characters, bands }, servers, arenaCatalogs, releasedCharacterIds] = await Promise.all([
     getBuildEvents(locale),
     getBuildCharacters(locale),
     getBuildServers(),
     getBuildArenaCatalogs(locale),
+    getBuildReleasedCharacterIds(locale),
   ]);
-  const bandOptions: Array<[number, string]> = bands.map((band) => [band.id, band.name]);
+  const events = releasedFacets(allEvents, Date.now());
+  const publicBandIds = new Set(characters.filter((character) => releasedCharacterIds.has(character.id)).map((character) => character.bandId));
+  const bandOptions: Array<[number, string]> = bands.filter((band) => publicBandIds.has(band.id)).map((band) => [band.id, band.name]);
   return (
     <PageHeader locale={locale} titleKey="seo.eventList.title" descriptionKey="seo.eventList.description">
       <EventsExplorer
@@ -162,12 +208,15 @@ export async function EventsServerPage({ locale }: { locale: AppLocale }) {
 }
 
 export async function GachaServerPage({ locale }: { locale: AppLocale }) {
-  const [gachas, { bands }, servers] = await Promise.all([
+  const [allGachas, { characters, bands }, servers, releasedCharacterIds] = await Promise.all([
     getBuildGachas(locale),
     getBuildCharacters(locale),
     getBuildServers(),
+    getBuildReleasedCharacterIds(locale),
   ]);
-  const bandOptions: Array<[number, string]> = bands.map((band) => [band.id, band.name]);
+  const gachas = releasedFacets(allGachas, Date.now());
+  const publicBandIds = new Set(characters.filter((character) => releasedCharacterIds.has(character.id)).map((character) => character.bandId));
+  const bandOptions: Array<[number, string]> = bands.filter((band) => publicBandIds.has(band.id)).map((band) => [band.id, band.name]);
   return (
     <PageHeader locale={locale} titleKey="seo.gacha.title" descriptionKey="seo.gacha.description">
       <GachaExplorer servers={servers} locale={locale} initialGachas={gachas} bands={bandOptions} />
@@ -176,13 +225,19 @@ export async function GachaServerPage({ locale }: { locale: AppLocale }) {
 }
 
 export async function CalendarServerPage({ locale }: { locale: AppLocale }) {
-  const [{ data, birthdays }, { characters }, servers] = await Promise.all([
+  const [calendar, { characters }, servers, releasedCharacterIds] = await Promise.all([
     getBuildCalendar(locale),
     getBuildCharacters(locale),
     getBuildServers(),
+    getBuildReleasedCharacterIds(locale),
   ]);
-  const characterOptions = characters.map((character) => ({ id: character.id, name: character.name }));
-  const buildMonth = monthKey(monthOf(calendarDayAt(Date.now(), MASTER_TIME_ZONE)));
+  const now = Date.now();
+  const data = releasedCalendar(calendar.data, now);
+  const birthdays = calendar.birthdays.filter((birthday) => releasedCharacterIds.has(birthday.characterId));
+  const characterOptions = characters
+    .filter((character) => releasedCharacterIds.has(character.id))
+    .map((character) => ({ id: character.id, name: character.name }));
+  const buildMonth = monthKey(monthOf(calendarDayAt(now, MASTER_TIME_ZONE)));
   return (
     <PageHeader locale={locale} titleKey="seo.calendar.title" descriptionKey="seo.calendar.description">
       <CalendarView
@@ -217,7 +272,12 @@ export async function StoryServerPage({
     // The event filter lists every band of the build, not only those an event chapter happens to use.
     category === "event" ? getBuildCharacters(locale) : Promise.resolve(null),
   ]);
-  const stories = allStories.filter((story) => inStorySection(category, story));
+  const now = Date.now();
+  const stories = allStories.filter((story) => isStoryReleasedAcrossServers(story, now) && inStorySection(category, story));
+  const releasedCharacterIds = new Set(stories.flatMap((story) => story.characterIds));
+  const readerCharacters = readerLookup.characters.filter((character) => releasedCharacterIds.has(character.id));
+  const readerTextIds = new Set(readerCharacters.flatMap((character) => [character.nameTextID, character.shortNameTextID]));
+  const readerTexts = readerLookup.texts.filter((text) => readerTextIds.has(text.id));
   const bands: Array<[number, string]> = characterData ? characterData.bands.map((band) => [band.id, band.name]) : [];
   return (
     <PageHeader locale={locale} titleKey={titleKey} descriptionKey={descriptionKey}>
@@ -227,8 +287,8 @@ export async function StoryServerPage({
         bands={bands}
         initialCategory={category}
         initialStories={stories}
-        initialCharacters={readerLookup.characters}
-        initialTexts={readerLookup.texts}
+        initialCharacters={readerCharacters}
+        initialTexts={readerTexts}
       />
     </PageHeader>
   );
@@ -257,11 +317,12 @@ export async function BandItemsServerPage({ locale }: { locale: AppLocale }) {
 }
 
 export async function StampsServerPage({ locale }: { locale: AppLocale }) {
-  const [stamps, bandNames, servers] = await Promise.all([
+  const [allStamps, bandNames, servers] = await Promise.all([
     getBuildStamps(locale),
     getBuildBandNames(locale),
     getBuildServers(),
   ]);
+  const stamps = releasedFacets(allStamps, Date.now());
   return (
     <PageHeader locale={locale} titleKey="seo.stamps.title" descriptionKey="seo.stamps.description">
       <StampsExplorer servers={servers} locale={locale} initialStamps={stamps} initialBandNames={bandNames} />
@@ -270,11 +331,12 @@ export async function StampsServerPage({ locale }: { locale: AppLocale }) {
 }
 
 export async function ComicsServerPage({ locale }: { locale: AppLocale }) {
-  const [comics, bandNames, servers] = await Promise.all([
+  const [allComics, bandNames, servers] = await Promise.all([
     getBuildComics(locale),
     getBuildBandNames(locale),
     getBuildServers(),
   ]);
+  const comics = releasedFacets(allComics, Date.now());
   return (
     <PageHeader locale={locale} titleKey="seo.comics.title" descriptionKey="seo.comics.description">
       <ComicsExplorer servers={servers} locale={locale} initialComics={comics} initialBandNames={bandNames} />
@@ -283,13 +345,17 @@ export async function ComicsServerPage({ locale }: { locale: AppLocale }) {
 }
 
 export async function TitlesServerPage({ locale }: { locale: AppLocale }) {
-  const [titles, { characters, bands }, servers] = await Promise.all([
+  const [allTitles, { characters, bands }, servers, releasedCharacterIds] = await Promise.all([
     getBuildDegrees(locale),
     getBuildCharacters(locale),
     getBuildServers(),
+    getBuildReleasedCharacterIds(locale),
   ]);
-  const bandOptions: Array<[number, string]> = bands.map((band) => [band.id, band.name]);
-  const characterOptions = characters.map((character) => ({ id: character.id, name: character.name, bandId: character.bandId }));
+  const titles = releasedFacets(allTitles, Date.now());
+  const publicCharacters = characters.filter((character) => releasedCharacterIds.has(character.id));
+  const publicBandIds = new Set(publicCharacters.map((character) => character.bandId));
+  const bandOptions: Array<[number, string]> = bands.filter((band) => publicBandIds.has(band.id)).map((band) => [band.id, band.name]);
+  const characterOptions = publicCharacters.map((character) => ({ id: character.id, name: character.name, bandId: character.bandId }));
   return (
     <PageHeader locale={locale} titleKey="seo.titles.title" descriptionKey="seo.titles.description">
       <TitlesExplorer servers={servers} locale={locale} initialTitles={titles} bands={bandOptions} characters={characterOptions} />
@@ -316,7 +382,8 @@ export async function ExchangeServerPage({ locale }: { locale: AppLocale }) {
 }
 
 export async function RewardsServerPage({ locale }: { locale: AppLocale }) {
-  const [entries, servers] = await Promise.all([getBuildRewardEntries(locale), getBuildServers()]);
+  const [allEntries, servers] = await Promise.all([getBuildRewardEntries(locale), getBuildServers()]);
+  const entries = releasedFacets(allEntries, Date.now());
   return (
     <PageHeader locale={locale} titleKey="seo.rewards.title" descriptionKey="seo.rewards.description">
       <RewardsExplorer servers={servers} locale={locale} initialEntries={entries} />
@@ -325,7 +392,8 @@ export async function RewardsServerPage({ locale }: { locale: AppLocale }) {
 }
 
 export async function ShopServerPage({ locale }: { locale: AppLocale }) {
-  const [shops, servers] = await Promise.all([getBuildShops(locale), getBuildServers()]);
+  const [allShops, servers] = await Promise.all([getBuildShops(locale), getBuildServers()]);
+  const shops = releasedFacets(allShops, Date.now());
   return (
     <PageHeader locale={locale} titleKey="seo.shop.title" descriptionKey="seo.shop.description">
       <ShopExplorer servers={servers} locale={locale} initialShops={shops} />

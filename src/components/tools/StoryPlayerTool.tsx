@@ -9,9 +9,11 @@ import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import Modal from "@/components/shared/Modal";
 import Popover from "@/components/shared/Popover";
-import { fetchSiteStory, fetchStorySite, type StoryRuntimes } from "@/lib/story/player-client";
+import { fetchStorySite, type StoryRuntimes } from "@/lib/story/player-client";
 import {
   buildStoryPlayerEntries,
+  isStoryPlayerEntryReleased,
+  isStoryPlayerRequestReleased,
   formatMegabytes,
   getStoryManifestUrl,
   getStoryPlayerHref,
@@ -28,7 +30,7 @@ import {
 import StoryStage from "@/components/tools/StoryStage";
 import StoryPickerDialog from "@/components/tools/StoryPickerDialog";
 import SpoilerNotice from "@/components/shared/SpoilerNotice";
-import { isSpoiler, useSpoilerSetting } from "@/lib/settings/spoiler";
+import { useSpoilerSetting } from "@/lib/settings/spoiler";
 import { StageSignature } from "@/components/tools/Live2DStage";
 import {
   AutoIcon,
@@ -65,8 +67,6 @@ export default function StoryPlayerTool({ locale, stories }: Props) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [runtimes, setRuntimes] = useState<StoryRuntimes | null>(null);
-  // A story the address names that the index does not list (yet), read from its manifest.
-  const [linked, setLinked] = useState<StorySiteEntry | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -82,43 +82,25 @@ export default function StoryPlayerTool({ locale, stories }: Props) {
 
   const entries = useMemo<StoryPlayerEntry[]>(() => {
     if (site.kind !== "ready") return [];
-    const siteEntries = linked && !site.entries.some((entry) => entry.advId === linked.advId) ? [...site.entries, linked] : site.entries;
-    return buildStoryPlayerEntries(stories, siteEntries, locale, t(locale, "storyPlayer.otherEpisodes"));
-  }, [site, linked, stories, locale]);
+    return buildStoryPlayerEntries(stories, site.entries);
+  }, [site, stories]);
 
-  const { showSpoiler, now } = useSpoilerSetting();
-  const visibleEntries = useMemo(() => {
-    if (showSpoiler) return entries;
-    return entries.filter((entry) => !entry.startAt || !isSpoiler(entry.startAt, now));
-  }, [entries, showSpoiler, now]);
-  const rawCurrent = useMemo(() => entries.find((entry) => entry.advId === advId) ?? null, [entries, advId]);
-  const isUnreleased = Boolean(rawCurrent?.startAt && isSpoiler(rawCurrent.startAt, now));
+  const { now } = useSpoilerSetting();
+  const visibleEntries = useMemo(
+    () => entries.filter((entry) => isStoryPlayerEntryReleased(entry, now)),
+    [entries, now],
+  );
   const index = useMemo(() => visibleEntries.findIndex((entry) => entry.advId === advId), [visibleEntries, advId]);
-  const current = !showSpoiler && isUnreleased ? null : (index >= 0 ? visibleEntries[index]! : rawCurrent);
+  const blockedRequest = site.kind === "ready" && advId !== null
+    && !isStoryPlayerRequestReleased(advId, entries, now);
+  const current = !blockedRequest && index >= 0 ? visibleEntries[index]! : null;
 
-  // The address names the story: open it once the index has arrived (or from its manifest, when the index lacks it).
+  // Accept the address only as an id. Unknown/unreleased ids are never fetched from a cloud manifest directly.
   useEffect(() => {
     if (site.kind !== "ready" || restored) return;
     const requested = parseStoryPlayerSearch(window.location.search);
-    if (requested === null || site.entries.some((entry) => entry.advId === requested)) {
-      if (requested !== null) setAdvId(requested);
-      setRestored(true);
-      return;
-    }
-    const controller = new AbortController();
-    fetchSiteStory(requested, controller.signal)
-      .then((entry) => {
-        if (controller.signal.aborted) return;
-        if (entry) {
-          setLinked(entry);
-          setAdvId(entry.advId);
-        }
-        setRestored(true);
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setRestored(true);
-      });
-    return () => controller.abort();
+    if (requested !== null) setAdvId(requested);
+    setRestored(true);
   }, [site, restored]);
 
   // Shareable address of the episode shown; a dialog's own history entry is left alone.
@@ -137,7 +119,7 @@ export default function StoryPlayerTool({ locale, stories }: Props) {
 
   return (
     <div className="space-y-3 @container">
-      {!showSpoiler && isUnreleased ? (
+      {blockedRequest ? (
         <SpoilerNotice locale={locale} />
       ) : current ? (
         <StoryView

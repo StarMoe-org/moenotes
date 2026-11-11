@@ -1,4 +1,21 @@
+import type { GameServer } from "@/config/servers";
 import type { AppRoute } from "@/types/route";
+
+export type StorySiteApiServer = Extract<GameServer, "tw" | "jp">;
+export type Live2DAssetSource = "chart" | "story";
+
+/** Same-origin API paths used by the cloud-backed player proxies. */
+export function getLive2DIndexApiPath(): string {
+  return "/api/v1/live2d/index";
+}
+
+export function getLive2DProxyApiRoot(server: GameServer, source: Live2DAssetSource): string {
+  return `/api/v1/live2d/${server}/${source}`;
+}
+
+export function getStorySiteProxyApiRoot(server: StorySiteApiServer): string {
+  return `/api/v1/story-site/${server}`;
+}
 
 export const routeRegistry = [
   {

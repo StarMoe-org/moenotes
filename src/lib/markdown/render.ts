@@ -56,6 +56,7 @@ import { absolutePageUrl, absoluteUrl, buildPageMetadata } from "@/lib/seo/metad
 import { valueForServer, type ServerFacetedValue } from "@/lib/servers/facets";
 import { findStoryChapter } from "@/lib/story/chapters";
 import { storyEpisodeLabel } from "@/lib/story/labels";
+import { isStoryReleasedAcrossServers } from "@/lib/story/release";
 import { parseStoryChapterPath } from "@/lib/story/paths";
 import { inStorySection, type StorySection } from "@/lib/story/sections";
 
@@ -659,7 +660,8 @@ async function renderComponentMarkdown(
         "story-other": "other",
       };
       const category = sectionMap[component] ?? "main";
-      const stories = (await getBuildStories(locale)).filter((s) => inStorySection(category, s));
+      const now = Date.now();
+      const stories = (await getBuildStories(locale)).filter((s) => isStoryReleasedAcrossServers(s, now) && inStorySection(category, s));
       return [
         `# ${defaultTitle}`,
         "",
@@ -683,7 +685,9 @@ async function renderComponentMarkdown(
       if (!Number.isSafeInteger(chapterId) || chapterId <= 0) return null;
       const parsed = parseStoryChapterPath(pathname);
       if (!parsed) return null;
-      const chapter = findStoryChapter(await getBuildStories(locale), chapterId);
+      const now = Date.now();
+      const publicStories = (await getBuildStories(locale)).filter((story) => isStoryReleasedAcrossServers(story, now));
+      const chapter = findStoryChapter(publicStories, chapterId);
       if (!chapter || chapter.category !== parsed.section) return null;
       return [
         `# ${chapter.name || `Chapter ${chapterId}`}`,
@@ -716,7 +720,7 @@ async function renderComponentMarkdown(
       const advId = Number(paramId);
       if (!Number.isFinite(advId)) return null;
       const detail = await getBuildStoryDetail(locale, advId);
-      if (detail.servers.length === 0 && !detail.story && !detail.script) return null;
+      if (!detail.story || !isStoryReleasedAcrossServers(detail.story, Date.now())) return null;
       const heading = detail.title || `ADV ${advId}`;
       const out: string[] = [
         `# ${heading}`,

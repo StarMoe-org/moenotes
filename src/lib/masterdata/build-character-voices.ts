@@ -1,9 +1,13 @@
+import { DEFAULT_LOCALE } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import { PRIMARY_SERVER } from "@/config/servers";
 import { eachServer, memo, table, texts, titleRow } from "@/lib/masterdata/build-core";
+import { cardsOn, storiesOn, supportCardsOn } from "@/lib/masterdata/build-data";
+import { isStoryReleasedAt } from "@/lib/story/release";
 import { getVoiceTypeName } from "@/lib/characters/data";
 import {
   collectVoiceLines,
+  filterReleasedCharacterVoiceLines,
   voiceLinesByCharacter,
   type CharacterVoicesPayload,
   type RawCharacterVoiceRow,
@@ -45,7 +49,7 @@ function soundPathsOn(server: GameServer): Promise<(soundId: number) => string> 
 /** Every voice line one server has (new tables read as empty where a server lacks or breaks them). */
 export function voiceLinesOn(server: GameServer): Promise<VoiceLine[]> {
   return memo(`voice-lines:${server}`, async () => {
-    const [talks, characterVoices, memberCards, liveCharacters, gekisouVoices, dialogueCommons, dialoguePairs, liveStarts, soundOf] = await Promise.all([
+    const [talks, characterVoices, memberCards, liveCharacters, gekisouVoices, dialogueCommons, dialoguePairs, liveStarts, soundOf, cards, supportCards, stories] = await Promise.all([
       table<RawTalk>("MasterTalk.json", server).catch(() => empty<RawTalk>()),
       table<RawCharacterVoiceRow>("MasterCharacterVoice.json", server).catch(() => empty<RawCharacterVoiceRow>()),
       table<RawMemberCardVoice>("MasterMemberCard.json", server).catch(() => empty<RawMemberCardVoice>()),
@@ -55,8 +59,19 @@ export function voiceLinesOn(server: GameServer): Promise<VoiceLine[]> {
       table<RawLiveDialogueFixedPair>("MasterLiveDialogueFixedPair.json", server).catch(() => empty<RawLiveDialogueFixedPair>()),
       table<RawLiveStartCharacterVoice>("MasterLiveStartCharacterVoice.json", server).catch(() => empty<RawLiveStartCharacterVoice>()),
       soundPathsOn(server),
+      cardsOn(server, DEFAULT_LOCALE),
+      supportCardsOn(server, DEFAULT_LOCALE),
+      storiesOn(server, DEFAULT_LOCALE),
     ]);
-    return collectVoiceLines({
+    const now = Date.now();
+    const releasedCards = cards.filter((card) => isStoryReleasedAt(card.startAt, now));
+    const releasedCardIds = new Set(releasedCards.map((card) => card.id));
+    const releasedCharacters = new Set<number>([
+      ...releasedCards.map((card) => card.characterId),
+      ...supportCards.filter((card) => isStoryReleasedAt(card.startAt, now)).flatMap((card) => card.characterIds),
+      ...stories.filter((story) => isStoryReleasedAt(story.startAt, now)).flatMap((story) => story.characterIds),
+    ].filter((id) => id > 0));
+    const lines = collectVoiceLines({
       talks: talks._allData,
       characterVoices: characterVoices._allData,
       memberCards: memberCards._allData,
@@ -66,6 +81,7 @@ export function voiceLinesOn(server: GameServer): Promise<VoiceLine[]> {
       dialoguePairs: dialoguePairs._allData,
       liveStarts: liveStarts._allData,
     }, soundOf, getVoiceTypeName);
+    return filterReleasedCharacterVoiceLines(lines, releasedCharacters, releasedCardIds);
   });
 }
 

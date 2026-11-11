@@ -1,89 +1,16 @@
-import { useCallback, useSyncExternalStore } from "react";
-import { storageKeys } from "@/config/storage";
 import { parseMasterDate } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
-import { safeGetLocalStorage, safeSetLocalStorage } from "@/lib/storage/safe-storage";
 import { SPOILER_REFERENCE_NOW } from "./spoiler-reference";
 
-export const SPOILER_PREFERENCE_EVENT = "moenotes:spoiler-preference";
-
-/** Checks URL for ?Spoiler=allow (case-insensitive) or ?Spoiler=disallow as a quick-toggle convenience. */
-export function checkSpoilerUrlParam(): boolean | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const search = window.location.search;
-    if (/[?&]spoiler=allow(?:&|$)/i.test(search)) {
-      safeSetLocalStorage(storageKeys.showSpoiler, "1");
-      return true;
-    }
-    if (/[?&]spoiler=(?:disallow|deny|disable|reset)(?:&|$)/i.test(search)) {
-      safeSetLocalStorage(storageKeys.showSpoiler, "0");
-      return false;
-    }
-  } catch {
-    // storage not available
-  }
-  return null;
-}
-
-if (typeof window !== "undefined") {
-  checkSpoilerUrlParam();
-}
-
-/** Whether adjusting spoiler content display is unlocked (currently unlocked for all users as a developer option). */
-export function isSpoilerUnlocked(): boolean {
-  return typeof window !== "undefined";
-}
-
-/** Whether spoiler content is allowed to be displayed (defaults to false until enabled in Settings). */
-export function getShowSpoiler(): boolean {
-  if (typeof window === "undefined") return false;
-  return safeGetLocalStorage(storageKeys.showSpoiler) === "1";
-}
-
-/** Stores the preference and fires the event to listeners. */
-export function setShowSpoiler(on: boolean): void {
-  if (typeof window === "undefined") return;
-  safeSetLocalStorage(storageKeys.showSpoiler, on ? "1" : "0");
-  window.dispatchEvent(
-    new CustomEvent(SPOILER_PREFERENCE_EVENT, {
-      detail: { showSpoiler: on, isUnlocked: true },
-    }),
-  );
-}
-
-function subscribe(onChange: () => void): () => void {
-  if (typeof window === "undefined") return () => undefined;
-  const onStorage = (event: StorageEvent) => {
-    if (
-      event.key === null ||
-      event.key === storageKeys.showSpoiler ||
-      event.key === storageKeys.spoilerUnlocked
-    ) {
-      onChange();
-    }
-  };
-  window.addEventListener(SPOILER_PREFERENCE_EVENT, onChange);
-  window.addEventListener("storage", onStorage);
-  return () => {
-    window.removeEventListener(SPOILER_PREFERENCE_EVENT, onChange);
-    window.removeEventListener("storage", onStorage);
-  };
-}
-
+/** The public site has no spoiler override: content stays locked until its official release time. */
 export interface SpoilerState {
-  isUnlocked: boolean;
-  showSpoiler: boolean;
-  setShowSpoiler: (on: boolean) => void;
+  /** Always false; retained only so existing filters share one locked public state. */
+  showSpoiler: false;
   now: number | null;
 }
 
-/** The current spoiler preference, live. */
 export function useSpoiler(): SpoilerState {
-  const showSpoiler = useSyncExternalStore(subscribe, getShowSpoiler, () => false);
-  const set = useCallback((on: boolean) => setShowSpoiler(on), []);
-  const now = useNow();
-  return { isUnlocked: true, showSpoiler, setShowSpoiler: set, now };
+  return { showSpoiler: false, now: useNow() };
 }
 
 export const useSpoilerSetting = useSpoiler;

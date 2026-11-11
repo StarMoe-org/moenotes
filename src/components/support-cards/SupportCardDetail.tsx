@@ -18,7 +18,7 @@ import { localizePath } from "@/i18n/routing";
 import { getRoutePathById } from "@/lib/route/registry";
 import { useNow } from "@/lib/schedule/use-now";
 import { isSpoiler, useSpoiler } from "@/lib/settings/spoiler";
-import { SpoilerNotice, DeveloperTestingBanner } from "@/components/shared/SpoilerNotice";
+import SpoilerNotice from "@/components/shared/SpoilerNotice";
 import {
   getSupportCardFullUrl,
   getSupportCardThumbnailUrl,
@@ -125,7 +125,6 @@ function SupportCardDetailView({ locale, data, materials, serverSwitch }: { loca
 
   return (
     <div className="w-full space-y-8">
-      {isUnreleased && <DeveloperTestingBanner locale={locale} />}
       <DetailHero
         title={card.title}
         subtitle={card.name}

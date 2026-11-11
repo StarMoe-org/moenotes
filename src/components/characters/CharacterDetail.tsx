@@ -37,7 +37,7 @@ interface Props {
   locale: AppLocale;
   characterId: number;
   initialData: ServerFacetedValue<DetailData>;
-  progressionData: CharacterProgressionData | null;
+  progressionData: ServerFacetedValue<CharacterProgressionData> | null;
   /** Bonds, missions and related entries (build-character-extras.ts). */
   extrasData: ServerFacetedValue<CharacterExtrasData>;
   servers: GameServer[];
@@ -52,12 +52,16 @@ interface DetailData {
 export default function CharacterDetail({ locale, initialData, progressionData, extrasData, servers }: Props) {
   const [server, pickServer] = useContentServer(locale, servers);
   const data = useMemo(() => moveReleaseUrls(valueForServer(initialData, server), entityServer(initialData, server)), [initialData, server]);
+  const progression = useMemo(
+    () => progressionData?.servers.includes(server) ? valueForServer(progressionData, server) : null,
+    [progressionData, server],
+  );
   const extras = useMemo(() => moveReleaseUrls(valueForServer(extrasData, server), entityServer(extrasData, server)), [extrasData, server]);
   // The hero carries the server switch beside the name, so the scope leaves its own out.
   const serverSwitch = <HeadingServerSwitch locale={locale} servers={servers} server={server} onChange={pickServer} entityServers={initialData.servers} />;
   return (
     <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer} entityServers={initialData.servers} hideSwitch>
-      <CharacterDetailView locale={locale} data={data} progression={progressionData} extras={extras} serverSwitch={serverSwitch} />
+      <CharacterDetailView locale={locale} data={data} progression={progression} extras={extras} serverSwitch={serverSwitch} />
     </ServerScope>
   );
 }

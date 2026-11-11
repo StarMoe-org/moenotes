@@ -1248,11 +1248,8 @@ export const zhCN = {
       title: "剧透内容过滤",
       showLabel: "剧透内容显示",
       description: "显示尚未在对应区服正式发布的活动、卡面、乐曲与剧情等数据。",
-      eulaNotice: "根据 bilibili.inc 用户条款 EULA 第八章要求，本站暂不提供未发布内容的查看。",
-      devOptionBadge: "开发者选项",
-      devOnly: "该功能仅供开发者测试",
-      restrictedTitle: "未发布内容暂不提供查看",
-      devTestingBadge: "开发者测试",
+      eulaNotice: "仅在对应地区版本的游戏内正式公开后显示。线上已可获取不代表游戏内已正式公开。",
+      restrictedTitle: "内容尚未公开",
     },
     data: {
       versionTitle: "数据版本",

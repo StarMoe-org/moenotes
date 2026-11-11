@@ -20,7 +20,7 @@ import { getRoutePathById } from "@/lib/route/registry";
 import { getChartPreviewHref } from "@/lib/music/chart-preview";
 import { useNow } from "@/lib/schedule/use-now";
 import { isSpoiler, useSpoiler } from "@/lib/settings/spoiler";
-import { SpoilerNotice, DeveloperTestingBanner } from "@/components/shared/SpoilerNotice";
+import SpoilerNotice from "@/components/shared/SpoilerNotice";
 import ChartSheetDialog from "@/components/music/ChartSheetDialog";
 import { difficultyStyles } from "@/components/music/difficulty-styles";
 import {
@@ -96,7 +96,6 @@ function MusicDetailView({ locale, song, liveDetail, extras, serverSwitch }: { l
 
   return (
     <div className="w-full space-y-8">
-      {isUnreleased && <DeveloperTestingBanner locale={locale} />}
       <DetailHero
         title={title}
         subtitle={title !== song.title ? song.title : undefined}

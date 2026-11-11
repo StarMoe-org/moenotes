@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   characterVoiceLines,
   collectVoiceLines,
+  filterReleasedCharacterVoiceLines,
   groupVoiceLines,
   voiceAudioUrl,
   voiceLinesByCharacter,
@@ -94,6 +95,14 @@ describe("character voices", () => {
     const payload: CharacterVoicesPayload = { texts: {}, sets: [byCharacter], servers: { tw: 0 } };
     expect(characterVoiceLines(payload, "jp", 2).map((line) => line.source)).toEqual(["talk", "liveDialogueFixedPair"]);
     expect(characterVoiceLines(payload, "tw", 99)).toEqual([]);
+  });
+
+  test("the public payload omits unreleased speakers, partners, birthday references and card gacha voices", () => {
+    const futureCardLine = { source: "memberCard" as const, id: 200, characterId: 1, text: "Gacha_200", sound: sound(2200), cardId: 200 };
+    const safe = filterReleasedCharacterVoiceLines([...lines, futureCardLine], new Set([1]), new Set([100]));
+    expect(safe.some((line) => line.characterId === 2 || line.partnerId === 2 || line.birthdayCharacterId === 2)).toBe(false);
+    expect(safe.filter((line) => line.source === "memberCard").map((line) => line.cardId)).toEqual([100]);
+    expect(safe.some((line) => line.text === "Talk_3")).toBe(false);
   });
 });
 

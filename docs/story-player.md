@@ -17,10 +17,10 @@ The episodes come from the **story sites** in the storage bucket, one per game r
 (`assetConfig.storySite`, `PUBLIC_STORY_SITE`, default `https://storage.bdon.moe/moenotes`; TW/HK/MO, every text
 language) and the JP site (`assetConfig.storySiteJp`, `PUBLIC_STORY_SITE_JP`, default
 `https://storage.bdon.moe/moenotes/jp`; Japanese only, JP-only episodes such as the event stories). They are separate
-sites because JP Live2D model ids overlap the international ones. The player reads both indexes and lists them as one
-(`mergeStorySiteEntries`): an episode on both plays from the international site; an unreadable site leaves only its
-stories out. Each site is the layout `nnnotes web` writes (the format is ournotes-player's
-`docs/story-data-format.md`, manifests `ournotes.story-manifest/2`):
+sites because JP Live2D model ids overlap the international ones. The server reads each regional index, matches entries to that region's MasterData, and returns only officially released
+stories through `/api/v1/story-site/index`. The browser receives same-origin proxy roots, not the storage bucket URLs;
+an episode on both sites remains associated with its source region. Each site is the layout `nnnotes web` writes (the
+format is ournotes-player's `docs/story-data-format.md`, manifests `ournotes.story-manifest/2`):
 
 ```text
 {storySite}/stories.json                 story index (ournotes.stories/1: titles, languages, sizes), read at runtime
@@ -35,22 +35,32 @@ bucket lacks. The bucket's CORS allows `https://bdon.moe` (and `http://localhost
 origin needs that origin added there.
 The player version (`ournotes-player` in package.json) must read what that workflow writes (`STORY_PLAYER_REF` there).
 
-- The picker lists the build's story data (`getBuildStories`: names, groups, episode numbers and banners, localized at
-  build time) for the episodes `stories.json` lists, in the story pages' order and in their three lists: main story by
-  chapter (with its banner; main, another and extra episodes as separate runs), bond stories by pair, and the other
-  talks by type. Episodes the build does not know yet are listed last under the other talks by the site's own titles.
-  Chapter and episode artwork keep their source server; entries played from the JP site use the JP Japanese asset
-  catalog, including episodes already present in the international MasterData whose artwork is not published there.
-- A `?story=` the index does not list is opened from its manifest (its `story` block is the index entry): a site build
-  publishes each manifest as it lands and rewrites `stories.json` at its end. The story page's link checks the manifest
-  the same way (a `HEAD`), so it never leads to a missing story.
+- The picker intersects the filtered cloud index with the locally built story catalog (`getBuildStories`: names, groups,
+  episode numbers and banners, localized at build time). Cloud-only rows are omitted because cloud presence is not proof
+  of an in-game release. `/api/v1/story-site/index` checks the same-region MasterData release date and rejects unknown,
+  missing-date and malformed-date records. The global picker stays locked until every region that lists a story has
+  officially released it. Chapter and episode artwork keep their source server; entries played from the JP site use the
+  JP Japanese asset catalog.
+- A `?story=` is only an id hint: unknown or unreleased ids are never fetched directly from a cloud manifest. The
+  story-scoped `/api/v1/story-site/{tw|jp}/stories/{advId}.json` proxy repeats the regional MasterData check, validates
+  the upstream manifest's `advId` and region, and only serves content-addressed assets and model manifests listed by
+  that episode's manifests. The proxy rewrites the story root so the player loads those resources through the same
+  gate. This intentionally drops the previous early-manifest shortcut, where the storage workflow could publish a
+  manifest before rewriting `stories.json`. The story-page link checks the filtered regional index instead of probing a
+  public manifest with `HEAD`.
 - The story starts in the first of the locale's text languages that the episode has (masterdata's order,
   `assetLanguageOrder`); the controls' labels follow the locale. Switching the language in the header goes through
   the player (`setLanguage`: it loads that language's files and restarts at the current line), not a reload.
 - A story's `assets/` files, its models' included, are kept in the browser once downloaded (`storyPlayerFetch`: the
-  player file cache of `src/lib/cache/player-files.ts` the Live2D viewer uses too), so replaying an episode or switching
-  its language fetches only the manifests again; the Live2D viewer reads the models the story site has from it, so a
-  model seen there is already kept too. The settings' Data tab shows what is kept (backgrounds with the images, voices and music with the audio) and clears it ([browser-cache.md](browser-cache.md)).
+  player file cache of `src/lib/cache/player-files.ts`), so replaying an episode or switching its language fetches only
+  the manifests again. The settings' Data tab shows what is kept (backgrounds with the images, voices and music with the
+  audio) and clears it ([browser-cache.md](browser-cache.md)).
+
+**Deployment limitation:** the same-origin proxy gates requests made through this site, but the configured storage
+bucket is still publicly addressable. This repository cannot prevent a caller from requesting a known raw
+`{storySite}/stories/<advId>.json`, `{storySite}/models/<id>.json`, or `{storySite}/assets/<hash>` URL directly. To satisfy
+a no-direct-link guarantee, the bucket/CDN must also deny public reads (or serve gated URLs only); until that is changed,
+release protection is not complete outside the Moenotes application.
 
 ## Layout
 

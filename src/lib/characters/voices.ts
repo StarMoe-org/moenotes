@@ -258,6 +258,20 @@ export function voiceLinesByCharacter(lines: readonly VoiceLine[]): Record<strin
   return out;
 }
 
+/** Remove voice/dialogue rows that point at characters or member cards without regional release evidence. */
+export function filterReleasedCharacterVoiceLines(
+  lines: readonly VoiceLine[],
+  releasedCharacterIds: ReadonlySet<number>,
+  releasedMemberCardIds: ReadonlySet<number>,
+): VoiceLine[] {
+  return lines.filter((line) =>
+    releasedCharacterIds.has(line.characterId)
+    && (line.source !== "memberCard" || releasedMemberCardIds.has(line.cardId ?? line.id))
+    && (!line.partnerId || releasedCharacterIds.has(line.partnerId))
+    && (!line.birthdayCharacterId || releasedCharacterIds.has(line.birthdayCharacterId)),
+  );
+}
+
 // ---- Payload (`/character-voices.json`) ----
 
 /**

@@ -4,27 +4,33 @@ import SiriusLoader from "@/components/shared/SiriusLoader";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { ModelPlayer } from "ournotes-player/live2d";
 import type { AppLocale } from "@/config/locales";
+import type { GameServer } from "@/config/servers";
 import { t } from "@/i18n";
+import ServerScope from "@/components/shared/ServerScope";
+import { useContentServer } from "@/lib/servers/use-content-server";
 import BaseFilters, { CharacterFilter, FilterButton, FilterSection, FilterToggle, toggleArrayItem } from "@/components/shared/BaseFilters";
 import { closeFilterDrawer, openFilterDrawer, useQuickFilter } from "@/lib/filter/use-quick-filter";
 import { fetchLive2DModels } from "@/lib/live2d/client";
-import { getLive2DViewerHref, parseLive2DViewerSearch, type Live2DModel } from "@/lib/live2d/models";
+import { findRequestedLive2DModel, getLive2DViewerHref, type Live2DModel } from "@/lib/live2d/models";
 import Live2DStage, { StageSignature } from "@/components/tools/Live2DStage";
 
 export interface Live2DCharacter {
   id: number;
   name: string;
   bandId: number;
+  /** Regions whose in-game MasterData establishes that this character is released. */
+  servers: GameServer[];
 }
 
 interface Props {
   locale: AppLocale;
-  /** Characters in display order, with localized names. */
+  servers: GameServer[];
+  /** Characters in display order, with localized names and their released regions. */
   characters: Live2DCharacter[];
-  bands: Array<{ id: number; name: string }>;
+  bands: Array<{ id: number; name: string; servers: GameServer[] }>;
 }
 
-type ListState = { kind: "loading" } | { kind: "error"; detail: string } | { kind: "ready"; models: Live2DModel[] };
+type ListState = { kind: "loading" } | { kind: "error"; detail: string } | { kind: "ready"; server: GameServer; models: Live2DModel[] };
 type Kind = Live2DModel["kind"];
 const KINDS: readonly Kind[] = ["story", "live", "side"];
 
@@ -43,7 +49,8 @@ interface ModelEntry {
  * The Live2D viewer: the quick filter finds a character (grouped by band, side characters after them) and narrows the
  * costumes by type and text; the panel beside the stage switches the character's costumes, motions and expressions.
  */
-export default function Live2DViewer({ locale, characters, bands }: Props) {
+export default function Live2DViewer({ locale, servers, characters, bands }: Props) {
+  const [server, pickServer] = useContentServer(locale, servers);
   const [list, setList] = useState<ListState>({ kind: "loading" });
   const [listAttempt, setListAttempt] = useState(0);
   const [subject, setSubject] = useState<Subject | null>(null);
@@ -56,18 +63,26 @@ export default function Live2DViewer({ locale, characters, bands }: Props) {
   useEffect(() => {
     const controller = new AbortController();
     setList({ kind: "loading" });
-    fetchLive2DModels(controller.signal).then(
-      (models) => setList({ kind: "ready", models }),
+    setRestored(false);
+    setModelId(null);
+    setSubject(null);
+    fetchLive2DModels(controller.signal, server).then(
+      (models) => setList({ kind: "ready", server, models }),
       (error: unknown) => {
         if (!controller.signal.aborted) setList({ kind: "error", detail: error instanceof Error ? error.message : String(error) });
       },
     );
     return () => controller.abort();
-  }, [listAttempt]);
+  }, [listAttempt, server]);
 
-  const characterById = useMemo(() => new Map(characters.map((character) => [character.id, character])), [characters]);
+  const currentList: ListState = list.kind === "ready" && list.server !== server ? { kind: "loading" } : list;
+
+  const characterById = useMemo(
+    () => new Map(characters.filter((character) => character.servers.includes(server)).map((character) => [character.id, character])),
+    [characters, server],
+  );
   const entries = useMemo<ModelEntry[]>(() => {
-    if (list.kind !== "ready") return [];
+    if (list.kind !== "ready" || list.server !== server) return [];
     return list.models.map((model) => {
       const name = (model.characterId !== null ? characterById.get(model.characterId)?.name : undefined) ?? (model.sideName ?? model.id).replaceAll("_", " ");
       const costume = costumeLabel(locale, model);
@@ -107,15 +122,14 @@ export default function Live2DViewer({ locale, characters, bands }: Props) {
 
   // The address names the model: open it (and its owner) once the list has arrived.
   useEffect(() => {
-    if (list.kind !== "ready" || restored) return;
-    const requested = parseLive2DViewerSearch(window.location.search);
-    const found = requested ? list.models.find((model) => model.id === requested) : undefined;
+    if (list.kind !== "ready" || list.server !== server || restored) return;
+    const found = findRequestedLive2DModel(window.location.search, list.models);
     if (found) {
       setModelId(found.id);
       setSubject(subjectOf(found));
     }
     setRestored(true);
-  }, [list, restored]);
+  }, [list, restored, server]);
 
   useEffect(() => {
     if (!restored) return;
@@ -195,8 +209,9 @@ export default function Live2DViewer({ locale, characters, bands }: Props) {
   ]);
 
   return (
-    <div className="space-y-2 @container">
-      <DataNotice locale={locale} />
+    <ServerScope locale={locale} servers={servers} server={server} onChange={pickServer}>
+      <div className="space-y-2 @container">
+        <DataNotice locale={locale} />
       {current ? (
         <div className="grid gap-4 @4xl:grid-cols-[minmax(0,1fr)_19rem] @4xl:items-start">
           <ModelView
@@ -209,10 +224,11 @@ export default function Live2DViewer({ locale, characters, bands }: Props) {
           />
         </div>
       ) : (
-        <StageEmpty locale={locale} list={list} onChoose={openFilterDrawer} onRetry={() => setListAttempt((value) => value + 1)} />
+        <StageEmpty locale={locale} list={currentList} onChoose={openFilterDrawer} onRetry={() => setListAttempt((value) => value + 1)} />
       )}
       <p className="px-1 text-right text-label-small text-on-surface-variant">{t(locale, "live2d.credit")}</p>
-    </div>
+      </div>
+    </ServerScope>
   );
 }
 

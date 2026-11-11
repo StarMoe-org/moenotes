@@ -13,6 +13,15 @@ describe("player file cache keys", () => {
     expect(getPlayerFileKey(`${assetConfig.chartSite}/assets/${hash}.moc3`)).toBe(`${assetConfig.chartSite}/assets/${hash}.moc3`);
   });
 
+  test("release-gated Live2D proxy assets are cacheable, not their manifests or arbitrary paths", () => {
+    const base = "https://bdon.moe";
+    const asset = `/api/v1/live2d/tw/chart/models/adv_live2d_anon_002_casual_spring_01/assets/${hash}.moc3.gz`;
+    expect(getPlayerFileKey(asset, base)).toBe(`${base}${asset}`);
+    expect(getPlayerFileKey(`/api/v1/live2d/tw/chart/models/adv_live2d_anon_002_casual_spring_01.json`, base)).toBeNull();
+    expect(getPlayerFileKey(`/api/v1/live2d/tw/chart/models/adv_live2d_anon_002_casual_spring_01/assets/sub/${hash}.moc3`, base)).toBeNull();
+    expect(getPlayerFileKey(`/api/v1/live2d/jp/story/models/adv_live2d_anon_002_casual_spring_01/assets/${hash}.moc3?v=1`, base)).toBeNull();
+  });
+
   test("the key leaves out the hash", () => {
     expect(getPlayerFileKey(`${assetConfig.chartSite}/assets/${hash}.png#frame`)).toBe(`${assetConfig.chartSite}/assets/${hash}.png`);
   });

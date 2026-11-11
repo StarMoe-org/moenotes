@@ -1199,11 +1199,8 @@ export const koKR = {
       title: "스포일러 필터",
       showLabel: "스포일러 콘텐츠 표시",
       description: "선택한 서버에 아직 정식 공개되지 않은 이벤트, 카드, 악곡, 스토리 등의 데이터를 표시합니다.",
-      eulaNotice: "bilibili.inc 사용자 약관 EULA 제8장 요건에 따라 본 사이트는 미공개 콘텐츠 조회를 제공하지 않습니다.",
-      devOptionBadge: "개발자 옵션",
-      devOnly: "해당 기능은 개발자 테스트 전용입니다",
-      restrictedTitle: "미공개 콘텐츠 조회 제한",
-      devTestingBadge: "개발자 테스트",
+      eulaNotice: "해당 지역 버전의 게임에서 정식 공개된 뒤에만 표시합니다. 온라인에서 이용 가능하더라도 정식 공개를 의미하지 않습니다.",
+      restrictedTitle: "아직 공개되지 않은 콘텐츠",
     },
     data: {
       versionTitle: "데이터 버전",

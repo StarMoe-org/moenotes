@@ -2,6 +2,7 @@ import type { AppLocale } from "@/config/locales";
 import type { RawBand, RawText } from "@/lib/cards/data";
 import { localizeMasterText } from "@/lib/masterdata/localize-text";
 import type { EntityLink } from "@/lib/route/entity-link";
+import { parseStoryReleaseTime } from "@/lib/story/release";
 
 export interface RawCharacter {
   id: number;
@@ -194,10 +195,21 @@ export interface CostumeViewModel {
   groupId: number;
   name: string;
   iconPath: string;
+  /** The costume group's in-game release time; the public viewer gates artwork and model links on this field. */
+  startAt: string;
   isDefault: boolean;
   isInitial: boolean;
   live2dPath: string;
   costumeType: number;
+}
+
+/**
+ * Costume groups with a MasterData timestamp use that server's official release time. An untimed `isInitial` costume
+ * is an explicit in-game launch entry; every other missing or malformed date fails closed.
+ */
+export function isCostumeReleased(costume: Pick<CostumeViewModel, "startAt" | "isInitial">, now: number): boolean {
+  const releaseTime = parseStoryReleaseTime(costume.startAt);
+  return releaseTime === null ? costume.isInitial : Number.isFinite(now) && releaseTime <= now;
 }
 
 export interface RankRewardGroup {
@@ -241,6 +253,7 @@ export function normalizeCharacterCostumes(
       groupId,
       name,
       iconPath: group?.iconPath ?? "",
+      startAt: group?.startAt ?? "",
       isDefault: costume.isDefault,
       isInitial: group?.isInitial ?? false,
       live2dPath: costume.live2dPath ?? "",
