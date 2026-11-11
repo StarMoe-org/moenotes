@@ -21,3 +21,6 @@ _tmp*
 
 # Built together by build:haneoka-engine
 /public/haneoka-team-engine/
+
+# Slide puzzle offline solution files
+/public/slidepuzzle/

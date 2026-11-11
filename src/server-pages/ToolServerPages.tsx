@@ -14,6 +14,7 @@ import AssetViewer from "@/components/tools/AssetViewer";
 import ChartPreview3D from "@/components/tools/ChartPreview3D";
 import Live2DViewer from "@/components/tools/Live2DViewer";
 import MusicRankingTool from "@/components/tools/MusicRankingTool";
+import SongPuzzleTool from "@/components/tools/SongPuzzleTool";
 import StoryPlayerTool from "@/components/tools/StoryPlayerTool";
 import type { AppLocale } from "@/config/locales";
 import { PRIMARY_SERVER } from "@/config/servers";
@@ -211,6 +212,15 @@ export async function MusicRankingServerPage({ locale }: { locale: AppLocale }) 
   return (
     <PageHeader locale={locale} titleKey="seo.musicRanking.title" descriptionKey="seo.musicRanking.description">
       <MusicRankingTool locale={locale} songs={songs} deckCards={deckCards} />
+    </PageHeader>
+  );
+}
+
+export async function SongPuzzleServerPage({ locale }: { locale: AppLocale }) {
+  const songs = await getBuildMusic(locale);
+  return (
+    <PageHeader locale={locale} titleKey="seo.songPuzzle.title" descriptionKey="seo.songPuzzle.description">
+      <SongPuzzleTool locale={locale} songs={songs} />
     </PageHeader>
   );
 }

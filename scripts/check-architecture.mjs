@@ -40,6 +40,7 @@ const allowedFetchFiles = new Set([
   "src/lib/deck/runtime-source.ts",
   "src/lib/guess-music/daily-client.ts",
   "src/lib/guess-music/practice-client.ts",
+  "src/lib/song-puzzle/client.ts",
 ]);
 
 const allowedDomainFiles = new Set([

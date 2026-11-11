@@ -26,3 +26,27 @@ test("resolves audio preview for CRI sound cue sheet path on specific server", (
   expect(result?.type).toBe("audio");
   expect(result?.url).toBe("https://assets.bdon.moe/jp/ja/Cri/Sound/sound_bgm_1001/sound_bgm_1001.m4a");
 });
+
+test("resolves a CRI movie to its exported MP4 under the movie's own key", () => {
+  const result = getAssetBrowserPreview("Assets/AddressableResources/Cri/Video/live/MV/music_mv_001_100001.usm", "ja-JP", "jp");
+  expect(result).toEqual({
+    type: "video",
+    url: "https://assets.bdon.moe/jp/ja/Cri/Video/live/MV/music_mv_001_100001/music_mv_001_100001.mp4",
+  });
+});
+
+test("keeps a story clip's nested movie key", () => {
+  const result = getAssetBrowserPreview(
+    "Assets/AddressableResources/Cri/Video/live/MV/music_mv_001_100001/music_mv_001_100001.usm",
+    "zh-CN",
+    "kr",
+  );
+  expect(result).toEqual({
+    type: "video",
+    url: "https://assets.bdon.moe/kr/zh-Hans/Cri/Video/live/MV/music_mv_001_100001/music_mv_001_100001/music_mv_001_100001.mp4",
+  });
+});
+
+test("does not map a movie outside the exported Cri/Video layout", () => {
+  expect(getAssetBrowserPreview("Assets/AddressableResources/MemberCard/30/card_movie.usm", "zh-CN")).toBeNull();
+});

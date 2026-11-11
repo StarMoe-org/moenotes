@@ -2,15 +2,35 @@ import { parseMasterDate } from "@/lib/schedule";
 import { useNow } from "@/lib/schedule/use-now";
 import { SPOILER_REFERENCE_NOW } from "./spoiler-reference";
 
-/** The public site has no spoiler override: content stays locked until its official release time. */
+/**
+ * The public site no longer exposes a spoiler switch, URL parameter or stored preference.
+ * Unreleased content stays hidden and the shared notice explains why.
+ */
+export function isSpoilerUnlocked(): boolean {
+  return false;
+}
+
+export function getShowSpoiler(): boolean {
+  return false;
+}
+
+/** Kept for callers that still use the old settings API; it has no effect. */
+export function setShowSpoiler(_on: boolean): void {
+  // Public users cannot enable unreleased content.
+}
+
 export interface SpoilerState {
+  isUnlocked: false;
   /** Always false; retained only so existing filters share one locked public state. */
   showSpoiler: false;
+  setShowSpoiler: typeof setShowSpoiler;
   now: number | null;
 }
 
+/** The public spoiler state: always locked, with the live clock for date-based hiding. */
 export function useSpoiler(): SpoilerState {
-  return { showSpoiler: false, now: useNow() };
+  const now = useNow();
+  return { isUnlocked: false, showSpoiler: false, setShowSpoiler, now };
 }
 
 export const useSpoilerSetting = useSpoiler;

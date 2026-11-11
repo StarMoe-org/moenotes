@@ -7,14 +7,16 @@ const ADDRESSABLE_ROOT = "Assets/AddressableResources/";
 
 /**
  * Direct preview URL for a file in the asset browser, built from its path; the asset service answers 404
- * for paths it has not exported. Audio previews the cue named after its sheet (BGM, SE and songs). The file comes from
- * the catalog of `server`, the browsed region's.
+ * for paths it has not exported. Audio previews the cue named after its sheet (BGM, SE and songs). A CRI movie
+ * (`.usm`) previews its exported MP4, which the exporter nests under the movie's own key, so the file path's
+ * directory becomes `…/<name>/<name>.mp4` (story clips keep their own nesting). The file comes from the catalog
+ * of `server`, the browsed region's.
  */
 export function getAssetBrowserPreview(
   filePath: string,
   locale: AppLocale,
   server: GameServer = PRIMARY_SERVER,
-): { type: "image" | "audio"; url: string } | null {
+): { type: "image" | "audio" | "video"; url: string } | null {
   if (!filePath) return null;
   let relPath = filePath.replace(/\\/g, "/").replace(/^\/+/, "");
   if (relPath.startsWith(ADDRESSABLE_ROOT)) relPath = relPath.slice(ADDRESSABLE_ROOT.length);
@@ -26,6 +28,13 @@ export function getAssetBrowserPreview(
 
   const sound = relPath.match(/^Cri\/Sound\/(?:.*\/)?([^/]+)\.(?:acb|awb)$/i);
   if (sound) return { type: "audio", url: serverAssetUrl(releaseFileUrl(`Cri/Sound/${sound[1]}`, `${sound[1]}.m4a`, locale), server) };
+
+  const video = relPath.match(/^Cri\/Video\/(.+)\.usm$/i);
+  if (video) {
+    const keyPath = video[1]?.replace(/\/+$/, "") ?? "";
+    const name = keyPath.split("/").filter(Boolean).at(-1);
+    if (name) return { type: "video", url: serverAssetUrl(releaseFileUrl(`Cri/Video/${keyPath}`, `${name}.mp4`, locale), server) };
+  }
 
   return null;
 }

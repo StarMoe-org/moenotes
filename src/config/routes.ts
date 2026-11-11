@@ -959,6 +959,21 @@ export const routeRegistry = [
         keywords: ["asset", "viewer", "s3", "files"],
       },
       {
+        id: "song-puzzle",
+        path: "/tools/song-puzzle",
+        labelKey: "nav.items.songPuzzle",
+        component: "song-puzzle",
+        seo: {
+          titleKey: "seo.songPuzzle.title",
+          descriptionKey: "seo.songPuzzle.description",
+          keywords: ["Our Notes song puzzle", "BanG Dream sliding puzzle", "Our Notes 华容道", "Our Notes 封面拼图", "slide puzzle solver"],
+          sitemap: { priority: 0.5, changefreq: "weekly" },
+        },
+        nav: { order: 35, icon: "puzzle" },
+        searchable: true,
+        keywords: ["puzzle", "slide", "huarongdao", "game", "cover", "jacket"],
+      },
+      {
         id: "design-system",
         path: "/tools/design-system",
         labelKey: "nav.items.designSystem",
