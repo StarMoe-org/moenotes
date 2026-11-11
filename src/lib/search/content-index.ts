@@ -10,7 +10,7 @@ import {
   getBuildRewardEntries,
 } from "@/lib/masterdata/build-data";
 import type { ServerFaceted } from "@/lib/servers/facets";
-import { isReleaseFacetReleasedAcrossServers, parseStoryReleaseTime } from "@/lib/story/release";
+import { isReleaseFacetReleasedAcrossServers, isStoryReleasedAcrossServers, parseStoryReleaseTime } from "@/lib/story/release";
 import type { ContentSearchEntry } from "@/lib/search/content-entry";
 import { CONTENT_SEARCH_SOURCES } from "@/lib/search/content-sources";
 
@@ -70,7 +70,8 @@ export async function buildContentSearchIndex(): Promise<ContentSearchEntry[]> {
   record("card", cards, (entry) => entry.id);
   record("support-card", supportCards, (entry) => entry.id);
   record("music", music, (entry) => entry.id);
-  record("story", stories, (entry) => entry.advId);
+  // Friendship, after-live and tutorial episodes have no MasterData date; the story gate knows their categories.
+  for (const story of stories) released.set(`story:${story.advId}`, isStoryReleasedAcrossServers(story, now));
   record("gacha", gachas, (entry) => entry.id);
   record("event", events, (entry) => entry.id);
   record("reward", rewards, (entry) => entry.slug);

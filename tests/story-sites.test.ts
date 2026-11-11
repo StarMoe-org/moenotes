@@ -84,6 +84,14 @@ describe("story sites", () => {
     expect(isStoryPlayerEntryReleased(built!, Date.UTC(2026, 11, 1))).toBe(true);
   });
 
+  test("plays an untimed friendship episode without a release date", () => {
+    const site = [entry(20001, "tw", ["zh-Hant", "ja"])];
+    const [built] = buildStoryPlayerEntries([{ ...story(20001, ["tw"], {}), category: "friendship" }], site);
+    expect(built?.startAt).toBe("");
+    expect(isStoryPlayerEntryReleased(built!, Date.UTC(2026, 9, 27))).toBe(true);
+    expect(isStoryPlayerRequestReleased(20001, [built!], Date.UTC(2026, 9, 27))).toBe(true);
+  });
+
   test("omits cloud-only entries without a locally verified release record", () => {
     expect(buildStoryPlayerEntries([], [entry(99999, "jp", ["ja"])] )).toEqual([]);
   });

@@ -2,7 +2,7 @@ import type { AppLocale } from "@/config/locales";
 import type { GameServer } from "@/config/servers";
 import type { CharacterViewModel } from "@/lib/characters/data";
 import { getBuildCards, getBuildCharacters, getBuildStories, getBuildSupportCards } from "@/lib/masterdata/build-data";
-import { isReleaseFacetReleasedForServer } from "@/lib/story/release";
+import { isReleaseFacetReleasedForServer, isStoryReleasedForServer } from "@/lib/story/release";
 import { restrictFacetServers, type ServerFaceted } from "@/lib/servers/facets";
 
 /**
@@ -35,7 +35,7 @@ export async function getBuildReleasedCharacterServers(locale: AppLocale, now = 
   }
   for (const story of stories) {
     for (const server of story.servers) {
-      if (isReleaseFacetReleasedForServer(story, server, now)) {
+      if (isStoryReleasedForServer(story, server, now)) {
         for (const characterId of story.characterIds) add(characterId, server);
       }
     }
