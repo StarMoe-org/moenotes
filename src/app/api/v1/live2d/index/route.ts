@@ -6,7 +6,10 @@ export const dynamic = "force-dynamic";
 
 const NO_STORE = { "Cache-Control": "private, no-store, max-age=0" };
 
-/** A cloud model index is only a locator; models are listed only after regional MasterData verifies their costume. */
+/**
+ * A cloud model index is only a locator. Equippable costumes are listed only once regional MasterData releases them;
+ * story-only outfits have no MasterData record to date and stay listed.
+ */
 export async function GET(request: NextRequest) {
   const server = request.nextUrl.searchParams.get("server") ?? "";
   if (!isGameServer(server)) {

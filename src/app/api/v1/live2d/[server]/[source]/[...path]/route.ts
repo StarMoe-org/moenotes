@@ -11,7 +11,10 @@ interface RouteContext {
 const NO_STORE = { "Cache-Control": "private, no-store, max-age=0" };
 const NOT_FOUND = () => Response.json({ error: "Live2D resource not found" }, { status: 404, headers: NO_STORE });
 
-/** Proxy model manifests and assets only for costume identities released in the requested server's MasterData. */
+/**
+ * Proxy model manifests and assets only for models the requested server's MasterData lets through: a dated equippable
+ * costume must be released, while a story-only outfit (which MasterData does not date) is served as before.
+ */
 export async function GET(_request: NextRequest, { params }: RouteContext) {
   const { server, source, path } = await params;
   if (!Array.isArray(path) || !isLive2DSource(source)) return NOT_FOUND();
