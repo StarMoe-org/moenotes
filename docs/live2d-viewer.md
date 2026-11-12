@@ -19,8 +19,13 @@ to the chart site (its `docs/MODEL_SITE.md`) and the **story site** the story pl
 {storySite}/models.json, models/, assets/   the same for the story models (the ADV models the stories use)
 ```
 
-Both `models.json` are fetched in the browser (`fetchLive2DModels`, `src/lib/live2d/client.ts`), so a new costume
-appears without rebuilding the site. The list is the model site's; a model the story site has too is read from the story
+Both `models.json` are read by the same-origin `/api/v1/live2d/index?server=<region>` endpoint (`fetchLive2DModels`,
+`src/lib/live2d/client.ts`; `getReleasedLive2DModels`), so a new costume appears without rebuilding the site. That
+endpoint and the `/api/v1/live2d/{server}/{source}/models/...` proxy apply the release gate: an **equippable costume**
+listed in `MasterCharacterCostume` is served only once its `MasterCharacterCostumeGroup._startAt` has passed (variants
+such as `_low`, glasses and hairdown follow their costume's id), while **story-only outfits** (school, roomwear,
+halloween, …) have no costume row and no date anywhere in MasterData, so they stay listed, like the untimed story
+categories. The list is the model site's; a model the story site has too is read from the story
 site (`mergeLive2DModelIndexes`, `Live2DModel.manifestUrl`). The two sites build a model into different files (the story
 site encodes moc3 and JSON as gzip and writes smaller PNGs), so this way the viewer loads the files the story player
 loads, and a model seen in a story is already in the browser's cache, and the other way round; the story site's files

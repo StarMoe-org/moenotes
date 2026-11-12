@@ -47,21 +47,37 @@ export function live2DModelIdFromCostumePath(value: unknown): string | null {
   return MODEL_ID.test(id) ? id : null;
 }
 
-/** The exact model ids the selected server's released costume groups authorize. */
-export function releasedLive2DModelIds(
+/**
+ * The Live2D models MasterData can date. `MasterCharacterCostume` lists the equippable costumes only: story-only outfits
+ * (school, roomwear, halloween, …) have a model but no costume row and no start time anywhere in MasterData, so they
+ * are not hidden for lacking a date, just as the untimed story categories are not. A costume that is listed is gated by
+ * its own group's release, and so are its variants (`_low`, glasses, hairdown, …), which extend the same model id.
+ */
+export interface Live2DReleaseGate {
+  /** Equippable-costume model ids whose group is not released (or whose group is missing). */
+  readonly blocked: ReadonlySet<string>;
+  /** Whether a cloud model may be listed and served: only an undated costume and its variants are withheld. */
+  allows(modelId: string): boolean;
+}
+
+export function createLive2DReleaseGate(
   costumes: readonly RawCharacterCostume[],
   groups: readonly RawCharacterCostumeGroup[],
   now: number,
-): Set<string> {
+): Live2DReleaseGate {
   const groupsById = new Map(groups.map((group) => [group.id, group]));
-  const ids = new Set<string>();
+  const blocked = new Set<string>();
   for (const costume of costumes) {
-    const group = groupsById.get(costumeGroupId(costume));
-    if (!group || !isCostumeReleased({ startAt: group.startAt ?? "", isInitial: group.isInitial === true }, now)) continue;
     const id = live2DModelIdFromCostumePath(costume.live2dPath);
-    if (id) ids.add(id);
+    if (!id) continue;
+    const group = groupsById.get(costumeGroupId(costume));
+    if (group && isCostumeReleased({ startAt: group.startAt ?? "", isInitial: group.isInitial === true }, now)) continue;
+    blocked.add(id);
   }
-  return ids;
+  return {
+    blocked,
+    allows: (modelId) => ![...blocked].some((id) => modelId === id || modelId.startsWith(`${id}_`)),
+  };
 }
 
 function sourceRoot(server: GameServer, source: Live2DSource): string | null {
@@ -120,14 +136,15 @@ async function cachedIndex(server: GameServer, source: Live2DSource, root: strin
   return promise;
 }
 
-/** A sanitized regional index intersected with exact costume identities from released MasterData. */
+/** A sanitized regional index with every equippable costume MasterData dates still unreleased left out. */
 export async function getReleasedLive2DEntries(server: GameServer, now = Date.now()): Promise<ReleasedLive2DEntry[]> {
   const [costumes, groups] = await Promise.all([
     table<RawCharacterCostume>("MasterCharacterCostume.json", server),
     table<RawCharacterCostumeGroup>("MasterCharacterCostumeGroup.json", server),
   ]);
-  const allowed = releasedLive2DModelIds(costumes._allData, groups._allData, now);
-  if (!Number.isFinite(now) || allowed.size === 0) return [];
+  // An empty costume catalog is no evidence that anything is public; a dead clock answers nothing either.
+  if (!Number.isFinite(now) || costumes._allData.length === 0 || groups._allData.length === 0) return [];
+  const gate = createLive2DReleaseGate(costumes._allData, groups._allData, now);
 
   const sources: Live2DSource[] = ["chart", "story"];
   const indexes = await Promise.all(sources.map(async (source) => {
@@ -135,7 +152,7 @@ export async function getReleasedLive2DEntries(server: GameServer, now = Date.no
     if (!root) return [] as ReleasedLive2DEntry[];
     const entries = await cachedIndex(server, source, root);
     return entries
-      .filter((entry) => allowed.has(entry.id))
+      .filter((entry) => gate.allows(entry.id))
       .map((entry): ReleasedLive2DEntry => ({ server, source, root, entry }));
   }));
 

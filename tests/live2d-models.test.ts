@@ -10,7 +10,7 @@ import {
   parseLive2DViewerSearch,
 } from "../src/lib/live2d/models";
 import { IDENTITY_VIEW, MAX_ZOOM, clampView, toNdc, zoomAbout } from "../src/lib/live2d/view";
-import { releasedLive2DModelIds } from "../src/lib/live2d/site-access";
+import { createLive2DReleaseGate } from "../src/lib/live2d/site-access";
 import { enUS } from "../src/i18n/messages/en-US";
 
 const model = (id: string, group: string, character?: number) =>
@@ -46,20 +46,35 @@ describe("Live2D model site addresses", () => {
 });
 
 describe("Live2D release gate", () => {
-  test("cloud model ids are authorized only by exact costume paths in released regional MasterData", () => {
-    const groups = [
-      { id: 1, characterID: 1, costumeNameTextId: "", iconPath: "", isInitial: true, isChangeable: false, specialConditionMemberCardId: 0, startAt: "" },
-      { id: 2, characterID: 1, costumeNameTextId: "", iconPath: "", isInitial: false, isChangeable: true, specialConditionMemberCardId: 0, startAt: "2026/11/01 00:00:00" },
-      { id: 3, characterID: 1, costumeNameTextId: "", iconPath: "", isInitial: false, isChangeable: true, specialConditionMemberCardId: 0, startAt: "2026/12/01 00:00:00" },
-    ];
-    const costumes = [
-      { id: 1, characterID: 1, groupID: 1, costumeType: 2, costumeId: 1, isDefault: true, live2dPath: "001_adv/live2d_tomori_001_initial" },
-      { id: 2, characterID: 1, groupID: 2, costumeType: 2, costumeId: 2, isDefault: false, live2dPath: "001_adv/adv_live2d_tomori_001_casual" },
-      { id: 3, characterID: 1, groupID: 3, costumeType: 2, costumeId: 3, isDefault: false, live2dPath: "001_adv/adv_live2d_tomori_001_future" },
-      { id: 4, characterID: 1, groupID: 99, costumeType: 2, costumeId: 4, isDefault: false, live2dPath: "001_adv/adv_live2d_tomori_001_unknown" },
-    ];
-    const allowed = releasedLive2DModelIds(costumes, groups, Date.parse("2026-11-15T00:00:00Z"));
-    expect(allowed).toEqual(new Set(["live2d_tomori_001_initial", "adv_live2d_tomori_001_casual"]));
+  const groups = [
+    { id: 1, characterID: 1, costumeNameTextId: "", iconPath: "", isInitial: true, isChangeable: false, specialConditionMemberCardId: 0, startAt: "" },
+    { id: 2, characterID: 1, costumeNameTextId: "", iconPath: "", isInitial: false, isChangeable: true, specialConditionMemberCardId: 0, startAt: "2026/11/01 00:00:00" },
+    { id: 3, characterID: 1, costumeNameTextId: "", iconPath: "", isInitial: false, isChangeable: true, specialConditionMemberCardId: 0, startAt: "2026/12/01 00:00:00" },
+  ];
+  const costumes = [
+    { id: 1, characterID: 1, groupID: 1, costumeType: 2, costumeId: 1, isDefault: true, live2dPath: "001_adv/live2d_tomori_001_initial" },
+    { id: 2, characterID: 1, groupID: 2, costumeType: 2, costumeId: 2, isDefault: false, live2dPath: "001_adv/adv_live2d_tomori_001_casual" },
+    { id: 3, characterID: 1, groupID: 3, costumeType: 2, costumeId: 3, isDefault: false, live2dPath: "001_adv/adv_live2d_tomori_001_future" },
+    { id: 4, characterID: 1, groupID: 99, costumeType: 2, costumeId: 4, isDefault: false, live2dPath: "001_adv/adv_live2d_tomori_001_unknown" },
+  ];
+  const gate = createLive2DReleaseGate(costumes, groups, Date.parse("2026-11-15T00:00:00Z"));
+
+  test("an equippable costume is listed once its group is released, together with its variants", () => {
+    expect(gate.allows("live2d_tomori_001_initial")).toBe(true);
+    expect(gate.allows("adv_live2d_tomori_001_casual")).toBe(true);
+    expect(gate.allows("adv_live2d_tomori_001_casual_glasses")).toBe(true);
+    expect(gate.allows("adv_live2d_tomori_001_future")).toBe(false);
+    expect(gate.allows("adv_live2d_tomori_001_future_glasses")).toBe(false);
+    // A costume whose group is missing from MasterData cannot be verified.
+    expect(gate.allows("adv_live2d_tomori_001_unknown")).toBe(false);
+  });
+
+  test("a story-only outfit has no MasterData date and is not hidden for that", () => {
+    // School, roomwear and the other story outfits are not equippable: no row in MasterCharacterCostume, no start time.
+    expect(gate.allows("adv_live2d_tomori_001_school_winter_hs_1st")).toBe(true);
+    expect(gate.allows("adv_live2d_tomori_001_roomwear_01")).toBe(true);
+    expect(gate.allows("adv_live2d_sub_mana_casual")).toBe(true);
+    expect(gate.blocked).toEqual(new Set(["adv_live2d_tomori_001_future", "adv_live2d_tomori_001_unknown"]));
   });
 });
 

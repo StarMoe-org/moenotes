@@ -66,6 +66,29 @@ export function isReleaseFacetReleasedAcrossServers(story: StoryReleaseFaceted, 
   return story.servers.every((server) => isStoryReleasedAt(dates[server], now));
 }
 
+/**
+ * MasterData writes "no timestamp" as an empty string, and a few tables (the beginner mission group) as the literal
+ * string "null". A malformed non-empty value is not treated as absent, so a real date that fails to parse still fails
+ * closed instead of making its entry look permanent.
+ */
+function hasReleaseDateValue(value: unknown): boolean {
+  if (typeof value !== "string") return false;
+  const text = value.trim();
+  return text !== "" && text.toLowerCase() !== "null";
+}
+
+/**
+ * Whether a catalog entry is public when its start time is optional. Titles, permanent gachas and passes carry no
+ * timestamp in any region; that is their data model, not missing release evidence, so they stay listed. As soon as any
+ * region dates the entry, every region listing it must have reached its own date, exactly as the all-or-nothing gate.
+ */
+export function isReleaseFacetPublicAcrossServers(entry: StoryReleaseFaceted, now: number): boolean {
+  if (entry.servers.length === 0 || !Number.isFinite(now)) return false;
+  const dates = storyReleaseDates(entry);
+  if (!entry.servers.some((server) => hasReleaseDateValue(dates[server]))) return true;
+  return isReleaseFacetReleasedAcrossServers(entry, now);
+}
+
 /** Whether one server's authoritative MasterData release date has passed. Unknown dates and absent regions fail closed. */
 export function isReleaseFacetReleasedForServer(story: StoryReleaseFaceted, server: GameServer, now: number): boolean {
   if (!story.servers.includes(server)) return false;

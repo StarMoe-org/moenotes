@@ -93,7 +93,10 @@ describe("ournotes-player 0.1.8 Live2D proxy runtime", () => {
     createReleasedAndFutureCostumes();
     const releasedId = "live2d_tomori_001_live_01";
     const futureId = "live2d_tomori_001_live_future";
+    // A story-only outfit: no MasterCharacterCostume row and no release date anywhere in MasterData.
+    const storyOnlyId = "adv_live2d_tomori_001_school_winter_hs_1st";
     const listedHash = "b".repeat(64);
+    const storyHash = "d".repeat(64);
     const unlistedHash = "c".repeat(64);
     const assetBytes = new Uint8Array([7, 8, 9]);
     const calls: string[] = [];
@@ -104,6 +107,7 @@ describe("ournotes-player 0.1.8 Live2D proxy runtime", () => {
         return Response.json({ models: [
           { id: releasedId, manifest: `models/${releasedId}.json`, group: "001_live", character: 1 },
           { id: futureId, manifest: `models/${futureId}.json`, group: "001_live", character: 1 },
+          { id: storyOnlyId, manifest: `models/${storyOnlyId}.json`, group: "001_adv", character: 1 },
         ] });
       }
       if (url === `${assetConfig.storySiteJp}/models.json`) return new Response("not found", { status: 404 });
@@ -114,7 +118,15 @@ describe("ournotes-player 0.1.8 Live2D proxy runtime", () => {
           files: { "model.moc3": { asset: `assets/${listedHash}.moc3`, size: assetBytes.length } },
         });
       }
+      if (url === `${assetConfig.chartSite}/models/${storyOnlyId}.json`) {
+        return Response.json({
+          format: 3,
+          id: storyOnlyId,
+          files: { "model.moc3": { asset: `assets/${storyHash}.moc3`, size: assetBytes.length } },
+        });
+      }
       if (url === `${assetConfig.chartSite}/assets/${listedHash}.moc3`) return new Response(assetBytes);
+      if (url === `${assetConfig.chartSite}/assets/${storyHash}.moc3`) return new Response(assetBytes);
       return new Response("not found", { status: 404 });
     });
     cleanups.push(() => fetcher.mockRestore());
@@ -122,8 +134,9 @@ describe("ournotes-player 0.1.8 Live2D proxy runtime", () => {
     const indexResponse = await getLive2DIndex(new NextRequest("https://moenotes.test/api/v1/live2d/index?server=jp"));
     expect(indexResponse.status).toBe(200);
     const index = await indexResponse.json() as { models: Live2DModel[] };
-    expect(index.models.map((model) => model.id)).toEqual([releasedId]);
+    expect(index.models.map((model) => model.id)).toEqual([releasedId, storyOnlyId]);
     expect(findRequestedLive2DModel(`?model=${releasedId}`, index.models)?.id).toBe(releasedId);
+    expect(findRequestedLive2DModel(`?model=${storyOnlyId}`, index.models)?.id).toBe(storyOnlyId);
     expect(findRequestedLive2DModel(`?model=${futureId}`, index.models)).toBeNull();
     expect(findRequestedLive2DModel("?model=unknown_model", index.models)).toBeNull();
     expect(findRequestedLive2DModel("?model=../unreleased", index.models)).toBeNull();
@@ -140,6 +153,17 @@ describe("ournotes-player 0.1.8 Live2D proxy runtime", () => {
     );
     expect(listedResponse.status).toBe(200);
     expect([...new Uint8Array(await listedResponse.arrayBuffer())]).toEqual([...assetBytes]);
+
+    const storyManifestResponse = await getLive2DResource(
+      live2DResourceRequest(["models", `${storyOnlyId}.json`]),
+      live2DResourceContext(["models", `${storyOnlyId}.json`]),
+    );
+    expect(storyManifestResponse.status).toBe(200);
+    const storyAssetResponse = await getLive2DResource(
+      live2DResourceRequest(["models", storyOnlyId, "assets", `${storyHash}.moc3`]),
+      live2DResourceContext(["models", storyOnlyId, "assets", `${storyHash}.moc3`]),
+    );
+    expect(storyAssetResponse.status).toBe(200);
 
     const deniedPaths = [
       ["assets", `${listedHash}.moc3`],
