@@ -19,7 +19,7 @@ import ShopExplorer from "@/components/shop/ShopExplorer";
 import SkillsExplorer from "@/components/skills/SkillsExplorer";
 import StampsExplorer from "@/components/stamps/StampsExplorer";
 import StoryExplorer from "@/components/story/StoryExplorer";
-import { isReleaseFacetReleasedAcrossServers, isStoryReleasedAcrossServers, isStoryReleasedAt } from "@/lib/story/release";
+import { isReleaseFacetPublicAcrossServers, isReleaseFacetReleasedAcrossServers, isStoryReleasedAcrossServers, isStoryReleasedAt } from "@/lib/story/release";
 import { getBuildReleasedCharacterIds } from "@/lib/characters/release";
 import { valueForServer, type ServerFaceted, type ServerFacetedValue } from "@/lib/servers/facets";
 import { inStorySection, type StorySection } from "@/lib/story/sections";
@@ -72,6 +72,11 @@ import type { AppRoute } from "@/types/route";
 
 function releasedFacets<T extends { startAt: string }>(entries: ServerFaceted<T>[], now: number): ServerFaceted<T>[] {
   return entries.filter((entry) => isReleaseFacetReleasedAcrossServers(entry, now));
+}
+
+/** Catalogs whose entries may be permanent (titles, gachas, passes): an entry no region dates stays listed. */
+function publicFacets<T extends { startAt: string }>(entries: ServerFaceted<T>[], now: number): ServerFaceted<T>[] {
+  return entries.filter((entry) => isReleaseFacetPublicAcrossServers(entry, now));
 }
 
 function releasedCalendar<T extends { entries: Array<{ id: string; startAt: string }> }>(data: ServerFacetedValue<T>, now: number): ServerFacetedValue<T> {
@@ -214,7 +219,7 @@ export async function GachaServerPage({ locale }: { locale: AppLocale }) {
     getBuildServers(),
     getBuildReleasedCharacterIds(locale),
   ]);
-  const gachas = releasedFacets(allGachas, Date.now());
+  const gachas = publicFacets(allGachas, Date.now());
   const publicBandIds = new Set(characters.filter((character) => releasedCharacterIds.has(character.id)).map((character) => character.bandId));
   const bandOptions: Array<[number, string]> = bands.filter((band) => publicBandIds.has(band.id)).map((band) => [band.id, band.name]);
   return (
@@ -351,7 +356,7 @@ export async function TitlesServerPage({ locale }: { locale: AppLocale }) {
     getBuildServers(),
     getBuildReleasedCharacterIds(locale),
   ]);
-  const titles = releasedFacets(allTitles, Date.now());
+  const titles = publicFacets(allTitles, Date.now());
   const publicCharacters = characters.filter((character) => releasedCharacterIds.has(character.id));
   const publicBandIds = new Set(publicCharacters.map((character) => character.bandId));
   const bandOptions: Array<[number, string]> = bands.filter((band) => publicBandIds.has(band.id)).map((band) => [band.id, band.name]);
@@ -383,7 +388,7 @@ export async function ExchangeServerPage({ locale }: { locale: AppLocale }) {
 
 export async function RewardsServerPage({ locale }: { locale: AppLocale }) {
   const [allEntries, servers] = await Promise.all([getBuildRewardEntries(locale), getBuildServers()]);
-  const entries = releasedFacets(allEntries, Date.now());
+  const entries = publicFacets(allEntries, Date.now());
   return (
     <PageHeader locale={locale} titleKey="seo.rewards.title" descriptionKey="seo.rewards.description">
       <RewardsExplorer servers={servers} locale={locale} initialEntries={entries} />
