@@ -2014,7 +2014,7 @@ index 03f460c..6d9fdb5 100644
                  return Err("cancelled".into());
              }
 diff --git a/src/gekiso_objective.rs b/src/gekiso_objective.rs
-index b4fbfd2..c2e4d52 100644
+index b4fbfd2..d6637ec 100644
 --- a/src/gekiso_objective.rs
 +++ b/src/gekiso_objective.rs
 @@ -1,3 +1,5 @@
@@ -2112,35 +2112,45 @@ index b4fbfd2..c2e4d52 100644
              let Some(p) = self.support_ref(m, s) else { continue; };
              if self.support_high.get(&(at, p.band_id))
                  .is_some_and(|values| values.contains_key(p.gekisou_support_skills.as_slice())) { continue; }
-@@ -3821,13 +3832,27 @@ impl<'a> Kernel<'a> {
+@@ -3821,15 +3832,28 @@ impl<'a> Kernel<'a> {
          if jobs.len() < 2 {
              return;
          }
+-        let (master, chart, seeds) = (&data.within, &*self.chart, &self.seeds);
+-        let Ok(found) = crate::parallel::map(&jobs, |(deck, _)| {
+-            gekiso::context_fixed(master, chart, deck, seeds)
+-                .map(|ctx| note_weights(master, chart, &ctx))
+-        }) else {
+-            return;
+-        };
+-        for ((_, key), weights) in jobs.into_iter().zip(found) {
+-            self.store_weights(key, Arc::new(weights));
 +        #[cfg(target_arch = "wasm32")]
-+        {
-+            for (deck, key) in jobs {
-+                if now() >= deadline { return; }
-+                if let Ok(ctx) = gekiso::context_fixed(&data.within, self.chart, &deck, &self.seeds) {
-+                    let weights = note_weights(&data.within, self.chart, &ctx);
-+                    self.store_weights(key, Arc::new(weights));
-+                }
++        for (deck, key) in jobs {
++            if now() >= deadline {
++                return;
 +            }
-+            return;
++            if let Ok(ctx) = gekiso::context_fixed(&data.within, self.chart, &deck, &self.seeds) {
++                let weights = note_weights(&data.within, self.chart, &ctx);
++                self.store_weights(key, Arc::new(weights));
++            }
 +        }
 +        #[cfg(not(target_arch = "wasm32"))]
-         let (master, chart, seeds) = (&data.within, &*self.chart, &self.seeds);
-+        #[cfg(not(target_arch = "wasm32"))]
-         let Ok(found) = crate::parallel::map(&jobs, |(deck, _)| {
-             gekiso::context_fixed(master, chart, deck, seeds)
-                 .map(|ctx| note_weights(master, chart, &ctx))
-         }) else {
-             return;
-         };
-+        #[cfg(not(target_arch = "wasm32"))]
-         for ((_, key), weights) in jobs.into_iter().zip(found) {
-             self.store_weights(key, Arc::new(weights));
++        {
++            let (master, chart, seeds) = (&data.within, &*self.chart, &self.seeds);
++            let Ok(found) = crate::parallel::map(&jobs, |(deck, _)| {
++                gekiso::context_fixed(master, chart, deck, seeds)
++                    .map(|ctx| note_weights(master, chart, &ctx))
++            }) else {
++                return;
++            };
++            for ((_, key), weights) in jobs.into_iter().zip(found) {
++                self.store_weights(key, Arc::new(weights));
++            }
          }
-@@ -4503,12 +4528,14 @@ impl Kernel<'_> {
+     }
+     fn store_weights(&mut self, key: (i32, Vec<u32>), weights: Arc<Weights>) {
+@@ -4503,12 +4527,14 @@ impl Kernel<'_> {
          Ok(result)
      }
      fn unsettled_scores(&mut self, team: &Team, power: i32) -> Result<Arc<live::Scores>, String> {
@@ -2156,7 +2166,7 @@ index b4fbfd2..c2e4d52 100644
          let slots: Vec<_> = team
              .members
              .iter()
-@@ -4556,6 +4583,13 @@ impl Kernel<'_> {
+@@ -4556,6 +4582,13 @@ impl Kernel<'_> {
              .collect();
          // Amortize replay-tree and native worker setup over larger completions.
          if missing.len() >= 30 {
@@ -2170,7 +2180,7 @@ index b4fbfd2..c2e4d52 100644
              let values =
                  gekiso::replay_order_subset(self.master, self.chart, &deck, power, &missing)?;
              for (order, value) in missing.into_iter().zip(values) {
-@@ -4563,6 +4597,8 @@ impl Kernel<'_> {
+@@ -4563,6 +4596,8 @@ impl Kernel<'_> {
              }
          } else {
              for order in missing {
@@ -2179,7 +2189,7 @@ index b4fbfd2..c2e4d52 100644
                  rows[order] = Some(gekiso::replay_order(
                      self.master,
                      self.chart,
-@@ -4652,6 +4688,8 @@ impl Kernel<'_> {
+@@ -4652,6 +4687,8 @@ impl Kernel<'_> {
              .then_some(values)
      }
      fn search_exact(&mut self, team: &Team, power: i32, settle: bool) -> Result<Exact, String> {
@@ -2188,7 +2198,7 @@ index b4fbfd2..c2e4d52 100644
          if !self.chart.luck && self.criterion == Criterion::Max && self.seeds.is_empty() && settle {
              if let Some(bounds) = self.max_order_bounds(team, power) {
                  let deck = self.original_deck(team);
-@@ -4661,6 +4699,8 @@ impl Kernel<'_> {
+@@ -4661,6 +4698,8 @@ impl Kernel<'_> {
                  let mut best = f64::NEG_INFINITY;
                  let mut count = 0;
                  for index in order {
@@ -2197,7 +2207,7 @@ index b4fbfd2..c2e4d52 100644
                      if bounds[index] <= best {
                          break;
                      }
-@@ -4693,7 +4733,7 @@ impl Kernel<'_> {
+@@ -4693,7 +4732,7 @@ impl Kernel<'_> {
          }
          let upper = self.unsettled_scores(team, power)?;
          let deck = self.deck_of(team);
@@ -2206,7 +2216,7 @@ index b4fbfd2..c2e4d52 100644
          let slots: Vec<_> = team
              .members
              .iter()
-@@ -5102,6 +5142,8 @@ impl Kernel<'_> {
+@@ -5102,6 +5141,8 @@ impl Kernel<'_> {
          })))
      }
      pub fn exact(&mut self, team: &Team, power: i32, settle: bool) -> Result<Exact, String> {
@@ -2215,7 +2225,7 @@ index b4fbfd2..c2e4d52 100644
          if !self.chart.luck && self.seeds.is_empty() {
              if let Some(scores) =
                  self.partial_orders
-@@ -5123,6 +5165,11 @@ impl Kernel<'_> {
+@@ -5123,6 +5164,11 @@ impl Kernel<'_> {
                      )
                  })
                  .collect();
@@ -2227,7 +2237,7 @@ index b4fbfd2..c2e4d52 100644
              let scores = gekiso::replay_orders(self.master, self.chart, &deck, &self.seeds, power)?;
              return Ok(Exact {
                  key: self.criterion.key(&scores.scores),
-@@ -5131,7 +5178,7 @@ impl Kernel<'_> {
+@@ -5131,7 +5177,7 @@ impl Kernel<'_> {
          }
          let ctx = if self.seeds.is_empty() {
              let deck = self.deck_of(team);
@@ -2236,7 +2246,7 @@ index b4fbfd2..c2e4d52 100644
          } else {
              let deck = team
                  .members
-@@ -10701,7 +10748,7 @@ fn warm(adapter: &mut Adapter<'_, '_>, env: &Environment<'_>, deadline: f64) ->
+@@ -10701,7 +10747,7 @@ fn warm(adapter: &mut Adapter<'_, '_>, env: &Environment<'_>, deadline: f64) ->
              })
              .collect();
          let level = adapter.level;
@@ -2245,7 +2255,7 @@ index b4fbfd2..c2e4d52 100644
      }
      for m in 0..env.members.len() {
          if (env.now)() >= deadline {
-@@ -11398,6 +11445,8 @@ fn replay_support_key(master: &Master, actor: &Performer, global_converters: &Ha
+@@ -11398,6 +11444,8 @@ fn replay_support_key(master: &Master, actor: &Performer, global_converters: &Ha
      Some(key)
  }
  struct ReplayObjective<'a> {
@@ -2254,7 +2264,7 @@ index b4fbfd2..c2e4d52 100644
      master: &'a Master,
      members: &'a [Member],
      snaps: &'a [Snap],
-@@ -11548,6 +11597,9 @@ impl Objective for ReplayObjective<'_> {
+@@ -11548,6 +11596,9 @@ impl Objective for ReplayObjective<'_> {
                  )
              })
              .collect();
@@ -2264,7 +2274,7 @@ index b4fbfd2..c2e4d52 100644
          let scores =
              gekiso::replay_orders(self.master, self.chart, &deck, self.seeds, power as i32)?;
          let mut result = Exact {
-@@ -11977,6 +12029,8 @@ fn search_levels(
+@@ -11977,6 +12028,8 @@ fn search_levels(
              });
          }
          let mut objective = ReplayObjective {
@@ -2273,7 +2283,7 @@ index b4fbfd2..c2e4d52 100644
              master: env.master,
              members: env.members,
              snaps: env.snaps,
-@@ -12044,6 +12098,8 @@ fn search_levels(
+@@ -12044,6 +12097,8 @@ fn search_levels(
      let generation = env.generation;
      let mut kernel = Kernel::new(env.master, env.members, env.snaps, chart, seeds, criterion);
      kernel.just_window = just_window;

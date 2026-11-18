@@ -210,7 +210,7 @@ an upgrade: a clean patch only means the reward layer can be reviewed against th
 only after `bun run build:haneoka-engine --test` rebuilds and tests the WASM with a Rust toolchain.
 
 State at the current sync: pinned to upstream `main` at `6de572be31b0fd8e4ab50825bd92c81ac625bc78` (0 commits behind),
-with `patches/haneoka-rewards.patch` (`c122a238a275783fd83aaff324f32d84fc3ed9a00684dfe4517a2d71308f2749`) cleanly ported
+with `patches/haneoka-rewards.patch` (`d0ed4936a4737c7377fe6a036f2eca8c8ea880244dfdbeb1420b7e7a0561e167`) cleanly ported
 and verified via `bun run build:haneoka-engine --test` and host + `wasm32-unknown-unknown` Clippy (`.github/workflows/haneoka-engine.yml`).
 All upstream features through `6de572be` — optimal note/live/support timing guides with `planBaseScore`, `frameOriginMs`,
 `planIsOptimal`, and earliest note input times; Gekisou timing guides (`timeline.guide`); bounded steady and partial
