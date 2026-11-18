@@ -1,7 +1,7 @@
 import type { GameServer } from "@/config/servers";
 import { validateMasterTable } from "@/lib/cards/data";
 import type { MasterTextRow } from "./localize-text";
-import { getBuildMasterData, getBuildMasterVersion } from "./build-snapshot";
+import { currentMasterDataEpochSync, getBuildManifest, getBuildMasterData, getBuildMasterVersion, isMasterDataManifestFresh } from "./build-snapshot";
 import { validatePlayerCatalogue, type PlayerCatalogueField, type PlayerFieldCatalogue, type PlayerProfileCatalogue } from "@/lib/box/player-catalog";
 
 type Row = Record<string, unknown>;
@@ -123,20 +123,47 @@ async function profileCatalogue(server: GameServer, masterVersion: string, table
   return profile;
 }
 
-const pending = new Map<GameServer, Promise<PlayerFieldCatalogue | null>>();
-export function getBuildPlayerCatalogue(server: GameServer): Promise<PlayerFieldCatalogue | null> {
-  let request = pending.get(server);
+const stateKey = Symbol.for("moenotes.masterdata.player-fields");
+interface CatalogueState {
+  /** MasterData epoch the cached catalogues belong to; a rotation drops every entry. */
+  epoch: number;
+  byServer: Map<GameServer, Promise<PlayerFieldCatalogue | null>>;
+}
+const globalState = globalThis as typeof globalThis & { [stateKey]?: CatalogueState };
+const state = globalState[stateKey] ??= { epoch: -1, byServer: new Map() };
+
+async function loadPlayerCatalogue(server: GameServer): Promise<PlayerFieldCatalogue | null> {
+  const names = ["MasterBandItem", "MasterBandItemLevel", "MasterCharacter", "MasterCharacterRank", "MasterVip", "MasterText", "MasterBand", "MasterBandRank", "MasterBandTypeRank", "MasterPlayerRank", "MasterBandItemSkillEffect", "MasterSkillTarget", "MasterMemberCard", "MasterMemoryMusic", "MasterMemoryMusicGroup", "MasterMemoryMusicBonus", "MasterMemoryMemberLevel", "MasterMemorySupportLevel", "MasterEvent", "MasterEventEffect"];
+  const data = await Promise.all(names.map(name => getBuildMasterData(`${name}.json`, raw => validateMasterTable<Row>(raw)._allData, server)));
+  const version = await getBuildMasterVersion(server);
+  if (!version) throw new Error("Player master version unavailable");
+  return buildPlayerCatalogue(server, version, { bandItems: data[0]!, bandItemLevels: data[1]!, characters: data[2]!, characterRanks: data[3]!, vip: data[4]!, texts: data[5]! as unknown as MasterTextRow[],
+    bands: data[6]!, bandRanks: data[7]!, bandTypeRanks: data[8]!, playerRanks: data[9]!, bandItemEffects: data[10]!, skillTargets: data[11]!, members: data[12]!,
+    memoryMusics: data[13]!, memoryMusicGroups: data[14]!, memoryMusicBonuses: data[15]!, memoryMemberLevels: data[16]!, memorySupportLevels: data[17]!, events: data[18]!, eventEffects: data[19]! });
+}
+
+/**
+ * The player field catalogue of `server` at its current MasterData version. It is rebuilt whenever the MasterData
+ * epoch rotates, so furniture and character rows released later are accepted; a failure is not kept, so the next call
+ * retries.
+ */
+export async function getBuildPlayerCatalogue(server: GameServer): Promise<PlayerFieldCatalogue | null> {
+  if (!isMasterDataManifestFresh()) {
+    await getBuildManifest();
+  }
+  const epoch = currentMasterDataEpochSync();
+  if (state.epoch !== epoch) {
+    state.epoch = epoch;
+    state.byServer.clear();
+  }
+  let request = state.byServer.get(server);
   if (!request) {
-    request = (async () => {
-      const names = ["MasterBandItem", "MasterBandItemLevel", "MasterCharacter", "MasterCharacterRank", "MasterVip", "MasterText", "MasterBand", "MasterBandRank", "MasterBandTypeRank", "MasterPlayerRank", "MasterBandItemSkillEffect", "MasterSkillTarget", "MasterMemberCard", "MasterMemoryMusic", "MasterMemoryMusicGroup", "MasterMemoryMusicBonus", "MasterMemoryMemberLevel", "MasterMemorySupportLevel", "MasterEvent", "MasterEventEffect"];
-      const data = await Promise.all(names.map(name => getBuildMasterData(`${name}.json`, raw => validateMasterTable<Row>(raw)._allData, server)));
-      const version = await getBuildMasterVersion(server);
-      if (!version) throw new Error("Player master version unavailable");
-      return buildPlayerCatalogue(server, version, { bandItems: data[0]!, bandItemLevels: data[1]!, characters: data[2]!, characterRanks: data[3]!, vip: data[4]!, texts: data[5]! as unknown as MasterTextRow[],
-        bands: data[6]!, bandRanks: data[7]!, bandTypeRanks: data[8]!, playerRanks: data[9]!, bandItemEffects: data[10]!, skillTargets: data[11]!, members: data[12]!,
-        memoryMusics: data[13]!, memoryMusicGroups: data[14]!, memoryMusicBonuses: data[15]!, memoryMemberLevels: data[16]!, memorySupportLevels: data[17]!, events: data[18]!, eventEffects: data[19]! });
-    })().catch(error => { console.warn(`[player-fields] ${server} catalogue unavailable: ${error instanceof Error ? error.message : String(error)}`); return null; });
-    pending.set(server, request);
+    request = loadPlayerCatalogue(server).catch(error => {
+      console.warn(`[player-fields] ${server} catalogue unavailable: ${error instanceof Error ? error.message : String(error)}`);
+      state.byServer.delete(server);
+      return null;
+    });
+    state.byServer.set(server, request);
   }
   return request;
 }

@@ -797,6 +797,8 @@ export const enUS = {
       "saveNotReady": "The game save is still loading.",
       "emptyBox": "Your card box is empty. Import cards from a game save or screenshots first.",
       "tablesUnavailable": "Level tables for this server are unavailable, so the team cannot be calculated.",
+      "tablesStale": "The card data has been updated since this page loaded, so its level tables no longer match. Reload the page and calculate again.",
+      "tablesLevelMissing": "A level you entered has no row in this server's level table. Choose the card's level again, or reload the page if the card data was just updated.",
       "stoppedEmpty": "Stopped before any team was found.",
       "outOfMemory": "Not enough device memory. Please use a computer.",
       "runFailed": "Something went wrong during the calculation.",

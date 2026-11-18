@@ -788,6 +788,8 @@ export const zhTW = {
       "saveNotReady": "存檔還沒有讀好，請稍候。",
       "emptyBox": "卡池還是空的，請先從遊戲存檔或截圖匯入卡牌。",
       "tablesUnavailable": "此區服的等級表暫不可用，無法計算。",
+      "tablesStale": "開啟頁面後卡牌資料已更新，等級表與卡池不一致。請重新整理頁面後再計算。",
+      "tablesLevelMissing": "填寫的等級在該區服的等級表裡沒有對應列。請重新選擇卡片等級；如果卡牌資料剛更新，請重新整理頁面。",
       "stoppedEmpty": "已停止，還沒有找到可行隊伍。",
       "outOfMemory": "裝置記憶體不足，請在電腦上使用。",
       "runFailed": "計算出錯了。",

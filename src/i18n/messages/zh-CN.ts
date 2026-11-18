@@ -789,6 +789,8 @@ export const zhCN = {
       "saveNotReady": "存档还没有读好，请稍候。",
       "emptyBox": "卡池还是空的，请先从游戏存档或截图导入卡牌。",
       "tablesUnavailable": "此区服的等级表暂不可用，无法计算。",
+      "tablesStale": "打开页面后卡牌数据已更新，等级表与卡池不一致。请刷新页面后重新计算。",
+      "tablesLevelMissing": "填写的等级在该区服的等级表里没有对应行。请重新选择卡片等级；如果卡牌数据刚更新，请刷新页面。",
       "stoppedEmpty": "已停止，还没有找到可行队伍。",
       "outOfMemory": "设备内存不足，请在电脑上使用。",
       "runFailed": "计算出错了。",

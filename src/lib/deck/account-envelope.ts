@@ -18,6 +18,20 @@ export interface AccountAssumption { path: string; reason: string }
 /** Chosen by the caller: the deck data the input is read with (lowercase hex SHA-256 of its text) and its save server. */
 export interface AccountTarget { datasetId: string; server: GameSaveServer }
 
+/**
+ * A known level that the page's save tables cannot encode as experience. `stale`: the card or its level group is not
+ * in the tables the page carries, which happens when MasterData moved on after the page was built. `level`: the level
+ * itself has no row in that group. Neither is a Box answer the player can fill, so it must not reach the solver as a
+ * missing `_exp`.
+ */
+export type DeckAccountTablesProblem = "stale" | "level";
+export class DeckAccountTablesError extends Error {
+  constructor(readonly problem: DeckAccountTablesProblem, readonly path: string, detail: string) {
+    super(detail);
+    this.name = "DeckAccountTablesError";
+  }
+}
+
 const I64_MAX = 9223372036854775807n;
 function long(id: string): string {
   if (!/^[1-9][0-9]*$/.test(id) || BigInt(id) > I64_MAX) throw new Error("Invalid long identity");
@@ -86,29 +100,42 @@ export function boxAccountJson(target: AccountTarget, box: CardBox, tables: Game
   const fallbackBandItems = options?.fallbackBandItems === true;
   const assumptions: AccountAssumption[] = [];
   const cards = (kind: BoxCard["kind"]) => box.cards.filter(card => card.kind === kind && card.identity.value !== null && card.identity.status !== "conflict");
-  function experience(path: string, card: BoxCard, rows: readonly (readonly [number, number])[] | undefined): string {
+  /**
+   * An unknown level stays null. A known one needs its level row: a card or level group the page's tables do not hold,
+   * or a level without a row, is reported instead of becoming a null experience the solver would call a missing field.
+   */
+  function experience(path: string, card: BoxCard, id: string, groups: Readonly<Record<string, number>>,
+    rows: Readonly<Record<string, readonly (readonly [number, number])[]>>, label: string): string {
     const level = known(card.fields.level);
-    const exp = level === null ? null : expForLevel(rows, level);
-    if (level !== null && exp !== null) assumptions.push({ path, reason: `Level ${level} ${origin(card.fields.level)}; experience is that level's threshold` });
+    if (level === null) return int(null);
+    const group = groups[id];
+    if (group === undefined) throw new DeckAccountTablesError("stale", path, `${label} ${id} is not in this page's save tables`);
+    const levelRows = rows[String(group)];
+    if (!levelRows?.length) throw new DeckAccountTablesError("stale", path, `${label} ${id} has no level rows for group ${group}`);
+    const exp = expForLevel(levelRows, level);
+    if (exp === null) throw new DeckAccountTablesError("level", path, `${label} ${id} has no level row for level ${level}`);
+    assumptions.push({ path, reason: `Level ${level} ${origin(card.fields.level)}; experience is that level's threshold` });
     return int(exp);
   }
   const members = cards("member").map((card, index) => {
     const path = `_player._memberCards[${index}]`, id = long(card.identity.value!);
-    return `{"_masterId":${id},"_exp":${experience(`${path}._exp`, card, tables.memberLevels[String(tables.members[id])])},"_awakeCount":${int(known(card.fields.awake))},`
+    return `{"_masterId":${id},"_exp":${experience(`${path}._exp`, card, id, tables.members, tables.memberLevels, "member card")},"_awakeCount":${int(known(card.fields.awake))},`
       + `"_rank":${int(known(card.fields.rank))},"_liveSkillLevel":${int(known(card.fields.liveSkillLevel))},"_performanceSkillLevel":${int(known(card.fields.gekisouSkillLevel))}}`;
   });
   const snaps = cards("snap").map((card, index) => {
     const path = `_player._supportCards[${index}]`, id = long(card.identity.value!);
-    return `{"_masterId":${id},"_exp":${experience(`${path}._exp`, card, tables.snapLevels[String(tables.snaps[id])])},"_rank":${int(known(card.fields.rank))}}`;
+    return `{"_masterId":${id},"_exp":${experience(`${path}._exp`, card, id, tables.snaps, tables.snapLevels, "Snap")},"_rank":${int(known(card.fields.rank))}}`;
   });
 
   const characterCoverage = box.player.characterCoverage;
   // Under a complete declaration every character is listed, so an unanswered one stays unknown rather than reading as experience 0.
   const characterIds = [...new Set([...tables.characters.filter(id => characterCoverage === "complete" || id in box.player.characterRanks), ...Object.keys(box.player.characterRanks)])];
   const characters = characterIds.map((id, index) => {
+    const path = `_player._characters[${index}]`;
     const rank = known(box.player.characterRanks[id]);
     const exp = rank === null ? null : tables.characterRanks.find(row => row[0] === rank)?.[1] ?? null;
-    if (rank !== null && exp !== null) assumptions.push({ path: `_player._characters[${index}]._exp`, reason: `Character rank ${rank} ${origin(box.player.characterRanks[id]!)}; experience is that rank's threshold` });
+    if (rank !== null && exp === null) throw new DeckAccountTablesError("level", `${path}._exp`, `character ${id} has no rank row for rank ${rank}`);
+    if (rank !== null && exp !== null) assumptions.push({ path: `${path}._exp`, reason: `Character rank ${rank} ${origin(box.player.characterRanks[id]!)}; experience is that rank's threshold` });
     return `{"_masterId":${long(id)},"_exp":${int(exp)}}`;
   });
 
