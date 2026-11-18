@@ -1,8 +1,9 @@
-import { DEFAULT_LOCALE, type AppLocale } from "@/config/locales";
+import { DEFAULT_LOCALE, FALLBACK_LOCALE, SUPPORTED_LOCALES, type AppLocale } from "@/config/locales";
 import { PRIMARY_SERVER, type GameServer } from "@/config/servers";
 import { serverReleaseFetcher } from "@/lib/assets/release";
 import { buildFetch } from "@/lib/build/fetch";
 import { getBuildServers } from "@/lib/masterdata/build-servers";
+import { buildThemeBandColors, type ThemeBandColor } from "@/lib/masterdata/build-settings";
 import {
   eachServer,
   memo,
@@ -374,6 +375,34 @@ export function getBuildCharacters(locale: AppLocale): Promise<{ characters: Ser
       characters: mergeServerLists(perServer.map(([server, data]) => [server, data.characters] as const), (character) => character.id),
       bands: mergeServerLists(perServer.map(([server, data]) => [server, data.bands] as const), (band) => band.id),
     };
+  });
+}
+
+const CORE_THEME_LOCALES: readonly AppLocale[] = ["zh-CN", "zh-TW", "ja-JP", "en-US", "ko-KR"];
+
+/**
+ * All 13 locales' theme band palettes cached in one epoch-scoped core selector (`theme-bands-by-locale`) so
+ * `AppShell` renders (including 404s) avoid firing 14 `memo()` calls or rebuilding UI-only locales per request.
+ */
+export function getBuildThemeBandsByLocale(): Promise<Partial<Record<AppLocale, readonly ThemeBandColor[]>>> {
+  return memo("theme-bands-by-locale", async () => {
+    try {
+      const coreEntries = await Promise.all(
+        CORE_THEME_LOCALES.map(async (code) => {
+          const { bands, characters } = await getBuildCharacters(code);
+          return [code, buildThemeBandColors(bands, characters)] as const;
+        }),
+      );
+      const byCore = new Map<AppLocale, ThemeBandColor[]>(coreEntries);
+      const fallback = byCore.get(FALLBACK_LOCALE) ?? [];
+      const out: Partial<Record<AppLocale, readonly ThemeBandColor[]>> = {};
+      for (const code of SUPPORTED_LOCALES) {
+        out[code] = byCore.get(code) ?? fallback;
+      }
+      return out;
+    } catch {
+      return {};
+    }
   });
 }
 

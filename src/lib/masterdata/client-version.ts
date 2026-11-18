@@ -95,27 +95,10 @@ export function formatMasterDataVersionLabel(version?: string | null, resourceVe
   return semverPrefix ? `${semverPrefix} · ${shortHash}` : shortHash;
 }
 
-function browserHasForceBypassQuery(): boolean {
-  if (typeof window === "undefined") return false;
-  if (safeGetSessionStorage(storageKeys.masterdataBypassSession) === "1") return true;
-  try {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("_refresh")?.trim();
-    if (token && token !== "0" && token.toLowerCase() !== "false") return true;
-    for (const key of ["refresh_masterdata", "__refresh", "nocache", "refresh"]) {
-      const val = params.get(key)?.trim().toLowerCase();
-      if (val === "1" || val === "true" || val === "yes") return true;
-    }
-  } catch {
-    // Ignore malformed query strings.
-  }
-  return false;
-}
-
 /**
  * Modeled after MoeSekai's `MasterDataContext`:
  * Cleans `?_refresh=...` / `?refresh_masterdata=1` out of the address bar on arrival, records the active
- * SSR `dataVersion` in local storage, and keeps a short session bypass flag while lazy client indexes finish loading.
+ * SSR `dataVersion` in local storage, and clears client-side cached data when needed.
  */
 export function syncMasterDataRefreshLanding(): (() => void) | undefined {
   if (typeof window === "undefined") return undefined;
@@ -206,12 +189,14 @@ export async function forceRefreshMasterDataAndReload(): Promise<void> {
 }
 
 /**
- * Attach `?v=<dataVersion>` (and `refresh_masterdata=1&_t=...` when the page itself was opened with force-bypass)
+ * Attach `?v=<dataVersion>` (and `refresh_masterdata=1&_t=...` only when `options.forceBypass` is explicitly requested)
  * to client-side MasterData JSON endpoints (`/search-index.json`, `/band-item-upgrades.json`, `/character-voices.json`).
+ * Avoids propagating `refresh_masterdata=1` from page reloads onto `/search-index.json`, which would trigger server
+ * bypass checks on normal user navigations.
  */
 export function withClientMasterDataVersion(path: string, options?: { forceBypass?: boolean }): string {
   const version = getDocumentMasterDataVersion();
-  const bypass = Boolean(options?.forceBypass) || browserHasForceBypassQuery();
+  const bypass = Boolean(options?.forceBypass);
   if (!version && !bypass) return path;
 
   const params = new URLSearchParams();

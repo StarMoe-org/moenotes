@@ -1,4 +1,5 @@
 import { DEFAULT_LOCALE } from "@/config/locales";
+import { currentMasterDataEpochSync } from "@/lib/masterdata/build-snapshot";
 import {
   getBuildCards,
   getBuildContentSearchIndex,
@@ -41,14 +42,10 @@ export function filterReleasedSearchEntries(
   });
 }
 
-/**
- * The build-time body of `/search-index.json`: every searchable content entity (cards, songs, characters, stories,
- * gacha, events, rewards, …, then each domain source of content-sources.ts). Static routes are not here — they ship in
- * the command palette's own bundle, localized by `t()`; the same entry on the client merges both sources. Titles
- * carry the MasterText row's five language cells so the browser localizes them; hrefs are locale-free detail paths.
- * Release-sensitive entries are removed here, before this public API serializes their titles and search text.
- */
-export async function buildContentSearchIndex(): Promise<ContentSearchEntry[]> {
+let inFlightEpoch = -1;
+let inFlightBuild: Promise<ContentSearchEntry[]> | null = null;
+
+async function computeContentSearchIndex(): Promise<ContentSearchEntry[]> {
   const [builtIn, ...loaded] = await Promise.all([
     getBuildContentSearchIndex(),
     ...CONTENT_SEARCH_SOURCES.map((load) => load()),
@@ -87,4 +84,26 @@ export async function buildContentSearchIndex(): Promise<ContentSearchEntry[]> {
   record("title", titles, (entry) => entry.id, isReleaseFacetPublicAcrossServers);
 
   return filterReleasedSearchEntries([...builtIn!, ...extra], released, now);
+}
+
+/**
+ * The build-time body of `/search-index.json`: every searchable content entity (cards, songs, characters, stories,
+ * gacha, events, rewards, …, then each domain source of content-sources.ts). Static routes are not here — they ship in
+ * the command palette's own bundle, localized by `t()`; the same entry on the client merges both sources. Titles
+ * carry the MasterText row's five language cells so the browser localizes them; hrefs are locale-free detail paths.
+ * Release-sensitive entries are removed here, before this public API serializes their titles and search text.
+ */
+export function buildContentSearchIndex(): Promise<ContentSearchEntry[]> {
+  const epoch = currentMasterDataEpochSync();
+  if (inFlightBuild && inFlightEpoch === epoch) {
+    return inFlightBuild;
+  }
+  const current = computeContentSearchIndex().finally(() => {
+    if (inFlightBuild === current) {
+      inFlightBuild = null;
+    }
+  });
+  inFlightEpoch = epoch;
+  inFlightBuild = current;
+  return current;
 }

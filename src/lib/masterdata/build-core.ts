@@ -4,10 +4,13 @@ import { PRIMARY_SERVER, GAME_SERVER_PROFILES, type GameServer } from "@/config/
 import type { AppLocale } from "@/config/locales";
 import {
   currentMasterDataEpochSync,
+  currentMasterDataPurgeGenerationSync,
   getBuildManifest,
   getBuildMasterData,
   getBuildTableKey,
   isMasterDataManifestFresh,
+  maxCachedTables,
+  toSharedTableKey,
 } from "@/lib/masterdata/build-snapshot";
 import { getBuildServers } from "@/lib/masterdata/build-servers";
 import { mergeServerLists, mergeServerValues, type ServerFaceted, type ServerFacetedValue } from "@/lib/servers/facets";
@@ -24,21 +27,122 @@ import { MASTER_UTC_OFFSET, isUntaggedMasterDate } from "@/lib/schedule";
 
 interface BuildDataState {
   epoch: number;
+  purgeGeneration: number;
   tables: Map<string, Promise<MasterTable<unknown>>>;
   selectors: Map<string, Promise<unknown>>;
+  coreSelectors: Map<string, Promise<unknown>>;
 }
 
 const buildDataKey = Symbol.for("moenotes.masterdata.build-data.v3");
 const globalState = globalThis as typeof globalThis & { [buildDataKey]?: BuildDataState };
-export const state = globalState[buildDataKey] ??= { epoch: -1, tables: new Map(), selectors: new Map() };
+const coreSelectors = new Map<string, Promise<unknown>>();
+const selectors = new (class extends Map<string, Promise<unknown>> {
+  override clear(): void {
+    super.clear();
+    coreSelectors.clear();
+  }
+})();
+export const state = globalState[buildDataKey] ??= {
+  epoch: -1,
+  purgeGeneration: -1,
+  tables: new Map(),
+  selectors,
+  coreSelectors,
+};
+state.coreSelectors ??= coreSelectors;
 
-const MAX_TAGGED_TABLES = 256;
+const CORE_SELECTOR_EXACT = new Set([
+  "character-voices",
+  "band-item-upgrades",
+  "search-text-rows",
+  "deck-arenas",
+  "story-reader-lookup",
+  "progression-references",
+  "content-search-index",
+  "theme-bands-by-locale",
+]);
+
+const CORE_SELECTOR_PREFIXES = [
+  "texts:",
+  "sound-paths:",
+  "voice-lines:",
+  "progression-reference:",
+  "cards:",
+  "support-cards:",
+  "characters:",
+  "character-progression:",
+  "character-missions:",
+  "music:",
+  "music-categories:",
+  "items:",
+  "item-sources:",
+  "item-usages:",
+  "item-details:",
+  "item-summaries:",
+  "item-neighbors:",
+  "band-items:",
+  "band-names:",
+  "gacha-details:",
+  "gachas:",
+  "home:",
+  "degrees:",
+  "backgrounds:",
+  "reward-resolver:",
+  "reward-entries:",
+  "reward-summaries:",
+  "event-details:",
+  "events:",
+  "deck-events:",
+  "deck-cards:",
+  "stamps:",
+  "exchanges:",
+  "exchange-details:",
+  "comics:",
+  "stories:",
+  "story-script-lookups:",
+  "calendar:",
+  "calendar-birthdays:",
+  "arena-catalog:",
+  "arena-catalogs:",
+  "catalog-counts:",
+  "catalog-covers:",
+  "card-skill-names:",
+  "item-cost-resolver:",
+  "guess-songs:",
+  "help:",
+  "help-categories:",
+  "help-tips:",
+  "help-faq:",
+  "help-topics:",
+  "regular-missions:",
+  "limited-mission-groups:",
+  "real-lives:",
+  "theme-bands:",
+  "shops:",
+  "shop-neighbors:",
+  "skill-dictionary:",
+  "skill-dictionaries:",
+  "sound-urls:",
+  "tgw-card:",
+] as const;
+
+function isCoreSelectorKey(key: string): boolean {
+  return CORE_SELECTOR_EXACT.has(key) || CORE_SELECTOR_PREFIXES.some((prefix) => key.startsWith(prefix));
+}
 
 function syncEpoch(): void {
   const epoch = currentMasterDataEpochSync();
-  if (state.epoch === epoch) return;
+  const purgeGeneration = currentMasterDataPurgeGenerationSync();
+  const purged = state.purgeGeneration !== purgeGeneration;
+  if (state.epoch === epoch && !purged) return;
   state.epoch = epoch;
+  state.purgeGeneration = purgeGeneration;
   state.selectors.clear();
+  state.coreSelectors.clear();
+  if (purged) {
+    state.tables.clear();
+    return;
+  }
   for (const key of state.tables.keys()) {
     if (!key.startsWith("sha256:")) {
       state.tables.delete(key);
@@ -61,20 +165,26 @@ export async function table<T>(path: string, server: GameServer): Promise<Master
   await ensureEpochFresh();
   const offset = GAME_SERVER_PROFILES[server].masterdataUtcOffset;
   const tagged = offset !== MASTER_UTC_OFFSET && path !== "MasterText.json";
-  const key = `${await getBuildTableKey(server, path)}${tagged ? `@${offset}` : ""}`;
+  if (!tagged) {
+    return getBuildMasterData(path, validateMasterTable<unknown>, server) as Promise<MasterTable<T>>;
+  }
+  const key = `${toSharedTableKey(await getBuildTableKey(server, path))}@${offset}`;
+  syncEpoch();
   let request = state.tables.get(key);
   if (request) {
     state.tables.delete(key);
     state.tables.set(key, request);
   } else {
-    request = getBuildMasterData(path, validateMasterTable<unknown>, server)
-      .then((loaded) => tagged ? tagMasterDates(loaded, offset) : loaded)
+    const loading = getBuildMasterData(path, validateMasterTable<unknown>, server)
+      .then((loaded) => tagMasterDates(loaded, offset))
       .catch((error) => {
-        state.tables.delete(key);
+        if (state.tables.get(key) === loading) state.tables.delete(key);
         throw error;
       });
+    request = loading;
     state.tables.set(key, request);
-    while (state.tables.size > MAX_TAGGED_TABLES) {
+    const limit = maxCachedTables();
+    while (state.tables.size > limit) {
       const oldest = state.tables.keys().next().value;
       if (oldest === undefined) break;
       state.tables.delete(oldest);
@@ -99,18 +209,24 @@ function maxCachedSelectors(): number {
   return Number.isFinite(parsed) && parsed >= 1 ? Math.floor(parsed) : cacheConfig.masterdata.maxSelectors;
 }
 
+function selectorStoreFor(key: string): Map<string, Promise<unknown>> {
+  return isCoreSelectorKey(key) ? state.coreSelectors : state.selectors;
+}
+
 function renewedSelector(key: string): Promise<unknown> | undefined {
-  const request = state.selectors.get(key);
-  if (request) {
-    state.selectors.delete(key);
-    state.selectors.set(key, request);
+  const store = selectorStoreFor(key);
+  const request = store.get(key);
+  if (request && store === state.selectors) {
+    store.delete(key);
+    store.set(key, request);
   }
   return request;
 }
 
 /**
- * A derived selector, loaded once per epoch while it stays among the most recently used. An in-flight selector can be
- * evicted too: its callers keep the promise and a later caller loads it anew, so a failure only drops its own entry.
+ * A derived selector, loaded once per epoch while it stays among the most recently used. Core global selectors
+ * live in an un-evicted epoch partition so detail-page selector churn cannot evict them. An in-flight selector can
+ * be evicted too: its callers keep the promise and a later caller loads it anew, so a failure only drops its own entry.
  */
 export function memo<T>(key: string, load: () => Promise<T>): Promise<T> {
   if (isMasterDataManifestFresh()) {
@@ -120,19 +236,22 @@ export function memo<T>(key: string, load: () => Promise<T>): Promise<T> {
   }
   return (async () => {
     await ensureEpochFresh();
+    const store = selectorStoreFor(key);
     let request = renewedSelector(key);
     if (!request) {
       const loading: Promise<unknown> = load().catch((error) => {
-        if (state.selectors.get(key) === loading) state.selectors.delete(key);
+        if (store.get(key) === loading) store.delete(key);
         throw error;
       });
       request = loading;
-      state.selectors.set(key, request);
-      const limit = maxCachedSelectors();
-      while (state.selectors.size > limit) {
-        const oldest = state.selectors.keys().next().value;
-        if (oldest === undefined) break;
-        state.selectors.delete(oldest);
+      store.set(key, request);
+      if (store === state.selectors) {
+        const limit = maxCachedSelectors();
+        while (store.size > limit) {
+          const oldest = store.keys().next().value;
+          if (oldest === undefined) break;
+          store.delete(oldest);
+        }
       }
     }
     return request as Promise<T>;

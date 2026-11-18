@@ -2,8 +2,8 @@ import type { ReactNode } from "react";
 import AppShellClient from "@/components/shell/AppShellClient";
 import BackgroundPattern from "@/components/shell/BackgroundPattern";
 import BrowserNotice from "@/components/shell/BrowserNotice";
-import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type AppLocale } from "@/config/locales";
-import { getBuildThemeBands } from "@/lib/masterdata/build-settings";
+import { DEFAULT_LOCALE, type AppLocale } from "@/config/locales";
+import { getBuildThemeBandsByLocale } from "@/lib/masterdata/build-data";
 import { buildSidebarScrollBootstrapScript } from "@/lib/settings/apply-theme";
 import type { BreadcrumbDetail } from "@/types/route";
 
@@ -16,11 +16,8 @@ interface AppShellProps {
 
 export default async function AppShell({ locale, pathname, breadcrumbDetail, children }: AppShellProps) {
   const sidebarScrollScript = buildSidebarScrollBootstrapScript();
-  const [defaultThemeBands, ...entries] = await Promise.all([
-    getBuildThemeBands(DEFAULT_LOCALE),
-    ...SUPPORTED_LOCALES.map(async (code) => [code, await getBuildThemeBands(code)] as const),
-  ]);
-  const themeBandsByLocale = Object.fromEntries(entries);
+  const themeBandsByLocale = await getBuildThemeBandsByLocale();
+  const defaultThemeBands = themeBandsByLocale[DEFAULT_LOCALE] ?? [];
 
   return (
     <>

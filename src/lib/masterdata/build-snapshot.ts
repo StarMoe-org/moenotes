@@ -32,6 +32,11 @@ export interface MasterDataCacheStats {
   isFresh: boolean;
 }
 
+interface CachedTableEntry {
+  raw: Promise<unknown>;
+  validated: WeakMap<object, Promise<unknown>>;
+}
+
 interface BuildSnapshotState {
   manifest?: Promise<VersionManifest> | undefined;
   resolvedManifest?: VersionManifest | undefined;
@@ -41,13 +46,15 @@ interface BuildSnapshotState {
   manifestFetchCount: number;
   refreshing?: Promise<VersionManifest> | undefined;
   forceRefreshing?: Promise<VersionManifest> | undefined;
+  forceRefreshingPurge?: boolean | undefined;
   index?: Promise<MasterdataIndex | null> | undefined;
   indexVersion?: string | undefined;
-  tables: Map<string, Promise<unknown>>;
+  tables: Map<string, CachedTableEntry>;
   /** Epoch during which uncached tables must also bypass disk/CDN caches once (`forceRefreshMasterData`). */
   forceBypassEpoch: number;
   penetratedKeys: Set<string>;
   epoch: number;
+  purgeGeneration: number;
   activeRequests: number;
   waiters: Array<() => void>;
 }
@@ -62,11 +69,13 @@ const state = globalState[snapshotKey] ??= {
   forceBypassEpoch: -1,
   penetratedKeys: new Set(),
   epoch: 0,
+  purgeGeneration: 0,
   activeRequests: 0,
   waiters: [],
 };
 
 const MAX_CONCURRENT_REQUESTS = 6;
+const UNAUTHENTICATED_REFRESH_COOLDOWN_MS = 5_000;
 
 function versionTtlMs(): number {
   const raw = buildEnv("MOENOTES_MASTERDATA_VERSION_TTL_MS") ?? buildEnv("MOENOTES_MASTERDATA_TTL_MS");
@@ -75,7 +84,7 @@ function versionTtlMs(): number {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : cacheConfig.masterdata.versionTtlMs;
 }
 
-function maxCachedTables(): number {
+export function maxCachedTables(): number {
   const raw = buildEnv("MOENOTES_MASTERDATA_MAX_TABLES");
   if (!raw) return cacheConfig.masterdata.maxTables;
   const parsed = Number(raw);
@@ -234,6 +243,7 @@ function syncSourceEnvironment(): void {
     state.tables.clear();
     state.penetratedKeys.clear();
     state.epoch += 1;
+    state.purgeGeneration += 1;
   }
 }
 
@@ -241,6 +251,12 @@ function syncSourceEnvironment(): void {
 export function currentMasterDataEpochSync(): number {
   syncSourceEnvironment();
   return state.epoch;
+}
+
+/** Increments only on explicit table-purging refreshes, environment changes, or test resets. */
+export function currentMasterDataPurgeGenerationSync(): number {
+  syncSourceEnvironment();
+  return state.purgeGeneration;
 }
 
 /** Whether the in-memory version manifest is still within its configured TTL window. */
@@ -273,28 +289,68 @@ export function getMasterDataCacheStats(): MasterDataCacheStats {
  * 3. Purges cached MasterData tables (when `purgeTables !== false`), increments `epoch` to invalidate all derived
  *    `memo()` selectors, and marks the new epoch so each table's first load also bypasses disk & CDN caches.
  */
-export function forceRefreshMasterData(options: ForceRefreshMasterDataOptions = {}): Promise<VersionManifest> {
+export async function forceRefreshMasterData(options: ForceRefreshMasterDataOptions = {}): Promise<VersionManifest> {
   const purgeTables = options.purgeTables !== false;
+  if (state.forceRefreshing) {
+    if (!purgeTables || state.forceRefreshingPurge) {
+      return state.forceRefreshing;
+    }
+    await state.forceRefreshing.catch(() => {});
+  }
+  state.forceRefreshingPurge = purgeTables;
   state.forceRefreshing ??= (async () => {
     const next = await fetchBuildManifest();
     const prevVersion = state.resolvedManifest?.dataVersion;
     recordManifest(next);
     if (purgeTables || (prevVersion && next.dataVersion !== prevVersion)) {
       state.epoch += 1;
-      state.tables.clear();
       state.penetratedKeys.clear();
       if (purgeTables) {
+        state.purgeGeneration += 1;
+        state.tables.clear();
         state.forceBypassEpoch = state.epoch;
+      } else {
+        evictStaleVersionTables(next.dataVersion);
       }
       state.indexVersion = next.dataVersion;
-      state.index = fetchBuildIndex(next.dataVersion, true);
+      state.index = fetchBuildIndex(next.dataVersion, purgeTables);
       await state.index;
     }
     return next;
   })().finally(() => {
     state.forceRefreshing = undefined;
+    state.forceRefreshingPurge = undefined;
   });
   return state.forceRefreshing;
+}
+
+/**
+ * Authorize full cache-purge requests (`purgeTables: true`) on public routes using `MOENOTES_CACHE_PURGE_TOKEN`.
+ * Fails closed when the token is unset so unauthenticated `?nocache=1` / `?refresh_masterdata=1` cannot flush tables.
+ */
+export function isMasterDataPurgeAuthorized(headers?: Headers | null): boolean {
+  const expected = buildEnv("MOENOTES_CACHE_PURGE_TOKEN")?.trim();
+  if (!expected || !headers) return false;
+  const auth = headers.get("authorization") ?? "";
+  const bearer = auth.toLowerCase().startsWith("bearer ") ? auth.slice(7).trim() : "";
+  const headerToken = headers.get("x-moenotes-purge-token")?.trim() ?? "";
+  return bearer === expected || headerToken === expected;
+}
+
+/**
+ * Resolve the active manifest for a request that signaled cache bypass:
+ * - Authorized callers (`MOENOTES_CACHE_PURGE_TOKEN`) execute `forceRefreshMasterData({ purgeTables: true })`.
+ * - Unauthenticated callers never purge cached tables; at most once per cooldown window they check
+ *   `current_version.json` with `purgeTables: false` (preserving unchanged `sha256:` tables and selectors).
+ */
+export function resolveBypassMasterDataManifest(headers?: Headers | null): Promise<VersionManifest> {
+  if (isMasterDataPurgeAuthorized(headers)) {
+    return forceRefreshMasterData({ purgeTables: true });
+  }
+  if (state.resolvedManifest && Date.now() - state.manifestCheckedAt < UNAUTHENTICATED_REFRESH_COOLDOWN_MS) {
+    return getBuildManifest();
+  }
+  return forceRefreshMasterData({ purgeTables: false });
 }
 
 /**
@@ -359,7 +415,7 @@ function evictStaleVersionTables(activeDataVersion: string): void {
   const activeRegionSuffixes = new Set(Object.values(state.regionVersions).map((v) => `@${v}`));
   const activePrefix = `v:${activeDataVersion}:`;
   for (const key of state.tables.keys()) {
-    if (key.startsWith(activePrefix)) continue;
+    if (key.startsWith("sha256:") || key.startsWith(activePrefix)) continue;
     let matchesActiveRegion = false;
     for (const suffix of activeRegionSuffixes) {
       if (key.endsWith(suffix)) {
@@ -392,12 +448,14 @@ export function resetMasterDataSnapshotForTests(): void {
   state.manifestFetchCount = 0;
   state.refreshing = undefined;
   state.forceRefreshing = undefined;
+  state.forceRefreshingPurge = undefined;
   state.index = undefined;
   state.indexVersion = undefined;
   state.tables.clear();
   state.forceBypassEpoch = -1;
   state.penetratedKeys.clear();
   state.epoch += 1;
+  state.purgeGeneration += 1;
 }
 
 /** The MasterData version a server's tables are at, or undefined when the metadata service does not serve it. */
@@ -420,6 +478,16 @@ export async function getBuildTableKey(server: GameServer, path: string, options
   if (sha256) return `v:${manifest.dataVersion}:sha256:${sha256}`;
   const version = manifest.regions?.[GAME_SERVER_PROFILES[server].masterdataRegion]?.version || manifest.dataVersion;
   return `${server}:${name}@${version}`;
+}
+
+/**
+ * Extract the content-addressed `sha256:<digest>` identity from a versioned key (`v:<dataVersion>:sha256:<digest>`)
+ * so unchanged tables stay warm in memory across `dataVersion` rotations.
+ */
+export function toSharedTableKey(versionedKey: string): string {
+  if (!versionedKey.startsWith("v:")) return versionedKey;
+  const idx = versionedKey.lastIndexOf(":sha256:");
+  return idx !== -1 ? versionedKey.slice(idx + 1) : versionedKey;
 }
 
 /**
@@ -469,29 +537,47 @@ export async function getBuildMasterData<T>(
 ): Promise<T> {
   const name = path.replace(/^\/+/, "");
   const explicitBypass = Boolean(options?.forceBypass);
-  const cacheKey = await getBuildTableKey(server, name, options);
+  const cacheKey = toSharedTableKey(await getBuildTableKey(server, name, options));
 
   const epochRequiresBypass = state.forceBypassEpoch === state.epoch && !state.penetratedKeys.has(cacheKey);
   const bypassTableFetch = explicitBypass || epochRequiresBypass;
 
-  let request = explicitBypass ? undefined : state.tables.get(cacheKey);
-  if (request) {
+  let entry = explicitBypass ? undefined : state.tables.get(cacheKey);
+  if (entry) {
     // Refresh LRU order.
     state.tables.delete(cacheKey);
-    state.tables.set(cacheKey, request);
+    state.tables.set(cacheKey, entry);
   } else {
     if (epochRequiresBypass) {
       state.penetratedKeys.add(cacheKey);
     }
-    request = loadOrFetchTable(server, name, cacheKey, bypassTableFetch).catch((error) => {
-      state.tables.delete(cacheKey);
+    let created: CachedTableEntry;
+    const raw = loadOrFetchTable(server, name, cacheKey, bypassTableFetch).catch((error) => {
+      if (state.tables.get(cacheKey) === created) {
+        state.tables.delete(cacheKey);
+      }
       state.penetratedKeys.delete(cacheKey);
       throw error;
     });
-    state.tables.set(cacheKey, request);
+    created = { raw, validated: new WeakMap() };
+    entry = created;
+    state.tables.set(cacheKey, entry);
     pruneTableLru();
   }
-  return validate(await request);
+
+  let validatedPromise = explicitBypass ? undefined : entry.validated.get(validate);
+  if (!validatedPromise) {
+    const currentEntry = entry;
+    const nextValidated = currentEntry.raw.then((raw) => validate(raw)).catch((error) => {
+      if (currentEntry.validated.get(validate) === nextValidated) {
+        currentEntry.validated.delete(validate);
+      }
+      throw error;
+    });
+    validatedPromise = nextValidated;
+    currentEntry.validated.set(validate, validatedPromise);
+  }
+  return validatedPromise as Promise<T>;
 }
 
 async function loadOrFetchTable(
