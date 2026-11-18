@@ -97,6 +97,8 @@ function loadFixtureWithEvent(): {
     chart.notes.judgementType = chart.notes.op.map((op, i) =>
       chart.notes.judgementType[i] === 0 && op === 1 ? 1 : chart.notes.judgementType[i]!,
     );
+    chart.skillEvents = { timeMs: chart.skillEvents.timeMs.slice(0, 5) };
+    chart.fevers = { startMs: [5000, 11000, 17000], endMs: [8000, 14000, 20000] };
   }
   const bytes = new TextEncoder().encode(JSON.stringify(data));
   const datasetId = createHash("sha256").update(bytes).digest("hex");
