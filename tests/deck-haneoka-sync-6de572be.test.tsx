@@ -93,6 +93,11 @@ function loadFixtureWithEvent(): {
       [6, 1, 7, 10000, 1, 90, 10],
     ],
   };
+  for (const chart of data.charts) {
+    chart.notes.judgementType = chart.notes.op.map((op, i) =>
+      chart.notes.judgementType[i] === 0 && op === 1 ? 1 : chart.notes.judgementType[i]!,
+    );
+  }
   const bytes = new TextEncoder().encode(JSON.stringify(data));
   const datasetId = createHash("sha256").update(bytes).digest("hex");
   const saveTables: GameSaveTables = {
@@ -767,6 +772,7 @@ describe("Haneoka 6de572be sync — optimal timing, partial JUST windows, Arena 
         expect(battleAns.status).toBe("ok");
         expect(battleAns.result!.teams.length).toBeGreaterThan(0);
         expect(battleAns.result!.teams[0]?.justWindow?.meetsTarget).toBe(true);
+        expect(battleAns.result!.teams[0]?.justWindow?.coverage?.ranges[0]?.notes).toBeGreaterThan(0);
 
         // 3. Arena Live section-priority objective (reference hit stripped, sectionPerformance populated, growth valid)
         const arenaReq = JSON.stringify({
@@ -792,7 +798,8 @@ describe("Haneoka 6de572be sync — optimal timing, partial JUST windows, Arena 
         });
         const arenaAns = parseDeckAnswer(solver.recommend(accountJson, arenaReq));
         expect(arenaAns.status).toBe("ok");
-        if (arenaAns.result!.teams.length > 0) {
+        expect(arenaAns.result!.teams.length).toBeGreaterThan(0);
+        {
           const t0 = arenaAns.result!.teams[0]!;
           expect(t0.sectionPerformance).toBeDefined();
           expect(t0.value?.score).toBeCloseTo(t0.sectionPerformance!.totalMean, 2);
