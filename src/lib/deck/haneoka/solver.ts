@@ -2,6 +2,7 @@ import { parseRequest } from "./clock";
 import { adaptData, optionalTable, table, type DeckData } from "./data";
 import { adaptAccount, type AccountInput } from "./account";
 import { evaluateTeamGrowth } from "./growth";
+import { parkingPlaysForDeckData, type DeckParkingPlay } from "./parking";
 import { adaptRequest, CAPABILITIES, HANEOKA_COMMIT, HANEOKA_PATCH_SHA, type RecommendationRequest } from "./request";
 import { HaneokaWasm } from "./wasm";
 let engine: HaneokaWasm | null = null;
@@ -18,15 +19,115 @@ function orders(): number[][] {
 }
 const ORDERS = orders();
 function id(key: string): number { return Number(key.slice(1)); }
-interface EngineTimingStep { step: number; timeMs: number; notes: number; noteIndices?: number[]; gain: number }
+const TIMING_INPUT_KINDS = new Set(["hit", "hold", "release", "flick", "miss"]);
+type TimingInputKind = "hit" | "hold" | "release" | "flick" | "miss";
+interface EngineTimingStep {
+  step: number;
+  timeMs: number;
+  notes: number;
+  noteIndices?: number[];
+  noteTimesMs?: number[];
+  inputTimesMs?: number[];
+  inputKinds?: TimingInputKind[];
+  deliveryTimesMs?: number[];
+  gain: number;
+}
 interface EngineTimingWindow { event: number; startMs: number; endMs: number; unit: number; notes: number[]; steps: EngineTimingStep[] }
-interface EngineOrderTiming { score: number; best: number; worst?: number; optimal?: number; guideAvailable?: boolean; advanceMs: number; windows: EngineTimingWindow[]; orderIndex?: number }
+interface EngineOrderTiming {
+  score: number;
+  planBaseScore?: number;
+  frameOriginMs?: number;
+  best: number;
+  worst?: number;
+  optimal?: number;
+  guideAvailable?: boolean;
+  planIsOptimal?: boolean;
+  advanceMs: number;
+  windows: EngineTimingWindow[];
+  orderIndex?: number;
+}
+interface EngineGekisoGuideAction {
+  kind: string;
+  event?: number | null;
+  range?: number | null;
+  timeMs: number;
+  noteIndices?: number[];
+  noteTimesMs?: number[];
+  inputTimesMs?: number[];
+  included: boolean;
+  gain?: number | null;
+  comboGain?: number | null;
+}
+interface EngineGekisoGuide {
+  frameRate: number;
+  score?: number | null;
+  best?: number | null;
+  actions: EngineGekisoGuideAction[];
+  orderIndex: number;
+}
+interface EngineJustWindowRangeStats {
+  notes: number;
+  coveredNotes: number;
+  minimumCoveredNotes: number;
+  coverage: number;
+  minimumCoverage: number;
+  durationMs: number;
+  coveredMs: number;
+  minimumCoveredMs: number;
+  longestMs: number;
+  minimumLongestMs: number;
+  peakMs: number;
+  minimumPeakMs: number;
+}
+interface EngineJustWindow {
+  beforeMs?: number;
+  afterMs?: number;
+  meetsTarget?: boolean;
+  coverage?: {
+    targetMs: number;
+    plays: number;
+    ranges: EngineJustWindowRangeStats[];
+  } | null;
+}
+interface EngineSectionPerformance {
+  versus?: boolean;
+  sampled?: boolean;
+  ranges?: number[];
+  baseMean?: number;
+  referenceBaseMean?: number;
+  bonusMean?: number;
+  totalMean?: number;
+  maxBaseLoss?: number;
+  allWin?: number | null;
+  songs?: { metrics?: number[] }[];
+  baseline?: { metrics?: number[] }[];
+}
 interface EngineAggregateSong {
   song: { songId: number; difficulty: number; baseSongId?: number };
   power: number;
   score: { mean: number; min: number; median: number; max: number };
+  sectionSummary?: { metrics?: number[]; wins?: number[] | null; baseMean?: number; bonusMean?: number; totalMean?: number } | null;
 }
-interface EngineHit { song?: { songId: number; difficulty: number; baseSongId?: number; arenaMusicId?: number } | null; aggregate?: { kind: "mean"; songs: EngineAggregateSong[] }; lexVector?: string[]; leader?: string; members: string[]; snaps: (string | null)[]; power: number; key: number; comboBonus?: number; justWindow?: { ms?: number; baseMs?: number; percent?: number } | null; skipScore?: number; score?: { orders: number[]; mean?: number } | null; gekiso?: { luckSamples?: number; sampled?: boolean }; event?: { mean: number; rewardSum: number | string; orders: number; selectedOrder?: number; sampled?: boolean; luckSamples?: number; lower?: number; upper?: number }; levels?: { sum: string; terms: string[]; lower?: number; upper?: number; termBounds?: { lower: number; upper: number }[] }[] }
+interface EngineHit {
+  song?: { songId: number; difficulty: number; baseSongId?: number; arenaMusicId?: number } | null;
+  aggregate?: { kind: "mean"; songs: EngineAggregateSong[] };
+  lexVector?: string[];
+  leader?: string;
+  members: string[];
+  snaps: (string | null)[];
+  power: number;
+  key: number;
+  comboBonus?: number;
+  sectionReference?: boolean;
+  sectionPerformance?: EngineSectionPerformance | null;
+  sectionRanking?: number[];
+  justWindow?: EngineJustWindow | null;
+  skipScore?: number;
+  score?: { orders: number[]; mean?: number; min?: number; max?: number } | null;
+  gekiso?: { luckSamples?: number; sampled?: boolean };
+  event?: { mean: number; bonusPercent?: number; rewardSum: number | string; orders: number; selectedOrder?: number; sampled?: boolean; luckSamples?: number; lower?: number; upper?: number };
+  levels?: { sum: string; terms: string[]; lower?: number; upper?: number; termBounds?: { lower: number; upper: number }[] }[];
+}
 interface EngineResponse { results: { proven: boolean; bound: number | null; sampled?: boolean; hits?: EngineHit[] }[]; overall: EngineHit[]; elapsedMs: number | null }
 function normalizeLeaderFirst(hit: Pick<EngineHit, "members" | "snaps" | "leader">): { members: string[]; snaps: (string | null)[] } {
   const leaderKey = hit.leader ?? hit.members[0];
@@ -38,14 +139,86 @@ function normalizeLeaderFirst(hit: Pick<EngineHit, "members" | "snaps" | "leader
     snaps: order.map(i => hit.snaps[i] ?? null),
   };
 }
-function answer(response: EngineResponse, request: RecommendationRequest, coversAllOwnedCards: boolean, final: boolean, coverage?: number, seeds?: Pick<EngineHit, "members" | "snaps" | "song">[], timings?: ReadonlyMap<EngineHit, EngineOrderTiming & { orderIndex: number }>, sampledScoreSeeds = 0) {
+function serializeJustWindow(raw: EngineJustWindow | null | undefined) {
+  if (!raw || typeof raw !== "object") return undefined;
+  if (typeof raw.beforeMs !== "number" || !Number.isFinite(raw.beforeMs) || typeof raw.afterMs !== "number" || !Number.isFinite(raw.afterMs)) {
+    return undefined;
+  }
+  const coverage = raw.coverage && typeof raw.coverage === "object" && typeof raw.coverage.targetMs === "number" && Array.isArray(raw.coverage.ranges)
+    ? {
+        targetMs: raw.coverage.targetMs,
+        plays: typeof raw.coverage.plays === "number" && Number.isFinite(raw.coverage.plays) ? Math.max(0, Math.trunc(raw.coverage.plays)) : 0,
+        ranges: raw.coverage.ranges.slice(0, 3).map((r) => ({
+          notes: typeof r?.notes === "number" && Number.isFinite(r.notes) ? Math.max(0, Math.trunc(r.notes)) : 0,
+          coveredNotes: typeof r?.coveredNotes === "number" && Number.isFinite(r.coveredNotes) ? r.coveredNotes : 0,
+          minimumCoveredNotes: typeof r?.minimumCoveredNotes === "number" && Number.isFinite(r.minimumCoveredNotes) ? Math.max(0, Math.trunc(r.minimumCoveredNotes)) : 0,
+          coverage: typeof r?.coverage === "number" && Number.isFinite(r.coverage) ? r.coverage : 0,
+          minimumCoverage: typeof r?.minimumCoverage === "number" && Number.isFinite(r.minimumCoverage) ? r.minimumCoverage : 0,
+          durationMs: typeof r?.durationMs === "number" && Number.isFinite(r.durationMs) ? r.durationMs : 0,
+          coveredMs: typeof r?.coveredMs === "number" && Number.isFinite(r.coveredMs) ? r.coveredMs : 0,
+          minimumCoveredMs: typeof r?.minimumCoveredMs === "number" && Number.isFinite(r.minimumCoveredMs) ? r.minimumCoveredMs : 0,
+          longestMs: typeof r?.longestMs === "number" && Number.isFinite(r.longestMs) ? r.longestMs : 0,
+          minimumLongestMs: typeof r?.minimumLongestMs === "number" && Number.isFinite(r.minimumLongestMs) ? r.minimumLongestMs : 0,
+          peakMs: typeof r?.peakMs === "number" && Number.isFinite(r.peakMs) ? Math.trunc(r.peakMs) : 0,
+          minimumPeakMs: typeof r?.minimumPeakMs === "number" && Number.isFinite(r.minimumPeakMs) ? Math.trunc(r.minimumPeakMs) : 0,
+        })),
+      }
+    : undefined;
+  return {
+    beforeMs: Math.trunc(raw.beforeMs),
+    afterMs: Math.trunc(raw.afterMs),
+    meetsTarget: raw.meetsTarget !== false,
+    ...(coverage ? { coverage } : {}),
+  };
+}
+function serializeSectionPerformance(raw: EngineSectionPerformance | null | undefined) {
+  if (!raw || typeof raw !== "object" || !Array.isArray(raw.ranges) || raw.ranges.length !== 3) return undefined;
+  const r0 = raw.ranges[0], r1 = raw.ranges[1], r2 = raw.ranges[2];
+  if (![r0, r1, r2, raw.baseMean, raw.referenceBaseMean, raw.bonusMean, raw.totalMean].every(v => typeof v === "number" && Number.isFinite(v))) {
+    return undefined;
+  }
+  const avgMetrics = (rows: { metrics?: number[] }[] | undefined): [number, number, number] | undefined => {
+    if (!Array.isArray(rows) || !rows.length) return undefined;
+    const valid = rows.filter(row => Array.isArray(row?.metrics) && row.metrics!.length === 3 && row.metrics!.every(v => typeof v === "number" && Number.isFinite(v)));
+    if (!valid.length) return undefined;
+    return [0, 1, 2].map(i => valid.reduce((sum, row) => sum + row.metrics![i]!, 0) / valid.length) as [number, number, number];
+  };
+  const metrics = avgMetrics(raw.songs);
+  const baselineMetrics = avgMetrics(raw.baseline);
+  return {
+    versus: raw.versus === true,
+    sampled: raw.sampled === true,
+    ranges: [r0!, r1!, r2!] as [number, number, number],
+    baseMean: raw.baseMean!,
+    referenceBaseMean: raw.referenceBaseMean!,
+    bonusMean: raw.bonusMean!,
+    totalMean: raw.totalMean!,
+    maxBaseLoss: typeof raw.maxBaseLoss === "number" && Number.isFinite(raw.maxBaseLoss) ? raw.maxBaseLoss : 0.03,
+    ...(typeof raw.allWin === "number" && Number.isFinite(raw.allWin) ? { allWin: raw.allWin } : {}),
+    ...(metrics ? { metrics } : {}),
+    ...(baselineMetrics ? { baselineMetrics } : {}),
+  };
+}
+function answer(
+  response: EngineResponse,
+  request: RecommendationRequest,
+  coversAllOwnedCards: boolean,
+  final: boolean,
+  coverage?: number,
+  seeds?: Pick<EngineHit, "members" | "snaps" | "song">[],
+  timings?: ReadonlyMap<EngineHit, EngineOrderTiming & { orderIndex: number }>,
+  sampledScoreSeeds = 0,
+  gekisoGuides?: ReadonlyMap<EngineHit, EngineGekisoGuide>,
+  parkingByHit?: ReadonlyMap<EngineHit, { active: DeckParkingPlay[]; allBoosts?: DeckParkingPlay[] }>,
+) {
   const rows = response.results ?? [];
-  const sampled = sampledScoreSeeds > 0 || (response.overall ?? []).some(hit => hit.event?.sampled === true || hit.gekiso?.sampled === true) || rows.some(row => row.sampled === true);
+  const overallHits = (response.overall ?? []).filter(hit => hit.sectionReference !== true);
+  const sampled = sampledScoreSeeds > 0 || overallHits.some(hit => hit.event?.sampled === true || hit.gekiso?.sampled === true || hit.sectionPerformance?.sampled === true) || rows.some(row => row.sampled === true);
   const sampleCount = sampledScoreSeeds > 0
     ? sampledScoreSeeds
-    : (response.overall ?? [])[0]?.event?.luckSamples ?? (response.overall ?? [])[0]?.gekiso?.luckSamples ?? (request.goal.luckSamples && request.goal.luckSamples > 0 ? request.goal.luckSamples : 4);
+    : overallHits[0]?.event?.luckSamples ?? overallHits[0]?.gekiso?.luckSamples ?? (request.goal.luckSamples && request.goal.luckSamples > 0 ? request.goal.luckSamples : 4);
   const proven = final && !sampled && rows.length > 0 && rows.every(row => row.proven === true);
-  const teams = (response.overall ?? []).map((hit, index) => {
+  const teams = overallHits.map((hit, index) => {
     const members: number[] = hit.members.map(id), snaps: (number | null)[] = hit.snaps.map((key: string | null) => key === null ? null : id(key));
     const scores: number[] = hit.score?.orders ?? [];
     const ranked = scores.map((score, i) => ({ score, order: ORDERS[i]!.map(slot => members[slot]) })).sort((a, b) => a.score - b.score);
@@ -71,21 +244,47 @@ function answer(response: EngineResponse, request: RecommendationRequest, covers
     const bestOrder = maximumReward ? { score: scores[selected!]!, payoff: Number(settlement!.rewardSum) / settlement!.orders, order: ORDERS[selected!]!.map(slot => members[slot]) } : values?.max ?? null;
     const rawTiming = timings?.get(hit);
     const timingOrder = rawTiming ? ORDERS[rawTiming.orderIndex] : undefined;
+    const rawGekisoGuide = gekisoGuides?.get(hit);
+    const gekisoOrder = rawGekisoGuide ? ORDERS[rawGekisoGuide.orderIndex] : undefined;
+    const sectionPerformance = serializeSectionPerformance(hit.sectionPerformance);
+    const justWindow = serializeJustWindow(hit.justWindow);
+    const parking = parkingByHit?.get(hit);
+    const primaryScore = request.goal.kind === "skip"
+      ? hit.skipScore!
+      : maximumReward
+        ? bestOrder!.score
+        : reward
+          ? hit.score!.mean!
+          : sectionPerformance
+            ? sectionPerformance.totalMean
+            : hit.key;
     const pair = (i: number) => ({ member: members[i], snap: snaps[i] });
     return {
       rank: index + 1, rankCertified: proven, leader: pair(0), others: [1, 2, 3, 4].map(pair),
-      power: hit.power, value: { score: request.goal.kind === "skip" ? hit.skipScore! : maximumReward ? bestOrder!.score : reward ? hit.score!.mean! : hit.key, exact: maximumReward && !sampledReward ? { numerator: String(bestOrder!.score), denominator: "1" } : null, interval: null,
-        payoff: reward ? payoff(settlement!.rewardSum) : null }, orders: maximumReward || sampledReward ? null : values,
+      power: hit.power,
+      value: {
+        score: primaryScore,
+        exact: maximumReward && !sampledReward ? { numerator: String(bestOrder!.score), denominator: "1" } : null,
+        interval: null,
+        payoff: reward ? payoff(settlement!.rewardSum) : null,
+      },
+      ...(typeof settlement?.bonusPercent === "number" && Number.isFinite(settlement.bonusPercent) ? { bonusPercent: settlement.bonusPercent } : {}),
+      orders: maximumReward || sampledReward ? null : values,
       ...(combined ? { levels: hit.levels!.map(level => ({ value: payoff(level.sum, level.lower, level.upper), terms: level.terms.map((sum, i) => payoff(sum, level.termBounds?.[i]?.lower, level.termBounds?.[i]?.upper)) })) } : {}),
       bestOrder: sampledReward && !maximumReward ? null : bestOrder,
+      ...(justWindow ? { justWindow } : {}),
+      ...(sectionPerformance ? { sectionPerformance } : {}),
       ...(rawTiming && timingOrder ? {
         timing: {
           order: timingOrder.map(slot => members[slot]!),
           score: rawTiming.score,
+          ...(typeof rawTiming.planBaseScore === "number" && Number.isFinite(rawTiming.planBaseScore) ? { planBaseScore: rawTiming.planBaseScore } : {}),
+          ...(typeof rawTiming.frameOriginMs === "number" && Number.isFinite(rawTiming.frameOriginMs) ? { frameOriginMs: rawTiming.frameOriginMs } : {}),
           best: rawTiming.best,
           ...(typeof rawTiming.worst === "number" && Number.isFinite(rawTiming.worst) ? { worst: rawTiming.worst } : {}),
           ...(typeof rawTiming.optimal === "number" && Number.isFinite(rawTiming.optimal) ? { optimal: rawTiming.optimal } : {}),
           ...(typeof rawTiming.guideAvailable === "boolean" ? { guideAvailable: rawTiming.guideAvailable } : {}),
+          ...(typeof rawTiming.planIsOptimal === "boolean" ? { planIsOptimal: rawTiming.planIsOptimal } : {}),
           advanceMs: rawTiming.advanceMs,
           windows: rawTiming.windows.map(win => ({
             event: win.event,
@@ -99,9 +298,41 @@ function answer(response: EngineResponse, request: RecommendationRequest, covers
               timeMs: step.timeMs,
               notes: step.notes,
               ...(Array.isArray(step.noteIndices) ? { noteIndices: step.noteIndices } : {}),
+              ...(Array.isArray(step.noteTimesMs) ? { noteTimesMs: step.noteTimesMs } : {}),
+              ...(Array.isArray(step.inputTimesMs) ? { inputTimesMs: step.inputTimesMs } : {}),
+              ...(Array.isArray(step.inputKinds) && step.inputKinds.length > 0
+                ? { inputKinds: step.inputKinds.filter((k): k is TimingInputKind => TIMING_INPUT_KINDS.has(k)) }
+                : {}),
+              ...(Array.isArray(step.deliveryTimesMs) && step.deliveryTimesMs.length > 0 ? { deliveryTimesMs: step.deliveryTimesMs } : {}),
               gain: step.gain,
             })),
           })),
+        },
+      } : {}),
+      ...(rawGekisoGuide && gekisoOrder && rawGekisoGuide.actions.length > 0 ? {
+        gekisoGuide: {
+          order: gekisoOrder.map(slot => members[slot]!),
+          frameRate: rawGekisoGuide.frameRate,
+          ...(typeof rawGekisoGuide.score === "number" && Number.isFinite(rawGekisoGuide.score) ? { score: rawGekisoGuide.score } : {}),
+          ...(typeof rawGekisoGuide.best === "number" && Number.isFinite(rawGekisoGuide.best) ? { best: rawGekisoGuide.best } : {}),
+          actions: rawGekisoGuide.actions.map(act => ({
+            kind: act.kind,
+            ...(typeof act.event === "number" && Number.isInteger(act.event) ? { event: act.event, member: members[gekisoOrder[act.event] ?? 0]! } : {}),
+            ...(typeof act.range === "number" && Number.isInteger(act.range) ? { range: act.range } : {}),
+            timeMs: act.timeMs,
+            ...(Array.isArray(act.noteIndices) && act.noteIndices.length > 0 ? { noteIndices: act.noteIndices } : {}),
+            ...(Array.isArray(act.noteTimesMs) && act.noteTimesMs.length > 0 ? { noteTimesMs: act.noteTimesMs } : {}),
+            ...(Array.isArray(act.inputTimesMs) && act.inputTimesMs.length > 0 ? { inputTimesMs: act.inputTimesMs } : {}),
+            included: act.included === true,
+            ...(typeof act.gain === "number" && Number.isFinite(act.gain) ? { gain: act.gain } : {}),
+            ...(typeof act.comboGain === "number" && Number.isFinite(act.comboGain) ? { comboGain: act.comboGain } : {}),
+          })),
+        },
+      } : {}),
+      ...(parking && parking.active.length > 0 ? {
+        parking: {
+          plays: parking.active,
+          ...(parking.allBoosts && parking.allBoosts.length > parking.active.length ? { allBoostPlays: parking.allBoosts } : {}),
         },
       } : {}),
       ...(hit.song && typeof hit.song.songId === "number" ? { song: { musicId: hit.song.baseSongId ?? hit.song.songId, difficulty: ["easy", "normal", "hard", "expert"][hit.song.difficulty] } } : {}),
@@ -115,6 +346,9 @@ function answer(response: EngineResponse, request: RecommendationRequest, covers
             min: part.score.min,
             median: part.score.median,
             max: part.score.max,
+            ...(Array.isArray(part.sectionSummary?.metrics) && part.sectionSummary.metrics.length === 3
+              ? { sectionMetrics: [part.sectionSummary.metrics[0]!, part.sectionSummary.metrics[1]!, part.sectionSummary.metrics[2]!] as [number, number, number] }
+              : {}),
           })),
         },
       } : {}),
@@ -122,7 +356,8 @@ function answer(response: EngineResponse, request: RecommendationRequest, covers
         snaps: [snaps[1], snaps[2], snaps[0], snaps[3], snaps[4]] },
     };
   });
-  const bound = rows.length === 1 && Number.isFinite(rows[0]!.bound) ? rows[0]!.bound : null;
+  const sectionSearch = request.goal.arena?.objective === "sections";
+  const bound = !sectionSearch && rows.length === 1 && Number.isFinite(rows[0]!.bound) ? rows[0]!.bound : null;
   const scopedIds = request.goal.multiSong === "mean" ? undefined : (request.goal.musicIds ?? request.goal.challengeMusicIds ?? request.goal.arenaMusicIds);
   const multiArenaIndividual = Array.isArray(request.goal.songs) && request.goal.songs.length > 1 && request.goal.arena?.mode !== "shared";
   const coverageTotal = scopedIds ? scopedIds.length : multiArenaIndividual ? request.goal.songs!.length : null;
@@ -221,7 +456,8 @@ export class DeckSolver {
     };
     engine!.onProgress = value => {
       const now = performance.now();
-      const current = (value.hits ?? []) as EngineHit[];
+      const current = ((value.hits ?? []) as EngineHit[]).filter(hit => hit.sectionReference !== true);
+      if (!current.length) return;
       remember(current);
       for (const hit of current) if (hit.song) covered.add(JSON.stringify(hit.song));
       const hits = mergeWarm(current);
@@ -303,9 +539,14 @@ export class DeckSolver {
       }
       const response = engine!.invoke<EngineResponse>({ op: "run", handle: this.handle, charts: converted.charts,
         request: prepared }, true);
-      response.overall = mergeWarm(response.overall);
-      for (const row of response.results) remember(row.hits ?? []);
+      response.overall = mergeWarm((response.overall ?? []).filter(hit => hit.sectionReference !== true));
+      for (const row of response.results) {
+        row.hits = (row.hits ?? []).filter(hit => hit.sectionReference !== true);
+        remember(row.hits);
+      }
       const timings = new Map<EngineHit, EngineOrderTiming & { orderIndex: number }>();
+      const gekisoGuides = new Map<EngineHit, EngineGekisoGuide>();
+      const parkingByHit = new Map<EngineHit, { active: DeckParkingPlay[]; allBoosts?: DeckParkingPlay[] }>();
       if ((converted.goal.kind === "score" || (converted.goal.kind === "event" && !("gekiso" in converted.goal))) && response.overall.length) {
         const maximumReward = ["eventPoints", "eventItems", "challengePoints", "combined"].includes(request.metric?.kind ?? "")
           && request.aggregation === "maximum" && request.goal.kind !== "skip";
@@ -360,10 +601,125 @@ export class DeckSolver {
             // Optional timing enrichment never invalidates a verified recommendation.
           }
         }
+      } else if (
+        (converted.goal.kind === "gekiso" || (converted.goal.kind === "event" && "gekiso" in converted.goal))
+        && response.overall.length
+      ) {
+        const maximumReward = ["eventPoints", "eventItems", "challengePoints", "combined"].includes(request.metric?.kind ?? "")
+          && request.aggregation === "maximum";
+        const gkSetup = converted.goal.kind === "gekiso" ? converted.goal : converted.goal.gekiso!;
+        const arenaSetup = "arena" in converted.goal && converted.goal.arena ? converted.goal.arena : undefined;
+        for (const hit of response.overall) {
+          if (hit.aggregate) continue;
+          const scores = hit.score?.orders ?? [];
+          let orderIndex: number | undefined;
+          if (maximumReward) {
+            if (typeof hit.event?.selectedOrder === "number" && hit.event.selectedOrder >= 0 && hit.event.selectedOrder < 120) {
+              orderIndex = hit.event.selectedOrder;
+            }
+          } else if (scores.length === 120 && hit.event?.sampled !== true && hit.gekiso?.sampled !== true) {
+            const rankedIndices = scores.map((score, i) => ({ score, i })).sort((a, b) => a.score - b.score);
+            orderIndex = rankedIndices[119]!.i;
+          }
+          if (orderIndex === undefined) continue;
+          const chartEntry = hit.song
+            ? converted.charts.find(c => c.song.songId === hit.song!.songId && c.song.difficulty === hit.song!.difficulty)
+            : converted.charts.length === 1 ? converted.charts[0] : undefined;
+          if (!chartEntry) continue;
+          try {
+            const normalized = normalizeLeaderFirst(hit);
+            const timeline = engine!.invoke<{ guide?: Omit<EngineGekisoGuide, "orderIndex"> | null }>({
+              op: "timeline",
+              handle: this.handle,
+              charts: [chartEntry],
+              request: {
+                ...(converted.songRules ? { songRules: converted.songRules } : {}),
+                ...(arenaSetup?.objective === "sections" ? { sectionArena: arenaSetup } : {}),
+                song: chartEntry.song,
+                members: box.members,
+                snaps: box.snaps,
+                unknownPolicy: "min",
+                memberKeys: normalized.members,
+                snapKeys: normalized.snaps,
+                order: ORDERS[orderIndex]!,
+                timing: {
+                  player: box.player,
+                  gekiso: {
+                    accuracy: gkSetup.accuracy,
+                    rank: gkSetup.rank,
+                    ...("ranks" in gkSetup && gkSetup.ranks ? { ranks: gkSetup.ranks } : {}),
+                    ...("seeds" in gkSetup && typeof gkSetup.seeds === "number" ? { seeds: gkSetup.seeds } : {}),
+                    ...("justWindow" in gkSetup && gkSetup.justWindow ? { justWindow: gkSetup.justWindow } : {}),
+                    ...("minJustWindowMs" in gkSetup && gkSetup.minJustWindowMs ? { minJustWindowMs: gkSetup.minJustWindowMs } : {}),
+                    ...(arenaSetup ? { arena: arenaSetup } : {}),
+                  },
+                },
+              },
+            });
+            if (timeline?.guide && Array.isArray(timeline.guide.actions) && timeline.guide.actions.some(a => a.included)) {
+              gekisoGuides.set(hit, { ...timeline.guide, orderIndex });
+            }
+          } catch {
+            // Optional Gekiso guide enrichment never invalidates a verified recommendation.
+          }
+        }
+      }
+      if (
+        converted.goal.kind === "event"
+        && converted.goal.rewardActive === true
+        && (request.metric?.kind === "eventPoints" || (request.metric?.kind === "combined" && request.metric.levels?.[0]?.[0]?.kind === "eventPoints"))
+        && response.overall.length
+      ) {
+        const challenge = converted.goal.challengeEventId !== null;
+        const route: "live" | "challenge" | "skip" = converted.goal.route === "skip"
+          ? "skip"
+          : challenge
+            ? "challenge"
+            : "live";
+        const eventId = converted.goal.eventId;
+        const consumption = converted.goal.consumption;
+        const battle = ("gekiso" in converted.goal && converted.goal.gekiso?.scene !== "missionLive" && request.room?.mode !== "solo")
+          || (request.goal.kind === "freeLive" && request.room?.mode === "battle");
+        const players = request.room?.players ?? 5;
+        const othersAverageScore = request.room?.othersAverageScore ?? null;
+        for (const hit of response.overall) {
+          if (typeof hit.event?.bonusPercent !== "number" || !Number.isFinite(hit.event.bonusPercent)) continue;
+          const bonusBp = Math.round(hit.event.bonusPercent * 100);
+          const orders = hit.score?.orders ?? [];
+          let scoreMin: number | null = null;
+          let scoreMax: number | null = null;
+          if (route === "skip") {
+            scoreMin = typeof hit.skipScore === "number" ? hit.skipScore : 0;
+            scoreMax = scoreMin;
+          } else if (orders.length > 0) {
+            scoreMin = Math.min(...orders);
+            scoreMax = Math.max(...orders);
+          } else if (typeof hit.score?.min === "number" && typeof hit.score?.max === "number") {
+            scoreMin = hit.score.min;
+            scoreMax = hit.score.max;
+          }
+          if (scoreMin === null || scoreMax === null) continue;
+          const rawSong = hit.song ?? converted.charts[0]?.song;
+          const songId = rawSong ? (rawSong.baseSongId ?? rawSong.songId) : null;
+          const baseOpts = {
+            eventId, songId, route, challenge, consumption, bonusBp, scoreMin, scoreMax,
+            battle, players, othersAverageScore,
+          };
+          const active = parkingPlaysForDeckData(this.data, baseOpts);
+          const allBoosts = !challenge
+            ? parkingPlaysForDeckData(this.data, { ...baseOpts, includeAllBoosts: true })
+            : undefined;
+          if (active.length > 0 || (allBoosts && allBoosts.length > 0)) {
+            parkingByHit.set(hit, {
+              active: active.length > 0 ? active : allBoosts!,
+              ...(allBoosts ? { allBoosts } : {}),
+            });
+          }
+        }
       }
       response.elapsedMs = performance.now() - started;
       const sampledScoreSeeds = converted.goal.kind === "gekiso" && luck && converted.goal.seeds > 0 ? converted.goal.seeds : 0;
-      return answer(response, request, box.coversAllOwnedCards, true, undefined, [...candidates.values()], timings, sampledScoreSeeds);
+      return answer(response, request, box.coversAllOwnedCards, true, undefined, [...candidates.values()], timings, sampledScoreSeeds, gekisoGuides, parkingByHit);
     } catch (error) {
       if (!(error instanceof Error) || !error.message.startsWith("moenotes-") && error.message !== "haneoka-continuation" && !["combined-reward-levels", "combined-reward-range", "combined-item-lottery", "skip-score-nonmonotone"].includes(error.message)) throw error;
       return JSON.stringify({ format: "ournotes-deck.account-recommendation/1", final: true, status: "invalid", missing: [],

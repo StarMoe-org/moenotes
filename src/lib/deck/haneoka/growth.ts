@@ -172,6 +172,10 @@ export function evaluateTeamGrowth(
       delete baseGoal.musicIds;
       delete baseGoal.challengeMusicIds;
       delete baseGoal.arenaMusicIds;
+      if (baseGoal.arena?.objective === "sections") {
+        const { objective: _obj, maxBaseLoss: _loss, ...arenaRest } = baseGoal.arena;
+        baseGoal.arena = arenaRest;
+      }
       if (team.aggregateSongs && team.aggregateSongs.length > 0 && baseGoal.kind === "arenaLive" && baseGoal.arena) {
         return { ...baseGoal, songs: team.aggregateSongs.map((s) => ({ musicId: s.musicId, difficulty: s.difficulty })) };
       }

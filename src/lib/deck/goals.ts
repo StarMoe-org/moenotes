@@ -21,7 +21,15 @@ export type DeckCumulativeTiming = "nominal" | "best" | "worst";
 export const DECK_FRAME_RATES = [30, 60, 90, 120] as const;
 export type DeckFrameRate = (typeof DECK_FRAME_RATES)[number];
 export const DEFAULT_JUST_WINDOW_BASE_MS = 25;
+export const DEFAULT_JUST_WINDOW_COVERAGE_PERCENT = 80;
 export const MAX_GEKISO_INPUT_COUNT = 2_147_483_647;
+export type DeckJustWindowMode = "off" | "steady" | "partial";
+export interface DeckJustWindowPolicy {
+  minimumMs: number;
+  minCoverage: number;
+  minDurationMs: number;
+  minContinuousMs: number;
+}
 export const isEventGoal = (goal: DeckGoal): boolean => (EVENT_GOALS as readonly string[]).includes(goal);
 export const isEventPayoffGoal = (goal: DeckGoal): boolean => goal === "challengePoints" || goal === "eventPoints" || goal === "eventItems";
 
@@ -45,7 +53,19 @@ export const DEFAULT_TIME_LIMIT: DeckTimeLimit = 60;
 /** `MasterReward` resource type of an item. */
 const ITEM_RESOURCE_TYPE = 1;
 
-export interface DeckChallengeMusic { id: number; musicId: number }
+export interface DeckChallengeMusic { id: number; musicId: number; musicType?: number }
+
+/** Return the common song attribute (`1..5` or `99`) when a challenge event sets one on all challenge songs; else `0`. */
+export function challengeEventMusicType(event: Pick<DeckEvent, "challengeMusics"> | null | undefined): number {
+  const musics = event?.challengeMusics;
+  if (!musics || !musics.length) return 0;
+  const types = new Set(
+    musics
+      .map((row) => row.musicType)
+      .filter((t): t is number => typeof t === "number" && ((t >= 1 && t <= 5) || t === 99)),
+  );
+  return types.size === 1 ? [...types][0]! : 0;
+}
 export interface DeckArenaMusic { id: number; musicId: number }
 /** A master event as the deck page reads it; times are master dates with their server offset. */
 export interface DeckEvent {
@@ -104,10 +124,18 @@ export interface DeckGoalInput {
   gekisouRanks?: readonly [number, number, number];
   /** Gekisou minimum opening COMBO BONUS (`1..=2147483647`, default `1`). */
   minComboBonus?: number;
-  /** Gekisou steady JUST tap window target unit (`+%` over base tap window or `±ms` half-window). */
+  /** Gekisou JUST window constraint mode (`off` | `steady` permanent | `partial` skill-covered). */
+  justWindowMode?: DeckJustWindowMode;
+  /** Gekisou steady/partial JUST tap window target unit (`+%` over base tap window or `±ms` half-window). */
   justWindowUnit?: "percent" | "ms";
   justWindowPercent?: number;
   justWindowMs?: number;
+  /** Minimum covered-note percentage (`0..100`) per section when `justWindowMode === "partial"`. */
+  justWindowCoveragePercent?: number;
+  /** Minimum covered duration (seconds) per section when `justWindowMode === "partial"`. */
+  justWindowDurationSec?: number;
+  /** Minimum longest continuous covered window (seconds) per section when `justWindowMode === "partial"`. */
+  justWindowContinuousSec?: number;
   /** Base JUST tap half-window in ms from `MasterLiveJudgementTiming` (`25` ms default). */
   baseJustWindowMs?: number;
   /** Gekisou LUCK sampling mode (`auto` nominal/4-root vs `manual` seed count `0..n`). */
@@ -172,7 +200,7 @@ export const supportsCrossSongMean = (input: Pick<DeckGoalInput, "goal" | "venue
 /** Retain the objective preference for supported non-Gekisou played lives. */
 export const effectiveAggregation = (input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput, "aggregation" | "arenaRule" | "allSongs" | "multiSongMode">>): DeckAggregation =>
   readsAccuracy(input)
-  && !(solverGoalKind(input) === "arenaLive" && input.arenaRule?.mode === "shared")
+  && !(solverGoalKind(input) === "arenaLive" && (input.arenaRule?.mode === "shared" || input.arenaRule?.objective === "sections"))
   && !(input.allSongs && input.multiSongMode === "mean" && supportsCrossSongMean(input))
     ? input.aggregation ?? "expected"
     : "expected";
@@ -202,8 +230,7 @@ export const effectiveFrameRate = (
     ? input.frameRate
     : 60;
 
-/** Resolved minimum steady JUST tap half-window in ms (`0` when unset). */
-export function effectiveMinJustWindowMs(
+function rawJustWindowTargetMs(
   input: Partial<Pick<DeckGoalInput, "justWindowUnit" | "justWindowPercent" | "justWindowMs" | "baseJustWindowMs">>,
 ): number {
   const unit = input.justWindowUnit ?? "percent";
@@ -217,6 +244,39 @@ export function effectiveMinJustWindowMs(
     ? input.baseJustWindowMs
     : DEFAULT_JUST_WINDOW_BASE_MS;
   return Number((base * (1 + pct / 100)).toFixed(4));
+}
+
+/** Resolved minimum steady JUST tap half-window in ms (`0` when unset or in `off`/`partial` mode). */
+export function effectiveMinJustWindowMs(
+  input: Partial<Pick<DeckGoalInput, "justWindowMode" | "justWindowUnit" | "justWindowPercent" | "justWindowMs" | "baseJustWindowMs">>,
+): number {
+  if (input.justWindowMode === "off" || input.justWindowMode === "partial") return 0;
+  return rawJustWindowTargetMs(input);
+}
+
+/** Resolved partial skill-covered JUST window policy (`null` unless `justWindowMode === "partial"` with a positive target). */
+export function effectiveJustWindowPolicy(
+  input: Partial<Pick<DeckGoalInput,
+    "justWindowMode" | "justWindowUnit" | "justWindowPercent" | "justWindowMs" | "baseJustWindowMs"
+    | "justWindowCoveragePercent" | "justWindowDurationSec" | "justWindowContinuousSec">>,
+): DeckJustWindowPolicy | null {
+  if (input.justWindowMode !== "partial") return null;
+  const minimumMs = rawJustWindowTargetMs(input);
+  if (minimumMs <= 0) return null;
+  const rawPct = input.justWindowCoveragePercent ?? DEFAULT_JUST_WINDOW_COVERAGE_PERCENT;
+  const minCoverage = typeof rawPct === "number" && Number.isFinite(rawPct)
+    ? Number((Math.max(0, Math.min(100, rawPct)) / 100).toFixed(4))
+    : DEFAULT_JUST_WINDOW_COVERAGE_PERCENT / 100;
+  const toMs = (sec: number | undefined) =>
+    typeof sec === "number" && Number.isFinite(sec) && sec > 0
+      ? Math.min(MAX_GEKISO_INPUT_COUNT, Math.round(sec * 1000))
+      : 0;
+  return {
+    minimumMs,
+    minCoverage,
+    minDurationMs: toMs(input.justWindowDurationSec),
+    minContinuousMs: toMs(input.justWindowContinuousSec),
+  };
 }
 
 type RewardInput = Pick<DeckGoalInput, "goal"> & Partial<Pick<DeckGoalInput, "venue" | "rewards">>;
@@ -258,6 +318,8 @@ export interface DeckSolverCapabilities {
   luckGreatConversions?: boolean;
   /** 1.1.0.100+ Gekiso Arena league/regulation rules and shared 5-song formation search. */
   arenaRules?: boolean;
+  /** Gekiso Arena range-victory / section-priority search (`arena.objective = "sections"`). */
+  arenaSections?: boolean;
   /** Gekisou range placements 1..5. */
   gekisouRank?: boolean;
   /** Per-range Gekisou placements `[r1, r2, r3]` (1..5). */
@@ -266,6 +328,12 @@ export interface DeckSolverCapabilities {
   manualEventBonuses?: boolean;
   /** Fast single-card upgrade impact ranking (`evaluateGrowth`) on solved teams. */
   teamGrowth?: boolean;
+  /** Optimal input timing and note-level guide fields (`planIsOptimal`, `frameOriginMs`, `inputTimesMs`). */
+  optimalTimingGuide?: boolean;
+  /** Gekisou timing guide (`timeline.guide`). */
+  gekisoTimingGuide?: boolean;
+  /** Exact event point parking calculator attached to event-PT results. */
+  eventParking?: boolean;
   /** Best/worst cumulative-counter delivery timing optimization (`cumulativeTiming: "best" | "worst"`). */
   cumulativeTiming?: boolean;
   /** Supported frame rates (Hz) for ordinary played lives. */
@@ -276,6 +344,8 @@ export interface DeckSolverCapabilities {
   minComboBonus?: boolean;
   /** Gekisou steady JUST tap window floor (`minJustWindowMs`). */
   minJustWindow?: boolean;
+  /** Gekisou partial skill-covered JUST window policy (`justWindow`). */
+  justWindowCoverage?: boolean;
   /** Configurable LUCK simulation seed counts (`luckSamples`). */
   luckSampling?: boolean;
   /** Supported event reward room grading modes (`battle` / `solo`). */
@@ -319,13 +389,18 @@ export function parseCapabilities(json: string | null): DeckSolverCapabilities |
   return { goals: strings(raw.goals), metrics, aggregations, ...(eventItemRewards ? { eventItemRewards } : {}), ...(combinedMetric ? { combinedMetric } : {}),
     crossSong: raw.crossSong === true, crossSongMean: raw.crossSongMean === true, songRules: raw.songRules === true,
     resume: raw.resume === true, luckMissions: raw.luckMissions === true, luckGreatConversions: raw.luckGreatConversions === true,
-    arenaRules: raw.arenaRules === true, gekisouRank: raw.gekisouRank === true, gekisouRangeRanks: raw.gekisouRangeRanks === true,
+    arenaRules: raw.arenaRules === true, arenaSections: raw.arenaSections === true,
+    gekisouRank: raw.gekisouRank === true, gekisouRangeRanks: raw.gekisouRangeRanks === true,
     manualEventBonuses: raw.manualEventBonuses === true, teamGrowth: raw.teamGrowth === true,
+    optimalTimingGuide: raw.optimalTimingGuide === true,
+    gekisoTimingGuide: raw.gekisoTimingGuide === true,
+    eventParking: raw.eventParking === true,
     cumulativeTiming: raw.cumulativeTiming === true,
     ...(frameRates.length ? { frameRates } : {}),
     minMissionMembers: raw.minMissionMembers === true,
     minComboBonus: raw.minComboBonus === true,
     minJustWindow: raw.minJustWindow === true,
+    justWindowCoverage: raw.justWindowCoverage === true,
     luckSampling: raw.luckSampling === true,
     ...(rewardRoomModes.length ? { rewardRoomModes } : {}),
     patternPlay: raw.patternPlay === true || !!raw.patternPlay && typeof raw.patternPlay === "object",
@@ -344,7 +419,8 @@ export function computes(
   input: Pick<DeckGoalInput, "goal" | "venue"> & Partial<Pick<DeckGoalInput,
     "playMode" | "greatPercent" | "goodPercent" | "badPercent" | "missPercent" | "justPercent"
     | "aggregation" | "cumulativeTiming" | "frameRate" | "rewards" | "arenaRule" | "gekisouRank" | "gekisouRanks"
-    | "minComboBonus" | "justWindowUnit" | "justWindowPercent" | "justWindowMs" | "baseJustWindowMs"
+    | "minComboBonus" | "justWindowMode" | "justWindowUnit" | "justWindowPercent" | "justWindowMs"
+    | "justWindowCoveragePercent" | "justWindowDurationSec" | "justWindowContinuousSec" | "baseJustWindowMs"
     | "luckSamplingMode" | "luckSamples" | "allSongs" | "multiSongMode" | "songRules">>,
 ): boolean {
   const layout = rewardLayoutOf(input);
@@ -368,6 +444,7 @@ export function computes(
   if (kind === "arenaLive" && input.arenaRule !== undefined) {
     if (!capabilities.arenaRules) return false;
     if (input.arenaRule?.mode === "shared" && (isEventPayoffGoal(input.goal) || effectiveAggregation(input) !== "expected")) return false;
+    if (input.arenaRule?.objective === "sections" && (!capabilities.arenaSections || isEventPayoffGoal(input.goal) || effectiveAggregation(input) !== "expected")) return false;
   }
   if (kind !== "power" && kind !== "arenaLive" && activeSongRules(input.songRules, playsGekisou(input)) && !capabilities.songRules) return false;
   if (input.allSongs && input.multiSongMode === "mean") {
@@ -378,6 +455,7 @@ export function computes(
     if (input.gekisouRanks && input.gekisouRanks.some(r => r !== (input.gekisouRank ?? 1)) && !capabilities.gekisouRangeRanks) return false;
     if ((input.minComboBonus ?? 1) > 1 && !capabilities.minComboBonus) return false;
     if (effectiveMinJustWindowMs(input) > 0 && !capabilities.minJustWindow) return false;
+    if (effectiveJustWindowPolicy(input) !== null && !capabilities.justWindowCoverage) return false;
     if (input.luckSamplingMode === "manual" && (input.luckSamples ?? 0) > 0 && !capabilities.luckSampling) return false;
   }
   if (effectiveCumulativeTiming(input) !== "nominal" && !capabilities.cumulativeTiming) return false;
@@ -520,21 +598,34 @@ export function recommendationRequest(input: DeckGoalInput, context: DeckRecomme
   const minComboBonus = isGekisou && Number.isSafeInteger(input.minComboBonus) && (input.minComboBonus ?? 1) > 1
     ? Math.min(MAX_GEKISO_INPUT_COUNT, input.minComboBonus!)
     : null;
-  const minJustWindowMs = isGekisou ? effectiveMinJustWindowMs(input) : 0;
+  const justWindowPolicy = isGekisou ? effectiveJustWindowPolicy(input) : null;
+  const minJustWindowMs = isGekisou && !justWindowPolicy ? effectiveMinJustWindowMs(input) : 0;
   const luckSamples = isGekisou && input.luckSamplingMode === "manual" && Number.isSafeInteger(input.luckSamples) && (input.luckSamples ?? 0) > 0
     ? Math.min(MAX_GEKISO_INPUT_COUNT, input.luckSamples!)
     : null;
-  const gekisouExtras = `${ranksJson}${minComboBonus !== null ? `,"minComboBonus":${minComboBonus}` : ""}${minJustWindowMs > 0 ? `,"minJustWindowMs":${minJustWindowMs}` : ""}${luckSamples !== null ? `,"luckSamples":${luckSamples}` : ""}`;
+  const justWindowJson = justWindowPolicy
+    ? `,"justWindow":${JSON.stringify(justWindowPolicy)}`
+    : minJustWindowMs > 0
+      ? `,"minJustWindowMs":${minJustWindowMs}`
+      : "";
+  const gekisouExtras = `${ranksJson}${minComboBonus !== null ? `,"minComboBonus":${minComboBonus}` : ""}${justWindowJson}${luckSamples !== null ? `,"luckSamples":${luckSamples}` : ""}`;
   let goal: string;
   switch (kind) {
     case "battleLive": case "missionLive": goal = `{"kind":"${kind}",${song}${kind === "battleLive" ? `,"rank":${rank}` : ""}${gekisouExtras},${play}}`; break;
     case "arenaLive": {
       if (input.arenaRule) {
+        const useSections = !isEventPayoffGoal(input.goal) && input.arenaRule.objective === "sections";
         const arenaJson = JSON.stringify({
           bandId: input.arenaRule.bandId,
           musicType: input.arenaRule.musicType,
           missions: [input.arenaRule.missions[0], input.arenaRule.missions[1], input.arenaRule.missions[2]],
           ...(input.arenaRule.mode ? { mode: input.arenaRule.mode } : {}),
+          ...(useSections ? {
+            objective: "sections",
+            maxBaseLoss: typeof input.arenaRule.maxBaseLoss === "number" && Number.isFinite(input.arenaRule.maxBaseLoss)
+              ? Math.max(0, Math.min(1, input.arenaRule.maxBaseLoss))
+              : 0.03,
+          } : {}),
         });
         const entries = input.arenaSongEntries && input.arenaSongEntries.length > 0 && !options.songScope
           ? input.arenaSongEntries.map(entry => ({ musicId: entry.musicId, difficulty: entry.difficulty }))

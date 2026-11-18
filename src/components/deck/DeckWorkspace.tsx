@@ -21,11 +21,11 @@ import { EMPTY_CARD_FILTERS, memberCardSubject, supportCardSubject, type CardFil
 import { mergeBoxBackup, parseBox, type BoxCard, type BoxSaveLink, type CardBox, type CardFieldName, type CardKind } from "@/lib/box/model";
 import { answerDeckFields } from "@/lib/box/deck-answers";
 import { boxAccountJson, DeckAccountTablesError, gameSaveAccountJson } from "@/lib/deck/account-envelope";
-import { CHALLENGE_POINT_COSTS, DECK_FRAME_RATES, DEFAULT_DECK_GOAL, EVENT_GOALS, EVERYDAY_GOALS, MAX_BOOST, MAX_GEKISO_INPUT_COUNT, computes, computesGoal, defaultDeckGoalInput, effectiveFrameRate, effectiveMinJustWindowMs, goalGap, heldEvent,
-  playsGekisou, readsAccuracy, effectiveAggregation, supportsFrameRate, usesEventData, usesEventItemRewards, rewardLayoutOf, isChallengeInput, isNetworkInput, challengeRateRequest, recommendationRequest, solverGoalKind, supportsCrossSongMean, goalVenues, isEventPayoffGoal, type ChallengePointCost, type DeckEvent, type DeckFrameRate, type DeckGoal, type DeckGoalInput, type DeckVenue, type DeckArenaMusic } from "@/lib/deck/goals";
-import { reconcileCardSelections } from "@/lib/deck/card-selection";
+import { CHALLENGE_POINT_COSTS, DECK_FRAME_RATES, DEFAULT_DECK_GOAL, DEFAULT_JUST_WINDOW_COVERAGE_PERCENT, EVENT_GOALS, EVERYDAY_GOALS, MAX_BOOST, MAX_GEKISO_INPUT_COUNT, challengeEventMusicType, computes, computesGoal, defaultDeckGoalInput, effectiveFrameRate, effectiveJustWindowPolicy, effectiveMinJustWindowMs, goalGap, heldEvent,
+  playsGekisou, readsAccuracy, effectiveAggregation, supportsFrameRate, usesEventData, usesEventItemRewards, rewardLayoutOf, isChallengeInput, isNetworkInput, challengeRateRequest, recommendationRequest, solverGoalKind, supportsCrossSongMean, goalVenues, isEventPayoffGoal, type ChallengePointCost, type DeckEvent, type DeckFrameRate, type DeckGoal, type DeckGoalInput, type DeckJustWindowMode, type DeckVenue, type DeckArenaMusic } from "@/lib/deck/goals";
+import { reconcileCardSelections, toggleLeaderSelection, toggleRequiredSelection } from "@/lib/deck/card-selection";
 import { checkGekisoConstraintFeasibility } from "@/lib/deck/feasibility";
-import { arenaPeriod, arenaSongMatchesBand, resolveArenaRule, type DeckArenaCatalog, type DeckArenaMode, type DeckArenaRuleSource } from "@/lib/deck/arena";
+import { DEFAULT_ARENA_MAX_BASE_LOSS_PERCENT, DEFAULT_SONG_RULES, arenaPeriod, arenaSongMatchesBand, resolveArenaRule, type DeckArenaCatalog, type DeckArenaMode, type DeckArenaObjective, type DeckArenaRuleSource } from "@/lib/deck/arena";
 import DeckArenaControls, { type DeckArenaSongEntry } from "./DeckArenaControls";
 import DeckManualEventDialog, { DeckEventSourceControls, type DeckEventSourceMode, type NamedEntityOption } from "./DeckManualEventDialog";
 import { buildManualEventEffects, extractManualEventTemplate, type ManualEventDraft } from "@/lib/deck/manual-event";
@@ -286,7 +286,10 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
   const [arenaCustomMusicType, setArenaCustomMusicType] = useState<number>(0);
   const [arenaCustomMissions, setArenaCustomMissions] = useState<[number, number, number]>([0, 0, 0]);
   const [arenaMode, setArenaMode] = useState<DeckArenaMode>("shared");
+  const [arenaObjective, setArenaObjective] = useState<DeckArenaObjective>("score");
+  const [arenaMaxBaseLossPercent, setArenaMaxBaseLossPercent] = useState<number>(DEFAULT_ARENA_MAX_BASE_LOSS_PERCENT);
   const [arenaPool, setArenaPool] = useState<DeckArenaSongEntry[]>([]);
+  const [touchedChallengeAttrEventId, setTouchedChallengeAttrEventId] = useState<number | null>(null);
   const [arenaPickerOpen, setArenaPickerOpen] = useState(false);
   const [setup, setSetup] = useState(false);
   const [management, setManagement] = useState(false);
@@ -320,6 +323,8 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
   const autoArenaPeriod = useMemo(() => arenaPeriod(arenaCatalog, validLeagueId, now), [arenaCatalog, validLeagueId, now]);
   const arenaRuleSource: DeckArenaRuleSource = userArenaSource ?? (autoArenaPeriod.season && autoArenaPeriod.regulation ? "auto" : "custom");
   const effectiveArenaMode: DeckArenaMode = isEventPayoffGoal(goal) ? "individual" : arenaMode;
+  const canArenaSections = !isEventPayoffGoal(goal) && (!capabilities || capabilities.arenaSections === true);
+  const effectiveArenaObjective: DeckArenaObjective = canArenaSections ? arenaObjective : "score";
   const resolvedArena = useMemo(() => useModernArena ? resolveArenaRule({
     catalog: arenaCatalog,
     ruleSource: arenaRuleSource,
@@ -328,8 +333,10 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
     customMusicType: arenaCustomMusicType,
     customMissions: arenaCustomMissions,
     mode: effectiveArenaMode,
+    objective: effectiveArenaObjective,
+    maxBaseLossPercent: arenaMaxBaseLossPercent,
     now,
-  }) : null, [useModernArena, arenaCatalog, arenaRuleSource, validLeagueId, arenaCustomBandId, arenaCustomMusicType, arenaCustomMissions, effectiveArenaMode, now]);
+  }) : null, [useModernArena, arenaCatalog, arenaRuleSource, validLeagueId, arenaCustomBandId, arenaCustomMusicType, arenaCustomMissions, effectiveArenaMode, effectiveArenaObjective, arenaMaxBaseLossPercent, now]);
   useEffect(() => {
     const nextAt = resolvedArena?.period.nextAt;
     if (!nextAt || nextAt <= now) return;
@@ -369,10 +376,25 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
     return effectiveArenaMode === "shared" ? list.slice(0, 5) : list;
   }, [useModernArena, arenaEligibleSongs, arenaPool, goal, effectiveArenaMode]);
   const canAllSongs = !!capabilities?.crossSong && goal !== "power" && !(useModernArena && effectiveArenaMode === "shared");
+  const challengeAutoMusicType = useMemo(() => {
+    if (!capabilities?.songRules || !event || !isChallengeInput(goalInput)) return 0;
+    if (touchedChallengeAttrEventId === event.id) return 0;
+    if ((goalInput.songRules?.musicType ?? 0) !== 0) return 0;
+    const chosen = goalInput.challengeMusicId !== null
+      ? event.challengeMusics.find(row => row.id === goalInput.challengeMusicId)
+      : undefined;
+    const direct = chosen?.musicType;
+    if (typeof direct === "number" && ((direct >= 1 && direct <= 5) || direct === 99)) return direct;
+    return challengeEventMusicType(event);
+  }, [capabilities?.songRules, event, goalInput, touchedChallengeAttrEventId]);
+  const effectiveSongRules = challengeAutoMusicType !== 0
+    ? { musicType: challengeAutoMusicType, missions: (goalInput.songRules ?? DEFAULT_SONG_RULES).missions }
+    : goalInput.songRules;
   const effectiveInput: DeckGoalInput = {
     ...goalInput,
+    ...(effectiveSongRules !== undefined ? { songRules: effectiveSongRules } : {}),
     allSongs: !!goalInput.allSongs && solver.engine.status === "ready" && canAllSongs,
-    aggregation: useModernArena && effectiveArenaMode === "shared" ? "expected" : effectiveAggregation(goalInput),
+    aggregation: useModernArena && (effectiveArenaMode === "shared" || effectiveArenaObjective === "sections") ? "expected" : effectiveAggregation(goalInput),
     ...(useModernArena ? {
       arenaRule: resolvedArena?.rule ?? null,
       arenaSongEntries: filteredArenaPool,
@@ -431,6 +453,7 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
     if (!isGekisouInput) return null;
     const minCombo = effectiveInput.minComboBonus;
     const minJust = effectiveMinJustWindowMs(effectiveInput);
+    const justPolicy = effectiveJustWindowPolicy(effectiveInput);
     const manualLuck = effectiveInput.luckSamplingMode === "manual" ? effectiveInput.luckSamples : undefined;
     return checkGekisoConstraintFeasibility({
       box: activeBox,
@@ -444,6 +467,7 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
       ...(minCombo !== undefined ? { minComboBonus: minCombo } : {}),
       ...(manualLuck !== undefined ? { luckSamples: manualLuck } : {}),
       ...(minJust > 0 ? { minJustWindowMs: minJust } : {}),
+      ...(justPolicy ? { justWindowPolicy: justPolicy } : {}),
     });
   }, [isGekisouInput, effectiveInput, activeBox, feasibilityMemberCatalog, constraints.includeMembers, constraints.excludeMembers, constraints.leader, minMissionMembers]);
   /** The kind the restriction list shows: one at a time, since members and Snaps rate on different rarity scales. */
@@ -750,15 +774,17 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
         ? tr("feasibilityMissionSum")
         : feasibilityIssue.code === "invalid_gekiso_count"
           ? tr("feasibilityInvalidCount")
-          : ""
+          : feasibilityIssue.code === "invalid_just_window_coverage"
+            ? tr("feasibilityInvalidJustCoverage")
+            : ""
     : "";
   const canRun = engine.status === "ready" && supported && !gap && !dataGap && saveReady && !feasibilityMessage;
   const blocker = engine.status === "loading" ? tr("solver.loading") : engine.status === "unavailable" ? tr(`solver.unavailable.${engine.reason}`)
     : engine.status === "failed" ? "" : feasibilityMessage ? feasibilityMessage : !supported ? tr(rewardLayoutOf(effectiveInput) ? effectiveInput.aggregation === "expected" ? "rewardMix.unavailable" : "rewardMix.expectedOnly" : goal === "eventItems" ? "solver.eventItemsUnsupported" : "comingSoon") : gap ? tr(`solver.gap.${gap}`) : !saveReady ? tr("solver.saveNotReady") : "";
   const runBlocker = ownedMembers.length ? "" : tr(linked && !saveReady ? "solver.saveNotReady" : "solver.emptyBox");
   const missionConstraintCount = isGekisouInput ? minMissionMembers.filter(v => v > 0).length : 0;
-  const activeConstraintCount = required.length + excluded.length + (leaderKey ? 1 : 0) + (noSnaps ? 1 : 0) + missionConstraintCount;
   const requiredConstraintCount = new Set([...required, ...(leaderKey ? [leaderKey] : [])]).size;
+  const activeConstraintCount = requiredConstraintCount + excluded.length + (noSnaps ? 1 : 0) + missionConstraintCount;
   function engineNotice() {
     if (engine.status === "failed") {
       return (
@@ -994,6 +1020,9 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
               customMissions={arenaCustomMissions}
               mode={effectiveArenaMode}
               canChooseMode={!isEventPayoffGoal(goal)}
+              objective={effectiveArenaObjective}
+              maxBaseLossPercent={arenaMaxBaseLossPercent}
+              canChooseObjective={canArenaSections}
               allSongs={!!effectiveInput.allSongs}
               entries={filteredArenaPool}
               eligibleSongs={arenaEligibleSongs}
@@ -1012,6 +1041,11 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
                 setArenaMode(nextMode);
                 if (nextMode === "shared") updateGoal({ allSongs: false, aggregation: "expected" });
               }}
+              onObjectiveChange={nextObjective => {
+                setArenaObjective(nextObjective);
+                if (nextObjective === "sections") updateGoal({ aggregation: "expected" });
+              }}
+              onMaxBaseLossPercentChange={setArenaMaxBaseLossPercent}
               onEntriesChange={setArenaPool}
               onOpenSongPicker={() => setArenaPickerOpen(true)}
             />
@@ -1077,8 +1111,18 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
           </div>}
           <DeckRewardMix locale={locale} input={effectiveInput} capabilities={capabilities} challengeSongs={customEventEffects !== undefined ? [] : challengeSongs}
             onChange={patch => { updateGoal(patch); if (patch.goal) safeSetLocalStorage(GOAL_STORAGE_KEY, patch.goal); }} />
-          {!(useModernArena && effectiveArenaMode === "shared") && <DeckObjective locale={locale} input={effectiveInput} capabilities={capabilities} onChange={aggregation => updateGoal({ aggregation })} onTimingChange={cumulativeTiming => updateGoal({ cumulativeTiming })} />}
-          <DeckGoalConditions locale={locale} input={effectiveInput} capabilities={capabilities} onChange={updateGoal} />
+          {!(useModernArena && (effectiveArenaMode === "shared" || effectiveArenaObjective === "sections")) && <DeckObjective locale={locale} input={effectiveInput} capabilities={capabilities} onChange={aggregation => updateGoal({ aggregation })} onTimingChange={cumulativeTiming => updateGoal({ cumulativeTiming })} />}
+          <DeckGoalConditions
+            locale={locale}
+            input={effectiveInput}
+            capabilities={capabilities}
+            onChange={(patch) => {
+              if (patch.songRules && event && isChallengeInput(effectiveInput) && patch.songRules.musicType !== effectiveInput.songRules?.musicType) {
+                setTouchedChallengeAttrEventId(event.id);
+              }
+              updateGoal(patch);
+            }}
+          />
           {goal === "power" && (
             <div className="dc-switch-group">
               <DeckSwitchRow
@@ -1245,41 +1289,105 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
                         onChange={(val) => updateGoal({ minComboBonus: val === null ? 1 : Math.trunc(val) })}
                       />
                     )}
-                    {(!capabilities || capabilities.minJustWindow) && (
-                      <div className="dc-field-pair">
-                        <DeckSegmented
-                          label={tr("justWindowLabel")}
-                          size="small"
-                          value={goalInput.justWindowUnit ?? "percent"}
-                          onChange={(justWindowUnit: "percent" | "ms") => updateGoal({ justWindowUnit })}
-                          options={[
-                            { value: "percent" as const, label: tr("justWindowUnitPercent") },
-                            { value: "ms" as const, label: tr("justWindowUnitMs") },
-                          ]}
-                        />
-                        {(goalInput.justWindowUnit ?? "percent") === "percent" ? (
-                          <DeckNumberField
-                            label={tr("justWindowUnitPercent")}
-                            min={0}
-                            max={1000}
-                            step={1}
-                            inputMode="decimal"
-                            value={goalInput.justWindowPercent ?? 0}
-                            onChange={(val) => updateGoal({ justWindowPercent: val === null ? 0 : Math.max(0, val) })}
+                    {(!capabilities || capabilities.minJustWindow) && (() => {
+                      const canPartial = !capabilities || capabilities.justWindowCoverage === true;
+                      const activeMode: DeckJustWindowMode = goalInput.justWindowMode
+                        ?? (((goalInput.justWindowPercent ?? 0) > 0 || (goalInput.justWindowMs ?? 0) > 0) ? "steady" : "off");
+                      return (
+                        <div className="dc-sub-stack">
+                          <DeckSegmented
+                            label={tr("justWindowLabel")}
+                            size="small"
+                            value={activeMode === "partial" && !canPartial ? "steady" : activeMode}
+                            onChange={(justWindowMode: DeckJustWindowMode) =>
+                              updateGoal({
+                                justWindowMode,
+                                ...(justWindowMode === "partial" && goalInput.justWindowCoveragePercent === undefined
+                                  ? { justWindowCoveragePercent: DEFAULT_JUST_WINDOW_COVERAGE_PERCENT }
+                                  : {}),
+                              })
+                            }
+                            options={[
+                              { value: "off" as const, label: tr("justWindowModeOff") },
+                              { value: "steady" as const, label: tr("justWindowModeSteady") },
+                              ...(canPartial ? [{ value: "partial" as const, label: tr("justWindowModePartial") }] : []),
+                            ]}
                           />
-                        ) : (
-                          <DeckNumberField
-                            label={tr("justWindowUnitMs")}
-                            min={0}
-                            max={1000}
-                            step={1}
-                            inputMode="decimal"
-                            value={goalInput.justWindowMs ?? 0}
-                            onChange={(val) => updateGoal({ justWindowMs: val === null ? 0 : Math.max(0, val) })}
-                          />
-                        )}
-                      </div>
-                    )}
+                          {activeMode !== "off" && (
+                            <div className="dc-field-pair">
+                              <DeckSegmented
+                                label={tr("justWindowUnitLabel")}
+                                size="small"
+                                value={goalInput.justWindowUnit ?? "percent"}
+                                onChange={(justWindowUnit: "percent" | "ms") => updateGoal({ justWindowUnit })}
+                                options={[
+                                  { value: "percent" as const, label: tr("justWindowUnitPercent") },
+                                  { value: "ms" as const, label: tr("justWindowUnitMs") },
+                                ]}
+                              />
+                              {(goalInput.justWindowUnit ?? "percent") === "percent" ? (
+                                <DeckNumberField
+                                  label={tr("justWindowUnitPercent")}
+                                  min={0}
+                                  max={1000}
+                                  step={1}
+                                  inputMode="decimal"
+                                  value={goalInput.justWindowPercent ?? 0}
+                                  onChange={(val) => updateGoal({ justWindowPercent: val === null ? 0 : Math.max(0, val) })}
+                                />
+                              ) : (
+                                <DeckNumberField
+                                  label={tr("justWindowUnitMs")}
+                                  min={0}
+                                  max={1000}
+                                  step={1}
+                                  inputMode="decimal"
+                                  value={goalInput.justWindowMs ?? 0}
+                                  onChange={(val) => updateGoal({ justWindowMs: val === null ? 0 : Math.max(0, val) })}
+                                />
+                              )}
+                            </div>
+                          )}
+                          {activeMode === "partial" && canPartial && (
+                            <>
+                              <DeckNumberField
+                                label={tr("justWindowCoverageLabel")}
+                                min={0}
+                                max={100}
+                                step={1}
+                                inputMode="decimal"
+                                value={goalInput.justWindowCoveragePercent ?? DEFAULT_JUST_WINDOW_COVERAGE_PERCENT}
+                                onChange={(val) =>
+                                  updateGoal({
+                                    justWindowCoveragePercent: val === null ? 0 : Math.max(0, Math.min(100, val)),
+                                  })
+                                }
+                              />
+                              <div className="dc-field-pair">
+                                <DeckNumberField
+                                  label={tr("justWindowDurationLabel")}
+                                  min={0}
+                                  max={600}
+                                  step={0.5}
+                                  inputMode="decimal"
+                                  value={goalInput.justWindowDurationSec ?? 0}
+                                  onChange={(val) => updateGoal({ justWindowDurationSec: val === null ? 0 : Math.max(0, val) })}
+                                />
+                                <DeckNumberField
+                                  label={tr("justWindowContinuousLabel")}
+                                  min={0}
+                                  max={600}
+                                  step={0.5}
+                                  inputMode="decimal"
+                                  value={goalInput.justWindowContinuousSec ?? 0}
+                                  onChange={(val) => updateGoal({ justWindowContinuousSec: val === null ? 0 : Math.max(0, val) })}
+                                />
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })()}
                     {(!capabilities || capabilities.luckSampling) && (
                       <div className="dc-sub-stack">
                         <DeckSegmented
@@ -1557,8 +1665,13 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
                       type="button"
                       className="md3-filter-chip md3-state dc-constraint-chip"
                       aria-pressed={isLeader}
-                      disabled={isExcluded}
-                      onClick={() => setLeaderKey((prev) => (prev === card.key ? null : card.key))}
+                      disabled={memberRequiredCount >= 5 && !isRequired && !isLeader}
+                      onClick={() => {
+                        const next = toggleLeaderSelection({ leaderKey, required, excluded }, card.key);
+                        setLeaderKey(next.leaderKey);
+                        setRequired(next.required);
+                        setExcluded(next.excluded);
+                      }}
                     >
                       {isLeader && <Icon name="check" className="h-4 w-4" />}
                       <span>{composer("leaderShort")}</span>
@@ -1570,7 +1683,11 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
                       className="md3-filter-chip md3-state dc-constraint-chip"
                       aria-pressed={isRequired}
                       disabled={isExcluded || (memberRequiredCount >= 5 && !isRequired)}
-                      onClick={() => toggle(required, card.key, setRequired)}
+                      onClick={() => {
+                        const next = toggleRequiredSelection({ leaderKey, required }, card.key);
+                        setLeaderKey(next.leaderKey);
+                        setRequired(next.required);
+                      }}
                     >
                       {isRequired && <Icon name="check" className="h-4 w-4" />}
                       <span>{tr("required")}</span>

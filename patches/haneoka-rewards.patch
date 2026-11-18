@@ -1,5 +1,5 @@
 diff --git a/src/api.rs b/src/api.rs
-index 2aa61a7..df815d5 100644
+index 500ffd3..d6f92aa 100644
 --- a/src/api.rs
 +++ b/src/api.rs
 @@ -1,3 +1,6 @@
@@ -9,14 +9,14 @@ index 2aa61a7..df815d5 100644
  //! Engine context and platform-neutral team evaluation. Chart loading is owned
  //! by the caller; the same release-bound context can serve native and WASM.
  use crate::{
-@@ -457,7 +460,14 @@ impl Engine {
+@@ -476,7 +479,14 @@ impl Engine {
              );
              input.clock = live::FrameClock::for_play(play);
              match chart::timing_mode(play) {
--                Some(best) if input.slots.iter().any(|slot| !slot.cumulative.is_empty()) => live::score_reachable(&input, &crate::input_timing::InputTiming::new(&self.master, chart, input.judgements.as_deref(), input.clock)?, best)?,
+-                Some(best) if input.slots.iter().any(|slot| !slot.cumulative.is_empty()) => live::PhaseTiming::new(&self.master, chart, input.judgements.as_deref(), input.clock)?.scores(&input, best)?,
 +                Some(best) if input.slots.iter().any(|slot| !slot.cumulative.is_empty()) => {
 +                    if chart::has_native_inputs(&self.master, chart) {
-+                        live::score_reachable(&input, &crate::input_timing::InputTiming::new(&self.master, chart, input.judgements.as_deref(), input.clock)?, best)?
++                        live::PhaseTiming::new(&self.master, chart, input.judgements.as_deref(), input.clock)?.scores(&input, best)?
 +                    } else {
 +                        let frames = chart::timing_frames_at(&self.master, chart, input.judgements.as_deref(), input.clock);
 +                        live::score_timed(&input, &frames, best)?
@@ -25,7 +25,7 @@ index 2aa61a7..df815d5 100644
                  _ => live::score(&input)?,
              }
          };
-@@ -577,6 +587,44 @@ impl crate::search::Objective for PowerObjective {
+@@ -598,6 +608,44 @@ impl crate::search::Objective for PowerObjective {
          })
      }
  }
@@ -70,7 +70,7 @@ index 2aa61a7..df815d5 100644
  fn constraints(
      master: &Master,
      input: &Value,
-@@ -763,8 +811,18 @@ impl Engine {
+@@ -785,8 +833,18 @@ impl Engine {
                  challenge,
              )?)
          };
@@ -91,7 +91,7 @@ index 2aa61a7..df815d5 100644
              .map(|e| e.effects.as_slice())
              .unwrap_or_default();
          let member_pct = |member: &power::Member| power::member_event_percent(effects, member, 2);
-@@ -793,6 +851,9 @@ impl Engine {
+@@ -815,6 +873,9 @@ impl Engine {
                      &cards.snaps,
                      master::number(&request["goal"]["windowSeconds"], 120.0),
                  ))
@@ -101,7 +101,7 @@ index 2aa61a7..df815d5 100644
              } else {
                  Box::new(PowerObjective)
              };
-@@ -821,7 +882,7 @@ impl Engine {
+@@ -843,7 +904,7 @@ impl Engine {
              on_candidate: Some(&mut crate::progress::emit),
              progress: None,
          })?;
@@ -110,7 +110,7 @@ index 2aa61a7..df815d5 100644
          Ok(
              json!({"results":[{"song":song,"hits":hits,"proven":output.proven,"bound":output.bound,"stats":output.stats}],"overall":hits,"unknownCards":cards.unknown,"elapsedMs":now()-started,"stopReason":if output.proven{None}else if generation!=crate::cancellation_generation(){Some("cancelled")}else{Some("budget")}}),
          )
-@@ -1721,6 +1782,8 @@ impl Engine {
+@@ -1759,6 +1820,8 @@ impl Engine {
                  source,
              ))
          });
@@ -119,7 +119,7 @@ index 2aa61a7..df815d5 100644
          let output = gekiso_objective::search_scored(
              gekiso_objective::Input {
                  env: gekiso_objective::Environment {
-@@ -1752,11 +1815,20 @@ impl Engine {
+@@ -1790,11 +1853,20 @@ impl Engine {
                  seeded: request["seeded"] == true,
                  shard,
                  floor,
@@ -142,7 +142,7 @@ index 2aa61a7..df815d5 100644
          #[cfg(not(target_arch = "wasm32"))]
          let output =
              {
-@@ -1797,7 +1869,7 @@ impl Engine {
+@@ -1835,7 +1907,7 @@ impl Engine {
          }
          self.gekiso_cache.replace(Some((cache_key, chart)));
          Ok(
@@ -151,7 +151,7 @@ index 2aa61a7..df815d5 100644
          )
      }
  }
-@@ -1835,7 +1907,10 @@ impl Engine {
+@@ -1873,7 +1945,10 @@ impl Engine {
              Some("skip") => RouteKind::Skip,
              _ => RouteKind::Live,
          };
@@ -163,7 +163,7 @@ index 2aa61a7..df815d5 100644
          let songs = if kind == RouteKind::Skip && master::rows(&goal["songs"]).is_empty() {
              vec![Value::Null]
          } else {
-@@ -1892,7 +1967,7 @@ impl Engine {
+@@ -1930,7 +2005,7 @@ impl Engine {
                          .ok_or("missing-chart")?,
                  )?;
              }
@@ -172,7 +172,7 @@ index 2aa61a7..df815d5 100644
                  Some(master::int(&goal["eventId"]))
              } else {
                  None
-@@ -1907,21 +1982,21 @@ impl Engine {
+@@ -1945,21 +2020,21 @@ impl Engine {
                  )?)
              };
              let member_pct = |m: &power::Member| {
@@ -197,7 +197,7 @@ index 2aa61a7..df815d5 100644
                      let key = json!([
                          song,
                          request["members"],
-@@ -1962,7 +2037,7 @@ impl Engine {
+@@ -2000,7 +2075,7 @@ impl Engine {
                              floor_exclusive: false,
  
                              streaming: true,
@@ -206,27 +206,39 @@ index 2aa61a7..df815d5 100644
                              member_power_percent: Some(&member_pct),
                              snap_power_percent: Some(&snap_pct),
                              on_candidate: None,
-@@ -1997,7 +2072,8 @@ impl Engine {
-                     0.0,
+@@ -2036,14 +2111,19 @@ impl Engine {
                      exchange,
                      score_cap,
--                );
-+                ).with_power_ties(goal["rewardSemantics"]=="moenotes-v1" && request["rewardPhase"].is_null())
-+                 .with_maximum(goal["criterion"]=="max" && goal["rewardSemantics"]=="moenotes-v1");
+                 );
+-                objective.certify_rank = request["rewardPhase"]["kind"] == "primary"
++                let maximum = goal["criterion"] == "max" && goal["rewardSemantics"] == "moenotes-v1";
++                objective.certify_rank = !maximum
++                    && request["rewardPhase"]["kind"] == "primary"
+                     && request["rewardPhase"]["certifyRanks"] == true;
++                let objective = objective
++                    .with_power_ties(goal["rewardSemantics"] == "moenotes-v1" && request["rewardPhase"].is_null())
++                    .with_maximum(maximum);
                  match weights {
                      Some((cp, other)) => objective.with_weights(cp, other),
                      None => objective,
-@@ -2020,6 +2096,7 @@ impl Engine {
+                 }
+             };
+-            let plan = if kind == RouteKind::Skip && goal["measure"] == "challenge-points" && goal["rewardPlan"].is_null() {
++            let plan = if kind == RouteKind::Skip && goal["measure"] == "challenge-points" && goal["rewardPlan"].is_null() && goal["rewardSemantics"] != "moenotes-v1" {
+                 Some(crate::reward_plan::Plan::parse(&json!({"unit":1,"levels":[[{"metric":"challenge-points","weight":1}]]}))?)
+             } else {
+                 (!goal["rewardPlan"].is_null()).then(|| crate::reward_plan::Plan::parse(&goal["rewardPlan"])).transpose()?
+@@ -2060,6 +2140,7 @@ impl Engine {
              {
                  return Err("event-reward-phase".into());
              }
 +            let mut lex_meta = None;
              let mut objective: Box<dyn Objective> = if let Some(plan) = &plan {
                  use crate::reward_plan::{Context, Metric, Ranked, Source};
-                 Box::new(Ranked::new(Source::Ordinary(Box::new(EventObjective::new(
-@@ -2027,6 +2104,12 @@ impl Engine {
-                     plan.anchor() == Metric::Points, &goal["play"], true, 0.0, None, score_cap,
-                 ))), Context { plan: plan.clone(), source_anchor: plan.anchor(), route: route.clone(), chart, members: &cards.members,
+                 let mut event = EventObjective::new(
+@@ -2069,6 +2150,12 @@ impl Engine {
+                 event.certify_rank = request["certifyRewardRanks"] == true && !plan.score_tie();
+                 Box::new(Ranked::new(Source::Ordinary(Box::new(event)), Context { plan: plan.clone(), source_anchor: plan.anchor(), route: route.clone(), chart, members: &cards.members,
                      snaps: &cards.snaps, k, floor: f64::NEG_INFINITY, skip_rank: self.master.params.skip_rank, observations: 120 }))
 +            } else if goal["measure"] == "combined" {
 +                let lex=crate::event::LexRewards::new(&self.master,&cards.members,&cards.snaps,chart.ok_or("missing-combined-chart")?,route.clone(),&goal["play"],&goal["levels"],score_cap)?;
@@ -237,7 +249,7 @@ index 2aa61a7..df815d5 100644
              } else if cp_measure {
                  Box::new(ChallengePoints::new(
                      LiveObjective {
-@@ -2042,7 +2125,7 @@ impl Engine {
+@@ -2084,7 +2171,7 @@ impl Engine {
                      },
                      chart.unwrap().clone(),
                      route.clone(),
@@ -246,7 +258,7 @@ index 2aa61a7..df815d5 100644
              } else {
                  Box::new(make_event())
              };
-@@ -2087,7 +2170,7 @@ impl Engine {
+@@ -2129,7 +2216,7 @@ impl Engine {
                      floor_exclusive: false,
  
                      streaming: true,
@@ -255,7 +267,7 @@ index 2aa61a7..df815d5 100644
                      member_power_percent: Some(&member_pct),
                      snap_power_percent: Some(&snap_pct),
                      on_candidate: if notify { Some(&mut publish) } else { None },
-@@ -2096,6 +2179,31 @@ impl Engine {
+@@ -2138,6 +2225,31 @@ impl Engine {
              };
              let mut seeds = seed_teams(request, &song, &cards.members, &cards.snaps);
              seeds.extend(cap_seeds);
@@ -287,7 +299,7 @@ index 2aa61a7..df815d5 100644
              let mut output = if phase.is_some_and(|phase| phase != "primary") {
                  let target = request["rewardPhase"]["reward"]
                      .as_f64()
-@@ -2150,14 +2258,18 @@ impl Engine {
+@@ -2192,14 +2304,18 @@ impl Engine {
                      )]
                      .as_f64()
                      .unwrap_or(f64::NEG_INFINITY)
@@ -307,7 +319,7 @@ index 2aa61a7..df815d5 100644
              }) {
                  let mut keys: Vec<_> = output.hits.iter().map(|h| h.key).collect();
                  keys.sort_by(|a, b| b.total_cmp(a));
-@@ -2250,7 +2362,7 @@ impl Engine {
+@@ -2292,7 +2408,7 @@ impl Engine {
                  }
                  output.hits = ordered;
              }
@@ -316,7 +328,7 @@ index 2aa61a7..df815d5 100644
                  let mut keys: Vec<_> = output.hits.iter().map(|h| h.key).collect();
                  keys.sort_by(|a, b| b.total_cmp(a));
                  keys.dedup();
-@@ -2291,15 +2403,26 @@ impl Engine {
+@@ -2333,9 +2449,17 @@ impl Engine {
                  }
                  output.hits = ordered;
              }
@@ -333,9 +345,10 @@ index 2aa61a7..df815d5 100644
 +                if !d["selectedOrder"].is_null() {value["event"]["selectedOrder"]=d["selectedOrder"].clone();}
 +                if goal["measure"] == "combined" {value["levels"]=d["levels"].clone();value["lexVector"]=d["lexVector"].clone();}
 +                if pt {value["event"]["rewardSum"]=d["rewardSum"].clone();value["event"]["comparisonSum"]=d["comparisonSum"].clone();value["event"]["orders"]=d["orders"].clone();value["event"]["directMean"]=json!(master::number(&d["rewardSum"],0.0)/master::number(&d["orders"],120.0));value["event"]["convertedMean"]=json!(exchange.map(|(n,den)|master::number(&d["challengePoints"],0.0)*n/den).unwrap_or(0.0));}
-                 if let Some(chart)=chart.filter(|_|!d["scores"].is_null()){
-                     let scores=&d["scores"];let values:Vec<_>=master::rows(&scores["scores"]).iter().map(|v|master::number(v,0.0)).collect();let mut sorted=values.clone();sorted.sort_by(f64::total_cmp);let mut ranks=BTreeMap::<i32,i32>::new();for &v in &values{*ranks.entry(chart::score_rank(chart,v)).or_default()+=1;}let keys=|order:usize|live::orders()[order].map(|slot|cards.members[hit.team.members[slot]].key.clone());value["score"]=json!({"mean":scores["mean"],"min":scores["min"],"max":scores["max"],"median":(sorted[59]+sorted[60])/2.0,"orders":values,"bestOrder":keys(master::int(&scores["maxOrder"]) as usize),"worstOrder":keys(master::int(&scores["minOrder"]) as usize),"ranks":ranks});
-                 }crate::reward_plan::decorate(&mut value, d);value
+                 if d["pendingScores"] == true {
+                     value["score"] = Value::Null;
+                     value["pendingScores"] = json!(true);
+@@ -2347,6 +2471,9 @@ impl Engine {
              }).collect();
              overall.extend(hits.iter().cloned());
              let mut part = json!({"song":song,"hits":hits,"proven":output.proven,"bound":output.bound,"stats":output.stats});
@@ -345,7 +358,7 @@ index 2aa61a7..df815d5 100644
              if let Some(phase) = phase {
                  part["rewardPhase"] = json!(phase);
              }
-@@ -2643,7 +2766,7 @@ impl Engine {
+@@ -2699,7 +2826,7 @@ impl Engine {
          if kind == "plan" {
              return self.plan(input, started, now);
          }
@@ -354,7 +367,7 @@ index 2aa61a7..df815d5 100644
              vec![request["goal"]["song"].clone()]
          } else {
              master::rows(&request["goal"]["songs"])
-@@ -2656,7 +2779,7 @@ impl Engine {
+@@ -2712,7 +2839,7 @@ impl Engine {
          } else {
              songs
          };
@@ -363,7 +376,7 @@ index 2aa61a7..df815d5 100644
              return Err(format!("unsupported-goal:{kind}"));
          }
          let deadline = request["deadline"].as_f64().unwrap_or_else(|| {
-@@ -2706,6 +2829,7 @@ impl Engine {
+@@ -2762,6 +2889,7 @@ impl Engine {
              crate::progress::chart(self.charts.get(&key), kind == "gekiso");
              let mut single = request.clone();
              single["goal"]["songs"] = json!([song]);
@@ -371,7 +384,7 @@ index 2aa61a7..df815d5 100644
              let current = now();
              let song_deadline = (current
                  + (deadline - current).max(0.0) / (songs.len() - index) as f64)
-@@ -2714,13 +2838,15 @@ impl Engine {
+@@ -2770,13 +2898,15 @@ impl Engine {
                  single["deadline"] = json!(song_deadline);
              }
              let mut response = match kind {
@@ -389,7 +402,7 @@ index 2aa61a7..df815d5 100644
                      }
                  }
                  "gekiso" => self.search_gekiso(
-@@ -4040,6 +4166,21 @@ fn merge_reward_candidates(
+@@ -4125,6 +4255,21 @@ fn merge_reward_candidates(
  }
  
  fn compare_hits(a: &Value, b: &Value) -> std::cmp::Ordering {
@@ -411,33 +424,44 @@ index 2aa61a7..df815d5 100644
      let ranking = crate::reward_plan::compare(&b["rewardRanking"], &a["rewardRanking"]);
      ranking.unwrap_or_else(|| master::number(&b["key"], 0.0)
          .total_cmp(&master::number(&a["key"], 0.0))
-@@ -4064,6 +4205,8 @@ impl Engine {
-             return scoped.evaluate_all(&scoped_input);
+@@ -4152,6 +4297,8 @@ impl Engine {
          }
+         if self.planner_scope(input).is_some() { return self.with_planner(input,Self::evaluate_all); }
          let request = &input["request"];
 +        #[cfg(target_arch="wasm32")]
-+        let _deadline=crate::clock::deadline_scope(request["deadline"].as_f64());
++        let _deadline=crate::clock::search_deadline_scope(request["deadline"].as_f64());
          let mut out = Vec::new();
          for song in master::rows(&request["songs"]) {
              self.load_source(input, song)?;
-@@ -4199,12 +4342,21 @@ impl Engine {
-             if early_grade == Some(grade) { advance_ms } else { 0 }
-         }).collect();
+@@ -4334,13 +4481,31 @@ impl Engine {
+         let mut input = chart::prepare(&self.master, chart, resolved.power.total as i32, resolved.slots, judgements, 1.0, 100.0);
+         input.clock = live::FrameClock::for_play(&context["play"]);
          if input.slots.iter().all(|slot| slot.cumulative.is_empty()) { return Ok(Value::Null); }
 -        let timing_inputs = crate::input_timing::InputTiming::new(&self.master, chart, input.judgements.as_deref(), input.clock)?;
--        let Some(timing) = live::timing_with_inputs(&input, index, &before_ms, Some(&timing_inputs)) else { return Ok(Value::Null) };
+-        let phases = live::PhaseTiming::from_timing(timing_inputs);
+-        let timing = phases.guide(&input, index)?;
 -        let mut output = json!(timing);
--        output["worst"] = json!(live::score_reachable_order(&input, &timing_inputs, false, index)?);
--        output["optimal"] = json!(live::score_reachable_order(&input, &timing_inputs, true, index)?);
+-        output["worst"] = json!(phases.order(&input, false, index)?);
+-        output["optimal"] = output["best"].clone();
 -        Ok(output)
 +        if chart::has_native_inputs(&self.master, chart) {
 +            let timing_inputs = crate::input_timing::InputTiming::new(&self.master, chart, input.judgements.as_deref(), input.clock)?;
-+            let Some(timing) = live::timing_with_inputs(&input, index, &before_ms, Some(&timing_inputs)) else { return Ok(Value::Null) };
++            let phases = live::PhaseTiming::from_timing(timing_inputs);
++            let timing = phases.guide(&input, index)?;
 +            let mut output = json!(timing);
-+            output["worst"] = json!(live::score_reachable_order(&input, &timing_inputs, false, index)?);
-+            output["optimal"] = json!(live::score_reachable_order(&input, &timing_inputs, true, index)?);
++            output["worst"] = json!(phases.order(&input, false, index)?);
++            output["optimal"] = output["best"].clone();
 +            Ok(output)
 +        } else {
++            let advance_ms = input.clock.advance_ms();
++            let before_ms: Vec<_> = chart.judgement_types.iter().enumerate().map(|(i, &kind)| {
++                if !matches!(kind, 1 | 2 | 5 | 10 | 11 | 12 | 15) { return 0; }
++                let grade = input.judgements.as_ref().map_or(5, |grades| grades[i]) as i32;
++                let early_grade = (1..=5).rev().find(|&candidate| {
++                    self.master.live.judgement_before_ms.get(&(kind, candidate)).copied().unwrap_or(0) >= advance_ms
++                });
++                if early_grade == Some(grade) { advance_ms } else { 0 }
++            }).collect();
 +            let Some(timing) = live::timing_with_inputs(&input, index, &before_ms, None) else { return Ok(Value::Null) };
 +            let frames = chart::timing_frames_at(&self.master, chart, input.judgements.as_deref(), input.clock);
 +            let mut output = json!(timing);
@@ -448,12 +472,11 @@ index 2aa61a7..df815d5 100644
      }
  }
  
-@@ -4294,3 +4446,92 @@ pub(crate) fn normalize_hit(hit: &mut Value) {
-         }
+@@ -4485,4 +4650,91 @@ impl Engine {
+         };
+         Ok(json!({"score":score,"lowestLife":life,"notes":if request["includeNotes"] == true { notes } else { Vec::new() },"judgements":grades,"cachedCharts":self.cached_chart_keys()}))
      }
- }
 +
-+impl Engine {
 +    fn search_moenotes_rewards(&self,request:&Value,started:f64,now:&dyn Fn()->f64)->Result<Value,String> {
 +        use crate::{event::{Route,RouteKind},full::play::Accuracy,rewards::MoenotesRewards,search};
 +        let goal=&request["goal"];let gk=&goal["gekiso"];
@@ -472,7 +495,7 @@ index 2aa61a7..df815d5 100644
 +        if goal["rewardActive"]==false {route.clear_rewards();}
 +        let deadline=request["deadline"].as_f64().unwrap_or_else(||request["timeLimitMs"].as_f64().map_or(f64::INFINITY,|ms|started+ms));
 +        #[cfg(target_arch="wasm32")]
-+        let _scope=crate::clock::deadline_scope(Some(deadline));
++        let _scope=crate::clock::search_deadline_scope(Some(deadline));
 +        let kind=match goal["measure"].as_str(){Some("points")=>0,Some("items")=>1,Some("challenge-points")=>2,Some("combined")=>3,_=>return Err("moenotes-reward-measure".into())};
 +        let battle=gk["scene"]!="missionLive" && goal["room"]["mode"]!="solo";
 +        let mut constraints=constraints(&self.master,&request["constraints"],&cards.members,&cards.snaps);
@@ -487,14 +510,14 @@ index 2aa61a7..df815d5 100644
 +            });
 +        }
 +        let mut objective=MoenotesRewards::new(&self.master,&cards.members,&cards.snaps,chart,compiled,route,kind,battle,&goal["room"],deadline,now)?.with_goal(goal)?;
-+        if let Some(minimum) = crate::just_window::target(&gk["minJustWindowMs"])? {
-+            objective.set_min_just_window(minimum)?;
++        if let Some(policy) = crate::just_window::Policy::read(gk)? {
++            objective.set_min_just_window(policy)?;
 +        }
 +        let sampled=objective.sampled;let ceiling=objective.ceiling();
 +        let k=master::int(&request["k"]).max(1) as usize;let generation=crate::cancellation_generation();
 +        let mut power_request=request.clone();power_request["goal"]=json!({"kind":"power","song":song});
 +        power_request["deadline"]=json!(deadline.min(now()+50.0));
-+        let has_special_filter = constraints.member_floor.is_some() || !constraints.member_floors.is_empty() || objective.has_just_window();
++        let has_special_filter = constraints.member_floor.is_some() || !constraints.member_floors.is_empty() || constraints.skill_roles.is_some() || objective.has_just_window();
 +        let seeded=!seed_teams(request,song,&cards.members,&cards.snaps).is_empty();
 +        let power=if seeded || has_special_filter {json!({"overall":[],"results":[{"proven":false,"stats":null}]})}
 +            else {crate::progress::with_callback(None,||self.search_power(&power_request,started,now))?};
@@ -531,7 +554,7 @@ index 2aa61a7..df815d5 100644
 +        let hits:Vec<_>=output.hits.iter().map(|hit|{
 +            let d=&hit.detail;let settlement=&d["settlement"];let mut value=hit_json(hit,song,&cards.members,&cards.snaps,Some(chart),battle);
 +            value["score"]["ranks"]=settlement["ranks"].clone();
-+            value["event"]=json!({"mean":settlement["mean"],"rewardSum":settlement["rewardSum"],"orders":settlement["observations"],"sampled":sampled,"lower":d["payoffLower"],"upper":d["payoffUpper"]});
++            value["event"]=json!({"mean":settlement["mean"],"bonusPercent":master::number(&d["bonus"],0.0)/100.0,"rewardSum":settlement["rewardSum"],"orders":settlement["observations"],"sampled":sampled,"lower":d["payoffLower"],"upper":d["payoffUpper"]});
 +            value["rewardPowerTie"]=json!(kind<3);
 +            if !d["selectedOrder"].is_null(){value["event"]["selectedOrder"]=d["selectedOrder"].clone();}
 +            if kind==3 {value["levels"]=d["levels"].clone();value["lexVector"]=d["lexVector"].clone();}
@@ -540,9 +563,9 @@ index 2aa61a7..df815d5 100644
 +        let proven=output.proven && !sampled;
 +        Ok(json!({"overall":hits,"results":[{"song":song,"hits":hits,"proven":proven,"sampled":sampled,"bound":if sampled{Some(ceiling)}else{output.bound},"powerPreparation":{"proven":power_proven,"witnesses":power_witnesses,"cpCertificate":cp_certificate,"stats":power["results"][0]["stats"]},"stats":if interrupted{Value::Null}else{json!(output.stats)}}],"elapsedMs":now()-started}))
 +    }
-+}
+ }
 diff --git a/src/api/arena.rs b/src/api/arena.rs
-index 12e0e4f..31e7e17 100644
+index 63653e5..64be022 100644
 --- a/src/api/arena.rs
 +++ b/src/api/arena.rs
 @@ -1,3 +1,4 @@
@@ -550,7 +573,7 @@ index 12e0e4f..31e7e17 100644
  //! Arena Master overrides are scoped to one call; raw chart cache entries never change identity.
  use super::*;
  use crate::{gekiso, gekiso_objective, search};
-@@ -47,13 +48,8 @@ impl Engine {
+@@ -60,13 +61,8 @@ impl Engine {
          let master = crate::song_rules::view(&self.master, rule)?;
          for song in &songs {
              let id = master::int(&song["songId"]);
@@ -566,33 +589,28 @@ index 12e0e4f..31e7e17 100644
                  return Err("arena-song-band".into());
              }
          }
-@@ -213,6 +209,8 @@ impl Engine {
+@@ -241,6 +237,8 @@ impl Engine {
                  .map(|ms| started + ms)
                  .unwrap_or(f64::INFINITY)
          });
 +        #[cfg(target_arch="wasm32")]
-+        let _scope = crate::clock::deadline_scope(Some(deadline));
-         let mut initial = seed_teams(request, &Value::Null, &cards.members, &cards.snaps);
-         if initial.is_empty()
-             && !(self.trusted_scores && request["seeded"] == true)
-@@ -228,9 +226,14 @@ impl Engine {
-             for key in ["shard", "floors", "completed", "seeded"] {
-                 trial["request"][key] = Value::Null;
-             }
--            let warm = crate::progress::with_callback(None, || scoped.run(&trial, started, now))?;
--            trial["request"]["seeds"] = warm["overall"].clone();
--            initial = seed_teams(&trial["request"], &songs[0], &cards.members, &cards.snaps);
-+            match crate::progress::with_callback(None, || scoped.run(&trial, started, now)) {
-+                Ok(warm) => {
-+                    trial["request"]["seeds"] = warm["overall"].clone();
-+                    initial = seed_teams(&trial["request"], &songs[0], &cards.members, &cards.snaps);
-+                }
-+                Err(error) if error == "search-deadline" => {}
-+                Err(error) => return Err(error),
-+            }
-         }
++        let _scope = crate::clock::search_deadline_scope(Some(deadline));
+         let initial = seed_teams(request, &Value::Null, &cards.members, &cards.snaps);
          let shard = request["shard"].is_object().then(|| {
              (
+diff --git a/src/api/arena_sections.rs b/src/api/arena_sections.rs
+index e01c824..052507a 100644
+--- a/src/api/arena_sections.rs
++++ b/src/api/arena_sections.rs
+@@ -681,6 +681,8 @@ impl Engine {
+                 }
+                 cache.charts = charts;
+             }
++            #[cfg(target_arch = "wasm32")]
++            let _scope = crate::clock::search_deadline_scope(Some(deadline));
+             let output = gekiso_objective::search_shared(gekiso_objective::SharedInput {
+                 env: gekiso_objective::Environment {
+                     master: &bound_master,
 diff --git a/src/api/gekiso_result_cache.rs b/src/api/gekiso_result_cache.rs
 index e794c22..69b0c13 100644
 --- a/src/api/gekiso_result_cache.rs
@@ -785,37 +803,37 @@ index 1f5e4fa..064c656 100644
      match play["cumulativeTiming"].as_str() {
          Some("best") => Some(true),
 diff --git a/src/clock.rs b/src/clock.rs
-index 8bfc101..583ee4a 100644
+index dc35596..fd3d6ac 100644
 --- a/src/clock.rs
 +++ b/src/clock.rs
 @@ -1,3 +1,4 @@
 +//! Modified for scoped Moenotes LUCK deadlines on 2026-10-26.
  //! Runtime clock adapter; algorithms accept an injected clock.
- #[cfg(not(target_arch = "wasm32"))]
- pub fn milliseconds() -> f64 {
-@@ -27,3 +28,20 @@ extern "C" {
- pub fn milliseconds() -> f64 {
+ use std::cell::Cell;
+ 
+@@ -83,3 +84,20 @@ pub fn milliseconds() -> f64 {
+     if COOPERATIVE.with(std::cell::Cell::get) { crate::yield_for_clock(); }
      unsafe { haneoka_now_ms() }
  }
 +
 +#[cfg(target_arch="wasm32")]
 +thread_local! {static SEARCH_DEADLINE:std::cell::Cell<f64>=const {std::cell::Cell::new(f64::INFINITY)};}
 +#[cfg(target_arch="wasm32")]
-+pub(crate) struct DeadlineScope(f64);
++pub(crate) struct SearchDeadlineScope(f64);
 +#[cfg(target_arch="wasm32")]
-+impl Drop for DeadlineScope {
++impl Drop for SearchDeadlineScope {
 +    fn drop(&mut self) {SEARCH_DEADLINE.with(|value|value.set(self.0));}
 +}
 +#[cfg(target_arch="wasm32")]
-+pub(crate) fn deadline_scope(deadline:Option<f64>)->DeadlineScope {
-+    DeadlineScope(SEARCH_DEADLINE.with(|value|value.replace(deadline.unwrap_or(f64::INFINITY))))
++pub(crate) fn search_deadline_scope(deadline:Option<f64>)->SearchDeadlineScope {
++    SearchDeadlineScope(SEARCH_DEADLINE.with(|value|value.replace(deadline.unwrap_or(f64::INFINITY))))
 +}
 +#[cfg(target_arch="wasm32")]
-+pub(crate) fn deadline_expired()->bool {
-+    SEARCH_DEADLINE.with(|value|value.get().is_finite() && milliseconds()>=value.get())
++pub(crate) fn search_deadline_expired()->bool {
++    deadline_expired(SEARCH_DEADLINE.with(std::cell::Cell::get))
 +}
 diff --git a/src/event.rs b/src/event.rs
-index 69b8a39..eda0076 100644
+index f150c1a..17cce53 100644
 --- a/src/event.rs
 +++ b/src/event.rs
 @@ -1,3 +1,6 @@
@@ -883,7 +901,7 @@ index 69b8a39..eda0076 100644
      fn rank_row(&self, rank: i32) -> Option<&RankRow> {
          usize::try_from(rank).ok().and_then(|i| self.ranks.get(i))
      }
-@@ -691,12 +688,28 @@ pub(crate) fn top_character_bonus(members: &[Member], values: &[f64]) -> f64 {
+@@ -691,13 +688,29 @@ pub(crate) fn top_character_bonus(members: &[Member], values: &[f64]) -> f64 {
      }
      top_five(characters.into_values())
  }
@@ -898,6 +916,7 @@ index 69b8a39..eda0076 100644
 +    mean_prefix:[f64;6], mean_suffix:[f64;6],
 +}
  pub struct EventObjective {
+     pub(crate) certify_rank: bool,
      pub core: Option<LiveCore>,
      pub chart: Option<Chart>,
      pub route: Route,
@@ -912,7 +931,7 @@ index 69b8a39..eda0076 100644
      pub cp_weight: f64,
      pub exchange: Option<(f64, f64)>,
      pub score_cap: f64,
-@@ -799,7 +812,13 @@ impl EventObjective {
+@@ -801,7 +814,13 @@ impl EventObjective {
              chart: chart.filter(|_| played).cloned(),
              route,
              points_measure,
@@ -926,7 +945,7 @@ index 69b8a39..eda0076 100644
              cp_weight,
              exchange,
              score_cap,
-@@ -839,6 +858,32 @@ impl EventObjective {
+@@ -841,6 +860,32 @@ impl EventObjective {
              mean_frontiers: vec![Vec::new(); members.len()],
          }
      }
@@ -959,7 +978,7 @@ index 69b8a39..eda0076 100644
      /// Ranks by `measure + cp·CP + other·(the other reward)`, the weights already divided by the measure's weight.
      pub fn with_weights(mut self, cp: f64, other: f64) -> Self {
          self.targets.clear();
-@@ -895,6 +940,9 @@ impl EventObjective {
+@@ -897,6 +942,9 @@ impl EventObjective {
          }
      }
      fn reward_bound(&self, bonus: f64, rank: i32) -> f64 {
@@ -969,7 +988,7 @@ index 69b8a39..eda0076 100644
          let value = |grade| {
              self.value_upper(bonus, grade) + self.tie * self.other_upper(self.max_other, grade)
          };
-@@ -951,8 +999,10 @@ impl EventObjective {
+@@ -953,8 +1001,10 @@ impl EventObjective {
          self.curves.get(&key).and_then(Option::as_ref)
      }
      fn mean_bound(&mut self, bonus: f64, other: f64, score: f64) -> f64 {
@@ -981,7 +1000,7 @@ index 69b8a39..eda0076 100644
      }
      fn cp_curve(&mut self) -> Option<&RewardCurve> {
          if self.cp_curve.is_none() {
-@@ -1108,6 +1158,7 @@ impl EventObjective {
+@@ -1110,6 +1160,7 @@ impl EventObjective {
          from: usize,
          t: Totals,
          other: f64,
@@ -989,7 +1008,7 @@ index 69b8a39..eda0076 100644
      ) -> Option<(f64, f64)> {
          if self.core.as_ref()?.unbounded || self.core.as_ref()?.input.judgements.is_some() {
              return None;
-@@ -1119,10 +1170,13 @@ impl EventObjective {
+@@ -1121,10 +1172,13 @@ impl EventObjective {
                  self.assignment_profiles[slot]
              }
          });
@@ -1004,7 +1023,7 @@ index 69b8a39..eda0076 100644
          let key = other.to_bits();
          self.other_mean_bound(other, f64::INFINITY);
          let secondary = self
-@@ -1132,14 +1186,97 @@ impl EventObjective {
+@@ -1134,14 +1188,97 @@ impl EventObjective {
              .map_or(f64::INFINITY, |curve| curve.orders(&coefficients, t.power));
          Some((primary, secondary))
      }
@@ -1105,7 +1124,7 @@ index 69b8a39..eda0076 100644
          let core = self.core.as_ref()?;
          if core.unbounded || core.input.judgements.is_some() {
              return None;
-@@ -1188,38 +1325,17 @@ impl EventObjective {
+@@ -1190,38 +1327,17 @@ impl EventObjective {
              (((sum * sum).next_up() / (4.0 * converted)).next_up() * (1.0 + RELATIVE_ERROR))
                  .next_up()
          });
@@ -1153,7 +1172,7 @@ index 69b8a39..eda0076 100644
          self.other_mean_bound(other, f64::INFINITY);
          let secondary = self
              .other_curves
-@@ -1270,6 +1386,7 @@ impl EventObjective {
+@@ -1272,6 +1388,7 @@ impl EventObjective {
          t: Totals,
          from: usize,
          other: f64,
@@ -1161,7 +1180,7 @@ index 69b8a39..eda0076 100644
      ) -> Option<(f64, f64)> {
          if self.core.as_ref()?.unbounded || self.core.as_ref()?.input.judgements.is_some() {
              return None;
-@@ -1281,10 +1398,13 @@ impl EventObjective {
+@@ -1283,10 +1400,13 @@ impl EventObjective {
                  self.suffix_profiles[from]
              }
          });
@@ -1176,7 +1195,7 @@ index 69b8a39..eda0076 100644
          self.other_mean_bound(other, f64::INFINITY);
          let secondary = self
              .other_curves
-@@ -1365,7 +1485,16 @@ impl EventObjective {
+@@ -1426,7 +1546,16 @@ impl EventObjective {
      }
  }
  impl Objective for EventObjective {
@@ -1194,7 +1213,7 @@ index 69b8a39..eda0076 100644
      fn seed_objective(&self) -> Option<Box<dyn Objective>> {
          (!self.points_measure
              && self
-@@ -1418,17 +1547,19 @@ impl Objective for EventObjective {
+@@ -1479,17 +1608,19 @@ impl Objective for EventObjective {
              .is_none_or(|core| core.shape(member, a) == core.shape(member, b))
      }
      fn preserve_snap_options(&self) -> bool {
@@ -1217,7 +1236,7 @@ index 69b8a39..eda0076 100644
              && self
                  .core
                  .as_mut()
-@@ -1452,7 +1583,8 @@ impl Objective for EventObjective {
+@@ -1513,7 +1644,8 @@ impl Objective for EventObjective {
          power_delta: f64,
      ) -> bool {
          !self.nonmonotone()
@@ -1227,7 +1246,7 @@ index 69b8a39..eda0076 100644
              && self
                  .core
                  .as_mut()
-@@ -1498,6 +1630,7 @@ impl Objective for EventObjective {
+@@ -1559,6 +1691,7 @@ impl Objective for EventObjective {
          self.snap_width = width;
      }
      fn prepare_assignment_power(&mut self, power: f64) {
@@ -1235,7 +1254,7 @@ index 69b8a39..eda0076 100644
          self.base_power = power;
      }
      fn prepare_members(&mut self, characters: &[Vec<usize>]) {
-@@ -1534,7 +1667,7 @@ impl Objective for EventObjective {
+@@ -1595,7 +1728,7 @@ impl Objective for EventObjective {
                  + self.other_member_suffix[from][left]
                  + self.other_snap_top
          };
@@ -1244,7 +1263,7 @@ index 69b8a39..eda0076 100644
              .map(|bounds| bounds.0)
      }
      fn product_base(&self) -> Option<f64> {
-@@ -1562,7 +1695,7 @@ impl Objective for EventObjective {
+@@ -1623,7 +1756,7 @@ impl Objective for EventObjective {
          self.value(totals.bonus, rank) + self.tie * self.other(other, rank)
      }
      fn joint_targets(&mut self, limit: f64) -> Option<Vec<JointTarget>> {
@@ -1253,7 +1272,7 @@ index 69b8a39..eda0076 100644
              return None;
          }
          let scale = self.core.as_ref()?.input.converted_count as f64 / (1.0 + RELATIVE_ERROR);
-@@ -1603,6 +1736,7 @@ impl Objective for EventObjective {
+@@ -1664,6 +1797,7 @@ impl Objective for EventObjective {
          })
      }
      fn prepare_assignment(&mut self, _members: &[usize], options: &[Vec<i32>]) {
@@ -1261,7 +1280,7 @@ index 69b8a39..eda0076 100644
          if self.core.is_some() {
              for (slot, choices) in options.iter().enumerate() {
                  let member = _members[slot];
-@@ -1716,18 +1850,28 @@ impl Objective for EventObjective {
+@@ -1777,18 +1911,28 @@ impl Objective for EventObjective {
          } else {
              self.assignment_other_bonus(members, assigned, from)
          };
@@ -1293,7 +1312,7 @@ index 69b8a39..eda0076 100644
              return Some(bounds.0);
          }
  
-@@ -1747,6 +1891,7 @@ impl Objective for EventObjective {
+@@ -1808,6 +1952,7 @@ impl Objective for EventObjective {
          }
      }
      fn interval(&mut self, team: &Team, t: Totals) -> (f64, f64) {
@@ -1301,7 +1320,16 @@ index 69b8a39..eda0076 100644
          let other = self.other_bonus(team);
          let Some(core) = &self.core else {
              let key =
-@@ -1770,12 +1915,34 @@ impl Objective for EventObjective {
+@@ -1827,7 +1972,7 @@ impl Objective for EventObjective {
+     fn exact(&mut self, team: &Team, power: f64, _slots: &[f64]) -> Result<Exact, String> {
+         let bonus = self.team_bonus(team);
+         let other = self.other_bonus(team);
+-        let certificate = if self.certify_rank {
++        let certificate = if self.certify_rank && !self.maximum {
+             self.core.as_mut().map(|core| core.order_bounds(team, power as i32 as f64))
+                 .and_then(|(lows, highs)| {
+                     let mut ranks = Vec::with_capacity(lows.len());
+@@ -1848,9 +1993,10 @@ impl Objective for EventObjective {
              let mean = self.value(bonus, self.skip_rank);
              let direct = self.direct(bonus, self.skip_rank);
              let other_mean = self.other(other, self.skip_rank);
@@ -1312,8 +1340,13 @@ index 69b8a39..eda0076 100644
 +                detail: json!({"mean":mean,"skipScore":skip_score,"rewardSum":direct,"orders":1,"bonus":bonus,"directMean":direct,"otherMean":other_mean,"directMin":direct,"directMax":direct,"challengePoints":self.route.cp(self.skip_rank)}),
              });
          };
-         let scores = core.evaluate(team, power as i32)?;
+         #[cfg(debug_assertions)]
+@@ -1861,6 +2007,28 @@ impl Objective for EventObjective {
+                 "ordinary reward rank certificate");
+         }
+         let scores = if certificate.is_none() { Some(core.evaluate(team, power as i32)?) } else { None };
 +        if self.maximum {
++            let scores = scores.as_ref().unwrap();
 +            let mut others = [1, 2, 3, 4];
 +            others.sort_unstable_by_key(|&slot| self.member_ids[team.members[slot]]);
 +            let layout = [others[0], others[1], 0, others[2], others[3]];
@@ -1331,22 +1364,22 @@ index 69b8a39..eda0076 100644
 +            let direct = self.direct(bonus, rank);
 +            let other = self.other(other, rank);
 +            return Ok(Exact { key: value + self.tie * other,
-+                detail: json!({"scores":&*scores,"perOrder":[value],"mean":value,"bonus":bonus,"ranks":{rank.to_string():1},"rewardSum":direct,"orders":1,"comparisonSum":value,"directMin":direct,"directMax":direct,"directMean":direct,"otherMean":other,"challengePoints":self.route.cp(rank),"selectedOrder":selected}),
++                detail: json!({"scores":scores.as_ref(),"perOrder":[value],"mean":value,"bonus":bonus,"ranks":{rank.to_string():1},"rewardSum":direct,"orders":1,"comparisonSum":value,"directMin":direct,"directMax":direct,"directMean":direct,"otherMean":other,"challengePoints":self.route.cp(rank),"selectedOrder":selected}),
 +            });
 +        }
-         let mut per_order = Vec::with_capacity(scores.scores.len());
-         let mut ranks = BTreeMap::<i32, i32>::new();
-         let (mut total, mut cp, mut reward_sum, mut direct_min, mut direct_max, mut other_sum) =
-@@ -1814,7 +1981,7 @@ impl Objective for EventObjective {
+         let order_ranks = certificate.as_ref().map(|value| value.0.clone()).unwrap_or_else(|| {
+             scores.as_ref().unwrap().scores.iter().map(|&score| self.rank(score)).collect()
+         });
+@@ -1898,7 +2066,7 @@ impl Objective for EventObjective {
+             key_max = key_max.max(key);
+         }
          let other_mean = (other_sum / count).clamp(other_min, other_max);
-         Ok(Exact {
-             key: (mean + self.tie * other_mean).clamp(key_min, key_max),
--            detail: json!({"scores":&*scores,"perOrder":per_order,"mean":mean,"bonus":bonus,"ranks":ranks,"rewardSum":reward_sum,"comparisonSum":total,"directMin":direct_min,"directMax":direct_max,"directMean":reward_sum/count,"otherMean":other_mean,"challengePoints":cp/count}),
-+            detail: json!({"scores":&*scores,"perOrder":per_order,"mean":mean,"bonus":bonus,"ranks":ranks,"rewardSum":reward_sum,"orders":count,"comparisonSum":total,"directMin":direct_min,"directMax":direct_max,"directMean":reward_sum/count,"otherMean":other_mean,"challengePoints":cp/count}),
-         })
-     }
- }
-@@ -1942,6 +2109,7 @@ impl ScoreTie {
+-        let mut detail = json!({"scores":scores.as_deref(),"perOrder":per_order,"mean":mean,"bonus":bonus,"ranks":ranks,"rewardSum":reward_sum,"comparisonSum":total,"directMin":direct_min,"directMax":direct_max,"directMean":reward_sum/count,"otherMean":other_mean,"challengePoints":cp/count});
++        let mut detail = json!({"scores":scores.as_deref(),"perOrder":per_order,"mean":mean,"bonus":bonus,"ranks":ranks,"rewardSum":reward_sum,"orders":order_ranks.len(),"comparisonSum":total,"directMin":direct_min,"directMax":direct_max,"directMean":reward_sum/count,"otherMean":other_mean,"challengePoints":cp/count});
+         if let Some((_, low, high)) = certificate {
+             detail["pendingScores"] = json!(true);
+             detail["rankCertificate"] = json!({"ranks":detail["ranks"],"orders":order_ranks.len(),"scoreLow":low,"scoreHigh":high});
+@@ -2033,6 +2201,7 @@ impl ScoreTie {
      }
  }
  impl Objective for ScoreTie {
@@ -1354,7 +1387,7 @@ index 69b8a39..eda0076 100644
      fn exchange_snap_equivalent(&mut self, member: usize, a: i32, b: i32) -> bool {
          !self.mean.core.unbounded && self.mean.core.shape(member, a) == self.mean.core.shape(member, b)
      }
-@@ -2037,7 +2205,7 @@ impl Objective for ScoreTie {
+@@ -2128,7 +2297,7 @@ impl Objective for ScoreTie {
              .sum::<f64>()
              + self.member_suffix[from][left]
              + self.other_snaps;
@@ -1363,7 +1396,7 @@ index 69b8a39..eda0076 100644
              if primary < self.target || self.other_target.is_some_and(|target| other < target) {
                  return Some(f64::NEG_INFINITY);
              }
-@@ -2172,7 +2340,7 @@ impl Objective for ScoreTie {
+@@ -2263,7 +2432,7 @@ impl Objective for ScoreTie {
                  .map(|&s| self.event.other_snap(s))
                  .sum::<f64>()
              + self.other_suffix[from].min(distinct);
@@ -1372,7 +1405,7 @@ index 69b8a39..eda0076 100644
          let upper =
              if primary < self.target || self.other_target.is_some_and(|target| other < target) {
                  f64::NEG_INFINITY
-@@ -2186,7 +2354,7 @@ impl Objective for ScoreTie {
+@@ -2277,7 +2446,7 @@ impl Objective for ScoreTie {
          }
          if let Some((primary, other, mean)) = self
              .event
@@ -1381,7 +1414,7 @@ index 69b8a39..eda0076 100644
          {
              if primary < self.target || self.other_target.is_some_and(|target| other < target) {
                  return Some(f64::NEG_INFINITY);
-@@ -2395,6 +2563,10 @@ pub struct ChallengePoints {
+@@ -2486,6 +2655,10 @@ pub struct ChallengePoints {
      pub chart: Chart,
      pub route: Route,
      curve: Option<RewardCurve>,
@@ -1392,7 +1425,7 @@ index 69b8a39..eda0076 100644
  }
  impl ChallengePoints {
      pub fn new(mean: crate::objectives::LiveObjective, chart: Chart, route: Route) -> Self {
-@@ -2420,7 +2592,32 @@ impl ChallengePoints {
+@@ -2511,7 +2684,32 @@ impl ChallengePoints {
              chart,
              route,
              curve,
@@ -1425,7 +1458,7 @@ index 69b8a39..eda0076 100644
      }
      fn value(&self, score: f64) -> f64 {
          *self
-@@ -2432,8 +2629,11 @@ impl ChallengePoints {
+@@ -2523,8 +2721,11 @@ impl ChallengePoints {
      }
  }
  impl Objective for ChallengePoints {
@@ -1438,7 +1471,7 @@ index 69b8a39..eda0076 100644
      }
      fn needs_power_cap(&self) -> bool {
          self.mean.needs_power_cap()
-@@ -2442,20 +2642,20 @@ impl Objective for ChallengePoints {
+@@ -2533,20 +2734,20 @@ impl Objective for ChallengePoints {
          self.mean.prepare_dominance(power);
      }
      fn numeric_snap_dominance(&mut self, m: usize, a: i32, b: i32, power: f64) -> bool {
@@ -1463,7 +1496,7 @@ index 69b8a39..eda0076 100644
      }
      fn canonical_leader(&self) -> bool {
          self.mean.canonical_leader()
-@@ -2464,20 +2664,22 @@ impl Objective for ChallengePoints {
+@@ -2555,20 +2756,22 @@ impl Objective for ChallengePoints {
          self.mean.skill(m, s)
      }
      fn bound(&mut self, t: Totals) -> f64 {
@@ -1489,7 +1522,7 @@ index 69b8a39..eda0076 100644
          )
      }
      fn exact(&mut self, team: &Team, power: f64, slots: &[f64]) -> Result<Exact, String> {
-@@ -2487,10 +2689,357 @@ impl Objective for ChallengePoints {
+@@ -2578,10 +2781,357 @@ impl Objective for ChallengePoints {
              .into_iter()
              .map(|s| self.value(crate::master::number(s, 0.0)))
              .collect();
@@ -1851,10 +1884,10 @@ index 69b8a39..eda0076 100644
 +    }
  }
 diff --git a/src/event_growth.rs b/src/event_growth.rs
-index b182bcf..f95a316 100644
+index 48f7bc1..d120dc8 100644
 --- a/src/event_growth.rs
 +++ b/src/event_growth.rs
-@@ -155,6 +155,7 @@ struct Problem {
+@@ -202,6 +202,7 @@ struct Problem {
  }
  fn empty_player() -> Player {
      Player {
@@ -1863,41 +1896,31 @@ index b182bcf..f95a316 100644
          total_rank: 0,
          band_items: BTreeMap::new(),
 diff --git a/src/gekiso.rs b/src/gekiso.rs
-index afefec4..1616603 100644
+index fbaef62..15d0d43 100644
 --- a/src/gekiso.rs
 +++ b/src/gekiso.rs
 @@ -1,3 +1,4 @@
-+//! Modified for Moenotes bounded WASM search replay on 2026-10-26.
++//! Modified for Moenotes bounded WASM search replay on 2026-11-18.
  //! Gekiso context simulation, nominal lottery expectation and per-order scores.
- use crate::{
-     chart::Source,
-@@ -2056,10 +2057,16 @@ struct ReplayTree<'a> {
-     observe: Option<&'a (dyn Fn(f64, usize) -> bool + Sync)>,
-     multiplicities: &'a [usize],
-     stopped: AtomicBool,
-+    #[cfg(target_arch="wasm32")]
-+    search_clock: Option<(f64,&'a dyn Fn()->f64)>,
- }
- impl ReplayTree<'_> {
-     fn advance(&self, model: &mut Model<'_>, from: usize, to: usize) -> Result<(), String> {
-         for k in from..to {
-+            #[cfg(target_arch="wasm32")]
-+            if (k-from)&31==0 && (self.search_clock.is_some_and(|(deadline,now)|now()>=deadline) || crate::clock::deadline_expired()) {
+ pub(crate) mod sections;
+ mod factored;
+@@ -2293,6 +2294,10 @@ impl<const SECTIONS:bool,const COUNTS:bool> ReplayTree<'_,SECTIONS,COUNTS> {
+             if visited & 63 == 0 && crate::clock::deadline_expired(self.deadline) {
+                 return Ok(false);
+             }
++            #[cfg(target_arch = "wasm32")]
++            if !SECTIONS && !COUNTS && visited & 63 == 0 && crate::clock::search_deadline_expired() {
 +                return Err("search-deadline".into());
 +            }
-             if self.generation != crate::cancellation_generation() {
-                 return Err("cancelled".into());
-             }
-@@ -2153,7 +2160,20 @@ pub fn replay_orders(
-     seeds: &[i32],
-     power: i32,
- ) -> Result<ReplayedScores, String> {
--    replay_orders_observed(master, chart, deck, seeds, power, None).map(Option::unwrap)
-+    replay_orders_observed(master, chart, deck, seeds, power, None, None).map(Option::unwrap)
-+}
-+
-+#[cfg(target_arch="wasm32")]
-+pub(crate) fn replay_orders_until(
+             visited += 1;
+             let frame = &self.chart.play.frames[k];
+             if SECTIONS { if let Some(trace)=&mut model.just_window {trace.record_probe(k);} }
+@@ -2410,6 +2415,42 @@ pub fn replay_orders(
+     replay_orders_observed(master, chart, deck, seeds, power, None).map(Option::unwrap)
+ }
+ 
++#[cfg(target_arch = "wasm32")]
++pub fn replay_orders_until(
 +    master: &Master,
 +    chart: &Chart,
 +    deck: &[Performer],
@@ -1906,45 +1929,16 @@ index afefec4..1616603 100644
 +    deadline: f64,
 +    now: &dyn Fn() -> f64,
 +) -> Result<ReplayedScores, String> {
-+    replay_orders_observed(master, chart, deck, seeds, power, None, Some((deadline, now))).map(Option::unwrap)
- }
- 
- /// Completed leaf orders carry their multiplicity in the native 120-order set.
-@@ -2165,7 +2185,7 @@ pub(crate) fn replay_orders_with_cutoff(
-     power: i32,
-     observe: &(dyn Fn(f64, usize) -> bool + Sync),
- ) -> Result<Option<ReplayedScores>, String> {
--    replay_orders_observed(master, chart, deck, seeds, power, Some(observe))
-+    replay_orders_observed(master, chart, deck, seeds, power, Some(observe), None)
- }
- 
- fn replay_orders_observed(
-@@ -2175,6 +2195,7 @@ fn replay_orders_observed(
-     seeds: &[i32],
-     power: i32,
-     observe: Option<&(dyn Fn(f64, usize) -> bool + Sync)>,
-+    _search_clock: Option<(f64, &dyn Fn() -> f64)>,
- ) -> Result<Option<ReplayedScores>, String> {
-     if deck.len() != 5 {
-         return Err("a team requires five performers".into());
-@@ -2231,7 +2252,7 @@ fn replay_orders_observed(
-         seeds.to_vec()
-     };
-     let orders: Vec<_> = (0..live::orders().len()).collect();
--    let Some(values) = replay_selected_orders(master, chart, deck, &runs, power, &orders, observe)?
-+    let Some(values) = replay_selected_orders(master, chart, deck, &runs, power, &orders, observe, _search_clock)?
-     else {
-         return Ok(None);
-     };
-@@ -2258,9 +2279,29 @@ pub(crate) fn replay_order_subset(
-     if chart.luck {
-         return Err("order completion requires a non-LUCK chart".into());
-     }
--    replay_selected_orders(master, chart, deck, &[0], power, orders, None).map(Option::unwrap)
-+    replay_selected_orders(master, chart, deck, &[0], power, orders, None, None).map(Option::unwrap)
++    if now() >= deadline {
++        return Err("search-deadline".into());
++    }
++    let _scope = crate::clock::search_deadline_scope(Some(deadline));
++    let observe = |_score: f64, _count: usize| !crate::clock::search_deadline_expired();
++    replay_orders_with_cutoff(master, chart, deck, seeds, power, &observe)?
++        .ok_or_else(|| "search-deadline".into())
 +}
 +
-+#[cfg(target_arch="wasm32")]
++#[cfg(target_arch = "wasm32")]
 +pub(crate) fn replay_order_subset_until(
 +    master: &Master,
 +    chart: &Chart,
@@ -1954,38 +1948,62 @@ index afefec4..1616603 100644
 +    deadline: f64,
 +    now: &dyn Fn() -> f64,
 +) -> Result<Vec<ReplayValue>, String> {
-+    if deck.len() != 5 {
-+        return Err("a team requires five performers".into());
++    if now() >= deadline {
++        return Err("search-deadline".into());
 +    }
-+    if chart.luck {
-+        return Err("order completion requires a non-LUCK chart".into());
-+    }
-+    replay_selected_orders(master, chart, deck, &[0], power, orders, None, Some((deadline, now))).map(Option::unwrap)
- }
- 
-+#[allow(clippy::too_many_arguments)]
- fn replay_selected_orders(
++    let _scope = crate::clock::search_deadline_scope(Some(deadline));
++    replay_order_subset(master, chart, deck, power, orders)
++}
++
+ /// Completed leaf orders carry their multiplicity in the native 120-order set.
+ pub(crate) fn replay_orders_with_cutoff(
      master: &Master,
-     chart: &Chart,
-@@ -2269,6 +2310,7 @@ fn replay_selected_orders(
-     power: i32,
-     orders: &[usize],
-     observe: Option<&(dyn Fn(f64, usize) -> bool + Sync)>,
-+    _search_clock: Option<(f64, &dyn Fn() -> f64)>,
- ) -> Result<Option<Vec<ReplayValue>>, String> {
-     if orders.is_empty() {
-         return Ok(Some(Vec::new()));
-@@ -2320,6 +2362,8 @@ fn replay_selected_orders(
-         observe,
-         multiplicities: &multiplicities,
-         stopped: AtomicBool::new(false),
-+        #[cfg(target_arch="wasm32")]
-+        search_clock: _search_clock,
-     };
-     #[cfg(target_arch = "wasm32")]
-     let jobs = vec![(0..event_orders.len()).collect::<Vec<_>>()];
+diff --git a/src/gekiso/factored.rs b/src/gekiso/factored.rs
+index 03f460c..6d9fdb5 100644
+--- a/src/gekiso/factored.rs
++++ b/src/gekiso/factored.rs
+@@ -586,6 +586,8 @@ fn ignore_dead_heal_order(master: &Master, chart: &Chart, deck: &[Performer], se
+         for seed in runs {
+             let mut model = template.clone();model.random = Random::new(seed);
+             for (index, frame) in chart.play.frames.iter().enumerate().take_while(|(_, frame)| frame.time_ms < first) {
++                #[cfg(target_arch = "wasm32")]
++                if crate::clock::search_deadline_expired() { return Err("search-deadline".into()); }
+                 if generation != crate::cancellation_generation() { return Err("cancelled".into()); }
+                 model.count_frame(frame.time_ms, &frame.judged, chart.play.dt[index])?;
+             }
+@@ -1104,6 +1106,10 @@ fn context(
+         let next = sparse.then(|| if run > 0 && fixed_inputs { prepared_next.as_slice() } else { chart.sparse_inputs() });
+         let (mut until, mut quiet) = (0, 0);
+         for (index, frame) in chart.play.frames.iter().enumerate() {
++            #[cfg(target_arch = "wasm32")]
++            if index & 63 == 0 && crate::clock::search_deadline_expired() {
++                return Err("search-deadline".into());
++            }
+             if index % 64 == 0 && generation != crate::cancellation_generation() {
+                 return Err("cancelled".into());
+             }
+@@ -1390,6 +1396,10 @@ impl<'a> ScoreTree<'a, '_> {
+         fixed: usize,
+         values: &mut [ReplayValue],
+     ) -> Result<(), String> {
++        #[cfg(target_arch = "wasm32")]
++        if crate::clock::search_deadline_expired() {
++            return Err("search-deadline".into());
++        }
+         if self.generation != crate::cancellation_generation() {
+             return Err("cancelled".into());
+         }
+@@ -1614,6 +1624,8 @@ pub(super) fn scores(
+         let reuse_ordinary = context.shared_inputs && draws.iter().skip(1)
+             .any(|draw| !Arc::ptr_eq(draw, &draws[0]));
+         for draw in draws {
++            #[cfg(target_arch = "wasm32")]
++            if crate::clock::search_deadline_expired() { return Err("search-deadline".into()); }
+             if generation != crate::cancellation_generation() {
+                 return Err("cancelled".into());
+             }
 diff --git a/src/gekiso_objective.rs b/src/gekiso_objective.rs
-index b1c2499..465db61 100644
+index b4fbfd2..c52335f 100644
 --- a/src/gekiso_objective.rs
 +++ b/src/gekiso_objective.rs
 @@ -1,3 +1,5 @@
@@ -1993,17 +2011,17 @@ index b1c2499..465db61 100644
 +//! Updated for Moenotes exact reward bounds and preparation deadlines on 2026-10-26.
  //! Gekiso context caches and safe level/support bounds for exact search.
  mod shared;
- use crate::{
-@@ -863,6 +865,8 @@ struct RushProjection {
-     bytes: usize,
+ pub(crate) mod sections;
+@@ -865,6 +867,8 @@ struct RushProjection {
  }
+ type SupportValues = HashMap<Vec<(i32, i32)>, f64>;
  pub struct Kernel<'a> {
 +    #[cfg(target_arch="wasm32")]
 +    search_clock:Option<(f64,&'a dyn Fn()->f64)>,
      master: &'a Master,
      members: &'a [Member],
      snaps: &'a [Snap],
-@@ -1798,6 +1802,8 @@ impl<'a> Kernel<'a> {
+@@ -1808,6 +1812,8 @@ impl<'a> Kernel<'a> {
              pattern_order: VecDeque::new(),
              pattern_bytes: 0,
              numeric_hull: None,
@@ -2012,17 +2030,17 @@ index b1c2499..465db61 100644
              defer_scores: false,
              seed_preview: false,
              live_floor: false,
-@@ -3264,6 +3270,9 @@ impl<'a> Kernel<'a> {
+@@ -3275,6 +3281,9 @@ impl<'a> Kernel<'a> {
          if let Some(value) = self.cache.get(&key) {
              return Arc::clone(&value.weights);
          }
 +        // Infallible bound contexts finish atomically; search checks their job boundary.
 +        #[cfg(target_arch="wasm32")]
-+        let _deadline=crate::clock::deadline_scope(None);
++        let _deadline=crate::clock::search_deadline_scope(None);
          let context = gekiso::context(
              within.unwrap_or(self.master),
              self.chart,
-@@ -3490,10 +3499,10 @@ impl<'a> Kernel<'a> {
+@@ -3501,10 +3510,10 @@ impl<'a> Kernel<'a> {
          deck: &[Performer],
          within: Option<&Master>,
          tag: i32,
@@ -2035,7 +2053,7 @@ index b1c2499..465db61 100644
          }
          let context = Arc::new(
              gekiso::context(
-@@ -3501,8 +3510,7 @@ impl<'a> Kernel<'a> {
+@@ -3512,8 +3521,7 @@ impl<'a> Kernel<'a> {
                  self.chart,
                  &deck,
                  &self.seeds,
@@ -2045,7 +2063,7 @@ index b1c2499..465db61 100644
          );
          let weights = Arc::new(self.weights(&context));
          let bytes = 128
-@@ -3514,7 +3522,7 @@ impl<'a> Kernel<'a> {
+@@ -3525,7 +3533,7 @@ impl<'a> Kernel<'a> {
                  .map(|r| r.len() * 8)
                  .sum::<usize>();
          if bytes > 16 * 1024 * 1024 {
@@ -2054,7 +2072,7 @@ index b1c2499..465db61 100644
          }
          // A lottery record shared by several contexts counts once, while any of them holds it.
          let record = context.shared_record();
-@@ -3559,7 +3567,7 @@ impl<'a> Kernel<'a> {
+@@ -3570,7 +3578,7 @@ impl<'a> Kernel<'a> {
                  }
              }
          }
@@ -2063,7 +2081,7 @@ index b1c2499..465db61 100644
      }
      fn weights(&self, ctx: &Context) -> Weights {
          note_weights(self.master, self.chart, ctx)
-@@ -3773,7 +3781,7 @@ impl<'a> Kernel<'a> {
+@@ -3785,7 +3793,7 @@ impl<'a> Kernel<'a> {
      }
      /// Computes the support bounds a warm pass at `level` is about to read, several at a time where the target has
      /// threads, and keeps their weights in the cache that `weights_of` reads.
@@ -2072,15 +2090,15 @@ index b1c2499..465db61 100644
          if self.chart.luck {
              return;
          }
-@@ -3787,6 +3795,7 @@ impl<'a> Kernel<'a> {
+@@ -3799,6 +3807,7 @@ impl<'a> Kernel<'a> {
          let mut seen = HashSet::default();
          let mut jobs = Vec::new();
          for &(m, s) in pairs {
 +            if now() >= deadline { return; }
-             let Some(p) = self.support(m, s) else {
-                 continue;
-             };
-@@ -3814,13 +3823,27 @@ impl<'a> Kernel<'a> {
+             let Some(p) = self.support_ref(m, s) else { continue; };
+             if self.support_high.get(&(at, p.band_id))
+                 .is_some_and(|values| values.contains_key(p.gekisou_support_skills.as_slice())) { continue; }
+@@ -3821,13 +3830,27 @@ impl<'a> Kernel<'a> {
          if jobs.len() < 2 {
              return;
          }
@@ -2108,12 +2126,12 @@ index b1c2499..465db61 100644
          for ((_, key), weights) in jobs.into_iter().zip(found) {
              self.store_weights(key, Arc::new(weights));
          }
-@@ -4497,12 +4520,14 @@ impl Kernel<'_> {
+@@ -4503,12 +4526,14 @@ impl Kernel<'_> {
          Ok(result)
      }
      fn unsettled_scores(&mut self, team: &Team, power: i32) -> Result<Arc<live::Scores>, String> {
 +        #[cfg(target_arch="wasm32")]
-+        let _deadline=crate::clock::deadline_scope(self.search_clock.map(|(deadline,_)|deadline));
++        let _deadline=crate::clock::search_deadline_scope(self.search_clock.map(|(deadline,_)|deadline));
          let key = (team.members.clone(), team.snaps.clone(), power);
          if let Some(scores) = self.unsettled.get(&key) {
              return Ok(Arc::clone(scores));
@@ -2124,7 +2142,7 @@ index b1c2499..465db61 100644
          let slots: Vec<_> = team
              .members
              .iter()
-@@ -4550,6 +4575,13 @@ impl Kernel<'_> {
+@@ -4556,6 +4581,13 @@ impl Kernel<'_> {
              .collect();
          // Amortize replay-tree and native worker setup over larger completions.
          if missing.len() >= 30 {
@@ -2138,7 +2156,7 @@ index b1c2499..465db61 100644
              let values =
                  gekiso::replay_order_subset(self.master, self.chart, &deck, power, &missing)?;
              for (order, value) in missing.into_iter().zip(values) {
-@@ -4557,6 +4589,8 @@ impl Kernel<'_> {
+@@ -4563,6 +4595,8 @@ impl Kernel<'_> {
              }
          } else {
              for order in missing {
@@ -2147,16 +2165,16 @@ index b1c2499..465db61 100644
                  rows[order] = Some(gekiso::replay_order(
                      self.master,
                      self.chart,
-@@ -4646,6 +4680,8 @@ impl Kernel<'_> {
+@@ -4652,6 +4686,8 @@ impl Kernel<'_> {
              .then_some(values)
      }
      fn search_exact(&mut self, team: &Team, power: i32, settle: bool) -> Result<Exact, String> {
 +        #[cfg(target_arch="wasm32")]
-+        let _deadline=crate::clock::deadline_scope(self.search_clock.map(|(deadline,_)|deadline));
++        let _deadline=crate::clock::search_deadline_scope(self.search_clock.map(|(deadline,_)|deadline));
          if !self.chart.luck && self.criterion == Criterion::Max && self.seeds.is_empty() && settle {
              if let Some(bounds) = self.max_order_bounds(team, power) {
                  let deck = self.original_deck(team);
-@@ -4655,6 +4691,8 @@ impl Kernel<'_> {
+@@ -4661,6 +4697,8 @@ impl Kernel<'_> {
                  let mut best = f64::NEG_INFINITY;
                  let mut count = 0;
                  for index in order {
@@ -2165,7 +2183,7 @@ index b1c2499..465db61 100644
                      if bounds[index] <= best {
                          break;
                      }
-@@ -4687,7 +4725,7 @@ impl Kernel<'_> {
+@@ -4693,7 +4731,7 @@ impl Kernel<'_> {
          }
          let upper = self.unsettled_scores(team, power)?;
          let deck = self.deck_of(team);
@@ -2174,16 +2192,16 @@ index b1c2499..465db61 100644
          let slots: Vec<_> = team
              .members
              .iter()
-@@ -5078,6 +5116,8 @@ impl Kernel<'_> {
+@@ -5102,6 +5140,8 @@ impl Kernel<'_> {
          })))
      }
      pub fn exact(&mut self, team: &Team, power: i32, settle: bool) -> Result<Exact, String> {
 +        #[cfg(target_arch="wasm32")]
-+        let _deadline=crate::clock::deadline_scope(self.search_clock.map(|(deadline,_)|deadline));
++        let _deadline=crate::clock::search_deadline_scope(self.search_clock.map(|(deadline,_)|deadline));
          if !self.chart.luck && self.seeds.is_empty() {
              if let Some(scores) =
                  self.partial_orders
-@@ -5099,6 +5139,11 @@ impl Kernel<'_> {
+@@ -5123,6 +5163,11 @@ impl Kernel<'_> {
                      )
                  })
                  .collect();
@@ -2195,7 +2213,7 @@ index b1c2499..465db61 100644
              let scores = gekiso::replay_orders(self.master, self.chart, &deck, &self.seeds, power)?;
              return Ok(Exact {
                  key: self.criterion.key(&scores.scores),
-@@ -5107,7 +5152,7 @@ impl Kernel<'_> {
+@@ -5131,7 +5176,7 @@ impl Kernel<'_> {
          }
          let ctx = if self.seeds.is_empty() {
              let deck = self.deck_of(team);
@@ -2204,7 +2222,7 @@ index b1c2499..465db61 100644
          } else {
              let deck = team
                  .members
-@@ -10651,7 +10696,7 @@ fn warm(adapter: &mut Adapter<'_, '_>, env: &Environment<'_>, deadline: f64) ->
+@@ -10701,7 +10746,7 @@ fn warm(adapter: &mut Adapter<'_, '_>, env: &Environment<'_>, deadline: f64) ->
              })
              .collect();
          let level = adapter.level;
@@ -2213,8 +2231,8 @@ index b1c2499..465db61 100644
      }
      for m in 0..env.members.len() {
          if (env.now)() >= deadline {
-@@ -10829,6 +10874,8 @@ fn replay_bound(
-     ))
+@@ -11398,6 +11443,8 @@ fn replay_support_key(master: &Master, actor: &Performer, global_converters: &Ha
+     Some(key)
  }
  struct ReplayObjective<'a> {
 +    #[cfg(target_arch="wasm32")]
@@ -2222,17 +2240,7 @@ index b1c2499..465db61 100644
      master: &'a Master,
      members: &'a [Member],
      snaps: &'a [Snap],
-@@ -10856,6 +10903,9 @@ impl Objective for ReplayObjective<'_> {
-     fn feasible_assignment(&self, members: &[usize], assigned: &[i32], from: usize, options: &[Vec<i32>]) -> bool {
-         self.just_window.as_ref().is_none_or(|window| window.possible_prepared(members, assigned, from, options))
-     }
-+    fn prepare_power(&mut self, power:Arc<Vec<f64>>, _width:usize) {
-+        if let Some(bound)=&mut self.bound {bound.snapshot_power(power);}
-+    }
-     fn score_ties(&self) -> bool {
-         self.criterion != Criterion::Mean
-     }
-@@ -10960,6 +11010,9 @@ impl Objective for ReplayObjective<'_> {
+@@ -11548,6 +11595,9 @@ impl Objective for ReplayObjective<'_> {
                  )
              })
              .collect();
@@ -2242,7 +2250,7 @@ index b1c2499..465db61 100644
          let scores =
              gekiso::replay_orders(self.master, self.chart, &deck, self.seeds, power as i32)?;
          let mut result = Exact {
-@@ -11382,6 +11435,8 @@ fn search_levels(
+@@ -11977,6 +12027,8 @@ fn search_levels(
              });
          }
          let mut objective = ReplayObjective {
@@ -2251,17 +2259,17 @@ index b1c2499..465db61 100644
              master: env.master,
              members: env.members,
              snaps: env.snaps,
-@@ -11444,6 +11499,8 @@ fn search_levels(
+@@ -12044,6 +12096,8 @@ fn search_levels(
      let generation = env.generation;
      let mut kernel = Kernel::new(env.master, env.members, env.snaps, chart, seeds, criterion);
      kernel.just_window = just_window;
 +    #[cfg(target_arch="wasm32")]
 +    {kernel.search_clock=Some((deadline,env.now));}
      if let Some(bounds) = shared_bounds {
-         kernel.global_fixed_preparation = bounds.preparation.clone();
+         kernel.bound_preparation = bounds.preparation.clone();
          kernel.global_fixed_luck = bounds.luck.clone();
 diff --git a/src/gekiso_objective/shared.rs b/src/gekiso_objective/shared.rs
-index db9fa86..4856470 100644
+index 389ca5d..726f9e7 100644
 --- a/src/gekiso_objective/shared.rs
 +++ b/src/gekiso_objective/shared.rs
 @@ -1,3 +1,4 @@
@@ -2269,7 +2277,37 @@ index db9fa86..4856470 100644
  //! A single physical formation optimized over a complete set of Gekiso charts.
  use super::*;
  
-@@ -846,6 +847,10 @@ pub(crate) fn search_shared(input: SharedInput<'_>) -> Result<search::Output, St
+@@ -1047,8 +1048,14 @@ pub(crate) fn search_shared(input: SharedInput<'_>) -> Result<search::Output, St
+                 seed_variant: None, defer_scores: false,
+                 cooperative_floor: false, min_combo_bonus, seeded: false, shard: None,
+                 floor: f64::NEG_INFINITY, on_candidate: None, progress: None,
+-            }, &[])?;
+-            if let Some(hit) = scout.hits.first() { initial.push(hit.team.clone()); }
++            }, &[]);
++            match scout {
++                Ok(scout) => {
++                    if let Some(hit) = scout.hits.first() { initial.push(hit.team.clone()); }
++                }
++                Err(error) if error == "search-deadline" => {}
++                Err(error) => return Err(error),
++            }
+         }
+         if initial.is_empty() {
+             let mut objective = PowerSeed { bonuses: combo_bonuses(env.master, env.members, &charts[0].setup.missions) };
+@@ -1067,7 +1074,11 @@ pub(crate) fn search_shared(input: SharedInput<'_>) -> Result<search::Output, St
+             if let Some(hit) = warm.hits.first() { initial.push(hit.team.clone()); }
+         }
+         if let Some(team) = initial.first() {
+-            early = initial_hit(&env, charts, music, &seeds, team, min_combo_bonus, deadline)?;
++            early = match initial_hit(&env, charts, music, &seeds, team, min_combo_bonus, deadline) {
++                Ok(hit) => hit,
++                Err(error) if error == "search-deadline" => None,
++                Err(error) => return Err(error),
++            };
+             if let (Some(hit), Some(callback)) = (&early, on_candidate.as_deref_mut()) { callback(std::slice::from_ref(hit)); }
+         }
+     }
+@@ -1103,6 +1114,10 @@ pub(crate) fn search_shared(input: SharedInput<'_>) -> Result<search::Output, St
                  Criterion::Mean,
              );
              kernel.just_window = window;
@@ -2280,21 +2318,43 @@ index db9fa86..4856470 100644
              kernel
          })
          .collect();
-@@ -993,7 +998,7 @@ pub(crate) fn search_shared(input: SharedInput<'_>) -> Result<search::Output, St
-                 callback(&ranked(&hits, k));
+@@ -1253,22 +1268,32 @@ pub(crate) fn search_shared(input: SharedInput<'_>) -> Result<search::Output, St
              }
          };
--        let out = env.run(
-+        let out = match env.run(
-             &mut objective,
-             Run {
-                 constraints,
-@@ -1009,7 +1014,14 @@ pub(crate) fn search_shared(input: SharedInput<'_>) -> Result<search::Output, St
-             },
-             None,
-             Some(&mut accept),
--        )?;
-+        ) {
+         let run = Run {
+-                constraints,
+-                k,
+-                deadline,
+-                seeds,
+-                shard: if level_shard { None } else { shard },
+-                floor: if current.len() >= k {
+-                    current[k - 1].key.max(floor)
+-                } else {
+-                    floor
+-                },
+-            };
+-        let out = if let Some(plan) = sections {
++            constraints,
++            k,
++            deadline,
++            seeds,
++            shard: if level_shard { None } else { shard },
++            floor: if current.len() >= k {
++                current[k - 1].key.max(floor)
++            } else {
++                floor
++            },
++        };
++        let step = if let Some(plan) = sections {
+             let floor_rank=current.get(k-1).map(|hit|[hit.key,hit.detail["sectionTie"][0].as_f64().unwrap_or(0.0),hit.detail["sectionTie"][1].as_f64().unwrap_or(0.0)]);
+             let mut target = sections::Wrapper::new(&mut objective, &env, section_charts.as_ref().unwrap(), music, plan, floor_rank);
+-            env.run(&mut target, run, None, Some(&mut accept))?
+-        } else { env.run(&mut objective, run, None, Some(&mut accept))? };
++            env.run(&mut target, run, None, Some(&mut accept))
++        } else {
++            env.run(&mut objective, run, None, Some(&mut accept))
++        };
++        let out = match step {
 +            Ok(out) => out,
 +            Err(error) if error == "search-deadline" => {
 +                proven = false;
@@ -2306,21 +2366,22 @@ index db9fa86..4856470 100644
          if !out.proven {
              proven = false;
 diff --git a/src/live.rs b/src/live.rs
-index 8b4eff7..f6bf3cf 100644
+index e816e84..47cc97f 100644
 --- a/src/live.rs
 +++ b/src/live.rs
-@@ -468,6 +468,9 @@ struct Delivery {
- pub fn score_timed(input: &Input, frames: &[Vec<i32>], best: bool) -> Result<Scores, String> {
-     Ok(summarize(input.power, timed_scores(input, frames, best, None, None)?))
+@@ -495,6 +495,10 @@ pub fn score_timed(input: &Input, frames: &[Vec<i32>], best: bool) -> Result<Sco
+     } else { frames };
+     Ok(summarize(input.power, timed_scores(input, frames, best, None, (None, None), None, None)?))
  }
 +pub(crate) fn score_timed_order(input: &Input, frames: &[Vec<i32>], best: bool, index: usize) -> Result<f64, String> {
-+    Ok(timed_scores(input, frames, best, None, Some(index))?[index])
++    validate(input)?;
++    Ok(timed_scores(input, frames, best, None, (Some(index), None), None, None)?[index])
 +}
  pub fn score_reachable(input: &Input, timing: &crate::input_timing::InputTiming, best: bool) -> Result<Scores, String> {
-     Ok(summarize(input.power, timed_scores(input, &timing.frames, best, Some(timing), None)?))
- }
+     validate(input)?;
+     Ok(summarize(input.power, timed_scores(input, &timing.frames, best, Some(timing), (None, None), None, None)?))
 diff --git a/src/luck.rs b/src/luck.rs
-index f860a33..0fa2e4f 100644
+index f860a33..a3c2b10 100644
 --- a/src/luck.rs
 +++ b/src/luck.rs
 @@ -1,3 +1,4 @@
@@ -2333,7 +2394,7 @@ index f860a33..0fa2e4f 100644
          return Err("invalid gauge width".into());
      }
 +    #[cfg(target_arch="wasm32")]
-+    if crate::clock::deadline_expired() {return Err("search-deadline".into());}
++    if crate::clock::search_deadline_expired() {return Err("search-deadline".into());}
      let generation = crate::cancellation_generation();
      let mut e = Engine::new(input);
      let mut out = Output {
@@ -2342,7 +2403,7 @@ index f860a33..0fa2e4f 100644
          let mut steady_at = None;
          for k in first..=last {
 +            #[cfg(target_arch="wasm32")]
-+            if crate::clock::deadline_expired() {return Err("search-deadline".into());}
++            if crate::clock::search_deadline_expired() {return Err("search-deadline".into());}
              if generation != crate::cancellation_generation() {
                  return Err("cancelled".into());
              }
@@ -2351,12 +2412,12 @@ index f860a33..0fa2e4f 100644
          }
      }
 +    #[cfg(target_arch="wasm32")]
-+    if crate::clock::deadline_expired() {return Err("search-deadline".into());}
++    if crate::clock::search_deadline_expired() {return Err("search-deadline".into());}
      for row in e.rows.rows.drain(..) {
          release(row, &mut e.pool);
      }
 diff --git a/src/master.rs b/src/master.rs
-index ac38992..62d1d33 100644
+index 4d2ed43..489b8c8 100644
 --- a/src/master.rs
 +++ b/src/master.rs
 @@ -1,3 +1,4 @@
@@ -2364,7 +2425,7 @@ index ac38992..62d1d33 100644
  //! Release-bound, typed tables compiled from the public team-builder document.
  use crate::num::f;
  use serde_json::{Map, Value};
-@@ -378,6 +379,7 @@ pub struct BandItem {
+@@ -382,6 +383,7 @@ pub struct BandItem {
  }
  #[derive(Clone)]
  struct MasterData {
@@ -2372,7 +2433,7 @@ index ac38992..62d1d33 100644
      pub server: String,
      pub release_id: String,
      pub params: Params,
-@@ -417,6 +419,8 @@ struct MasterData {
+@@ -421,6 +423,8 @@ struct MasterData {
  }
  #[derive(Clone)]
  pub struct Master {
@@ -2381,7 +2442,7 @@ index ac38992..62d1d33 100644
      pub server: String,
      pub release_id: String,
      pub params: Arc<Params>,
-@@ -458,6 +462,8 @@ pub struct Master {
+@@ -462,6 +466,8 @@ pub struct Master {
  impl From<MasterData> for Master {
      fn from(data: MasterData) -> Self {
          Self {
@@ -2390,7 +2451,7 @@ index ac38992..62d1d33 100644
              server: data.server,
              release_id: data.release_id,
              params: Arc::new(data.params),
-@@ -880,16 +886,14 @@ pub fn compile(data: &Value) -> Result<Master, String> {
+@@ -885,16 +891,14 @@ pub fn compile(data: &Value) -> Result<Master, String> {
          .find(|r| r["id"] == "live_skip_result_score_rank")
          .map(|r| text(&r["value"]))
          .unwrap_or_else(|| "C".into());
@@ -2415,7 +2476,7 @@ index ac38992..62d1d33 100644
      };
      let challenge = if !data["crossServer"]["challengeMusics"].is_null() {
          &data["crossServer"]["challengeMusics"]
-@@ -897,6 +901,7 @@ pub fn compile(data: &Value) -> Result<Master, String> {
+@@ -902,6 +906,7 @@ pub fn compile(data: &Value) -> Result<Master, String> {
          &data["challengeMusicTable"]["rows"]
      };
      Ok(Master::from(MasterData {
@@ -2424,33 +2485,33 @@ index ac38992..62d1d33 100644
          release_id: text(&identity["releaseId"]),
          params: Params {
 diff --git a/src/objectives.rs b/src/objectives.rs
-index f874e7e..0a717e7 100644
+index 7d6a6fa..567ee61 100644
 --- a/src/objectives.rs
 +++ b/src/objectives.rs
-@@ -136,9 +136,13 @@ impl Objective for AccuracySeed {
+@@ -147,9 +147,13 @@ impl Objective for AccuracySeed {
          })
      }
  }
 +enum TimingSource {
-+    Native(Result<crate::input_timing::InputTiming, String>),
++    Native(Result<live::PhaseTiming, String>),
 +    Frames(Vec<Vec<i32>>),
 +}
  pub struct LiveCore {
      pub input: Input,
--    timing: Option<(bool, Result<crate::input_timing::InputTiming, String>)>,
+-    timing: Option<(bool, Result<live::PhaseTiming, String>)>,
 +    timing: Option<(bool, TimingSource)>,
      pub high: Linear,
      pub low: Linear,
      pub factor_cap: f64,
-@@ -258,15 +262,22 @@ impl LiveCore {
+@@ -271,15 +275,22 @@ impl LiveCore {
          let mut input = chart::prepare(master, chart, 0, Vec::new(), judgements, 1.0, 100.0);
          input.clock = live::FrameClock::for_play(play);
          let timing = chart::timing_mode(play).map(|best| {
 -            (
 -                best,
--                crate::input_timing::InputTiming::new(
+-                live::PhaseTiming::new(
 +            let source = if chart::has_native_inputs(master, chart) {
-+                TimingSource::Native(crate::input_timing::InputTiming::new(
++                TimingSource::Native(live::PhaseTiming::new(
                      master,
                      chart,
                      input.judgements.as_deref(),
@@ -2470,20 +2531,28 @@ index f874e7e..0a717e7 100644
          });
          let play_profile = table.for_play(&input);
          let healthy_play = play_profile.healthy;
-@@ -863,14 +874,15 @@ impl LiveCore {
+@@ -782,7 +793,10 @@ impl LiveCore {
+             let mut upper = model::skill_weights(&self.high, &self.input, skill, self.timing.is_none());
+             if self.timing.is_some() {
+                 for factor in &skill.cumulative {
+-                    let weights = self.timing.as_ref().and_then(|(_, timing)| timing.as_ref().ok())
++                    let weights = self.timing.as_ref().and_then(|(_, timing)| match timing {
++                        TimingSource::Native(Ok(timing)) => Some(timing),
++                        _ => None,
++                    })
+                         .filter(|_| self.input.judgements.is_none() && !factor.requires_unbounded_bounds(self.input.times.len()))
+                         .map(|timing| timing.cumulative_weights(&self.high.prefix, &self.input, factor));
+                     if let Some(weights) = weights {
+@@ -909,10 +923,11 @@ impl LiveCore {
                      .iter()
                      .any(|slot| !slot.cumulative.is_empty()) =>
              {
 -                (
--                    live::score_reachable(
-+                let scores = match timing {
-+                    TimingSource::Native(timing) => live::score_reachable(
-                         &self.input,
-                         timing.as_ref().map_err(Clone::clone)?,
-                         *best,
-                     )?,
+-                    timing.as_ref().map_err(Clone::clone)?.scores(&self.input, *best)?,
 -                    None,
 -                )
++                let scores = match timing {
++                    TimingSource::Native(timing) => timing.as_ref().map_err(Clone::clone)?.scores(&self.input, *best)?,
 +                    TimingSource::Frames(frames) => live::score_timed(&self.input, frames, *best)?,
 +                };
 +                (scores, None)
@@ -2557,7 +2626,7 @@ index f7e17a4..79d88dc 100644
 +    bonus
 +}
 diff --git a/src/progress.rs b/src/progress.rs
-index c6fb67f..45545ff 100644
+index 9397274..cc2f0cc 100644
 --- a/src/progress.rs
 +++ b/src/progress.rs
 @@ -1,3 +1,5 @@
@@ -2566,7 +2635,7 @@ index c6fb67f..45545ff 100644
  //! Synchronous compute-thread notifications; the host forwards them to its UI.
  use crate::{
      chart::Chart,
-@@ -136,7 +138,11 @@ fn hit_json(state: &State, hit: &Hit) -> Value {
+@@ -189,7 +191,11 @@ fn hit_json(state: &State, hit: &Hit) -> Value {
          let count = master::number(&d["observations"], 1.0);
          let cp = master::number(&d["cpSum"], 0.0) / count;
          value["event"] = json!({"mean":master::number(&d["mean"],0.0)/denominator,"bonusPercent":master::number(&detail["bonus"],0.0)/100.0,"challengePoints":cp,"perPlayMin":d["directMin"],"perPlayMax":d["directMax"],"rewardSum":d["rewardSum"],"comparisonSum":d["comparisonSum"],"orders":d["observations"],"directMean":master::number(&d["rewardSum"],0.0)/count,"otherMean":d["otherMean"],"convertedMean":cp*numerator/denominator});
@@ -2579,7 +2648,7 @@ index c6fb67f..45545ff 100644
      } else if !detail["bonus"].is_null() {
          let cp = master::number(&detail["challengePoints"], 0.0);
          let mean = master::number(&detail["mean"], 0.0) / denominator;
-@@ -152,14 +158,19 @@ fn hit_json(state: &State, hit: &Hit) -> Value {
+@@ -205,14 +211,20 @@ fn hit_json(state: &State, hit: &Hit) -> Value {
              .reduce(f64::max)
              .unwrap_or(mean);
          value["event"] = json!({"mean":if plan{master::number(&detail["directMean"],mean)}else{mean},"bonusPercent":master::number(&detail["bonus"],0.0)/100.0,"challengePoints":cp,"perPlayMin":master::number(&detail["directMin"],low),"perPlayMax":master::number(&detail["directMax"],high),"directMean":detail["directMean"],"otherMean":detail["otherMean"]});
@@ -2596,16 +2665,17 @@ index c6fb67f..45545ff 100644
              value["event"]["convertedMean"] = json!(cp * numerator / denominator);
          }
      }
++    if detail["justWindow"].is_object() { value["justWindow"] = detail["justWindow"].clone(); }
 +    if !detail["skipScore"].is_null() { value["skipScore"] = detail["skipScore"].clone(); }
 +    if !detail["levels"].is_null() { value["levels"]=detail["levels"].clone();value["lexVector"]=detail["lexVector"].clone(); }
      if !detail["potential"].is_null() {
          value["potential"] = json!({"value":detail["potential"],"area":detail["area"]});
      }
 diff --git a/src/rewards.rs b/src/rewards.rs
-index 1de2094..ccede8c 100644
+index 931c538..47c76ac 100644
 --- a/src/rewards.rs
 +++ b/src/rewards.rs
-@@ -11646,3 +11646,246 @@ pub(crate) fn order_score_coefficients_with_base(
+@@ -11945,3 +11945,251 @@ pub(crate) fn order_score_coefficients_with_base(
              .collect(),
      )
  }
@@ -2688,7 +2758,7 @@ index 1de2094..ccede8c 100644
 +        }else {self.other_member=vec![0.0;self.members.len()];self.other_snap=vec![0.0;self.snaps.len()];}
 +        Ok(self)
 +    }
-+    pub(crate) fn set_min_just_window(&mut self, minimum: f64) -> Result<(), String> {
++    pub(crate) fn set_min_just_window(&mut self, minimum: crate::just_window::Policy) -> Result<(), String> {
 +        if !self.chart.setup.missions.contains(&3) { return Ok(()); }
 +        let seeds: Vec<_> = if self.sampled { (0..self.samples.max(1)).collect() } else { Vec::new() };
 +        let prepared = crate::just_window::Prepared::new(self.master, &self.chart, self.members, self.snaps, minimum, &seeds)?;
@@ -2788,7 +2858,7 @@ index 1de2094..ccede8c 100644
 +        let cache_key=(power as i32,team.members.clone(),team.snaps.clone());
 +        if let Some((key,detail))=self.exact_cache.get(&cache_key){return Ok(Exact{key:*key,detail:detail.clone()});}
 +        #[cfg(target_arch="wasm32")]
-+        let _scope=crate::clock::deadline_scope(Some(self.deadline));
++        let _scope=crate::clock::search_deadline_scope(Some(self.deadline));
 +        let mut canonical=[0,1,2,3,4];canonical[1..].sort_by_key(|&slot|self.members[team.members[slot]].card.id);
 +        let deck:Vec<_>=canonical.iter().map(|&slot|Performer::from_member(self.master,&self.members[team.members[slot]],(team.snaps[slot]>=0).then(||&self.snaps[team.snaps[slot] as usize]))).collect();
 +        let slots:Vec<_>=canonical.iter().map(|&slot|skills::resolve(self.master,&self.members[team.members[slot]],(team.snaps[slot]>=0).then(||&self.snaps[team.snaps[slot] as usize]),&mut Vec::new())).collect();
@@ -2839,6 +2909,11 @@ index 1de2094..ccede8c 100644
 +        let support=range(&primary);let sum=primary(&sums);let mean=sum as f64/count as f64;
 +        let mut detail=json!({"scores":live::summarize(power as i32,scores),"bonus":bonus,"sampled":self.sampled,"luckSamples":runs,
 +            "payoffLower":support["lower"],"payoffUpper":support["upper"],"settlement":{"rewardSum":if self.kind==3 {json!(sum.to_string())}else{json!(sum as f64)},"comparisonSum":sum.to_string(),"observations":count,"mean":mean,"directMin":values.iter().map(|v|primary(v) as f64/runs as f64).reduce(f64::min),"directMax":values.iter().map(|v|primary(v) as f64/runs as f64).reduce(f64::max),"otherMean":0,"cpSum":if self.kind==2 {sum as f64}else{0.0},"ranks":ranks}});
++        if let Some(prepared) = &mut self.just_window {
++            if let Some(window) = prepared.measure(self.master, &self.chart, team, power as i32)? {
++                detail["justWindow"] = json!(window);
++            }
++        }
 +        if self.maximum {detail["selectedOrder"]=json!(selected);}
 +        if self.kind==3 {
 +            detail["lexVector"]=json!(self.levels.iter().map(|l|sum_level(l,&sums).to_string()).collect::<Vec<_>>());
@@ -2853,7 +2928,7 @@ index 1de2094..ccede8c 100644
 +    }
 +}
 diff --git a/src/search.rs b/src/search.rs
-index dbf4f6c..2c1a457 100644
+index aa7404f..e8b75c3 100644
 --- a/src/search.rs
 +++ b/src/search.rs
 @@ -1,3 +1,5 @@
@@ -2862,7 +2937,7 @@ index dbf4f6c..2c1a457 100644
  //! Exact top-K search over leaders, character-distinct member sets and snap
  //! assignments. Bounds prune only when the retained legal teams justify it.
  use crate::{
-@@ -68,6 +70,15 @@ pub trait Objective {
+@@ -69,6 +71,15 @@ pub trait Objective {
      ) -> bool {
          true
      }
@@ -2878,7 +2953,7 @@ index dbf4f6c..2c1a457 100644
      fn score_ties(&self) -> bool {
          false
      }
-@@ -603,6 +614,7 @@ struct Runner<'a, O: Objective + ?Sized> {
+@@ -645,6 +656,7 @@ struct Runner<'a, O: Objective + ?Sized> {
      hit_keys: Vec<String>,
      option_scratch: [Vec<i32>; 5],
      retained: HashMap<String, f64>,
@@ -2886,7 +2961,7 @@ index dbf4f6c..2c1a457 100644
      compact_at: usize,
      timed_out: bool,
      unexplored: f64,
-@@ -700,7 +712,7 @@ fn suffix(values: &[f64], from: usize) -> f64 {
+@@ -743,7 +755,7 @@ fn suffix(values: &[f64], from: usize) -> f64 {
      values[from..].iter().rev().fold(0.0, |sum, v| sum + v)
  }
  impl<'a, O: Objective + ?Sized> Runner<'a, O> {
@@ -2894,8 +2969,8 @@ index dbf4f6c..2c1a457 100644
 +    fn new(mut input: Input<'a, O>) -> Option<Self> {
          let started = (input.now)();
          let generation = crate::cancellation_generation();
-         let team_filter = input.objective.has_team_filter();
-@@ -765,7 +777,9 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+         let team_filter = input.objective.has_team_filter() || input.constraints.skill_roles.is_some();
+@@ -808,7 +820,9 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
              vec![0.0; n * width],
          );
          for i in 0..n {
@@ -2905,7 +2980,7 @@ index dbf4f6c..2c1a457 100644
                  let col = if j < 0 { s } else { j as usize };
                  if j >= 0 {
                      snap_power[i * width + col] = power::snap_points(
-@@ -821,6 +835,7 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -864,6 +878,7 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
              })
              .collect();
          let mut profiles = HashMap::default();
@@ -2913,7 +2988,7 @@ index dbf4f6c..2c1a457 100644
          if input.objective.needs_power_cap() {
              let mut maximum = 0.0_f64;
              for leader in 0..n {
-@@ -937,10 +952,11 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -981,10 +996,11 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
              .collect();
          let k = input.k;
          let snap_power = Arc::new(snap_power);
@@ -2926,7 +3001,7 @@ index dbf4f6c..2c1a457 100644
              input,
              started,
              last_notify: started,
-@@ -976,6 +992,7 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -1021,6 +1037,7 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
              hit_keys: Vec::new(),
              option_scratch: std::array::from_fn(|_| Vec::new()),
              retained: HashMap::default(),
@@ -2934,7 +3009,7 @@ index dbf4f6c..2c1a457 100644
              compact_at: 4096,
              timed_out: false,
              unexplored: f64::NEG_INFINITY,
-@@ -987,7 +1004,7 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -1032,7 +1049,7 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
              stamp: 0,
              target_limit: f64::NAN,
              member_targets: None,
@@ -2943,15 +3018,15 @@ index dbf4f6c..2c1a457 100644
      }
      fn expired(&self) -> bool {
          self.generation != crate::cancellation_generation()
-@@ -1033,6 +1050,7 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -1093,6 +1110,7 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
          }
      }
      fn cannot_improve(&self, upper: f64) -> bool {
 +        let upper=self.input.objective.discrete_upper(upper);
          (self.input.objective.live_floor()
-             && !self.input.objective.score_ties()
+             && self.input.objective.live_floor_exclusive()
              && upper <= crate::search_floor())
-@@ -1043,6 +1061,13 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -1103,6 +1121,13 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
                      || !self.input.objective.score_ties()
                          && upper == self.hits[self.input.k - 1].key))
      }
@@ -2965,7 +3040,7 @@ index dbf4f6c..2c1a457 100644
      fn compare_hit(&mut self, hit: &mut Hit, index: usize) -> Result<std::cmp::Ordering, String> {
          if let Some(order) = self.input.objective.compare_rank(hit, &self.hits[index]) {
              return Ok(order);
-@@ -1061,9 +1086,7 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -1121,9 +1146,7 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
          self.input
              .objective
              .complete_score_tie(&mut self.hits[index])?;
@@ -2976,7 +3051,7 @@ index dbf4f6c..2c1a457 100644
      }
      fn insert_position(&mut self, hit: &mut Hit) -> Result<usize, String> {
          let mut i = self.hits.len();
-@@ -1080,6 +1103,14 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -1140,6 +1163,14 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
          keys.sort_by(|a, b| a.encode_utf16().cmp(b.encode_utf16()));
          keys.join("|")
      }
@@ -2991,7 +3066,7 @@ index dbf4f6c..2c1a457 100644
      fn profile(&mut self, leader: usize) -> Arc<LeaderProfile> {
          self.profiles
              .entry(leader)
-@@ -1091,7 +1122,8 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -1151,7 +1182,8 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
              })
              .clone()
      }
@@ -3001,7 +3076,7 @@ index dbf4f6c..2c1a457 100644
          if !self.input.streaming {
              self.candidates.push(candidate);
              return Ok(());
-@@ -1101,7 +1133,8 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -1161,7 +1193,8 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
              self.unexplored = self.unexplored.max(candidate.high);
              return Ok(());
          }
@@ -3011,7 +3086,7 @@ index dbf4f6c..2c1a457 100644
              return Ok(());
          }
          let existing = self
-@@ -1153,6 +1186,7 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -1223,6 +1256,7 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
          if !was_evaluated {
              self.stats.exact += 1;
          }
@@ -3019,7 +3094,7 @@ index dbf4f6c..2c1a457 100644
          self.frontier.offer(&candidate.set_key, exact.key);
          let mut hit = Hit {
              team: candidate.team,
-@@ -1179,6 +1213,7 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -1249,6 +1283,7 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
              self.retained.remove(&key);
          }
          self.input.objective.observe_hits(&self.hits);
@@ -3027,9 +3102,9 @@ index dbf4f6c..2c1a457 100644
          if let Some(callback) = self.input.on_candidate.as_deref_mut() {
              callback(&self.hits);
          }
-@@ -1303,7 +1338,8 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
-         }
-         let exact = self.input.objective.exact(&seed, power, &powers)?;
+@@ -1379,7 +1414,8 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+             return Ok(false);
+         };
          self.stats.exact += 1;
 -        let set_key = self.set_key(&seed.members);
 +        if !self.input.objective.accepts_exact(&exact) {return Ok(false);}
@@ -3037,7 +3112,7 @@ index dbf4f6c..2c1a457 100644
          self.frontier.offer(&set_key, exact.key);
          self.retain_seed(
              Candidate {
-@@ -1360,6 +1396,29 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -1436,6 +1472,29 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
              snaps: assigned.iter().map(|&col| snapshots[col]).collect(),
          })
      }
@@ -3067,9 +3142,9 @@ index dbf4f6c..2c1a457 100644
      fn warm_seed(&mut self, owned_leaders: Option<&[usize]>) -> Result<(), String> {
          let Some(mut objective) = self.input.objective.seed_objective() else {
              return Ok(());
-@@ -1702,7 +1761,12 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
-                             }
-                             let exact = self.input.objective.exact(&next, totals.power, &powers)?;
+@@ -1781,7 +1840,12 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+                                 break 'neighbors;
+                             };
                              self.stats.exact += 1;
 +                            if !self.input.objective.accepts_exact(&exact) {continue;}
                              let candidate = rating(&exact);
@@ -3080,7 +3155,7 @@ index dbf4f6c..2c1a457 100644
                              if candidate > next_value {
                                  next_value = candidate;
                                  best = Some((next, totals, powers, exact));
-@@ -1717,7 +1781,7 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -1796,7 +1860,7 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
                      };
                      team = next;
                      value = next_value;
@@ -3089,7 +3164,7 @@ index dbf4f6c..2c1a457 100644
                      self.frontier.offer(&set_key, exact.key);
                      self.retain_seed(
                          Candidate {
-@@ -2184,7 +2248,8 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -2263,7 +2327,8 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
              ),
          };
          let plain = self.input.objective.bound(totals);
@@ -3099,7 +3174,7 @@ index dbf4f6c..2c1a457 100644
              return Ok(());
          }
          let limit = self.necessary_limit(self.limit());
-@@ -2202,6 +2267,7 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -2281,6 +2346,7 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
          }
          let bound = self.member_set_bound(chosen, totals, left, index);
          if bound < self.limit()
@@ -3107,7 +3182,7 @@ index dbf4f6c..2c1a457 100644
              || self.cannot_improve(bound)
              || self
                  .input
-@@ -2244,11 +2310,11 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -2323,11 +2389,11 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
          self.member_visit(m, index + 1, power, weight, bonus, member_part)
      }
      fn assignment_limit(&self, a: &Assignment) -> f64 {
@@ -3121,7 +3196,7 @@ index dbf4f6c..2c1a457 100644
                  && (a.exact_low > upper
                      || !self.input.objective.score_ties() && a.exact_low == upper)
      }
-@@ -2370,6 +2436,20 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -2460,6 +2526,20 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
          true
      }
      fn remaining_bound(&mut self, a: &Assignment, from: usize, totals: Totals) -> f64 {
@@ -3142,7 +3217,7 @@ index dbf4f6c..2c1a457 100644
          let mut table = std::mem::take(&mut self.pools[from]);
          self.tables(&mut table, a, from);
          let power = self.matching.maximum(&table.power, table.columns, None);
-@@ -2393,6 +2473,11 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -2483,6 +2563,11 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
              if power <= NONE / 2.0 || skill <= NONE / 2.0 {
                  return f64::NEG_INFINITY;
              }
@@ -3154,7 +3229,7 @@ index dbf4f6c..2c1a457 100644
              let order_limit = self.assignment_necessary_limit(a);
              let objective_bound = self.input.objective.assignment_order_bound(
                  &a.team,
-@@ -2408,6 +2493,7 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -2498,6 +2583,7 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
              );
              if objective_bound.is_some_and(|bound| {
                  bound < self.assignment_limit(a) || self.cannot_improve_set(a, bound)
@@ -3162,7 +3237,7 @@ index dbf4f6c..2c1a457 100644
              }) {
                  return f64::NEG_INFINITY;
              }
-@@ -2538,8 +2624,10 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -2635,8 +2721,10 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
          if high < self.assignment_limit(a) || self.cannot_improve_set(a, high) {
              return Ok(());
          }
@@ -3175,7 +3250,7 @@ index dbf4f6c..2c1a457 100644
          self.stats.candidates += 1;
          if self.candidates.len() > self.compact_at {
              self.compact();
-@@ -2954,7 +3042,9 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -3056,7 +3144,9 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
                              .max_bonus
                              .is_none_or(|b| totals.bonus <= b)
                      {
@@ -3185,7 +3260,7 @@ index dbf4f6c..2c1a457 100644
                      }
                  }
              }
-@@ -3224,6 +3314,7 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -3337,6 +3427,7 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
              slot,
          );
          if optimistic < self.assignment_limit(a)
@@ -3193,7 +3268,7 @@ index dbf4f6c..2c1a457 100644
              || self.cannot_improve_set(a, optimistic)
              || (slot > 0
                  && slot < 5
-@@ -3580,6 +3671,8 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
+@@ -3695,6 +3786,8 @@ impl<'a, O: Objective + ?Sized> Runner<'a, O> {
              }
              if self.expired() {
                  self.timed_out = true;
@@ -3202,7 +3277,7 @@ index dbf4f6c..2c1a457 100644
              }
              self.stats.leaders += 1;
              if self.any_snap_bonus {
-@@ -4033,7 +4126,9 @@ pub(crate) fn search_at<O: Objective + ?Sized>(
+@@ -4148,7 +4241,9 @@ pub(crate) fn search_at<O: Objective + ?Sized>(
              stats: Stats::default(),
          });
      }

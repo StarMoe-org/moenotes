@@ -11,10 +11,20 @@ import { t } from "@/i18n";
 import { localizePath } from "@/i18n/routing";
 import { getRoutePathById } from "@/lib/route/registry";
 import type { BoxCard, CardBox, CardFieldName } from "@/lib/box/model";
-import type { DeckAnswer, DeckIssueGroups, DeckOrderStat, DeckOrderTiming, DeckTeam } from "@/lib/deck/answer";
+import type {
+  DeckAnswer,
+  DeckGekisoGuide,
+  DeckIssueGroups,
+  DeckJustWindow,
+  DeckOrderStat,
+  DeckOrderTiming,
+  DeckSectionPerformance,
+  DeckTeam,
+  DeckTimingInputKind,
+} from "@/lib/deck/answer";
 import type { DeckTeamGrowthReport } from "@/lib/deck/haneoka/growth";
 import { formatDeckInterval } from "@/lib/deck/interval";
-import { groupIssues, isOutOfMemory } from "@/lib/deck/answer";
+import { groupIssues, hasAlternateFrameOrigin, isOutOfMemory, timingPlanDelta } from "@/lib/deck/answer";
 import type { DeckAggregation, DeckGoal } from "@/lib/deck/goals";
 import type { DeckJobState } from "./use-deck-solver";
 import { BoxArtwork, cardName, type BoxCatalog } from "@/components/box/BoxManager";
@@ -23,6 +33,7 @@ import NativeFormationGroup from "@/components/chart-data/NativeFormationGroup";
 import { MemberSquareArtwork, SupportSquareArtwork } from "@/components/shared/CardSquareArtwork";
 import { termRate, type RewardTerm } from "@/lib/deck/reward-mix";
 import { RewardBreakdown, RewardOrder, RewardTies } from "./DeckRewardMix";
+import DeckParkingPanel from "./DeckParkingPanel";
 import DeckShareImageButton from "./DeckShareImageButton";
 import DeckTeamGrowthPanel from "./DeckTeamGrowthPanel";
 
@@ -261,6 +272,10 @@ function TeamCard(props: DeckResultProps & { team: DeckTeam; teamKey: string; me
         {props.levels && props.levels.length > 1 && team.levels && <RewardTies locale={locale} levels={props.levels.slice(1)} values={team.levels.slice(1).map(level => level.value)} />}
         <div className="dr-formation"><div className="dc-stage"><NativeFormationGroup locale={locale} slots={formationSlots(team, box, catalog)} label={tr("formation")} /></div></div>
         <Slots locale={locale} team={team} box={box} catalog={catalog} />
+        {team.sectionPerformance && <SectionPerformanceSummary locale={locale} performance={team.sectionPerformance} />}
+        {team.justWindow && (team.justWindow.afterMs > team.justWindow.beforeMs || !team.justWindow.meetsTarget || Boolean(team.justWindow.coverage)) && (
+          <JustWindowSummary locale={locale} window={team.justWindow} />
+        )}
         {props.final && !props.theoreticalMode && props.onEvaluateGrowth && (
           <DeckTeamGrowthPanel
             locale={locale}
@@ -271,6 +286,7 @@ function TeamCard(props: DeckResultProps & { team: DeckTeam; teamKey: string; me
             snapById={props.snapById}
           />
         )}
+        {props.final && team.parking && <DeckParkingPanel locale={locale} parking={team.parking} />}
         {team.aggregate && <AggregateSongs {...props} team={team} />}
         <SkillOrders {...props} />
       </div>
@@ -347,6 +363,89 @@ function AggregateSongs(props: DeckResultProps & { team: DeckTeam }) {
   </section>;
 }
 
+function SectionPerformanceSummary({ locale, performance }: { locale: AppLocale; performance: DeckSectionPerformance }) {
+  const tr = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.solver.${key}`, values);
+  const pct = (value: number) => `${(value * 100).toFixed(1)}%`;
+  const baseDeltaPct = performance.referenceBaseMean > 0
+    ? ((performance.baseMean - performance.referenceBaseMean) / performance.referenceBaseMean) * 100
+    : 0;
+  const deltaSign = baseDeltaPct > 0 ? "+" : "";
+  return (
+    <section className="mt-3 rounded-2xl border border-outline-variant/60 bg-surface-container-low p-3" data-testid="deck-section-performance">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <h4 className="m-0 text-xs font-semibold text-on-surface">{tr("sectionSummaryTitle")}</h4>
+        <span className="text-[11px] tabular-nums text-on-surface-variant">
+          {tr("sectionLossCap", { delta: `${deltaSign}${baseDeltaPct.toFixed(2)}`, cap: (performance.maxBaseLoss * 100).toFixed(1) })}
+        </span>
+      </div>
+      <dl className="dr-timing-grid">
+        {([0, 1, 2] as const).map((i) => (
+          <div key={i}>
+            <dt>{tr("sectionRangeWin", { n: i + 1 })}</dt>
+            <dd className="tabular-nums">{pct(performance.ranges[i])}</dd>
+          </div>
+        ))}
+        {typeof performance.allWin === "number" && (
+          <div>
+            <dt>{tr("sectionAllWin")}</dt>
+            <dd className="tabular-nums">{pct(performance.allWin)}</dd>
+          </div>
+        )}
+        <div>
+          <dt>{tr("sectionBaseScore")}</dt>
+          <dd className="tabular-nums">{formatValue(performance.baseMean, "score", locale)}</dd>
+        </div>
+        <div>
+          <dt>{tr("sectionBonusScore")}</dt>
+          <dd className="tabular-nums">+{formatValue(performance.bonusMean, "score", locale)}</dd>
+        </div>
+        <div>
+          <dt>{tr("sectionTotalScore")}</dt>
+          <dd className="tabular-nums">{formatValue(performance.totalMean, "score", locale)}</dd>
+        </div>
+      </dl>
+    </section>
+  );
+}
+
+function JustWindowSummary({ locale, window: jw }: { locale: AppLocale; window: DeckJustWindow }) {
+  const tr = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.solver.${key}`, values);
+  return (
+    <section className="mt-3 rounded-2xl border border-outline-variant/60 bg-surface-container-low p-3" data-testid="deck-just-window">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-xs font-semibold text-on-surface">{tr("justWindowResultTitle")}</span>
+        <span className="flex items-center gap-2 text-xs tabular-nums text-on-surface">
+          <strong>{tr("justWindowSteadyValue", { before: jw.beforeMs, after: jw.afterMs })}</strong>
+          <span
+            className={`rounded px-1.5 py-0.5 text-[11px] font-medium ${
+              jw.meetsTarget
+                ? "bg-secondary-container text-on-secondary-container"
+                : "bg-error-container text-on-error-container"
+            }`}
+          >
+            {tr(jw.meetsTarget ? "justWindowTargetMet" : "justWindowTargetMissed")}
+          </span>
+        </span>
+      </div>
+      {jw.coverage && jw.coverage.ranges.length > 0 && (
+        <ul className="mt-2 mb-0 flex list-none flex-col gap-1 p-0 text-xs tabular-nums text-on-surface-variant">
+          {jw.coverage.ranges.map((range, i) => (
+            <li key={i}>
+              {tr("justWindowCoverageRange", {
+                n: i + 1,
+                pct: (range.minimumCoverage * 100).toFixed(1),
+                coveredSec: (range.minimumCoveredMs / 1000).toFixed(1),
+                longestSec: (range.minimumLongestMs / 1000).toFixed(1),
+                peakMs: range.minimumPeakMs,
+              })}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 /**
  * The skill activation order. Each live draws one of the 120 orders; an average objective shows where the team's orders
  * fall and which order scores best, worst and in the middle, and the maximum objective names the order it counts.
@@ -355,16 +454,20 @@ function SkillOrders(props: DeckResultProps & { team: DeckTeam; aggregation: Dec
   const { locale, team, catalog } = props;
   const tr = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.solver.${key}`, values);
   const hasTimingExtrema = team.timing !== undefined && (
-    team.timing.best > team.timing.score
+    timingPlanDelta(team.timing) > 0
+    || team.timing.best > team.timing.score
+    || hasAlternateFrameOrigin(team.timing)
     || team.timing.guideAvailable === false
     || (team.timing.optimal !== undefined && team.timing.worst !== undefined && team.timing.optimal > team.timing.worst)
   );
   const activeTiming = props.final && hasTimingExtrema ? team.timing! : null;
+  const activeGekisoGuide = props.final && team.gekisoGuide && team.gekisoGuide.actions.some(a => a.included) ? team.gekisoGuide : null;
   if (props.aggregation === "maximum") return team.bestOrder ? <section className="dr-orders" aria-label={tr("bestOrder")}>
     <h4>{tr("bestOrder")}</h4>
     <OrderSequence locale={locale} order={team.bestOrder.order} catalog={catalog} />
     <p className="dr-muted">{tr("bestOrderNote")}</p>
     {activeTiming && <OrderTimingPanel locale={locale} timing={activeTiming} catalog={catalog} />}
+    {activeGekisoGuide && <GekisoGuidePanel locale={locale} guide={activeGekisoGuide} catalog={catalog} />}
   </section> : null;
   const orders = team.orders;
   if (!props.final || !orders) return null;
@@ -379,6 +482,7 @@ function SkillOrders(props: DeckResultProps & { team: DeckTeam; aggregation: Dec
     </div>)}</dl>
     <p className="dr-muted">{tr("ordersNote")}</p>
     {activeTiming && <OrderTimingPanel locale={locale} timing={activeTiming} catalog={catalog} />}
+    {activeGekisoGuide && <GekisoGuidePanel locale={locale} guide={activeGekisoGuide} catalog={catalog} />}
   </section>;
 }
 
@@ -387,15 +491,29 @@ function chartClock(ms: number): string {
   return `${Math.floor(seconds / 60)}:${(seconds % 60).toFixed(2).padStart(5, "0")}`;
 }
 
-/** Cumulative-Snap legal timing extrema and collapsible 17 ms early-hit guide for the team's best skill order. */
+function inputKindKey(kind: DeckTimingInputKind): string {
+  switch (kind) {
+    case "hit": return "timingInputKindHit";
+    case "hold": return "timingInputKindHold";
+    case "release": return "timingInputKindRelease";
+    case "flick": return "timingInputKindFlick";
+    case "miss": return "timingInputKindMiss";
+  }
+}
+
+/** Cumulative-Snap legal timing extrema, frame-origin offset, and optimal input schedule for the team's best skill order. */
 function OrderTimingPanel({ locale, timing, catalog }: { locale: AppLocale; timing: DeckOrderTiming; catalog: BoxCatalog }) {
   const tr = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.solver.${key}`, values);
   const windows = timing.windows.filter(win => win.steps.length > 0);
   const hasFullExtrema = timing.worst !== undefined && timing.optimal !== undefined;
-  const planDelta = timing.best - timing.score;
+  const planDelta = timingPlanDelta(timing);
+  const altFrameOrigin = hasAlternateFrameOrigin(timing);
   const guideBlocked = timing.guideAvailable === false;
-  const canGuide = !guideBlocked && timing.best > timing.score && windows.length > 0;
+  const canGuide = !guideBlocked && (planDelta > 0 || timing.best > timing.score || altFrameOrigin) && windows.length > 0;
   const memberName = (id: number) => catalog.members.find(card => card.id === id)?.title ?? String(id);
+  const formattedOrigin = altFrameOrigin
+    ? `${timing.frameOriginMs! > 0 ? "+" : ""}${timing.frameOriginMs!.toFixed(1)}`
+    : null;
   return <div className="dr-timing">
     {hasFullExtrema ? (
       <dl className="dr-timing-grid">
@@ -434,6 +552,24 @@ function OrderTimingPanel({ locale, timing, catalog }: { locale: AppLocale; timi
           <Icon name="fastRewind" className="h-4 w-4" />
           {tr("timingAdvance", { ms: timing.advanceMs })}
         </span>
+      </div>
+    )}
+    {(timing.planIsOptimal !== undefined || formattedOrigin !== null) && (
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+        {timing.planIsOptimal !== undefined && (
+          <span
+            className={`rounded px-1.5 py-0.5 text-[11px] font-medium ${
+              timing.planIsOptimal
+                ? "bg-secondary-container text-on-secondary-container"
+                : "bg-surface-container-high text-on-surface-variant"
+            }`}
+          >
+            {tr(timing.planIsOptimal ? "timingPlanOptimal" : "timingPlanSuboptimal")}
+          </span>
+        )}
+        {formattedOrigin !== null && (
+          <span className="tabular-nums text-on-surface-variant">{tr("timingFrameOrigin", { ms: formattedOrigin })}</span>
+        )}
       </div>
     )}
     {guideBlocked && (
@@ -484,19 +620,35 @@ function OrderTimingPanel({ locale, timing, catalog }: { locale: AppLocale; timi
                   </div>
                   <table className="dr-timing-steps">
                     <tbody>
-                      {win.steps.map(step => (
-                        <tr key={`${step.step}:${step.timeMs}`}>
-                          <th scope="row">
-                            <span className="dr-timing-badge">{step.step}</span>
-                            {tr("timingStep", { step: step.step })}
-                          </th>
-                          <td className="dr-timing-time">{chartClock(step.timeMs)}</td>
-                          <td>
-                            {step.notes > 1 ? <span className="dr-timing-chord">{tr("timingChord", { count: step.notes })}</span> : null}
-                          </td>
-                          <td className="dr-timing-gain">+{formatValue(step.gain, "score", locale)}</td>
-                        </tr>
-                      ))}
+                      {win.steps.map(step => {
+                        const firstInput = step.inputTimesMs?.[0];
+                        const firstNote = step.noteTimesMs?.[0] ?? step.timeMs;
+                        const distinctInput = typeof firstInput === "number" && Math.abs(firstInput - firstNote) >= 0.5;
+                        const primaryKind = step.inputKinds?.[0];
+                        return (
+                          <tr key={`${step.step}:${step.timeMs}`}>
+                            <th scope="row">
+                              <span className="dr-timing-badge">{step.step}</span>
+                              {tr("timingStep", { step: step.step })}
+                            </th>
+                            <td className="dr-timing-time">
+                              <span>{chartClock(firstNote)}</span>
+                              {distinctInput && (
+                                <small className="block text-[11px] text-on-surface-variant">
+                                  {tr("timingInputAt", { time: chartClock(firstInput) })}
+                                </small>
+                              )}
+                            </td>
+                            <td>
+                              {primaryKind && primaryKind !== "hit" && (
+                                <span className="dr-timing-chord me-1">{tr(inputKindKey(primaryKind))}</span>
+                              )}
+                              {step.notes > 1 ? <span className="dr-timing-chord">{tr("timingChord", { count: step.notes })}</span> : null}
+                            </td>
+                            <td className="dr-timing-gain">+{formatValue(step.gain, "score", locale)}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </li>
@@ -508,6 +660,65 @@ function OrderTimingPanel({ locale, timing, catalog }: { locale: AppLocale; timi
       </details>
     )}
   </div>;
+}
+
+/** Collapsible Gekisou timing guide (`timeline.guide`) for the team's optimal order. */
+function GekisoGuidePanel({ locale, guide, catalog }: { locale: AppLocale; guide: DeckGekisoGuide; catalog: BoxCatalog }) {
+  const tr = (key: string, values?: Record<string, string | number>) => t(locale, `deckWorkspace.solver.${key}`, values);
+  const included = guide.actions.filter(act => act.included);
+  if (!included.length) return null;
+  const gain = typeof guide.best === "number" && typeof guide.score === "number" ? guide.best - guide.score : 0;
+  const memberName = (id: number) => catalog.members.find(card => card.id === id)?.title ?? String(id);
+  return (
+    <details className="dr-timing-guide mt-2" data-testid="deck-gekiso-guide">
+      <summary className="dr-timing-guide-summary md3-state">
+        <span>{tr("gekisoGuideTitle")}</span>
+        <span className="dr-timing-guide-right">
+          {gain > 0 && <em className="dr-timing-delta">+{formatValue(gain, "score", locale)}</em>}
+          <span className="dr-timing-advance">{tr("gekisoGuideFrameRate", { hz: guide.frameRate })}</span>
+          <Icon name="chevronDown" className="dr-timing-guide-chevron h-4 w-4" />
+        </span>
+      </summary>
+      <div className="dr-timing-guide-body">
+        <table className="dr-timing-steps">
+          <tbody>
+            {included.map((act, idx) => {
+              const firstInput = act.inputTimesMs?.[0];
+              const distinctInput = typeof firstInput === "number" && Math.abs(firstInput - act.timeMs) >= 0.5;
+              const noteCount = act.noteIndices?.length ?? act.noteTimesMs?.length ?? 1;
+              return (
+                <tr key={`${act.kind}:${act.timeMs}:${idx}`}>
+                  <th scope="row">
+                    {typeof act.range === "number" && (
+                      <span className="dr-timing-badge">{tr("gekisoGuideRange", { n: act.range + 1 })}</span>
+                    )}
+                    {typeof act.member === "number" ? memberName(act.member) : act.kind}
+                  </th>
+                  <td className="dr-timing-time">
+                    <span>{chartClock(act.timeMs)}</span>
+                    {distinctInput && (
+                      <small className="block text-[11px] text-on-surface-variant">
+                        {tr("timingInputAt", { time: chartClock(firstInput) })}
+                      </small>
+                    )}
+                  </td>
+                  <td>
+                    {noteCount > 1 ? <span className="dr-timing-chord">{tr("timingChord", { count: noteCount })}</span> : null}
+                  </td>
+                  <td className="dr-timing-gain">
+                    {typeof act.gain === "number" && act.gain > 0 ? `+${formatValue(act.gain, "score", locale)}` : null}
+                    {typeof act.comboGain === "number" && act.comboGain > 0 ? (
+                      <small className="block text-[11px]">{tr("gekisoGuideComboGain", { n: act.comboGain })}</small>
+                    ) : null}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  );
 }
 
 /** Where the lowest, median and highest order scores and their average lie on one scale. */

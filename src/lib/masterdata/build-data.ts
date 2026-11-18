@@ -812,7 +812,13 @@ export function getBuildDeckEvents(locale: AppLocale): Promise<{ server: GameSer
         startAt: event.startAt,
         endAt: event.endAt,
         itemId: event.eventItemId || null,
-        challengeMusics: challengeMusics._allData.filter((row) => row.eventId === event.id).map((row) => ({ id: row.id, musicId: row.liveMusicId })),
+        challengeMusics: challengeMusics._allData.filter((row) => row.eventId === event.id).map((row) => ({
+          id: row.id,
+          musicId: row.liveMusicId,
+          ...(typeof row.musicType === "number" && ((row.musicType >= 1 && row.musicType <= 5) || row.musicType === 99)
+            ? { musicType: row.musicType }
+            : {}),
+        })),
         ...(effects.length > 0 ? { effects } : {}),
       };
     });

@@ -1,0 +1,96 @@
+name: Haneoka Engine
+
+on:
+  pull_request:
+    paths:
+      - patches/**
+      - scripts/build-haneoka-engine.mjs
+      - scripts/check-haneoka-upstream.mjs
+      - src/lib/deck/**
+      - tests/*haneoka*
+      - tests/*deck*
+      - .github/workflows/haneoka-engine.yml
+  push:
+    branches: [main]
+    paths:
+      - patches/**
+      - scripts/build-haneoka-engine.mjs
+      - scripts/check-haneoka-upstream.mjs
+      - src/lib/deck/**
+      - tests/*haneoka*
+      - tests/*deck*
+      - .github/workflows/haneoka-engine.yml
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  engine:
+    name: Build, Clippy & Test Haneoka WASM Engine
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CARGO_TERM_COLOR: always
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: clippy
+
+      - name: Install JS dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Verify Haneoka upstream pin & patch applicability
+        run: bun scripts/check-haneoka-upstream.mjs --patch
+
+      - name: Cache Cargo registry and engine target artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            .haneoka/target
+          key: haneoka-cargo-${{ runner.os }}-${{ hashFiles('patches/haneoka-rewards.patch', 'scripts/build-haneoka-engine.mjs') }}
+          restore-keys: |
+            haneoka-cargo-${{ runner.os }}-
+
+      - name: Build Haneoka WASM engine and run Rust test suite
+        run: bun scripts/build-haneoka-engine.mjs --test
+
+      - name: Run Clippy on host and wasm32 targets
+        run: |
+          PATCHED_MANIFEST="$(ls .haneoka/patched-*/Cargo.toml | head -n 1)"
+          test -f "$PATCHED_MANIFEST"
+          cargo clippy --manifest-path "$PATCHED_MANIFEST" --target-dir .haneoka/target --locked --lib -- -D warnings
+          cargo clippy --manifest-path "$PATCHED_MANIFEST" --target-dir .haneoka/target --locked --target wasm32-unknown-unknown --lib -- -D warnings
+
+      - name: Verify generated runtime bundle
+        run: |
+          test -s public/haneoka-team-engine/team-engine.wasm
+          test -s public/haneoka-team-engine/solver.mjs
+          test -s public/haneoka-team-engine/runtime.json
+          test -s public/haneoka-team-engine/moenotes.patch
+
+      - name: Run Bun test suite (with live WASM bundle)
+        run: bun test tests/
+
+      - name: Ensure tracked workspace remains clean
+        run: test -z "$(git status --porcelain)"
