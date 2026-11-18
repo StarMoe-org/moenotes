@@ -212,7 +212,17 @@ only after `bun run build:haneoka-engine --test` rebuilds and tests the WASM wit
 State at the last check (2026-11-27): upstream `main` is `6de572be31b0fd8e4ab50825bd92c81ac625bc78`, 40 commits ahead
 of the pin and 0 behind, and the reward patch does **not** apply to it. The ten files that reject the patch are
 `src/api.rs`, `src/api/arena.rs`, `src/clock.rs`, `src/event.rs`, `src/gekiso.rs`, `src/gekiso_objective.rs`,
-`src/gekiso_objective/shared.rs`, `src/live.rs`, `src/objectives.rs` and `src/search.rs`.
+`src/gekiso_objective/shared.rs`, `src/live.rs`, `src/objectives.rs` and `src/search.rs`; a 3-way application resolves
+the other nine patched files (`chart.rs`, `clock.rs`, `power.rs`, `rewards.rs`, `search.rs`, …) cleanly.
+
+Most of the reward layer has meanwhile arrived upstream, so the port is a shrinking rewrite rather than a replay of the
+whole patch. Of the 107 definitions the patch adds, 61 already exist upstream — among them `with_power_ties`,
+`with_maximum`, `score_ties`, `prefetch_supports`, `deadline_scope`, `preserve_snap_options` and
+`team_filter_impossible` — while 46 stay patch-only, led by the lexicographic combined-reward layer
+(`LexRewards`, `MoenotesRewards`, `RewardTerm`, `search_moenotes_rewards`, `PairedRelaxation`), `SkipScore`,
+`FixedChallengePoints` and the non-native timing path (`has_native_inputs`, `timing_frames_at`, `score_timed_order`).
+Symbol names survive refactors, so this is a scope estimate, not a proof of equivalence; every remaining piece still
+needs the same review and a rebuild.
 
 Most of the gap is upstream work that overlaps the reward layer rather than unrelated code, so the patch has to be
 re-derived instead of fuzzed into place:
