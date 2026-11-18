@@ -61,7 +61,7 @@ jobs:
         run: bun scripts/check-haneoka-upstream.mjs --patch
 
       - name: Cache Cargo registry and engine target artifacts
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry/index/
@@ -79,8 +79,23 @@ jobs:
         run: |
           PATCHED_MANIFEST="$(ls .haneoka/patched-*/Cargo.toml | head -n 1)"
           test -f "$PATCHED_MANIFEST"
-          cargo clippy --manifest-path "$PATCHED_MANIFEST" --target-dir .haneoka/target --locked --lib -- -D warnings
-          cargo clippy --manifest-path "$PATCHED_MANIFEST" --target-dir .haneoka/target --locked --target wasm32-unknown-unknown --lib -- -D warnings
+          run_clippy() {
+            local label="$1"
+            shift
+            local log
+            log="$(mktemp)"
+            if ! cargo clippy --manifest-path "$PATCHED_MANIFEST" --target-dir .haneoka/target --locked --message-format=short "$@" -- -D warnings 2>&1 | tee "$log"; then
+              grep -E '^(error|warning)' "$log" | head -n 20 | while IFS= read -r line; do
+                echo "::error title=Clippy ($label)::$line"
+              done
+              rm -f "$log"
+              exit 1
+            fi
+            rm -f "$log"
+          }
+          set -o pipefail
+          run_clippy host --lib
+          run_clippy wasm32 --target wasm32-unknown-unknown --lib
 
       - name: Verify generated runtime bundle
         run: |

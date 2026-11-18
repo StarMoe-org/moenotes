@@ -1,5 +1,5 @@
 diff --git a/src/api.rs b/src/api.rs
-index 500ffd3..d6f92aa 100644
+index 500ffd3..3d20bae 100644
 --- a/src/api.rs
 +++ b/src/api.rs
 @@ -1,3 +1,6 @@
@@ -384,7 +384,7 @@ index 500ffd3..d6f92aa 100644
              let current = now();
              let song_deadline = (current
                  + (deadline - current).max(0.0) / (songs.len() - index) as f64)
-@@ -2770,13 +2898,15 @@ impl Engine {
+@@ -2770,11 +2898,13 @@ impl Engine {
                  single["deadline"] = json!(song_deadline);
              }
              let mut response = match kind {
@@ -394,14 +394,11 @@ index 500ffd3..d6f92aa 100644
                  "event" => {
                      if single["goal"]["gekiso"].is_null() {
                          self.search_event(&single, started, now)?
++                    } else if single["goal"]["rewardSemantics"] == "moenotes-v1" {
++                        self.search_moenotes_rewards(&single, started, now)?
                      } else {
--                        self.search_rewards(&single, started, now)?
-+                        if single["goal"]["rewardSemantics"]=="moenotes-v1" {
-+                            self.search_moenotes_rewards(&single,started,now)?
-+                        } else {self.search_rewards(&single, started, now)?}
+                         self.search_rewards(&single, started, now)?
                      }
-                 }
-                 "gekiso" => self.search_gekiso(
 @@ -4125,6 +4255,21 @@ fn merge_reward_candidates(
  }
  
@@ -676,7 +673,7 @@ index e794c22..69b0c13 100644
              && self.max_character_rank == *max_character_rank
              && self
 diff --git a/src/assignment.rs b/src/assignment.rs
-index 087fc97..b496656 100644
+index 087fc97..1afe55a 100644
 --- a/src/assignment.rs
 +++ b/src/assignment.rs
 @@ -1,3 +1,4 @@
@@ -684,7 +681,7 @@ index 087fc97..b496656 100644
  //! Reusable maximum-weight matching scratch, including the small top-column
  //! search used by the website for up to five remaining snap slots.
  pub(crate) const SLOT_MASKS: [&[usize]; 6] = [
-@@ -119,6 +120,40 @@ pub struct Scratch {
+@@ -119,6 +120,42 @@ pub struct Scratch {
      small_used: Vec<bool>,
  }
  impl Scratch {
@@ -695,7 +692,8 @@ index 087fc97..b496656 100644
 +        if self.small_used.len()<4096 {self.small_used.resize(4096,false);}
 +        for (row,order) in orders.iter().enumerate() {
 +            let base=row*5;
-+            for k in 0..n {self.small_columns[base+k]=(width+row) as i32;self.small_values[base+k]=-1e30;}
++            self.small_columns[base..base+n].fill((width+row) as i32);
++            self.small_values[base..base+n].fill(-1e30);
 +            let mut count=0;
 +            for &snap in order {
 +                if snap>=0 && used[snap as usize] {continue;}
@@ -712,7 +710,8 @@ index 087fc97..b496656 100644
 +        if self.small_used.len()<4096 {self.small_used.resize(4096,false);}
 +        for (row,choices) in allowed.iter().enumerate() {
 +            let base=row*5;
-+            for k in 0..n {self.small_columns[base+k]=(width+row) as i32;self.small_values[base+k]=0.0;}
++            self.small_columns[base..base+n].fill((width+row) as i32);
++            self.small_values[base..base+n].fill(0.0);
 +            let mut count=0;
 +            for &snap in order {
 +                if used[snap] || !choices[snap] {continue;}
@@ -833,7 +832,7 @@ index dc35596..fd3d6ac 100644
 +    deadline_expired(SEARCH_DEADLINE.with(std::cell::Cell::get))
 +}
 diff --git a/src/event.rs b/src/event.rs
-index f150c1a..17cce53 100644
+index f150c1a..17abc4c 100644
 --- a/src/event.rs
 +++ b/src/event.rs
 @@ -1,3 +1,6 @@
@@ -1023,7 +1022,7 @@ index f150c1a..17cce53 100644
          let key = other.to_bits();
          self.other_mean_bound(other, f64::INFINITY);
          let secondary = self
-@@ -1134,14 +1188,97 @@ impl EventObjective {
+@@ -1134,14 +1188,96 @@ impl EventObjective {
              .map_or(f64::INFINITY, |curve| curve.orders(&coefficients, t.power));
          Some((primary, secondary))
      }
@@ -1044,8 +1043,8 @@ index f150c1a..17cce53 100644
 +                let member=members[slot];
 +                let row:[f64;5]=std::array::from_fn(|event|self.frontiers[member][event].iter()
 +                    .map(|&(power,weight)|((lambda*power).next_up()+(weight/lambda).next_up()).next_up()).fold(0.0,f64::max));
-+                for i in 0..120 {
-+                    let event=positions[i][slot];
++                for (i, pos) in positions.iter().enumerate() {
++                    let event=pos[slot];
 +                    cache.suffix[slot][i]=(row[event]+cache.suffix[slot+1][i]).next_up();
 +                }
 +                let mean=self.mean_frontiers[member].iter()
@@ -1055,12 +1054,12 @@ index f150c1a..17cce53 100644
 +            cache
 +        };
 +        let common=(0..from.min(cache.depth)).take_while(|&slot|cache.selected[slot]==assigned[slot]).count();
-+        for slot in common..from {
-+            let member=members[slot];let snap=assigned[slot];let id=self.slot_profile(member,snap);
++        for (slot, (&member, &snap)) in members.iter().zip(assigned).enumerate().take(from).skip(common) {
++            let id=self.slot_profile(member,snap);
 +            let power=self.snap_power[member*self.snap_width+if snap<0 {self.snap_width-1} else {snap as usize}];
 +            let row=self.profiles[id as usize].map(|weight|((cache.lambda*power).next_up()+(weight/cache.lambda).next_up()).next_up());
-+            for i in 0..120 {
-+                let event=positions[i][slot];
++            for (i, pos) in positions.iter().enumerate() {
++                let event=pos[slot];
 +                cache.prefix[slot+1][i]=(cache.prefix[slot][i]+row[event]).next_up();
 +            }
 +            let weight=self.profiles[id as usize].iter().sum::<f64>()/5.0;
@@ -1081,8 +1080,7 @@ index f150c1a..17cce53 100644
 +        if !lambda.is_finite() || lambda<=0.0 {return None;}
 +        let constant=((lambda*self.base_power).next_up()+(base/lambda).next_up()).next_up();
 +        let mut mean_sum = constant;
-+        for slot in 0..5 {
-+            let member = members[slot];
++        for (slot, &member) in members.iter().enumerate().take(5) {
 +            let value = if slot < from {
 +                let snap = assigned[slot];
 +                let id = self.slot_profile(member, snap);
@@ -1124,7 +1122,7 @@ index f150c1a..17cce53 100644
          let core = self.core.as_ref()?;
          if core.unbounded || core.input.judgements.is_some() {
              return None;
-@@ -1190,38 +1327,17 @@ impl EventObjective {
+@@ -1190,38 +1326,17 @@ impl EventObjective {
              (((sum * sum).next_up() / (4.0 * converted)).next_up() * (1.0 + RELATIVE_ERROR))
                  .next_up()
          });
@@ -1172,7 +1170,7 @@ index f150c1a..17cce53 100644
          self.other_mean_bound(other, f64::INFINITY);
          let secondary = self
              .other_curves
-@@ -1272,6 +1388,7 @@ impl EventObjective {
+@@ -1272,6 +1387,7 @@ impl EventObjective {
          t: Totals,
          from: usize,
          other: f64,
@@ -1180,7 +1178,7 @@ index f150c1a..17cce53 100644
      ) -> Option<(f64, f64)> {
          if self.core.as_ref()?.unbounded || self.core.as_ref()?.input.judgements.is_some() {
              return None;
-@@ -1283,10 +1400,13 @@ impl EventObjective {
+@@ -1283,10 +1399,13 @@ impl EventObjective {
                  self.suffix_profiles[from]
              }
          });
@@ -1195,7 +1193,7 @@ index f150c1a..17cce53 100644
          self.other_mean_bound(other, f64::INFINITY);
          let secondary = self
              .other_curves
-@@ -1426,7 +1546,16 @@ impl EventObjective {
+@@ -1426,7 +1545,16 @@ impl EventObjective {
      }
  }
  impl Objective for EventObjective {
@@ -1213,7 +1211,7 @@ index f150c1a..17cce53 100644
      fn seed_objective(&self) -> Option<Box<dyn Objective>> {
          (!self.points_measure
              && self
-@@ -1479,17 +1608,19 @@ impl Objective for EventObjective {
+@@ -1479,17 +1607,19 @@ impl Objective for EventObjective {
              .is_none_or(|core| core.shape(member, a) == core.shape(member, b))
      }
      fn preserve_snap_options(&self) -> bool {
@@ -1236,7 +1234,7 @@ index f150c1a..17cce53 100644
              && self
                  .core
                  .as_mut()
-@@ -1513,7 +1644,8 @@ impl Objective for EventObjective {
+@@ -1513,7 +1643,8 @@ impl Objective for EventObjective {
          power_delta: f64,
      ) -> bool {
          !self.nonmonotone()
@@ -1246,7 +1244,7 @@ index f150c1a..17cce53 100644
              && self
                  .core
                  .as_mut()
-@@ -1559,6 +1691,7 @@ impl Objective for EventObjective {
+@@ -1559,6 +1690,7 @@ impl Objective for EventObjective {
          self.snap_width = width;
      }
      fn prepare_assignment_power(&mut self, power: f64) {
@@ -1254,7 +1252,7 @@ index f150c1a..17cce53 100644
          self.base_power = power;
      }
      fn prepare_members(&mut self, characters: &[Vec<usize>]) {
-@@ -1595,7 +1728,7 @@ impl Objective for EventObjective {
+@@ -1595,7 +1727,7 @@ impl Objective for EventObjective {
                  + self.other_member_suffix[from][left]
                  + self.other_snap_top
          };
@@ -1263,7 +1261,7 @@ index f150c1a..17cce53 100644
              .map(|bounds| bounds.0)
      }
      fn product_base(&self) -> Option<f64> {
-@@ -1623,7 +1756,7 @@ impl Objective for EventObjective {
+@@ -1623,7 +1755,7 @@ impl Objective for EventObjective {
          self.value(totals.bonus, rank) + self.tie * self.other(other, rank)
      }
      fn joint_targets(&mut self, limit: f64) -> Option<Vec<JointTarget>> {
@@ -1272,7 +1270,7 @@ index f150c1a..17cce53 100644
              return None;
          }
          let scale = self.core.as_ref()?.input.converted_count as f64 / (1.0 + RELATIVE_ERROR);
-@@ -1664,6 +1797,7 @@ impl Objective for EventObjective {
+@@ -1664,6 +1796,7 @@ impl Objective for EventObjective {
          })
      }
      fn prepare_assignment(&mut self, _members: &[usize], options: &[Vec<i32>]) {
@@ -1280,7 +1278,7 @@ index f150c1a..17cce53 100644
          if self.core.is_some() {
              for (slot, choices) in options.iter().enumerate() {
                  let member = _members[slot];
-@@ -1777,18 +1911,28 @@ impl Objective for EventObjective {
+@@ -1777,18 +1910,26 @@ impl Objective for EventObjective {
          } else {
              self.assignment_other_bonus(members, assigned, from)
          };
@@ -1289,11 +1287,9 @@ index f150c1a..17cce53 100644
          if upper <= limit {
              return Some(upper);
          }
-+        if !self.maximum {
-+            if let Some(mean)=self.paired_mean(members,assigned,from,t) {
-+                upper=upper.min(self.mean_bound(t.bonus,other,mean));
-+                if upper<=limit {return Some(upper);}
-+            }
++        if let Some(mean)=(!self.maximum).then(||self.paired_mean(members,assigned,from,t)).flatten() {
++            upper=upper.min(self.mean_bound(t.bonus,other,mean));
++            if upper<=limit {return Some(upper);}
 +        }
          Some(
 -            self.paired_projection(members, assigned, from, t, other)
@@ -1312,7 +1308,7 @@ index f150c1a..17cce53 100644
              return Some(bounds.0);
          }
  
-@@ -1808,6 +1952,7 @@ impl Objective for EventObjective {
+@@ -1808,6 +1949,7 @@ impl Objective for EventObjective {
          }
      }
      fn interval(&mut self, team: &Team, t: Totals) -> (f64, f64) {
@@ -1320,7 +1316,7 @@ index f150c1a..17cce53 100644
          let other = self.other_bonus(team);
          let Some(core) = &self.core else {
              let key =
-@@ -1827,7 +1972,7 @@ impl Objective for EventObjective {
+@@ -1827,7 +1969,7 @@ impl Objective for EventObjective {
      fn exact(&mut self, team: &Team, power: f64, _slots: &[f64]) -> Result<Exact, String> {
          let bonus = self.team_bonus(team);
          let other = self.other_bonus(team);
@@ -1329,7 +1325,7 @@ index f150c1a..17cce53 100644
              self.core.as_mut().map(|core| core.order_bounds(team, power as i32 as f64))
                  .and_then(|(lows, highs)| {
                      let mut ranks = Vec::with_capacity(lows.len());
-@@ -1848,9 +1993,10 @@ impl Objective for EventObjective {
+@@ -1848,9 +1990,10 @@ impl Objective for EventObjective {
              let mean = self.value(bonus, self.skip_rank);
              let direct = self.direct(bonus, self.skip_rank);
              let other_mean = self.other(other, self.skip_rank);
@@ -1341,7 +1337,7 @@ index f150c1a..17cce53 100644
              });
          };
          #[cfg(debug_assertions)]
-@@ -1861,6 +2007,28 @@ impl Objective for EventObjective {
+@@ -1861,6 +2004,28 @@ impl Objective for EventObjective {
                  "ordinary reward rank certificate");
          }
          let scores = if certificate.is_none() { Some(core.evaluate(team, power as i32)?) } else { None };
@@ -1353,9 +1349,9 @@ index f150c1a..17cce53 100644
 +            let positions: [usize; 5] = std::array::from_fn(|slot| layout.iter().position(|&value| value == slot).unwrap());
 +            let mut selected = 0;
 +            let values: Vec<_> = scores.scores.iter().map(|&score| self.value(bonus, self.rank(score))).collect();
-+            for index in 1..values.len() {
++            for (index, &candidate) in values.iter().enumerate().skip(1) {
 +                let order_key = |i: usize| crate::live::orders()[i].map(|slot| positions[slot]);
-+                if values[index] > values[selected] || values[index] == values[selected] && order_key(index) < order_key(selected) {
++                if candidate > values[selected] || candidate == values[selected] && order_key(index) < order_key(selected) {
 +                    selected = index;
 +                }
 +            }
@@ -1370,7 +1366,7 @@ index f150c1a..17cce53 100644
          let order_ranks = certificate.as_ref().map(|value| value.0.clone()).unwrap_or_else(|| {
              scores.as_ref().unwrap().scores.iter().map(|&score| self.rank(score)).collect()
          });
-@@ -1898,7 +2066,7 @@ impl Objective for EventObjective {
+@@ -1898,7 +2063,7 @@ impl Objective for EventObjective {
              key_max = key_max.max(key);
          }
          let other_mean = (other_sum / count).clamp(other_min, other_max);
@@ -1379,7 +1375,7 @@ index f150c1a..17cce53 100644
          if let Some((_, low, high)) = certificate {
              detail["pendingScores"] = json!(true);
              detail["rankCertificate"] = json!({"ranks":detail["ranks"],"orders":order_ranks.len(),"scoreLow":low,"scoreHigh":high});
-@@ -2033,6 +2201,7 @@ impl ScoreTie {
+@@ -2033,6 +2198,7 @@ impl ScoreTie {
      }
  }
  impl Objective for ScoreTie {
@@ -1387,7 +1383,7 @@ index f150c1a..17cce53 100644
      fn exchange_snap_equivalent(&mut self, member: usize, a: i32, b: i32) -> bool {
          !self.mean.core.unbounded && self.mean.core.shape(member, a) == self.mean.core.shape(member, b)
      }
-@@ -2128,7 +2297,7 @@ impl Objective for ScoreTie {
+@@ -2128,7 +2294,7 @@ impl Objective for ScoreTie {
              .sum::<f64>()
              + self.member_suffix[from][left]
              + self.other_snaps;
@@ -1396,7 +1392,7 @@ index f150c1a..17cce53 100644
              if primary < self.target || self.other_target.is_some_and(|target| other < target) {
                  return Some(f64::NEG_INFINITY);
              }
-@@ -2263,7 +2432,7 @@ impl Objective for ScoreTie {
+@@ -2263,7 +2429,7 @@ impl Objective for ScoreTie {
                  .map(|&s| self.event.other_snap(s))
                  .sum::<f64>()
              + self.other_suffix[from].min(distinct);
@@ -1405,7 +1401,7 @@ index f150c1a..17cce53 100644
          let upper =
              if primary < self.target || self.other_target.is_some_and(|target| other < target) {
                  f64::NEG_INFINITY
-@@ -2277,7 +2446,7 @@ impl Objective for ScoreTie {
+@@ -2277,7 +2443,7 @@ impl Objective for ScoreTie {
          }
          if let Some((primary, other, mean)) = self
              .event
@@ -1414,7 +1410,7 @@ index f150c1a..17cce53 100644
          {
              if primary < self.target || self.other_target.is_some_and(|target| other < target) {
                  return Some(f64::NEG_INFINITY);
-@@ -2486,6 +2655,10 @@ pub struct ChallengePoints {
+@@ -2486,6 +2652,10 @@ pub struct ChallengePoints {
      pub chart: Chart,
      pub route: Route,
      curve: Option<RewardCurve>,
@@ -1425,7 +1421,7 @@ index f150c1a..17cce53 100644
  }
  impl ChallengePoints {
      pub fn new(mean: crate::objectives::LiveObjective, chart: Chart, route: Route) -> Self {
-@@ -2511,7 +2684,32 @@ impl ChallengePoints {
+@@ -2511,7 +2681,32 @@ impl ChallengePoints {
              chart,
              route,
              curve,
@@ -1458,7 +1454,7 @@ index f150c1a..17cce53 100644
      }
      fn value(&self, score: f64) -> f64 {
          *self
-@@ -2523,8 +2721,11 @@ impl ChallengePoints {
+@@ -2523,8 +2718,11 @@ impl ChallengePoints {
      }
  }
  impl Objective for ChallengePoints {
@@ -1471,7 +1467,7 @@ index f150c1a..17cce53 100644
      }
      fn needs_power_cap(&self) -> bool {
          self.mean.needs_power_cap()
-@@ -2533,20 +2734,20 @@ impl Objective for ChallengePoints {
+@@ -2533,20 +2731,20 @@ impl Objective for ChallengePoints {
          self.mean.prepare_dominance(power);
      }
      fn numeric_snap_dominance(&mut self, m: usize, a: i32, b: i32, power: f64) -> bool {
@@ -1496,7 +1492,7 @@ index f150c1a..17cce53 100644
      }
      fn canonical_leader(&self) -> bool {
          self.mean.canonical_leader()
-@@ -2555,20 +2756,22 @@ impl Objective for ChallengePoints {
+@@ -2555,20 +2753,22 @@ impl Objective for ChallengePoints {
          self.mean.skill(m, s)
      }
      fn bound(&mut self, t: Totals) -> f64 {
@@ -1522,7 +1518,7 @@ index f150c1a..17cce53 100644
          )
      }
      fn exact(&mut self, team: &Team, power: f64, slots: &[f64]) -> Result<Exact, String> {
-@@ -2578,10 +2781,357 @@ impl Objective for ChallengePoints {
+@@ -2578,10 +2778,372 @@ impl Objective for ChallengePoints {
              .into_iter()
              .map(|s| self.value(crate::master::number(s, 0.0)))
              .collect();
@@ -1533,9 +1529,9 @@ index f150c1a..17cce53 100644
 +            let layout = [others[0],others[1],0,others[2],others[3]];
 +            let positions: [usize;5] = std::array::from_fn(|slot|layout.iter().position(|&s|s==slot).unwrap());
 +            let mut selected = 0;
-+            for index in 1..per_order.len() {
++            for (index, &candidate) in per_order.iter().enumerate().skip(1) {
 +                let key = |i:usize|crate::live::orders()[i].map(|slot|positions[slot]);
-+                if per_order[index]>per_order[selected] || per_order[index]==per_order[selected] && key(index)<key(selected) { selected=index; }
++                if candidate>per_order[selected] || candidate==per_order[selected] && key(index)<key(selected) { selected=index; }
 +            }
 +            let payoff=per_order[selected];
 +            return Ok(Exact { key:payoff,detail:json!({"scores":scores,"perOrder":[payoff],"mean":payoff,"rewardSum":payoff,"orders":1,"bonus":0,"challengePoints":payoff,"selectedOrder":selected}) });
@@ -1547,9 +1543,9 @@ index f150c1a..17cce53 100644
 -            detail: json!({"scores":scores,"perOrder":per_order,"mean":mean,"bonus":0,"challengePoints":mean}),
 +            key: mean + self.score_tie(crate::master::number(&scores["mean"], 0.0)),
 +            detail: json!({"scores":scores,"perOrder":per_order,"mean":mean,"rewardSum":reward_sum,"orders":per_order.len(),"bonus":0,"challengePoints":mean}),
-+        })
-+    }
-+}
+         })
+     }
+ }
 +
 +// Moenotes Skip CP is a fixed result-grade payoff, independent of the formation.
 +pub struct FixedChallengePoints { pub value: f64, pub master: Master, pub chart: Chart }
@@ -1612,12 +1608,16 @@ index f150c1a..17cce53 100644
 +        upper
 +    }
 +    fn project_upper(&self, upper: &[i128]) -> f64 {
-+        let mut clipped;
-+        let upper=if self.prefix.is_empty() {upper} else {
-+            if upper[..self.prefix.len()]<self.prefix[..] {return f64::NEG_INFINITY;}
-+            clipped=upper.to_vec();clipped[..self.prefix.len()].copy_from_slice(&self.prefix);clipped.as_slice()
++        let upper: std::borrow::Cow<'_, [i128]> = if self.prefix.is_empty() {
++            std::borrow::Cow::Borrowed(upper)
++        } else if upper[..self.prefix.len()] < self.prefix[..] {
++            return f64::NEG_INFINITY;
++        } else {
++            let mut clipped = upper.to_vec();
++            clipped[..self.prefix.len()].copy_from_slice(&self.prefix);
++            std::borrow::Cow::Owned(clipped)
 +        };
-+        if self.frontier.as_ref().is_some_and(|kth|upper<=kth.as_slice()) {f64::NEG_INFINITY}
++        if self.frontier.as_ref().is_some_and(|kth|upper.as_ref()<=kth.as_slice()) {f64::NEG_INFINITY}
 +        else {(upper[self.search_level] as f64).next_up()}
 +    }
 +    fn projected_bound(&self, high: f64, bonuses: [f64;2]) -> f64 {
@@ -1629,7 +1629,7 @@ index f150c1a..17cce53 100644
 +        let mut upper=[0i128;3];
 +        for &score in scores {
 +            let row=self.order_upper(score,bonuses);
-+            for index in 0..self.levels.len() {upper[index]+=row[index];}
++            for (dst, &src) in upper[..self.levels.len()].iter_mut().zip(&row) {*dst+=src;}
 +        }
 +        self.project_upper(&upper[..self.levels.len()])
 +    }
@@ -1659,15 +1659,16 @@ index f150c1a..17cce53 100644
 +                    .filter(|s| !used.contains(s)).map(|&s|if s<0 {0.0} else {self.snaps[kind][s as usize]})
 +                    .fold(f64::NEG_INFINITY, f64::max)).sum::<f64>()
 +            }
-         })
-     }
++        })
++    }
 +
++    #[allow(clippy::too_many_arguments)]
 +    pub fn new(master: &Master, members: &[Member], snaps: &[Snap], chart: &Chart, route: Route,
 +        play: &Value, levels: &Value, score_cap: f64) -> Result<Self, String> {
 +        let levels: Vec<Vec<RewardTerm>> = serde_json::from_value(levels.clone()).map_err(|e| e.to_string())?;
 +        if levels.is_empty() || levels.len() > 3 || levels.iter().any(|l| l.is_empty())
 +            || levels.iter().map(Vec::len).sum::<usize>() > 9
-+            || levels.iter().flatten().any(|t| t.kind > 2 || t.weight < 1 || t.weight > 1_000_000_000) {
++            || levels.iter().flatten().any(|t| t.kind > 2 || !(1..=1_000_000_000).contains(&t.weight)) {
 +            return Err("combined-reward-levels".into());
 +        }
 +        let used = std::array::from_fn(|kind| levels.iter().flatten().any(|t| t.kind == kind));
@@ -1706,7 +1707,7 @@ index f150c1a..17cce53 100644
 +        match kind { 0=>self.route.points(bonus,rank),1=>self.route.items(bonus,rank),_=>self.route.cp(rank) }
 +    }
 +    fn whole(value: f64) -> Result<i128,String> {
-+        if !value.is_finite() || value.fract() != 0.0 || value < i32::MIN as f64 || value > i32::MAX as f64 {
++        if !value.is_finite() || value.fract() != 0.0 || !(i32::MIN as f64..=i32::MAX as f64).contains(&value) {
 +            return Err("combined-reward-range".into());
 +        }
 +        Ok(value as i128)
@@ -1729,19 +1730,22 @@ index f150c1a..17cce53 100644
 +                    self.monotone[1] &= count>=0 && item_rate>=0 && (0..=i32::MAX as i128).contains(&bonus) && (0..=i64::MAX as i128).contains(&(count as i128*bonus*item_rate));
 +                }
 +            }
-+            for kind in 0..3 { if self.used[kind] { Self::whole(self.reward(kind,self.max_bonus[kind.min(1)],rank))?; } }
++            for (kind, &used) in self.used.iter().enumerate() { if used { Self::whole(self.reward(kind,self.max_bonus[kind.min(1)],rank))?; } }
 +        }
 +        Ok(())
 +    }
 +    fn global_range(&self) -> Result<([i128;3],[i128;3]),String> {
 +        let mut low=[i128::MAX;3];let mut high=[0;3];
-+        for &(rank,_) in &self.eligible { for kind in 0..3 { if self.used[kind] {
-+            if kind<2 && !self.monotone[kind] {low[kind]=-214748;high[kind]=214748;}else{
-+                low[kind]=low[kind].min(Self::whole(self.reward(kind,0.0,rank))?);
-+                high[kind]=high[kind].max(Self::whole(self.reward(kind,self.max_bonus[kind.min(1)],rank))?);
++        for &(rank,_) in &self.eligible {
++            for ((kind, &used), (low_cell, high_cell)) in self.used.iter().enumerate().zip(low.iter_mut().zip(&mut high)) {
++                if !used { continue; }
++                if kind<2 && !self.monotone[kind] {*low_cell=-214748;*high_cell=214748;} else {
++                    *low_cell=(*low_cell).min(Self::whole(self.reward(kind,0.0,rank))?);
++                    *high_cell=(*high_cell).max(Self::whole(self.reward(kind,self.max_bonus[kind.min(1)],rank))?);
++                }
 +            }
-+        } } }
-+        for kind in 0..3 { if !self.used[kind] {low[kind]=0;} }
++        }
++        for (&used, low_cell) in self.used.iter().zip(&mut low) { if !used {*low_cell=0;} }
 +        Ok((low,high))
 +    }
 +    fn sum(&self, level: &[RewardTerm], values: &[i128;3]) -> i128 {
@@ -1870,19 +1874,26 @@ index f150c1a..17cce53 100644
 +    fn interval(&mut self,_:&Team,t:Totals)->(f64,f64) { (f64::NEG_INFINITY,self.bound(t)) }
 +    fn exact(&mut self,team:&Team,power:f64,_:&[f64])->Result<Exact,String> {
 +        let bonuses=[self.team_bonus(team,0),self.team_bonus(team,1)];
-+        let scores=match &mut self.core {Some(core)=>Some(core.evaluate(team,power as i32)?),None=>None};
++        let scores=self.core.as_mut().map(|core|core.evaluate(team,power as i32)).transpose()?;
 +        let ranks=if let Some(scores)=&scores {scores.scores.iter().map(|&s|chart::score_rank(&self.chart,s)).collect::<Vec<_>>()}else{vec![self.master.params.skip_rank]};
 +        let mut sums=[0i128;3];let mut per_order=Vec::new();
-+        for rank in ranks {let mut values=[0i128;3];for kind in 0..3 {if self.used[kind] {
-+            values[kind]=Self::whole(self.reward(kind,bonuses[kind.min(1)],rank))?;sums[kind]+=values[kind];
-+        }}per_order.push(self.sum(&self.levels[0],&values) as f64);}
++        for rank in ranks {
++            let mut values=[0i128;3];
++            for ((kind, &used), (val_cell, sum_cell)) in self.used.iter().enumerate().zip(values.iter_mut().zip(&mut sums)) {
++                if used {
++                    let v=Self::whole(self.reward(kind,bonuses[kind.min(1)],rank))?;
++                    *val_cell=v;*sum_cell+=v;
++                }
++            }
++            per_order.push(self.sum(&self.levels[0],&values) as f64);
++        }
 +        let vector=self.levels.iter().map(|l|self.sum(l,&sums)).collect::<Vec<_>>();
 +        let levels=self.levels.iter().zip(&vector).map(|(l,sum)|json!({"sum":sum.to_string(),"terms":l.iter().map(|t|sums[t.kind].to_string()).collect::<Vec<_>>()})).collect::<Vec<_>>();
 +        Ok(Exact {key:vector[self.search_level] as f64,detail:json!({"scores":scores,"skipScore":if self.core.is_none(){Some(chart::skip_score(&self.master,&self.chart,power as i32))}else{None},
 +            "prefixValid":vector.starts_with(&self.prefix),"mean":vector[0] as f64/self.observations as f64,"rewardSum":vector[0].to_string(),"orders":self.observations,"levels":levels,"lexVector":vector.iter().map(ToString::to_string).collect::<Vec<_>>(),
 +            "bonus":bonuses[self.selected],"challengePoints":sums[2] as f64/self.observations as f64,"directMin":per_order.iter().copied().reduce(f64::min),"directMax":per_order.iter().copied().reduce(f64::max)})})
 +    }
- }
++}
 diff --git a/src/event_growth.rs b/src/event_growth.rs
 index 48f7bc1..d120dc8 100644
 --- a/src/event_growth.rs
@@ -2003,7 +2014,7 @@ index 03f460c..6d9fdb5 100644
                  return Err("cancelled".into());
              }
 diff --git a/src/gekiso_objective.rs b/src/gekiso_objective.rs
-index b4fbfd2..c52335f 100644
+index b4fbfd2..c2e4d52 100644
 --- a/src/gekiso_objective.rs
 +++ b/src/gekiso_objective.rs
 @@ -1,3 +1,5 @@
@@ -2012,16 +2023,19 @@ index b4fbfd2..c52335f 100644
  //! Gekiso context caches and safe level/support bounds for exact search.
  mod shared;
  pub(crate) mod sections;
-@@ -865,6 +867,8 @@ struct RushProjection {
+@@ -864,7 +866,11 @@ struct RushProjection {
+     bytes: usize,
  }
  type SupportValues = HashMap<Vec<(i32, i32)>, f64>;
++#[cfg(target_arch = "wasm32")]
++type SearchClock<'a> = (f64, &'a dyn Fn() -> f64);
  pub struct Kernel<'a> {
-+    #[cfg(target_arch="wasm32")]
-+    search_clock:Option<(f64,&'a dyn Fn()->f64)>,
++    #[cfg(target_arch = "wasm32")]
++    search_clock: Option<SearchClock<'a>>,
      master: &'a Master,
      members: &'a [Member],
      snaps: &'a [Snap],
-@@ -1808,6 +1812,8 @@ impl<'a> Kernel<'a> {
+@@ -1808,6 +1814,8 @@ impl<'a> Kernel<'a> {
              pattern_order: VecDeque::new(),
              pattern_bytes: 0,
              numeric_hull: None,
@@ -2030,7 +2044,7 @@ index b4fbfd2..c52335f 100644
              defer_scores: false,
              seed_preview: false,
              live_floor: false,
-@@ -3275,6 +3281,9 @@ impl<'a> Kernel<'a> {
+@@ -3275,6 +3283,9 @@ impl<'a> Kernel<'a> {
          if let Some(value) = self.cache.get(&key) {
              return Arc::clone(&value.weights);
          }
@@ -2040,7 +2054,7 @@ index b4fbfd2..c52335f 100644
          let context = gekiso::context(
              within.unwrap_or(self.master),
              self.chart,
-@@ -3501,10 +3510,10 @@ impl<'a> Kernel<'a> {
+@@ -3501,10 +3512,10 @@ impl<'a> Kernel<'a> {
          deck: &[Performer],
          within: Option<&Master>,
          tag: i32,
@@ -2053,7 +2067,7 @@ index b4fbfd2..c52335f 100644
          }
          let context = Arc::new(
              gekiso::context(
-@@ -3512,8 +3521,7 @@ impl<'a> Kernel<'a> {
+@@ -3512,8 +3523,7 @@ impl<'a> Kernel<'a> {
                  self.chart,
                  &deck,
                  &self.seeds,
@@ -2063,7 +2077,7 @@ index b4fbfd2..c52335f 100644
          );
          let weights = Arc::new(self.weights(&context));
          let bytes = 128
-@@ -3525,7 +3533,7 @@ impl<'a> Kernel<'a> {
+@@ -3525,7 +3535,7 @@ impl<'a> Kernel<'a> {
                  .map(|r| r.len() * 8)
                  .sum::<usize>();
          if bytes > 16 * 1024 * 1024 {
@@ -2072,7 +2086,7 @@ index b4fbfd2..c52335f 100644
          }
          // A lottery record shared by several contexts counts once, while any of them holds it.
          let record = context.shared_record();
-@@ -3570,7 +3578,7 @@ impl<'a> Kernel<'a> {
+@@ -3570,7 +3580,7 @@ impl<'a> Kernel<'a> {
                  }
              }
          }
@@ -2081,7 +2095,7 @@ index b4fbfd2..c52335f 100644
      }
      fn weights(&self, ctx: &Context) -> Weights {
          note_weights(self.master, self.chart, ctx)
-@@ -3785,7 +3793,7 @@ impl<'a> Kernel<'a> {
+@@ -3785,7 +3795,7 @@ impl<'a> Kernel<'a> {
      }
      /// Computes the support bounds a warm pass at `level` is about to read, several at a time where the target has
      /// threads, and keeps their weights in the cache that `weights_of` reads.
@@ -2090,7 +2104,7 @@ index b4fbfd2..c52335f 100644
          if self.chart.luck {
              return;
          }
-@@ -3799,6 +3807,7 @@ impl<'a> Kernel<'a> {
+@@ -3799,6 +3809,7 @@ impl<'a> Kernel<'a> {
          let mut seen = HashSet::default();
          let mut jobs = Vec::new();
          for &(m, s) in pairs {
@@ -2098,7 +2112,7 @@ index b4fbfd2..c52335f 100644
              let Some(p) = self.support_ref(m, s) else { continue; };
              if self.support_high.get(&(at, p.band_id))
                  .is_some_and(|values| values.contains_key(p.gekisou_support_skills.as_slice())) { continue; }
-@@ -3821,13 +3830,27 @@ impl<'a> Kernel<'a> {
+@@ -3821,13 +3832,27 @@ impl<'a> Kernel<'a> {
          if jobs.len() < 2 {
              return;
          }
@@ -2126,7 +2140,7 @@ index b4fbfd2..c52335f 100644
          for ((_, key), weights) in jobs.into_iter().zip(found) {
              self.store_weights(key, Arc::new(weights));
          }
-@@ -4503,12 +4526,14 @@ impl Kernel<'_> {
+@@ -4503,12 +4528,14 @@ impl Kernel<'_> {
          Ok(result)
      }
      fn unsettled_scores(&mut self, team: &Team, power: i32) -> Result<Arc<live::Scores>, String> {
@@ -2142,7 +2156,7 @@ index b4fbfd2..c52335f 100644
          let slots: Vec<_> = team
              .members
              .iter()
-@@ -4556,6 +4581,13 @@ impl Kernel<'_> {
+@@ -4556,6 +4583,13 @@ impl Kernel<'_> {
              .collect();
          // Amortize replay-tree and native worker setup over larger completions.
          if missing.len() >= 30 {
@@ -2156,7 +2170,7 @@ index b4fbfd2..c52335f 100644
              let values =
                  gekiso::replay_order_subset(self.master, self.chart, &deck, power, &missing)?;
              for (order, value) in missing.into_iter().zip(values) {
-@@ -4563,6 +4595,8 @@ impl Kernel<'_> {
+@@ -4563,6 +4597,8 @@ impl Kernel<'_> {
              }
          } else {
              for order in missing {
@@ -2165,7 +2179,7 @@ index b4fbfd2..c52335f 100644
                  rows[order] = Some(gekiso::replay_order(
                      self.master,
                      self.chart,
-@@ -4652,6 +4686,8 @@ impl Kernel<'_> {
+@@ -4652,6 +4688,8 @@ impl Kernel<'_> {
              .then_some(values)
      }
      fn search_exact(&mut self, team: &Team, power: i32, settle: bool) -> Result<Exact, String> {
@@ -2174,7 +2188,7 @@ index b4fbfd2..c52335f 100644
          if !self.chart.luck && self.criterion == Criterion::Max && self.seeds.is_empty() && settle {
              if let Some(bounds) = self.max_order_bounds(team, power) {
                  let deck = self.original_deck(team);
-@@ -4661,6 +4697,8 @@ impl Kernel<'_> {
+@@ -4661,6 +4699,8 @@ impl Kernel<'_> {
                  let mut best = f64::NEG_INFINITY;
                  let mut count = 0;
                  for index in order {
@@ -2183,7 +2197,7 @@ index b4fbfd2..c52335f 100644
                      if bounds[index] <= best {
                          break;
                      }
-@@ -4693,7 +4731,7 @@ impl Kernel<'_> {
+@@ -4693,7 +4733,7 @@ impl Kernel<'_> {
          }
          let upper = self.unsettled_scores(team, power)?;
          let deck = self.deck_of(team);
@@ -2192,7 +2206,7 @@ index b4fbfd2..c52335f 100644
          let slots: Vec<_> = team
              .members
              .iter()
-@@ -5102,6 +5140,8 @@ impl Kernel<'_> {
+@@ -5102,6 +5142,8 @@ impl Kernel<'_> {
          })))
      }
      pub fn exact(&mut self, team: &Team, power: i32, settle: bool) -> Result<Exact, String> {
@@ -2201,7 +2215,7 @@ index b4fbfd2..c52335f 100644
          if !self.chart.luck && self.seeds.is_empty() {
              if let Some(scores) =
                  self.partial_orders
-@@ -5123,6 +5163,11 @@ impl Kernel<'_> {
+@@ -5123,6 +5165,11 @@ impl Kernel<'_> {
                      )
                  })
                  .collect();
@@ -2213,7 +2227,7 @@ index b4fbfd2..c52335f 100644
              let scores = gekiso::replay_orders(self.master, self.chart, &deck, &self.seeds, power)?;
              return Ok(Exact {
                  key: self.criterion.key(&scores.scores),
-@@ -5131,7 +5176,7 @@ impl Kernel<'_> {
+@@ -5131,7 +5178,7 @@ impl Kernel<'_> {
          }
          let ctx = if self.seeds.is_empty() {
              let deck = self.deck_of(team);
@@ -2222,7 +2236,7 @@ index b4fbfd2..c52335f 100644
          } else {
              let deck = team
                  .members
-@@ -10701,7 +10746,7 @@ fn warm(adapter: &mut Adapter<'_, '_>, env: &Environment<'_>, deadline: f64) ->
+@@ -10701,7 +10748,7 @@ fn warm(adapter: &mut Adapter<'_, '_>, env: &Environment<'_>, deadline: f64) ->
              })
              .collect();
          let level = adapter.level;
@@ -2231,16 +2245,16 @@ index b4fbfd2..c52335f 100644
      }
      for m in 0..env.members.len() {
          if (env.now)() >= deadline {
-@@ -11398,6 +11443,8 @@ fn replay_support_key(master: &Master, actor: &Performer, global_converters: &Ha
+@@ -11398,6 +11445,8 @@ fn replay_support_key(master: &Master, actor: &Performer, global_converters: &Ha
      Some(key)
  }
  struct ReplayObjective<'a> {
-+    #[cfg(target_arch="wasm32")]
-+    search_clock:(f64,&'a dyn Fn()->f64),
++    #[cfg(target_arch = "wasm32")]
++    search_clock: SearchClock<'a>,
      master: &'a Master,
      members: &'a [Member],
      snaps: &'a [Snap],
-@@ -11548,6 +11595,9 @@ impl Objective for ReplayObjective<'_> {
+@@ -11548,6 +11597,9 @@ impl Objective for ReplayObjective<'_> {
                  )
              })
              .collect();
@@ -2250,7 +2264,7 @@ index b4fbfd2..c52335f 100644
          let scores =
              gekiso::replay_orders(self.master, self.chart, &deck, self.seeds, power as i32)?;
          let mut result = Exact {
-@@ -11977,6 +12027,8 @@ fn search_levels(
+@@ -11977,6 +12029,8 @@ fn search_levels(
              });
          }
          let mut objective = ReplayObjective {
@@ -2259,7 +2273,7 @@ index b4fbfd2..c52335f 100644
              master: env.master,
              members: env.members,
              snaps: env.snaps,
-@@ -12044,6 +12096,8 @@ fn search_levels(
+@@ -12044,6 +12098,8 @@ fn search_levels(
      let generation = env.generation;
      let mut kernel = Kernel::new(env.master, env.members, env.snaps, chart, seeds, criterion);
      kernel.just_window = just_window;
@@ -2485,7 +2499,7 @@ index 4d2ed43..489b8c8 100644
          release_id: text(&identity["releaseId"]),
          params: Params {
 diff --git a/src/objectives.rs b/src/objectives.rs
-index 7d6a6fa..567ee61 100644
+index 7d6a6fa..7e90d5d 100644
 --- a/src/objectives.rs
 +++ b/src/objectives.rs
 @@ -147,9 +147,13 @@ impl Objective for AccuracySeed {
@@ -2493,7 +2507,7 @@ index 7d6a6fa..567ee61 100644
      }
  }
 +enum TimingSource {
-+    Native(Result<live::PhaseTiming, String>),
++    Native(Result<Box<live::PhaseTiming>, String>),
 +    Frames(Vec<Vec<i32>>),
 +}
  pub struct LiveCore {
@@ -2503,7 +2517,7 @@ index 7d6a6fa..567ee61 100644
      pub high: Linear,
      pub low: Linear,
      pub factor_cap: f64,
-@@ -271,15 +275,22 @@ impl LiveCore {
+@@ -271,15 +275,25 @@ impl LiveCore {
          let mut input = chart::prepare(master, chart, 0, Vec::new(), judgements, 1.0, 100.0);
          input.clock = live::FrameClock::for_play(play);
          let timing = chart::timing_mode(play).map(|best| {
@@ -2511,7 +2525,17 @@ index 7d6a6fa..567ee61 100644
 -                best,
 -                live::PhaseTiming::new(
 +            let source = if chart::has_native_inputs(master, chart) {
-+                TimingSource::Native(live::PhaseTiming::new(
++                TimingSource::Native(
++                    live::PhaseTiming::new(
++                        master,
++                        chart,
++                        input.judgements.as_deref(),
++                        input.clock,
++                    )
++                    .map(Box::new),
++                )
++            } else {
++                TimingSource::Frames(chart::timing_frames_at(
                      master,
                      chart,
                      input.judgements.as_deref(),
@@ -2519,31 +2543,24 @@ index 7d6a6fa..567ee61 100644
 -                ),
 -            )
 +                ))
-+            } else {
-+                TimingSource::Frames(chart::timing_frames_at(
-+                    master,
-+                    chart,
-+                    input.judgements.as_deref(),
-+                    input.clock,
-+                ))
 +            };
 +            (best, source)
          });
          let play_profile = table.for_play(&input);
          let healthy_play = play_profile.healthy;
-@@ -782,7 +793,10 @@ impl LiveCore {
+@@ -782,7 +796,10 @@ impl LiveCore {
              let mut upper = model::skill_weights(&self.high, &self.input, skill, self.timing.is_none());
              if self.timing.is_some() {
                  for factor in &skill.cumulative {
 -                    let weights = self.timing.as_ref().and_then(|(_, timing)| timing.as_ref().ok())
 +                    let weights = self.timing.as_ref().and_then(|(_, timing)| match timing {
-+                        TimingSource::Native(Ok(timing)) => Some(timing),
++                        TimingSource::Native(Ok(timing)) => Some(timing.as_ref()),
 +                        _ => None,
 +                    })
                          .filter(|_| self.input.judgements.is_none() && !factor.requires_unbounded_bounds(self.input.times.len()))
                          .map(|timing| timing.cumulative_weights(&self.high.prefix, &self.input, factor));
                      if let Some(weights) = weights {
-@@ -909,10 +923,11 @@ impl LiveCore {
+@@ -909,10 +926,11 @@ impl LiveCore {
                      .iter()
                      .any(|slot| !slot.cumulative.is_empty()) =>
              {
@@ -2560,7 +2577,7 @@ index 7d6a6fa..567ee61 100644
              _ if self.played_envelope => live::score_with_curve(&self.input)?,
              _ => (live::score(&self.input)?, None),
 diff --git a/src/power.rs b/src/power.rs
-index f7e17a4..79d88dc 100644
+index f7e17a4..24d7be5 100644
 --- a/src/power.rs
 +++ b/src/power.rs
 @@ -1,3 +1,4 @@
@@ -2615,13 +2632,13 @@ index f7e17a4..79d88dc 100644
 +    };
 +    for (key,owned) in [("memberLevels",&player.memory["members"]),("supportLevels",&player.memory["supports"])] {
 +        let count = rows(owned).len() as i32;
-+        if let Some(row) = rows(&master.memory[key]).into_iter().filter(|r|int(&r["point"])<=count).last() { add(row); }
++        if let Some(row) = rows(&master.memory[key]).into_iter().rfind(|r|int(&r["point"])<=count) { add(row); }
 +    }
 +    for group in rows(&master.memory["groups"]) {
 +        let Some(state) = rows(&player.memory["musicGroups"]).into_iter().find(|r|r["id"]==group["id"]) else {continue};
 +        let ranks = rows(&state["ranks"]);
 +        if ranks.is_empty() || !matches_targets(master, member, &ids(&group["skillTargetIds"])) {continue;}
-+        if let Some(row) = rows(&master.memory["bonuses"]).into_iter().filter(|r|r["groupId"]==group["id"] && ranks.iter().all(|rank|int(rank)>=int(&r["scoreRank"]))).last() {add(row);}
++        if let Some(row) = rows(&master.memory["bonuses"]).into_iter().rfind(|r|r["groupId"]==group["id"] && ranks.iter().all(|rank|int(rank)>=int(&r["scoreRank"]))) {add(row);}
 +    }
 +    bonus
 +}
@@ -2672,13 +2689,15 @@ index 9397274..cc2f0cc 100644
          value["potential"] = json!({"value":detail["potential"],"area":detail["area"]});
      }
 diff --git a/src/rewards.rs b/src/rewards.rs
-index 931c538..47c76ac 100644
+index 931c538..a590106 100644
 --- a/src/rewards.rs
 +++ b/src/rewards.rs
-@@ -11945,3 +11945,251 @@ pub(crate) fn order_score_coefficients_with_base(
+@@ -11945,3 +11945,249 @@ pub(crate) fn order_score_coefficients_with_base(
              .collect(),
      )
  }
++
++type MoenotesExactCache = HashMap<(i32, Vec<usize>, Vec<i32>), (f64, serde_json::Value)>;
 +
 +/// Moenotes single-reward searches reuse native Gekiso replay and its fixed lottery roots.
 +pub(crate) struct MoenotesRewards<'a> {
@@ -2706,7 +2725,7 @@ index 931c538..47c76ac 100644
 +    just_window: Option<crate::just_window::Prepared>,
 +    deadline: f64,
 +    now: &'a dyn Fn() -> f64,
-+    exact_cache: HashMap<(i32,Vec<usize>,Vec<i32>),(f64,serde_json::Value)>,
++    exact_cache: MoenotesExactCache,
 +}
 +impl<'a> MoenotesRewards<'a> {
 +    #[allow(clippy::too_many_arguments)]
@@ -2745,14 +2764,12 @@ index 931c538..47c76ac 100644
 +    }
 +    pub fn with_goal(mut self, goal:&serde_json::Value)->Result<Self,String> {
 +        self.maximum=goal["criterion"]=="max";
-+        if let Some(seeds) = goal["gekiso"]["seeds"].as_i64().filter(|&n| n > 0) {
-+            if self.sampled {
-+                self.samples = seeds.min(256) as i32;
-+            }
++        if let Some(seeds) = goal["gekiso"]["seeds"].as_i64().filter(|&n| self.sampled && n > 0) {
++            self.samples = seeds.min(256) as i32;
 +        }
 +        if self.kind==3 {
 +            self.levels=serde_json::from_value(goal["levels"].clone()).map_err(|_|"moenotes-combined-levels")?;
-+            if self.maximum || self.levels.is_empty() || self.levels.len()>3 || self.levels.iter().flatten().any(|t|t.kind>2 || t.weight<1 || t.weight>1_000_000_000) {return Err("moenotes-combined-levels".into());}
++            if self.maximum || self.levels.is_empty() || self.levels.len()>3 || self.levels.iter().flatten().any(|t|t.kind>2 || !(1..=1_000_000_000).contains(&t.weight)) {return Err("moenotes-combined-levels".into());}
 +            self.other_member=self.members.iter().map(|m|crate::power::member_event_percent(&self.route.effects,m,1) as f64).collect();
 +            self.other_snap=self.snaps.iter().map(|s|crate::power::snap_event_percent(&self.route.effects,s,1) as f64).collect();
 +        }else {self.other_member=vec![0.0;self.members.len()];self.other_snap=vec![0.0;self.snaps.len()];}
@@ -2787,7 +2804,7 @@ index 931c538..47c76ac 100644
 +        if score.fract()!=0.0 || !(0.0..=i32::MAX as f64).contains(&score){return Err("moenotes-reward-score".into());}
 +        let score=score as i32;
 +        if !self.battle {
-+            return self.ranks.iter().filter(|r|r.required<=score).last().map(|r|r.rank).ok_or_else(||"moenotes-reward-rank".into());
++            return self.ranks.iter().rfind(|r|r.required<=score).map(|r|r.rank).ok_or_else(||"moenotes-reward-rank".into());
 +        }
 +        let peer=self.others.unwrap_or(score);
 +        let total=(1..self.players).try_fold(score,|total,_|total.checked_add(peer)).ok_or("moenotes-room-score-overflow")?;
@@ -2880,12 +2897,12 @@ index 931c538..47c76ac 100644
 +                let replay=gekiso::replay_orders(self.master,&self.chart,&deck,&[seed],power as i32)?;
 +                replay.scores
 +            };
-+            for i in 0..120 {
-+                let score=replay.scores[mapping[i]];scores[i]+=score/runs as f64;
++            for ((&mapped, score_acc), row) in mapping.iter().zip(&mut scores).zip(&mut values) {
++                let score=replay.scores[mapped];*score_acc+=score/runs as f64;
 +                let rank=self.rank(score)?;*ranks.entry(rank).or_default()+=1;
-+                if self.kind==3 {for kind in 0..3 {if self.levels.iter().flatten().any(|t|t.kind==kind) {
-+                    values[i][kind]+=self.value_at(kind,if kind==1 {other}else{bonus},rank)? as i128;
-+                }}} else {values[i][0]+=self.reward(bonus,rank)? as i128;}
++                if self.kind==3 {for (kind, cell) in row.iter_mut().enumerate() {if self.levels.iter().flatten().any(|t|t.kind==kind) {
++                    *cell+=self.value_at(kind,if kind==1 {other}else{bonus},rank)? as i128;
++                }}} else {row[0]+=self.reward(bonus,rank)? as i128;}
 +            }
 +        }
 +        let sum_level=|terms:&[crate::event::RewardTerm],v:&[i128;3]|terms.iter().map(|t|v[t.kind]*t.weight).sum::<i128>();
@@ -2894,25 +2911,23 @@ index 931c538..47c76ac 100644
 +        let layout=[other_slots[0],other_slots[1],0,other_slots[2],other_slots[3]];
 +        let slot_positions:[usize;5]=std::array::from_fn(|slot|layout.iter().position(|&s|s==slot).unwrap());
 +        let mut selected=0;
-+        if self.maximum {for i in 1..120 {
++        if self.maximum {for (i, row) in values.iter().enumerate().skip(1) {
 +            let key=|index:usize|live::orders()[index].map(|s|slot_positions[s]);
-+            if primary(&values[i])>primary(&values[selected]) || primary(&values[i])==primary(&values[selected]) && key(i)<key(selected) {selected=i;}
++            if primary(row)>primary(&values[selected]) || primary(row)==primary(&values[selected]) && key(i)<key(selected) {selected=i;}
 +        }}
 +        let count=if self.maximum {runs}else{runs*120};
 +        let sums: [i128;3]=if self.maximum {values[selected]}else{std::array::from_fn(|kind|values.iter().map(|v|v[kind]).sum())};
 +        let bounds:Vec<_>=self.ranks.iter().map(|r|{
 +            if self.kind==3 {
-+                let mut v=[0i128;3];for kind in 0..3 {if self.levels.iter().flatten().any(|t|t.kind==kind) {v[kind]=self.value_at(kind,if kind==1 {other}else{bonus},r.rank)? as i128;}}Ok(v)
++                let mut v=[0i128;3];for (kind, cell) in v.iter_mut().enumerate() {if self.levels.iter().flatten().any(|t|t.kind==kind) {*cell=self.value_at(kind,if kind==1 {other}else{bonus},r.rank)? as i128;}}Ok(v)
 +            }else {Ok([self.reward(bonus,r.rank)? as i128,0,0])}
 +        }).collect::<Result<_,String>>()?;
 +        let range=|f:&dyn Fn(&[i128;3])->i128|{let low=bounds.iter().map(f).min().unwrap();let high=bounds.iter().map(f).max().unwrap();json!({"lower":if self.kind==3 {(low as f64).next_down()}else{low as f64},"upper":if self.kind==3 {(high as f64).next_up()}else{high as f64}})};
 +        let support=range(&primary);let sum=primary(&sums);let mean=sum as f64/count as f64;
 +        let mut detail=json!({"scores":live::summarize(power as i32,scores),"bonus":bonus,"sampled":self.sampled,"luckSamples":runs,
 +            "payoffLower":support["lower"],"payoffUpper":support["upper"],"settlement":{"rewardSum":if self.kind==3 {json!(sum.to_string())}else{json!(sum as f64)},"comparisonSum":sum.to_string(),"observations":count,"mean":mean,"directMin":values.iter().map(|v|primary(v) as f64/runs as f64).reduce(f64::min),"directMax":values.iter().map(|v|primary(v) as f64/runs as f64).reduce(f64::max),"otherMean":0,"cpSum":if self.kind==2 {sum as f64}else{0.0},"ranks":ranks}});
-+        if let Some(prepared) = &mut self.just_window {
-+            if let Some(window) = prepared.measure(self.master, &self.chart, team, power as i32)? {
-+                detail["justWindow"] = json!(window);
-+            }
++        if let Some(window) = self.just_window.as_mut().map(|prepared| prepared.measure(self.master, &self.chart, team, power as i32)).transpose()?.flatten() {
++            detail["justWindow"] = json!(window);
 +        }
 +        if self.maximum {detail["selectedOrder"]=json!(selected);}
 +        if self.kind==3 {
@@ -2928,7 +2943,7 @@ index 931c538..47c76ac 100644
 +    }
 +}
 diff --git a/src/search.rs b/src/search.rs
-index aa7404f..e8b75c3 100644
+index aa7404f..b7cb8d8 100644
 --- a/src/search.rs
 +++ b/src/search.rs
 @@ -1,3 +1,5 @@
@@ -3120,14 +3135,14 @@ index aa7404f..e8b75c3 100644
 +        if !self.input.objective.physical_teams() || self.hits.first().is_none_or(|hit|hit.team.members!=team.members) {return Ok(());}
 +        let mut roster=team.members[1..].to_vec();roster.sort_unstable();roster.insert(0,team.members[0]);
 +        if !self.probed_rosters.insert(roster) {return Ok(());}
-+        for slot in 0..5 {
-+            for snap in self.options[team.members[slot]].clone() {
++        for (slot, &member) in team.members.iter().enumerate().take(5) {
++            for snap in self.options[member].clone() {
 +                if self.hits.len()>=self.input.k && self.hits[self.input.k-1].key>=self.hits[0].key {return Ok(());}
 +                if self.expired() {return Ok(());}
 +                if snap==team.snaps[slot] {continue;}
 +                let mut next=team.clone();
-+                if snap>=0 {
-+                    if let Some(other)=next.snaps.iter().position(|&held|held==snap) {next.snaps[other]=team.snaps[slot];}
++                if let Some(other)=(snap>=0).then(||next.snaps.iter().position(|&held|held==snap)).flatten() {
++                    next.snaps[other]=team.snaps[slot];
 +                }
 +                next.snaps[slot]=snap;
 +                if !self.seed_valid(&next) {continue;}
