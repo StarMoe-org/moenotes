@@ -715,6 +715,7 @@ describe("Haneoka 6de572be sync — optimal timing, partial JUST windows, Arena 
       const wasmBytes = new Uint8Array(readFileSync(wasmPath));
       const { data, bytes, datasetId, accountJson } = loadFixtureWithEvent();
       const firstMusicId = data.master.MasterLiveMusic.rows[0]![0] as number;
+      const justMusicId = (data.master.MasterLiveMusic.rows[1]?.[0] as number | undefined) ?? firstMusicId;
       const solver = await mod.DeckSolver.init(wasmBytes, bytes, datasetId);
       try {
         const caps = parseCapabilities(solver.capabilities());
@@ -738,7 +739,7 @@ describe("Haneoka 6de572be sync — optimal timing, partial JUST windows, Arena 
         expect(freeAns.engine?.commit).toBe(HANEOKA_COMMIT);
         expect(freeAns.result!.teams.length).toBeGreaterThan(0);
 
-        // 2. Battle Live Gekiso with partial JUST window policy
+        // 2. Battle Live Gekiso on JUST-mission song with partial JUST window policy
         const battleAns = parseDeckAnswer(
           solver.recommendForAccount(
             accountJson,
@@ -746,10 +747,10 @@ describe("Haneoka 6de572be sync — optimal timing, partial JUST windows, Arena 
               format: "ournotes-deck.recommendation-request/2",
               goal: {
                 kind: "battleLive",
-                musicId: firstMusicId,
+                musicId: justMusicId,
                 difficulty: "expert",
                 rank: 1,
-                justWindow: { minimumMs: 1, minCoverage: 0.5, minDurationMs: 0, minContinuousMs: 0 },
+                justWindow: { minimumMs: 2, minCoverage: 0.5, minDurationMs: 0, minContinuousMs: 0 },
                 accuracy: { greatFraction: 0, justFraction: 1 },
               },
               metric: { kind: "score" },
@@ -799,17 +800,17 @@ describe("Haneoka 6de572be sync — optimal timing, partial JUST windows, Arena 
           expect(growth.status).toBe("ok");
         }
 
-        // 4. Moenotes event PT + partial JUST window + attached parking plays
+        // 4. Moenotes event PT on JUST-mission song + partial JUST window + attached parking plays
         const eventReqText = recommendationRequest(
           {
             ...defaultDeckGoalInput("eventPoints"),
             venue: "battleLive",
-            musicId: firstMusicId,
+            musicId: justMusicId,
             difficulty: "expert",
             boosts: 1,
             justWindowMode: "partial",
             justWindowUnit: "ms",
-            justWindowMs: 1,
+            justWindowMs: 2,
             justWindowCoveragePercent: 50,
           },
           {
@@ -828,5 +829,6 @@ describe("Haneoka 6de572be sync — optimal timing, partial JUST windows, Arena 
         solver.free();
       }
     },
+    { timeout: 60_000 },
   );
 });

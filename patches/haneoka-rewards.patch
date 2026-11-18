@@ -1,5 +1,5 @@
 diff --git a/src/api.rs b/src/api.rs
-index 500ffd3..3d20bae 100644
+index 500ffd3..d407801 100644
 --- a/src/api.rs
 +++ b/src/api.rs
 @@ -1,3 +1,6 @@
@@ -515,7 +515,7 @@ index 500ffd3..3d20bae 100644
 +        let mut power_request=request.clone();power_request["goal"]=json!({"kind":"power","song":song});
 +        power_request["deadline"]=json!(deadline.min(now()+50.0));
 +        let has_special_filter = constraints.member_floor.is_some() || !constraints.member_floors.is_empty() || constraints.skill_roles.is_some() || objective.has_just_window();
-+        let seeded=!seed_teams(request,song,&cards.members,&cards.snaps).is_empty();
++        let seeded = !seed_teams(request, song, &cards.members, &cards.snaps).is_empty();
 +        let power=if seeded || has_special_filter {json!({"overall":[],"results":[{"proven":false,"stats":null}]})}
 +            else {crate::progress::with_callback(None,||self.search_power(&power_request,started,now))?};
 +        let power_proven=power["results"][0]["proven"]==true;
@@ -832,7 +832,7 @@ index dc35596..fd3d6ac 100644
 +    deadline_expired(SEARCH_DEADLINE.with(std::cell::Cell::get))
 +}
 diff --git a/src/event.rs b/src/event.rs
-index f150c1a..17abc4c 100644
+index f150c1a..d52a54b 100644
 --- a/src/event.rs
 +++ b/src/event.rs
 @@ -1,3 +1,6 @@
@@ -1200,7 +1200,7 @@ index f150c1a..17abc4c 100644
 -    fn generic_assignment_product(&self) -> bool { self.core.is_some() }
 +    fn generic_assignment_product(&self) -> bool { self.core.is_some() && !self.power_ties }
 +    fn discrete_upper(&self, upper: f64) -> f64 {
-+        if self.nonmonotone() || !self.power_ties || !self.points_measure && self.route.rewards.iter().any(|row| (row.probability as f64) % 10000.0 != 0.0) || self.tie != 0.0 || self.cp_weight != 0.0 || self.exchange.is_some() || !upper.is_finite() || upper.abs() > i32::MAX as f64 { return upper; }
++        if self.nonmonotone() || !self.power_ties || !self.points_measure && self.route.rewards.iter().any(|row| row.probability % 10000.0 != 0.0) || self.tie != 0.0 || self.cp_weight != 0.0 || self.exchange.is_some() || !upper.is_finite() || upper.abs() > i32::MAX as f64 { return upper; }
 +        let count = if self.core.is_some() && !self.maximum { 120.0 } else { 1.0 };
 +        (upper * count).next_up().floor() / count
 +    }
@@ -1518,7 +1518,7 @@ index f150c1a..17abc4c 100644
          )
      }
      fn exact(&mut self, team: &Team, power: f64, slots: &[f64]) -> Result<Exact, String> {
-@@ -2578,10 +2778,372 @@ impl Objective for ChallengePoints {
+@@ -2578,10 +2778,375 @@ impl Objective for ChallengePoints {
              .into_iter()
              .map(|s| self.value(crate::master::number(s, 0.0)))
              .collect();
@@ -1543,9 +1543,9 @@ index f150c1a..17abc4c 100644
 -            detail: json!({"scores":scores,"perOrder":per_order,"mean":mean,"bonus":0,"challengePoints":mean}),
 +            key: mean + self.score_tie(crate::master::number(&scores["mean"], 0.0)),
 +            detail: json!({"scores":scores,"perOrder":per_order,"mean":mean,"rewardSum":reward_sum,"orders":per_order.len(),"bonus":0,"challengePoints":mean}),
-         })
-     }
- }
++        })
++    }
++}
 +
 +// Moenotes Skip CP is a fixed result-grade payoff, independent of the formation.
 +pub struct FixedChallengePoints { pub value: f64, pub master: Master, pub chart: Chart }
@@ -1659,8 +1659,8 @@ index f150c1a..17abc4c 100644
 +                    .filter(|s| !used.contains(s)).map(|&s|if s<0 {0.0} else {self.snaps[kind][s as usize]})
 +                    .fold(f64::NEG_INFINITY, f64::max)).sum::<f64>()
 +            }
-+        })
-+    }
+         })
+     }
 +
 +    #[allow(clippy::too_many_arguments)]
 +    pub fn new(master: &Master, members: &[Member], snaps: &[Snap], chart: &Chart, route: Route,
@@ -1739,7 +1739,10 @@ index f150c1a..17abc4c 100644
 +        for &(rank,_) in &self.eligible {
 +            for ((kind, &used), (low_cell, high_cell)) in self.used.iter().enumerate().zip(low.iter_mut().zip(&mut high)) {
 +                if !used { continue; }
-+                if kind<2 && !self.monotone[kind] {*low_cell=-214748;*high_cell=214748;} else {
++                if kind < 2 && !self.monotone[kind] {
++                    *low_cell = -214748;
++                    *high_cell = 214748;
++                } else {
 +                    *low_cell=(*low_cell).min(Self::whole(self.reward(kind,0.0,rank))?);
 +                    *high_cell=(*high_cell).max(Self::whole(self.reward(kind,self.max_bonus[kind.min(1)],rank))?);
 +                }
@@ -1893,7 +1896,7 @@ index f150c1a..17abc4c 100644
 +            "prefixValid":vector.starts_with(&self.prefix),"mean":vector[0] as f64/self.observations as f64,"rewardSum":vector[0].to_string(),"orders":self.observations,"levels":levels,"lexVector":vector.iter().map(ToString::to_string).collect::<Vec<_>>(),
 +            "bonus":bonuses[self.selected],"challengePoints":sums[2] as f64/self.observations as f64,"directMin":per_order.iter().copied().reduce(f64::min),"directMax":per_order.iter().copied().reduce(f64::max)})})
 +    }
-+}
+ }
 diff --git a/src/event_growth.rs b/src/event_growth.rs
 index 48f7bc1..d120dc8 100644
 --- a/src/event_growth.rs
