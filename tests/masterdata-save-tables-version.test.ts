@@ -2,6 +2,8 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { answerField, createBox, createCard } from "../src/lib/box/model";
+import { boxAccountJson } from "../src/lib/deck/account-envelope";
 import { resetMasterDataSnapshotForTests } from "../src/lib/masterdata/build-snapshot";
 import { getBuildPlayerCatalogue } from "../src/lib/masterdata/player-fields";
 import { getBuildGameSaveTables } from "../src/lib/masterdata/save-tables";
@@ -113,6 +115,14 @@ describe("save tables follow the MasterData version", () => {
     expect(second).not.toBe(first);
     expect(second?.snaps).toEqual({ "76": 3, "85": 5 });
     expect(second?.snapLevels["5"]).toEqual([[1, 0], [2, 40]]);
+
+    // The reported dead end: a Snap added after the tables were first built could only be sent with `_exp: null`.
+    const box = createBox("jp", "box", 1);
+    const snap = createCard("snap", "s", "85", 2);
+    snap.fields.level = answerField(snap.fields.level, { id: "level", value: 2, source: "manual", at: 3 });
+    box.cards = [snap];
+    const envelope = JSON.parse(boxAccountJson({ datasetId: "a".repeat(64), server: "jp" }, box, second!));
+    expect(envelope.account._player._supportCards).toEqual([{ _masterId: 85, _exp: 40, _rank: null }]);
   });
 
   test("a failed build is not cached, so the next call reads the tables again", async () => {
