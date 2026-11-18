@@ -3,7 +3,10 @@ import type { CardViewModel, RawBand, RawCharacter, RawText } from "@/lib/cards/
 import type { CardMaterialCost, CardMaterialStep, ItemCostResolver } from "@/lib/cards/materials";
 import { compareByStartDesc, parseMasterDate } from "@/lib/schedule";
 import {
-  normalizeSkill,
+  buildSkillNormalizationIndex,
+  indexSkillEffects,
+  normalizeSkillFromDefinition,
+  skillEffectId,
   type RawSkillCondition,
   type RawSkillConditionSet,
   type RawSkillCumulativeCondition,
@@ -12,7 +15,7 @@ import {
   type RawSkillIcon,
   type RawSkillTarget,
 } from "@/lib/cards/skills";
-import { normalizeSupportSkill } from "@/lib/support-cards/skills";
+import { normalizeSupportSkillFromDefinition, supportSkillEffectId } from "@/lib/support-cards/skills";
 import type { SupportCardViewModel } from "@/lib/support-cards/data";
 
 export const SKILL_FAMILIES = ["live", "leader", "gekisou", "support", "gekisouSupport"] as const;
@@ -116,6 +119,16 @@ function buildUpgradeGroups(
 export function normalizeSkillDictionary(input: BuildSkillDictionaryInput): SkillDictionaryViewModel {
   const characterMap = new Map(input.characters.map((row) => [row.id, row]));
   const bandMap = new Map(input.bands.map((row) => [row.id, row]));
+  const skillIndex = buildSkillNormalizationIndex(
+    input.icons,
+    input.texts,
+    input.conditionSets,
+    input.conditions,
+    input.cumulativeConditions,
+    input.skillTargets,
+    characterMap,
+    bandMap,
+  );
   const upgradeGroups = buildUpgradeGroups(input.skillResources, input.resolveItemCost);
 
   const memberByLeader = new Map<number, CardViewModel[]>();
@@ -168,6 +181,14 @@ export function normalizeSkillDictionary(input: BuildSkillDictionaryInput): Skil
 
   const entries: SkillDictionaryEntry[] = [];
 
+  const firstDefinitionById = (defs: readonly RawSkillDefinition[]) => {
+    const map = new Map<number, RawSkillDefinition>();
+    for (const def of defs) {
+      if (!map.has(def.id)) map.set(def.id, def);
+    }
+    return map;
+  };
+
   const collectMemberFamily = (
     family: "leader" | "live" | "gekisou",
     defs: RawSkillDefinition[],
@@ -175,23 +196,17 @@ export function normalizeSkillDictionary(input: BuildSkillDictionaryInput): Skil
     ownersMap: Map<number, CardViewModel[]>,
     resMap?: Map<number, Set<number>>,
   ) => {
+    const defMap = firstDefinitionById(defs);
+    const effectsBySkillId = indexSkillEffects(effects, (entry) => skillEffectId(entry, family));
     for (const def of [...defs].sort((a, b) => a.id - b.id)) {
-      const vm = normalizeSkill(
+      const canonicalDef = defMap.get(def.id) ?? def;
+      const vm = normalizeSkillFromDefinition(
         family,
-        def.id,
-        defs,
-        effects,
-        input.icons,
-        input.texts,
+        canonicalDef,
+        effectsBySkillId.get(def.id) ?? [],
+        skillIndex,
         input.locale,
-        input.conditionSets,
-        input.conditions,
-        input.cumulativeConditions,
-        input.skillTargets,
-        characterMap,
-        bandMap,
       );
-      if (!vm) continue;
       const owners = [...(ownersMap.get(def.id) ?? [])].sort(compareByStartDesc);
       const newestStartAt = owners.find((c) => parseMasterDate(c.startAt) !== null)?.startAt ?? "";
       const bandIds = [...new Set(owners.map((c) => c.bandId).filter((id) => id > 0))].sort((a, b) => a - b);
@@ -230,21 +245,16 @@ export function normalizeSkillDictionary(input: BuildSkillDictionaryInput): Skil
     ownersMap: Map<number, SupportCardViewModel[]>,
   ) => {
     const supportKind = family === "support" ? "support" : "gekisou-support";
+    const defMap = firstDefinitionById(defs);
+    const effectsBySkillId = indexSkillEffects(effects, (entry) => supportSkillEffectId(entry, supportKind));
     for (const def of [...defs].sort((a, b) => a.id - b.id)) {
-      const vm = normalizeSupportSkill(
+      const canonicalDef = defMap.get(def.id) ?? def;
+      const vm = normalizeSupportSkillFromDefinition(
         supportKind,
-        def.id,
-        defs,
-        effects,
-        input.icons,
-        input.texts,
+        canonicalDef,
+        effectsBySkillId.get(def.id) ?? [],
+        skillIndex,
         input.locale,
-        input.conditionSets,
-        input.conditions,
-        input.cumulativeConditions,
-        characterMap,
-        bandMap,
-        input.skillTargets,
       );
       if (!vm) continue;
       const owners = [...(ownersMap.get(def.id) ?? [])].sort(compareByStartDesc);

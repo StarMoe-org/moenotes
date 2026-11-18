@@ -1,6 +1,6 @@
 import { isAppLocale } from "@/config/locales";
 import { siteConfig } from "@/config/site";
-import { getSitemapEntries, type SitemapEntry } from "@/lib/seo/sitemap";
+import { getSitemapShardEntries, type SitemapEntry } from "@/lib/seo/sitemap";
 
 export const dynamic = "force-dynamic";
 
@@ -20,8 +20,7 @@ export async function GET(_request: Request, context: { params: Promise<{ locale
     return new Response("Not found\n", { status: 404 });
   }
 
-  const all = await getSitemapEntries();
-  const entries = all.filter((entry) => entry.locale === locale);
+  const entries = await getSitemapShardEntries(locale);
   const xml = renderUrlset(entries);
 
   return new Response(xml, {

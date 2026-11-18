@@ -60,6 +60,7 @@ function CommandPalette({ locale }: CommandPaletteProps) {
   }, [staticRows, q]);
 
   useEffect(() => {
+    if (!isOpen && !q) return;
     let cancelled = false;
     void searchContent(query, locale).then((results) => {
       if (cancelled) return;
@@ -70,7 +71,7 @@ function CommandPalette({ locale }: CommandPaletteProps) {
       setContent(filtered.map((result) => ({ id: result.key, kind: result.kind, label: result.title, href: result.href })));
     });
     return () => { cancelled = true; };
-  }, [query, locale, showSpoiler, now]);
+  }, [isOpen, q, query, locale, showSpoiler, now]);
 
   // Group content rows by kind, ordered; pages form their own leading group.
   const groups = useMemo(() => {

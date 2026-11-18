@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import BreadcrumbSync from "@/components/shell/BreadcrumbSync";
@@ -17,6 +18,8 @@ import { PlayerServerPage } from "@/server-pages/AccountServerPages";
 import RouteDispatcher from "@/server-pages/RouteDispatcher";
 
 export const dynamic = "force-dynamic";
+
+const getCachedEntitySeo = cache(resolveEntitySeo);
 
 interface CatchAllPageProps {
   params: Promise<{ segments?: string[] }>;
@@ -87,7 +90,7 @@ export async function generateMetadata({ params }: CatchAllPageProps): Promise<M
 
   const component = match.item.component ?? "page";
   const entitySeo = isDynamicRoute(match.item)
-    ? await resolveEntitySeo(component, match.params.id, locale, canonicalPathname)
+    ? await getCachedEntitySeo(component, match.params.id, locale, canonicalPathname)
     : null;
 
   if (ENTITY_DETAIL_COMPONENTS.has(component) && !entitySeo) {
@@ -157,7 +160,7 @@ export default async function CatchAllPage({ params }: CatchAllPageProps) {
 
   const component = match.item.component ?? "page";
   const entitySeo = isDynamicRoute(match.item)
-    ? await resolveEntitySeo(component, match.params.id, locale, canonicalPathname)
+    ? await getCachedEntitySeo(component, match.params.id, locale, canonicalPathname)
     : null;
 
   if (ENTITY_DETAIL_COMPONENTS.has(component) && !entitySeo) {

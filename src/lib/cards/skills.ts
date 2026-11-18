@@ -98,6 +98,141 @@ export interface SkillViewModel {
   levels: SkillLevelViewModel[];
 }
 
+export interface SkillDescriptionIndex {
+  conditionMap: ReadonlyMap<number, RawSkillCondition>;
+  setsByGroup: ReadonlyMap<number, readonly RawSkillConditionSet[]>;
+  cumulativeMap: ReadonlyMap<number, RawSkillCumulativeCondition>;
+  targetMap: ReadonlyMap<number, RawSkillTarget>;
+  hasTargetTable: boolean;
+  characterMap?: ReadonlyMap<number, RawCharacter> | undefined;
+  bandMap?: ReadonlyMap<number, RawBand> | undefined;
+}
+
+export interface SkillNormalizationIndex extends SkillDescriptionIndex {
+  textMap: ReadonlyMap<string, RawText>;
+  iconMap: ReadonlyMap<number, RawSkillIcon>;
+}
+
+/** Pre-index condition sets, conditions, cumulative conditions, and targets once for batch formatting. */
+export function buildSkillDescriptionIndex(
+  conditionSets: readonly RawSkillConditionSet[],
+  conditions: readonly RawSkillCondition[],
+  cumulativeConditions: readonly RawSkillCumulativeCondition[],
+  skillTargets?: readonly RawSkillTarget[],
+  characterMap?: ReadonlyMap<number, RawCharacter>,
+  bandMap?: ReadonlyMap<number, RawBand>,
+): SkillDescriptionIndex {
+  const conditionMap = new Map<number, RawSkillCondition>();
+  for (const entry of conditions || []) conditionMap.set(entry.id, entry);
+
+  const setsByGroup = new Map<number, RawSkillConditionSet[]>();
+  for (const entry of conditionSets || []) {
+    let list = setsByGroup.get(entry.group);
+    if (!list) {
+      list = [];
+      setsByGroup.set(entry.group, list);
+    }
+    list.push(entry);
+  }
+
+  const cumulativeMap = new Map<number, RawSkillCumulativeCondition>();
+  for (const entry of cumulativeConditions || []) cumulativeMap.set(entry.id, entry);
+
+  const targetMap = new Map<number, RawSkillTarget>();
+  for (const entry of skillTargets || []) targetMap.set(entry.id, entry);
+
+  return {
+    conditionMap,
+    setsByGroup,
+    cumulativeMap,
+    targetMap,
+    hasTargetTable: skillTargets !== undefined,
+    characterMap,
+    bandMap,
+  };
+}
+
+/** Pre-index icons, texts, and description lookup tables once per dictionary or batch normalization pass. */
+export function buildSkillNormalizationIndex(
+  icons: readonly RawSkillIcon[],
+  texts: readonly RawText[],
+  conditionSets: readonly RawSkillConditionSet[],
+  conditions: readonly RawSkillCondition[],
+  cumulativeConditions: readonly RawSkillCumulativeCondition[],
+  skillTargets?: readonly RawSkillTarget[],
+  characterMap?: ReadonlyMap<number, RawCharacter>,
+  bandMap?: ReadonlyMap<number, RawBand>,
+): SkillNormalizationIndex {
+  const iconMap = new Map<number, RawSkillIcon>();
+  for (const entry of icons) {
+    if (!iconMap.has(entry.id)) iconMap.set(entry.id, entry);
+  }
+  const textMap = new Map<string, RawText>();
+  for (const entry of texts) textMap.set(entry.id, entry);
+
+  return {
+    ...buildSkillDescriptionIndex(
+      conditionSets,
+      conditions,
+      cumulativeConditions,
+      skillTargets,
+      characterMap,
+      bandMap,
+    ),
+    textMap,
+    iconMap,
+  };
+}
+
+/** Group effect rows by their parent skill id in a single pass. */
+export function indexSkillEffects<T extends RawSkillEffect>(
+  effects: readonly T[],
+  getSkillId: (effect: T) => number | undefined,
+): Map<number, T[]> {
+  const bySkill = new Map<number, T[]>();
+  for (const entry of effects) {
+    const id = getSkillId(entry);
+    if (id === undefined) continue;
+    let list = bySkill.get(id);
+    if (!list) {
+      list = [];
+      bySkill.set(id, list);
+    }
+    list.push(entry);
+  }
+  return bySkill;
+}
+
+/** Normalize one member skill using pre-indexed lookup maps and pre-filtered effect rows. */
+export function normalizeSkillFromDefinition(
+  kind: SkillKind,
+  definition: RawSkillDefinition,
+  relevantEffects: readonly RawSkillEffect[],
+  index: SkillNormalizationIndex,
+  locale: AppLocale,
+): SkillViewModel {
+  const icon = index.iconMap.get(definition.skillIconID);
+  const template = localizeText(index.textMap.get(definition.descriptionTextFormatID), locale);
+  const resolveText = (id: string) => localizeText(index.textMap.get(id), locale) || id;
+
+  return {
+    kind,
+    id: definition.id,
+    name: localizeText(index.textMap.get(definition.nameTextID), locale) || definition.nameTextID,
+    iconUrl: icon?.normalIconAssetName ? getSkillIconUrl(icon.normalIconAssetName) : "",
+    levels: groupEffectsByLevel(relevantEffects).map(([level, levelEffects]) => ({
+      level,
+      description: formatSkillDescriptionWithIndex(
+        template,
+        levelEffects,
+        index,
+        resolveText,
+      ),
+      effects: levelEffects.map(toSkillEffectViewModel),
+    })),
+  };
+}
+
 export function normalizeSkill(
   kind: SkillKind,
   skillId: number,
@@ -116,10 +251,19 @@ export function normalizeSkill(
   const definition = definitions.find((entry) => entry.id === skillId);
   if (!definition) return null;
   const icon = icons.find((entry) => entry.id === definition.skillIconID);
-  const textMap = new Map(texts.map((entry) => [entry.id, entry]));
+  const textMap = new Map<string, RawText>();
+  for (const entry of texts) textMap.set(entry.id, entry);
   const relevant = effects.filter((entry) => skillEffectId(entry, kind) === skillId);
   const template = localizeText(textMap.get(definition.descriptionTextFormatID), locale);
   const resolveText = (id: string) => localizeText(textMap.get(id), locale) || id;
+  const descriptionIndex = buildSkillDescriptionIndex(
+    conditionSets,
+    conditions,
+    cumulativeConditions,
+    skillTargets,
+    characterMap,
+    bandMap,
+  );
 
   return {
     kind,
@@ -128,15 +272,10 @@ export function normalizeSkill(
     iconUrl: icon?.normalIconAssetName ? getSkillIconUrl(icon.normalIconAssetName) : "",
     levels: groupEffectsByLevel(relevant).map(([level, levelEffects]) => ({
       level,
-      description: formatSkillDescription(
+      description: formatSkillDescriptionWithIndex(
         template,
         levelEffects,
-        conditionSets,
-        conditions,
-        cumulativeConditions,
-        skillTargets,
-        characterMap,
-        bandMap,
+        descriptionIndex,
         resolveText,
       ),
       effects: levelEffects.map(toSkillEffectViewModel),
@@ -145,9 +284,16 @@ export function normalizeSkill(
 }
 
 /** Groups effect rows by skill level (ascending); a skill without rows yields a single empty level 1. */
-export function groupEffectsByLevel<T extends RawSkillEffect>(effects: T[]): Array<[number, T[]]> {
+export function groupEffectsByLevel<T extends RawSkillEffect>(effects: readonly T[]): Array<[number, T[]]> {
   const byLevel = new Map<number, T[]>();
-  effects.forEach((entry) => byLevel.set(entry.level, [...(byLevel.get(entry.level) ?? []), entry]));
+  for (const entry of effects) {
+    let list = byLevel.get(entry.level);
+    if (!list) {
+      list = [];
+      byLevel.set(entry.level, list);
+    }
+    list.push(entry);
+  }
   if (byLevel.size === 0) return [[1, []]];
   return [...byLevel.entries()]
     .sort(([a], [b]) => a - b)
@@ -183,14 +329,27 @@ export function formatSkillDescription(
   resolveText: (id: string) => string = (id) => id,
 ): string {
   if (!template) return "";
+  const index = buildSkillDescriptionIndex(
+    conditionSets,
+    conditions,
+    cumulativeConditions,
+    skillTargets,
+    characterMap,
+    bandMap,
+  );
+  return formatSkillDescriptionWithIndex(template, effects, index, resolveText);
+}
 
-  const conditionMap = new Map((conditions || []).map((entry) => [entry.id, entry]));
-  const setsByGroup = new Map<number, RawSkillConditionSet[]>();
-  (conditionSets || []).forEach((entry) => {
-    setsByGroup.set(entry.group, [...(setsByGroup.get(entry.group) ?? []), entry]);
-  });
-  const cumulativeMap = new Map((cumulativeConditions || []).map((entry) => [entry.id, entry]));
-  const targetMap = new Map((skillTargets || []).map((entry) => [entry.id, entry]));
+/** Format a skill description template using pre-indexed condition/target lookup maps. */
+export function formatSkillDescriptionWithIndex(
+  template: string,
+  effects: readonly RawSkillEffect[],
+  index: SkillDescriptionIndex,
+  resolveText: (id: string) => string = (id) => id,
+): string {
+  if (!template) return "";
+
+  const { conditionMap, setsByGroup, cumulativeMap, targetMap, hasTargetTable, characterMap, bandMap } = index;
   let unresolvedTarget = false;
 
   const resolveTargetName = (targetId: number | undefined): string => {
@@ -208,10 +367,10 @@ export function formatSkillDescription(
     }
     // With a target table, IDs are MasterSkillTarget IDs, never character/band IDs.
     // Retain the legacy direct-ID path only for callers without a target table.
-    if (skillTargets === undefined && characterMap?.has(targetId)) {
+    if (!hasTargetTable && characterMap?.has(targetId)) {
       return resolveText(characterMap.get(targetId)!.nameTextID);
     }
-    if (skillTargets === undefined && bandMap?.has(targetId)) {
+    if (!hasTargetTable && bandMap?.has(targetId)) {
       return resolveText(bandMap.get(targetId)!.nameTextID);
     }
     unresolvedTarget = true;
@@ -351,7 +510,7 @@ export function formatNumber(value: number | undefined, digits?: string): string
   return digits === undefined ? String(value) : Number(value).toFixed(Number(digits));
 }
 
-function evaluateBranch(branch: string, effects: RawSkillEffect[]): string {
+function evaluateBranch(branch: string, effects: readonly RawSkillEffect[]): string {
   const parts = branch.split("~");
   return parts
     .map((part) => {
@@ -369,7 +528,7 @@ function evaluateBranch(branch: string, effects: RawSkillEffect[]): string {
     .join("");
 }
 
-function evaluateTernary(cond: string, tr: string, fl: string, effects: RawSkillEffect[]): string {
+function evaluateTernary(cond: string, tr: string, fl: string, effects: readonly RawSkillEffect[]): string {
   let condResult = false;
   const condMatch = cond.match(/(?:0\s*<\s*effects\[(\d+)\]\.time|effects\[(\d+)\]\.time\s*>\s*0)/i);
   if (condMatch) {
@@ -382,7 +541,7 @@ function evaluateTernary(cond: string, tr: string, fl: string, effects: RawSkill
   return evaluateBranch(condResult ? tr : fl, effects);
 }
 
-function skillEffectId(effect: RawSkillEffect, kind: SkillKind): number | undefined {
+export function skillEffectId(effect: RawSkillEffect, kind: SkillKind): number | undefined {
   if (kind === "leader") return effect.leaderSkillID;
   if (kind === "live") return effect.liveSkillID;
   return effect.gekisouSkillID;

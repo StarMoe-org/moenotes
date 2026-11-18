@@ -103,7 +103,12 @@ const detailLabelLoaders: Record<string, (locale: AppLocale) => Promise<Map<stri
     // An ADV in several lists takes its first one's title and category.
     const now = Date.now();
     const publicStories = (await getBuildStories(locale)).filter((story) => isStoryReleasedAcrossServers(story, now));
-    const stories = publicStories.filter((story, index, all) => all.findIndex((other) => other.advId === story.advId) === index);
+    const seenAdvIds = new Set<number>();
+    const stories = publicStories.filter((story) => {
+      if (seenAdvIds.has(story.advId)) return false;
+      seenAdvIds.add(story.advId);
+      return true;
+    });
     return byId(stories, (story) => story.advId, (story) => ({
       label: story.title || `ADV ${story.advId}`,
       ancestors: [storyRoute, plainRoute(findRouteById(storyCategoryRoutes[story.category] ?? "other-story"))].filter((r): r is AppRoute => r !== null),

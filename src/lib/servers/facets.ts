@@ -23,17 +23,78 @@ export interface ServerFacetedValue<T> {
 
 type Row = Record<string, unknown>;
 
+function isPlainObject(value: unknown): value is Row {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+}
+
+function jsonEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (a === null || b === null || typeof a !== "object" || typeof b !== "object") {
+    if (
+      (typeof a === "string" || typeof a === "boolean" || (typeof a === "number" && Number.isFinite(a)) || a === null) &&
+      (typeof b === "string" || typeof b === "boolean" || (typeof b === "number" && Number.isFinite(b)) || b === null)
+    ) {
+      return false;
+    }
+    return JSON.stringify(a) === JSON.stringify(b);
+  }
+  if (typeof (a as { toJSON?: unknown }).toJSON === "function" || typeof (b as { toJSON?: unknown }).toJSON === "function") {
+    return JSON.stringify(a) === JSON.stringify(b);
+  }
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i += 1) {
+      const av = a[i];
+      const bv = b[i];
+      if (av === undefined || bv === undefined || typeof av === "symbol" || typeof bv === "symbol" || typeof av === "function" || typeof bv === "function") {
+        return JSON.stringify(a) === JSON.stringify(b);
+      }
+      if (!jsonEqual(av, bv)) return false;
+    }
+    return true;
+  }
+  if (!isPlainObject(a) || !isPlainObject(b)) {
+    return JSON.stringify(a) === JSON.stringify(b);
+  }
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
+  if (keysA.length !== keysB.length) {
+    return JSON.stringify(a) === JSON.stringify(b);
+  }
+  for (let i = 0; i < keysA.length; i += 1) {
+    const key = keysA[i]!;
+    if (key !== keysB[i]) {
+      return JSON.stringify(a) === JSON.stringify(b);
+    }
+    const av = a[key];
+    const bv = b[key];
+    if (av === undefined || bv === undefined || typeof av === "symbol" || typeof bv === "symbol" || typeof av === "function" || typeof bv === "function") {
+      return JSON.stringify(a) === JSON.stringify(b);
+    }
+    if (!jsonEqual(av, bv)) return false;
+  }
+  return true;
+}
+
 /** Top-level fields of `other` that differ from `base` (JSON equality: view models are plain data). */
 function changedFields<T>(base: T, other: T): Partial<T> | null {
   const a = base as Row;
   const b = other as Row;
   let changed: Row | null = null;
-  for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) {
+  for (const key of Object.keys(b)) {
     // A field another server leaves out cannot be told apart from an unchanged one once serialized.
-    if (b[key] === undefined) continue;
-    if (JSON.stringify(a[key]) !== JSON.stringify(b[key])) (changed ??= {})[key] = b[key];
+    const bv = b[key];
+    if (bv === undefined) continue;
+    if (!jsonEqual(a[key], bv)) (changed ??= {})[key] = bv;
   }
   return changed as Partial<T> | null;
+}
+
+interface OrderNode<T> {
+  value: ServerFaceted<T>;
+  next: OrderNode<T> | null;
 }
 
 /**
@@ -45,30 +106,35 @@ export function mergeServerLists<T>(
   lists: ReadonlyArray<readonly [GameServer, readonly T[]]>,
   idOf: (item: T) => string | number,
 ): ServerFaceted<T>[] {
-  const merged = new Map<string, ServerFaceted<T>>();
-  const order: string[] = [];
+  const merged = new Map<string, OrderNode<T>>();
+  const sentinel: { next: OrderNode<T> | null } = { next: null };
   for (const [server, items] of lists) {
     const seen = new Map<string, number>();
-    let previous = -1;
+    let previous: { next: OrderNode<T> | null } = sentinel;
     for (const item of items) {
       const id = String(idOf(item));
       const occurrence = seen.get(id) ?? 0;
       seen.set(id, occurrence + 1);
       const key = occurrence ? `${id}#${occurrence}` : id;
-      const entry = merged.get(key);
-      if (entry) {
-        entry.servers.push(server);
-        const changed = changedFields(entry, item);
-        if (changed) (entry.serverVariants ??= {})[server] = changed;
-        previous = order.indexOf(key);
+      const existing = merged.get(key);
+      if (existing) {
+        existing.value.servers.push(server);
+        const changed = changedFields(existing.value, item);
+        if (changed) (existing.value.serverVariants ??= {})[server] = changed;
+        previous = existing;
         continue;
       }
-      merged.set(key, { ...item, servers: [server] });
-      order.splice(previous + 1, 0, key);
-      previous += 1;
+      const node: OrderNode<T> = { value: { ...item, servers: [server] }, next: previous.next };
+      previous.next = node;
+      merged.set(key, node);
+      previous = node;
     }
   }
-  return order.map((key) => merged.get(key)!);
+  const result: ServerFaceted<T>[] = [];
+  for (let node = sentinel.next; node !== null; node = node.next) {
+    result.push(node.value);
+  }
+  return result;
 }
 
 /** Merge one value per server; servers without one (null) do not have it. Null when no server has it. */

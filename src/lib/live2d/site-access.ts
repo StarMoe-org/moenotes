@@ -24,10 +24,48 @@ export interface GatedLive2DBundle {
 
 const MODEL_ID = /^[a-z0-9_]+$/;
 const ASSET_PATH = /^assets\/[a-f0-9]{64}(?:\.[a-z0-9_-]+)+$/;
-const indexCache = new Map<string, { expiresAt: number; promise: Promise<Live2DModelEntry[]> }>();
-const bundleCache = new Map<string, { expiresAt: number; promise: Promise<GatedLive2DBundle | null> }>();
 const INDEX_TTL_MS = 15_000;
 const BUNDLE_TTL_MS = 30_000;
+export const LIVE2D_BUNDLE_MAX_ENTRIES = 128;
+
+interface TimedCacheEntry<T> {
+  expiresAt: number;
+  promise: Promise<T>;
+}
+
+const indexCache = new Map<string, TimedCacheEntry<Live2DModelEntry[]>>();
+const bundleCache = new Map<string, TimedCacheEntry<GatedLive2DBundle | null>>();
+
+function getTimedLru<T>(cache: Map<string, TimedCacheEntry<T>>, key: string, now: number): Promise<T> | undefined {
+  const cached = cache.get(key);
+  if (!cached) return undefined;
+  if (cached.expiresAt <= now) {
+    cache.delete(key);
+    return undefined;
+  }
+  cache.delete(key);
+  cache.set(key, cached);
+  return cached.promise;
+}
+
+function setTimedLru<T>(
+  cache: Map<string, TimedCacheEntry<T>>,
+  key: string,
+  entry: TimedCacheEntry<T>,
+  maxEntries: number,
+  now: number,
+): void {
+  for (const [candidateKey, candidate] of cache) {
+    if (candidate.expiresAt <= now) cache.delete(candidateKey);
+  }
+  cache.delete(key);
+  while (cache.size >= maxEntries) {
+    const oldest = cache.keys().next().value;
+    if (oldest === undefined) break;
+    cache.delete(oldest);
+  }
+  cache.set(key, entry);
+}
 
 /** Clear short-lived cloud lookups between proxy-handler tests. */
 export function resetLive2DSiteAccessCachesForTests(): void {
@@ -126,13 +164,14 @@ async function fetchIndex(root: string): Promise<Live2DModelEntry[]> {
 
 async function cachedIndex(server: GameServer, source: Live2DSource, root: string): Promise<Live2DModelEntry[]> {
   const key = `${server}:${source}`;
+  const clock = Date.now();
   const cached = indexCache.get(key);
-  if (cached && cached.expiresAt > Date.now()) return cached.promise;
+  if (cached && cached.expiresAt > clock) return cached.promise;
   const promise = fetchIndex(root).catch((error: unknown) => {
-    indexCache.delete(key);
+    if (indexCache.get(key)?.promise === promise) indexCache.delete(key);
     throw error;
   });
-  indexCache.set(key, { expiresAt: Date.now() + INDEX_TTL_MS, promise });
+  indexCache.set(key, { expiresAt: clock + INDEX_TTL_MS, promise });
   return promise;
 }
 
@@ -222,13 +261,14 @@ export async function getGatedLive2DBundle(
   if (!entry) return null;
 
   const key = `${server}:${source}:${modelId}`;
-  const cached = bundleCache.get(key);
-  if (cached && cached.expiresAt > Date.now()) return cached.promise;
+  const clock = Date.now();
+  const cached = getTimedLru(bundleCache, key, clock);
+  if (cached) return cached;
   const promise = fetchModelBundle(entry).catch((error: unknown) => {
-    bundleCache.delete(key);
+    if (bundleCache.get(key)?.promise === promise) bundleCache.delete(key);
     throw error;
   });
-  bundleCache.set(key, { expiresAt: Date.now() + BUNDLE_TTL_MS, promise });
+  setTimedLru(bundleCache, key, { expiresAt: clock + BUNDLE_TTL_MS, promise }, LIVE2D_BUNDLE_MAX_ENTRIES, clock);
   return promise;
 }
 

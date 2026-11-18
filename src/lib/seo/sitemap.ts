@@ -21,6 +21,16 @@ interface SitemapPath {
   pathname: `/${string}`;
 }
 
+function buildAlternates(pathname: `/${string}`, locales: readonly AppLocale[]) {
+  const alternates = locales.map((alternateLocale) => ({
+    locale: alternateLocale,
+    href: absolutePageUrl(localizePath(pathname, alternateLocale)),
+  }));
+  const xDefault = alternates.find((alt) => alt.locale === DEFAULT_LOCALE)?.href
+    ?? absolutePageUrl(localizePath(pathname, DEFAULT_LOCALE));
+  return { alternates, xDefault };
+}
+
 /**
  * Locale-aware sitemap entries. `locales` defaults to this build's active set (`MOENOTES_BUILD_LOCALES`),
  * so the core/fallback batch only emits entries for the locales it actually rendered.
@@ -28,20 +38,49 @@ interface SitemapPath {
 export async function getSitemapEntries(locales: readonly AppLocale[] = activeBuildLocales()): Promise<SitemapEntry[]> {
   const paths = await getSitemapPaths();
 
-  return paths.flatMap(({ route, pathname }) =>
-    locales.map((locale) => ({
+  return paths.flatMap(({ route, pathname }) => {
+    const { alternates, xDefault } = buildAlternates(pathname, locales);
+    const lastmod = route.seo.sitemap?.lastmod;
+    const priority = route.seo.sitemap?.priority ?? 0.5;
+    const changefreq = route.seo.sitemap?.changefreq ?? "weekly";
+
+    return locales.map((locale, index) => ({
       locale,
-      loc: absolutePageUrl(localizePath(pathname, locale)),
-      alternates: locales.map((alternateLocale) => ({
-        locale: alternateLocale,
-        href: absolutePageUrl(localizePath(pathname, alternateLocale)),
-      })),
-      xDefault: absolutePageUrl(localizePath(pathname, DEFAULT_LOCALE)),
-      ...(route.seo.sitemap?.lastmod ? { lastmod: route.seo.sitemap.lastmod } : {}),
+      loc: alternates[index]!.href,
+      alternates,
+      xDefault,
+      ...(lastmod ? { lastmod } : {}),
+      priority,
+      changefreq,
+    }));
+  });
+}
+
+/**
+ * Compute entries for a single `/sitemaps/<locale>.xml` shard without allocating entry objects for every other locale.
+ * Each entry still carries the full `alternateLocales` hreflang set.
+ */
+export async function getSitemapShardEntries(
+  shardLocale: AppLocale,
+  alternateLocales: readonly AppLocale[] = activeBuildLocales(),
+): Promise<SitemapEntry[]> {
+  const shardIndex = alternateLocales.indexOf(shardLocale);
+  if (shardIndex < 0) return [];
+
+  const paths = await getSitemapPaths();
+  return paths.map(({ route, pathname }) => {
+    const { alternates, xDefault } = buildAlternates(pathname, alternateLocales);
+    const lastmod = route.seo.sitemap?.lastmod;
+    return {
+      locale: shardLocale,
+      loc: alternates[shardIndex]!.href,
+      alternates,
+      xDefault,
+      ...(lastmod ? { lastmod } : {}),
       priority: route.seo.sitemap?.priority ?? 0.5,
       changefreq: route.seo.sitemap?.changefreq ?? "weekly",
-    })),
-  );
+    };
+  });
 }
 
 /** Locales this build renders an `/sitemaps/<prefix>.xml` shard for, in `SUPPORTED_LOCALES` order. */

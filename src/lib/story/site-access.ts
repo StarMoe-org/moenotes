@@ -30,8 +30,54 @@ export interface GatedStoryBundle {
 
 const ASSET_PATH = /^assets\/[a-f0-9]{64}(?:\.[a-z0-9_-]+)+$/;
 const MODEL_PATH = /^models\/[a-z0-9_]+\.json$/;
-const storyBundleCache = new Map<string, { expiresAt: number; promise: Promise<GatedStoryBundle | null> }>();
+const STORY_INDEX_TTL_MS = 15_000;
 const STORY_BUNDLE_TTL_MS = 30_000;
+export const STORY_BUNDLE_MAX_ENTRIES = 64;
+
+interface TimedCacheEntry<T> {
+  expiresAt: number;
+  promise: Promise<T>;
+}
+
+const storyIndexCache = new Map<StorySiteRegion, TimedCacheEntry<unknown[]>>();
+const storyBundleCache = new Map<string, TimedCacheEntry<GatedStoryBundle | null>>();
+
+/** Clear short-lived cloud lookups between proxy-handler tests. */
+export function resetStorySiteAccessCachesForTests(): void {
+  storyIndexCache.clear();
+  storyBundleCache.clear();
+}
+
+function getTimedLru<T>(cache: Map<string, TimedCacheEntry<T>>, key: string, now: number): Promise<T> | undefined {
+  const cached = cache.get(key);
+  if (!cached) return undefined;
+  if (cached.expiresAt <= now) {
+    cache.delete(key);
+    return undefined;
+  }
+  cache.delete(key);
+  cache.set(key, cached);
+  return cached.promise;
+}
+
+function setTimedLru<T>(
+  cache: Map<string, TimedCacheEntry<T>>,
+  key: string,
+  entry: TimedCacheEntry<T>,
+  maxEntries: number,
+  now: number,
+): void {
+  for (const [candidateKey, candidate] of cache) {
+    if (candidate.expiresAt <= now) cache.delete(candidateKey);
+  }
+  cache.delete(key);
+  while (cache.size >= maxEntries) {
+    const oldest = cache.keys().next().value;
+    if (oldest === undefined) break;
+    cache.delete(oldest);
+  }
+  cache.set(key, entry);
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -94,22 +140,44 @@ function sanitizeIndexEntry(entry: Record<string, unknown>, advId: number, sourc
   };
 }
 
+async function fetchStorySiteIndex(root: string): Promise<unknown[]> {
+  const response = await buildFetch(`${root}/stories.json`, {
+    cache: "no-store",
+    headers: { Accept: "application/json" },
+    redirect: "error",
+  });
+  if (response.status === 404) return [];
+  if (!response.ok) throw new Error(`Story site index returned HTTP ${response.status}`);
+
+  const index: unknown = await response.json();
+  if (!isRecord(index) || index.format !== "ournotes.stories/1" || !Array.isArray(index.stories)) {
+    return [];
+  }
+  return index.stories;
+}
+
+async function cachedStorySiteIndex(server: StorySiteRegion, root: string): Promise<unknown[]> {
+  const clock = Date.now();
+  const cached = storyIndexCache.get(server);
+  if (cached && cached.expiresAt > clock) return cached.promise;
+  const promise = fetchStorySiteIndex(root).catch((error: unknown) => {
+    if (storyIndexCache.get(server)?.promise === promise) storyIndexCache.delete(server);
+    throw error;
+  });
+  storyIndexCache.set(server, { expiresAt: clock + STORY_INDEX_TTL_MS, promise });
+  return promise;
+}
+
 /** The server-side story index after intersecting it with official release data for that same region. */
 export async function getReleasedStorySiteIndex(server: StorySiteRegion, now = Date.now()): Promise<ReleasedStorySiteIndex> {
   const site = getStorySites().find((candidate) => candidate.server === server);
   if (!site) return { site: { root: "", server }, stories: [] };
 
-  const [response, masterStories] = await Promise.all([
-    buildFetch(`${site.root}/stories.json`, { cache: "no-store", headers: { Accept: "application/json" }, redirect: "error" }),
+  const [rawStories, masterStories] = await Promise.all([
+    cachedStorySiteIndex(server, site.root),
     getBuildStories(DEFAULT_LOCALE),
   ]);
-  if (response.status === 404) return { site, stories: [] };
-  if (!response.ok) throw new Error(`Story site index returned HTTP ${response.status}`);
-
-  const index: unknown = await response.json();
-  if (!isRecord(index) || index.format !== "ournotes.stories/1" || !Array.isArray(index.stories)) {
-    return { site, stories: [] };
-  }
+  if (rawStories.length === 0) return { site, stories: [] };
 
   const localByAdvId = new Map<number, (typeof masterStories)[number]>();
   for (const story of masterStories) {
@@ -119,7 +187,7 @@ export async function getReleasedStorySiteIndex(server: StorySiteRegion, now = D
   }
 
   const stories: ReleasedStoryIndexEntry[] = [];
-  for (const rawEntry of index.stories) {
+  for (const rawEntry of rawStories) {
     if (!isRecord(rawEntry) || typeof rawEntry.advId !== "number" || !Number.isSafeInteger(rawEntry.advId) || rawEntry.advId <= 0) continue;
     const advId = rawEntry.advId as number;
     const story = localByAdvId.get(advId);
@@ -214,14 +282,15 @@ export async function getGatedStoryBundle(server: StorySiteRegion, advId: number
   if (!local || !isStoryReleasedForServer(local, server, Date.now())) return null;
 
   const key = `${server}:${advId}`;
-  const cached = storyBundleCache.get(key);
-  if (cached && cached.expiresAt > Date.now()) return cached.promise;
+  const clock = Date.now();
+  const cached = getTimedLru(storyBundleCache, key, clock);
+  if (cached) return cached;
 
   const promise = loadStoryBundle(server, advId).catch((error: unknown) => {
-    storyBundleCache.delete(key);
+    if (storyBundleCache.get(key)?.promise === promise) storyBundleCache.delete(key);
     throw error;
   });
-  storyBundleCache.set(key, { expiresAt: Date.now() + STORY_BUNDLE_TTL_MS, promise });
+  setTimedLru(storyBundleCache, key, { expiresAt: clock + STORY_BUNDLE_TTL_MS, promise }, STORY_BUNDLE_MAX_ENTRIES, clock);
   return promise;
 }
 
