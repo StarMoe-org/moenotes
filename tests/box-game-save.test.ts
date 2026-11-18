@@ -4,7 +4,7 @@ import { gameSaveServer, gameSavePath } from "../src/config/account";
 import { deriveGameSaveBox, expForLevel, gameSaveCounts, levelByExp, parseGameSave, unavailableGameSaveBox, type GameSaveTables } from "../src/lib/box/game-save";
 import { buildGameSaveTables } from "../src/lib/masterdata/save-tables";
 import { answerField, createBox, createCard, parseBox, type BoxSaveLink, type CardBox } from "../src/lib/box/model";
-import { ACCOUNT_COVERAGE_PATHS, boxAccountJson, gameSaveAccountJson } from "../src/lib/deck/account-envelope";
+import { ACCOUNT_COVERAGE_PATHS, boxAccountJson, DeckAccountTablesError, gameSaveAccountJson } from "../src/lib/deck/account-envelope";
 
 const SHA_A = "a".repeat(64), SHA_B = "b".repeat(64);
 const DATASET = "c".repeat(64);
@@ -277,6 +277,32 @@ describe("account envelope", () => {
       { path: "_player._memberCards[0]._exp", reason: "Level 2 read from a screenshot; experience is that level's threshold" },
       { path: "_player._characters[1]._exp", reason: "Character rank 3 entered manually; experience is that rank's threshold" },
     ]);
+  });
+  test("a known level the page's save tables cannot encode is reported instead of a null experience", () => {
+    // A Snap added after the page's tables were built: the solver would otherwise read `_exp: null` as a missing field
+    // the player can never fill (the “补填” dead end).
+    const stale = createBox("tw", "box", 1);
+    const card = createCard("snap", "s", "202", 2);
+    card.fields.level = answerField(card.fields.level, { id: "level", value: 2, source: "manual", at: 3 });
+    stale.cards = [card];
+    expect(() => boxAccountJson(target, stale, tables)).toThrow(DeckAccountTablesError);
+    try { boxAccountJson(target, stale, tables); } catch (error) {
+      expect(error).toMatchObject({ problem: "stale", path: "_player._supportCards[0]._exp" });
+    }
+
+    // A known Snap whose group has no row for the answered level: the player's answer is out of range.
+    const beyond = createBox("tw", "box", 1);
+    const beyondCard = createCard("snap", "s2", "201", 2);
+    beyondCard.fields.level = answerField(beyondCard.fields.level, { id: "level9", value: 9, source: "manual", at: 4 });
+    beyond.cards = [beyondCard];
+    try { boxAccountJson(target, beyond, tables); } catch (error) {
+      expect(error).toMatchObject({ problem: "level", path: "_player._supportCards[0]._exp" });
+    }
+
+    // An unknown level stays null, which the solver reports as the field the player still has to answer.
+    const unknown = createBox("tw", "box", 1);
+    unknown.cards = [createCard("snap", "s", "201", 2)];
+    expect(JSON.parse(boxAccountJson(target, unknown, tables)).account._player._supportCards).toEqual([{ _masterId: 201, _exp: null, _rank: null }]);
   });
   test("IDs are written as exact integer tokens and a linked Box is not assembled from its own facts", () => {
     const box = createBox("tw", "box", 1);

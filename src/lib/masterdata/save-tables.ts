@@ -1,7 +1,7 @@
 import type { GameServer } from "@/config/servers";
 import { validateMasterTable } from "@/lib/cards/data";
 import type { GameSaveTables } from "@/lib/box/game-save";
-import { getBuildMasterData } from "./build-snapshot";
+import { getBuildManifest, getBuildMasterData, currentMasterDataEpochSync, isMasterDataManifestFresh } from "./build-snapshot";
 
 type Row = Record<string, unknown>;
 export interface GameSaveMasterRows {
@@ -49,18 +49,46 @@ export function buildGameSaveTables(server: GameServer, rows: GameSaveMasterRows
   };
 }
 
-const pending = new Map<GameServer, Promise<GameSaveTables | null>>();
-/** Null when the server's tables are unavailable; the page then shows save cards without levels or ranks. */
-export function getBuildGameSaveTables(server: GameServer): Promise<GameSaveTables | null> {
-  let request = pending.get(server);
+interface SaveTablesState {
+  /** MasterData epoch the cached tables belong to; a rotation drops every entry. */
+  epoch: number;
+  byServer: Map<GameServer, Promise<GameSaveTables | null>>;
+}
+
+const stateKey = Symbol.for("moenotes.masterdata.save-tables");
+const globalState = globalThis as typeof globalThis & { [stateKey]?: SaveTablesState };
+const state = globalState[stateKey] ??= { epoch: -1, byServer: new Map() };
+
+async function loadGameSaveTables(server: GameServer): Promise<GameSaveTables> {
+  const names = ["MasterMemberCard", "MasterSupportCard", "MasterMemberCardLevel", "MasterSupportCardLevel", "MasterCharacterRank", "MasterCharacter", "MasterBandItem", "MasterBandItemLevel", "MasterMemoryMusicGroup", "MasterMemoryMusic"];
+  const data = await Promise.all(names.map(name => getBuildMasterData(`${name}.json`, raw => validateMasterTable<Row>(raw)._allData, server)));
+  return buildGameSaveTables(server, { memberCards: data[0]!, supportCards: data[1]!, memberCardLevels: data[2]!, supportCardLevels: data[3]!, characterRanks: data[4]!,
+    characters: data[5]!, bandItems: data[6]!, bandItemLevels: data[7]!, memoryMusicGroups: data[8]!, memoryMusics: data[9]! });
+}
+
+/**
+ * The save tables of `server` at its current MasterData version. They are rebuilt whenever the MasterData epoch
+ * rotates, so a card or Snap released after the server started has its level group here; a cached older subset would
+ * leave that card's level unencodable. Null when the tables are unavailable; a failure is not kept, so the next call
+ * retries.
+ */
+export async function getBuildGameSaveTables(server: GameServer): Promise<GameSaveTables | null> {
+  if (!isMasterDataManifestFresh()) {
+    await getBuildManifest();
+  }
+  const epoch = currentMasterDataEpochSync();
+  if (state.epoch !== epoch) {
+    state.epoch = epoch;
+    state.byServer.clear();
+  }
+  let request = state.byServer.get(server);
   if (!request) {
-    request = (async () => {
-      const names = ["MasterMemberCard", "MasterSupportCard", "MasterMemberCardLevel", "MasterSupportCardLevel", "MasterCharacterRank", "MasterCharacter", "MasterBandItem", "MasterBandItemLevel", "MasterMemoryMusicGroup", "MasterMemoryMusic"];
-      const data = await Promise.all(names.map(name => getBuildMasterData(`${name}.json`, raw => validateMasterTable<Row>(raw)._allData, server)));
-      return buildGameSaveTables(server, { memberCards: data[0]!, supportCards: data[1]!, memberCardLevels: data[2]!, supportCardLevels: data[3]!, characterRanks: data[4]!,
-        characters: data[5]!, bandItems: data[6]!, bandItemLevels: data[7]!, memoryMusicGroups: data[8]!, memoryMusics: data[9]! });
-    })().catch(error => { console.warn(`[save-tables] ${server} tables unavailable: ${error instanceof Error ? error.message : String(error)}`); return null; });
-    pending.set(server, request);
+    request = loadGameSaveTables(server).catch(error => {
+      console.warn(`[save-tables] ${server} tables unavailable: ${error instanceof Error ? error.message : String(error)}`);
+      state.byServer.delete(server);
+      return null;
+    });
+    state.byServer.set(server, request);
   }
   return request;
 }

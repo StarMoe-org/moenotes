@@ -27,7 +27,8 @@
     "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
     "lint:server-config": "bun scripts/generate-runtime-config.ts --check",
     "gen:server-config": "bun scripts/generate-runtime-config.ts",
-    "build:haneoka-engine": "bun scripts/build-haneoka-engine.mjs"
+    "build:haneoka-engine": "bun scripts/build-haneoka-engine.mjs",
+    "check:haneoka-upstream": "node scripts/check-haneoka-upstream.mjs"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",

@@ -1,6 +1,7 @@
 # Haneoka engine integration
 
-The Haneoka engine is pinned at `8b6915c140b6239cff5f4bca78380b654ed722e6`.
+The Haneoka engine is pinned at `7c167c95e8589bc84a9ab726b5b58adbc0ef4b05` (`HANEOKA_COMMIT`) with
+`patches/haneoka-rewards.patch` (`HANEOKA_PATCH_SHA`); see [Upstream tracking](#upstream-tracking).
 The existing Moenotes card pool, account envelopes, Worker lifecycle and result components are reused.
 The Rust engine, with the Moenotes reward patch, owns scoring and search; the adapter translates documents, goals and results.
 
@@ -199,6 +200,37 @@ The current page's scene families (including cumulative support-skill climbing s
 Played combined maximum and older provider-only threshold/capped/score-and-LIFE objectives are not advertised.
 LUCK retains the native finite-root model and cooperative deadlines. Live-account and physical-phone
 acceptance remain separate from declared-fixture and responsive browser verification.
+
+## Upstream tracking
+
+`node scripts/check-haneoka-upstream.mjs [--ref <commit>] [--patch]` reports the pinned commit against
+`haneoka-gakuen/ournotes-team-builder` `main`, lists the commits since the pin, and `--patch` checks whether
+`patches/haneoka-rewards.patch` still applies there. It needs git and network access, not Rust. It is a diagnosis, not
+an upgrade: a clean patch only means the reward layer can be reviewed against the upstream changes, and the pin moves
+only after `bun run build:haneoka-engine --test` rebuilds and tests the WASM with a Rust toolchain.
+
+State at the last check (2026-11-27): upstream `main` is `6de572be31b0fd8e4ab50825bd92c81ac625bc78`, 40 commits ahead
+of the pin and 0 behind, and the reward patch does **not** apply to it. The ten files that reject the patch are
+`src/api.rs`, `src/api/arena.rs`, `src/clock.rs`, `src/event.rs`, `src/gekiso.rs`, `src/gekiso_objective.rs`,
+`src/gekiso_objective/shared.rs`, `src/live.rs`, `src/objectives.rs` and `src/search.rs`.
+
+Most of the gap is upstream work that overlaps the reward layer rather than unrelated code, so the patch has to be
+re-derived instead of fuzzed into place:
+
+- Timing and judgement delivery (`PhaseTiming` replaced by native `score_reachable` / `score_timed` with a
+  `TimingSource`, frame origins, counting snapshots anchored to their activation frame, cumulative and JUST search
+  deadlines). The reward layer's timing branch must move onto the native input path.
+- Reward settlement and ordering (`with_power_ties`, `with_maximum`, stable reward goals, pair-aware skill limits,
+  shared reward proofs, per-song power reuse). Some of these were introduced by the patch first; they now exist
+  upstream and must be reconciled rather than duplicated.
+- Search structure (section-first Arena search, `search-deadline` handling inside `shared::search_shared`, prepared
+  card reuse, sampled LUCK inputs). The patch's own deadline and progress handling in `gekiso_objective` collides here.
+- Metadata and cache layout (`support_high` keyed by a tuple instead of a JSON string, `support_ref`, owned
+  initialization metadata), which the patch's support-prep code still assumes in its older form.
+
+Until that port is reviewed, the site keeps serving the pinned runtime. Nothing in the deck page reads a live upstream
+commit: `runtime.json`, the answers' `engine.commit` and the licence links all name `HANEOKA_COMMIT`, so a stale pin is
+visible and reproducible rather than silently mixed.
 
 ## Performance evidence
 

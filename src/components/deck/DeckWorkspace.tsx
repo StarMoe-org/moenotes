@@ -20,7 +20,7 @@ import { ContentServerProvider, useContentServer } from "@/lib/servers/use-conte
 import { EMPTY_CARD_FILTERS, memberCardSubject, supportCardSubject, type CardFilterSubject } from "@/lib/filter/card-filter";
 import { mergeBoxBackup, parseBox, type BoxCard, type BoxSaveLink, type CardBox, type CardFieldName, type CardKind } from "@/lib/box/model";
 import { answerDeckFields } from "@/lib/box/deck-answers";
-import { boxAccountJson, gameSaveAccountJson } from "@/lib/deck/account-envelope";
+import { boxAccountJson, DeckAccountTablesError, gameSaveAccountJson } from "@/lib/deck/account-envelope";
 import { CHALLENGE_POINT_COSTS, DECK_FRAME_RATES, DEFAULT_DECK_GOAL, EVENT_GOALS, EVERYDAY_GOALS, MAX_BOOST, MAX_GEKISO_INPUT_COUNT, computes, computesGoal, defaultDeckGoalInput, effectiveFrameRate, effectiveMinJustWindowMs, goalGap, heldEvent,
   playsGekisou, readsAccuracy, effectiveAggregation, supportsFrameRate, usesEventData, usesEventItemRewards, rewardLayoutOf, isChallengeInput, isNetworkInput, challengeRateRequest, recommendationRequest, solverGoalKind, supportsCrossSongMean, goalVenues, isEventPayoffGoal, type ChallengePointCost, type DeckEvent, type DeckFrameRate, type DeckGoal, type DeckGoalInput, type DeckVenue, type DeckArenaMusic } from "@/lib/deck/goals";
 import { reconcileCardSelections } from "@/lib/deck/card-selection";
@@ -535,7 +535,14 @@ function DeckWorkspace(props: DeckWorkspaceProps) {
         return worth ? recommendationRequest(effectiveInput, context, { worth, ...(songScope ? { songScope } : {}) }) : null;
       } });
       requestAnimationFrame(() => teamPanel.current?.closest<HTMLElement>(".dc-team")?.scrollIntoView({ block: "start", behavior: "smooth" }));
-    } catch (error) { setRunError(error instanceof Error ? error.message : String(error)); }
+    } catch (error) {
+      // A known level the page's save tables cannot encode is a data-version problem, not a Box answer to fill.
+      if (error instanceof DeckAccountTablesError) {
+        setRunError(tr(error.problem === "stale" ? "solver.tablesStale" : "solver.tablesLevelMissing"));
+        return;
+      }
+      setRunError(error instanceof Error ? error.message : String(error));
+    }
   }
   async function answerAll(keys: string[], name: CardFieldName, value: number) {
     if (!stored || linked) return;
