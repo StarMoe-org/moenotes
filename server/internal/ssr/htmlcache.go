@@ -5,6 +5,8 @@ package ssr
 import (
 	"bytes"
 	"compress/gzip"
+	"container/list"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -35,6 +37,140 @@ type inflightCall struct {
 	err    error
 }
 
+type flightGroup struct {
+	mu      sync.Mutex
+	flights map[string]*inflightCall
+}
+
+func (fg *flightGroup) do(ctx context.Context, key string, fn func(context.Context) (int, http.Header, []byte, error)) (int, http.Header, []byte, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if err := ctx.Err(); err != nil {
+		return 0, nil, nil, err
+	}
+
+	fg.mu.Lock()
+	if call, ok := fg.flights[key]; ok {
+		fg.mu.Unlock()
+		select {
+		case <-call.done:
+			return call.status, call.header, call.body, call.err
+		case <-ctx.Done():
+			return 0, nil, nil, ctx.Err()
+		}
+	}
+	call := &inflightCall{done: make(chan struct{})}
+	if fg.flights == nil {
+		fg.flights = make(map[string]*inflightCall)
+	}
+	fg.flights[key] = call
+	fg.mu.Unlock()
+
+	flightCtx := context.WithoutCancel(ctx)
+	go func() {
+		defer func() {
+			fg.mu.Lock()
+			delete(fg.flights, key)
+			close(call.done)
+			fg.mu.Unlock()
+		}()
+		call.status, call.header, call.body, call.err = fn(flightCtx)
+	}()
+
+	select {
+	case <-call.done:
+		return call.status, call.header, call.body, call.err
+	case <-ctx.Done():
+		return 0, nil, nil, ctx.Err()
+	}
+}
+
+type shortCacheEntry struct {
+	key       string
+	status    int
+	header    http.Header
+	body      []byte
+	expiresAt time.Time
+	elem      *list.Element
+}
+
+type shortResponseCache struct {
+	mu            sync.Mutex
+	maxEntries    int
+	maxBytes      int
+	maxEntryBytes int
+	totalBytes    int
+	items         map[string]*shortCacheEntry
+	lru           *list.List
+}
+
+func newShortResponseCache(maxEntries, maxBytes, maxEntryBytes int) *shortResponseCache {
+	return &shortResponseCache{
+		maxEntries:    maxEntries,
+		maxBytes:      maxBytes,
+		maxEntryBytes: maxEntryBytes,
+		items:         make(map[string]*shortCacheEntry),
+		lru:           list.New(),
+	}
+}
+
+func (c *shortResponseCache) get(key string, now time.Time) (int, http.Header, []byte, bool) {
+	if c == nil {
+		return 0, nil, nil, false
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	entry, ok := c.items[key]
+	if !ok {
+		return 0, nil, nil, false
+	}
+	if !now.Before(entry.expiresAt) {
+		c.removeEntry(entry)
+		return 0, nil, nil, false
+	}
+	c.lru.MoveToFront(entry.elem)
+	return entry.status, entry.header, entry.body, true
+}
+
+func (c *shortResponseCache) set(key string, status int, header http.Header, body []byte, ttl time.Duration, now time.Time) {
+	if c == nil || ttl <= 0 || len(body) > c.maxEntryBytes {
+		return
+	}
+	bodyCopy := append([]byte(nil), body...)
+	hdrCopy := header.Clone()
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if existing, ok := c.items[key]; ok {
+		c.removeEntry(existing)
+	}
+	entry := &shortCacheEntry{
+		key:       key,
+		status:    status,
+		header:    hdrCopy,
+		body:      bodyCopy,
+		expiresAt: now.Add(ttl),
+	}
+	entry.elem = c.lru.PushFront(entry)
+	c.items[key] = entry
+	c.totalBytes += len(bodyCopy)
+
+	for len(c.items) > c.maxEntries || c.totalBytes > c.maxBytes {
+		back := c.lru.Back()
+		if back == nil {
+			break
+		}
+		c.removeEntry(back.Value.(*shortCacheEntry))
+	}
+}
+
+func (c *shortResponseCache) removeEntry(entry *shortCacheEntry) {
+	c.lru.Remove(entry.elem)
+	delete(c.items, entry.key)
+	c.totalBytes -= len(entry.body)
+}
+
 // HTMLCache stores rendered 200 OK HTML and Markdown responses on disk keyed by buildID + dataVersion.
 // Bumping dataVersion immediately invalidates stale entries without blocking requests.
 type HTMLCache struct {
@@ -43,8 +179,7 @@ type HTMLCache struct {
 
 	dataVersion atomic.Value // string
 
-	flightMu sync.Mutex
-	flights  map[string]*inflightCall
+	flights flightGroup
 
 	pruneMu sync.Mutex
 	pruning bool
@@ -61,7 +196,6 @@ func NewHTMLCache(dir, buildID, initialDataVersion string) *HTMLCache {
 	c := &HTMLCache{
 		dir:     dir,
 		buildID: buildID,
-		flights: make(map[string]*inflightCall),
 	}
 	c.dataVersion.Store(initialDataVersion)
 	_ = os.MkdirAll(dir, 0o755)
@@ -148,21 +282,37 @@ func (c *HTMLCache) Write(version, variant, reqPath string, meta cacheMeta, plai
 	if err != nil {
 		return
 	}
-	tmpGz := gzPath + ".tmp"
-	tmpMeta := metaPath + ".tmp"
-	if os.WriteFile(tmpGz, buf.Bytes(), 0o644) != nil {
+	if err := writeAtomically(gzPath, buf.Bytes()); err != nil {
 		return
 	}
-	if os.Rename(tmpGz, gzPath) != nil {
-		_ = os.Remove(tmpGz)
-		return
+	_ = writeAtomically(metaPath, rawMeta)
+}
+
+func writeAtomically(dst string, data []byte) error {
+	f, err := os.CreateTemp(filepath.Dir(dst), filepath.Base(dst)+".*.tmp")
+	if err != nil {
+		return err
 	}
-	if os.WriteFile(tmpMeta, rawMeta, 0o644) != nil {
-		return
+	tmp := f.Name()
+	cleanup := true
+	defer func() {
+		if cleanup {
+			_ = os.Remove(tmp)
+		}
+	}()
+	if _, err := f.Write(data); err != nil {
+		_ = f.Close()
+		return err
 	}
-	if os.Rename(tmpMeta, metaPath) != nil {
-		_ = os.Remove(tmpMeta)
+	if err := f.Close(); err != nil {
+		return err
 	}
+	_ = os.Chmod(tmp, 0o644)
+	if err := os.Rename(tmp, dst); err != nil {
+		return err
+	}
+	cleanup = false
+	return nil
 }
 
 // BuildID returns the Next.js build identifier associated with this cache.
@@ -223,24 +373,18 @@ func acceptsGzip(header string) bool {
 }
 
 // DoCoalesced executes fn once for concurrent identical (version, variant, path) misses.
-func (c *HTMLCache) DoCoalesced(key string, fn func() (int, http.Header, []byte, error)) (int, http.Header, []byte, error) {
-	c.flightMu.Lock()
-	if call, ok := c.flights[key]; ok {
-		c.flightMu.Unlock()
-		<-call.done
-		return call.status, call.header, call.body, call.err
+// Individual callers exit via ctx.Done() without cancelling the shared fn execution.
+func (c *HTMLCache) DoCoalesced(ctx context.Context, key string, fn func(context.Context) (int, http.Header, []byte, error)) (int, http.Header, []byte, error) {
+	if c == nil {
+		if ctx == nil {
+			ctx = context.Background()
+		}
+		if err := ctx.Err(); err != nil {
+			return 0, nil, nil, err
+		}
+		return fn(context.WithoutCancel(ctx))
 	}
-	call := &inflightCall{done: make(chan struct{})}
-	c.flights[key] = call
-	c.flightMu.Unlock()
-
-	call.status, call.header, call.body, call.err = fn()
-
-	c.flightMu.Lock()
-	delete(c.flights, key)
-	close(call.done)
-	c.flightMu.Unlock()
-	return call.status, call.header, call.body, call.err
+	return c.flights.do(ctx, key, fn)
 }
 
 // pruneOldEntries removes expired cache entries belonging to older builds or superseded MasterData versions,

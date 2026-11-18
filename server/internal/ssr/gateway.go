@@ -3,6 +3,8 @@ package ssr
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"io"
 	"net/http"
 	"net/url"
@@ -45,6 +47,14 @@ type Gateway struct {
 	readyFn        func() bool
 	onForceRefresh func(ctx context.Context)
 	lastTraffic    atomic.Int64
+
+	flights    flightGroup
+	shortCache *shortResponseCache
+	nowFn      func() time.Time
+
+	warmupTick time.Duration
+	warmupIdle time.Duration
+	warmupStep time.Duration
 }
 
 // NewGateway constructs a semi-SSR Gateway.
@@ -55,7 +65,14 @@ func NewGateway(opts GatewayOptions) (*Gateway, error) {
 	}
 	client := opts.Client
 	if client == nil {
-		client = &http.Client{Timeout: 30 * time.Second}
+		tr := http.DefaultTransport.(*http.Transport).Clone()
+		tr.MaxIdleConns = 256
+		tr.MaxIdleConnsPerHost = 128
+		tr.IdleConnTimeout = 90 * time.Second
+		client = &http.Client{
+			Timeout:   30 * time.Second,
+			Transport: tr,
+		}
 	}
 	g := &Gateway{
 		upstream:       parsed,
@@ -67,9 +84,35 @@ func NewGateway(opts GatewayOptions) (*Gateway, error) {
 		client:         client,
 		readyFn:        opts.Ready,
 		onForceRefresh: opts.OnForceRefresh,
+		shortCache:     newShortResponseCache(512, 64<<20, 16<<20),
+		nowFn:          time.Now,
+		warmupTick:     5 * time.Second,
+		warmupIdle:     1500 * time.Millisecond,
+		warmupStep:     120 * time.Millisecond,
 	}
-	g.lastTraffic.Store(time.Now().UnixNano())
+	g.lastTraffic.Store(g.now().UnixNano())
 	return g, nil
+}
+
+func (g *Gateway) now() time.Time {
+	if g.nowFn != nil {
+		return g.nowFn()
+	}
+	return time.Now()
+}
+
+func (g *Gateway) dataVersion() string {
+	if g.cache == nil {
+		return ""
+	}
+	return g.cache.DataVersion()
+}
+
+func (g *Gateway) doCoalesced(ctx context.Context, key string, fn func(context.Context) (int, http.Header, []byte, error)) (int, http.Header, []byte, error) {
+	if g.cache != nil {
+		return g.cache.DoCoalesced(ctx, key, fn)
+	}
+	return g.flights.do(ctx, key, fn)
 }
 
 // PrefersMarkdown reports whether an HTTP Accept header prefers text/markdown over text/html.
@@ -200,6 +243,68 @@ func isBypassCacheRequest(r *http.Request) bool {
 	return isNonCacheablePathOrHeaders(r)
 }
 
+func readOnlyEndpointTTL(p string) (time.Duration, bool) {
+	switch {
+	case p == "/api/v1/story-site/index":
+		return 30 * time.Second, true
+	case p == "/search-index.json",
+		p == "/band-item-upgrades.json",
+		p == "/character-voices.json",
+		p == "/llms.txt",
+		p == "/llms-full.txt",
+		p == "/sitemap.xml",
+		p == "/robots.txt",
+		strings.HasPrefix(p, "/sitemaps/"):
+		return 2 * time.Minute, true
+	default:
+		return 0, false
+	}
+}
+
+func isCoalescableRSCRequest(r *http.Request) bool {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		return false
+	}
+	if r.Header.Get("Authorization") != "" || r.Header.Get("Next-Action") != "" {
+		return false
+	}
+	p := r.URL.Path
+	if strings.HasPrefix(p, "/_next/") ||
+		strings.HasPrefix(p, "/api/") ||
+		p == "/internal-healthz" ||
+		strings.HasPrefix(p, "/u/") ||
+		strings.Contains(p, "/u/") {
+		return false
+	}
+	return r.Header.Get("RSC") != "" || r.Header.Get("Next-Router-Prefetch") != "" || r.URL.Query().Has("_rsc")
+}
+
+func hasNoStoreOrPrivate(cc string) bool {
+	if cc == "" {
+		return false
+	}
+	lower := strings.ToLower(cc)
+	return strings.Contains(lower, "no-store") || strings.Contains(lower, "private")
+}
+
+func rscHeaderDigest(r *http.Request) string {
+	h := sha256.New()
+	for _, name := range []string{
+		"RSC",
+		"Next-Router-Prefetch",
+		"Next-Router-Segment-Prefetch",
+		"Next-Router-State-Tree",
+		"Next-Url",
+		"Accept",
+	} {
+		_, _ = io.WriteString(h, name)
+		_, _ = io.WriteString(h, ":")
+		_, _ = io.WriteString(h, r.Header.Get(name))
+		_, _ = io.WriteString(h, "\n")
+	}
+	return hex.EncodeToString(h.Sum(nil))[:16]
+}
+
 func normalizeCachePath(p string) string {
 	if p == "" || p == "/" {
 		return "/"
@@ -220,7 +325,7 @@ func cleanRelativeAssetPath(raw string) (string, bool) {
 }
 
 func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	g.lastTraffic.Store(time.Now().UnixNano())
+	g.lastTraffic.Store(g.now().UnixNano())
 
 	isRead := r.Method == http.MethodGet || r.Method == http.MethodHead
 
@@ -263,6 +368,17 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !forceBypass && isRead {
+		if ttl, ok := readOnlyEndpointTTL(r.URL.Path); ok && r.Header.Get("Authorization") == "" {
+			g.serveCoalescedDirect(w, r, "ep", ttl, true)
+			return
+		}
+		if isCoalescableRSCRequest(r) {
+			g.serveCoalescedDirect(w, r, "rsc", 15*time.Second, false)
+			return
+		}
+	}
+
 	if isBypassCacheRequest(r) || g.cache == nil {
 		g.proxyDirect(w, r, forceBypass)
 		return
@@ -282,45 +398,72 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ver := g.cache.DataVersion()
-	flightKey := ver + "\n" + variant + "\n" + cachePath
-	status, hdr, body, err := g.cache.DoCoalesced(flightKey, func() (int, http.Header, []byte, error) {
-		return g.fetchUpstream(r.Context(), cachePath, wantsMd)
-	})
+	negKey := "404\n" + ver + "\n" + variant + "\n" + cachePath
+	if status, hdr, body, ok := g.shortCache.get(negKey, g.now()); ok {
+		g.writePageResponse(w, r, status, hdr, body, wantsMd, ver, "HIT")
+		return
+	}
+
+	status, hdr, body, err := g.fetchAndCachePage(r.Context(), ver, variant, cachePath, wantsMd)
 	if err != nil {
 		logx.Printf("ssr gateway upstream failed for %s: %v", r.URL.Path, err)
 		w.Header().Set("Cache-Control", "no-store")
 		http.Error(w, "Bad Gateway", http.StatusBadGateway)
 		return
 	}
+	g.writePageResponse(w, r, status, hdr, body, wantsMd, ver, "MISS")
+}
 
-	if status == http.StatusOK && len(body) > 0 {
-		ct := hdr.Get("Content-Type")
-		if wantsMd && ct == "" {
-			ct = "text/markdown; charset=utf-8"
-		} else if ct == "" {
-			ct = "text/html; charset=utf-8"
+func (g *Gateway) fetchAndCachePage(ctx context.Context, ver, variant, cachePath string, wantsMd bool) (int, http.Header, []byte, error) {
+	flightKey := ver + "\n" + variant + "\n" + cachePath
+	return g.doCoalesced(ctx, flightKey, func(flightCtx context.Context) (int, http.Header, []byte, error) {
+		status, hdr, body, err := g.fetchUpstream(flightCtx, cachePath, wantsMd)
+		if err != nil {
+			return 0, nil, nil, err
 		}
-		meta := cacheMeta{
-			ContentType:   ct,
-			MarkdownToken: hdr.Get("X-Markdown-Tokens"),
-			CanonicalLink: hdr.Get("Link"),
-			DataVersion:   hdr.Get("X-Moenotes-Data-Version"),
+		if status == http.StatusOK && len(body) > 0 && g.cache != nil {
+			g.writePageToCache(ver, variant, cachePath, wantsMd, hdr, body)
+		} else if status == http.StatusNotFound && g.shortCache != nil && hdr.Get("Set-Cookie") == "" {
+			negKey := "404\n" + flightKey
+			g.shortCache.set(negKey, status, hdr, body, 30*time.Second, g.now())
 		}
-		if meta.DataVersion == "" {
-			meta.DataVersion = ver
-		}
-		g.cache.Write(ver, variant, cachePath, meta, body)
+		return status, hdr, body, nil
+	})
+}
+
+func (g *Gateway) writePageToCache(ver, variant, cachePath string, wantsMd bool, hdr http.Header, body []byte) {
+	ct := hdr.Get("Content-Type")
+	if wantsMd && ct == "" {
+		ct = "text/markdown; charset=utf-8"
+	} else if ct == "" {
+		ct = "text/html; charset=utf-8"
 	}
+	meta := cacheMeta{
+		ContentType:   ct,
+		MarkdownToken: hdr.Get("X-Markdown-Tokens"),
+		CanonicalLink: hdr.Get("Link"),
+		DataVersion:   hdr.Get("X-Moenotes-Data-Version"),
+	}
+	if meta.DataVersion == "" {
+		meta.DataVersion = ver
+	}
+	g.cache.Write(ver, variant, cachePath, meta, body)
+}
 
-	outHdr := w.Header()
-	for k, vals := range hdr {
+func copyUpstreamHeaders(dst, src http.Header) {
+	for k, vals := range src {
 		if strings.EqualFold(k, "Content-Length") || strings.EqualFold(k, "Content-Encoding") || strings.EqualFold(k, "Transfer-Encoding") || strings.EqualFold(k, "Connection") {
 			continue
 		}
-		outHdr[k] = append([]string(nil), vals...)
+		dst[k] = append([]string(nil), vals...)
 	}
+}
+
+func (g *Gateway) writePageResponse(w http.ResponseWriter, r *http.Request, status int, hdr http.Header, body []byte, wantsMd bool, ver, cacheStatus string) {
+	outHdr := w.Header()
+	copyUpstreamHeaders(outHdr, hdr)
 	outHdr.Set("Vary", "Accept, Accept-Encoding")
-	outHdr.Set("X-Moenotes-Cache", "MISS")
+	outHdr.Set("X-Moenotes-Cache", cacheStatus)
 	if !wantsMd {
 		dv := hdr.Get("X-Moenotes-Data-Version")
 		if dv == "" {
@@ -411,31 +554,11 @@ func (g *Gateway) refreshAndUpdateCache(w http.ResponseWriter, r *http.Request) 
 
 	ver := g.cache.DataVersion()
 	if status == http.StatusOK && len(body) > 0 {
-		ct := hdr.Get("Content-Type")
-		if wantsMd && ct == "" {
-			ct = "text/markdown; charset=utf-8"
-		} else if ct == "" {
-			ct = "text/html; charset=utf-8"
-		}
-		meta := cacheMeta{
-			ContentType:   ct,
-			MarkdownToken: hdr.Get("X-Markdown-Tokens"),
-			CanonicalLink: hdr.Get("Link"),
-			DataVersion:   hdr.Get("X-Moenotes-Data-Version"),
-		}
-		if meta.DataVersion == "" {
-			meta.DataVersion = ver
-		}
-		g.cache.Write(ver, variant, cachePath, meta, body)
+		g.writePageToCache(ver, variant, cachePath, wantsMd, hdr, body)
 	}
 
 	outHdr := w.Header()
-	for k, vals := range hdr {
-		if strings.EqualFold(k, "Content-Length") || strings.EqualFold(k, "Content-Encoding") || strings.EqualFold(k, "Transfer-Encoding") || strings.EqualFold(k, "Connection") {
-			continue
-		}
-		outHdr[k] = append([]string(nil), vals...)
-	}
+	copyUpstreamHeaders(outHdr, hdr)
 	outHdr.Set("Vary", "Accept, Accept-Encoding")
 	outHdr.Set("Cache-Control", "no-store")
 	outHdr.Set("X-Moenotes-Cache", "BYPASS")
@@ -443,6 +566,98 @@ func (g *Gateway) refreshAndUpdateCache(w http.ResponseWriter, r *http.Request) 
 	if r.Method != http.MethodHead {
 		_, _ = w.Write(body)
 	}
+}
+
+func (g *Gateway) serveCoalescedDirect(w http.ResponseWriter, r *http.Request, kind string, ttl time.Duration, respectCacheControl bool) {
+	ver := g.dataVersion()
+	key := kind + "\n" + ver + "\n" + r.URL.RequestURI()
+	if kind == "rsc" {
+		key += "\n" + rscHeaderDigest(r)
+	}
+
+	if status, hdr, body, ok := g.shortCache.get(key, g.now()); ok {
+		outHdr := w.Header()
+		copyUpstreamHeaders(outHdr, hdr)
+		outHdr.Set("X-Moenotes-Cache", "HIT")
+		w.WriteHeader(status)
+		if r.Method != http.MethodHead {
+			_, _ = w.Write(body)
+		}
+		return
+	}
+
+	// Snapshot safe request headers before entering the detached singleflight goroutine.
+	reqHdr := r.Header.Clone()
+	reqHdr.Del("Host")
+	reqHdr.Del("Connection")
+	reqHdr.Del("Cookie")
+	reqHdr.Del("If-None-Match")
+	reqHdr.Del("If-Modified-Since")
+	reqHdr.Del("If-Match")
+	reqHdr.Del("If-Unmodified-Since")
+	reqHdr.Del("Range")
+	reqHdr.Set("Accept-Encoding", "identity")
+	reqURI := r.URL.RequestURI()
+
+	status, hdr, body, err := g.doCoalesced(r.Context(), key, func(flightCtx context.Context) (int, http.Header, []byte, error) {
+		if st, h, b, ok := g.shortCache.get(key, g.now()); ok {
+			return st, h, b, nil
+		}
+		st, h, b, fetchErr := g.fetchDirectUpstream(flightCtx, reqURI, reqHdr)
+		if fetchErr != nil {
+			return 0, nil, nil, fetchErr
+		}
+		if g.shortCache != nil && h.Get("Set-Cookie") == "" {
+			if st == http.StatusNotFound {
+				negTTL := ttl
+				if negTTL > 30*time.Second {
+					negTTL = 30 * time.Second
+				}
+				g.shortCache.set(key, st, h, b, negTTL, g.now())
+			} else if st == http.StatusOK && (!respectCacheControl || !hasNoStoreOrPrivate(h.Get("Cache-Control"))) {
+				g.shortCache.set(key, st, h, b, ttl, g.now())
+			}
+		}
+		return st, h, b, nil
+	})
+	if err != nil {
+		logx.Printf("ssr direct coalesce failed for %s: %v", r.URL.Path, err)
+		w.Header().Set("Cache-Control", "no-store")
+		http.Error(w, "Bad Gateway", http.StatusBadGateway)
+		return
+	}
+
+	outHdr := w.Header()
+	copyUpstreamHeaders(outHdr, hdr)
+	outHdr.Set("X-Moenotes-Cache", "MISS")
+	w.WriteHeader(status)
+	if r.Method != http.MethodHead {
+		_, _ = w.Write(body)
+	}
+}
+
+func (g *Gateway) fetchDirectUpstream(ctx context.Context, reqURI string, reqHdr http.Header) (int, http.Header, []byte, error) {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	target := g.upstream.String() + reqURI
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
+	if err != nil {
+		return 0, nil, nil, err
+	}
+	req.Header = reqHdr.Clone()
+
+	relay := *g.client
+	relay.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+	resp, err := relay.Do(req)
+	if err != nil {
+		return 0, nil, nil, err
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 32<<20))
+	if err != nil {
+		return 0, nil, nil, err
+	}
+	return resp.StatusCode, resp.Header.Clone(), body, nil
 }
 
 func (g *Gateway) proxyDirect(w http.ResponseWriter, r *http.Request, forceBypass bool) {
@@ -521,8 +736,32 @@ func (g *Gateway) RunIdleWarmup(ctx context.Context) {
 		}
 	}
 
+	tickInterval := g.warmupTick
+	if tickInterval <= 0 {
+		tickInterval = 5 * time.Second
+	}
+	idleThreshold := g.warmupIdle
+	if idleThreshold <= 0 {
+		idleThreshold = 1500 * time.Millisecond
+	}
+	stepPause := g.warmupStep
+
+	canContinue := func(ver string) bool {
+		if ctx.Err() != nil {
+			return false
+		}
+		if g.readyFn != nil && !g.readyFn() {
+			return false
+		}
+		if g.cache.DataVersion() != ver {
+			return false
+		}
+		idleFor := g.now().Sub(time.Unix(0, g.lastTraffic.Load()))
+		return idleFor >= idleThreshold
+	}
+
 	warmedVersion := ""
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(tickInterval)
 	defer ticker.Stop()
 
 	for {
@@ -535,36 +774,39 @@ func (g *Gateway) RunIdleWarmup(ctx context.Context) {
 			continue
 		}
 		ver := g.cache.DataVersion()
-		if ver == warmedVersion {
+		if ver == "" || ver == "initial" || ver == warmedVersion {
 			continue
 		}
-		idleFor := time.Since(time.Unix(0, g.lastTraffic.Load()))
-		if idleFor < 1500*time.Millisecond {
+		if !canContinue(ver) {
 			continue
 		}
 		allDone := true
+	warmLoop:
 		for _, p := range corePaths {
-			if ctx.Err() != nil {
-				return
-			}
 			for _, variant := range []string{"html", "md"} {
+				if !canContinue(ver) {
+					allDone = false
+					break warmLoop
+				}
 				if _, _, ok := g.cache.Read(variant, p); ok {
 					continue
 				}
-				status, hdr, body, err := g.fetchUpstream(ctx, p, variant == "md")
+				_, _, _, err := g.fetchAndCachePage(ctx, ver, variant, p, variant == "md")
 				if err != nil {
 					allDone = false
-					break
+					break warmLoop
 				}
-				if status == http.StatusOK && len(body) > 0 {
-					g.cache.Write(ver, variant, p, cacheMeta{
-						ContentType:   hdr.Get("Content-Type"),
-						MarkdownToken: hdr.Get("X-Markdown-Tokens"),
-						CanonicalLink: hdr.Get("Link"),
-						DataVersion:   ver,
-					}, body)
+				if !canContinue(ver) {
+					allDone = false
+					break warmLoop
 				}
-				time.Sleep(120 * time.Millisecond)
+				if stepPause > 0 {
+					select {
+					case <-ctx.Done():
+						return
+					case <-time.After(stepPause):
+					}
+				}
 			}
 		}
 		if allDone {
