@@ -698,33 +698,38 @@ describe("Haneoka 6de572be sync — optimal timing, partial JUST windows, Arena 
     "live WASM end-to-end: cooperative clock ABI, timing guide, partial JUST window, Arena sections, and Moenotes rewards",
     async () => {
       const mod = (await import(pathToFileURL(solverPath).href)) as {
-        DeckSolver: {
-          init(wasm: Uint8Array, data: Uint8Array, datasetId: string): Promise<{
-            capabilities(): string;
-            recommendForAccount(
-              account: string,
-              request: string,
-              progress?: (json: string) => void,
-              intervalMs?: number,
-            ): string;
-            evaluateGrowth(account: string, request: string, team: { members: number[]; snaps: (number | null)[] }): string;
-            free(): void;
-          }>;
+        default: (options: { module_or_path: Uint8Array }) => Promise<void>;
+        DeckSolver: new (bytes: Uint8Array, options: { datasetId: string }) => {
+          datasetId: string;
+          capabilities(): string;
+          recommend(
+            account: string,
+            request: string,
+            progress?: (json: string) => void,
+            intervalMs?: number,
+          ): string;
+          evaluateGrowth(account: string, request: string, teamJson: string): string;
+          free(): void;
         };
       };
       const wasmBytes = new Uint8Array(readFileSync(wasmPath));
+      await mod.default({ module_or_path: wasmBytes });
       const { data, bytes, datasetId, accountJson } = loadFixtureWithEvent();
       const firstMusicId = data.master.MasterLiveMusic.rows[0]![0] as number;
       const justMusicId = (data.master.MasterLiveMusic.rows[1]?.[0] as number | undefined) ?? firstMusicId;
-      const solver = await mod.DeckSolver.init(wasmBytes, bytes, datasetId);
+      const solver = new mod.DeckSolver(bytes, { datasetId });
       try {
+        expect(solver.datasetId).toBe(datasetId);
         const caps = parseCapabilities(solver.capabilities());
         expect(caps?.arenaSections).toBe(true);
         expect(caps?.justWindowCoverage).toBe(true);
+        expect(caps?.optimalTimingGuide).toBe(true);
+        expect(caps?.gekisoTimingGuide).toBe(true);
+        expect(caps?.eventParking).toBe(true);
 
         // 1. Free Live score + optimal timing enrichment
         const freeAns = parseDeckAnswer(
-          solver.recommendForAccount(
+          solver.recommend(
             accountJson,
             JSON.stringify({
               format: "ournotes-deck.recommendation-request/2",
@@ -739,9 +744,9 @@ describe("Haneoka 6de572be sync — optimal timing, partial JUST windows, Arena 
         expect(freeAns.engine?.commit).toBe(HANEOKA_COMMIT);
         expect(freeAns.result!.teams.length).toBeGreaterThan(0);
 
-        // 2. Battle Live Gekiso on JUST-mission song with partial JUST window policy
+        // 2. Battle Live Gekiso on JUST-mission song with partial JUST window policy + Gekiso guide
         const battleAns = parseDeckAnswer(
-          solver.recommendForAccount(
+          solver.recommend(
             accountJson,
             JSON.stringify({
               format: "ournotes-deck.recommendation-request/2",
@@ -763,7 +768,7 @@ describe("Haneoka 6de572be sync — optimal timing, partial JUST windows, Arena 
         expect(battleAns.result!.teams.length).toBeGreaterThan(0);
         expect(battleAns.result!.teams[0]?.justWindow?.meetsTarget).toBe(true);
 
-        // 3. Arena Live section-priority objective (reference hit stripped, sectionPerformance populated)
+        // 3. Arena Live section-priority objective (reference hit stripped, sectionPerformance populated, growth valid)
         const arenaReq = JSON.stringify({
           format: "ournotes-deck.recommendation-request/2",
           goal: {
@@ -785,17 +790,22 @@ describe("Haneoka 6de572be sync — optimal timing, partial JUST windows, Arena 
           k: 3,
           limits: { timeLimitMs: 15000 },
         });
-        const arenaAns = parseDeckAnswer(solver.recommendForAccount(accountJson, arenaReq));
+        const arenaAns = parseDeckAnswer(solver.recommend(accountJson, arenaReq));
         expect(arenaAns.status).toBe("ok");
         if (arenaAns.result!.teams.length > 0) {
           const t0 = arenaAns.result!.teams[0]!;
           expect(t0.sectionPerformance).toBeDefined();
           expect(t0.value?.score).toBeCloseTo(t0.sectionPerformance!.totalMean, 2);
           const growth = JSON.parse(
-            solver.evaluateGrowth(accountJson, arenaReq, {
-              members: [t0.leader.member, ...t0.others.map((o) => o.member)],
-              snaps: [t0.leader.snap, ...t0.others.map((o) => o.snap)],
-            }),
+            solver.evaluateGrowth(
+              accountJson,
+              arenaReq,
+              JSON.stringify({
+                members: [t0.leader.member, ...t0.others.map((o) => o.member)],
+                snaps: [t0.leader.snap, ...t0.others.map((o) => o.snap)],
+                song: { musicId: firstMusicId, difficulty: "expert" },
+              }),
+            ),
           ) as { status: string };
           expect(growth.status).toBe("ok");
         }
@@ -819,7 +829,7 @@ describe("Haneoka 6de572be sync — optimal timing, partial JUST windows, Arena 
             constraints: { includeMembers: [], excludeMembers: [], excludeSnaps: [] },
           },
         );
-        const eventAns = parseDeckAnswer(solver.recommendForAccount(accountJson, eventReqText));
+        const eventAns = parseDeckAnswer(solver.recommend(accountJson, eventReqText));
         expect(eventAns.status).toBe("ok");
         expect(eventAns.result!.teams.length).toBeGreaterThan(0);
         expect(eventAns.result!.teams[0]?.value?.payoff?.score).toBeGreaterThan(0);
