@@ -9,17 +9,19 @@ import {
   ARENA_BAND_IDS,
   ARENA_MISSION_TYPES,
   ARENA_MUSIC_TYPES,
+  DEFAULT_ARENA_MAX_BASE_LOSS_PERCENT,
   effectiveArenaSongRule,
   type DeckArenaCatalog,
   type DeckArenaMissions,
   type DeckArenaMode,
+  type DeckArenaObjective,
   type DeckArenaPeriod,
   type DeckArenaRule,
   type DeckArenaRuleSource,
 } from "@/lib/deck/arena";
 import type { MusicViewModel } from "@/lib/music/data";
 import { MUSIC_DIFFICULTIES, type MusicDifficulty } from "@/lib/music/difficulty";
-import { DeckSegmented, DeckSelect } from "./DeckControls";
+import { DeckNumberField, DeckSegmented, DeckSelect } from "./DeckControls";
 
 export interface DeckArenaSongEntry {
   musicId: number;
@@ -38,6 +40,9 @@ export interface DeckArenaControlsProps {
   customMissions: DeckArenaMissions;
   mode: DeckArenaMode;
   canChooseMode: boolean;
+  objective?: DeckArenaObjective;
+  maxBaseLossPercent?: number;
+  canChooseObjective?: boolean;
   allSongs: boolean;
   entries: readonly DeckArenaSongEntry[];
   eligibleSongs: readonly MusicViewModel[];
@@ -49,6 +54,8 @@ export interface DeckArenaControlsProps {
   onCustomMusicTypeChange: (musicType: number) => void;
   onCustomMissionChange: (index: 0 | 1 | 2, mission: number) => void;
   onModeChange: (mode: DeckArenaMode) => void;
+  onObjectiveChange?: (objective: DeckArenaObjective) => void;
+  onMaxBaseLossPercentChange?: (percent: number) => void;
   onEntriesChange: (entries: DeckArenaSongEntry[]) => void;
   onOpenSongPicker: () => void;
 }
@@ -184,6 +191,36 @@ export default function DeckArenaControls(props: DeckArenaControlsProps) {
             label: tr(choice === "shared" ? "modeShared" : "modeIndividual"),
           }))}
         />
+      )}
+
+      {props.canChooseObjective && props.onObjectiveChange && (
+        <div className="dc-sub-stack">
+          <DeckSegmented
+            label={tr("objectiveLabel")}
+            value={props.objective ?? "score"}
+            onChange={props.onObjectiveChange}
+            hint={tr((props.objective ?? "score") === "sections" ? "objectiveSectionsNote" : "objectiveScoreNote")}
+            options={(["score", "sections"] as const).map((choice) => ({
+              value: choice,
+              label: tr(choice === "sections" ? "objectiveSections" : "objectiveScore"),
+            }))}
+          />
+          {props.objective === "sections" && props.onMaxBaseLossPercentChange && (
+            <DeckNumberField
+              label={tr("maxBaseLossLabel")}
+              min={0}
+              max={100}
+              step={0.5}
+              inputMode="decimal"
+              value={props.maxBaseLossPercent ?? DEFAULT_ARENA_MAX_BASE_LOSS_PERCENT}
+              onChange={(val) =>
+                props.onMaxBaseLossPercentChange?.(
+                  val === null ? DEFAULT_ARENA_MAX_BASE_LOSS_PERCENT : Math.max(0, Math.min(100, val)),
+                )
+              }
+            />
+          )}
+        </div>
       )}
 
       {!props.allSongs && (

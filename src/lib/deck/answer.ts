@@ -1,6 +1,7 @@
 import type { BoxCard, CardBox, CardFieldName, CardKind } from "@/lib/box/model";
 import { parseFraction, parseInterval, type DeckFraction, type DeckInterval } from "./interval";
 import type { DeckAggregation } from "./goals";
+import type { DeckParkingPlay } from "./parking";
 import { isEventReward, type ChallengeWorth, type RewardTerm } from "./reward-mix";
 
 /** The answer of a recommendation, `ournotes-deck.account-recommendation/1`, as the page reads it. */
@@ -12,11 +13,18 @@ export interface DeckValue extends DeckPayoffValue { payoff: DeckPayoffValue | n
 /** A team's value on one level: the expected weighted sum, and each term's own expectation in the order of the level's terms. */
 export interface DeckTeamLevel { value: number; terms: number[] }
 export interface DeckOrderStat { score: number; order: number[] }
+export type DeckTimingInputKind = "hit" | "hold" | "release" | "flick" | "miss";
+const TIMING_INPUT_KINDS = new Set<string>(["hit", "hold", "release", "flick", "miss"]);
+
 export interface DeckTimingStep {
   step: number;
   timeMs: number;
   notes: number;
   noteIndices?: number[];
+  noteTimesMs?: number[];
+  inputTimesMs?: number[];
+  inputKinds?: DeckTimingInputKind[];
+  deliveryTimesMs?: number[];
   gain: number;
 }
 export interface DeckTimingWindow {
@@ -31,12 +39,96 @@ export interface DeckTimingWindow {
 export interface DeckOrderTiming {
   order: number[];
   score: number;
+  planBaseScore?: number;
+  frameOriginMs?: number;
   best: number;
   worst?: number;
   optimal?: number;
   guideAvailable?: boolean;
+  planIsOptimal?: boolean;
   advanceMs: number;
   windows: DeckTimingWindow[];
+}
+/** Score delta achieved by following the timing guide over its reference base score. */
+export function timingPlanDelta(timing: Pick<DeckOrderTiming, "score" | "planBaseScore" | "best">): number {
+  const base = typeof timing.planBaseScore === "number" && Number.isFinite(timing.planBaseScore)
+    ? timing.planBaseScore
+    : timing.score;
+  return timing.best - base;
+}
+/** True when the timing plan evaluates under a non-zero live frame-origin alignment offset. */
+export function hasAlternateFrameOrigin(timing: Pick<DeckOrderTiming, "frameOriginMs">): boolean {
+  return typeof timing.frameOriginMs === "number" && Number.isFinite(timing.frameOriginMs) && Math.abs(timing.frameOriginMs) > 1e-6;
+}
+/** Whether a team's normal-live timing guide contains actionable or optimality-verified details worth rendering. */
+export function hasActionableOrderTiming(timing: DeckOrderTiming | undefined): timing is DeckOrderTiming {
+  if (!timing || timing.guideAvailable === false) return false;
+  return timingPlanDelta(timing) > 0
+    || timing.windows.length > 0
+    || hasAlternateFrameOrigin(timing)
+    || (typeof timing.optimal === "number" && timing.optimal > timing.score)
+    || (typeof timing.worst === "number" && timing.worst < timing.score);
+}
+export interface DeckGekisoGuideAction {
+  kind: string;
+  event?: number;
+  member?: number;
+  range?: number;
+  timeMs: number;
+  noteIndices?: number[];
+  noteTimesMs?: number[];
+  inputTimesMs?: number[];
+  included: boolean;
+  gain?: number;
+  comboGain?: number;
+}
+export interface DeckGekisoGuide {
+  order: number[];
+  frameRate: number;
+  score?: number;
+  best?: number;
+  actions: DeckGekisoGuideAction[];
+}
+export interface DeckJustWindowRangeStats {
+  notes: number;
+  coveredNotes: number;
+  minimumCoveredNotes: number;
+  coverage: number;
+  minimumCoverage: number;
+  durationMs: number;
+  coveredMs: number;
+  minimumCoveredMs: number;
+  longestMs: number;
+  minimumLongestMs: number;
+  peakMs: number;
+  minimumPeakMs: number;
+}
+export interface DeckJustWindow {
+  beforeMs: number;
+  afterMs: number;
+  meetsTarget: boolean;
+  coverage?: {
+    targetMs: number;
+    plays: number;
+    ranges: DeckJustWindowRangeStats[];
+  };
+}
+export interface DeckSectionPerformance {
+  versus: boolean;
+  sampled: boolean;
+  ranges: [number, number, number];
+  baseMean: number;
+  referenceBaseMean: number;
+  bonusMean: number;
+  totalMean: number;
+  maxBaseLoss: number;
+  allWin?: number;
+  metrics?: [number, number, number];
+  baselineMetrics?: [number, number, number];
+}
+export interface DeckTeamParking {
+  plays: DeckParkingPlay[];
+  allBoostPlays?: DeckParkingPlay[];
 }
 export interface DeckTeamSongScore {
   song: { musicId: number; difficulty: string };
@@ -45,6 +137,7 @@ export interface DeckTeamSongScore {
   min: number;
   median: number;
   max: number;
+  sectionMetrics?: [number, number, number];
 }
 export interface DeckTeam {
   rank: number;
@@ -56,12 +149,21 @@ export interface DeckTeam {
   others: DeckPair[];
   power: number;
   value: DeckValue | null;
+  bonusPercent?: number;
   /** A reward plan: the team's value on each level, in the order of the result's levels. */
   levels?: DeckTeamLevel[];
   orders: { count: number; min: DeckOrderStat; median: DeckOrderStat; max: DeckOrderStat } | null;
   bestOrder: DeckOrderStat | null;
-  /** Cumulative-Snap 1-frame early-hit ceiling and per-window step schedule for the optimal order. */
+  /** Gekisou steady/partial JUST window metrics for this formation. */
+  justWindow?: DeckJustWindow;
+  /** Gekiso Arena range-victory / section-priority performance breakdown. */
+  sectionPerformance?: DeckSectionPerformance;
+  /** Cumulative-Snap timing ceiling, frame origin, and per-window input schedule for the optimal order. */
   timing?: DeckOrderTiming;
+  /** Gekisou skill/mission timing guide for the optimal order. */
+  gekisoGuide?: DeckGekisoGuide;
+  /** Exact event point parking options computed from this team's settlement parameters. */
+  parking?: DeckTeamParking;
   /** Slots 0..4 of the formation screen; the leader sits in slot 2. */
   layout: { members: number[]; snaps: (number | null)[] };
 }
@@ -108,19 +210,29 @@ function stat(raw: unknown): DeckOrderStat {
   if (!record(raw) || num(raw.score) === null || !Array.isArray(raw.order)) throw new Error("Invalid order statistic");
   return { score: raw.score as number, order: raw.order.map(int) };
 }
+function numArray(raw: unknown): number[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const out = raw.filter((v): v is number => typeof v === "number" && Number.isFinite(v));
+  return out.length > 0 ? out : undefined;
+}
 function orderTiming(raw: unknown): DeckOrderTiming | undefined {
   if (!record(raw)) return undefined;
   const score = num(raw.score), best = num(raw.best), advanceMs = num(raw.advanceMs);
+  const planBaseScore = num(raw.planBaseScore), frameOriginMs = num(raw.frameOriginMs);
   const worst = num(raw.worst), optimal = num(raw.optimal);
   const guideAvailable = typeof raw.guideAvailable === "boolean" ? raw.guideAvailable : undefined;
+  const planIsOptimal = typeof raw.planIsOptimal === "boolean" ? raw.planIsOptimal : undefined;
   if (score === null || best === null || advanceMs === null || !Array.isArray(raw.order) || !Array.isArray(raw.windows)) return undefined;
   return {
     order: raw.order.map(int),
     score,
+    ...(planBaseScore !== null ? { planBaseScore } : {}),
+    ...(frameOriginMs !== null ? { frameOriginMs } : {}),
     best,
     ...(worst !== null ? { worst } : {}),
     ...(optimal !== null ? { optimal } : {}),
     ...(guideAvailable !== undefined ? { guideAvailable } : {}),
+    ...(planIsOptimal !== undefined ? { planIsOptimal } : {}),
     advanceMs: Math.trunc(advanceMs),
     windows: raw.windows.filter(record).flatMap((win) => {
       const event = num(win.event), member = num(win.member), startMs = num(win.startMs), endMs = num(win.endMs), unit = num(win.unit);
@@ -138,16 +250,160 @@ function orderTiming(raw: unknown): DeckOrderTiming | undefined {
           const noteIndices = Array.isArray(step.noteIndices)
             ? step.noteIndices.filter((idx): idx is number => typeof idx === "number" && Number.isSafeInteger(idx) && idx >= 0)
             : null;
+          const noteTimesMs = numArray(step.noteTimesMs);
+          const inputTimesMs = numArray(step.inputTimesMs);
+          const inputKinds = Array.isArray(step.inputKinds)
+            ? step.inputKinds.filter((k): k is DeckTimingInputKind => typeof k === "string" && TIMING_INPUT_KINDS.has(k))
+            : [];
+          const deliveryTimesMs = numArray(step.deliveryTimesMs);
           return [{
             step: Math.trunc(s),
             timeMs: Math.trunc(timeMs),
             notes: Math.trunc(notes),
             ...(noteIndices ? { noteIndices } : {}),
+            ...(noteTimesMs ? { noteTimesMs } : {}),
+            ...(inputTimesMs ? { inputTimesMs } : {}),
+            ...(inputKinds.length > 0 ? { inputKinds } : {}),
+            ...(deliveryTimesMs ? { deliveryTimesMs } : {}),
             gain,
           }];
         }),
       }];
     }),
+  };
+}
+function gekisoGuide(raw: unknown): DeckGekisoGuide | undefined {
+  if (!record(raw) || !Array.isArray(raw.order) || !Array.isArray(raw.actions)) return undefined;
+  const frameRate = num(raw.frameRate);
+  if (frameRate === null || frameRate <= 0) return undefined;
+  const actions: DeckGekisoGuideAction[] = raw.actions.filter(record).flatMap((act) => {
+    const timeMs = num(act.timeMs);
+    if (typeof act.kind !== "string" || timeMs === null) return [];
+    const event = num(act.event), member = num(act.member), range = num(act.range);
+    const gain = num(act.gain), comboGain = num(act.comboGain);
+    const noteIndices = Array.isArray(act.noteIndices)
+      ? act.noteIndices.filter((idx): idx is number => typeof idx === "number" && Number.isSafeInteger(idx) && idx >= 0)
+      : [];
+    const noteTimesMs = numArray(act.noteTimesMs);
+    const inputTimesMs = numArray(act.inputTimesMs);
+    return [{
+      kind: act.kind,
+      ...(event !== null ? { event: Math.trunc(event) } : {}),
+      ...(member !== null ? { member: Math.trunc(member) } : {}),
+      ...(range !== null ? { range: Math.trunc(range) } : {}),
+      timeMs,
+      ...(noteIndices.length > 0 ? { noteIndices } : {}),
+      ...(noteTimesMs ? { noteTimesMs } : {}),
+      ...(inputTimesMs ? { inputTimesMs } : {}),
+      included: act.included === true,
+      ...(gain !== null ? { gain } : {}),
+      ...(comboGain !== null ? { comboGain } : {}),
+    }];
+  });
+  if (!actions.length) return undefined;
+  const score = num(raw.score), best = num(raw.best);
+  return {
+    order: raw.order.map(int),
+    frameRate: Math.trunc(frameRate),
+    ...(score !== null ? { score } : {}),
+    ...(best !== null ? { best } : {}),
+    actions,
+  };
+}
+function justWindow(raw: unknown): DeckJustWindow | undefined {
+  if (!record(raw)) return undefined;
+  const beforeMs = num(raw.beforeMs), afterMs = num(raw.afterMs);
+  if (beforeMs === null || afterMs === null) return undefined;
+  let coverage: DeckJustWindow["coverage"];
+  if (record(raw.coverage) && num(raw.coverage.targetMs) !== null && Array.isArray(raw.coverage.ranges)) {
+    const ranges = raw.coverage.ranges.filter(record).map((r): DeckJustWindowRangeStats => ({
+      notes: Math.max(0, Math.trunc(num(r.notes) ?? 0)),
+      coveredNotes: num(r.coveredNotes) ?? 0,
+      minimumCoveredNotes: Math.max(0, Math.trunc(num(r.minimumCoveredNotes) ?? 0)),
+      coverage: num(r.coverage) ?? 0,
+      minimumCoverage: num(r.minimumCoverage) ?? 0,
+      durationMs: num(r.durationMs) ?? 0,
+      coveredMs: num(r.coveredMs) ?? 0,
+      minimumCoveredMs: num(r.minimumCoveredMs) ?? 0,
+      longestMs: num(r.longestMs) ?? 0,
+      minimumLongestMs: num(r.minimumLongestMs) ?? 0,
+      peakMs: Math.trunc(num(r.peakMs) ?? 0),
+      minimumPeakMs: Math.trunc(num(r.minimumPeakMs) ?? 0),
+    }));
+    if (ranges.length > 0) {
+      coverage = {
+        targetMs: raw.coverage.targetMs as number,
+        plays: Math.max(0, Math.trunc(num(raw.coverage.plays) ?? 0)),
+        ranges,
+      };
+    }
+  }
+  return {
+    beforeMs: Math.trunc(beforeMs),
+    afterMs: Math.trunc(afterMs),
+    meetsTarget: raw.meetsTarget !== false,
+    ...(coverage ? { coverage } : {}),
+  };
+}
+function triple(raw: unknown): [number, number, number] | undefined {
+  if (!Array.isArray(raw) || raw.length !== 3) return undefined;
+  const a = num(raw[0]), b = num(raw[1]), c = num(raw[2]);
+  return a !== null && b !== null && c !== null ? [a, b, c] : undefined;
+}
+function sectionPerformance(raw: unknown): DeckSectionPerformance | undefined {
+  if (!record(raw)) return undefined;
+  const ranges = triple(raw.ranges);
+  const baseMean = num(raw.baseMean), referenceBaseMean = num(raw.referenceBaseMean);
+  const bonusMean = num(raw.bonusMean), totalMean = num(raw.totalMean);
+  if (!ranges || baseMean === null || referenceBaseMean === null || bonusMean === null || totalMean === null) return undefined;
+  const allWin = num(raw.allWin);
+  const metrics = triple(raw.metrics);
+  const baselineMetrics = triple(raw.baselineMetrics);
+  return {
+    versus: raw.versus === true,
+    sampled: raw.sampled === true,
+    ranges,
+    baseMean,
+    referenceBaseMean,
+    bonusMean,
+    totalMean,
+    maxBaseLoss: num(raw.maxBaseLoss) ?? 0.03,
+    ...(allWin !== null ? { allWin } : {}),
+    ...(metrics ? { metrics } : {}),
+    ...(baselineMetrics ? { baselineMetrics } : {}),
+  };
+}
+function parkingPlays(raw: unknown): DeckParkingPlay[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(record).flatMap((p) => {
+    const rank = num(p.rank), points = num(p.points);
+    const scoreMin = num(p.scoreMin), scoreMax = num(p.scoreMax);
+    const boosts = num(p.boosts), cpCost = num(p.cpCost), cpGain = num(p.cpGain);
+    if (
+      rank === null
+      || points === null || points <= 0
+      || scoreMin === null || scoreMax === null || scoreMin > scoreMax
+      || boosts === null || cpCost === null || cpGain === null
+    ) return [];
+    return [{
+      rank: Math.trunc(rank),
+      points: Math.trunc(points),
+      scoreMin: Math.trunc(scoreMin),
+      scoreMax: Math.trunc(scoreMax),
+      boosts: Math.max(0, Math.trunc(boosts)),
+      cpCost: Math.max(0, Math.trunc(cpCost)),
+      cpGain: Math.max(0, Math.trunc(cpGain)),
+    }];
+  });
+}
+function teamParking(raw: unknown): DeckTeamParking | undefined {
+  if (!record(raw)) return undefined;
+  const plays = parkingPlays(raw.plays);
+  if (!plays.length) return undefined;
+  const allBoostPlays = parkingPlays(raw.allBoostPlays);
+  return {
+    plays,
+    ...(allBoostPlays.length > plays.length ? { allBoostPlays } : {}),
   };
 }
 function planLevels(raw: unknown): RewardTerm[][] {
@@ -186,6 +442,7 @@ function team(raw: unknown, index: number, inheritedRankProof: boolean, levels: 
           .map(part => {
             const s = part.song as Record<string, unknown>;
             const mean = part.mean as number;
+            const sectionMetrics = triple(part.sectionMetrics);
             return {
               song: { musicId: s.musicId as number, difficulty: s.difficulty as string },
               power: num(part.power) ?? 0,
@@ -193,17 +450,28 @@ function team(raw: unknown, index: number, inheritedRankProof: boolean, levels: 
               min: num(part.min) ?? mean,
               median: num(part.median) ?? mean,
               max: num(part.max) ?? mean,
+              ...(sectionMetrics ? { sectionMetrics } : {}),
             };
           }),
       }
     : undefined;
   const parsedTiming = orderTiming(raw.timing);
+  const parsedGekisoGuide = gekisoGuide(raw.gekisoGuide);
+  const parsedJustWindow = justWindow(raw.justWindow);
+  const parsedSection = sectionPerformance(raw.sectionPerformance);
+  const parsedParking = teamParking(raw.parking);
+  const bonusPercent = num(raw.bonusPercent);
   return { rank: num(raw.rank) ?? index + 1, rankCertified: raw.rankCertified === undefined ? inheritedRankProof : raw.rankCertified === true, leader: pair(raw.leader), others: [0, 1, 2, 3].length ? raw.others.map(pair) : [], power: num(raw.power) ?? 0, value: teamValue, orders,
+    ...(bonusPercent !== null ? { bonusPercent } : {}),
     ...(levels ? { levels: teamLevels(raw.levels, levels) } : {}),
     ...(record(raw.song) && Number.isInteger(raw.song.musicId) && typeof raw.song.difficulty === "string" ? { song: { musicId: raw.song.musicId as number, difficulty: raw.song.difficulty } } : {}),
     ...(aggregate && aggregate.songs.length > 0 ? { aggregate } : {}),
     bestOrder: record(raw.bestOrder) ? stat(raw.bestOrder) : null,
+    ...(parsedJustWindow ? { justWindow: parsedJustWindow } : {}),
+    ...(parsedSection ? { sectionPerformance: parsedSection } : {}),
     ...(parsedTiming ? { timing: parsedTiming } : {}),
+    ...(parsedGekisoGuide ? { gekisoGuide: parsedGekisoGuide } : {}),
+    ...(parsedParking ? { parking: parsedParking } : {}),
     layout: { members: layout.members.map(int), snaps: layout.snaps.map(item => item === null ? null : int(item)) } };
 }
 function issues(raw: unknown): DeckIssue[] {

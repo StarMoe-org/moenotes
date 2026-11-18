@@ -16,11 +16,18 @@ export const MAX_GEKISO_COUNT = 2_147_483_647;
 export const FRAME_RATES = [30, 60, 90, 120] as const;
 export type DeckFrameRate = (typeof FRAME_RATES)[number];
 
+export interface JustWindowPolicyInput {
+  minimumMs: number;
+  minCoverage?: number;
+  minDurationMs?: number;
+  minContinuousMs?: number;
+}
+
 export interface RecommendationRequest {
   format: string;
-  goal: { kind: string; rank?: number; ranks?: readonly [number, number, number]; minComboBonus?: number; minJustWindowMs?: number; luckSamples?: number;
+  goal: { kind: string; rank?: number; ranks?: readonly [number, number, number]; minComboBonus?: number; minJustWindowMs?: number; justWindow?: JustWindowPolicyInput; luckSamples?: number;
     arenaMusicId?: number; musicIds?: number[]; challengeMusicIds?: number[]; arenaMusicIds?: number[]; multiSong?: "individual" | "mean"; eventParameter?: boolean; musicId?: number; difficulty?: string; challengeMusicId?: number;
-    arena?: { bandId?: number; musicType?: number; missions?: number[]; mode?: string };
+    arena?: { bandId?: number; musicType?: number; missions?: number[]; mode?: string; objective?: "score" | "sections"; maxBaseLoss?: number };
     songRules?: { musicType?: number; missions?: number[] };
     songs?: { musicId?: number; difficulty?: string }[];
     play?: { kind?: string; greatFraction?: number; goodFraction?: number; badFraction?: number; missFraction?: number; justFraction?: number; missEvery?: number; cumulativeTiming?: "best" | "worst"; frameRate?: DeckFrameRate };
@@ -39,8 +46,8 @@ export interface RecommendationRequest {
   k: number;
   limits?: { timeLimitMs: number | null };
 }
-export const HANEOKA_COMMIT = "7c167c95e8589bc84a9ab726b5b58adbc0ef4b05";
-export const HANEOKA_PATCH_SHA = "f8f5cf1470b0c1cdf9509c947aa92f7f907992ef464ee36ee0c48316196a37ad";
+export const HANEOKA_COMMIT = "6de572be31b0fd8e4ab50825bd92c81ac625bc78";
+export const HANEOKA_PATCH_SHA = "adf4b37aa1c43a691d89eb9e0cbc43b256eb4df49771777ea904c83d2bd693f0";
 export const CAPABILITIES = {
   goals: ["power", "freeLive", "challengeLive", "battleLive", "missionLive", "arenaLive", "skip"],
   metrics: { freeLive: ["score", "eventPoints", "eventItems", "challengePoints"], challengeLive: ["score", "eventPoints", "eventItems"], battleLive: ["score", "eventPoints", "eventItems", "challengePoints"], missionLive: ["score", "eventPoints", "eventItems", "challengePoints"], arenaLive: ["score", "eventPoints", "eventItems", "challengePoints"], skip: ["score", "eventPoints", "eventItems", "challengePoints"] },
@@ -50,9 +57,9 @@ export const CAPABILITIES = {
   },
   combinedMetric: { goals: ["freeLive", "challengeLive", "battleLive", "missionLive", "arenaLive", "skip"], kind: "combined", objective: "lexicographicWeightedExpectedSums", weights: "integer", maxLevels: 3, maxTerms: 9, maxWeight: 1_000_000_000 },
   eventItemRewards: { selection: "exactResultGrade", eventGroupField: "eventGroup", rowsPerGrade: 1, probabilityMarker: 10000 },
-  crossSong: true, crossSongMean: true, songRules: true, resume: true, arenaRules: true, gekisouRank: true, gekisouRangeRanks: true,
-  manualEventBonuses: true, teamGrowth: true, orderTiming: true, cumulativeTiming: true,
-  frameRates: FRAME_RATES, minMissionMembers: true, minComboBonus: true, minJustWindow: true, luckSampling: true,
+  crossSong: true, crossSongMean: true, songRules: true, resume: true, arenaRules: true, arenaSections: true, gekisouRank: true, gekisouRangeRanks: true,
+  manualEventBonuses: true, teamGrowth: true, orderTiming: true, optimalTimingGuide: true, gekisoTimingGuide: true, cumulativeTiming: true, eventParking: true,
+  frameRates: FRAME_RATES, minMissionMembers: true, minComboBonus: true, minJustWindow: true, justWindowCoverage: true, luckSampling: true,
   rewardRoomModes: ["battle", "solo"] as const,
   accuracy: { great: true, good: true, bad: true, miss: true, just: true }, patternPlay: true, luckMissions: true, luckGreatConversions: true,
 };
@@ -136,9 +143,27 @@ function adaptSingleRequest(data: DeckData, request: RecommendationRequest) {
     }
     return raw > 1 ? raw : null;
   })();
+  const justWindow = (() => {
+    const raw = request.goal.justWindow;
+    if (raw === undefined) return null;
+    if (!gekiso || !raw || typeof raw !== "object" || Array.isArray(raw)) {
+      throw new Error("haneoka-just-window");
+    }
+    const { minimumMs, minCoverage = 0, minDurationMs = 0, minContinuousMs = 0 } = raw;
+    if (typeof minimumMs !== "number" || !Number.isFinite(minimumMs) || minimumMs <= 0 || minimumMs > MAX_GEKISO_COUNT) {
+      throw new Error("haneoka-just-window");
+    }
+    if (typeof minCoverage !== "number" || !Number.isFinite(minCoverage) || minCoverage < 0 || minCoverage > 1
+      || typeof minDurationMs !== "number" || !Number.isFinite(minDurationMs) || minDurationMs < 0 || minDurationMs > MAX_GEKISO_COUNT
+      || typeof minContinuousMs !== "number" || !Number.isFinite(minContinuousMs) || minContinuousMs < 0 || minContinuousMs > MAX_GEKISO_COUNT) {
+      throw new Error("haneoka-just-window-coverage");
+    }
+    return { minimumMs, minCoverage, minDurationMs, minContinuousMs, partial: true as const };
+  })();
   const minJustWindowMs = (() => {
     const raw = request.goal.minJustWindowMs;
     if (raw === undefined) return null;
+    if (justWindow !== null) throw new Error("haneoka-just-window");
     if (!gekiso || typeof raw !== "number" || !Number.isFinite(raw) || raw < 0 || raw > MAX_GEKISO_COUNT) {
       throw new Error("haneoka-min-just-window");
     }
@@ -161,14 +186,24 @@ function adaptSingleRequest(data: DeckData, request: RecommendationRequest) {
   const arenaRule = kind === "arenaLive" && request.goal.arena !== undefined ? (() => {
     const raw = request.goal.arena;
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("haneoka-arena-rule");
-    const bandId = raw.bandId, musicType = raw.musicType, missions = raw.missions, mode = raw.mode;
+    const { bandId, musicType, missions, mode, objective, maxBaseLoss } = raw;
     if (!Number.isInteger(bandId) || bandId! < 1 || bandId! > 5) throw new Error("haneoka-arena-band");
     if (!Number.isInteger(musicType) || !((musicType! >= 0 && musicType! <= 5) || musicType === 99)) throw new Error("haneoka-arena-type");
     if (!Array.isArray(missions) || missions.length !== 3 || missions.some(m => !Number.isInteger(m) || m < 0 || m > 3))
       throw new Error("haneoka-arena-missions");
     if (mode !== undefined && mode !== "shared" && mode !== "individual") throw new Error("haneoka-arena-mode");
     if (mode === "shared" && (rewards || request.aggregation === "maximum")) throw new Error("haneoka-arena-shared");
-    return { bandId: bandId!, musicType: musicType!, missions: [missions[0]!, missions[1]!, missions[2]!], ...(mode ? { mode } : {}) };
+    if (objective !== undefined && objective !== "score" && objective !== "sections") throw new Error("haneoka-arena-sections");
+    if (maxBaseLoss !== undefined && (typeof maxBaseLoss !== "number" || !Number.isFinite(maxBaseLoss) || maxBaseLoss < 0 || maxBaseLoss > 1))
+      throw new Error("haneoka-arena-sections");
+    if (objective === "sections" && (rewards || request.aggregation === "maximum")) throw new Error("haneoka-arena-sections");
+    return {
+      bandId: bandId!,
+      musicType: musicType!,
+      missions: [missions[0]!, missions[1]!, missions[2]!],
+      ...(mode ? { mode } : {}),
+      ...(objective === "sections" ? { objective: "sections" as const, maxBaseLoss: maxBaseLoss ?? 0.03 } : {}),
+    };
   })() : null;
   const songRules = request.goal.songRules !== undefined ? (() => {
     if (kind === "power" || arenaRule !== null) throw new Error("haneoka-song-rules");
@@ -270,7 +305,7 @@ function adaptSingleRequest(data: DeckData, request: RecommendationRequest) {
         rank,
         ...(ranks ? { ranks } : {}),
         ...(minComboBonus ? { minComboBonus } : {}),
-        ...(minJustWindowMs ? { minJustWindowMs } : {}),
+        ...(justWindow ? { justWindow } : minJustWindowMs ? { minJustWindowMs } : {}),
         seeds: luckSamples,
         ...(arenaRule ? { arena: arenaRule } : {}),
         accuracy: {
@@ -312,7 +347,7 @@ function adaptSingleRequest(data: DeckData, request: RecommendationRequest) {
           rank,
           ...(ranks ? { ranks } : {}),
           ...(minComboBonus ? { minComboBonus } : {}),
-          ...(minJustWindowMs ? { minJustWindowMs } : {}),
+          ...(justWindow ? { justWindow } : minJustWindowMs ? { minJustWindowMs } : {}),
           ...(luckSamples > 0 ? { seeds: luckSamples } : {}),
           accuracy: scoreGoal.accuracy,
         },

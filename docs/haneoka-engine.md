@@ -1,6 +1,6 @@
 # Haneoka engine integration
 
-The Haneoka engine is pinned at `7c167c95e8589bc84a9ab726b5b58adbc0ef4b05` (`HANEOKA_COMMIT`) with
+The Haneoka engine is pinned at `6de572be31b0fd8e4ab50825bd92c81ac625bc78` (`HANEOKA_COMMIT`) with
 `patches/haneoka-rewards.patch` (`HANEOKA_PATCH_SHA`); see [Upstream tracking](#upstream-tracking).
 The existing Moenotes card pool, account envelopes, Worker lifecycle and result components are reused.
 The Rust engine, with the Moenotes reward patch, owns scoring and search; the adapter translates documents, goals and results.
@@ -209,38 +209,20 @@ acceptance remain separate from declared-fixture and responsive browser verifica
 an upgrade: a clean patch only means the reward layer can be reviewed against the upstream changes, and the pin moves
 only after `bun run build:haneoka-engine --test` rebuilds and tests the WASM with a Rust toolchain.
 
-State at the last check (2026-11-27): upstream `main` is `6de572be31b0fd8e4ab50825bd92c81ac625bc78`, 40 commits ahead
-of the pin and 0 behind, and the reward patch does **not** apply to it. The ten files that reject the patch are
-`src/api.rs`, `src/api/arena.rs`, `src/clock.rs`, `src/event.rs`, `src/gekiso.rs`, `src/gekiso_objective.rs`,
-`src/gekiso_objective/shared.rs`, `src/live.rs`, `src/objectives.rs` and `src/search.rs`; a 3-way application resolves
-the other nine patched files (`chart.rs`, `clock.rs`, `power.rs`, `rewards.rs`, `search.rs`, …) cleanly.
+State at the current sync: pinned to upstream `main` at `6de572be31b0fd8e4ab50825bd92c81ac625bc78` (0 commits behind),
+with `patches/haneoka-rewards.patch` (`adf4b37aa1c43a691d89eb9e0cbc43b256eb4df49771777ea904c83d2bd693f0`) cleanly ported
+and verified via `bun run build:haneoka-engine --test` and host + `wasm32-unknown-unknown` Clippy (`.github/workflows/haneoka-engine.yml`).
+All upstream features through `6de572be` — optimal note/live/support timing guides with `planBaseScore`, `frameOriginMs`,
+`planIsOptimal`, and earliest note input times; Gekisou timing guides (`timeline.guide`); bounded steady and partial
+skill-covered JUST tap windows (`minJustWindowMs` and `justWindow`); Gekiso Arena section-priority search
+(`arena.objective = "sections"` with `maxBaseLoss` and reference baseline); cooperative WASM clock yield imports
+(`haneoka_cooperative_clock`); counting-snapshot activation anchoring; prepared card reuse; sampled LUCK inputs; and
+exact integer event point parking — are active alongside Moenotes' remaining local patch surface (`LexRewards`,
+`MoenotesRewards` with `just_window::Policy`, `SkipScore`, `FixedChallengePoints`, synchronous `wasm32` `SearchDeadlineScope`,
+and legacy non-native `score_timed_order` chart compatibility).
 
-Most of the reward layer has meanwhile arrived upstream, so the port is a shrinking rewrite rather than a replay of the
-whole patch. Of the 107 definitions the patch adds, 61 already exist upstream — among them `with_power_ties`,
-`with_maximum`, `score_ties`, `prefetch_supports`, `deadline_scope`, `preserve_snap_options` and
-`team_filter_impossible` — while 46 stay patch-only, led by the lexicographic combined-reward layer
-(`LexRewards`, `MoenotesRewards`, `RewardTerm`, `search_moenotes_rewards`, `PairedRelaxation`), `SkipScore`,
-`FixedChallengePoints` and the non-native timing path (`has_native_inputs`, `timing_frames_at`, `score_timed_order`).
-Symbol names survive refactors, so this is a scope estimate, not a proof of equivalence; every remaining piece still
-needs the same review and a rebuild.
-
-Most of the gap is upstream work that overlaps the reward layer rather than unrelated code, so the patch has to be
-re-derived instead of fuzzed into place:
-
-- Timing and judgement delivery (`PhaseTiming` replaced by native `score_reachable` / `score_timed` with a
-  `TimingSource`, frame origins, counting snapshots anchored to their activation frame, cumulative and JUST search
-  deadlines). The reward layer's timing branch must move onto the native input path.
-- Reward settlement and ordering (`with_power_ties`, `with_maximum`, stable reward goals, pair-aware skill limits,
-  shared reward proofs, per-song power reuse). Some of these were introduced by the patch first; they now exist
-  upstream and must be reconciled rather than duplicated.
-- Search structure (section-first Arena search, `search-deadline` handling inside `shared::search_shared`, prepared
-  card reuse, sampled LUCK inputs). The patch's own deadline and progress handling in `gekiso_objective` collides here.
-- Metadata and cache layout (`support_high` keyed by a tuple instead of a JSON string, `support_ref`, owned
-  initialization metadata), which the patch's support-prep code still assumes in its older form.
-
-Until that port is reviewed, the site keeps serving the pinned runtime. Nothing in the deck page reads a live upstream
-commit: `runtime.json`, the answers' `engine.commit` and the licence links all name `HANEOKA_COMMIT`, so a stale pin is
-visible and reproducible rather than silently mixed.
+Nothing in the deck page reads a live upstream commit: `runtime.json`, the answers' `engine.commit` and the licence
+links all name `HANEOKA_COMMIT`, so any future upstream drift is visible and reproducible rather than silently mixed.
 
 ## Performance evidence
 

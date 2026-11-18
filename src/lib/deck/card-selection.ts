@@ -78,3 +78,52 @@ export function reconcileCardSelections(
     leaderKey: nextLeader,
   };
 }
+
+/**
+ * Toggle a member card as pinned Leader (`6ce891a6`): pinning a member as Leader automatically
+ * includes it in `required` and removes it from `excluded`; unpinning clears `leaderKey` while
+ * keeping the member in `required`.
+ */
+export function toggleLeaderSelection(
+  current: {
+    readonly leaderKey: string | null;
+    readonly required: readonly string[];
+    readonly excluded: readonly string[];
+  },
+  key: string,
+): { leaderKey: string | null; required: string[]; excluded: string[] } {
+  if (current.leaderKey === key) {
+    return {
+      leaderKey: null,
+      required: [...current.required],
+      excluded: [...current.excluded],
+    };
+  }
+  return {
+    leaderKey: key,
+    required: current.required.includes(key) ? [...current.required] : [...current.required, key],
+    excluded: current.excluded.filter((item) => item !== key),
+  };
+}
+
+/**
+ * Toggle a card in `required`; removing the currently pinned Leader also clears `leaderKey`.
+ */
+export function toggleRequiredSelection(
+  current: {
+    readonly leaderKey: string | null;
+    readonly required: readonly string[];
+  },
+  key: string,
+): { leaderKey: string | null; required: string[] } {
+  if (current.required.includes(key)) {
+    return {
+      leaderKey: current.leaderKey === key ? null : current.leaderKey,
+      required: current.required.filter((item) => item !== key),
+    };
+  }
+  return {
+    leaderKey: current.leaderKey,
+    required: [...current.required, key],
+  };
+}

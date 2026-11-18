@@ -21,8 +21,8 @@ import { getDeckGuide } from "../src/i18n/guides/deck";
 const CORE_LOCALES = ["zh-CN", "zh-TW", "ja-JP", "en-US", "ko-KR"] as const;
 
 describe("Haneoka 4ed6e00 cumulative-Snap OrderTiming, cumulativeTiming goals and DeckResult rendering", () => {
-  test("pins Haneoka commit 7c167c95 and exposes orderTiming + cumulativeTiming capabilities", () => {
-    expect(HANEOKA_COMMIT).toBe("7c167c95e8589bc84a9ab726b5b58adbc0ef4b05");
+  test("pins Haneoka commit 6de572be and exposes orderTiming + cumulativeTiming capabilities", () => {
+    expect(HANEOKA_COMMIT).toBe("6de572be31b0fd8e4ab50825bd92c81ac625bc78");
     expect(CAPABILITIES.orderTiming).toBe(true);
     expect(CAPABILITIES.cumulativeTiming).toBe(true);
   });

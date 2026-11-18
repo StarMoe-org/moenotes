@@ -2,7 +2,10 @@ import { parseMasterDate } from "@/lib/schedule";
 
 export type DeckArenaRuleSource = "auto" | "custom";
 export type DeckArenaMode = "shared" | "individual";
+export type DeckArenaObjective = "score" | "sections";
 export type DeckArenaMissions = readonly [number, number, number];
+
+export const DEFAULT_ARENA_MAX_BASE_LOSS_PERCENT = 3;
 
 export interface DeckArenaRule {
   bandId: number;
@@ -11,6 +14,9 @@ export interface DeckArenaRule {
   /** Per-range Gekisou mission override: 0 = song's own, 1 = Combo, 2 = Luck, 3 = Just count. */
   missions: DeckArenaMissions;
   mode?: DeckArenaMode;
+  objective?: DeckArenaObjective;
+  /** Maximum permitted base-score drop fraction (`0..1`) when `objective === "sections"`. */
+  maxBaseLoss?: number;
 }
 
 export interface DeckSongRules {
@@ -143,9 +149,17 @@ export function resolveArenaRule(options: {
   customMusicType: number;
   customMissions: DeckArenaMissions;
   mode: DeckArenaMode;
+  objective?: DeckArenaObjective;
+  maxBaseLossPercent?: number;
   now: number;
 }): { period: DeckArenaPeriod; rule: DeckArenaRule | null } {
   const period = arenaPeriod(options.catalog, options.leagueId, options.now);
+  const clampedLoss = typeof options.maxBaseLossPercent === "number" && Number.isFinite(options.maxBaseLossPercent)
+    ? Math.max(0, Math.min(100, options.maxBaseLossPercent))
+    : DEFAULT_ARENA_MAX_BASE_LOSS_PERCENT;
+  const sectionFields: Partial<DeckArenaRule> = options.objective === "sections"
+    ? { objective: "sections", maxBaseLoss: Number((clampedLoss / 100).toFixed(4)) }
+    : {};
   if (options.ruleSource === "custom") {
     return {
       period,
@@ -154,6 +168,7 @@ export function resolveArenaRule(options: {
         musicType: options.customMusicType,
         missions: [options.customMissions[0], options.customMissions[1], options.customMissions[2]],
         mode: options.mode,
+        ...sectionFields,
       },
     };
   }
@@ -168,6 +183,7 @@ export function resolveArenaRule(options: {
       musicType: period.regulation.musicType,
       missions: [period.regulation.missions[0], period.regulation.missions[1], period.regulation.missions[2]],
       mode: options.mode,
+      ...sectionFields,
     },
   };
 }
@@ -180,7 +196,10 @@ export function isValidArenaRule(value: unknown): value is DeckArenaRule {
   const missionsOk = Array.isArray(raw.missions) && raw.missions.length === 3
     && raw.missions.every((m) => typeof m === "number" && Number.isInteger(m) && m >= 0 && m <= 3);
   const modeOk = raw.mode === undefined || raw.mode === "shared" || raw.mode === "individual";
-  return bandOk && typeOk && missionsOk && modeOk;
+  const objectiveOk = raw.objective === undefined || raw.objective === "score" || raw.objective === "sections";
+  const lossOk = raw.maxBaseLoss === undefined
+    || (typeof raw.maxBaseLoss === "number" && Number.isFinite(raw.maxBaseLoss) && raw.maxBaseLoss >= 0 && raw.maxBaseLoss <= 1);
+  return bandOk && typeOk && missionsOk && modeOk && objectiveOk && lossOk;
 }
 
 /** Whether a song belongs to the league band and has been released by `now`. */

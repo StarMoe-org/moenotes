@@ -27,8 +27,16 @@ export interface FeasibilityConstraints {
   readonly minMissionMembers?: readonly [number, number, number];
 }
 
+export interface FeasibilityJustWindowPolicy {
+  readonly minimumMs: number;
+  readonly minCoverage: number;
+  readonly minDurationMs: number;
+  readonly minContinuousMs: number;
+}
+
 export type DeckFeasibilityIssue =
   | { readonly code: "invalid_gekiso_count"; readonly field: "minComboBonus" | "luckSamples" | "minJustWindowMs" }
+  | { readonly code: "invalid_just_window_coverage" }
   | { readonly code: "invalid_mission_member_sum"; readonly sum: number }
   | { readonly code: "mission_members_unreachable"; readonly missionIndex: 0 | 1 | 2; readonly required: number; readonly available: number }
   | { readonly code: "character_conflict_or_shortage"; readonly availableCharacters: number };
@@ -44,8 +52,9 @@ export function checkGekisoConstraintFeasibility(options: {
   readonly minComboBonus?: number;
   readonly luckSamples?: number;
   readonly minJustWindowMs?: number;
+  readonly justWindowPolicy?: FeasibilityJustWindowPolicy | null;
 }): DeckFeasibilityIssue | null {
-  const { box, memberCatalog, constraints, minComboBonus, luckSamples, minJustWindowMs } = options;
+  const { box, memberCatalog, constraints, minComboBonus, luckSamples, minJustWindowMs, justWindowPolicy } = options;
 
   if (minComboBonus !== undefined && !validGekisoCount(minComboBonus, 1)) {
     return { code: "invalid_gekiso_count", field: "minComboBonus" };
@@ -55,6 +64,20 @@ export function checkGekisoConstraintFeasibility(options: {
   }
   if (minJustWindowMs !== undefined && (!Number.isFinite(minJustWindowMs) || minJustWindowMs < 0 || minJustWindowMs > MAX_GEKISO_COUNT)) {
     return { code: "invalid_gekiso_count", field: "minJustWindowMs" };
+  }
+  if (justWindowPolicy) {
+    const { minimumMs, minCoverage, minDurationMs, minContinuousMs } = justWindowPolicy;
+    if (!Number.isFinite(minimumMs) || minimumMs <= 0 || minimumMs > MAX_GEKISO_COUNT) {
+      return { code: "invalid_gekiso_count", field: "minJustWindowMs" };
+    }
+    if (
+      !Number.isFinite(minCoverage) || minCoverage < 0 || minCoverage > 1
+      || !Number.isFinite(minDurationMs) || minDurationMs < 0 || minDurationMs > MAX_GEKISO_COUNT
+      || !Number.isFinite(minContinuousMs) || minContinuousMs < 0 || minContinuousMs > MAX_GEKISO_COUNT
+      || (minDurationMs > 0 && minContinuousMs > minDurationMs)
+    ) {
+      return { code: "invalid_just_window_coverage" };
+    }
   }
 
   const missionMinimums = constraints.minMissionMembers ?? [0, 0, 0];
